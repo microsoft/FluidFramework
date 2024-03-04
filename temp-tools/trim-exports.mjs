@@ -13,17 +13,9 @@ const packageRoot = process.cwd();
 // Get root of Git repo.
 const repoRootPath = repoRoot();
 
-// From the package root, compute how many repetitions of '../' get us to the repo root.
-const workspaceRoot = (() => {
-	const gitRootLength = repoRootPath.split(path.sep).length;
-	let relativePath = "../".repeat(packageRoot.split(path.sep).length - gitRootLength);
-	return relativePath.slice(0, relativePath.length - 1);
-})();
-
 // Load 'package.json'
 const pkgPath = path.join(packageRoot, "package.json");
 const pkgSrc = fs.readFileSync(pkgPath, "utf8");
-
 const pkg = JSON5.parse(pkgSrc);
 
 function loadDts(exportName) {

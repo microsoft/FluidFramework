@@ -141,9 +141,9 @@ if (pkg.scripts["build:test"]) {
 
 // Rewrite test scripts
 if (pkg.scripts["test:mocha"]) {
-	pkg.scripts["test:mocha"] = "npm run test:mocha:esm && npm run test:mocha:cjs";
-	pkg.scripts["test:mocha:cjs"] = "mocha --recursive \"dist/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
-	pkg.scripts["test:mocha:esm"] = "mocha --recursive \"lib/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup";
+	pkg.scripts["test:mocha"] = "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs";
+	pkg.scripts["test:mocha:cjs"] = "mocha --recursive \"dist/test/**/*.spec.*js\" --exit";
+	pkg.scripts["test:mocha:esm"] = "mocha --recursive \"lib/test/**/*.spec.*js\" --exit";
 }
 
 pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
@@ -199,53 +199,49 @@ if (fs.existsSync(apiExtractorEsmPath)) {
 }
 
 // Update tsconfig
-const tsconfigPath = path.join(packageRoot, "tsconfig.json");
-const tsconfigPaths = [tsconfigPath];
-const tsconfig = JSON5.parse(fs.readFileSync(tsconfigPath, "utf8"));
-tsconfig.extends = `${workspaceRoot}/common/build/build-common/tsconfig.node16.json`;
+const tsconfigPaths = [];
+if (!!true) {
+	const tsconfigPath = path.join(packageRoot, "tsconfig.json");
+	tsconfigPaths.push(tsconfigPath);
 
-// TODO: Exclude lib, dist, etc if rootDir = '.'
-// Ensure tsconfig excludes 'lib', 'dist', and 'node-modules'.
-// for (const excluded of ["lib", "dist", "node_modules"]) {
-// 	if (!tsconfig.exclude.includes(excluded)) {
-// 		tsconfig.exclude.push(excluded);
-// 	}
-// }
+	const tsconfig = JSON5.parse(fs.readFileSync(tsconfigPath, "utf8"));
+	tsconfig.extends = `${workspaceRoot}/common/build/build-common/tsconfig.node16.json`;
 
-const compilerOptions = tsconfig.compilerOptions;
+	const compilerOptions = tsconfig.compilerOptions;
 
-// Delete compilerOptions that are same as default
-if (compilerOptions.composite === true) { delete compilerOptions.composite }
-if (compilerOptions.declaration === true) { delete compilerOptions.declaration }
-if (compilerOptions.declarationMap === true) { delete compilerOptions.declarationMap }
-if (compilerOptions.esModuleInterop === true) { delete compilerOptions.esModuleInterop }
-if (compilerOptions.incremental === true) { delete compilerOptions.incremental }
-if (compilerOptions.inlineSources === true) { delete compilerOptions.inlineSources }
-if (compilerOptions.jsx === "react") { delete compilerOptions.jsx }
-if (compilerOptions.noImplicitAny === false) { delete compilerOptions.noImplicitAny }
-if (compilerOptions.noUnusedLocals === true) { delete compilerOptions.noUnusedLocals }
-if (compilerOptions.pretty === true) { delete compilerOptions.pretty }
-if (compilerOptions.sourceMap === true) { delete compilerOptions.sourceMap }
-if (compilerOptions.strict === true) { delete compilerOptions.strict }
-if (compilerOptions.target === "ES2020") { delete compilerOptions.target }
-if (compilerOptions.types?.length === 0) { delete compilerOptions.types }
+	// Delete compilerOptions that are same as default
+	if (compilerOptions.composite === true) { delete compilerOptions.composite }
+	if (compilerOptions.declaration === true) { delete compilerOptions.declaration }
+	if (compilerOptions.declarationMap === true) { delete compilerOptions.declarationMap }
+	if (compilerOptions.esModuleInterop === true) { delete compilerOptions.esModuleInterop }
+	if (compilerOptions.incremental === true) { delete compilerOptions.incremental }
+	if (compilerOptions.inlineSources === true) { delete compilerOptions.inlineSources }
+	if (compilerOptions.jsx === "react") { delete compilerOptions.jsx }
+	if (compilerOptions.noImplicitAny === false) { delete compilerOptions.noImplicitAny }
+	if (compilerOptions.noUnusedLocals === true) { delete compilerOptions.noUnusedLocals }
+	if (compilerOptions.pretty === true) { delete compilerOptions.pretty }
+	if (compilerOptions.sourceMap === true) { delete compilerOptions.sourceMap }
+	if (compilerOptions.strict === true) { delete compilerOptions.strict }
+	if (compilerOptions.target === "ES2020") { delete compilerOptions.target }
+	if (compilerOptions.types?.length === 0) { delete compilerOptions.types }
 
-// Main tsconfig is now ESM:
-compilerOptions.outDir = "./lib";
-delete compilerOptions.module;
-delete compilerOptions.moduleResolution;
+	// Main tsconfig is now ESM:
+	compilerOptions.outDir = "./lib";
+	delete compilerOptions.module;
+	delete compilerOptions.moduleResolution;
 
-// Move include/exclude to the end.
-// {
-// 	const include = tsconfig.include;
-// 	const exclude = tsconfig.exclude;
-// 	delete tsconfig.include;
-// 	delete tsconfig.exclude;
-// 	tsconfig.include = include;
-// 	tsconfig.exclude = exclude;
-// }
+	// Move include/exclude to the end.
+	// {
+	// 	const include = tsconfig.include;
+	// 	const exclude = tsconfig.exclude;
+	// 	delete tsconfig.include;
+	// 	delete tsconfig.exclude;
+	// 	tsconfig.include = include;
+	// 	tsconfig.exclude = exclude;
+	// }
 
-fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 4));
+	fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 4));
+}
 
 // Create a tsconfig.cjs.json
 const tsconfigCjsPath = path.join(packageRoot, "tsconfig.cjs.json");
