@@ -23,7 +23,6 @@ export class Json1Factory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
     // (undocumented)
     static Type: string;

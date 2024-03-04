@@ -24,17 +24,11 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @alpha @sealed
 export class DirectoryFactory implements IChannelFactory {
-    // (undocumented)
     static readonly Attributes: IChannelAttributes;
-    // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
-    // (undocumented)
     static readonly Type = "https://graph.microsoft.com/types/directory";
-    // (undocumented)
     get type(): string;
 }
 
@@ -198,17 +192,11 @@ export class LocalValueMaker {
 
 // @alpha @sealed
 export class MapFactory implements IChannelFactory {
-    // (undocumented)
     static readonly Attributes: IChannelAttributes;
-    // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    // (undocumented)
     static readonly Type = "https://graph.microsoft.com/types/map";
-    // (undocumented)
     get type(): string;
 }
 
@@ -218,7 +206,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
-    // (undocumented)
     protected applyStashedOp(op: unknown): void;
     clear(): void;
     countSubDirectory(): number;
@@ -239,24 +226,18 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     has(key: string): boolean;
     hasSubDirectory(subdirName: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     readonly localValueMaker: LocalValueMaker;
-    // (undocumented)
     protected onDisconnect(): void;
     protected populate(data: IDirectoryDataObject): void;
-    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     set<T = unknown>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
-    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
@@ -266,7 +247,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
@@ -277,19 +257,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     static getFactory(): IChannelFactory;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: unknown): this;
     get size(): number;
-    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
