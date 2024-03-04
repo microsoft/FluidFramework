@@ -28,6 +28,11 @@ import {
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
+import {
+	IContainerRuntimeOptions,
+	DefaultSummaryConfiguration,
+	CompressionAlgorithms,
+} from "@fluidframework/container-runtime";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,
@@ -41,6 +46,68 @@ import {
  * @internal
  */
 export const TestDataObjectType = "@fluid-example/test-dataStore";
+
+/**
+ * This function modifies container runtime options according to a version of runtime used.
+ * If a version of runtime does not support some options, they are removed.
+ * If a version runtime supports some options, such options are enabled to increase a chance of
+ * hitting feature set controlled by such options, and thus increase chances of finding product bugs.
+ * 
+ * @param version - a version of container runtime to be used in test
+ * @param optionsArg - input runtime options (optional)
+ * @returns - runtime options that should be used with a given version of container runtime
+ * @internal
+ */
+function filterRuntimeOptionsForVersion(
+	version: string,
+	optionsArg: IContainerRuntimeOptions = {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				...DefaultSummaryConfiguration,
+				...{
+					initialSummarizerDelayMs: 0,
+				},
+			},
+		},
+	},
+) {
+	let options = { ...optionsArg };
+
+	// No test fails with this option, it allows us to validate properly expectations and
+	// implementation of services
+	options.loadSequenceNumberVerification = "close";
+
+	if (version === "1.3.7") {
+		options.compressionOptions = undefined;
+		options.enableGroupedBatching = false;
+		options.enableRuntimeIdCompressor = "off";
+		options.maxBatchSizeInBytes = undefined;
+		options.chunkSizeInBytes = undefined;
+	} else if (version.includes("2.0.0-rc")) {
+		const {
+			compressionOptions = {
+				minimumBatchSizeInBytes: 500,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
+			chunkSizeInBytes = 200,
+			enableRuntimeIdCompressor = "on",
+			enableGroupedBatching = true,
+		} = options;
+
+		// Note about comments below:
+		// 1) save-version tests refers to all configs going through getVersionedTestObjectProviderFromApis(),
+		//    i.e. all kinds other than CompatKind.CrossVersion, E2E tests, and describeInstallVersions() tests.
+		// 2) cross-version tests refer to all configs going thorugh getCompatVersionedTestObjectProviderFromApis(), i.e. CompatKind.CrossVersion
+		options = {
+			... options,
+			compressionOptions, // 2 same-version tests failed; 2 cross-version tests fail; seems like functional bugs.
+			chunkSizeInBytes, // same-version test "can send and receive multiple batch ops that are flushed on JS turn" fails; 0 cross-version tests failed.
+			enableRuntimeIdCompressor, // 9 same-version tests failed; 0 cross-version tests failed.
+			enableGroupedBatching, // 0 same-version tests failed; 14 cross-version tests failed, all look like functional bugs.
+		};
+	}
+	return options;
+}
 
 /**
  * @internal
@@ -139,6 +206,15 @@ export async function getVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			containerOptions?.runtimeOptions,
+			// If you isolate each runtime option and test them individually then only 13 test fails.
+			// But enabling all 2.0 options results in 69 tests failing!
+			// Most of the failures are due to error generated as result of sending ops in disconnected state, which is a bit weird.
+			/*
+			filterRuntimeOptionsForVersion(
+				apis.containerRuntime.version,
+				containerOptions?.runtimeOptions,
+			),
+			*/
 		);
 	};
 
@@ -207,6 +283,15 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		apis.dataRuntimeForLoading,
 	);
 
+	// We want to ensure that we are testing all latest rutime features, but only if both runtimes
+	// (one that creates containers and one that loads them) are supported them.
+	// Ideally, we should use runtime options config that is defined by min version of the two runtimes.
+	// But it should be totally fine to use runtime options supported/defied by containerRuntimeForLoading.
+	// If higher version then containerRuntime, then we will pass configs to containerRuntime that it does not
+	// understand, and it will simply ignore them.
+	const versionForLoading = apis.containerRuntimeForLoading?.version;
+	assert(versionForLoading !== undefined, "versionForLoading");
+
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(
@@ -215,7 +300,10 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			containerOptions?.runtimeOptions,
+			filterRuntimeOptionsForVersion(
+				versionForLoading,
+				containerOptions?.runtimeOptions,
+			),
 			[innerRequestHandler],
 		);
 	};
@@ -231,7 +319,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			containerOptions?.runtimeOptions,
+			// containerOptions?.runtimeOptions,
+			filterRuntimeOptionsForVersion(
+				versionForLoading,
+				containerOptions?.runtimeOptions,
+			),
 			[innerRequestHandler],
 		);
 	};
