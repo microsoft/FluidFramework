@@ -12,6 +12,7 @@ import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";
 import { readJson } from "fs-extra";
+import { getPackages } from "@manypkg/get-packages";
 
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
@@ -31,35 +32,72 @@ async function isFluidRootPackage(dir: string) {
 	return false;
 }
 
-async function inferRoot() {
-	let fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
-	if (fluidConfig === undefined) {
-		traceInit(`No fluidBuild.config.cjs found. Falling back to git root.`);
+async function inferRoot(buildRoot: boolean) {
+	const config = await findUp("fluidBuild.config.cjs", {
+		cwd: process.cwd(),
+		type: "file",
+	});
+	if (config !== undefined) {
+		return path.dirname(config);
+	}
+
+	traceInit(`No fluidBuild.config.cjs found. Falling back to git root.`);
+	try {
 		// Use the git root as a fallback for older branches where the fluidBuild config is still in
 		// package.json
 		const gitRoot = childProcess
-			.execSync("git rev-parse --show-toplevel", { encoding: "utf8" })
+			.execSync("git rev-parse --show-toplevel", {
+				encoding: "utf8",
+				stdio: ["ignore", "pipe", "ignore"],
+			})
 			.trim();
-		fluidConfig = path.join(gitRoot, "package.json");
-		if (fluidConfig === undefined || !existsSync(fluidConfig)) {
-			return undefined;
+
+		const gitRootPackageJson = path.join(gitRoot, "package.json");
+		if (existsSync(gitRootPackageJson)) {
+			if (!buildRoot) {
+				return gitRoot;
+			}
+			// For build root, we require it to have fluidBuild property.
+			const parsed = await readJson(gitRootPackageJson);
+			if (parsed.fluidBuild !== undefined) {
+				return gitRoot;
+			}
 		}
+	} catch (e) {
+		traceInit(`Error getting git root: ${e}`);
 	}
-	const isRoot = await isFluidRootPackage(path.dirname(fluidConfig));
-	if (isRoot) {
-		return path.dirname(fluidConfig);
+
+	if (buildRoot) {
+		// For fluid-build, just use the enclosing workspace or package if exists
+		try {
+			traceInit(`No git root found. Trying enclosing workspace/package`);
+			const { rootDir } = await getPackages(process.cwd());
+			return rootDir;
+		} catch (e) {
+			traceInit(`Error getting packages: ${e}`);
+		}
 	}
 
 	return undefined;
 }
 
-export async function getResolvedFluidRoot() {
+async function inferFluidRoot(buildRoot: boolean) {
+	const rootDir = await inferRoot(buildRoot);
+	if (rootDir === undefined) {
+		return undefined;
+	}
+
+	// build root doesn't require the root to be a private package
+	return buildRoot || (await isFluidRootPackage(rootDir)) ? rootDir : undefined;
+}
+
+export async function getResolvedFluidRoot(buildRoot = false) {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {
 		traceInit(`Using argument root @ ${root}`);
 	} else {
-		root = await inferRoot();
+		root = await inferFluidRoot(buildRoot);
 		if (root) {
 			checkFluidRoot = false;
 			traceInit(`Using inferred root @ ${root}`);
@@ -88,7 +126,7 @@ export async function getResolvedFluidRoot() {
 
 /**
  * A cosmiconfig explorer to find the fluidBuild config. First looks for javascript config files and falls back to the
- * fluidBuild propert in package.json. We create a single explorer here because cosmiconfig internally caches configs
+ * fluidBuild property in package.json. We create a single explorer here because cosmiconfig internally caches configs
  * for performance. The cache is per-explorer, so re-using the same explorer is a minor perf improvement.
  */
 const configExplorer = cosmiconfigSync("fluidBuild", {
@@ -98,10 +136,26 @@ const configExplorer = cosmiconfigSync("fluidBuild", {
 
 /**
  * Loads an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
+ * Throw if not found.
  *
  * @param rootDir - The path to the root package.json to load.
  * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
  * @returns The fluidBuild section of the package.json.
+ */
+export function loadFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
+	const config = getFluidBuildConfig(rootDir, noCache);
+	if (config === undefined) {
+		throw new Error(`Error loading config.`);
+	}
+	return config;
+}
+
+/**
+ * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
+ *
+ * @param rootDir - The path to the root package.json to load.
+ * @param noCache - If true, the config cache will be cleared and the config will be reloaded.
+ * @returns The fluidBuild section of the package.json, or undefined if not found
  */
 export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBuildConfig {
 	if (noCache === true) {
@@ -109,8 +163,5 @@ export function getFluidBuildConfig(rootDir: string, noCache = false): IFluidBui
 	}
 
 	const config = configExplorer.search(rootDir);
-	if (config?.config === undefined) {
-		throw new Error(`Error loading config.`);
-	}
-	return config.config;
+	return config?.config;
 }

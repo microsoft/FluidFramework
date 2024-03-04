@@ -13,7 +13,7 @@ import {
 } from "../../common/fluidTaskDefinitions";
 import { getEsLintConfigFilePath } from "../../common/taskUtils";
 import { FluidRepo } from "../../common/fluidRepo";
-import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig } from "../../common/fluidUtils";
 import * as TscUtils from "../../common/tscUtils";
 import { Handler, readFile } from "../common";
 
@@ -26,7 +26,8 @@ const getFluidBuildTasksTscIgnore = (root: string) => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray = getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray =
+			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -39,7 +40,7 @@ const getFluidBuildTasksIgnoreDependencies = (root: string) => {
 	let ignore = fluidBuildTasksTscIgnoreDependenciesCache.get(rootDir);
 	if (ignore === undefined) {
 		const ignoreArray =
-			getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDependencies;
+			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDependencies;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreDependenciesCache.set(rootDir, ignore);
 	}
@@ -52,7 +53,7 @@ const getFluidBuildTasksIgnoreDevDependencies = (root: string) => {
 	let ignore = fluidBuildTasksTscIgnoreDevDependenciesCache.get(rootDir);
 	if (ignore === undefined) {
 		const ignoreArray =
-			getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDevDependencies;
+			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDevDependencies;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreDevDependenciesCache.set(rootDir, ignore);
 	}
@@ -66,7 +67,7 @@ function getFluidPackageMap(root: string) {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = new FluidRepo(rootDir);
+		const repo = FluidRepo.create(rootDir);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
