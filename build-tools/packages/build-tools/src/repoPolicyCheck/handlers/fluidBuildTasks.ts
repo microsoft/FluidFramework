@@ -315,7 +315,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: string[],
 ) {
-	const rootConfig = getFluidBuildConfig(root);
+	const rootConfig = loadFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	const seenDep = new Set<string>();
