@@ -351,6 +351,7 @@ describe("Error Logging", () => {
 				p9: [true, true, false],
 				p10: { one: "1" },
 				p11: undefined,
+				p12: { value: ["1", 2, true], tag: "CodeArtifact" },
 			});
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "should not be overwritten");
@@ -362,6 +363,7 @@ describe("Error Logging", () => {
 			assert.strictEqual(props.p9, "[true,true,false]");
 			assert.strictEqual(props.p10, `{"one":"1"}`);
 			assert.strictEqual(props.p11, undefined);
+			assert.deepStrictEqual(props.p12, { value: `["1",2,true]`, tag: "CodeArtifact" });
 			const errorAsAny = loggingError as any;
 			assert.strictEqual(errorAsAny.p1, "should not be overwritten");
 			assert.strictEqual(errorAsAny.p4, 4);
@@ -372,6 +374,7 @@ describe("Error Logging", () => {
 			assert.deepStrictEqual(errorAsAny.p9, [true, true, false]);
 			assert.deepStrictEqual(errorAsAny.p10, { one: "1" });
 			assert.strictEqual(errorAsAny.p11, undefined);
+			assert.deepStrictEqual(errorAsAny.p12, { value: ["1", 2, true], tag: "CodeArtifact" });
 		});
 		it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
 			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
@@ -388,10 +391,11 @@ describe("Error Logging", () => {
 			errorAsAny.p9 = [true, true, false];
 			errorAsAny.p10 = { one: "1" };
 			errorAsAny.p11 = undefined;
+			errorAsAny.p12 = { value: ["1", 2, true], tag: "CodeArtifact" };
 			// Things that can't be set with addTelemetryProperties
-			errorAsAny.p12 = null; // Null
-			errorAsAny.p13 = ["a", "b", "c", null]; // Array with nulls
-			errorAsAny.p14 = [[1, 2]]; // Nested array
+			errorAsAny.p13 = null; // Null
+			errorAsAny.p14 = ["a", "b", "c", null]; // Array with nulls
+			errorAsAny.p15 = [[1, 2]]; // Nested array
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "one");
 			assert.strictEqual(props.p4, 4);
@@ -403,9 +407,10 @@ describe("Error Logging", () => {
 			assert.strictEqual(props.p9, `[true,true,false]`);
 			assert.strictEqual(props.p10, `{"one":"1"}`);
 			assert.strictEqual(props.p11, undefined);
-			assert.strictEqual(props.p12, "null");
-			assert.strictEqual(props.p13, `["a","b","c",null]`);
-			assert.strictEqual(props.p14, "[[1,2]]");
+			assert.deepStrictEqual(props.p12, { value: `["1",2,true]`, tag: "CodeArtifact" });
+			assert.strictEqual(props.p13, "null");
+			assert.strictEqual(props.p14, `["a","b","c",null]`);
+			assert.strictEqual(props.p15, "[[1,2]]");
 		});
 		it("addTelemetryProperties - Does not overwrite base class Error fields (untagged)", () => {
 			const loggingError = new LoggingError("myMessage");
