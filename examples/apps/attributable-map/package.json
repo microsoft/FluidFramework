@@ -47,6 +47,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/test-tools": "^1.0.195075",
+		"@types/jest-environment-puppeteer": "workspace:",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
