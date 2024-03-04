@@ -188,7 +188,6 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
 		"double-ended-queue": "^2.1.0-0",
-		"events": "^3.1.0",
 		"lz4js": "^0.2.0",
 		"uuid": "^9.0.0"
 	},
@@ -205,7 +204,6 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.39.1",
 		"@types/double-ended-queue": "^2.1.0",
-		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",

@@ -36,8 +36,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"events": "^3.1.0"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.34.0",

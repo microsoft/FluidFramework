@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
 	FlexTreeNode,
@@ -306,11 +307,13 @@ export class SchemaFactory<
 						0x83b /* building node with wrong schema */,
 					);
 				}
-				// TODO: make this a better user facing error, and explain how to copy explicitly.
-				assert(
-					!isTreeNode(input),
-					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
-				);
+
+				if (isTreeNode(input)) {
+					// TODO: update this once we have better support for deep-copying and move operations.
+					throw new UsageError(
+						"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
+					);
+				}
 			}
 
 			public get [type](): ScopedSchemaName<TScope, Name> {
