@@ -90,6 +90,7 @@ import {
 	IFluidErrorBase,
 	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces";
 import structuredClone from "@ungap/structured-clone";
 import { Audience } from "./audience.js";
 import { ContainerContext } from "./containerContext.js";
@@ -2346,7 +2347,7 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(content: any, targetClientId?: string) {
+	private submitSignal(content: ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
