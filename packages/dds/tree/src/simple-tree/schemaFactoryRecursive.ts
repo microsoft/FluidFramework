@@ -224,6 +224,11 @@ export class SchemaFactoryRecursive<
 		>;
 	}
 
+	/**
+	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
+	 * @remarks
+	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 */
 	public optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T) {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t);
 	}

@@ -15,19 +15,16 @@ import {
 	NodeFromSchema,
 	SchemaFactoryRecursive,
 	TreeConfiguration,
-	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
 	TreeView,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
-import { ArrayToUnion, ExtractItemType, FlexListToUnion } from "../../feature-libraries/index.js";
+import { FlexListToUnion } from "../../feature-libraries/index.js";
 import {
 	FieldSchemaUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	ObjectFromSchemaRecordUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
@@ -82,36 +79,6 @@ describe("SchemaFactoryRecursive", () => {
 			const view: TreeView<Box> = tree.schematize(config);
 			assert.equal(view.root?.text, "hi");
 
-			{
-				type _check1 = requireTrue<areSafelyAssignable<Box, typeof view.root>>;
-				type _check2 = requireTrue<areSafelyAssignable<Box | undefined, Box["child"]>>;
-
-				const FieldSchemaX = schema.optionalRecursive([() => Box]);
-				type TFieldSchema = readonly [() => typeof Box] & readonly (() => TreeNodeSchema)[];
-				type TFieldContent = TreeFieldFromImplicitField<TFieldSchema>;
-				type TFieldContentNode = TreeNodeFromImplicitAllowedTypes<TFieldSchema>;
-				type TFieldContentNode2 = FlexListToUnion<TFieldSchema>;
-
-				type TFieldContentNode3 = ArrayToUnion<TFieldSchema>;
-				type TFieldContentNode4 = ArrayToUnion<[() => Box]>;
-
-				type TFieldContentNode5 = ArrayToUnion<TFieldSchema>;
-				type TFieldContentNode6 = ArrayToUnion<readonly [() => Box]>;
-
-				type ExtractItemType2<Item extends () => unknown> = Item extends () => infer Result
-					? Result
-					: never;
-
-				type TFieldContentNode7 = ExtractItemType<TFieldContentNode3>;
-				type TFieldContentNode8 = ExtractItemType2<TFieldContentNode3>;
-				type TFieldContentNode9 = ReturnType<TFieldContentNode3>;
-				type X = typeof Box & TreeNodeSchema;
-				type XX = ReturnType<(() => 1) & (() => number)>;
-				type XY = ReturnType<(() => number) & (() => 1)>;
-
-				type Field = Box["child"];
-			}
-
 			const stuff: undefined | Box = view.root.child;
 
 			assert.equal(stuff, undefined);
@@ -136,26 +103,42 @@ describe("SchemaFactoryRecursive", () => {
 				x: sf.optionalRecursive([() => ObjectRecursive]),
 			}) {}
 
-			type FieldsSchema = typeof ObjectRecursive.info;
 			type XSchema = typeof ObjectRecursive.info.x;
-			type Fields = ObjectFromSchemaRecordUnsafe<FieldsSchema>;
-			type Field = TreeFieldFromImplicitFieldUnsafe<XSchema>;
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
 				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
 				: "zzz";
 			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
+			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;
+			type _check2 = requireTrue<areSafelyAssignable<Field4, typeof ObjectRecursive>>;
 
 			type Insertable = InsertableTreeNodeFromImplicitAllowedTypes<typeof ObjectRecursive>;
+			type _checkInsertable = requireTrue<areSafelyAssignable<Insertable, ObjectRecursive>>;
 			type Constructable = NodeFromSchema<typeof ObjectRecursive>;
+			type _checkConstructable = requireTrue<
+				areSafelyAssignable<Constructable, ObjectRecursive>
+			>;
 			type Child = ObjectRecursive["x"];
-			type _check = requireTrue<areSafelyAssignable<Child, ObjectRecursive | undefined>>;
+			type _checkChild = requireTrue<areSafelyAssignable<Child, ObjectRecursive | undefined>>;
+			type Constructor = ConstructorParameters<typeof ObjectRecursive>;
+			type _checkConstructor = requireTrue<
+				areSafelyAssignable<
+					Constructor,
+					[
+						{
+							readonly x: undefined | ObjectRecursive;
+						},
+					]
+				>
+			>;
 
 			const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
 
 			const data = Reflect.ownKeys(tree);
 			// TODO: are empty optional fields supposed to show up as keys in simple-tree? They currently are included, but maybe thats a bug?
+			// Currently optional fields must be provided explicitly when constructing nodes, but this is planned to change (with default field defaults), which will make it seem less like the should be included.
+			// Additionally all the lower level abstractions omit empty fields when iterating (especially map nodes which would be infinite if they didn't): if this layer is supposed to differ it should be explicit about it.
 			assert.deepEqual(data, ["x"]);
 
 			tree.x = new ObjectRecursive({ x: undefined });
