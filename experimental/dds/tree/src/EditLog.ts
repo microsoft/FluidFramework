@@ -579,13 +579,12 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 	/**
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
-	 * @internal
 	 */
 	public getEditLogSummary(): EditLogSummary<TChange, FluidEditHandle>;
+
 	/**
 	 * @param compressEdit - a function which compresses edits
 	 * @returns the summary of this `OrderedEditSet` that can be used to reconstruct the edit set.
-	 * @internal
 	 */
 	public getEditLogSummary<TCompressedChange>(
 		compressEdit: (edit: Pick<Edit<TChange>, 'changes'>) => Pick<Edit<TCompressedChange>, 'changes'>
