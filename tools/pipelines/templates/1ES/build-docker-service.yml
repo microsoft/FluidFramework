@@ -129,13 +129,9 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
-      #componentgovernance:
-      #  timeoutInMinutes: 15
-      SKIPAUTOMATICIMAGESCAN: true
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks. 
     settings:
       skipBuildTagsForGitHubPullRequests: true
-      SKIPAUTOMATICIMAGESCAN: true
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
@@ -190,7 +186,6 @@ extends:
           hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
           hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
-          ComponentDetection.Timeout: 900
           SKIPAUTOMATICIMAGESCAN: true
         steps:
         # Setup
