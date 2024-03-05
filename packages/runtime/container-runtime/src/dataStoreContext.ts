@@ -1321,6 +1321,10 @@ export class LocalDetachedFluidDataStoreContext
 		} catch (error) {
 			this.channelDeferred?.reject(error);
 			this.mc.logger.sendErrorEvent({ eventName: "AttachRuntimeError" }, error);
+			// The following two lines result in same exception thrown.
+			// But we need to ensure that this.channelDeferred.promise is "observed", as otherwise
+			// out UT reports unhandled exception
+			await this.channelDeferred.promise;
 			throw error;
 		}
 	}
