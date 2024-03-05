@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import path from "node:path";
+import * as path from "node:path";
 
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing.js";
-import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
+import { baseModel } from "../sharedNothing.js";
+import type { DDSFuzzModel } from "../../ddsFuzzHarness.js";
+import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
 import { _dirname } from "./dirname.cjs";
 
 let currentIndex = 0;

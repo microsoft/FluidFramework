@@ -20,7 +20,7 @@ async function main() {
 	const timer = new Timer(commonOptions.timer);
 	const resolvedRoot = await getResolvedFluidRoot(true);
 
-	log(`Fluid Build Root: ${resolvedRoot}`);
+	log(`Build Root: ${resolvedRoot}`);
 
 	// Load the package
 	const repo = FluidRepoBuild.create(resolvedRoot);

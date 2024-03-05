@@ -10,6 +10,7 @@ import { defaultLogger } from "../common/logging";
 import { existsSync } from "../common/utils";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { ISymlinkOptions } from "./symlinkUtils";
+import { defaultBuildTaskName, defaultCleanTaskName } from "../common/fluidTaskDefinitions";
 
 const { log, warning, errorLog } = defaultLogger;
 
@@ -323,11 +324,11 @@ export function parseOptions(argv: string[]) {
 
 	// If we are building, and don't have a task name, default to "build"
 	if (options.build !== false && options.buildTaskNames.length === 0) {
-		options.buildTaskNames.push("build");
+		options.buildTaskNames.push(defaultBuildTaskName);
 	}
 
 	// Add the "clean" task if --clean is specified
 	if (options.clean) {
-		options.buildTaskNames.push("clean");
+		options.buildTaskNames.push(defaultCleanTaskName);
 	}
 }
