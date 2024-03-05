@@ -129,15 +129,9 @@ jobs:
 
       # Install
       - task: UseNode@1
-        displayName: Use Node 18.17.1
+        displayName: Use Node 14.x
         inputs:
-          version: 18.17.1
-      - task: Npm@1
-        displayName: Install npm 6
-        inputs:
-          command: 'custom'
-          customCommand: 'install --global npm@^6'
-          customRegistry: 'useNpmrc'
+          version: 14.x
 
       # Download artifact
       - task: DownloadPipelineArtifact@2
