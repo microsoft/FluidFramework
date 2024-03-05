@@ -30,7 +30,7 @@ import { pkgVersion } from "./packageVersion.js";
  * A channel factory that creates an {@link ITree}.
  * @internal
  */
-export class TreeFactory implements IChannelFactory {
+export class TreeFactory implements IChannelFactory<ITree> {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 

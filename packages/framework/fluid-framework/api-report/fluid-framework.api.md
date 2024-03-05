@@ -361,7 +361,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedMap>;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
     protected loadCore(storage: IChannelStorageService): Promise<void>;

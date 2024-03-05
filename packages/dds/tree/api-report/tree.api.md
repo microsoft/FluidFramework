@@ -1668,7 +1668,7 @@ export interface SharedTreeContentSnapshot {
 }
 
 // @internal
-export class SharedTreeFactory implements IChannelFactory {
+export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -1829,7 +1829,7 @@ export interface TreeEvent {
 }
 
 // @internal
-export class TreeFactory implements IChannelFactory {
+export class TreeFactory implements IChannelFactory<ITree> {
     constructor(options: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
