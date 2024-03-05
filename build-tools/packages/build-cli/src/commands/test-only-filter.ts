@@ -31,6 +31,7 @@ interface FilterCommandResult {
 export default class FilterCommand extends PackageCommand<typeof FilterCommand> {
 	static readonly summary =
 		`FOR INTERNAL TESTING ONLY. This command is used only to test the common package filtering and selection logic that is used across the CLI. FOR INTERNAL TESTING ONLY.`;
+
 	static readonly description =
 		`This command outputs JSON containing metadata about the packages selected and filtered. This output is parsed in tests. While the --json flag is technically optional, it should always be passed when using this command for testing. Otherwise there is no output to be checked for correctness.`;
 

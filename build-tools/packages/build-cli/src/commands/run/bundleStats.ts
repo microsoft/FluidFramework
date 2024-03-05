@@ -21,8 +21,8 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	};
 
 	public async run(): Promise<void> {
-		// eslint-disable-next-line unicorn/prefer-module
 		const dangerfile =
+			// eslint-disable-next-line unicorn/prefer-module
 			this.flags.dangerfile ?? path.join(__dirname, "../../lib/dangerfile.js");
 
 		// ADO:3710 This needs to change in order to remove the 'danger' dependency in the root package.json

@@ -49,6 +49,7 @@ export default class GenerateChangesetCommand extends BaseCommand<
 > {
 	static readonly summary =
 		`Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+
 	static readonly aliases: string[] = [
 		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",

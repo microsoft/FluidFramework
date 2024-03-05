@@ -172,15 +172,17 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 	private getFileVersion(): string {
 		if (fs.existsSync("./lerna.json")) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" }))
-				.version as string;
+			return (
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version as string
+			);
 		}
 
 		if (fs.existsSync("./package.json")) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
-				.version as string;
+			return (
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version as string
+			);
 		}
 
 		this.error(`lerna.json or package.json not found`);
