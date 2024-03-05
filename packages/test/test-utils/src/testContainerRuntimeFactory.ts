@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -83,12 +84,9 @@ export const createTestContainerRuntimeFactory = (
 		}
 
 		public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-			const rootContext = runtime.createDetachedRootDataStore([this.type], "default");
-			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
-				rootContext,
-				/* existing */ false,
-			);
-			await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+			const dataStore = await runtime.createDataStore([this.type]);
+			const result = await dataStore.trySetAlias("default");
+			assert(result === "Success", "success");
 		}
 
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
