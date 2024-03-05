@@ -194,26 +194,10 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			const dataObjectB2 = (await handleB2.get()) as TestDataObject;
 			const dataObjectC2 = (await handleC2.get()) as TestDataObject;
 			const dataObjectD2 = (await handleD2.get()) as TestDataObject;
-			assert.equal(
-				dataObjectA2.loadingGroupId,
-				loadingGroupId,
-				"dataObjectA groupId should be set",
-			);
-			assert.equal(
-				dataObjectB2.loadingGroupId,
-				loadingGroupId,
-				"dataObjectB groupId should be set",
-			);
-			assert.equal(
-				dataObjectC2.loadingGroupId,
-				loadingGroupId2,
-				"dataObjectB groupId should be set",
-			);
-			assert.equal(
-				dataObjectD2.loadingGroupId,
-				loadingGroupId2,
-				"dataObjectB groupId should be set",
-			);
+			assert.equal(dataObjectA2.loadingGroupId, loadingGroupId, "A groupId not set");
+			assert.equal(dataObjectB2.loadingGroupId, loadingGroupId, "B groupId not set");
+			assert.equal(dataObjectC2.loadingGroupId, loadingGroupId2, "B groupId not set");
+			assert.equal(dataObjectD2.loadingGroupId, loadingGroupId2, "B groupId not set");
 		}
 	});
 

@@ -214,7 +214,7 @@ export class PureDataObjectFactory<
 	 * @param context - The context being used to create the runtime
 	 * (the created object will have its own new context created as well)
 	 * @param initialState - The initial state to provide to the created data store.
-	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README} tries to delay load a data store. The service needs to support this feature, does not work for most services
+	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL, please read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}. The service needs to support this feature, does not work for most services
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
@@ -238,7 +238,7 @@ export class PureDataObjectFactory<
 	 * @param context - The component context being used to create the object
 	 * (the created object will have its own new context created as well)
 	 * @param initialState - The initial state to provide to the created component.
-	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README} tries to delay load a data store. The service needs to support this feature, does not work for most services
+	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL, please read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}. The service needs to support this feature, does not work for most services
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
@@ -262,7 +262,7 @@ export class PureDataObjectFactory<
 	 * The name in this registry for such record should match type of this factory.
 	 * @param runtime - container runtime. It's registry is used to create an object.
 	 * @param initialState - The initial state to provide to the created component.
-	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README} tries to delay load a data store. The service needs to support this feature, does not work for most services
+	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL, please read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}. The service needs to support this feature, does not work for most services
 	 * @returns an object created by this factory. Data store and objects created are not attached to container.
 	 * They get attached only when a handle to one of them is attached to already attached objects.
 	 */
@@ -280,7 +280,7 @@ export class PureDataObjectFactory<
 	 * the underlying infrastructure to get the data object to operate.
 	 * @param initialState - The initial state to provide to the created component.
 	 * @param packagePath - The path to the data store factory to use to create the data object.
-	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README} tries to delay load a data store. The service needs to support this feature, does not work for most services
+	 * @param loadingGroupId - NOT production ready, EXPERIMENTAL, please read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}. The service needs to support this feature, does not work for most services
 	 * @returns an array containing the object created by this factory and an IDataStore object that enables users to
 	 * alias the data object.
 	 * The data object is attached only when it is attached to the handle graph that connects to an aliased object or
