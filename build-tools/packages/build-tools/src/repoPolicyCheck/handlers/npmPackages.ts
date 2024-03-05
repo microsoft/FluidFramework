@@ -36,7 +36,10 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-export function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMustPublishToNPM(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const mustPublish = config.mustPublish.npm;
 
 	if (mustPublish === undefined) {
@@ -673,10 +676,7 @@ export const handlers: Handler[] = [
 			const expectTrademark = fs.existsSync(path.join(packageDir, "Dockerfile"));
 			if (!readmeInfo.exists) {
 				if (expectTrademark) {
-					writeFile(
-						readmeInfo.filePath,
-						`${expectedTitle}${newline}${newline}${trademark}`,
-					);
+					writeFile(readmeInfo.filePath, `${expectedTitle}${newline}${newline}${trademark}`);
 				} else {
 					writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
 				}
@@ -800,10 +800,7 @@ export const handlers: Handler[] = [
 					json.scripts,
 					"prettier:fix",
 				);
-				const hasFormatScript = Object.prototype.hasOwnProperty.call(
-					json.scripts,
-					"format",
-				);
+				const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
 				const isLernaFormat = json["scripts"]["format"]?.includes("lerna");
 
 				if (!isLernaFormat) {
@@ -1024,9 +1021,7 @@ export const handlers: Handler[] = [
 				const info = fs.readdirSync(testDir, { withFileTypes: true });
 				if (
 					info.some(
-						(e) =>
-							path.extname(e.name) === ".ts" ||
-							(e.isDirectory() && e.name !== "types"),
+						(e) => path.extname(e.name) === ".ts" || (e.isDirectory() && e.name !== "types"),
 					)
 				) {
 					return "Test files exists but no test scripts";
@@ -1483,10 +1478,9 @@ export const handlers: Handler[] = [
 			}
 
 			if (errors.length > 0) {
-				return [
-					`Policy violations for public package "${packageJson.name}":`,
-					...errors,
-				].join(`${newline}* `);
+				return [`Policy violations for public package "${packageJson.name}":`, ...errors].join(
+					`${newline}* `,
+				);
 			}
 		},
 		resolver: (packageJsonFilePath, rootDirectoryPath) => {

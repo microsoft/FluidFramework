@@ -307,7 +307,11 @@ export class TscTask extends LeafTask {
 		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
 	}
 
-	private remapOutFile(options: tsTypes.ParsedCommandLine, directory: string, fileName: string) {
+	private remapOutFile(
+		options: tsTypes.ParsedCommandLine,
+		directory: string,
+		fileName: string,
+	) {
 		if (options.options.outDir) {
 			if (options.options.rootDir) {
 				const relative = path.relative(options.options.rootDir, directory);
@@ -348,9 +352,7 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(
-						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
-					);
+					const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
 					if (
 						tsBuildInfo.program &&
 						tsBuildInfo.program.fileNames &&
@@ -550,12 +552,9 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 			const project = tscMultiConfig.projects[0];
 			const projectExt = path.extname(project);
 			const target = tscMultiConfig.targets[0];
-			const relTsBuildInfoPath = `${project.substring(
-				0,
-				project.length - projectExt.length,
-			)}${target.extName ?? ""}${configKeyForPackageOverrides(
-				target.packageOverrides,
-			)}.tsbuildinfo`;
+			const relTsBuildInfoPath = `${project.substring(0, project.length - projectExt.length)}${
+				target.extName ?? ""
+			}${configKeyForPackageOverrides(target.packageOverrides)}.tsbuildinfo`;
 			const tsbuildinfoPath = this.getPackageFileFullPath(relTsBuildInfoPath);
 			if (!existsSync(tsbuildinfoPath)) {
 				// No tsbuildinfo file, so we need to build

@@ -336,9 +336,7 @@ export class BuildPackage {
 					/* ignore mutual before "*" */
 					(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
 				);
-				traceTaskDepTask(
-					`Expanding before: ${task.nameColored} -> ${JSON.stringify(before)}`,
-				);
+				traceTaskDepTask(`Expanding before: ${task.nameColored} -> ${JSON.stringify(before)}`);
 				const matchedTasks = this.getMatchedTasks(before);
 				for (const matchedTask of matchedTasks) {
 					traceTaskDepTask(`${matchedTask.nameColored} -> ${task.nameColored}`);
@@ -354,9 +352,7 @@ export class BuildPackage {
 					/* ignore mutual after "*" */
 					(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
 				);
-				traceTaskDepTask(
-					`Expanding after: ${task.nameColored} -> ${JSON.stringify(after)}`,
-				);
+				traceTaskDepTask(`Expanding after: ${task.nameColored} -> ${JSON.stringify(after)}`);
 				const matchedTasks = this.getMatchedTasks(taskConfig.after);
 				matchedTasks.forEach((matchedTask) => {
 					traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
@@ -629,9 +625,7 @@ export class BuildGraph {
 						version.startsWith("workspace:") || semver.satisfies(dep.version, version);
 					if (satisfied) {
 						if (depFilter(dep)) {
-							traceGraph(
-								`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`,
-							);
+							traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
 							node.dependentPackages.push(
 								this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
 							);

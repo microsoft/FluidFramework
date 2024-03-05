@@ -62,9 +62,7 @@ export const handlers: Handler[] = [
 					return true;
 				});
 				if (containsBadUrl) {
-					return `A private registry URL is in lock file: ${file}:\n${results.join(
-						"\n",
-					)}`;
+					return `A private registry URL is in lock file: ${file}:\n${results.join("\n")}`;
 				}
 			}
 			return;
