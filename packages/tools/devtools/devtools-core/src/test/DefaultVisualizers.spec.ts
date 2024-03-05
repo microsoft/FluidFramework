@@ -19,7 +19,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, TreeConfiguration, SharedTree, type ITree } from "@fluidframework/tree";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 
-import { EditType, type FluidObjectId } from "../CommonInterfaces";
+import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
 import {
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
@@ -35,7 +35,7 @@ import {
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 	VisualNodeKind,
-} from "../data-visualization";
+} from "../data-visualization/index.js";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests
