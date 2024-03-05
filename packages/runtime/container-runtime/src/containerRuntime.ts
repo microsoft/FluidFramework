@@ -881,7 +881,7 @@ export class ContainerRuntime
 			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
 			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
-			idCompressorMode = metadata?.idCompressorEnabled ?? "off";
+			idCompressorMode = metadata?.idCompressorMode ?? "off";
 		} else {
 			// FG overwrite
 			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
@@ -1028,7 +1028,15 @@ export class ContainerRuntime
 	}
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+
+	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
+	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
 	private pendingIdCompressorOps: IdCreationRange[] = [];
+
+	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
+	// (such ops will be marked by Loader layer as savedOp === true)
+	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before we getPendingLocalState() is called.
+	// In such case we have to process all ops, including those marked with saveOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
 	/**
@@ -1049,7 +1057,7 @@ export class ContainerRuntime
 	 * True if we have ID compressor loading in-flight (async operation). Useful only for
 	 * this.idCompressorMode === "delayed" mode
 	 */
-	protected delayedCompressorLoading = false;
+	protected compressorLoadInitiated = false;
 
 	/**
 	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
@@ -1740,8 +1748,8 @@ export class ContainerRuntime
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
-			idCompressorEnabledMetadata: metadata?.idCompressorEnabled,
-			idCompressorEnabled: this.idCompressorMode,
+			idCompressorModeMetadata: metadata?.idCompressorMode,
+			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				disableCompression,
 				disableOpReentryCheck,
@@ -1769,7 +1777,7 @@ export class ContainerRuntime
 		});
 
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
-		// saved state
+		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
@@ -1781,6 +1789,7 @@ export class ContainerRuntime
 			this.idCompressorMode === "on" ||
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
+			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, "no pending ops");
 			this._idCompressor = await this.createIdCompressor();
 		}
@@ -2068,7 +2077,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressorMode,
+			idCompressorMode: this.idCompressorMode,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2211,6 +2220,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.IdAllocation:
+				assert(this.idCompressorMode !== "off", "ID compressor should be in use");
 				return;
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
@@ -2249,8 +2259,8 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
-		if (connected && this.idCompressorMode === "delayed" && !this.delayedCompressorLoading) {
-			this.delayedCompressorLoading = true;
+		if (connected && this.idCompressorMode === "delayed" && !this.compressorLoadInitiated) {
+			this.compressorLoadInitiated = true;
 			this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
@@ -2481,9 +2491,11 @@ export class ContainerRuntime
 			case ContainerMessageType.IdAllocation:
 				// Don't re-finalize the range if we're processing a "savedOp" in
 				// stashed ops flow. The compressor is stashed with these ops already processed.
+				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
+				// thus we need to process all the ops.
 				if (
-					!this.skipSavedCompressorOps ||
-					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
+					!(this.skipSavedCompressorOps &&
+					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp === true)
 				) {
 					const range = messageWithContext.message.contents;
 					if (this._idCompressor === undefined) {

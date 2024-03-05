@@ -113,7 +113,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
 	/** True if the runtime IdCompressor is enabled */
-	readonly idCompressorEnabled?: IdCompressorMode;
+	readonly idCompressorMode?: IdCompressorMode;
 }
 
 /**

@@ -1567,7 +1567,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						idCompressorEnabled: defaultRuntimeOptions.enableRuntimeIdCompressor,
+						idCompressorMode: defaultRuntimeOptions.enableRuntimeIdCompressor,
 					},
 				]);
 			});
@@ -1593,7 +1593,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						idCompressorEnabled: "on",
+						idCompressorMode: "on",
 						featureGates: JSON.stringify({
 							disableCompression: true,
 							disableOpReentryCheck: false,

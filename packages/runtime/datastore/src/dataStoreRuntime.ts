@@ -413,7 +413,7 @@ export class FluidDataStoreRuntime
 		if (id.includes("/")) {
 			throw new UsageError(`Id cannot contain slashes: ${id}`);
 		}
-		if (id.includes("_")) {
+		if (id.startsWith("_")) {
 			throw new UsageError(`Id cannot start with underscore: ${id}`);
 		}
 	}

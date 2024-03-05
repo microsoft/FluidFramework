@@ -11814,7 +11814,7 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       fflate: 0.7.4
-      semver: 7.5.4
+      semver: 7.6.0
       typescript: 5.3.2
       validate-npm-package-name: 5.0.0
     dev: true

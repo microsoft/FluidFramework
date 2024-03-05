@@ -20,7 +20,7 @@ import type { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions, IdCompressorMode } from "@fluidframework/container-runtime";
 import {
 	IContainer,
 	type IFluidCodeDetails,
@@ -842,9 +842,9 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		);
 	});
 
-	it("Container uses short DataStore & DDS IDs", async () => {
+	async function TestCompactIds(enableRuntimeIdCompressor: IdCompressorMode) {
 		const container = await createContainer({
-			runtimeOptions: { enableRuntimeIdCompressor: "delayed" },
+			runtimeOptions: { enableRuntimeIdCompressor},
 		});
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		// This data store was created in detached container, so it has to be short!
@@ -857,8 +857,8 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		defaultDataStore._root.set("foo", "bar");
 		await provider.ensureSynchronized();
 
-		// generate one ID to force system to request a range of short IDs.
-		// Without that ID Compressor will not attempt to allocate a block of IDs on an op.
+		// Generate one ID to force ID Compressor to request a range of short IDs on next op.
+		// Without that call, ID Compressor will not attempt to allocate a block of IDs on a map op that follows.
 		defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
 
 		// Give an opportunity for ID compressor to acqure a block of short IDs
@@ -909,5 +909,14 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			SharedDirectory.getFactory().type,
 		);
 		assert(channel2.id.length <= 2, "DDS ID created in attached data store");
+
+	}
+
+	it("Container uses short DataStore & DDS IDs in delayed mode", async () => {
+		TestCompactIds("delayed");
+	});
+
+	it("Container uses short DataStore & DDS IDs in On mode", async () => {
+		TestCompactIds("on");
 	});
 });

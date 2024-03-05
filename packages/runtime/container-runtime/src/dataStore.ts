@@ -46,8 +46,7 @@ export const channelToDataStore = (
 	runtime: ContainerRuntime,
 	datastores: DataStores,
 	logger: ITelemetryLoggerExt,
-): IDataStore =>
-	new DataStore(fluidDataStoreChannel, fluidDataStoreChannel.id, runtime, datastores, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, runtime, datastores, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -110,7 +109,7 @@ class DataStore implements IDataStore {
 
 	async trySetAliasInternal(alias: string): Promise<AliasResult> {
 		const message: IDataStoreAliasMessage = {
-			internalId: this.internalId,
+			internalId: this.fluidDataStoreChannel.id,
 			alias,
 		};
 
@@ -136,7 +135,7 @@ class DataStore implements IDataStore {
 							tag: TelemetryDataTag.UserData,
 						},
 						internalId: {
-							value: this.internalId,
+							value: this.fluidDataStoreChannel.id,
 							tag: TelemetryDataTag.CodeArtifact,
 						},
 					},
@@ -169,7 +168,6 @@ class DataStore implements IDataStore {
 
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
-		private readonly internalId: string,
 		private readonly runtime: ContainerRuntime,
 		private readonly datastores: DataStores,
 		private readonly logger: ITelemetryLoggerExt,
