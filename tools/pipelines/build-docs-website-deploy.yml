@@ -4,22 +4,13 @@
 # build-docs-website-deploy pipeline
 # This pipeline triggers on the completion of the build-docs pipeline (main branch run).
 # After the build-docs pipeline completes, this pipeline downloads the generated fluidframework-docs
-# artifacts and deploys the content using AzureStaticWebApp.
-# This pipeline also has a scheduled trigger which runs every 4 hours.
-# Note that this pipeline contains two triggers: a scheduled trigger which captures changes made in
-# the release branches and a pipeline completion trigger which captures the changes on main.
-# Ideally, changes to both branches would be captured in pipeline completion triggers, however,
-# due to limitations with pipeline version configurations. It seems like its not possible to set 
-# "release/*" branch as a pipeline trigger while running this pipeline using the "main" branch version.
+# artifacts and deploys the content using AzureStaticWebApp. 
+# Note: this pipeline should be triggering on changes to "release/*" branches as well. However, we 
+# only want to trigger on changes to the latest release minor versions (since triggering on old 
+# minor release versions would update the website with old content).
+# Item for tracking minor release versions: ADO 6739. Until this item is complete, we will only deploy
+# on changes to main.
 name: $(Build.BuildId)
-
-schedules:
-  - cron: "0 */4 * * *"
-    displayName: Website deploy with 4 hour increments
-    branches:
-      include:
-        - main
-    always: true
 
 pr: none
 
@@ -66,6 +57,110 @@ resources:
         - main # Runs this deploy pipeline when build-docs main branch pipeline completes
 
 stages:
+  # BEGIN Secure development tasks
+- stage: guardian
+  displayName: Guardian
+  dependsOn: [] # run in parallel
+  pool: Large
+  jobs:
+    - job: guardian_tasks
+      displayName: Guardian tasks
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: templates/include-use-node-version.yml
+
+        - task: UseDotNet@2
+          displayName: 'Use .NET Core 3.x'
+          condition: succeededOrFailed()
+          inputs:
+            packageType: sdk
+            version: 3.x
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-eslint.ESLint@1
+          displayName: 'Run ESLint'
+          condition: succeededOrFailed()
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-publishsecurityanalysislogs.PublishSecurityAnalysisLogs@3
+          displayName: 'Publish Guardian Artifacts - All Tools'
+          condition: succeededOrFailed()
+          inputs:
+            ArtifactType: M365
+
+        - task: AssetRetention@3
+          displayName: Guardian Asset Retention
+          condition: and(succeeded(), eq(variables.shouldRetainGuardianAssets, true))
+          inputs:
+            ArrowServiceConnection: 'Arrow_FluidFramework_internal'
+            AssetGroupName: 'fluidframework_$(System.TeamProject)_$(Build.DefinitionName)'
+            AssetNumber: '$(Build.BuildId)'
+            IsShipped: false # based on value of arrow.releasedtoproduction variable
+            DropsToRetain: 'CodeAnalysisLogs'
+
+        - task: securedevelopmentteam.vss-secure-development-tools.build-task-postanalysis.PostAnalysis@2
+          displayName: 'Guardian Break'
+          condition: succeededOrFailed()
+          continueOnError: false
+          inputs:
+            GdnBreakPolicyMinSev: Warning
+            GdnBreakAllTools: true
+            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
+            GdnBreakGdnToolESLint: true
+            GdnBreakGdnToolESLintSeverity: Warning
+            GdnBreakPolicy: M365
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
+
+        - task: PublishPipelineArtifact@1
+          displayName: 'Publish Baselines'
+          condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
+            artifactName: .gdn
+# END Secure development tasks
+
+- stage: link_check
+  displayName: 'Website Link Check'
+  dependsOn: [] # run in parallel
+  pool: Large
+  jobs:
+    - job: link_check
+      displayName: 'Website Link Check'
+      continueOnError: true
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: templates/include-use-node-version.yml
+
+        - template: templates/include-install-pnpm.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              pnpm i --frozen-lockfile
+
+        - task: Npm@1
+          displayName: npm run build
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:build'
+
+        - task: Npm@1
+          displayName: npm run ci:linkcheck
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:linkcheck'
+
 - stage: deploy
   displayName: 'Deploy website'
   pool: Small
