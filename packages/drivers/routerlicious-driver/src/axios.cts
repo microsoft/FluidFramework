@@ -5,5 +5,4 @@
 
 import axios, { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders } from "axios";
 
-export { AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders };
-export default axios;
+export { axios, AxiosRequestConfig, AxiosRequestHeaders, RawAxiosRequestHeaders };
