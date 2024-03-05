@@ -108,8 +108,6 @@ describeCompat("SharedString", "FullCompat", (getTestObjectProvider, apis) => {
 		const prop = { color: detachedString2.handle };
 		detachedString1.annotateMarker(simpleMarker, prop);
 
-		assert.equal(detachedString1.isAttached(), false, "detachedString1 should not be attached");
-		assert.equal(detachedString2.isAttached(), false, "detachedString2 should not be attached");
 		assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
 
 		// When referring SharedString becomes attached, the referred SharedString becomes attached

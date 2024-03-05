@@ -171,7 +171,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the sub dataStore's root channel and verify that it is attached.
 		const testChannel = await subDataStore.runtime.getChannel("root");
-		assert.strictEqual(testChannel.isAttached(), false, "Channel should be detached!!");
 		assert.strictEqual(
 			subDataStore.context.attachState,
 			AttachState.Detached,

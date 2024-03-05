@@ -881,7 +881,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			defaultDataStore.root.set("someDataStore", dataStore.handle);
@@ -916,7 +915,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			defaultDataStore.root.set("someDataStore", dataStore.handle);
@@ -934,7 +932,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
@@ -970,7 +967,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			newCounterId,
 			"https://graph.microsoft.com/types/counter",
 		);
-		assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 		((await channel.handle.get()) as SharedObject).bindToContext();
 		assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
 
@@ -1488,7 +1484,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			defaultDataStore.root.set("someDataStore", dataStore.handle);

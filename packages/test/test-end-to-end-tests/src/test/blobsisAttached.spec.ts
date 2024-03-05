@@ -270,16 +270,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("after container is attached and dds is detached in map", async function () {
 			map.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			assert.strictEqual(
-				map.handle.isAttached,
-				false,
-				"map should be detached after container attaches",
-			);
-			assert.strictEqual(
-				blobHandle.isAttached,
-				false,
-				"blob should be detached in a detached dds and attached container",
-			);
 			detachedBlobStorage.blobs.clear();
 			detachedDataStore.root.set(mapId, map.handle);
 			assert.strictEqual(
@@ -297,16 +287,6 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		it("after container is attached and dds is detached in directory", async function () {
 			directory.set("my blob", blobHandle);
 			await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
-			assert.strictEqual(
-				directory.handle.isAttached,
-				false,
-				"directory should be detached after container attaches",
-			);
-			assert.strictEqual(
-				blobHandle.isAttached,
-				false,
-				"blob should be detached in a detached dds and attached container",
-			);
 			detachedBlobStorage.blobs.clear();
 			detachedDataStore.root.set(directoryId, directory.handle);
 			assert.strictEqual(

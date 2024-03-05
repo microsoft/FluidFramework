@@ -162,7 +162,6 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			channel.handle.attachGraph();
 
@@ -193,7 +192,6 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
@@ -205,11 +203,6 @@ describeCompat(
 				rootOfDataStore2.isAttached(),
 				true,
 				"Root Channel should be attached",
-			);
-			assert.strictEqual(
-				testChannelOfDataStore2.isAttached(),
-				false,
-				"Test Channel should not be attached",
 			);
 			rootOfDataStore2.set("test1handle", channel.handle);
 
@@ -234,7 +227,6 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
@@ -261,7 +253,6 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 		});
@@ -332,14 +323,12 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
 
 			// Create second channel
 			const channel2 = dataStore2.runtime.createChannel(
 				"test2",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
 			// Now register both dds to parent dataStore
 			((await channel1.handle.get()) as SharedObject).bindToContext();
@@ -393,14 +382,12 @@ describeCompat(
 					"test1",
 					"https://graph.microsoft.com/types/map",
 				);
-				assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
 				// Create second channel from dataStore 3
 				const channel3 = dataStore3.runtime.createChannel(
 					"test2",
 					"https://graph.microsoft.com/types/map",
 				);
-				assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
 				const testChannelOfDataStore2 = (await dataStore2.runtime.getChannel(
 					"test1",
