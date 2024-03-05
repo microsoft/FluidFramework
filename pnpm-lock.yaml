@@ -6375,7 +6375,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/path-browserify': ^1.0.0
-      '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -6389,7 +6388,6 @@ importers:
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
       typescript: ~5.1.6
-      uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6403,7 +6401,6 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       path-browserify: 1.0.1
-      uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
@@ -6421,7 +6418,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
-      '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
       cross-env: 7.0.3

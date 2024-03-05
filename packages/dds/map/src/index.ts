@@ -50,7 +50,6 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { v4 as uuid } from "uuid";
 import { MapFactory } from "./map.js";
 import { ISharedMap } from "./interfaces.js";
 
@@ -79,13 +78,15 @@ export const SharedMap = {
 	 *
 	 * ```typescript
 	 * const myMap = SharedMap.create(this.runtime, id);
-	 *
-	 * @privateRemarks
-	 * This alias is for legacy compat from when the SharedMap class exposed this static method.
 	 * ```
+	 * @privateRemarks
+	 * TODO:
+	 * Clarify how this differs from `MapFactory.create`.
+	 * They are different since making this forward to MapFactory.create breaks some things,
+	 * but the difference is unclear from the documentation.
 	 */
 	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap {
-		return this.getFactory().create(runtime, id ?? uuid());
+		return runtime.createChannel(id, MapFactory.Type) as ISharedMap;
 	},
 };
 
