@@ -23,7 +23,7 @@ import {
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError, LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	TestFluidObject,
@@ -231,7 +231,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					await runAndValidateBatch(provider, proxyDsf, this.timeout());
 					assert.fail("expected error");
 				} catch (e) {
-					assert(isILoggingError(e), `${e}`);
+					assert(LoggingError.isLoggingError(e), `${e}`);
 					assert.equal(e.message, "OpBatchIncomplete", e);
 				}
 			},
@@ -274,7 +274,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 				await runAndValidateBatch(provider, proxyDsf, this.timeout());
 				assert.fail("expected error");
 			} catch (e) {
-				assert(isILoggingError(e), `${e}`);
+				assert(LoggingError.isLoggingError(e), `${e}`);
 				assert.equal(e.message, "OpBatchIncomplete", e);
 			}
 		});
@@ -351,7 +351,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					await runAndValidateBatch(provider, proxyDsf, this.timeout());
 					assert.fail("expected error");
 				} catch (e) {
-					assert(isILoggingError(e), `${e}`);
+					assert(LoggingError.isLoggingError(e), `${e}`);
 					assert(isFluidError(e));
 					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
@@ -433,7 +433,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					});
 					assert.fail("expected error");
 				} catch (e) {
-					assert(isILoggingError(e), `${e}`);
+					assert(LoggingError.isLoggingError(e), `${e}`);
 					assert(isFluidError(e));
 					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				}

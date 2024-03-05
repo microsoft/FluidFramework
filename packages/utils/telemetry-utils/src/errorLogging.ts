@@ -81,6 +81,8 @@ export function extractLogSafeErrorProperties(
  * Type-guard for {@link @fluidframework/core-interfaces#ILoggingError}.
  *
  * @internal
+ * @deprecated This function will be removed in a future release, with no replacement.
+ * Its known uses as well as its purpose were internal to FluidFramework.
  */
 export const isILoggingError = (x: unknown): x is ILoggingError =>
 	typeof (x as Partial<ILoggingError>)?.getTelemetryProperties === "function";
@@ -267,7 +269,7 @@ export function wrapError<T extends LoggingError>(
 
 	// Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
 	// This will include the untrustedOrigin property if the inner error itself was created from an external error
-	if (isILoggingError(innerError)) {
+	if (LoggingError.isLoggingError(innerError)) {
 		newError.addTelemetryProperties(innerError.getTelemetryProperties());
 	}
 
@@ -388,10 +390,7 @@ export const getCircularReplacer = (): ((key: string, value: unknown) => any) =>
  *
  * @internal
  */
-export class LoggingError
-	extends Error
-	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
-{
+export class LoggingError extends Error implements Omit<IFluidErrorBase, "errorType"> {
 	private _errorInstanceId = uuid();
 	get errorInstanceId(): string {
 		return this._errorInstanceId;
@@ -454,6 +453,13 @@ export class LoggingError
 
 	/**
 	 * Get all properties fit to be logged to telemetry for this error
+	 *
+	 * @privateremarks
+	 * LoggingError is not a class intended for use outside FluidFramework so we probably want to make this return
+	 * {@link ITelemetryPropertiesExt}, which would be a breaking change.
+	 * For safety we're holding on it a bit, until after the 2.0 GA.
+	 * See the discussion at https://github.com/microsoft/FluidFramework/pull/19861#discussion_r1508487995 for more
+	 * details.
 	 */
 	public getTelemetryProperties(): ITelemetryBaseProperties {
 		// Only pick properties fit for telemetry out of all of this object's enumerable properties.
@@ -476,6 +482,10 @@ export class LoggingError
 			message: this.message,
 			errorInstanceId: this._errorInstanceId,
 		};
+	}
+
+	public static isLoggingError(input: unknown): input is LoggingError {
+		return typeof (input as Partial<LoggingError>)?.getTelemetryProperties === "function";
 	}
 }
 

@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 
 import { DataCorruptionError, DataProcessingError } from "../error.js";
-import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.js";
+import { LoggingError, normalizeError } from "../errorLogging.js";
 
 describe("Errors", () => {
 	describe("DataProcessingError.create", () => {
@@ -222,7 +222,7 @@ describe("Errors", () => {
 				op,
 			);
 
-			assert(isILoggingError(coercedError));
+			assert(LoggingError.isLoggingError(coercedError));
 			assert(
 				coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber,
 			);
@@ -239,7 +239,7 @@ describe("Errors", () => {
 				op,
 			);
 
-			assert(isILoggingError(coercedError));
+			assert(LoggingError.isLoggingError(coercedError));
 			assert(
 				coercedError.getTelemetryProperties().messageSequenceNumber === op.sequenceNumber,
 			);

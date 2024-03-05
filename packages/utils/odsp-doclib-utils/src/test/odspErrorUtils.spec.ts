@@ -16,7 +16,7 @@ import {
 	OdspError,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -24,7 +24,7 @@ import { pkgVersion } from "../packageVersion.js";
 describe("OdspErrorUtils", () => {
 	function assertCustomPropertySupport(err: any) {
 		err.asdf = "asdf";
-		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
+		assert(LoggingError.isLoggingError(err), "Error should support getTelemetryProperties()");
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
 	}
 
@@ -159,7 +159,8 @@ describe("OdspErrorUtils", () => {
 			enrichOdspError(error);
 
 			assert(typeof error.online === "string");
-			assert(isILoggingError(error));
+			// The forced typing above causes this line to result in error having type 'never' unless we cast as unknown
+			assert(LoggingError.isLoggingError(error as unknown));
 			assert(typeof error.getTelemetryProperties().online === "string");
 		});
 		it("enriched with facetCodes", () => {
@@ -174,7 +175,7 @@ describe("OdspErrorUtils", () => {
 			);
 
 			assert.deepStrictEqual(error.facetCodes, ["bar", "foo"]);
-			assert(isILoggingError(error));
+			assert(LoggingError.isLoggingError(error));
 			assert.equal(error.getTelemetryProperties().innerMostErrorCode, "bar");
 		});
 		it("error response with redirect location", () => {
@@ -192,7 +193,7 @@ describe("OdspErrorUtils", () => {
 				"Error should be a fileNotFoundOrAccessDeniedError",
 			);
 			assert(error.redirectLocation === "url", "redirect location is wrong");
-			assert(isILoggingError(error));
+			assert(LoggingError.isLoggingError(error));
 			assert(
 				error.getTelemetryProperties().redirectLocation === undefined,
 				"redirect location should not be logged",
@@ -215,7 +216,7 @@ describe("OdspErrorUtils", () => {
 				"non-standard response text",
 			);
 
-			assert(isILoggingError(error));
+			assert(LoggingError.isLoggingError(error));
 			assert.equal(
 				error.getTelemetryProperties().response,
 				undefined,
