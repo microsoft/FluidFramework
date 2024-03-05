@@ -46,9 +46,7 @@ function makeHandler(config: IFileConfig) {
 
 	// Detection regex matches the header start (if any), followed by lines in 'copyrightText',
 	// optionally followed by lines in the 'autoGenText', and finally the header end (if any).
-	const regex = new RegExp(
-		`^${pre}${toRegex(copyrightText)}(${toRegex(autoGenText)})?${post}`,
-	);
+	const regex = new RegExp(`^${pre}${toRegex(copyrightText)}(${toRegex(autoGenText)})?${post}`);
 
 	return async (file: string): Promise<string | undefined> => {
 		// TODO: Consider reading only the first 512B or so since copyright headers are required

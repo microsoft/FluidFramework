@@ -76,9 +76,7 @@ export function getIsLatest(
 	}
 
 	let versions =
-		input_tags === undefined
-			? getVersions(prefix)
-			: getVersionsFromStrings(prefix, input_tags);
+		input_tags === undefined ? getVersions(prefix) : getVersionsFromStrings(prefix, input_tags);
 	versions = versions.filter((v) => {
 		if (v === undefined) {
 			return false;

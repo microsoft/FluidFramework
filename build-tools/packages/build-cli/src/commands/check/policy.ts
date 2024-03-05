@@ -8,12 +8,7 @@ import * as path from "node:path";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
 
-import {
-	Context,
-	getFluidBuildConfig,
-	Handler,
-	policyHandlers,
-} from "@fluidframework/build-tools";
+import { Context, getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 import { Repository } from "../../library";
@@ -256,7 +251,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				.map(async (handler): Promise<void> => {
 					// doing exclusion per handler
 					const exclusions = handlerExclusions[handler.name];
-					if (exclusions !== undefined && !exclusions.every((regex) => !regex.test(relPath))) {
+					if (
+						exclusions !== undefined &&
+						!exclusions.every((regex) => !regex.test(relPath))
+					) {
 						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
 						return;
 					}
@@ -269,8 +267,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 						const { resolver } = handler;
 						if (this.flags.fix && resolver) {
 							output += `${newline}attempting to resolve: ${relPath}`;
-							const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-								resolver(relPath, gitRoot),
+							const resolveResult = await runWithPerf(
+								handler.name,
+								"resolve",
+								async () => resolver(relPath, gitRoot),
 							);
 
 							if (resolveResult?.message !== undefined) {

@@ -63,10 +63,7 @@ export class VersionBag {
  * dependencies. It can also be used to collect dependency information from packages published to npm.
  */
 export class ReferenceVersionBag extends VersionBag {
-	private readonly referenceData = new Map<
-		string,
-		{ reference: string; published: boolean }
-	>();
+	private readonly referenceData = new Map<string, { reference: string; published: boolean }>();
 	private readonly nonDevDep = new Set<string>();
 	private readonly publishedPackage = new Set<string>();
 	private readonly publishedPackageRange = new Set<string>();
@@ -105,7 +102,9 @@ export class ReferenceVersionBag extends VersionBag {
 				const existingReference = this.referenceData.get(entryName);
 				const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(
 					10,
-				)} in ${newReference}\n  ${existing.padStart(10)} in ${existingReference?.reference}`;
+				)} in ${newReference}\n  ${existing.padStart(
+					10,
+				)} in ${existingReference?.reference}`;
 				if (
 					existingReference?.reference &&
 					this.publishedPackage.has(existingReference.reference) &&
@@ -267,8 +266,8 @@ export class ReferenceVersionBag extends VersionBag {
 			const state = this.needRelease(name)
 				? "(new)"
 				: this.needBump(name)
-				  ? "(current)"
-				  : "(old)";
+				? "(current)"
+				: "(old)";
 			console.log(`${name.padStart(40)}: ${depVersion.padStart(10)} ${state}`);
 		}
 		console.log();
@@ -280,7 +279,11 @@ export class ReferenceVersionBag extends VersionBag {
 			const depVersion = this.get(name) ?? "undefined";
 			console.log(
 				`${name.padStart(40)}: ${depVersion.padStart(10)} ${
-					depVersion === "undefined" ? "" : this.needRelease(name) ? "(local)" : "(published)"
+					depVersion === "undefined"
+						? ""
+						: this.needRelease(name)
+						? "(local)"
+						: "(published)"
 				}`,
 			);
 		}

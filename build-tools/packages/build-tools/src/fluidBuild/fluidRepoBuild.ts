@@ -170,7 +170,9 @@ export class FluidRepoBuild extends FluidRepo {
 		for (const releaseGroup of this.releaseGroups.values()) {
 			if (isSameFileOrDir(releaseGroup.repoPath, pkgDir)) {
 				log(
-					`Release group ${chalk.cyanBright(releaseGroup.kind)} matched (directory: ${dir})`,
+					`Release group ${chalk.cyanBright(
+						releaseGroup.kind,
+					)} matched (directory: ${dir})`,
 				);
 				this.setMatchedReleaseGroup(releaseGroup);
 				return;

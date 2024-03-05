@@ -64,12 +64,8 @@ export abstract class Task {
 		assert.strictEqual(this.dependentTasks, undefined);
 		// This function should only be called by task with task names
 		assert.notStrictEqual(this.taskName, undefined);
-		this.dependentTasks = this.node.getDependsOnTasks(
-			this,
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.taskName!,
-			pendingInitDep,
-		);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.dependentTasks = this.node.getDependsOnTasks(this, this.taskName!, pendingInitDep);
 	}
 
 	protected get transitiveDependentLeafTask() {

@@ -29,31 +29,31 @@ import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
-	ts2esm: Ts2EsmTask,
-	tsc: TscTask,
+	"ts2esm": Ts2EsmTask,
+	"tsc": TscTask,
 	"fluid-tsc": TscTask,
 	"tsc-multi": TscMultiTask,
-	tslint: TsLintTask,
-	eslint: EsLintTask,
-	webpack: WebpackTask,
+	"tslint": TsLintTask,
+	"eslint": EsLintTask,
+	"webpack": WebpackTask,
 	"parallel-webpack": WebpackTask,
-	lessc: LesscTask,
-	copyfiles: CopyfilesTask,
-	echo: EchoTask,
-	prettier: PrettierTask,
+	"lessc": LesscTask,
+	"copyfiles": CopyfilesTask,
+	"echo": EchoTask,
+	"prettier": PrettierTask,
 	"gen-version": GenVerTask,
-	gf: GoodFence,
+	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
 	"flub list": FlubListTask,
 	"flub check layers": FlubCheckLayerTask,
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
-	depcruise: DepCruiseTask,
+	"depcruise": DepCruiseTask,
 
 	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
 	// pipeline then this mapping will have to be updated.
-	renamer: RenameTypesTask,
+	"renamer": RenameTypesTask,
 	"flub rename-types": RenameTypesTask,
 };
 

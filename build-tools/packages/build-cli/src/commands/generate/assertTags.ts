@@ -175,8 +175,10 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 							// way. If we clean up the assert comments that have them, this code could go away.
 							const shouldRemoveSurroundingQuotes = (input: string): boolean => {
 								return (
-									(input.startsWith('"') && input.indexOf('"', 1) === input.length - 1) ||
-									(input.startsWith("`") && input.indexOf("`", 1) === input.length - 1)
+									(input.startsWith('"') &&
+										input.indexOf('"', 1) === input.length - 1) ||
+									(input.startsWith("`") &&
+										input.indexOf("`", 1) === input.length - 1)
 								);
 							};
 
@@ -295,9 +297,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 	private async getTsConfigPath(pkg: Package): Promise<string> {
 		const context = await this.getContext();
-		const tsconfigPath = context.repo.relativeToRepo(
-			path.join(pkg.directory, "tsconfig.json"),
-		);
+		const tsconfigPath = context.repo.relativeToRepo(path.join(pkg.directory, "tsconfig.json"));
 		return tsconfigPath;
 	}
 }

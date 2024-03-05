@@ -40,8 +40,7 @@ const localReportPath = "./artifacts/bundleAnalysis";
 		undefined,
 		ADOSizeComparator.naiveFallbackCommitGenerator,
 	);
-	const result: BundleComparisonResult =
-		await sizeComparator.createSizeComparisonMessage(false);
+	const result: BundleComparisonResult = await sizeComparator.createSizeComparisonMessage(false);
 
 	// Post a message only if there was an error (result.comparison is undefined) or if
 	// there were actual changes to the bundle sizes.  In other cases, we don't post a

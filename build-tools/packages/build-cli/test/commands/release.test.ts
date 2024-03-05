@@ -16,8 +16,7 @@ const machineStates = FluidReleaseMachine.states()
 
 describe("release command handles all states", () => {
 	for (const state of machineStates) {
-		test
-			.stdout()
+		test.stdout()
 			.command([
 				"release",
 				"--releaseGroup",

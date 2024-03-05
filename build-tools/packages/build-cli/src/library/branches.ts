@@ -152,8 +152,9 @@ export function generateReleaseBranchName(
 
 	const releaseBranchVersion =
 		scheme === "virtualPatch"
-			? toVirtualPatchScheme(`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`)
-					.version
+			? toVirtualPatchScheme(
+					`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+			  ).version
 			: `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
 	branchPath.push(releaseBranchVersion);
 
@@ -209,8 +210,8 @@ export function generateBumpDepsCommitMessage(
 		bumpedDep === "prerelease"
 			? "released prerelease packages"
 			: isReleaseGroup(bumpedDep)
-			  ? `${bumpedDep} release group`
-			  : PackageName.getUnscopedName(bumpedDep);
+			? `${bumpedDep} release group`
+			: PackageName.getUnscopedName(bumpedDep);
 
 	const releaseGroupSegment = isReleaseGroup(releaseGroup)
 		? ` in the ${releaseGroup} release group`

@@ -88,7 +88,9 @@ export async function loadChangesets(dir: string, log?: Logger): Promise<Changes
 		changesets.push(newChangeset);
 		if (newChangeset.changeTypes.length > 1) {
 			log?.warning(
-				`Changeset ${path.basename(file)} contains multiple change types. Is this expected?`,
+				`Changeset ${path.basename(
+					file,
+				)} contains multiple change types. Is this expected?`,
 			);
 		}
 	}

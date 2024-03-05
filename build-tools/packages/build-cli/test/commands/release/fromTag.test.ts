@@ -33,8 +33,7 @@ describe("flub release fromTag", () => {
 		title: "build-tools v0.26.1 (patch)",
 	};
 
-	test
-		.stdout()
+	test.stdout()
 		.command(["release:fromTag", "build-tools_v0.26.1", "--json"])
 		.it(`--json`, (ctx) => {
 			const output: jsonOutput = JSON.parse(ctx.stdout);

@@ -25,9 +25,7 @@ function getBundleNameFromPath(relativePath: string): string {
 	return pathParts.join("/");
 }
 
-export function getBundleFilePathsFromFolder(
-	relativePathsInFolder: string[],
-): BundleFileData[] {
+export function getBundleFilePathsFromFolder(relativePathsInFolder: string[]): BundleFileData[] {
 	const statsFilePaths: Omit<BundleFileData, "relativePathToConfigFile">[] = [];
 
 	// A map from bundle name to a bundle buddy config

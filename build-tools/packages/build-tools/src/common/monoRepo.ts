@@ -2,10 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	InterdependencyRange,
-	DEFAULT_INTERDEPENDENCY_RANGE,
-} from "@fluid-tools/version-tools";
+import { InterdependencyRange, DEFAULT_INTERDEPENDENCY_RANGE } from "@fluid-tools/version-tools";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import * as path from "path";
@@ -234,8 +231,8 @@ export class MonoRepo {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			  ? "npm run install-strict"
-			  : "npm i --no-package-lock --no-shrinkwrap";
+			? "npm run install-strict"
+			: "npm i --no-package-lock --no-shrinkwrap";
 	}
 
 	public get fluidBuildConfig(): IFluidBuildConfig | undefined {

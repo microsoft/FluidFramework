@@ -26,8 +26,7 @@ const getFluidBuildTasksTscIgnore = (root: string) => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray =
-			getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray = getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -84,10 +83,7 @@ function getFluidPackageMap(root: string) {
  */
 function findScript(json: PackageJson, command: string) {
 	// Multiple scripts can have the same command, we want to find the best one.
-	let bestScript: { rank: number; script: string | undefined } = {
-		rank: 0,
-		script: undefined,
-	};
+	let bestScript: { rank: number; script: string | undefined } = { rank: 0, script: undefined };
 	for (const script in json.scripts) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const scriptCommands = json.scripts[script]!.split("&&");
@@ -365,7 +361,12 @@ function checkTaskDeps(
 	const missingTaskDependencies = taskDeps
 		.filter(
 			(taskDep) =>
-				!hasTaskDependency(root, json, taskName, Array.isArray(taskDep) ? taskDep : [taskDep]),
+				!hasTaskDependency(
+					root,
+					json,
+					taskName,
+					Array.isArray(taskDep) ? taskDep : [taskDep],
+				),
 		)
 		.map((dep) => (Array.isArray(dep) ? dep.join(" or ") : dep));
 
@@ -497,7 +498,9 @@ function getTscCommandDependencies(
 			// that builds the referenced project is listed as a dependency.
 			const referencedScript = findTscScripts(json, refConfigPath);
 			if (referencedScript === undefined) {
-				throw new Error(`Unable to find tsc script for referenced project ${refConfigPath}`);
+				throw new Error(
+					`Unable to find tsc script for referenced project ${refConfigPath}`,
+				);
 			}
 			deps.push(referencedScript);
 		}

@@ -19,10 +19,7 @@ export {
 } from "./FileSystemBundleFileProvider";
 export { getAzureDevopsApi } from "./getAzureDevopsApi";
 export { getBuildTagForCommit } from "./getBuildTagForCommit";
-export {
-	getBundleBuddyConfigMap,
-	GetBundleBuddyConfigMapArgs,
-} from "./getBundleBuddyConfigMap";
+export { getBundleBuddyConfigMap, GetBundleBuddyConfigMapArgs } from "./getBundleBuddyConfigMap";
 export { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
 export { getBundleSummaries, GetBundleSummariesArgs } from "./getBundleSummaries";
 export { getCommentForBundleDiff, getSimpleComment } from "./getCommentForBundleDiff";

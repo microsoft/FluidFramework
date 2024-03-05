@@ -146,7 +146,10 @@ export class NpmDepChecker {
 				const typePkgName = dep.substring("@types/".length);
 				const altName = this.altTyping.get(typePkgName);
 				if (
-					!(this.isInDependencies(typePkgName) || (altName && this.isInDependencies(altName)))
+					!(
+						this.isInDependencies(typePkgName) ||
+						(altName && this.isInDependencies(altName))
+					)
 				) {
 					console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
 					if (apply) {

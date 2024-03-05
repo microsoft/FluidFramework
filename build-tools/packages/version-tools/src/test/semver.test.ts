@@ -4,12 +4,7 @@
  */
 import { assert } from "chai";
 
-import {
-	bumpRange,
-	detectBumpType,
-	getPreviousVersions,
-	isPrereleaseVersion,
-} from "../semver";
+import { bumpRange, detectBumpType, getPreviousVersions, isPrereleaseVersion } from "../semver";
 
 describe("semver", () => {
 	describe("detectBumpType semver", () => {

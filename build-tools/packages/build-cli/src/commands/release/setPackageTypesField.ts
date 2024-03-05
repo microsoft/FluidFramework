@@ -85,7 +85,9 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
-				throw new Error("Neither 'types' nor 'typings' field is defined in the package.json.");
+				throw new Error(
+					"Neither 'types' nor 'typings' field is defined in the package.json.",
+				);
 			}
 
 			/**

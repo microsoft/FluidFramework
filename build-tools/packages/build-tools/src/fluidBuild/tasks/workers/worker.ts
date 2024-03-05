@@ -20,9 +20,9 @@ export interface WorkerExecResult {
 }
 
 const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecResult> } = {
-	tsc: compile,
+	"tsc": compile,
 	"fluid-tsc": fluidCompile,
-	eslint: lint,
+	"eslint": lint,
 };
 
 let collectMemoryUsage = false;

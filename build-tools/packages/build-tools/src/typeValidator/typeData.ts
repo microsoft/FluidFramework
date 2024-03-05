@@ -51,9 +51,9 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 
 	if (Node.isIdentifier(node)) {
 		const typeData: TypeData[] = [];
-		node
-			.getDefinitionNodes()
-			.forEach((d) => typeData.push(...getNodeTypeData(d, namespacePrefix)));
+		node.getDefinitionNodes().forEach((d) =>
+			typeData.push(...getNodeTypeData(d, namespacePrefix)),
+		);
 		return typeData;
 	}
 

@@ -86,8 +86,8 @@ async function main() {
 				options.fullSymlink
 					? "full"
 					: options.fullSymlink === false
-					  ? "isolated"
-					  : "non-dependent"
+					? "isolated"
+					: "non-dependent"
 			} mode`,
 		);
 
@@ -116,7 +116,9 @@ async function main() {
 			const totalElapsedTime = buildGraph.totalElapsedTime;
 			const concurrency = buildGraph.totalElapsedTime / elapsedTime;
 			log(
-				`Execution time: ${totalElapsedTime.toFixed(3)}s, Concurrency: ${concurrency.toFixed(
+				`Execution time: ${totalElapsedTime.toFixed(
+					3,
+				)}s, Concurrency: ${concurrency.toFixed(
 					3,
 				)}, Queue Wait time: ${buildGraph.totalQueueWaitTime.toFixed(3)}s`,
 			);

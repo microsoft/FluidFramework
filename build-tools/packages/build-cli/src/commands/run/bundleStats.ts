@@ -9,8 +9,7 @@ import path from "node:path";
 import { BaseCommand } from "../../base";
 
 export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
-	static readonly description =
-		`Generate a report from input bundle stats collected through the collect bundleStats command.`;
+	static readonly description = `Generate a report from input bundle stats collected through the collect bundleStats command.`;
 
 	static readonly flags = {
 		dangerfile: Flags.file({
@@ -21,9 +20,8 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	};
 
 	public async run(): Promise<void> {
-		const dangerfile =
-			// eslint-disable-next-line unicorn/prefer-module
-			this.flags.dangerfile ?? path.join(__dirname, "../../lib/dangerfile.js");
+		// eslint-disable-next-line unicorn/prefer-module
+		const dangerfile = this.flags.dangerfile ?? path.join(__dirname, "../../lib/dangerfile.js");
 
 		// ADO:3710 This needs to change in order to remove the 'danger' dependency in the root package.json
 		execSync(`npx danger ci -d ${dangerfile}`, { stdio: "inherit" });

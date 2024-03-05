@@ -50,8 +50,8 @@ export function bumpRange(
 				bumpType === "current"
 					? originalNoPrerelease
 					: scheme === "virtualPatch"
-					  ? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
-					  : semver.inc(originalNoPrerelease, bumpType);
+					? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
+					: semver.inc(originalNoPrerelease, bumpType);
 			if (newVersion === null) {
 				throw new Error(`Failed to increment ${original}.`);
 			}

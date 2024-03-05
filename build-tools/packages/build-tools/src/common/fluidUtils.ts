@@ -32,10 +32,7 @@ async function isFluidRootPackage(dir: string) {
 }
 
 async function inferRoot() {
-	let fluidConfig = findUp.sync("fluidBuild.config.cjs", {
-		cwd: process.cwd(),
-		type: "file",
-	});
+	let fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
 	if (fluidConfig === undefined) {
 		traceInit(`No fluidBuild.config.cjs found. Falling back to git root.`);
 		// Use the git root as a fallback for older branches where the fluidBuild config is still in

@@ -10,9 +10,7 @@ import { BaseCommand } from "../../base";
 import { PnpmListEntry, pnpmList } from "../../pnpm";
 
 export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
-	static readonly description =
-		`Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
-
+	static readonly description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
 	static readonly flags = {
 		packageMetadataPath: Flags.file({
 			description:
@@ -72,7 +70,9 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 					}
 
 					if (asset.size < flags.smallestAssetSize) {
-						this.warning(`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`);
+						this.warning(
+							`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`,
+						);
 						hasSmallAssetError = true;
 					}
 				}
