@@ -46,12 +46,12 @@ const compressionSuite = (getProvider) => {
 			const localContainer = await provider.makeTestContainer(testContainerConfig);
 			const localDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
-			localMap = await localDataObject.getSharedObject<SharedMap>("mapKey");
+			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(testContainerConfig);
 			const remoteDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
-			remoteMap = await remoteDataObject.getSharedObject<SharedMap>("mapKey");
+			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");
 		});
 
 		afterEach(() => {

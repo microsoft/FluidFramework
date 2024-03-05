@@ -104,7 +104,7 @@
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.8.0.0",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",

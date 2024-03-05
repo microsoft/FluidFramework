@@ -1020,20 +1020,20 @@ function* relevantRemovedRootsFromFields(
 }
 
 /**
- * Adds any refreshers missing from the provided change that are relevant to the change.
+ * Adds any refreshers missing from the provided change that are relevant to the change and
+ * removes any refreshers from the provided change that are not relevant to the change.
  * This function enforces that all relevant removed roots have a corresponding build or refresher.
  *
- * @param change - The change with potentially missing builds. Not mutated by this function.
+ * @param change - The change that possibly has missing or superfluous refreshers. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
-export function addMissingRefreshers(
+export function updateRefreshers(
 	change: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
-	// todo existing refreshers are not copied over as 7251 will remove all existing refreshers anyways
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
@@ -1048,66 +1048,6 @@ export function addMissingRefreshers(
 		const node = getDetachedNode(root);
 		assert(node !== undefined, "detached node should exist");
 		setInNestedMap(refreshers, root.major, root.minor, node);
-	}
-
-	if (refreshers.size === 0) {
-		return change.change;
-	}
-
-	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } =
-		change.change;
-	return makeModularChangeset(
-		fieldChanges,
-		maxId,
-		revisions,
-		constraintViolationCount,
-		builds,
-		destroys,
-		refreshers,
-	);
-}
-
-/**
- * Removes any refreshers from the provided change that are not relevant to the change.
- *
- * @param change - The change with potentially superfluous refreshers. Not mutated by this function.
- * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
- * Can be retrieved by calling {@link relevantRemovedRoots}.
- * @returns a {@link ModularChangeset} with only builds relevant to the change.
- */
-export function filterSuperfluousRefreshers(
-	change: TaggedChange<ModularChangeset>,
-	removedRoots: Iterable<DeltaDetachedNodeId>,
-): ModularChangeset {
-	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
-	if (change.change.refreshers !== undefined) {
-		populateNestedMap(change.change.refreshers, refreshers, true);
-	} else {
-		return change.change;
-	}
-
-	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
-	for (const { major, minor } of removedRoots) {
-		const rootsSet = getOrAddInMap(rootSets, major, new Set());
-		rootsSet.add(minor);
-	}
-
-	for (const [revision, innerMap] of refreshers.entries()) {
-		const rootSet = rootSets.get(revision);
-		if (rootSet !== undefined) {
-			for (const id of innerMap.keys()) {
-				if (!rootSet.has(id)) {
-					innerMap.delete(id);
-				}
-			}
-
-			if (innerMap.size === 0) {
-				refreshers.delete(revision);
-			}
-		} else {
-			// if this revision does not exist in the relevant removed roots, delete it from the refreshers
-			refreshers.delete(revision);
-		}
 	}
 
 	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } =

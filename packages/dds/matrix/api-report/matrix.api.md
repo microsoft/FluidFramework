@@ -48,13 +48,11 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 // @alpha
 export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
-    // (undocumented)
     protected applyStashedOp(_content: unknown): void;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)
     get colCount(): number;
-    // (undocumented)
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedMatrix<T>;
     // (undocumented)
     protected didAttach(): void;
@@ -70,7 +68,6 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     insertRows(rowStart: number, count: number): void;
     // (undocumented)
     isSetCellConflictResolutionPolicyFWW(): boolean;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     get matrixProducer(): IMatrixProducer<MatrixItem<T>>;
@@ -117,7 +114,6 @@ export class SharedMatrixFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): SharedMatrix;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
     // (undocumented)
     static Type: string;

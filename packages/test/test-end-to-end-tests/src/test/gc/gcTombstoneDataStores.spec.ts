@@ -45,7 +45,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 type ExpectedTombstoneError = Error & {
@@ -539,7 +539,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// handle.get on a DDS in a tombstoned object should succeed (despite not being able to pass the header)
 				const dataObject = tombstoneSuccessResponse.value as ITestDataObject;
-				const ddsHandle = dataObject._root.get<IFluidHandle<SharedMap>>("dds1");
+				const ddsHandle = dataObject._root.get<IFluidHandle<ISharedMap>>("dds1");
 				assert(ddsHandle !== undefined, "Expected to find a handle to the DDS");
 				await assert.doesNotReject(
 					async () => ddsHandle.get(),

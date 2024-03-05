@@ -50,7 +50,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @public
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @alpha

@@ -10,9 +10,9 @@ import {
 	IPersistedCache,
 	HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
-import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 // eslint-disable-next-line import/no-internal-modules
-import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory";
+import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

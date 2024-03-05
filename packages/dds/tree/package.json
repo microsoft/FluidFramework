@@ -130,7 +130,7 @@
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
 		"@types/mocha": "^9.1.1",
