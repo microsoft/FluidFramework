@@ -10306,6 +10306,7 @@ importers:
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-private/test-drivers': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
       '@fluid-private/test-version-utils': workspace:~
@@ -10375,6 +10376,7 @@ importers:
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
+      '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-private/test-loader-utils': link:../../loader/test-loader-utils
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
       '@fluid-private/test-version-utils': link:../test-version-utils

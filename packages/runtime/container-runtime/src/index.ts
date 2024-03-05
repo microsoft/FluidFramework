@@ -14,9 +14,6 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
-	RuntimeHeaders,
-	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
@@ -34,7 +31,13 @@ export {
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-export { detectOutboundReferences } from "./dataStores.js";
+export {
+	detectOutboundReferences,
+	RuntimeHeaders,
+	DataStoresFactory,
+	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
+} from "./dataStores.js";
 export {
 	GCNodeType,
 	IGCMetadata,
