@@ -461,7 +461,7 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
-		this.bindRuntime(channel);
+		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
 		if (this.disposed) {
@@ -794,7 +794,7 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
-	protected bindRuntime(channel: IFluidDataStoreChannel) {
+	protected async bindRuntime(channel: IFluidDataStoreChannel, existing: boolean) {
 		if (this.channel) {
 			throw new Error("Runtime already bound");
 		}
@@ -807,19 +807,35 @@ export abstract class FluidDataStoreContext
 			assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
 			assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const pending = this.pending!;
+			if (existing) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const pending = this.pending!;
 
-			// Apply all pending ops
-			for (const op of pending) {
-				// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-				const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
-				if (op.sequenceNumber > seqNumber) {
-					channel.process(op, false, undefined /* localOpMetadata */);
+				// Apply all pending ops
+				for (const op of pending) {
+					// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
+					const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
+					if (op.sequenceNumber > seqNumber) {
+						channel.process(op, false, undefined /* localOpMetadata */);
+					}
 				}
-			}
 
-			this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+				this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+			} else {
+				assert(this.pending?.length === 0, "no pending ops");
+
+				// Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
+				// initialization function is called before the data store gets attached and potentially connected to the
+				// delta stream, so it gets a chance to do things while the data store is still "purely local".
+				// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
+				// of data store factories tends to construct the data object (at least kick off an async method that returns
+				// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
+				// before the data store is attached.
+				await channel.entryPoint.get();
+
+				// Test immidiate attachment.
+				channel.makeVisibleAndAttachGraph();
+			}
 			this.pending = undefined;
 
 			// And now mark the runtime active
@@ -1307,16 +1323,7 @@ export class LocalDetachedFluidDataStoreContext
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
 		this.registry = entry.registry;
 
-		super.bindRuntime(dataStoreChannel);
-
-		// Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
-		// initialization function is called before the data store gets attached and potentially connected to the
-		// delta stream, so it gets a chance to do things while the data store is still "purely local".
-		// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
-		// of data store factories tends to construct the data object (at least kick off an async method that returns
-		// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
-		// before the data store is attached.
-		await dataStoreChannel.entryPoint.get();
+		await super.bindRuntime(dataStoreChannel, false /* existing */);
 
 		if (await this.isRoot()) {
 			dataStoreChannel.makeVisibleAndAttachGraph();
