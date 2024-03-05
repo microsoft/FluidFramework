@@ -8,7 +8,7 @@ import { v4 as uuid } from "uuid";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
-import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { LoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {
 	LocalCodeLoader,
 	LoaderContainerTracker,
@@ -143,7 +143,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 
 	function assertCustomPropertySupport(err: any) {
 		err.asdf = "asdf";
-		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
+		assert(LoggingError.isLoggingError(err), "Error should support getTelemetryProperties()");
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
 	}
 

@@ -11,7 +11,7 @@ import {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 
 import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
@@ -198,7 +198,7 @@ describe("Pending State Manager", () => {
 
 			submitBatch(messages);
 			process(messages);
-			assert(isILoggingError(closeError));
+			assert(LoggingError.isLoggingError(closeError));
 			assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchStart, true);
 			assert.strictEqual(closeError.getTelemetryProperties().hasBatchEnd, false);
@@ -222,7 +222,7 @@ describe("Pending State Manager", () => {
 						type: "otherType",
 					})),
 				);
-				assert(isILoggingError(closeError));
+				assert(LoggingError.isLoggingError(closeError));
 				assert.strictEqual(closeError.errorType, ContainerErrorTypes.dataProcessingError);
 				assert.strictEqual(
 					closeError.getTelemetryProperties().expectedMessageType,

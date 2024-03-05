@@ -92,6 +92,10 @@ export interface ITelemetryErrorEvent extends ITelemetryBaseProperties {
 /**
  * An error object that supports exporting its properties to be logged to telemetry
  * @internal
+ *
+ * @deprecated This interface will be removed in a future release, with no replacement.
+ * Its known uses as well as its purpose were internal to FluidFramework.
+ *
  */
 export interface ILoggingError extends Error {
 	/**

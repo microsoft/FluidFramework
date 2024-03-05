@@ -31,7 +31,7 @@ import {
 	createChildLogger,
 	IFluidErrorBase,
 	isFluidError,
-	isILoggingError,
+	LoggingError,
 	mixinMonitoringContext,
 	MockLogger,
 } from "@fluidframework/telemetry-utils";
@@ -943,7 +943,7 @@ describe("Runtime", () => {
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
-					assert(isILoggingError(error));
+					assert(LoggingError.isLoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -1106,7 +1106,7 @@ describe("Runtime", () => {
 						error.message,
 						"Runtime detected too many reconnects with no progress syncing local ops.",
 					);
-					assert(isILoggingError(error));
+					assert(LoggingError.isLoggingError(error));
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,

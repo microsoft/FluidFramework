@@ -176,7 +176,7 @@ export function isExternalError(error: unknown): boolean;
 // @internal
 export function isFluidError(error: unknown): error is IFluidErrorBase;
 
-// @internal
+// @internal @deprecated
 export const isILoggingError: (x: unknown) => x is ILoggingError;
 
 // @internal
@@ -252,12 +252,14 @@ export interface ITelemetryPropertiesExt {
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L): MonitoringContext<L>;
 
 // @internal
-export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
+export class LoggingError extends Error implements Omit<IFluidErrorBase, "errorType"> {
     constructor(message: string, props?: ITelemetryBaseProperties, omitPropsFromLogging?: Set<string>);
     addTelemetryProperties(props: ITelemetryPropertiesExt): void;
     // (undocumented)
     get errorInstanceId(): string;
     getTelemetryProperties(): ITelemetryBaseProperties;
+    // (undocumented)
+    static isLoggingError(input: unknown): input is LoggingError;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
     static typeCheck(object: unknown): object is LoggingError;
