@@ -33,7 +33,7 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @public (undocumented)
+// @public
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -65,7 +65,7 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha (undocumented)
+// @alpha
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @public
@@ -106,7 +106,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @public
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
