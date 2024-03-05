@@ -313,7 +313,7 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 
 		// Prep context snapshot intercept
 		// Hack to inspect the runtime's dataStores
-		const stores = (runtime3 as any).dataStores;
+		const stores = (runtime3 as any).channelCollection;
 		const contextA = (await stores.getDataStore(dataObjectA.id, {})) as IFluidDataStoreContext;
 		const contextB = (await stores.getDataStore(dataObjectB.id, {})) as IFluidDataStoreContext;
 		assert(contextA.baseSnapshot !== undefined, "contextA should have a baseSnapshot");

@@ -2426,7 +2426,7 @@ describe("Runtime", () => {
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				const missingDataStoreContext =
 					// eslint-disable-next-line @typescript-eslint/dot-notation
-					containerRuntime["dataStores"]["contexts"].get("missingDataStore");
+					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
 				// Add ops to this context.
 				const messages = [
