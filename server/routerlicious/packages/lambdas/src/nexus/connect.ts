@@ -79,7 +79,7 @@ function composeConnectedMessage(
 	const connectedMessage: IConnected = {
 		claims,
 		clientId,
-		existing: false,
+		existing: true,
 		maxMessageSize: messageSize,
 		mode,
 		serviceConfiguration: {
@@ -579,7 +579,7 @@ export async function connectDocument(
 		connectMetric.setProperties({
 			[CommonProperties.clientId]: result.connection.clientId,
 			[CommonProperties.clientCount]: result.connection.initialClients.length + 1,
-			[CommonProperties.clientType]: result.details.details.type,
+			[CommonProperties.clientType]: result.details.details?.type,
 		});
 
 		return {

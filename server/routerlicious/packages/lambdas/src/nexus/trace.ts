@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "node:perf_hooks";
+import { performance } from "@fluidframework/common-utils";
 import type { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { getRandomInt } from "@fluidframework/server-services-client";
 import { DefaultServiceConfiguration } from "@fluidframework/server-services-core";
