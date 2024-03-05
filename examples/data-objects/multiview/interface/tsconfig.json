@@ -3,7 +3,6 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"jsx": "react",
 		"types": ["react", "react-dom", "puppeteer", "expect-puppeteer"],
 	},
 	"include": ["src/**/*"],
