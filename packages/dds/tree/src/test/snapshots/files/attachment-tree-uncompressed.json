@@ -14,55 +14,7 @@
               "String": {
                 "type": "blob",
                 "content": {
-                  "trunk": [
-                    {
-                      "change": [
-                        {
-                          "schema": {
-                            "new": {
-                              "version": 1,
-                              "nodes": {
-                                "com.fluidframework.leaf.boolean": {
-                                  "leaf": 2
-                                },
-                                "com.fluidframework.leaf.handle": {
-                                  "leaf": 3
-                                },
-                                "com.fluidframework.leaf.null": {
-                                  "leaf": 4
-                                },
-                                "com.fluidframework.leaf.number": {
-                                  "leaf": 0
-                                },
-                                "com.fluidframework.leaf.string": {
-                                  "leaf": 1
-                                },
-                                "test trees.TestInner": {
-                                  "map": {
-                                    "kind": "Sequence"
-                                  }
-                                }
-                              },
-                              "root": {
-                                "kind": "Sequence"
-                              }
-                            },
-                            "old": {
-                              "version": 1,
-                              "nodes": {},
-                              "root": {
-                                "kind": "Forbidden",
-                                "types": []
-                              }
-                            }
-                          }
-                        }
-                      ],
-                      "revision": 1,
-                      "sequenceNumber": 2,
-                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
-                    }
-                  ],
+                  "trunk": [],
                   "branches": [],
                   "version": 1
                 },
@@ -82,6 +34,34 @@
                 "content": {
                   "version": 1,
                   "nodes": {
+                    "com.fluidframework.json.array": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.json.object",
+                            "com.fluidframework.json.array",
+                            "com.fluidframework.leaf.number",
+                            "com.fluidframework.leaf.boolean",
+                            "com.fluidframework.leaf.string",
+                            "com.fluidframework.leaf.null"
+                          ]
+                        }
+                      }
+                    },
+                    "com.fluidframework.json.object": {
+                      "map": {
+                        "kind": "Optional",
+                        "types": [
+                          "com.fluidframework.json.object",
+                          "com.fluidframework.json.array",
+                          "com.fluidframework.leaf.number",
+                          "com.fluidframework.leaf.boolean",
+                          "com.fluidframework.leaf.string",
+                          "com.fluidframework.leaf.null"
+                        ]
+                      }
+                    },
                     "com.fluidframework.leaf.boolean": {
                       "leaf": 2
                     },
@@ -96,15 +76,18 @@
                     },
                     "com.fluidframework.leaf.string": {
                       "leaf": 1
-                    },
-                    "test trees.TestInner": {
-                      "map": {
-                        "kind": "Sequence"
-                      }
                     }
                   },
                   "root": {
-                    "kind": "Sequence"
+                    "kind": "Sequence",
+                    "types": [
+                      "com.fluidframework.json.object",
+                      "com.fluidframework.json.array",
+                      "com.fluidframework.leaf.number",
+                      "com.fluidframework.leaf.boolean",
+                      "com.fluidframework.leaf.string",
+                      "com.fluidframework.leaf.null"
+                    ]
                   }
                 },
                 "encoding": "utf-8"
@@ -121,7 +104,9 @@
               "ForestTree": {
                 "type": "blob",
                 "content": {
-                  "keys": [],
+                  "keys": [
+                    "rootFieldKey"
+                  ],
                   "fields": {
                     "version": 1,
                     "identifiers": [],
@@ -135,7 +120,17 @@
                         "a": 0
                       }
                     ],
-                    "data": []
+                    "data": [
+                      [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "y",
+                          []
+                        ]
+                      ]
+                    ]
                   },
                   "version": 1
                 },
@@ -155,7 +150,7 @@
                 "content": {
                   "version": 1,
                   "data": [],
-                  "maxId": -1
+                  "maxId": 0
                 },
                 "encoding": "utf-8"
               }
