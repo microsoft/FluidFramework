@@ -30,8 +30,8 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
  * @public
  */
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
-	| DataObjectClass<T>
-	| SharedObjectClass<T>;
+	| SharedObjectClass<T>
+	| DataObjectClass<T>;
 
 /**
  * A class that has a factory that can create a `DataObject` and a

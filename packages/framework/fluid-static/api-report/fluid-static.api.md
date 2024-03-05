@@ -117,7 +117,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;

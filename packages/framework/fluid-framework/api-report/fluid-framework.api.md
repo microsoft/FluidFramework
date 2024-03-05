@@ -265,7 +265,7 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
@@ -340,18 +340,29 @@ export interface SchemaIncompatible {
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @deprecated
-export const SharedMap: {
-    getFactory(): IChannelFactory<ISharedMap>;
-    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
-};
-
-// @public @deprecated
-export type SharedMap = ISharedMap;
-
-// @public
-export interface SharedObjectClass<T extends IFluidLoadable> {
-    // (undocumented)
-    readonly getFactory: () => IChannelFactory<T>;
+export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    protected applyStashedOp(content: unknown): void;
+    clear(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
+    delete(key: string): boolean;
+    entries(): IterableIterator<[string, any]>;
+    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
+    get<T = any>(key: string): T | undefined;
+    static getFactory(): IChannelFactory<ISharedMap>;
+    has(key: string): boolean;
+    keys(): IterableIterator<string>;
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    protected onDisconnect(): void;
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): this;
+    get size(): number;
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    values(): IterableIterator<any>;
 }
 
 // @public
