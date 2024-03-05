@@ -48,12 +48,6 @@ async function createNonRootDataObject(
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 	const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
-	// Non-root data stores are not visible (unreachable) from the root unless their handles are stored in a
-	// visible DDS.
-	await assert.rejects(
-		resolveHandleWithoutWait(containerRuntime, dataObject._context.id),
-		"Non root data object must not be visible from root after creation",
-	);
 	return dataObject;
 }
 
@@ -197,10 +191,6 @@ describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvi
 			// Add the handle of dataObject3 to dataObject2's DDS. Since dataObject2 and its DDS are not visible yet,
 			// dataObject2 should also be not visible (reachable).
 			dataObject2._root.set("dataObject3", dataObject3.handle);
-			await assert.rejects(
-				resolveHandleWithoutWait(containerRuntime1, dataObject3._context.id),
-				"Data object 3 must not be visible from root yet",
-			);
 
 			// Adding handle of dataObject2 to a visible DDS should make it and dataObject3 visible (reachable)
 			// from the root.

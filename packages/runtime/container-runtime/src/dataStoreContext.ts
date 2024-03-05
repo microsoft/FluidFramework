@@ -799,72 +799,64 @@ export abstract class FluidDataStoreContext
 			throw new Error("Runtime already bound");
 		}
 
-		try {
-			assert(
-				!this.detachedRuntimeCreation,
-				0x148 /* "Detached runtime creation on runtime bind" */,
-			);
-			assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
-			assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
+		assert(
+			!this.detachedRuntimeCreation,
+			0x148 /* "Detached runtime creation on runtime bind" */,
+		);
+		assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
+		assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
-			if (existing) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const pending = this.pending!;
+		if (existing) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const pending = this.pending!;
 
-				// Apply all pending ops
-				for (const op of pending) {
-					// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-					const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
-					if (op.sequenceNumber > seqNumber) {
-						channel.process(op, false, undefined /* localOpMetadata */);
-					}
+			// Apply all pending ops
+			for (const op of pending) {
+				// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
+				const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
+				if (op.sequenceNumber > seqNumber) {
+					channel.process(op, false, undefined /* localOpMetadata */);
 				}
-
-				this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
-			} else {
-				assert(this.pending?.length === 0, "no pending ops");
-
-				// Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
-				// initialization function is called before the data store gets attached and potentially connected to the
-				// delta stream, so it gets a chance to do things while the data store is still "purely local".
-				// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
-				// of data store factories tends to construct the data object (at least kick off an async method that returns
-				// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
-				// before the data store is attached.
-				await channel.entryPoint.get();
-
-				// Test immidiate attachment.
-				channel.makeVisibleAndAttachGraph();
 			}
-			this.pending = undefined;
 
-			// And now mark the runtime active
-			this.loaded = true;
-			this.channel = channel;
+			this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+		} else {
+			assert(this.pending?.length === 0, "no pending ops");
 
-			// Freeze the package path to ensure that someone doesn't modify it when it is
-			// returned in packagePath().
-			Object.freeze(this.pkg);
+			// Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
+			// initialization function is called before the data store gets attached and potentially connected to the
+			// delta stream, so it gets a chance to do things while the data store is still "purely local".
+			// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
+			// of data store factories tends to construct the data object (at least kick off an async method that returns
+			// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
+			// before the data store is attached.
+			await channel.entryPoint.get();
+		}
+		this.pending = undefined;
 
-			/**
-			 * Update the used routes of the channel. If GC has run before this data store was realized, we will have
-			 * the used routes saved. So, this will ensure that all the child contexts have up-to-date used routes as
-			 * per the last time GC was run.
-			 * Also, this data store may have been realized during summarize. In that case, the child contexts need to
-			 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
-			 */
-			this.updateChannelUsedRoutes();
+		// And now mark the runtime active
+		this.loaded = true;
+		this.channel = channel;
 
-			// And notify the pending promise it is now available
-			this.channelDeferred.resolve(this.channel);
-		} catch (error) {
-			this.channelDeferred?.reject(error);
-			this.mc.logger.sendErrorEvent(
-				{
-					eventName: "BindRuntimeError",
-				},
-				error,
-			);
+		// Freeze the package path to ensure that someone doesn't modify it when it is
+		// returned in packagePath().
+		Object.freeze(this.pkg);
+
+		/**
+		 * Update the used routes of the channel. If GC has run before this data store was realized, we will have
+		 * the used routes saved. So, this will ensure that all the child contexts have up-to-date used routes as
+		 * per the last time GC was run.
+		 * Also, this data store may have been realized during summarize. In that case, the child contexts need to
+		 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
+		 */
+		this.updateChannelUsedRoutes();
+
+		// And notify the pending promise it is now available
+		this.channelDeferred.resolve(this.channel);
+
+		if (!existing) {
+			// Test immediate attachment of data store.
+			channel.makeVisibleAndAttachGraph();
 		}
 	}
 
@@ -1315,21 +1307,27 @@ export class LocalDetachedFluidDataStoreContext
 		assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
 		this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
 
-		const factory = registry.IFluidDataStoreFactory;
+		try {
+			const factory = registry.IFluidDataStoreFactory;
 
-		const entry = await this.factoryFromPackagePath(this.pkg);
-		assert(entry.factory === factory, 0x156 /* "Unexpected factory for package path" */);
+			const entry = await this.factoryFromPackagePath(this.pkg);
+			assert(entry.factory === factory, 0x156 /* "Unexpected factory for package path" */);
 
-		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
-		this.registry = entry.registry;
+			assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
+			this.registry = entry.registry;
 
-		await super.bindRuntime(dataStoreChannel, false /* existing */);
+			await super.bindRuntime(dataStoreChannel, false /* existing */);
 
-		if (await this.isRoot()) {
-			dataStoreChannel.makeVisibleAndAttachGraph();
+			if (await this.isRoot()) {
+				dataStoreChannel.makeVisibleAndAttachGraph();
+			}
+
+			return this.channelToDataStoreFn(dataStoreChannel, this.id);
+		} catch (error) {
+			this.channelDeferred?.reject(error);
+			this.mc.logger.sendErrorEvent({ eventName: "AttachRuntimeError" }, error);
+			throw error;
 		}
-
-		return this.channelToDataStoreFn(dataStoreChannel, this.id);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -89,7 +88,8 @@ export const createTestContainerRuntimeFactory = (
 				rootContext,
 				/* existing */ false,
 			);
-			await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);		}
+			await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+		}
 
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 			// Validate we can load root data stores.

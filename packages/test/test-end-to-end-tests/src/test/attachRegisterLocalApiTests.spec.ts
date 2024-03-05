@@ -100,17 +100,11 @@ describeCompat(
 				defaultDataStore.context.containerRuntime,
 			);
 
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
-			);
-
 			// Create a channel
 			const channel = dataStore2.runtime.createChannel(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
@@ -118,12 +112,6 @@ describeCompat(
 			assert(
 				dataStore2.runtime.attachState !== AttachState.Detached,
 				createTestStatementForAttachedDetached("DataStore2", true),
-			);
-
-			assert.strictEqual(
-				channel.handle.isAttached,
-				false,
-				"Channel should not be attached as it was not registered",
 			);
 		});
 
@@ -134,10 +122,6 @@ describeCompat(
 			// Create another dataStore which returns the runtime channel.
 			const { peerDataStore: dataStore2 } = await createPeerDataStore(
 				defaultDataStore.context.containerRuntime,
-			);
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
 			);
 
 			// Create a channel
@@ -173,10 +157,6 @@ describeCompat(
 			const { peerDataStore: dataStore2 } = await createPeerDataStore(
 				defaultDataStore.context.containerRuntime,
 			);
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
-			);
 
 			// Create a channel
 			const channel = dataStore2.runtime.createChannel(
@@ -207,10 +187,6 @@ describeCompat(
 			// Create another dataStore which returns the runtime channel.
 			const { peerDataStore: dataStore2 } = await createPeerDataStore(
 				defaultDataStore.context.containerRuntime,
-			);
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
 			);
 
 			// Create a channel
@@ -254,11 +230,6 @@ describeCompat(
 				defaultDataStore.context.containerRuntime,
 			);
 
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
-			);
-
 			// Create a channel
 			const channel = dataStore2.runtime.createChannel(
 				"test1",
@@ -286,11 +257,6 @@ describeCompat(
 				defaultDataStore.context.containerRuntime,
 			);
 
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
-			);
-
 			// Create a channel
 			const channel = dataStore2.runtime.createChannel(
 				"test1",
@@ -299,11 +265,6 @@ describeCompat(
 			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
-			assert.strictEqual(
-				channel.handle.isAttached,
-				false,
-				"Channel should not get attached on registering it to unattached dataStore",
-			);
 		});
 
 		it("Stick handle of 2 dds in each other and then attaching dataStore should attach both DDS", async () => {
@@ -315,24 +276,17 @@ describeCompat(
 				defaultDataStore.context.containerRuntime,
 			);
 
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
-			);
-
 			// Create first channel
 			const channel1 = dataStore2.runtime.createChannel(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel1.handle.isAttached, false, "Channel should be detached");
 
 			// Create second channel
 			const channel2 = dataStore2.runtime.createChannel(
 				"test2",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
 			// Now register both dds to parent dataStore
 			((await channel1.handle.get()) as SharedObject).bindToContext();
@@ -373,11 +327,6 @@ describeCompat(
 				defaultDataStore.context.containerRuntime,
 			);
 			const dataStore2 = peerDataStore.peerDataStore;
-
-			assert(
-				dataStore2.runtime.attachState === AttachState.Detached,
-				createTestStatementForAttachedDetached("DataStore2", false),
-			);
 
 			// Create first channel
 			const channel1 = dataStore2.runtime.createChannel(
@@ -433,20 +382,12 @@ describeCompat(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore2 = peerDataStore1.peerDataStore;
-				assert(
-					dataStore2.runtime.attachState === AttachState.Detached,
-					createTestStatementForAttachedDetached("DataStore2", false),
-				);
 
 				// Create another dataStore which returns the runtime channel.
 				const peerDataStore2 = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore3 = peerDataStore2.peerDataStore;
-				assert(
-					dataStore3.runtime.attachState === AttachState.Detached,
-					createTestStatementForAttachedDetached("DataStore2", false),
-				);
 
 				// Create first channel from dataStore2
 				const channel2 = dataStore2.runtime.createChannel(
@@ -508,20 +449,12 @@ describeCompat(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
-				assert(
-					dataStore2.runtime.attachState === AttachState.Detached,
-					"DataStore2 should be unattached",
-				);
 
 				// Create another data store which returns the runtime channel.
 				const peerDataStore2 = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
-				assert(
-					dataStore3.runtime.attachState === AttachState.Detached,
-					"DataStore3 should be unattached",
-				);
 
 				// Create first channel from dataStore2
 				const channel2 = await dataStore2.getSharedObject<ISharedMap>(mapId1);
@@ -576,10 +509,6 @@ describeCompat(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore2 = peerDataStore1.peerDataStore as TestFluidObject;
-				assert(
-					dataStore2.runtime.attachState === AttachState.Detached,
-					"DataStore2 should be unattached",
-				);
 
 				// Create another dataStore which returns the runtime channel.
 				// Create another dataStore which returns the runtime channel.
@@ -587,58 +516,25 @@ describeCompat(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore3 = peerDataStore2.peerDataStore as TestFluidObject;
-				assert(
-					dataStore3.runtime.attachState === AttachState.Detached,
-					"DataStore3 should be unattached",
-				);
 
 				// Create another dataStore which returns the runtime channel.
 				const peerDataStore3 = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
 				const dataStore4 = peerDataStore3.peerDataStore as TestFluidObject;
-				assert(
-					dataStore4.runtime.attachState === AttachState.Detached,
-					"DataStore4 should be unattached",
-				);
 
 				// Create two channel from dataStore2
 				const channel1OfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(mapId1);
-				assert.strictEqual(
-					channel1OfDataStore2.handle.isAttached,
-					false,
-					"Channel should be detached",
-				);
 
 				const channel2OfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(mapId2);
-				assert.strictEqual(
-					channel2OfDataStore2.handle.isAttached,
-					false,
-					"Channel should be detached",
-				);
 
 				// Create two channel from dataStore 3
 				const channel1OfDataStore3 = await dataStore3.getSharedObject<ISharedMap>(mapId1);
-				assert.strictEqual(
-					channel1OfDataStore3.handle.isAttached,
-					false,
-					"Channel should be detached",
-				);
 
 				const channel2OfDataStore3 = await dataStore3.getSharedObject<ISharedMap>(mapId2);
-				assert.strictEqual(
-					channel2OfDataStore3.handle.isAttached,
-					false,
-					"Channel should be detached",
-				);
 
 				// Create one channel from dataStore 4
 				const channel1OfDataStore4 = await dataStore4.getSharedObject<ISharedMap>(mapId1);
-				assert.strictEqual(
-					channel1OfDataStore4.handle.isAttached,
-					false,
-					"Channel should be detached",
-				);
 
 				channel2OfDataStore2.set("componet3Handle", dataStore3.handle);
 				channel1OfDataStore3.set("channel23handle", channel2OfDataStore3.handle);
@@ -828,23 +724,11 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attached;
 			});
 
-			dataStore2.context.once("attaching", () => {
-				assert.fail("Attaching event should not be fired for unreferenced context");
-			});
-
-			dataStore2.context.once("attached", () => {
-				assert.fail("Attached event should not be fired for unreferenced context");
-			});
 			await container.attach(request);
 			assert.strictEqual(
 				dataStore1.runtime.attachState,
 				AttachState.Attached,
 				"DataStore 1 should end up in attached state",
-			);
-			assert.strictEqual(
-				dataStore2.runtime.attachState,
-				AttachState.Detached,
-				"DataStore 2 should end up in detached state as it was not referenced",
 			);
 		});
 
