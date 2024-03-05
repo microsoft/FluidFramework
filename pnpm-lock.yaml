@@ -5771,6 +5771,7 @@ importers:
 
   experimental/framework/data-objects:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
@@ -5784,6 +5785,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/node': ^18.19.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       prettier: ~3.0.3
@@ -5798,12 +5800,14 @@ importers:
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/node': 18.19.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       prettier: 3.0.3
@@ -6079,7 +6083,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^17.0.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
@@ -6105,7 +6108,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/driver-definitions:
@@ -11038,7 +11040,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../../common/client-utils
@@ -11082,7 +11083,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/tools/devtools/devtools-example:
@@ -11800,7 +11800,7 @@ packages:
       commander: 10.0.1
       marked: 9.1.6
       marked-terminal: 6.1.0_marked@9.1.6
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /@arethetypeswrong/core/0.13.3:
@@ -11809,7 +11809,7 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       fflate: 0.7.4
-      semver: 7.5.4
+      semver: 7.6.0
       typescript: 5.3.2
       validate-npm-package-name: 5.0.0
     dev: true
