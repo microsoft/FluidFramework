@@ -95,7 +95,9 @@ function generateLeafNodeSchemas(nodeTypes: string[]) {
 			nodeType !== "com.fluidframework.leaf.number" &&
 			nodeType !== "com.fluidframework.leaf.string"
 		) {
-			leafNodeSchemas.push(builder.leaf(nodeType, ValueSchema.Number));
+			if (!nodeType.startsWith("com.fluidframework.leaf")) {
+				leafNodeSchemas.push(builder.leaf(nodeType, ValueSchema.Number));
+			}
 		}
 	}
 	const library = builder.intoLibrary();

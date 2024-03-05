@@ -13,7 +13,6 @@ import {
 	Weights,
 } from "@fluid-private/stochastic-test-utils";
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { v4 as uuid } from "uuid";
 import {
 	FlexTreeView,
 	SharedTreeFactory,
@@ -22,7 +21,7 @@ import {
 	SharedTree,
 	ISharedTree,
 } from "../../../shared-tree/index.js";
-import { brand, disposeSymbol, fail, getOrCreate } from "../../../util/index.js";
+import { brand, fail, getOrCreate } from "../../../util/index.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -41,6 +40,7 @@ import {
 	FieldEditTypes,
 	FuzzInsert,
 	FuzzSchemaChange,
+	FuzzSchemaOp,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
@@ -109,7 +109,6 @@ export function viewFromState(
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
 ): FuzzView {
 	state.view ??= new Map();
-
 	const view =
 		state.transactionViews?.get(client.channel) ??
 		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
@@ -125,29 +124,18 @@ export function viewFromState(
 						: treeSchema,
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 				},
-			);
+				() => {
+					if (state.view?.get(client.channel as SharedTree) !== undefined) {
+						state.view.delete(client.channel as SharedTree);
+					}
+				},
+			) as unknown as FuzzView;
+
 			const fuzzView = flexView as FuzzView;
 			assert.equal(fuzzView.currentSchema, undefined);
 			const nodeSchema = treeSchema.nodeSchema.get(brand("tree2fuzz.node")) as FuzzNodeSchema;
 			fuzzView.currentSchema =
 				nodeSchema ?? initialFuzzSchema.nodeSchema.get(brand("tree2fuzz.node"));
-
-			// Hook up afterSchemaChange event
-			(client.channel as SharedTree).storedSchema.on("afterSchemaChange", (newSchema) => {
-				const currentView = state.view?.get(client.channel);
-				const hasView = (client.channel as unknown as any).hasView;
-				if (currentView !== undefined && hasView === true) {
-					currentView[disposeSymbol]();
-				}
-				const newFuzzView = tree.schematizeInternal({
-					initialTree,
-					schema: isEmptyStoredSchema(client.channel as SharedTree)
-						? initialFuzzSchema
-						: treeSchemaFromStoredSchema(newSchema),
-					allowedSchemaModifications: AllowedUpdateType.None,
-				}) as FuzzView;
-				state.view?.set(client.channel, newFuzzView);
-			});
 			return fuzzView;
 		});
 	return view;
@@ -551,8 +539,30 @@ export const makeTransactionEditGenerator = (
 	};
 };
 
-export const makeSchemaEdit = (): FuzzSchemaChange => {
-	return { type: "schema", contents: { type: uuid() } };
+export const makeSchemaEdit = (
+	opWeights: Partial<EditGeneratorOpWeights>,
+): Generator<FuzzSchemaChange, FuzzTestState> => {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
+	const makeSchemaOp = (state: FuzzTestState) => {
+		return { type: "schema", contents: { type: state.random.uuid4() } };
+	};
+	const schemaType = createWeightedGenerator<FuzzSchemaOp, FuzzTestState>([
+		[makeSchemaOp, passedOpWeights.schema],
+	]);
+
+	return (state) => {
+		const contents = schemaType(state);
+
+		return contents === done
+			? done
+			: {
+					type: "schema",
+					contents,
+			  };
+	};
 };
 
 export const makeUndoRedoEditGenerator = (
@@ -605,7 +615,7 @@ export function makeOpGenerator(
 					}),
 					weights.synchronizeTrees,
 				],
-				[() => makeSchemaEdit(), weights.schema],
+				[() => makeSchemaEdit(weights), weights.schema],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)

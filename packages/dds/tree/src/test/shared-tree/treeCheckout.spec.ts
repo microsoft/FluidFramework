@@ -680,7 +680,7 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		// AB#7256: This test fails because purging repair data upon application of schema changes makes it impossible
+		// AB#7265: This test fails because purging repair data upon application of schema changes makes it impossible
 		// to roll back the changes that were before that schema change on the branch being rebased.
 		// This is not a problem when the changes before the schema change are applied once rebased (because the
 		// rollback and reapplication cancel out). This is the scenario covered in the test above.
