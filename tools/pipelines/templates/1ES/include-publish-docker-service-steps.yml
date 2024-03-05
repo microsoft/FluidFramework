@@ -70,7 +70,7 @@ jobs:
               ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest,
               ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)
 
-        - template: /tools/pipelines/templates/1ES/include-git-tag-steps.yml@self
+        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
           parameters:
             tagName: ${{ parameters.tagName }}
   # templateContext is available because our templates were migrated to extend 1ES templates for pipelines, so
