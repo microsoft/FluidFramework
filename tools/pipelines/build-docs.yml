@@ -180,16 +180,9 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: UseNode@1
-          displayName: Use Node 18.17.1
+          displayName: 'Use Node 14.x'
           inputs:
-            version: 18.17.1
-
-        - task: Npm@1
-          displayName: Install npm 6
-          inputs:
-            command: 'custom'
-            customCommand: 'install --global npm@^6'
-            customRegistry: 'useNpmrc'
+            version: 14.x
 
         - task: Npm@1
           displayName: npm ci
@@ -234,16 +227,9 @@ stages:
           clean: true
 
         - task: UseNode@1
-          displayName: Use Node 18.17.1
+          displayName: 'Use Node 14.x'
           inputs:
-            version: 18.17.1
-
-        - task: Npm@1
-          displayName: Install npm 6
-          inputs:
-            command: 'custom'
-            customCommand: 'install --global npm@^6'
-            customRegistry: 'useNpmrc'
+            version: 14.x
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'

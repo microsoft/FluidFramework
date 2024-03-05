@@ -1,0 +1,6 @@
+schema: 'src/graphql-schemas/Pizza.ts'
+generates:
+    src/graphql-generated/Pizza.ts:
+        plugins:
+            - 'typescript'
+            - dist/graphql-plugins/SharedTreePlugin.js

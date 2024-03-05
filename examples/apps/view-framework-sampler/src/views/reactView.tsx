@@ -20,7 +20,7 @@ interface IDiceRollerViewProps {
     model: IDiceRoller;
 }
 
-export const DiceRollerView = (props: IDiceRollerViewProps) => {
+export const DiceRollerView: React.FC<IDiceRollerViewProps> = (props: IDiceRollerViewProps) => {
     const [diceValue, setDiceValue] = React.useState(props.model.value);
 
     React.useEffect(() => {

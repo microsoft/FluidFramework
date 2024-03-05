@@ -35,7 +35,7 @@ trigger:
     - release/*
   paths:
     include:
-    - azure/packages/azure-local-service
+    - server/azure-local-service
     - tools/pipelines/build-azure-local-service.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
@@ -55,7 +55,7 @@ pr:
     - release/*
   paths:
     include:
-    - azure/packages/azure-local-service
+    - server/azure-local-service
     - tools/pipelines/build-azure-local-service.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
@@ -68,7 +68,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: azure/packages/azure-local-service
+    buildDirectory: server/azure-local-service
     tagName: azure-local-service
     taskBuild: build
     taskBuildDocs: false

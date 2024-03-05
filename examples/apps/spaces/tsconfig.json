@@ -1,13 +1,14 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
-    "exclude": ["dist", "node_modules"],
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
     "compilerOptions": {
         "target": "es6",
         "declarationDir": "./dist",
         "outDir": "./dist",
         "jsx": "react",
-        // Added because upgrading to node 18 caused a bunch of typecheck errors
-        "skipLibCheck": true,
         "types": [
             "jest",
             "puppeteer",
@@ -17,5 +18,7 @@
             "react-dom"
         ]
     },
-    "include": ["src/**/*"]
+    "include": [
+        "src/**/*"
+    ]
 }
