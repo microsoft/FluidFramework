@@ -116,6 +116,9 @@ interface FluidDataStoreMessage {
 	type: string;
 }
 
+/**
+ * Creates a shallow wrapper of {@link IFluidParentContext}. The wrapper can then have its methods overwritten as needed
+ */
 export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 	return {
 		get IFluidDataStoreRegistry() {
@@ -180,7 +183,14 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 	};
 }
 
-/** @internal */
+/**
+ * Creates a wrapper of a {@link IFluidParentContext} to be provided to the inner datastore channels.
+ * The wrapper will have the submit methods overwritten with the appropriate id as the destination address.
+ *
+ * @param id - the id of the channel
+ * @param parentContext - the {@link IFluidParentContext} to wrap
+ * @returns A wrapped {@link IFluidParentContext}
+ */
 export function wrapContextForInnerChannel(
 	id: string,
 	parentContext: IFluidParentContext,
