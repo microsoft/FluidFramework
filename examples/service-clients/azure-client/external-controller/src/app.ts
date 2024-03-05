@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
+import { IFluidContainer, ISharedMap, IValueChanged, SharedMap } from "fluid-framework";
 
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 import {
@@ -68,7 +68,7 @@ const containerSchema = {
 	},
 };
 
-function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerProps {
+function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerProps {
 	return {
 		get: (key: string) => map.get(key) as number,
 		set: (key: string, value: any) => map.set(key, value),
@@ -87,10 +87,10 @@ function createDiceRollerControllerPropsFromContainer(
 	container: IFluidContainer,
 ): [DiceRollerControllerProps, DiceRollerControllerProps] {
 	const diceRollerController1Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-		container.initialObjects.map1 as SharedMap,
+		container.initialObjects.map1 as ISharedMap,
 	);
 	const diceRollerController2Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-		container.initialObjects.map2 as SharedMap,
+		container.initialObjects.map2 as ISharedMap,
 	);
 	return [diceRollerController1Props, diceRollerController2Props];
 }
@@ -135,9 +135,9 @@ async function start(): Promise<void> {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
 		({ container, services } = await client.createContainer(containerSchema));
-		// const map1 = container.initialObjects.map1 as SharedMap;
+		// const map1 = container.initialObjects.map1 as ISharedMap;
 		// map1.set("diceValue", 1);
-		// const map2 = container.initialObjects.map1 as SharedMap;
+		// const map2 = container.initialObjects.map1 as ISharedMap;
 		// map2.set("diceValue", 1);
 		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers

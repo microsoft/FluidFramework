@@ -88,9 +88,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     tenantKey: string,
     user: IInsecureUser,
     scopes?: ScopeType[] | undefined);
-    // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
-    // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
