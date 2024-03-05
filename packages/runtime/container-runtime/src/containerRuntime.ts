@@ -74,9 +74,7 @@ import {
 	InboundAttachMessage,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IFluidDataStoreChannel,
 	IGarbageCollectionData,
-	IEnvelope,
 	IInboundSignalMessage,
 	NamedFluidDataStoreRegistryEntries,
 	ISummaryTreeWithStats,
@@ -86,6 +84,7 @@ import {
 	channelsTreeName,
 	IDataStore,
 	ITelemetryContext,
+	IEnvelope,
 } from "@fluidframework/runtime-definitions";
 import type {
 	SerializedIdCompressorWithNoSession,
@@ -117,7 +116,7 @@ import {
 } from "./pendingStateManager.js";
 import { pkgVersion } from "./packageVersion.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
-import { DataStores, getSummaryForDatastores } from "./dataStores.js";
+import { DataStores, getSummaryForDatastores, wrapContext } from "./dataStores.js";
 import {
 	aliasBlobName,
 	blobsTreeName,
@@ -167,13 +166,8 @@ import {
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-	trimLeadingAndTrailingSlashes,
 } from "./gc/index.js";
-import {
-	channelToDataStore,
-	IDataStoreAliasMessage,
-	isDataStoreAliasMessage,
-} from "./dataStore.js";
+import { channelToDataStore } from "./dataStore.js";
 import { BindBatchTracker } from "./batchTracker.js";
 import { ScheduleManager } from "./scheduleManager.js";
 import {
@@ -468,27 +462,6 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly enableGroupedBatching?: boolean;
 }
-
-/**
- * Accepted header keys for requests coming to the runtime.
- * @internal
- */
-export enum RuntimeHeaders {
-	/** True to wait for a data store to be created and loaded before returning it. */
-	wait = "wait",
-	/** True if the request is coming from an IFluidHandle. */
-	viaHandle = "viaHandle",
-}
-
-/** True if a tombstoned object should be returned without erroring
- * @alpha
- */
-export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
-/**
- * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
- * @internal
- */
-export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
 /**
  * Tombstone error responses will have this header set to true
@@ -951,6 +924,10 @@ export class ContainerRuntime
 
 	public get storage(): IDocumentStorageService {
 		return this._storage;
+	}
+
+	public get containerRuntime() {
+		return this;
 	}
 
 	private readonly submitFn: (
@@ -1457,28 +1434,44 @@ export class ContainerRuntime
 			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
 		}
 
+		const parentContext = wrapContext(this);
+
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need the
+		// downstream stores to wrap the signal.
+		parentContext.submitSignal = (type: string, content: any, targetClientId?: string) => {
+			const envelope1 = content as IEnvelope;
+			const envelope2 = this.createNewSignalEnvelope(
+				envelope1.address,
+				type,
+				envelope1.contents,
+			);
+			return this.submitSignalFn(envelope2, targetClientId);
+		};
+
 		this.dataStores = new DataStores(
 			getSummaryForDatastores(baseSnapshot, metadata),
-			this,
-			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
-			(id: string, createParam: CreateChildSummarizerNodeParam) =>
-				(
-					summarizeInternal: SummarizeInternalFn,
-					getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-				) =>
-					this.summarizerNode.createChild(
-						summarizeInternal,
-						id,
-						createParam,
-						undefined,
-						getGCDataFn,
-					),
-			(id: string) => this.summarizerNode.deleteChild(id),
+			parentContext,
 			this.mc.logger,
-			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
-				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
+			(
+				path: string,
+				reason: "Loaded" | "Changed",
+				timestampMs?: number,
+				packagePath?: readonly string[],
+				request?: IRequest,
+				headerData?: RuntimeHeaderData,
+			) =>
+				this.garbageCollector.nodeUpdated(
+					path,
+					reason,
+					timestampMs,
+					packagePath,
+					request,
+					headerData,
+				),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
+			async (runtime: DataStores) => provideEntryPoint,
 		);
 
 		this.blobManager = new BlobManager(
@@ -1718,6 +1711,28 @@ export class ContainerRuntime
 		});
 	}
 
+	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+		return (
+			summarizeInternal: SummarizeInternalFn,
+			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+		) =>
+			this.summarizerNode.createChild(
+				summarizeInternal,
+				id,
+				createParam,
+				undefined,
+				getGCDataFn,
+			);
+	}
+
+	public deleteChildSummarizerNode(id: string) {
+		return this.summarizerNode.deleteChild(id);
+	}
+
+	public makeLocallyVisible() {
+		assert(false, "should not be called");
+	}
+
 	/**
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
@@ -1938,19 +1953,7 @@ export class ContainerRuntime
 					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
-				// Differentiate between requesting the dataStore directly, or one of its children
-				const requestForChild = !requestParser.isLeaf(1);
-				const dataStore = await this.getDataStoreFromRequest(id, request, requestForChild);
-
-				const subRequest = requestParser.createSubRequest(1);
-				// We always expect createSubRequest to include a leading slash, but asserting here to protect against
-				// unintentionally modifying the url if that changes.
-				assert(
-					subRequest.url.startsWith("/"),
-					0x126 /* "Expected createSubRequest url to include a leading slash" */,
-				);
-				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
-				return dataStore.request(subRequest);
+				return await this.dataStores.request(request);
 			}
 
 			return create404Response(request);
@@ -1968,54 +1971,7 @@ export class ContainerRuntime
 	private readonly entryPoint: LazyPromise<FluidObject>;
 
 	private internalId(maybeAlias: string): string {
-		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
-	}
-
-	private async getDataStoreFromRequest(
-		id: string,
-		request: IRequest,
-		requestForChild: boolean,
-	): Promise<IFluidDataStoreChannel> {
-		const headerData: RuntimeHeaderData = {};
-		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
-			headerData.wait = request.headers[RuntimeHeaders.wait];
-		}
-		if (typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean") {
-			headerData.viaHandle = request.headers[RuntimeHeaders.viaHandle];
-		}
-		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
-			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
-		}
-		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
-			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
-		}
-
-		// We allow Tombstone requests for sub-DataStore objects
-		if (requestForChild) {
-			headerData.allowTombstone = true;
-		}
-
-		await this.dataStores.waitIfPendingAlias(id);
-		const internalId = this.internalId(id);
-		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-
-		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
-		// the same as GC nodes id.
-		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
-		// Get the initial snapshot details which contain the data store package path.
-		const details = await dataStoreContext.getInitialSnapshotDetails();
-
-		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
-		// is configured.
-		this.garbageCollector.nodeUpdated(
-			`/${urlWithoutQuery}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			details.pkg,
-			request,
-			headerData,
-		);
-		return dataStoreContext.realize();
+		return this.dataStores.internalId(maybeAlias);
 	}
 
 	/** Adds the container's metadata to the given summary tree. */
@@ -2175,16 +2131,15 @@ export class ContainerRuntime
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(opContents.contents);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(opContents.contents);
+			case ContainerMessageType.Alias:
+				return this.dataStores.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
 				return;
-			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
 			case ContainerMessageType.ChunkedOp:
@@ -2416,17 +2371,9 @@ export class ContainerRuntime
 		const { local } = messageWithContext;
 		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
-				this.dataStores.processAttachMessage(messageWithContext.message, local);
-				break;
 			case ContainerMessageType.Alias:
-				this.dataStores.processAliasMessage(
-					messageWithContext.message,
-					localOpMetadata,
-					local,
-				);
-				break;
 			case ContainerMessageType.FluidDataStoreOp:
-				this.dataStores.processFluidDataStoreOp(
+				this.dataStores.process(
 					messageWithContext.message,
 					local,
 					localOpMetadata,
@@ -2553,7 +2500,16 @@ export class ContainerRuntime
 			return;
 		}
 
-		this.dataStores.processSignal(envelope.address, transformed, local);
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need to adjust
+		// the signal envelope before sending it to the datastores to be processed
+		const envelope2: IEnvelope = {
+			address: envelope.address,
+			contents: transformed.content,
+		};
+		transformed.content = envelope2;
+
+		this.dataStores.processSignal(transformed, local);
 	}
 
 	/**
@@ -2695,7 +2651,6 @@ export class ContainerRuntime
 				)
 				.realize(),
 			id,
-			this,
 			this.dataStores,
 			this.mc.logger,
 		);
@@ -2714,7 +2669,6 @@ export class ContainerRuntime
 				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
 				.realize(),
 			id,
-			this,
 			this.dataStores,
 			this.mc.logger,
 		);
@@ -2816,22 +2770,6 @@ export class ContainerRuntime
 		return this.submitSignalFn(envelope, targetClientId);
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
-	public submitDataStoreSignal(
-		address: string,
-		type: string,
-		content: any,
-		targetClientId?: string,
-	) {
-		const envelope = this.createNewSignalEnvelope(address, type, content);
-		return this.submitSignalFn(envelope, targetClientId);
-	}
-
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		if (attachState === AttachState.Attaching) {
 			assert(
@@ -2874,7 +2812,7 @@ export class ContainerRuntime
 			this.idCompressor?.finalizeCreationRange(idRange);
 		}
 
-		const summarizeResult = this.dataStores.createSummary(telemetryContext);
+		const summarizeResult = this.dataStores.getAttachSummary(telemetryContext);
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
 
@@ -3624,28 +3562,15 @@ export class ContainerRuntime
 		}
 	}
 
-	public submitDataStoreOp(
-		id: string,
+	public submitMessage(
+		type:
+			| ContainerMessageType.FluidDataStoreOp
+			| ContainerMessageType.Alias
+			| ContainerMessageType.Attach,
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
-		const envelope: IEnvelope = {
-			address: id,
-			contents,
-		};
-		this.submit(
-			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
-			localOpMetadata,
-		);
-	}
-
-	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
-		const aliasMessage = contents as IDataStoreAliasMessage;
-		if (!isDataStoreAliasMessage(aliasMessage)) {
-			throw new UsageError("malformedDataStoreAliasMessage");
-		}
-
-		this.submit({ type: ContainerMessageType.Alias, contents }, localOpMetadata);
+		this.submit({ type, contents }, localOpMetadata);
 	}
 
 	public async uploadBlob(
@@ -3901,12 +3826,12 @@ export class ContainerRuntime
 		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				// For Operations, call resubmitDataStoreOp which will find the right store
-				// and trigger resubmission on it.
-				this.dataStores.resubmitDataStoreOp(message.contents, localOpMetadata);
-				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
+				// For Operations, call resubmitDataStoreOp which will find the right store
+				// and trigger resubmission on it.
+				this.dataStores.reSubmit(message.type, message.contents, localOpMetadata);
+				break;
 			case ContainerMessageType.IdAllocation: {
 				this.submit(message, localOpMetadata);
 				break;
@@ -3958,7 +3883,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
+				this.dataStores.rollback(type, contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
