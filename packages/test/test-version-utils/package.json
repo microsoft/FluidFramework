@@ -32,8 +32,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:esnext": "api-extractor run --local",
