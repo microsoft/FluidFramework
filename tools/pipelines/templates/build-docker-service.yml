@@ -201,9 +201,16 @@ stages:
 
     # for npm ci in component detection and set version
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 18.17.1
       inputs:
-        version: 14.x
+        version: 18.17.1
+
+    - task: Npm@1
+      displayName: Install npm 6
+      inputs:
+        command: 'custom'
+        customCommand: 'install --global npm@^6'
+        customRegistry: 'useNpmrc'
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
