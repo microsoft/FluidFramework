@@ -48,26 +48,6 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
-	"c8": {
-		"all": true,
-		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
-		],
-		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"dist/**/*.*js"
-		],
-		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
-		"temp-directory": "nyc/.nyc_output"
-	},
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
