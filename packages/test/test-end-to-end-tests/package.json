@@ -78,6 +78,7 @@
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
