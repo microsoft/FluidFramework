@@ -19,12 +19,17 @@ import {
 	RestLessClient,
 } from "@fluidframework/server-services-client";
 import fetch from "cross-fetch";
-import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
+// Workaround to import types: https://github.com/microsoft/TypeScript/issues/49055
+// import type {
+// 	AxiosRequestConfig,
+// 	RawAxiosRequestHeaders,
+// } from "axios" assert { "resolution-mode": "require" };
 import safeStringify from "json-stringify-safe";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
 import { ITokenProvider, ITokenResponse } from "./tokens.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;

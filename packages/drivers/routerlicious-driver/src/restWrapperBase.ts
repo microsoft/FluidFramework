@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
+// Workaround to import types: https://github.com/microsoft/TypeScript/issues/49055
+// import type {
+// 	AxiosRequestConfig,
+// 	AxiosRequestHeaders,
+// } from "axios" assert { "resolution-mode": "require" };
 import { IR11sResponse } from "./restWrapper.js";
+import { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
 
 export abstract class RestWrapper {
 	constructor(
