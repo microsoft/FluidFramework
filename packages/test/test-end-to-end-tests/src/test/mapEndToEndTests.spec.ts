@@ -325,7 +325,7 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		 */
 
 		// Create a new map in local (detached) state.
-		const newSharedMap1 = SharedMap.getFactory().create(dataObject1.runtime, "1");
+		const newSharedMap1 = SharedMap.create(dataObject1.runtime);
 
 		// Set a value while in local state.
 		newSharedMap1.set("newKey", "newValue");
@@ -364,8 +364,8 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("attaches if referring SharedMap becomes attached or is already attached", async () => {
-		const detachedMap1: ISharedMap = SharedMap.getFactory().create(dataObject1.runtime, "1");
-		const detachedMap2: ISharedMap = SharedMap.getFactory().create(dataObject1.runtime, "2");
+		const detachedMap1: ISharedMap = SharedMap.create(dataObject1.runtime);
+		const detachedMap2: ISharedMap = SharedMap.create(dataObject1.runtime);
 
 		// When an unattached map refers to another unattached map, both remain unattached
 		detachedMap1.set("newSharedMap", detachedMap2.handle);

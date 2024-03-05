@@ -86,7 +86,7 @@ describeCompat(
 			public map!: ISharedMap;
 
 			protected async initializingFirstTime() {
-				const sharedMap = SharedMap.getFactory().create(this.runtime, this.mapKey);
+				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
 				this.root.set(this.mapKey, sharedMap.handle);
 			}
 

@@ -358,7 +358,7 @@ describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvi
 			const dataObject2 = await createRootDataObject(containerRuntime1, "rootDataStore");
 
 			// Create a DDS after data store is locally visible and store its handle.
-			const map1 = SharedMap.getFactory().create(dataObject2._runtime, "1");
+			const map1 = SharedMap.create(dataObject2._runtime);
 			dataObject2._root.set("map1", map1.handle);
 
 			// Adding handle of the non-root data store to a visible DDS should make it visible (reachable)
