@@ -5,7 +5,7 @@
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { getOdspResolvedUrl } from "./odspUtils";
+import { getOdspResolvedUrl } from "./odspUtils.js";
 
 /**
  * It takes a resolved url with old siteUrl and creates a new resolved url with updated site url domain.

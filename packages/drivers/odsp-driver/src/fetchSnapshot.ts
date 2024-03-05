@@ -36,9 +36,9 @@ import {
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
-} from "./contracts";
-import { getQueryString } from "./getQueryString";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+} from "./contracts.js";
+import { getQueryString } from "./getQueryString.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
@@ -49,15 +49,15 @@ import {
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-} from "./odspUtils";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
+} from "./odspUtils.js";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import {
 	currentReadVersion,
 	ISnapshotContentsWithProps,
 	parseCompactSnapshotResponse,
-} from "./compactSnapshotParser";
-import { EpochTracker } from "./epochTracker";
-import { pkgVersion } from "./packageVersion";
+} from "./compactSnapshotParser.js";
+import { EpochTracker } from "./epochTracker.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Enum to support different types of snapshot formats.
