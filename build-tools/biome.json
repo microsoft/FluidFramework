@@ -31,7 +31,7 @@
 			"jsxQuoteStyle": "double",
 			"semicolons": "always",
 			"trailingComma": "all",
-			"quoteProperties": "asNeeded",
+			"quoteProperties": "preserve",
 			"quoteStyle": "double",
 			"bracketSpacing": true
 		}
