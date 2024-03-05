@@ -23,27 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/azure-service-utils-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/azure-service-utils-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/azure-service-utils-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/azure-service-utils-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./fruit": {
 			"import": {
 				"types": "./lib/azure-service-utils-alpha.d.ts",
 				"default": "./lib/index.js"
@@ -64,8 +44,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "./dist/index.js",
+	"types": "./dist/azure-service-utils-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
