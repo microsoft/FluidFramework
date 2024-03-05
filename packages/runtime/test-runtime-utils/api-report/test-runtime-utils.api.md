@@ -344,11 +344,17 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // @deprecated (undocumented)
     createProps?: any;
     // (undocumented)
+    deleteChildSummarizerNode(id: string): void;
+    // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
+    // (undocumented)
+    readonly gcThrowOnTombstoneUsage = false;
+    // (undocumented)
+    readonly gcTombstoneEnforcementAllowed = false;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
