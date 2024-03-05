@@ -2598,7 +2598,9 @@ export class ContainerRuntime
 	): Promise<IFluidHandle<FluidObject> | undefined> {
 		await this.channelCollection.waitIfPendingAlias(alias);
 		const internalId = this.internalId(alias);
-		const context = await this.channelCollection.getDataStoreIfAvailable(internalId, { wait: false });
+		const context = await this.channelCollection.getDataStoreIfAvailable(internalId, {
+			wait: false,
+		});
 		// If the data store is not available or not an alias, return undefined.
 		if (context === undefined || !(await context.isRoot())) {
 			return undefined;
@@ -2633,7 +2635,12 @@ export class ContainerRuntime
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.channelCollection.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
+		return this.channelCollection.createDetachedDataStoreCore(
+			pkg,
+			false,
+			undefined,
+			loadingGroupId,
+		);
 	}
 
 	public async createDataStore(
