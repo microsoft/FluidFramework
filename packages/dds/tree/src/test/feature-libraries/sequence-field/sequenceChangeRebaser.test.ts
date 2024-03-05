@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
@@ -12,6 +13,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	RevisionInfo,
+	TaggedChange,
 } from "../../../core/index.js";
 import {
 	BoundFieldChangeRebaser,
@@ -22,6 +24,8 @@ import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js"
 import { TestChange } from "../../testChange.js";
 import { deepFreeze, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -644,13 +648,18 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 };
 
 const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
-	rebase,
+	rebase: (
+		change: TestChangeset,
+		base: TaggedChange<TestChangeset>,
+		metadata?: RebaseRevisionMetadata,
+	): TestChangeset => rebase(change, base, { metadata }),
 	invert,
-	compose: (changes, metadata) => compose(changes, metadata),
+	compose: (change1, change2, metadata) => compose([change1, change2], metadata),
 	rebaseComposed: (metadata, change, ...baseChanges) => {
 		const composedChanges = compose(baseChanges, metadata);
-		return rebase(change, makeAnonChange(composedChanges), metadata);
+		return rebase(change, makeAnonChange(composedChanges), { metadata });
 	},
+	createEmpty: () => [],
 	assertEqual: (change1, change2) => {
 		if (change1 === undefined && change2 === undefined) {
 			return true;
@@ -669,7 +678,8 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 
 export function testStateBasedRebaserAxioms() {
 	describe("State-based Rebaser Axioms", () => {
-		describe("Lineage Method", () => {
+		describeStress("Lineage Method", function ({ isStress }) {
+			this.timeout(isStress ? 60_000 : 5000);
 			const allocator = idAllocatorFromMaxId();
 			const startingLength = 2;
 			const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -689,12 +699,13 @@ export function testStateBasedRebaserAxioms() {
 				fieldRebaser,
 				{
 					groupSubSuites: true,
-					numberOfEditsToVerifyAssociativity: 3,
+					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
 			);
 		});
-		describe("Tombstone Method", () => {
+		describeStress("Tombstone Method", function ({ isStress }) {
+			this.timeout(isStress ? 60_000 : 5000);
 			const allocator = idAllocatorFromMaxId();
 			const startingLength = 2;
 			const startingState: NodeState[] = makeArray(startingLength, () => ({
@@ -714,7 +725,7 @@ export function testStateBasedRebaserAxioms() {
 				fieldRebaser,
 				{
 					groupSubSuites: true,
-					numberOfEditsToVerifyAssociativity: 3,
+					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
 				},
 			);

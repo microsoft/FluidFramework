@@ -4,6 +4,7 @@
  */
 
 import {
+	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
 	ITokenRevocationManager,
@@ -22,4 +23,5 @@ export interface INexusResourcesCustomizations {
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;
 	serviceMessageResourceManager?: IServiceMessageResourceManager;
+	clusterDrainingChecker?: IClusterDrainingChecker;
 }

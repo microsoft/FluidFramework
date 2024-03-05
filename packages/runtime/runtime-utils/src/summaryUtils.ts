@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	bufferToString,
 	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
 } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	ITree,
@@ -128,18 +128,6 @@ export function addBlobToSummary(
 	summary.summary.tree[key] = blob;
 	summary.stats.blobNodeCount++;
 	summary.stats.totalBlobSize += getBlobSize(content);
-}
-
-/**
- * @internal
- */
-export function addTreeToSummary(
-	summary: ISummaryTreeWithStats,
-	key: string,
-	summarizeResult: ISummarizeResult,
-): void {
-	summary.summary.tree[key] = summarizeResult.summary;
-	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
 }
 
 /**
@@ -265,6 +253,7 @@ export function convertToSummaryTreeWithStats(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -326,6 +315,7 @@ export function convertSnapshotTreeToSummaryTree(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -372,19 +362,59 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
+}
+
+/**
+ * Looks in the given attach message snapshot for the .gcdata blob, which would
+ * contain the initial GC Data for the node being attached.
+ * If it finds it, it notifies GC of all the new outbound routes being added by the attach.
+ *
+ * @param snapshot - The snapshot from the attach message
+ * @param addedGCOutboundRoute - Callback to notify GC of a new outbound route.
+ * IMPORTANT: addedGCOutboundRoute's param nodeId is "/" for the attaching node itself, or "/<id>" for its children.
+ *
+ * @returns true if it found/processed GC Data, false otherwise
+ *
+ * @internal
+ */
+export function processAttachMessageGCData(
+	snapshot: ITree | null,
+	addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void,
+): boolean {
+	const gcDataEntry = snapshot?.entries.find((e) => e.path === ".gcdata");
+
+	// Old attach messages won't have GC Data
+	// (And REALLY old DataStore Attach messages won't even have a snapshot!)
+	if (gcDataEntry === undefined) {
+		return false;
+	}
+
+	assert(
+		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
+		"GC data should be a utf-8-encoded blob",
+	);
+
+	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;
+	for (const [nodeId, outboundRoutes] of Object.entries(gcData.gcNodes)) {
+		outboundRoutes.forEach((toPath) => {
+			addedGCOutboundRoute(nodeId, toPath);
+		});
+	}
+	return true;
 }
 
 /**
  * @internal
  */
 export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+	private readonly telemetry = new Map<string, TelemetryBaseEventPropertyType>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
@@ -394,7 +424,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -405,7 +435,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType {
+	get(prefix: string, property: string): TelemetryBaseEventPropertyType {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 

@@ -34,7 +34,7 @@ import { Multiplicity } from "../multiplicity.js";
  */
 export const noChangeHandler: FieldChangeHandler<0> = {
 	rebaser: referenceFreeFieldChangeRebaser({
-		compose: (changes: 0[]) => 0,
+		compose: (change1: 0, change2: 0) => 0,
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
 	}),
@@ -43,6 +43,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
+	createEmpty: () => 0,
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {

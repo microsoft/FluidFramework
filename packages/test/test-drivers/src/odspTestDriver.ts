@@ -22,7 +22,7 @@ import {
 	getDriveId,
 	getDriveItemByRootFileName,
 	IClientConfig,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
 import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
 

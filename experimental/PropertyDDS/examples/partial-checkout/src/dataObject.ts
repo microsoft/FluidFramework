@@ -3,21 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { SharedPropertyTree, PropertyTreeFactory } from "@fluid-experimental/property-dds";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IDirectory, IValueChanged } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { SharedPropertyTree, PropertyTreeFactory } from "@fluid-experimental/property-dds";
-import { IDirectory, ISharedDirectory, IValueChanged, SharedDirectory } from "@fluidframework/map";
 
-import {
-	LazyLoadedDataObject,
-	LazyLoadedDataObjectFactory,
-} from "@fluidframework/data-object-base";
 import { BaseProperty, NodeProperty } from "@fluid-experimental/property-properties";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 export interface IPropertyTree extends EventEmitter {
 	pset: NodeProperty;
@@ -57,10 +53,8 @@ const directoryWait = async <T = any>(directory: IDirectory, key: string): Promi
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> implements IPropertyTree {
+export class PropertyTree extends DataObject implements IPropertyTree {
 	private _tree?: SharedPropertyTree;
-	private _queryString: string | undefined;
-	private _existing: boolean = false;
 
 	stopTransmission(stopped: boolean): void {
 		this._tree?.stopTransmission(stopped);
@@ -77,18 +71,10 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
 				this.root,
 				propertyKey,
 			);
-			if (this._queryString !== undefined) {
-				// The absolutePath of the DDS should not be updated. Instead, a new handle can be created with the new
-				// path. To be fixed with this issue - https://github.com/microsoft/FluidFramework/issues/6036
-				(treeHandle as any).absolutePath += `?${this._queryString}`;
-			}
 			this._tree = await treeHandle.get();
 		} else {
 			if (this._tree === undefined) {
-				this.root.set(
-					propertyKey,
-					SharedPropertyTree.create(this.runtime, undefined, this._queryString).handle,
-				);
+				this.root.set(propertyKey, SharedPropertyTree.create(this.runtime).handle);
 				this._tree = await this.root
 					.get<IFluidHandle<SharedPropertyTree>>(propertyKey)
 					?.get();
@@ -98,6 +84,14 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
 		this.tree.on("localModification", (changeSet: any) => {
 			this.emit("changeSetModified", changeSet);
 		});
+	}
+
+	protected async initializingFirstTime(props?: any): Promise<void> {
+		return this.initialize(false);
+	}
+
+	protected async initializingFromExisting(): Promise<void> {
+		return this.initialize(true);
 	}
 
 	public get tree() {
@@ -123,38 +117,15 @@ export class PropertyTree extends LazyLoadedDataObject<ISharedDirectory> impleme
 		// return PropertyTreeRoot.factory.create(parentContext, props);
 		throw new Error("Not yet implemented");
 	}
-
-	public create() {
-		/* this.initialize(false); */
-		console.log("A");
-	}
-	public async load(
-		_context: IFluidDataStoreContext,
-		_runtime: IFluidDataStoreRuntime,
-		existing: boolean,
-	) {
-		this._existing = existing;
-		/* this.initialize(true); */
-		console.log("B");
-	}
-
-	public async request(request: IRequest): Promise<IResponse> {
-		const url = request.url;
-		console.log(url);
-		this._queryString = url.split("?")[1];
-		await this.initialize(this._existing);
-		return super.request(request);
-	}
 }
 
 /**
  * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
  * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
  */
-export const PropertyTreeInstantiationFactory = new LazyLoadedDataObjectFactory<PropertyTree>(
+export const PropertyTreeInstantiationFactory = new DataObjectFactory<PropertyTree>(
 	"property-tree",
 	PropertyTree,
-	SharedDirectory.getFactory(),
 	[new PropertyTreeFactory()],
-	[],
+	{},
 );

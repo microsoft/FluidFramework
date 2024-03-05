@@ -14,7 +14,7 @@ import {
 	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
 	leaf,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 

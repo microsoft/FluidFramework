@@ -250,6 +250,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				clientType: "noninteractive/summarizer",
 				error: "NodeDidNotRunGC",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
 		],
 		async () => {
 			const container = await createContainer(provider);
@@ -294,6 +299,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				clientType: "noninteractive/summarizer",
+				error: "NodeDidNotRunGC",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
 				clientType: "noninteractive/summarizer",
 				error: "NodeDidNotRunGC",
 			},
@@ -342,6 +352,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				clientType: "noninteractive/summarizer",
 				error: "PendingOpsWhileSummarizing",
 				beforeGenerate: true,
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
 			},
 		],
 		async () => {
@@ -409,6 +424,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				clientType: "noninteractive/summarizer",
 				error: "PendingOpsWhileSummarizing",
 				beforeGenerate: false,
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
 			},
 		],
 		async () => {
@@ -574,6 +594,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				finalAttempt: true,
 				error: "PendingOpsWhileSummarizing",
 			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "PendingOpsWhileSummarizing",
+			},
 		],
 		async () => {
 			configProvider.set("Fluid.Summarizer.UseDynamicRetries", true);
@@ -715,6 +740,11 @@ describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvid
 				clientType: "noninteractive/summarizer",
 				error: "Mixed-in summary handler threw!",
 				errorType: "dataProcessingError",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed",
+				clientType: "noninteractive/summarizer",
+				error: "Mixed-in summary handler threw!",
 			},
 		],
 		async () => {

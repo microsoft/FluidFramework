@@ -34,12 +34,13 @@ export {
 } from "./dataStoreRegistry";
 export {
 	gcBlobPrefix,
+	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "./garbageCollection";
+} from "./garbageCollectionDefinitions";
 export {
 	IAttachMessage,
 	IEnvelope,

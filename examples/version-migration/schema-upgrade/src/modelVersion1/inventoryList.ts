@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";

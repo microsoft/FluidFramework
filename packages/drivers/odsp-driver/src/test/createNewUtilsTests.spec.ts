@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
@@ -14,16 +15,16 @@ import {
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
-import { createNewFluidFile } from "../createFile";
-import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
-import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
-import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils";
-import { LocalPersistentCache } from "../odspCache";
-import { mockFetchOk } from "./mockFetch";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
+import { createNewFluidFile } from "../createFile.js";
+import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
+import { EpochTracker } from "../epochTracker.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { mockFetchOk } from "./mockFetch.js";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
@@ -31,7 +32,7 @@ describe("Create New Utils Tests", () => {
 		sequenceNumber: 0,
 	};
 	const blobContent = "testing";
-	const createSummary = () => {
+	const createSummary = (): api.ISummaryTree => {
 		const summary: api.ISummaryTree = {
 			type: api.SummaryType.Tree,
 			tree: {},
@@ -66,7 +67,7 @@ describe("Create New Utils Tests", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	const filePath = "path";
 	let newFileParams: INewFileInfo;
 	let hashedDocumentId: string;
@@ -106,14 +107,14 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	const test = (snapshot: ISnapshotContents) => {
+	const test = (snapshot: ISnapshot): void => {
 		const snapshotTree = snapshot.snapshotTree;
 		assert.strictEqual(
 			Object.entries(snapshotTree.trees).length,
 			2,
 			"app and protocol should be there",
 		);
-		assert.strictEqual(snapshot.blobs.size, 2, "2 blobs should be there");
+		assert.strictEqual(snapshot.blobContents.size, 2, "2 blobs should be there");
 
 		const appTree = snapshotTree.trees[".app"];
 		const protocolTree = snapshotTree.trees[".protocol"];
@@ -121,13 +122,13 @@ describe("Create New Utils Tests", () => {
 		assert(protocolTree !== undefined, "Protocol tree should be there");
 
 		const appTreeBlobId = appTree.blobs.attributes;
-		const appTreeBlobValBuffer = snapshot.blobs.get(appTreeBlobId);
+		const appTreeBlobValBuffer = snapshot.blobContents.get(appTreeBlobId);
 		assert(appTreeBlobValBuffer !== undefined, "app blob value should exist");
 		const appTreeBlobVal = bufferToString(appTreeBlobValBuffer, "utf8");
 		assert(appTreeBlobVal === blobContent, "Blob content should match");
 
 		const docAttributesBlobId = protocolTree.blobs.attributes;
-		const docAttributesBuffer = snapshot.blobs.get(docAttributesBlobId);
+		const docAttributesBuffer = snapshot.blobContents.get(docAttributesBlobId);
 		assert(docAttributesBuffer !== undefined, "protocol attributes blob value should exist");
 		const docAttributesBlobValue = bufferToString(docAttributesBuffer, "utf8");
 		assert(
@@ -160,7 +161,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});
@@ -187,7 +190,9 @@ describe("Create New Utils Tests", () => {
 			{ itemId: "itemId1", id: "Summary handle" },
 			{ "x-fluid-epoch": "epoch1" },
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const snapshot = await epochTracker.get(createCacheSnapshotKey(odspResolvedUrl));
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		test(snapshot);
 		await epochTracker.removeEntries().catch(() => {});
 	});

@@ -14,8 +14,8 @@ import {
 	runMergeTreeOperationRunner,
 	TestOperation,
 	generateClientNames,
-} from "./mergeTreeOperationRunner";
-import { TestClient } from "./testClient";
+} from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
 
 interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 	minLength: IConfigRange;

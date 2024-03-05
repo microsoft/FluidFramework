@@ -6,6 +6,7 @@
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICollection, ICheckpointRepository } from "./database";
 import { ICheckpoint, IDeliState, IScribe } from "./document";
+import { runWithRetry } from "./runWithRetry";
 
 /**
  * @internal
@@ -34,11 +35,39 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 			return;
 		}
 		const pointReadFilter = this.composePointReadFilter(documentId, tenantId);
-		await this.collection.upsert(
+		const lumberProperties = {
+			...getLumberBaseProperties(documentId, tenantId),
 			pointReadFilter,
-			{ [this.checkpointType]: JSON.stringify(checkpoint) },
-			null,
-		);
+			checkpointType: this.checkpointType,
+		};
+		try {
+			// Duplicate key errors have occurred when 2 upsert() occur at the same time for the same document
+			// retry to allow both checkpoints
+			await runWithRetry(
+				async () =>
+					this.collection.upsert(
+						pointReadFilter,
+						{ [this.checkpointType]: JSON.stringify(checkpoint) },
+						null,
+					),
+				"checkpointRepository_writeCheckpoint",
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* ignoreError */,
+				(error) => {
+					// should retry if duplicate key error
+					return (
+						error.code === 11000 ||
+						error.message?.toString()?.indexOf("E11000 duplicate key") >= 0
+					);
+				},
+			);
+		} catch (error: any) {
+			const err = new Error(`Checkpoint upsert error:  ${error.message?.substring(0, 30)}`);
+			Lumberjack.error("Unexpected error when writing checkpoint", lumberProperties, err);
+			throw error;
+		}
 	}
 
 	async removeServiceCheckpoint(documentId, tenantId): Promise<void> {
@@ -62,6 +91,19 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		documentId: string,
 		tenantId: string,
 	): { _id: string; documentId: string } & any {
+		const isError = !documentId || !tenantId;
+
+		if (isError) {
+			const error = new Error(`Cannot create filter due to missing parameter`);
+			Lumberjack.error(
+				"Missing parameter when writing checkpoint.",
+				{
+					...getLumberBaseProperties(documentId, tenantId),
+				},
+				error,
+			);
+		}
+
 		return { _id: documentId + tenantId, documentId };
 	}
 }

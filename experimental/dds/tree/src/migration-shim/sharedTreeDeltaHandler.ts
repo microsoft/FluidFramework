@@ -50,7 +50,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// Drop v1 ops
 		assert(this.hasTreeDeltaHandler(), 0x831 /* Can't process ops before attaching tree handler */);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+
 		if (message.type !== MessageType.Operation) {
 			return;
 		}
@@ -76,11 +76,12 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	}
 
 	// We are not capable of applying stashed v1 ops.
-	public applyStashedOp(contents: unknown): unknown {
-		if (this.shouldDropOp(contents as IOpContents)) {
-			return;
-		}
-		return this.handler.applyStashedOp(contents);
+	public applyStashedOp(contents: unknown): void {
+		assert(
+			!this.shouldDropOp(contents as IOpContents),
+			"SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally."
+		);
+		this.handler.applyStashedOp(contents);
 	}
 
 	/**

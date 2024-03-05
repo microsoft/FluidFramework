@@ -10,34 +10,75 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedStringFactory } from "../sequenceFactory";
+// eslint-disable-next-line import/no-internal-modules
+import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/test";
 import { SharedString } from "../sharedString";
 import { IntervalStickiness } from "../intervals";
 import { Side } from "../intervalCollection";
-import { assertConsistent, Client } from "./intervalTestUtils";
+import { SharedStringFactory } from "../sequenceFactory";
+import { assertConsistent, assertSequenceIntervals, Client } from "./intervalTestUtils";
+
+function constructClient(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	id: string,
+) {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = {
+		intervalStickinessEnabled: true,
+		mergeTreeEnableObliterate: true,
+	};
+	const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	};
+
+	sharedString.initializeLocal();
+
+	return {
+		sharedString,
+		containerRuntime,
+		services,
+	};
+}
+
+async function loadClient(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	source: Client,
+	id: string,
+): Promise<Client> {
+	const { summary } = source.sharedString.getAttachSummary();
+
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = {
+		intervalStickinessEnabled: true,
+		mergeTreeEnableObliterate: true,
+	};
+	const factory = SharedString.getFactory();
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: MockStorage.createFromSummary(summary),
+	};
+	const sharedString = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+
+	return {
+		sharedString,
+		containerRuntime,
+	};
+}
 
 function constructClients(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	numClients = 3,
 ): [Client, Client, Client] {
 	return Array.from({ length: numClients }, (_, index) => {
-		const dataStoreRuntime = new MockFluidDataStoreRuntime();
-		dataStoreRuntime.options = {
-			intervalStickinessEnabled: true,
-			mergeTreeEnableObliterate: true,
-		};
-		const sharedString = new SharedString(
-			dataStoreRuntime,
+		const { sharedString, containerRuntime, services } = constructClient(
+			containerRuntimeFactory,
 			String.fromCharCode(index + 65),
-			SharedStringFactory.Attributes,
 		);
-		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-		const services: IChannelServices = {
-			deltaConnection: dataStoreRuntime.createDeltaConnection(),
-			objectStorage: new MockStorage(),
-		};
 
-		sharedString.initializeLocal();
 		sharedString.connect(services);
 		return { containerRuntime, sharedString };
 	}) as [Client, Client, Client];
@@ -46,6 +87,8 @@ function constructClients(
 describe("interval rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
 	let clients: [Client, Client, Client];
+
+	useStrictPartialLengthChecks();
 
 	beforeEach(() => {
 		containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
@@ -90,8 +133,8 @@ describe("interval rebasing", () => {
 	});
 
 	it("does not crash when interval is removed before reconnect when string is concurrently removed", () => {
-		clients[0].sharedString.insertText(0, "a");
-		clients[1].sharedString.insertText(0, "a");
+		clients[0].sharedString.insertText(0, "A");
+		clients[1].sharedString.insertText(0, "B");
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 		clients[0].containerRuntime.connected = false;
@@ -118,9 +161,7 @@ describe("interval rebasing", () => {
 		collection_0.add({
 			start: 20,
 			end: 20,
-			props: {
-				intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
-			},
+			props: { intervalId: "0" },
 		});
 		clients[2].sharedString.removeRange(13, 15);
 		containerRuntimeFactory.processAllMessages();
@@ -179,9 +220,7 @@ describe("interval rebasing", () => {
 		collection_0.add({
 			start: 0,
 			end: 1,
-			props: {
-				intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
-			},
+			props: { intervalId: "0" },
 		});
 
 		containerRuntimeFactory.processAllMessages();
@@ -197,9 +236,7 @@ describe("interval rebasing", () => {
 		collection_0.add({
 			start: 0,
 			end: 0,
-			props: {
-				intervalId: "1",
-			},
+			props: { intervalId: "1" },
 		});
 		clients[1].sharedString.insertText(0, "BCD");
 		clients[1].sharedString.removeRange(0, 1);
@@ -218,6 +255,8 @@ describe("interval rebasing", () => {
 
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "CE");
 	});
 
 	it("is consistent for full stickiness", () => {
@@ -273,6 +312,81 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = true;
 
 		assert.equal(clients[0].sharedString.getText(), "");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("zamboni avoids modifying segments with pending interval changes", () => {
+		// C-AB
+		// D-C-AB
+		// E-HIJ-FG-D-C-AB
+		//   ^----------^
+		clients[2].sharedString.insertText(0, "AB");
+		clients[0].sharedString.insertText(0, "C");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = false;
+		clients[2].sharedString.insertText(0, "D");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[2].sharedString.insertText(0, "E");
+		clients[1].sharedString.insertText(0, "FG");
+		clients[1].sharedString.insertText(0, "HIJ");
+		clients[0].containerRuntime.connected = false;
+		const collection_0 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_0.add({ start: 0, end: 7 });
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].containerRuntime.connected = true;
+	});
+
+	it("zamboni avoids modifying segments with pending interval changes through multiple reconnects", async () => {
+		// Note: the specifics of the attach flow shouldn't be necessary here to reproduce this issue.
+		// All that's necessary is that the "R" segment is zamboni'd.
+		// However, due to zamboni's fragility, some care needs to be taken for that to happen.
+		// See AB#7048 for more details.
+		const A = constructClient(containerRuntimeFactory, "A");
+		A.sharedString.insertText(0, "Rr");
+		A.sharedString.connect(A.services);
+		const B = await loadClient(containerRuntimeFactory, A, "B");
+		B.sharedString.removeRange(0, 1);
+		const collection = A.sharedString.getIntervalCollection("comments");
+		collection.add({ start: { pos: 1, side: Side.After }, end: { pos: 0, side: Side.Before } });
+		A.containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		B.sharedString.insertText(0, "8");
+		A.containerRuntime.connected = true;
+		A.containerRuntime.connected = false;
+		B.sharedString.insertText(0, "J");
+		containerRuntimeFactory.processAllMessages();
+		A.containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent([A, B]);
+	});
+
+	// Reproduction of seed 70. Appears to be some problem with normalization of segments interacting
+	// with sliding logic on reconnect. The ordering of the 22222 and 11 segments is not consistent
+	// across clients even when in the collab window, and the local reference gets put on this segment.
+	// So clients[0] disagrees with the others about where the reference slides.
+	it.skip("AB#6552", () => {
+		// Note: all 3 clients submit edits. When debugging this test, it might be helpful to
+		// add a 4th client that doesn't submit any edits. E.g.:
+		// clients = constructClients(containerRuntimeFactory, 4);
+		clients[0].sharedString.insertText(0, "000");
+		containerRuntimeFactory.processAllMessages();
+		clients[0].containerRuntime.connected = false;
+		clients[1].containerRuntime.connected = false;
+		clients[1].sharedString.insertText(0, "11");
+		clients[0].sharedString.insertText(1, "22222");
+		clients[0].sharedString
+			.getIntervalCollection("test collection")
+			.add({ start: { pos: 1, side: Side.After }, end: { pos: 1, side: Side.After } });
+		clients[0].sharedString.removeRange(0, 6);
+		clients[2].sharedString.removeRange(0, 2);
+		containerRuntimeFactory.processAllMessages();
+		clients[0].sharedString.insertText(1, "3");
+		clients[1].containerRuntime.connected = true;
+		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
@@ -428,5 +542,137 @@ describe("interval rebasing", () => {
 		clients[0].containerRuntime.connected = true;
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
+	});
+
+	// todo: potentially related to AB#7050
+	//
+	// this is a reduced fuzz test from the suite
+	// `SharedString with rebasing and reconnect`
+	it.skip("...", async () => {
+		const A = constructClient(containerRuntimeFactory, "A");
+
+		A.sharedString.insertText(0, "ABCDEF");
+		A.sharedString.insertText(0, "GHIJ");
+		A.sharedString.insertText(0, "KLMNO");
+		A.sharedString.insertText(0, "PQRST");
+
+		// attach
+		A.sharedString.connect(A.services);
+		const B = await loadClient(containerRuntimeFactory, A, "B");
+
+		A.sharedString.insertText(0, "UVWXYZ");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent([A, B]);
+		B.sharedString.insertText(26, "1");
+		A.sharedString.removeRange(0, 1);
+		B.containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent([A, B]);
+		B.containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent([A, B]);
+	});
+
+	it("slides to correct segment when inserting segment while disconnected after changing interval", () => {
+		// B-A
+		//   ^
+		clients[0].sharedString.insertText(0, "A");
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_0.add({ start: 0, end: 0, props: { intervalId: "0" } });
+		collection_0.change("0", { start: 0, end: 0 });
+		clients[0].containerRuntime.connected = false;
+		clients[0].sharedString.insertText(0, "B");
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "BA");
+
+		assertSequenceIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: 1, end: 1 }],
+		);
+	});
+
+	it("changing interval to concurrently deleted segment detaches interval", () => {
+		// B-A
+		// ^
+		// (B)-A
+		//     ^
+		// (B)-(A)-C
+		//         ^
+		clients[0].sharedString.insertText(0, "A");
+		clients[2].sharedString.insertText(0, "B");
+		const collection_0 = clients[2].sharedString.getIntervalCollection("comments");
+		collection_0.add({ start: 0, end: 0, props: { intervalId: "0" } });
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].sharedString.removeRange(0, 1);
+		clients[0].containerRuntime.connected = false;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[1].sharedString.removeRange(0, 1);
+		const collection_1 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_1.change("0", { start: 0, end: 0 });
+		clients[2].sharedString.insertText(0, "C");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "C");
+
+		assertSequenceIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: 0, end: 0 }],
+		);
+	});
+
+	it("changing interval endpoint while disconnected to segment also inserted while disconnected", () => {
+		// AC
+		// A-B-C
+		clients[0].sharedString.insertText(0, "AC");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_0.add({ start: 0, end: 0, props: { intervalId: "0" } });
+		clients[0].containerRuntime.connected = false;
+		clients[0].sharedString.insertText(1, "B");
+		collection_0.change("0", { start: 1, end: 1 });
+		clients[0].containerRuntime.connected = true;
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "ABC");
+
+		assertSequenceIntervals(
+			clients[0].sharedString,
+			clients[0].sharedString.getIntervalCollection("comments"),
+			[{ start: 1, end: 1 }],
+		);
+	});
+
+	it("delete and insert text into range containing interval while disconnected", async () => {
+		// 012
+		// (0)-x-12
+		clients[0].containerRuntime.connected = false;
+		const intervals = clients[0].sharedString.getIntervalCollection("comments");
+		clients[0].sharedString.insertText(0, "012");
+		intervals.add({ start: 0, end: 2, props: { intervalId: "0" } });
+		assertSequenceIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
+
+		clients[0].sharedString.insertText(1, "x");
+		clients[0].sharedString.removeRange(0, 1);
+		clients[0].containerRuntime.connected = true;
+
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+
+		assert.equal(clients[0].sharedString.getText(), "x12");
+
+		assertSequenceIntervals(clients[0].sharedString, intervals, [{ start: 0, end: 2 }]);
 	});
 });

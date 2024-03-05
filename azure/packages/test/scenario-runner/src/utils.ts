@@ -19,13 +19,13 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
 
-import { ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface";
 
 export interface AzureClientConfig {
 	userId?: string;
 	userName?: string;
-	logger?: ITelemetryLogger;
+	logger?: ITelemetryLoggerExt;
 }
 
 export const delay = async (timeMs: number): Promise<void> =>

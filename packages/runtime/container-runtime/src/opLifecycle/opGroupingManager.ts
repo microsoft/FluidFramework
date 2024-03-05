@@ -7,8 +7,8 @@ import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType } from "../messageTypes";
-import { IBatch } from "./definitions";
+import { ContainerMessageType } from "../messageTypes.js";
+import { IBatch } from "./definitions.js";
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -96,21 +96,12 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		let fakeCsn = 1;
 		if (!isGroupContents(op.contents)) {
-			// Align the worlds of what clientSequenceNumber represents when grouped batching is enabled
-			if (this.config.groupedBatchingEnabled) {
-				return [
-					{
-						...op,
-						clientSequenceNumber: fakeCsn,
-					},
-				];
-			}
 			return [op];
 		}
 
 		const messages = op.contents.contents;
+		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,

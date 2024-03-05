@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { deltaEncoder } from "../encoders";
+import { strict as assert } from "node:assert";
+import { deltaEncoder } from "../encoders.js";
 
 describe("deltaEncoder", () => {
 	const cases: { name: string; data: number[]; expected: number[] }[] = [

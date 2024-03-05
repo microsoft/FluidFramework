@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -16,8 +16,8 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
-import { SharedCell } from "@fluidframework/cell";
+import type { ISharedMap, IValueChanged, SharedDirectory } from "@fluidframework/map";
+import type { SharedCell } from "@fluidframework/cell";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
@@ -28,7 +28,9 @@ const cellId = "cellKey";
 const mapId = "mapKey";
 
 describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory } = apis.dds;
+	const { SharedMap, SharedDirectory, SharedString, SharedCell } = apis.dds;
+	const { SequenceDeltaEvent } = apis.dataRuntime.packages.sequence;
+
 	const registry: ChannelFactoryRegistry = [
 		[stringId, SharedString.getFactory()],
 		[string2Id, SharedString.getFactory()],
@@ -52,7 +54,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 	let sharedString2: SharedString;
 	let sharedDir: SharedDirectory;
 	let sharedCell: SharedCell;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 	let changedEventData: (IValueChanged | Serializable<unknown>)[];
 	let containerRuntime: ContainerRuntime;
 	let error: Error | undefined;
@@ -77,7 +79,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
 		sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
-		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];

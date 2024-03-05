@@ -23,8 +23,8 @@ import {
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
-import { ReadDocumentStorageServiceBase } from "./replayController";
+import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
+import { ReadDocumentStorageServiceBase } from "./replayController.js";
 
 /**
  * Structure of snapshot on disk, when we store snapshot as single file
@@ -140,23 +140,6 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		return this.storage.readBlob(blobId);
-	}
-}
-
-/**
- * @internal
- */
-export class OpStorage extends ReadDocumentStorageServiceBase {
-	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-		return [];
-	}
-
-	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-		throw new Error("no snapshot tree should be asked when playing ops");
-	}
-
-	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		throw new Error(`Unknown blob ID: ${blobId}`);
 	}
 }
 

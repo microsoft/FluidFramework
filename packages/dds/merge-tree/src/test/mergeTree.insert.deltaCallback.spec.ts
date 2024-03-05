@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
-import { MergeTree } from "../mergeTree";
-import { MergeTreeDeltaType, ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { countOperations, insertMarker, insertSegments, insertText } from "./testUtils";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
+import { MergeTree } from "../mergeTree.js";
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+import { countOperations, insertMarker, insertSegments, insertText } from "./testUtils.js";
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;

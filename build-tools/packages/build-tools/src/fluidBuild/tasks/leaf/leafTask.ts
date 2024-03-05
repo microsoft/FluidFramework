@@ -537,6 +537,7 @@ export class UnknownLeafTask extends LeafTask {
 			return true;
 		}
 		// Because we don't know, it is always out of date and need to rebuild
+		this.traceTrigger("Unknown task");
 		return false;
 	}
 }

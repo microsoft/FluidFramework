@@ -5,7 +5,7 @@
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IOdspTokenProvider } from "./token";
+import { IOdspTokenProvider } from "./token.js";
 
 /**
  * Defines the necessary properties that will be applied to all containers
@@ -52,6 +52,21 @@ export interface OdspClientProps {
 	 * Base interface for providing configurations to control experimental features. If unsure, leave this undefined.
 	 */
 	readonly configProvider?: IConfigProviderBase;
+}
+
+/**
+ * @alpha
+ */
+export interface OdspContainerAttachProps {
+	/**
+	 * The file path where Fluid containers are created. If undefined, the file is created at the root.
+	 */
+	filePath: string | undefined;
+
+	/**
+	 * The file name of the Fluid file. If undefined, the file is named with a GUID.
+	 */
+	fileName: string | undefined;
 }
 
 /**

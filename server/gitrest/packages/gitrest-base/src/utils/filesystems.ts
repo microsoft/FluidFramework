@@ -4,7 +4,7 @@
  */
 
 import fs from "node:fs";
-import { Redis as IoRedis, RedisOptions as IoRedisOptions } from "ioredis";
+import { Redis as IoRedis, RedisOptions as IoRedisOptions, type Cluster } from "ioredis";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
 import {
@@ -32,14 +32,17 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 	private readonly redisParams: RedisParams;
 	private readonly redisOptions: IoRedisOptions;
 	private readonly redisFsConfig: RedisFsConfig;
+	private readonly enableClustering: boolean;
+
 	constructor(
 		config: Provider,
-		private readonly createRedisClient?: (options: IoRedisOptions) => IoRedis,
+		private readonly createRedisClient?: (options: IoRedisOptions) => IoRedis | Cluster,
 	) {
 		this.redisFsConfig = {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
 			redisApiMetricsSamplingPeriod:
 				(config.get("git:redisApiMetricsSamplingPeriod") as number) ?? 0,
+			enableOptimizedStat: (config.get("git:enableRedisFsOptimizedStat") as boolean) ?? false,
 		};
 		const redisConfig = config.get("redis");
 		this.redisOptions = {
@@ -50,6 +53,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig.enableOfflineQueue,
+			retryStrategy: (attempts: number) => Math.min(attempts * 50, 2000),
 		};
 		if (redisConfig.enableAutoPipelining) {
 			/**
@@ -70,7 +74,11 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 		this.redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			enableHashmapRedisFs,
+			enableRedisMetrics: this.redisFsConfig.enableRedisFsMetrics,
+			redisApiMetricsSamplingPeriod: this.redisFsConfig.redisApiMetricsSamplingPeriod,
 		};
+
+		this.enableClustering = redisConfig.enableClustering;
 	}
 
 	public create(fsManagerParams?: IFileSystemManagerParams): IFileSystemManager {
@@ -80,6 +88,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			this.redisFsConfig,
 			fsManagerParams,
 			this.createRedisClient,
+			this.enableClustering,
 		);
 	}
 }

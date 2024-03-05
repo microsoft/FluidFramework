@@ -2,10 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
-import { Attributor, IAttributor } from "../attributor";
-import { AttributorSerializer, chain, Encoder, SerializedAttributor } from "../encoders";
+import { strict as assert } from "node:assert";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions";
+
+import { Attributor, type IAttributor } from "../attributor.js";
+import {
+	AttributorSerializer,
+	chain,
+	type Encoder,
+	type SerializedAttributor,
+} from "../encoders.js";
+import { type InternedStringId } from "../stringInterner.js";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
 	return {
@@ -21,13 +28,13 @@ describe("AttributorSerializer", () => {
 				[1, { user: { id: "a" }, timestamp: 500 }],
 				[2, { user: { id: "a" }, timestamp: 6001 }],
 			]);
-			const calls: any[] = [];
+			const calls: unknown[] = [];
 			const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
-				encode: (x) => {
+				encode: (x): number[] => {
 					calls.push(x);
 					return x;
 				},
-				decode: (x) => x,
+				decode: (x): number[] => x,
 			});
 			assert.equal(calls.length, 0);
 			serializer.encode(attributor);
@@ -36,10 +43,10 @@ describe("AttributorSerializer", () => {
 		});
 
 		it("on decode", () => {
-			const calls: any[] = [];
+			const calls: unknown[] = [];
 			const serializer = new AttributorSerializer((entries) => new Attributor(entries), {
-				encode: (x) => x,
-				decode: (x) => {
+				encode: (x): number[] => x,
+				decode: (x): number[] => {
 					calls.push(x);
 					return x;
 				},
@@ -48,7 +55,7 @@ describe("AttributorSerializer", () => {
 				interner: ["a"],
 				seqs: [1, 2],
 				timestamps: [501, 604],
-				attributionRefs: [0, 0] as any[],
+				attributionRefs: [0 as InternedStringId, 0 as InternedStringId],
 			};
 
 			assert.equal(calls.length, 0);
@@ -86,7 +93,7 @@ describe("AttributorSerializer", () => {
 
 		for (const { name, entries } of testCases) {
 			it(name, () => {
-				const calls: any[] = [];
+				const calls: unknown[] = [];
 				let retVal: IAttributor | undefined;
 				const serializer = new AttributorSerializer((providedEntries) => {
 					calls.push(providedEntries);
@@ -107,12 +114,12 @@ describe("chain", () => {
 	it("correctly chains encoders", () => {
 		const encodeCalls: string[] = [];
 		const decodeCalls: string[] = [];
-		const makeLoggingChain = <T>(tag: string) => ({
-			encode: (s: T) => {
+		const makeLoggingChain = <T>(tag: string): Encoder<T, T> => ({
+			encode: (s: T): T => {
 				encodeCalls.push(tag);
 				return s;
 			},
-			decode: (s: T) => {
+			decode: (s: T): T => {
 				decodeCalls.push(tag);
 				return s;
 			},

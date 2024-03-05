@@ -38,23 +38,23 @@ import {
 	DeltaRoot,
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
-	RevisionTagCodec,
 } from "../../../core/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
 import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
 	mintRevisionTag,
 	testChangeReceiver,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import {
 	ModularChangeFamily,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	intoDelta,
+	updateRefreshers,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
@@ -65,10 +65,9 @@ import { ajvValidator } from "../../codec/index.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
-	compose: (changes, composeChild) => composeChild(changes),
+	compose: (change1, change2, composeChild) => composeChild(change1.change, change2.change),
 	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
-	amendCompose: () => fail("Not supported"),
 	prune: (change) => change,
 };
 
@@ -89,6 +88,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		relevantRemovedRootsFromChild(change.change),
 	isEmpty: (change) => change.fieldChanges === undefined,
+	createEmpty: () => ({}),
 };
 
 const singleNodeField = new FieldKindWithEditor(
@@ -106,10 +106,9 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Ma
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
-const revisionTagCodec = new RevisionTagCodec(new MockIdCompressor());
 const family = new ModularChangeFamily(
 	fieldKinds,
-	revisionTagCodec,
+	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
@@ -120,9 +119,6 @@ const tag3: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
-
-const detachId = { minor: 424242 };
-const buildId = { minor: 424243 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -695,6 +691,86 @@ describe("ModularChangeFamily", () => {
 
 			assert.deepEqual(composed, expected);
 		});
+
+		it("refreshers", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
+				},
+				tag1,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+						[tag3, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					]),
+					revisions: [{ revision: tag2 }],
+				},
+				undefined,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				refreshers: new Map([
+					[undefined, new Map([[brand(2), treeChunkFromCursor(node1)]])],
+					[
+						tag3,
+						new Map([
+							[brand(0), treeChunkFromCursor(node1)],
+							[brand(2), treeChunkFromCursor(node1)],
+						]),
+					],
+				]),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
+
+		it("refreshers with the same detached node id", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])],
+					]),
+				},
+				tag1,
+			);
+
+			const change2: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[tag3, new Map([[brand(0), treeChunkFromCursor(objectNode)]])],
+					]),
+					revisions: [{ revision: tag2 }],
+				},
+				undefined,
+			);
+
+			deepFreeze(change1);
+			deepFreeze(change2);
+			const composed = family.compose([change1, change2]);
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map(),
+				refreshers: new Map([[tag3, new Map([[brand(0), treeChunkFromCursor(node1)]])]]),
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
+			};
+
+			assert.deepEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {
@@ -899,6 +975,36 @@ describe("ModularChangeFamily", () => {
 			const actual = intoDelta(change1, family.fieldKinds);
 			assertDeltaEqual(actual, expectedDelta);
 		});
+
+		it("refreshers", () => {
+			const change1: TaggedChange<ModularChangeset> = tagChange(
+				{
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[undefined, new Map([[brand(1), node1Chunk]])],
+						[
+							tag2,
+							new Map([
+								[brand(2), node1Chunk],
+								[brand(3), nodesChunk],
+							]),
+						],
+					]),
+				},
+				tag1,
+			);
+
+			const expectedDelta: DeltaRoot = {
+				refreshers: [
+					{ id: { major: tag1, minor: 1 }, trees: [node1] },
+					{ id: { major: tag2, minor: 2 }, trees: [node1] },
+					{ id: { major: tag2, minor: 3 }, trees: [objectNode, objectNode] },
+				],
+			};
+
+			const actual = intoDelta(change1, family.fieldKinds);
+			assertDeltaEqual(actual, expectedDelta);
+		});
 	});
 
 	describe("relevantRemovedRoots", () => {
@@ -1034,8 +1140,22 @@ describe("ModularChangeFamily", () => {
 			};
 			const input: ModularChangeset = {
 				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA), revision: majorAB }],
-					[brand("fC"), { fieldKind, change: brand(changeC), revision: majorC }],
+					[
+						brand("fA"),
+						{
+							fieldKind,
+							change: brand(changeA),
+							revision: majorAB,
+						},
+					],
+					[
+						brand("fC"),
+						{
+							fieldKind,
+							change: brand(changeC),
+							revision: majorC,
+						},
+					],
 				]),
 			};
 
@@ -1045,6 +1165,177 @@ describe("ModularChangeFamily", () => {
 				{ major: majorAB, minor: 2 },
 				{ major: majorC, minor: 1 },
 			]);
+		});
+	});
+
+	describe("update refreshers", () => {
+		const aMajor = mintRevisionTag();
+		const a1 = { major: aMajor, minor: 1 };
+		const a2 = { major: aMajor, minor: 2 };
+		const bMajor = mintRevisionTag();
+		const b1 = { major: bMajor, minor: 1 };
+
+		const node2 = singleJsonCursor(2);
+		const node2Chunk = treeChunkFromCursor(node2);
+		const node3 = singleJsonCursor(3);
+		const node3Chunk = treeChunkFromCursor(node3);
+
+		const nodesArray: [DeltaDetachedNodeId, TreeChunk][] = [
+			[a1, node1Chunk],
+			[a2, node2Chunk],
+			[b1, node3Chunk],
+		];
+		const nodeMap = nestedMapFromFlatList(
+			nodesArray.map(([{ major, minor }, chunk]) => [major, minor, chunk]),
+		);
+
+		const getDetachedNode = ({ major, minor }: DeltaDetachedNodeId) => {
+			return tryGetFromNestedMap(nodeMap, major, minor);
+		};
+
+		it("preserves relevant refreshers that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([[aMajor, new Map([[brand(2), node2Chunk]])]]),
+			};
+
+			const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [a2]);
+			assert.deepEqual(withBuilds, expected);
+		});
+
+		it("removes irrelevant refreshers that are present in the input", () => {
+			const input: ModularChangeset = {
+				fieldChanges: new Map([]),
+				refreshers: new Map([
+					[
+						aMajor,
+						new Map([
+							[brand(1), node1Chunk],
+							[brand(2), node2Chunk],
+						]),
+					],
+					[bMajor, new Map([[brand(1), node3Chunk]])],
+				]),
+			};
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([]),
+			};
+
+			const filtered = updateRefreshers(makeAnonChange(input), getDetachedNode, []);
+			assert.deepEqual(filtered, expected);
+		});
+
+		describe("attempts to add relevant refreshers that are missing from the input", () => {
+			it("adds the missing refresher if the detached node is available", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
+				};
+
+				const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
+				assert.deepEqual(withBuilds, expected);
+			});
+
+			it("replaces outdated refreshers", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node2Chunk],
+								[brand(2), node1Chunk],
+							]),
+						],
+					]),
+				};
+
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+					refreshers: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+					]),
+				};
+
+				const filtered = updateRefreshers(makeAnonChange(input), getDetachedNode, [a1, a2]);
+				assert.deepEqual(filtered, expected);
+			});
+
+			it("does not add a refresher that is present in the builds", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
+				};
+
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([
+						[
+							aMajor,
+							new Map([
+								[brand(1), node1Chunk],
+								[brand(2), node2Chunk],
+							]),
+						],
+						[bMajor, new Map([[brand(1), node3Chunk]])],
+					]),
+				};
+
+				const withBuilds = updateRefreshers(makeAnonChange(input), getDetachedNode, [
+					a1,
+					a2,
+					b1,
+				]);
+				assert.deepEqual(withBuilds, expected);
+			});
+
+			it("throws if the detached node is not available", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+
+				assert.throws(() =>
+					updateRefreshers(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
+				);
+			});
 		});
 	});
 
