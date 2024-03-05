@@ -20,7 +20,11 @@ import type { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { ContainerRuntime, IContainerRuntimeOptions, IdCompressorMode } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	IdCompressorMode,
+} from "@fluidframework/container-runtime";
 import {
 	IContainer,
 	type IFluidCodeDetails,
@@ -844,7 +848,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 	async function TestCompactIds(enableRuntimeIdCompressor: IdCompressorMode) {
 		const container = await createContainer({
-			runtimeOptions: { enableRuntimeIdCompressor},
+			runtimeOptions: { enableRuntimeIdCompressor },
 		});
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		// This data store was created in detached container, so it has to be short!
@@ -909,7 +913,6 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			SharedDirectory.getFactory().type,
 		);
 		assert(channel2.id.length <= 2, "DDS ID created in attached data store");
-
 	}
 
 	it("Container uses short DataStore & DDS IDs in delayed mode", async () => {

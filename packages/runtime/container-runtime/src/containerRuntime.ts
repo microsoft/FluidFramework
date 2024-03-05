@@ -2494,8 +2494,11 @@ export class ContainerRuntime
 				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
 				// thus we need to process all the ops.
 				if (
-					!(this.skipSavedCompressorOps &&
-					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp === true)
+					!(
+						this.skipSavedCompressorOps &&
+						(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp ===
+							true
+					)
 				) {
 					const range = messageWithContext.message.contents;
 					if (this._idCompressor === undefined) {
