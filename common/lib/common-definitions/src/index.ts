@@ -20,16 +20,3 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	TransformedEvent,
 } from "./events.js";
-export type {
-	ILoggingError,
-	ITaggedTelemetryPropertyType,
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryLogger,
-	ITelemetryPerformanceEvent,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-	TelemetryEventPropertyType,
-} from "./logger.js";

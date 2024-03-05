@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/common-definitions",
-	"version": "1.2.0",
+	"version": "2.0.0",
 	"description": "Fluid common definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,6 +86,51 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryGenericEvent": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ILoggingError": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryBaseLogger": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryBaseEvent": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITelemetryProperties": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

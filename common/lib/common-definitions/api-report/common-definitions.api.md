@@ -190,77 +190,10 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @internal @deprecated
-export interface ILoggingError extends Error {
-    getTelemetryProperties(): ITelemetryProperties;
-}
-
-// @alpha @deprecated
-export interface ITaggedTelemetryPropertyType {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryEventPropertyType;
-}
-
-// @internal @deprecated
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
-    // (undocumented)
-    category: string;
-    // (undocumented)
-    eventName: string;
-}
-
-// @internal @deprecated
-export interface ITelemetryBaseLogger {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-}
-
-// @internal @deprecated
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    // (undocumented)
-    eventName: string;
-}
-
-// @internal @deprecated
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-    // (undocumented)
-    category?: TelemetryEventCategory;
-    // (undocumented)
-    eventName: string;
-}
-
-// @internal @deprecated
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
-}
-
-// @internal @deprecated
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    // (undocumented)
-    duration?: number;
-}
-
-// @alpha @deprecated
-export interface ITelemetryProperties {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
-}
-
 // @alpha @deprecated
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
-
-// @internal @deprecated
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-// @alpha @deprecated
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @alpha @deprecated
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
