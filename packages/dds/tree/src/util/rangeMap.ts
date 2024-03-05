@@ -148,6 +148,23 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
 	map.splice(iBefore + 1, numContainedEntries, newEntry);
 }
 
+/**
+ * Delete the keys from `start` to `start + length - 1`
+ *
+ * 1. If an entry is completely included in the deletion range, the whole entry will be deleted
+ * e.g.: map = [[1, 2], [4, 6]], delete range: [3, 6]
+ * map becomes [[1, 2]] after deletion
+ * (Note: the notation [a, b] represents start = a, end = b for simpler visiualization, instead of `b`
+ * representing the length)
+ *
+ * 2. If an entry is partially overlapped with the deletion range, the start or end point will be shifted
+ * e.g.: map = [[1, 2], [4, 6]], delete range: [2, 4]
+ * map becomes [[1, 1], [5, 6]] after deletion
+ *
+ * 3. If an entry completely includes the deletion range, the original entry may be split into two.
+ * e.g.: map = [[1, 6]], delete range: [2, 4]
+ * map becomes [[1, 1], [5, 6]]
+ */
 export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
 	const end = start + length - 1;
 
@@ -183,26 +200,24 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 		// If the entry lies within the range to be deleted, remove it
 		if (entry.start >= start && entryLastKey <= end) {
 			map.splice(i, 1);
-			// i--; // Adjust index after removal
 		} else {
-			// If the entry overlaps with the range to be deleted
+			// If the entry partially or completely overlaps with the range to be deleted
 			if (entry.start < start) {
-				// Update the length of the portion before the range to be deleted
+				// Update the endpoint and length of the portion before the range to be deleted
 				const lengthBefore = start - entry.start;
 				map[i] = { ...entry, length: lengthBefore };
 				isDirty = true;
 			}
 
 			if (entryLastKey > end) {
-				// Update the start and length of the portion after the range to be deleted
+				// Update the startpoint and length of the portion after the range to be deleted
 				const newStart = end + 1;
 				const newLength = entryLastKey - end;
-				if (!isDirty) {
-					map.splice(i, 1, { start: newStart, length: newLength, value: entry.value });
-				} else {
-					i++; // Adjust index before insertion
-					map.splice(i, 0, { start: newStart, length: newLength, value: entry.value });
-				}
+				map.splice(isDirty ? i + 1 : i, isDirty ? 0 : 1, {
+					start: newStart,
+					length: newLength,
+					value: entry.value,
+				});
 			}
 		}
 	}
