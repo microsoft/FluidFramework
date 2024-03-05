@@ -23,7 +23,6 @@ import {
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { IContainerExperimental } from "@fluidframework/container-loader";
-import { config } from "process";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 
 // A Test Data Object that exposes some basic functionality.
