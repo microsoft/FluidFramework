@@ -1,7 +1,7 @@
 # Ignore all files...
 **/*.*
-**/bin
+*/*
 
 # ...except JSON files not handled by biome
-!**/tsconfig.json
-!**/package.json
+!tsconfig.json
+!package.json
