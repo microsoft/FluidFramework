@@ -63,7 +63,7 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha (undocumented)
+// @alpha
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
@@ -293,7 +293,6 @@ export { IErrorBase }
 
 // @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
-    // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
         [environment: string]: IFluidPackageEnvironment;

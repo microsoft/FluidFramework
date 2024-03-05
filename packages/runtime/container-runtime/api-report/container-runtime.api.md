@@ -153,7 +153,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;
-    // (undocumented)
     getEntryPoint(): Promise<FluidObject>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
@@ -189,7 +188,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
     readonly options: Record<string | number, any>;
-    // (undocumented)
     orderSequentially<T>(callback: () => T): T;
     // (undocumented)
     process(messageArg: ISequencedDocumentMessage, local: boolean): void;

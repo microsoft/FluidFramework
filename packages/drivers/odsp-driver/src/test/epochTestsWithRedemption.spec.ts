@@ -12,16 +12,16 @@ import {
 	IEntry,
 	snapshotKey,
 } from "@fluidframework/odsp-driver-definitions";
-import { EpochTrackerWithRedemption } from "../epochTracker";
-import { LocalPersistentCache } from "../odspCache";
-import { getHashedDocumentId } from "../odspPublicUtils";
+import { EpochTrackerWithRedemption } from "../epochTracker.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
 	mockFetchSingle,
 	mockFetchMultiple,
 	okResponse,
 	notFound,
-	type MockResponse,
-} from "./mockFetch";
+	MockResponse,
+} from "./mockFetch.js";
 
 class DeferralWithCallback extends Deferred<void> {
 	private epochCallback: () => Promise<unknown> = async () => {};

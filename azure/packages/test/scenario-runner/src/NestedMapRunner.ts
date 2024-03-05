@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ConnectionState } from "@fluidframework/container-loader";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -84,7 +84,9 @@ export class NestedMapRunner extends ScenarioRunner<
 
 		const writeRatePerMin = runConfig.writeRatePerMin ?? -1;
 		const msBetweenWrites = writeRatePerMin < 0 ? 0 : 60000 / writeRatePerMin;
-		let currentMap: SharedMap = container.initialObjects[runConfig.initialMapKey] as SharedMap;
+		let currentMap: ISharedMap = container.initialObjects[
+			runConfig.initialMapKey
+		] as ISharedMap;
 		const tenPercent = Math.floor(runConfig.numMaps / 10);
 		const getData = () => {
 			const dataType = runConfig.dataType;

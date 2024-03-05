@@ -8,7 +8,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -36,7 +36,7 @@ describe("Logging Last Connection Mode ", () => {
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 
 	/**
 	 * Waits for the "connected" event from the given container.
@@ -97,7 +97,7 @@ describe("Logging Last Connection Mode ", () => {
 		// Create the first container, component and DDSes.
 		container = await createContainer();
 		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 		// re-sent. Do it here so that the extra events don't mess with rest of the test.

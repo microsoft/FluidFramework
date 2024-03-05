@@ -5,8 +5,8 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
-import { type IContainerDevtools } from "./IContainerDevtools";
+import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools.js";
+import { type IContainerDevtools } from "./IContainerDevtools.js";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -18,12 +18,12 @@ import {
 	type ISourcedDevtoolsMessage,
 	type MessageLoggingOptions,
 	postMessagesToWindow,
-} from "./messaging";
-import { type IFluidDevtools } from "./IFluidDevtools";
-import { type DevtoolsFeatureFlags } from "./Features";
-import { type IDevtoolsLogger } from "./DevtoolsLogger";
-import { type ContainerKey } from "./CommonInterfaces";
-import { pkgVersion as devtoolsVersion } from "./packageVersion";
+} from "./messaging/index.js";
+import { type IFluidDevtools } from "./IFluidDevtools.js";
+import { type DevtoolsFeatureFlags } from "./Features.js";
+import { type IDevtoolsLogger } from "./DevtoolsLogger.js";
+import { type ContainerKey } from "./CommonInterfaces.js";
+import { pkgVersion as devtoolsVersion } from "./packageVersion.js";
 
 /**
  * Message logging options used by the root devtools.

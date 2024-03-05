@@ -18,6 +18,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import type { PermutationVector } from "../permutationvector.js";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils.js";
 import { TestConsumer } from "./testconsumer.js";
 
@@ -968,6 +969,103 @@ describe("Matrix1", () => {
 						[90, undefined],
 						[undefined, 0],
 					]);
+				});
+			});
+
+			describe("Doesn't leave dangling row/col reference positions", () => {
+				type MatrixWithDimensions = Omit<SharedMatrix, "rows" | "cols"> & {
+					rows: PermutationVector;
+					cols: PermutationVector;
+				};
+
+				function findVectorReferenceCount(vector: PermutationVector): number {
+					let count = 0;
+					vector.walkSegments((segment) => {
+						count += Array.from(segment.localRefs ?? []).length;
+						return true;
+					});
+					return count;
+				}
+
+				function findTotalReferenceCount(matrix: SharedMatrix): {
+					rows: number;
+					cols: number;
+				} {
+					const matrixWithDimensions = matrix as unknown as MatrixWithDimensions;
+					assert(
+						matrixWithDimensions.rows !== undefined,
+						"Expected matrix to have rows property",
+					);
+					assert(
+						matrixWithDimensions.cols !== undefined,
+						"Expected matrix to have cols property",
+					);
+
+					return {
+						rows: findVectorReferenceCount(matrixWithDimensions.rows),
+						cols: findVectorReferenceCount(matrixWithDimensions.cols),
+					};
+				}
+
+				it("made while detached", () => {
+					const matrix = createLocalMatrix("A");
+					matrix.insertRows(0, 2);
+					matrix.insertCols(0, 2);
+					matrix.setCell(0, 0, "val");
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+				});
+
+				it("after first submission ack", () => {
+					const containerRuntimeFactory = new MockContainerRuntimeFactory();
+					const matrix = createConnectedMatrix(
+						"A",
+						containerRuntimeFactory,
+						isSetCellPolicyFWW,
+					);
+
+					matrix.insertRows(0, 2);
+					matrix.insertCols(0, 2);
+					containerRuntimeFactory.processAllMessages();
+					matrix.setCell(0, 0, "val");
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
+				});
+
+				it("after resubmitted ack", () => {
+					const containerRuntimeFactory =
+						new MockContainerRuntimeFactoryForReconnection();
+					const dataStoreRuntime = new MockFluidDataStoreRuntime();
+					const matrix = new SharedMatrix(
+						dataStoreRuntime,
+						"A",
+						SharedMatrixFactory.Attributes,
+						isSetCellPolicyFWW,
+					);
+					const containerRuntime =
+						containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+					matrix.connect({
+						deltaConnection: dataStoreRuntime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					});
+
+					matrix.insertRows(0, 2);
+					matrix.insertCols(0, 2);
+					containerRuntimeFactory.processAllMessages();
+
+					containerRuntime.connected = false;
+					matrix.setCell(0, 0, "val");
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+					containerRuntime.connected = true;
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 1, cols: 1 });
+
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(findTotalReferenceCount(matrix), { rows: 0, cols: 0 });
 				});
 			});
 
