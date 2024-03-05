@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -28,6 +28,7 @@
 		"test": "echo TODO: add tests"
 	},
 	"dependencies": {
+		"@fluid-internal/eslint-plugin-fluid": "^0.1.1",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/eslint-patch": "~1.4.0",
 		"@rushstack/eslint-plugin": "~0.13.0",

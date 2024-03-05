@@ -14,17 +14,13 @@ import {
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../packageVersion.js";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
 describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
@@ -103,35 +99,33 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(sharedString.getText(0), text);
 			}
 			{
-				// failure load client
-				const realSf: IDocumentServiceFactory = provider.documentServiceFactory;
-				const documentServiceFactory: IDocumentServiceFactory = {
-					...realSf,
-					createDocumentService: async (resolvedUrl, logger2) => {
-						const realDs = await realSf.createDocumentService(resolvedUrl, logger2);
-						const mockDs = Object.create(realDs) as IDocumentService;
-						mockDs.connectToStorage = async () => {
-							const realStorage = await realDs.connectToStorage();
-							const mockstorage = Object.create(
-								realStorage,
-							) as IDocumentStorageService;
-							mockstorage.readBlob = async (id) => {
-								const blob = await realStorage.readBlob(id);
-								const blobObj = await readAndParse<any>(realStorage, id);
-								// throw when trying to load the header blob
-								if (blobObj.headerMetadata !== undefined) {
-									throw new NonRetryableError("Not Found", "someErrorType", {
-										statusCode: 404,
-										driverVersion: pkgVersion,
-									});
-								}
-								return blob;
-							};
-							return mockstorage;
-						};
-						return mockDs;
-					},
-				};
+				const documentServiceFactory: IDocumentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									readBlob: (realStorage) => async (id) => {
+										const blob = await realStorage.readBlob(id);
+										const blobObj = await readAndParse<any>(realStorage, id);
+										// throw when trying to load the header blob
+										if (blobObj.headerMetadata !== undefined) {
+											throw new NonRetryableError(
+												"Not Found",
+												"someErrorType",
+												{
+													statusCode: 404,
+													driverVersion: pkgVersion,
+												},
+											);
+										}
+										return blob;
+									},
+								},
+							},
+						},
+					);
+
 				const codeDetails = { package: "no-dynamic-pkg" };
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
 					summaryOptions: {

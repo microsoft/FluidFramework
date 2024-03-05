@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ReadBuffer } from "./ReadBufferUtils";
+import { ReadBuffer } from "./ReadBufferUtils.js";
 import {
 	assertBlobCoreInstance,
 	getStringInstance,
@@ -18,8 +18,8 @@ import {
 	NodeCore,
 	NodeTypes,
 	TreeBuilder,
-} from "./zipItDataRepresentationUtils";
-import { measure } from "./odspUtils";
+} from "./zipItDataRepresentationUtils.js";
+import { measure } from "./odspUtils.js";
 
 export const snapshotMinReadVersion = "1.0";
 export const currentReadVersion = "1.0";

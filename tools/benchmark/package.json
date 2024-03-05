@@ -48,7 +48,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/benchmark": "^2.1.0",
 		"@types/chai": "^4.3.4",
 		"@types/easy-table": "^0.0.32",
