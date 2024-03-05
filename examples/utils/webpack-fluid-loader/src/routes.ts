@@ -18,9 +18,9 @@ import {
 } from "@fluidframework/tool-utils";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
 import Axios from "axios";
-import { RouteOptions } from "./loader";
-import { createManifestResponse } from "./bohemiaIntercept";
-import { tinyliciousUrls } from "./getUrlResolver";
+import { RouteOptions } from "./loader.js";
+import { createManifestResponse } from "./bohemiaIntercept.js";
+import { tinyliciousUrls } from "./getUrlResolver.js";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;
