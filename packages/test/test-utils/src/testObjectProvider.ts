@@ -149,6 +149,7 @@ export interface ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer>;
 
 	/**
@@ -558,16 +559,24 @@ export class TestObjectProvider implements ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader);
+		return this.resolveContainer(loader, requestHeader, pendingLocalState);
 	}
 
-	private async resolveContainer(loader: ILoader, headers?: IRequestHeader) {
-		return loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
-			headers,
-		});
+	private async resolveContainer(
+		loader: ILoader,
+		headers?: IRequestHeader,
+		pendingLocalState?: string,
+	) {
+		return loader.resolve(
+			{
+				url: await this.driver.createContainerUrl(this.documentId),
+				headers,
+			},
+			pendingLocalState,
+		);
 	}
 
 	/**
@@ -900,22 +909,27 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return this.resolveContainer(loader, requestHeader, driver);
+		return this.resolveContainer(loader, requestHeader, pendingLocalState, driver);
 	}
 
 	private async resolveContainer(
 		loader: ILoader,
 		headers?: IRequestHeader,
+		pendingLocalState?: string,
 		driver?: ITestDriver,
 	) {
-		return loader.resolve({
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			url: await driver!.createContainerUrl(this.documentId),
-			headers,
-		});
+		return loader.resolve(
+			{
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				url: await driver!.createContainerUrl(this.documentId),
+				headers,
+			},
+			pendingLocalState,
+		);
 	}
 
 	/**
@@ -961,11 +975,17 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
+		pendingLocalState?: string,
 	): Promise<IContainer> {
 		// Keep track of which Loader we are about to use so we can pass the correct driver through
 		const driver = this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 		const loader = this.makeTestLoader(testContainerConfig);
-		const container = await this.resolveContainer(loader, requestHeader, driver);
+		const container = await this.resolveContainer(
+			loader,
+			requestHeader,
+			pendingLocalState,
+			driver,
+		);
 		await this.waitContainerToCatchUp(container);
 
 		return container;

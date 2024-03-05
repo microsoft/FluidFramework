@@ -60,6 +60,7 @@ import {
 	ContainerRuntime,
 	defaultRuntimeHeaderData,
 	RuntimeHeaderData,
+	type IDownloadedSnapshotTrees as IDownloadedSnapshotTrees,
 } from "./containerRuntime.js";
 import {
 	FluidDataStoreContext,
@@ -807,6 +808,21 @@ export class DataStores implements IDisposable {
 		return builder.getSummaryTree();
 	}
 
+	public getDownloadedSnapshotTrees(): IDownloadedSnapshotTrees {
+		const snapshots: IDownloadedSnapshotTrees = {};
+		for (const [, context] of this.contexts) {
+			const snapshot = context.baseSnapshot;
+			if (
+				snapshot !== undefined &&
+				snapshot.omitted !== true &&
+				snapshot.groupId !== undefined
+			) {
+				snapshots[context.id] = snapshot;
+			}
+		}
+		return snapshots;
+	}
+
 	/**
 	 * Before GC runs, called by the garbage collector to update any pending GC state.
 	 * The garbage collector needs to know all outbound references that are added. Since root data stores are not
@@ -1031,6 +1047,7 @@ export class DataStores implements IDisposable {
 export function getSummaryForDatastores(
 	snapshot: ISnapshotTree | undefined,
 	metadata?: IContainerRuntimeMetadata,
+	downloadedSnapshots?: IDownloadedSnapshotTrees,
 ): ISnapshotTree | undefined {
 	if (!snapshot) {
 		return undefined;
@@ -1039,7 +1056,17 @@ export function getSummaryForDatastores(
 	if (rootHasIsolatedChannels(metadata)) {
 		const datastoresSnapshot = snapshot.trees[channelsTreeName];
 		assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
-		return datastoresSnapshot;
+		const shallowCloneSnapshot = {
+			...datastoresSnapshot,
+		};
+		if (downloadedSnapshots?.trees === undefined) {
+			return shallowCloneSnapshot;
+		}
+		shallowCloneSnapshot.trees = {
+			...datastoresSnapshot.trees,
+			...downloadedSnapshots.trees[channelsTreeName],
+		};
+		return shallowCloneSnapshot;
 	} else {
 		// back-compat: strip out all non-datastore paths before giving to DataStores object.
 		const datastoresTrees: ISnapshotTree["trees"] = {};
@@ -1050,7 +1077,10 @@ export function getSummaryForDatastores(
 		}
 		return {
 			...snapshot,
-			trees: datastoresTrees,
+			trees: {
+				...datastoresTrees,
+				...downloadedSnapshots,
+			},
 		};
 	}
 }

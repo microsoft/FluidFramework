@@ -560,6 +560,17 @@ export interface IPendingRuntimeState {
 	 * Time at which session expiry timer started.
 	 */
 	sessionExpiryTimerStarted?: number | undefined;
+	/**
+	 * The snapshots of virtualized dataStores that were downloaded
+	 */
+	downloadedSnapshotTrees?: IDownloadedSnapshotTrees;
+}
+
+/**
+ *
+ */
+export interface IDownloadedSnapshotTrees {
+	[path: string]: ISnapshotTree;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1458,7 +1469,11 @@ export class ContainerRuntime
 		}
 
 		this.dataStores = new DataStores(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			getSummaryForDatastores(
+				baseSnapshot,
+				metadata,
+				pendingRuntimeState?.downloadedSnapshotTrees,
+			),
 			this,
 			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
 			(id: string, createParam: CreateChildSummarizerNodeParam) =>
@@ -1614,6 +1629,10 @@ export class ContainerRuntime
 			);
 
 			if (this.isSummarizerClient) {
+				assert(
+					pendingRuntimeState === undefined,
+					"Summarizer client cannot have pending state",
+				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -4107,6 +4126,7 @@ export class ContainerRuntime
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
 		const getSyncState = (
+			downloadedSnapshotTrees: IDownloadedSnapshotTrees,
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
 			const pending = this.pendingStateManager.getLocalState();
@@ -4121,6 +4141,7 @@ export class ContainerRuntime
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
 				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+				downloadedSnapshotTrees,
 			};
 		};
 		const perfEvent = {
@@ -4143,20 +4164,18 @@ export class ContainerRuntime
 		// to close current batch.
 		this.flush();
 
-		return props?.notifyImminentClosure === true
-			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
-					logAndReturnPendingState(
-						event,
-						getSyncState(
-							await this.blobManager.attachAndGetPendingBlobs(
-								props?.stopBlobAttachingSignal,
-							),
-						),
-					),
-			  )
-			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
-					logAndReturnPendingState(event, getSyncState()),
-			  );
+		return PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) => {
+			let pendingBlobState: IPendingBlobs | undefined;
+			if (props?.notifyImminentClosure === true) {
+				pendingBlobState = await this.blobManager.attachAndGetPendingBlobs(
+					props?.stopBlobAttachingSignal,
+				);
+			}
+			const downloadedSnapshotTrees = this.dataStores.getDownloadedSnapshotTrees();
+
+			const syncState = getSyncState(downloadedSnapshotTrees, pendingBlobState);
+			return logAndReturnPendingState(event, syncState);
+		});
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

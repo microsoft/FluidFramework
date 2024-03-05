@@ -1112,7 +1112,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
  * Base class for detached & attached context classes
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
-	private readonly snapshotTree: ISnapshotTree | undefined;
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
@@ -1129,7 +1128,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Summarizer client should not create local data stores.
 		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
-		this.snapshotTree = props.snapshotTree;
+		this._baseSnapshot = props.snapshotTree;
 		if (props.isRootDataStore === true) {
 			this.setInMemoryRoot();
 		}
@@ -1196,7 +1195,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
-		let snapshot = this.snapshotTree;
+		let snapshot = this._baseSnapshot;
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
 		if (snapshot !== undefined) {
