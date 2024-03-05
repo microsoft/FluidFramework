@@ -2259,7 +2259,7 @@ describe("Runtime", () => {
 					(err: IFluidErrorBase) => {
 						assert(
 							err.message ===
-								"Summarizer client behind when loading snapshot with loadingGroupId",
+								"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 							"summarizer client is behind",
 						);
 						return true;

@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { describeCompat } from "@fluid-private/test-version-utils";
 
 // REVIEW: enable compat testing?
@@ -223,7 +223,7 @@ describeCompat(
 			defaultDataStore.root.set("dataStore2", dataStore2.handle);
 			await provider.ensureSynchronized();
 
-			const rootOfDataStore2 = (await dataStore2.runtime.getChannel("root")) as SharedMap;
+			const rootOfDataStore2 = (await dataStore2.runtime.getChannel("root")) as ISharedMap;
 			const testChannelOfDataStore2 = await dataStore2.runtime.getChannel("test1");
 
 			assert.strictEqual(
@@ -340,10 +340,10 @@ describeCompat(
 
 			const testChannel1OfDataStore2 = (await dataStore2.runtime.getChannel(
 				"test1",
-			)) as SharedMap;
+			)) as ISharedMap;
 			const testChannel2OfDataStore2 = (await dataStore2.runtime.getChannel(
 				"test2",
-			)) as SharedMap;
+			)) as ISharedMap;
 
 			testChannel1OfDataStore2.set("test2handle", channel2.handle);
 			testChannel2OfDataStore2.set("test1handle", channel1.handle);
@@ -399,10 +399,10 @@ describeCompat(
 
 			const testChannel1OfDataStore2 = (await dataStore2.runtime.getChannel(
 				"test1",
-			)) as SharedMap;
+			)) as ISharedMap;
 			const testChannel2OfDataStore2 = (await dataStore2.runtime.getChannel(
 				"test2",
-			)) as SharedMap;
+			)) as ISharedMap;
 
 			testChannel1OfDataStore2.set("test2handle", channel2.handle);
 			testChannel2OfDataStore2.set("test1handle", channel1.handle);
@@ -464,10 +464,10 @@ describeCompat(
 
 				const testChannelOfDataStore2 = (await dataStore2.runtime.getChannel(
 					"test1",
-				)) as SharedMap;
+				)) as ISharedMap;
 				const testChannelOfDataStore3 = (await dataStore3.runtime.getChannel(
 					"test2",
-				)) as SharedMap;
+				)) as ISharedMap;
 
 				testChannelOfDataStore2.set("channel3handle", channel3.handle);
 				testChannelOfDataStore3.set("channel2handle", channel2.handle);
@@ -524,11 +524,11 @@ describeCompat(
 				);
 
 				// Create first channel from dataStore2
-				const channel2 = await dataStore2.getSharedObject<SharedMap>(mapId1);
+				const channel2 = await dataStore2.getSharedObject<ISharedMap>(mapId1);
 				assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
 				// Create second channel from dataStore 3
-				const channel3 = await dataStore3.getSharedObject<SharedMap>(mapId2);
+				const channel3 = await dataStore3.getSharedObject<ISharedMap>(mapId2);
 				assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
 				// dataStore2 POINTS TO dataStore3, channel3
@@ -603,14 +603,14 @@ describeCompat(
 				);
 
 				// Create two channel from dataStore2
-				const channel1OfDataStore2 = await dataStore2.getSharedObject<SharedMap>(mapId1);
+				const channel1OfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(mapId1);
 				assert.strictEqual(
 					channel1OfDataStore2.handle.isAttached,
 					false,
 					"Channel should be detached",
 				);
 
-				const channel2OfDataStore2 = await dataStore2.getSharedObject<SharedMap>(mapId2);
+				const channel2OfDataStore2 = await dataStore2.getSharedObject<ISharedMap>(mapId2);
 				assert.strictEqual(
 					channel2OfDataStore2.handle.isAttached,
 					false,
@@ -618,14 +618,14 @@ describeCompat(
 				);
 
 				// Create two channel from dataStore 3
-				const channel1OfDataStore3 = await dataStore3.getSharedObject<SharedMap>(mapId1);
+				const channel1OfDataStore3 = await dataStore3.getSharedObject<ISharedMap>(mapId1);
 				assert.strictEqual(
 					channel1OfDataStore3.handle.isAttached,
 					false,
 					"Channel should be detached",
 				);
 
-				const channel2OfDataStore3 = await dataStore3.getSharedObject<SharedMap>(mapId2);
+				const channel2OfDataStore3 = await dataStore3.getSharedObject<ISharedMap>(mapId2);
 				assert.strictEqual(
 					channel2OfDataStore3.handle.isAttached,
 					false,
@@ -633,7 +633,7 @@ describeCompat(
 				);
 
 				// Create one channel from dataStore 4
-				const channel1OfDataStore4 = await dataStore4.getSharedObject<SharedMap>(mapId1);
+				const channel1OfDataStore4 = await dataStore4.getSharedObject<ISharedMap>(mapId1);
 				assert.strictEqual(
 					channel1OfDataStore4.handle.isAttached,
 					false,
@@ -861,7 +861,7 @@ describeCompat(
 			const { peerDataStore: dataStore2 } = await createPeerDataStore(
 				defaultDataStore.context.containerRuntime,
 			);
-			const rootMapOfDataStore1 = await dataStore1.getSharedObject<SharedMap>(mapId1);
+			const rootMapOfDataStore1 = await dataStore1.getSharedObject<ISharedMap>(mapId1);
 			rootMapOfDataStore1.set("dataStore2", dataStore2.handle);
 
 			let dataStore1AttachState = AttachState.Detached;

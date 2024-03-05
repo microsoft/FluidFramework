@@ -69,7 +69,11 @@ class BuildContext {
 }
 
 export class BuildPackage {
-	private tasks = new Map<string, Task>();
+	private readonly tasks = new Map<string, Task>();
+
+	// track a script task without the lifecycle (pre/post) tasks
+	private readonly scriptTasks = new Map<string, Task>();
+
 	public readonly dependentPackages = new Array<BuildPackage>();
 	public level: number = -1;
 	private buildP?: Promise<BuildResult>;
@@ -154,13 +158,53 @@ export class BuildPackage {
 	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
 		const command = this.pkg.getScript(taskName);
 		if (command !== undefined && !command.startsWith("fluid-build ")) {
-			const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
-			pendingInitDep.push(task);
+			// Find the script task (without the lifecycle task)
+			let scriptTask = this.scriptTasks.get(taskName);
+			if (scriptTask === undefined) {
+				scriptTask = TaskFactory.Create(this, command, pendingInitDep, taskName);
+				pendingInitDep.push(scriptTask);
+				this.scriptTasks.set(taskName, scriptTask);
+			}
+
+			// Create the script task with lifecycle task.
+			// This will be tracked in the 'tasks' map, and other task that depends on this
+			// script task will depend on this instance instead of the standalone script task without the lifecycle.
+			const task = TaskFactory.CreateTaskWithLifeCycle(
+				this,
+				scriptTask,
+				this.ensureScriptTask(`pre${taskName}`, pendingInitDep),
+				this.ensureScriptTask(`post${taskName}`, pendingInitDep),
+			);
+			if (task !== scriptTask) {
+				// We are doing duplicate work initializeDependentTasks as both the lifecycle task
+				// and script task will have the task name and dependency
+				pendingInitDep.push(task);
+			}
 			return task;
 		}
 		return undefined;
 	}
 
+	private ensureScriptTask(taskName: string, pendingInitDep: Task[]) {
+		const scriptTask = this.scriptTasks.get(taskName);
+		if (scriptTask !== undefined) {
+			return scriptTask;
+		}
+		const command = this.pkg.getScript(taskName);
+		if (command === undefined) {
+			return undefined;
+		}
+		const config = this.getTaskDefinition(taskName);
+		if (config?.script === false) {
+			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
+		}
+
+		const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
+		pendingInitDep.push(task);
+		return task;
+	}
+
+	// Create or return and existing task with a name.  If it is a script, it will also create an return the pre/post script task if it exists
 	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
 		const existing = this.tasks.get(taskName);
 		if (existing) {
@@ -213,6 +257,7 @@ export class BuildPackage {
 		return matchedTasks;
 	}
 
+	// Create or get the task with names in the `deps` array
 	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
@@ -656,21 +701,21 @@ export class BuildGraph {
 
 		traceGraph("package task initialized");
 
-		// All the task has been created, initialize the dependent tasks
+		// All the transitive task has been created, finalize "soft" dependent edges and before/after tasks
 		this.buildPackages.forEach((node) => {
 			node.finalizeDependentTasks();
 		});
 
 		traceGraph("dependent task initialized");
 
-		// All the task has been created, initialize the dependent tasks
+		// All the tasks and dependency has been initialized, now initialize the leaf graph (which is used in build)
 		this.buildPackages.forEach((node) => {
 			node.initializeDependentLeafTasks();
 		});
 
 		traceGraph("dependent leaf task initialized");
 
-		// All the task has been created, initialize the dependent tasks
+		// Leaf graph is completed. Compute the weight
 		this.buildPackages.forEach((node) => {
 			node.initializeWeight();
 		});

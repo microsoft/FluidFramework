@@ -42,11 +42,11 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { fetch } from "./fetch";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IOdspSnapshot } from "./contracts";
+import { fetch } from "./fetch.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IOdspSnapshot } from "./contracts.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./odspPublicUtils.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
