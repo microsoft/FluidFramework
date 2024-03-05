@@ -93,7 +93,7 @@ export interface IParsedUrl {
     id: string;
     path: string;
     query: string;
-    version: string | null | undefined;
+    version: string | undefined;
 }
 
 // @alpha (undocumented)

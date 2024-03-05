@@ -19,7 +19,11 @@ import {
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	DriverHeader,
+	ISummaryContext,
+	type IDocumentServiceFactory,
+} from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
@@ -29,13 +33,13 @@ import {
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
-	wrapDocumentServiceFactory,
 	waitForContainerConnection,
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;
@@ -110,6 +114,7 @@ async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 	cancellationToken = neverCancelledSummaryToken,
 ) {
@@ -122,6 +127,7 @@ async function submitAndAckSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
+		latestSummaryRefSeqNum,
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
@@ -321,10 +327,13 @@ describeCompat(
 			containerRuntime: ContainerRuntime;
 			summaryCollection: SummaryCollection;
 		}): Promise<string> {
+			const latestSummaryRefSeqNum =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
 				logger,
+				latestSummaryRefSeqNum,
 				false, // fullTree
 			);
 			latestAckedSummary = summaryResult.ackedSummary;
@@ -354,10 +363,21 @@ describeCompat(
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
-				(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-					provider.documentServiceFactory,
-					uploadSummaryCb,
-				);
+				(provider as any)._documentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									uploadSummaryWithContext: (dss) => async (summary, context) => {
+										uploadSummaryCb(summary, context);
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+										return dss.uploadSummaryWithContext(summary, context);
+									},
+								},
+							},
+						},
+					);
 
 				mainContainer = await createContainer();
 				// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
@@ -380,6 +400,7 @@ describeCompat(
 					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: 0,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 				await waitForSummaryOp(summarizerClient.containerRuntime);
@@ -416,11 +437,14 @@ describeCompat(
 					summarizerClient2.containerRuntime.deltaManager.lastSequenceNumber;
 
 				// Submit a summary
+				const latestSummaryRefSeqNum =
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 				const result = await summarizerClient2.containerRuntime.submitSummary({
 					fullTree: false,
 					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 
@@ -475,6 +499,7 @@ describeCompat(
 					refreshLatestAck: false,
 					summaryLogger: logger,
 					cancellationToken: neverCancelledSummaryToken,
+					latestSummaryRefSeqNum: summary1.summaryRefSeq,
 				});
 				assert(result.stage === "submit", "The summary was not submitted");
 				await waitForSummaryOp(summarizer2.containerRuntime);

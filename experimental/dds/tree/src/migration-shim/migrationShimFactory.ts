@@ -11,7 +11,10 @@ import {
 	type IChannelFactory,
 } from '@fluidframework/datastore-definitions';
 import { type ITree } from '@fluidframework/tree';
-import { type SharedTreeFactory as LegacySharedTreeFactory, type SharedTree as LegacySharedTree } from '../SharedTree';
+import {
+	type SharedTreeFactory as LegacySharedTreeFactory,
+	type SharedTree as LegacySharedTree,
+} from '../SharedTree.js';
 import { MigrationShim } from './migrationShim.js';
 import { attributesMatch } from './utils.js';
 

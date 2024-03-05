@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
+import { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	SummaryTree,
 	ISummaryTree,
@@ -11,7 +11,10 @@ import {
 	ISnapshotTree,
 	ITree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
+import {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollectionDefinitions";
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
@@ -326,7 +329,7 @@ export interface ITelemetryContext {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @param value - value to attribute to this summary telemetry data
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.
@@ -337,7 +340,7 @@ export interface ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void;
 
 	/**
@@ -349,7 +352,7 @@ export interface ITelemetryContext {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @returns undefined if item not found
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType;
+	get(prefix: string, property: string): TelemetryBaseEventPropertyType;
 
 	/**
 	 * Returns a serialized version of all the telemetry data.

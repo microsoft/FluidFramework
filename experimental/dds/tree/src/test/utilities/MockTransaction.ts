@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Result } from '../../Common';
-import { ChangeInternal, EditStatus } from '../../persisted-types';
-import { RevisionView } from '../../RevisionView';
+import { Result } from '../../Common.js';
+import { ChangeInternal, EditStatus } from '../../persisted-types/index.js';
+import { RevisionView } from '../../RevisionView.js';
 import {
 	ChangeResult,
 	GenericTransaction,
 	GenericTransactionPolicy,
 	TransactionInternal,
-} from '../../TransactionInternal';
+} from '../../TransactionInternal.js';
 
 /**
  * @internal

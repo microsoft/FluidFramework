@@ -36,7 +36,6 @@ export {
 export * from "./documentation-domain";
 
 export {
-	createDocumentWriter,
 	DocumentWriter,
 	type HtmlRenderContext,
 	type HtmlRenderers,

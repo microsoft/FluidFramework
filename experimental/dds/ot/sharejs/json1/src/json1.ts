@@ -19,7 +19,7 @@ import {
 	removeOp,
 	Path,
 } from "ot-json1";
-import { Json1Factory } from "./factory";
+import { Json1Factory } from "./factory.js";
 
 /**
  * @internal

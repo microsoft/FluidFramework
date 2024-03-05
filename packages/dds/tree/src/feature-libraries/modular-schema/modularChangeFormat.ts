@@ -149,6 +149,7 @@ export const EncodedModularChangeset = Type.Object(
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 		builds: Type.Optional(EncodedBuilds),
+		refreshers: Type.Optional(EncodedBuilds),
 	},
 	noAdditionalProps,
 );

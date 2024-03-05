@@ -1,14 +1,7 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-base.json",
-	"bundledPackages": [
-		"@fluidframework/container-definitions",
-		"@fluidframework/container-loader",
-		"@fluidframework/driver-definitions",
-		"@fluidframework/fluid-static",
-		"@fluidframework/map",
-		"@fluidframework/tree"
-	],
+	"extends": "../../../common/build/build-common/api-extractor-base.esm.primary.json",
+	"bundledPackages": ["@fluidframework/*"],
 	"messages": {
 		"extractorMessageReporting": {
 			// TODO: Add missing documentation and remove this rule override

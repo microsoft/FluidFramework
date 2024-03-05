@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export { FluidSerializer, IFluidSerializer } from "./serializer";
-export { SharedObject, SharedObjectCore } from "./sharedObject";
-export { SummarySerializer } from "./summarySerializer";
-export { ISharedObject, ISharedObjectEvents } from "./types";
+export { FluidSerializer, IFluidSerializer } from "./serializer.js";
+export { SharedObject, SharedObjectCore } from "./sharedObject.js";
+export { SummarySerializer } from "./summarySerializer.js";
+export { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {
 	createSingleBlobSummary,
 	makeHandlesSerializable,
 	parseHandles,
 	serializeHandles,
-} from "./utils";
-export { ValueType } from "./valueType";
+	bindHandles,
+} from "./utils.js";
+export { ValueType } from "./valueType.js";

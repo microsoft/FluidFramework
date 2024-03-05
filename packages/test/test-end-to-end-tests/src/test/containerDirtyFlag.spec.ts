@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	createAndAttachContainer,
@@ -31,7 +31,7 @@ const testValue = "test value";
 type MapCallback = (
 	container: IContainer,
 	dataStore: ITestFluidObject,
-	map: SharedMap,
+	map: ISharedMap,
 ) => void | Promise<void>;
 
 describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis) => {
@@ -52,7 +52,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 		const container: IContainerExperimental = await args.loadTestContainer(testContainerConfig);
 		await waitForContainerConnection(container);
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
 		[...Array(lots).keys()].map((i) =>
 			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
@@ -84,14 +84,14 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 	let url;
 	let loader: IHostLoader;
 	let container1: IContainer;
-	let map1: SharedMap;
+	let map1: ISharedMap;
 
 	describe("Attached container", () => {
 		const verifyDirtyStateTransitions = async (container: IContainer) => {
 			assert.strictEqual(container.isDirty, false, "Container should not be dirty");
 
 			const dataStore2 = (await container.getEntryPoint()) as ITestFluidObject;
-			const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			map2.set("key", "value");
 
 			assert.strictEqual(container.isDirty, true, "Container should be dirty");
@@ -116,7 +116,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 			provider.updateDocumentId(container1.resolvedUrl);
 			url = await container1.getAbsoluteUrl("");
 			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+			map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		});
 
 		it("handles container with pending ops to be sent out", async function () {

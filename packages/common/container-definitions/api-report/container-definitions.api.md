@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'events_pkg';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
@@ -228,6 +228,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
     readonly hasCheckpointSequenceNumber: boolean;
+    // @deprecated
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;
     readonly initialSequenceNumber: number;
@@ -236,6 +237,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly lastSequenceNumber: number;
     readonly maxMessageSize: number;
     readonly minimumSequenceNumber: number;
+    // @deprecated
     readonly outbound: IDeltaQueue<U[]>;
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
@@ -291,7 +293,6 @@ export { IErrorBase }
 
 // @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
-    // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
         [environment: string]: IFluidPackageEnvironment;

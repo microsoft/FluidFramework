@@ -24,8 +24,10 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MatrixItem, SharedMatrix } from "../matrix";
-import { SharedMatrixFactory } from "../runtime";
+import { MatrixItem, SharedMatrix } from "../matrix.js";
+import { SharedMatrixFactory } from "../runtime.js";
+import { _dirname } from "./dirname.cjs";
+
 /**
  * Supported cell values used within the fuzz model.
  */
@@ -207,13 +209,23 @@ describe("Matrix fuzz tests", function () {
 	 * This makes some seeds rather slow (since that cost is paid 3 times per recycled row/col per client).
 	 * Despite this accounting for 95% of test runtime when profiled, this codepath doesn't appear to be a bottleneck
 	 * in profiled production scenarios investigated at the time of writing.
+	 *
+	 * This timeout is set to 30s to avoid flakiness on CI, but it's worth noting the vast majority of these test cases
+	 * do not go anywhere near this.
+	 * We've previously skipped the long seeds, but that tended to lead to more code churn when adding features to the
+	 * underlying harness (which affects which seeds are the slow ones).
 	 */
-	this.timeout(5000);
+	this.timeout(30_000);
 	const model: Omit<DDSFuzzModel<TypedMatrixFactory, Operation>, "workloadName"> = {
 		factory: new TypedMatrixFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: assertMatricesAreEquivalent,
+		minimizationTransforms: ["count", "start", "row", "col"].map((p) => (op) => {
+			if (p in op && typeof op[p] === "number" && op[p] > 0) {
+				op[p]--;
+			}
+		}),
 	};
 
 	const baseOptions: Partial<DDSFuzzSuiteOptions> = {
@@ -224,7 +236,7 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 	};
 
 	const nameModel = (workloadName: string): DDSFuzzModel<TypedMatrixFactory, Operation> => ({
@@ -235,8 +247,6 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		// Seeds 62 and 80 are slow but otherwise pass, see comment on timeout above.
-		skip: [62, 80],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -249,8 +259,6 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0,
 		},
 		reconnectProbability: 0.1,
-		// Seeds needing investigation, tracked by AB#7088.
-		skip: [23, 24, 69],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -262,8 +270,17 @@ describe("Matrix fuzz tests", function () {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		// Seed 7 is slow but otherwise passes, see comment on timeout above.
-		skip: [7],
+		// Uncomment to replay a particular seed.
+		// replay: 0,
+	});
+
+	createDDSFuzzSuite(nameModel("with stashing"), {
+		...baseOptions,
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.1,
+			stashableClientProbability: 0.5,
+		},
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});

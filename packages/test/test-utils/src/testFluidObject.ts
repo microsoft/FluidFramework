@@ -18,7 +18,7 @@ import {
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { ITestFluidObject } from "./interfaces";
+import { ITestFluidObject } from "./interfaces.js";
 
 /**
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.

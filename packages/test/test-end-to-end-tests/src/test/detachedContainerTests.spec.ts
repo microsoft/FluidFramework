@@ -17,7 +17,7 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -41,6 +41,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -223,7 +224,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		// Load a second container and validate it can load the DDS.
 		const container2 = await loader.resolve({ url });
 		const dsClient2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		const mapClient2 = await dsClient2.root.get<IFluidHandle<SharedMap>>("map")?.get();
+		const mapClient2 = await dsClient2.root.get<IFluidHandle<ISharedMap>>("map")?.get();
 		assert(mapClient2 !== undefined, "Map is not available in the second client");
 
 		// Make a change in the first client's DDS and validate that the change is reflected in the second client.
@@ -358,7 +359,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the root dataStore from the detached container.
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<SharedMap>(sharedMapId);
+		const testChannel1 = await dataStore.getSharedObject<ISharedMap>(sharedMapId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -511,6 +512,10 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			key: "1",
 			type: "write",
 			serializedValue: JSON.stringify("b"),
+			value: {
+				type: "Plain",
+				value: "b",
+			},
 			refSeq: detachedContainerRefSeqNumber,
 		};
 		const defPromise = new Deferred<void>();
@@ -533,19 +538,24 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 				crcId,
 				"Address should be consensus register collection",
 			);
+			const receivedOp = (
+				(
+					(message.contents as { contents: unknown }).contents as {
+						content: unknown;
+					}
+				).content as { contents?: unknown }
+			).contents as any;
+			assert.strictEqual(op.key, receivedOp.key, "Op key should be same");
+			assert.strictEqual(op.type, receivedOp.type, "Op type should be same");
 			assert.strictEqual(
-				JSON.stringify(
-					(
-						(
-							(message.contents as { contents: unknown }).contents as {
-								content: unknown;
-							}
-						).content as { contents?: unknown }
-					).contents,
-				),
-				JSON.stringify(op),
-				"Op should be same",
+				op.serializedValue,
+				receivedOp.serializedValue,
+				"Op serializedValue should be same",
 			);
+			assert.strictEqual(op.refSeq, receivedOp.refSeq, "Op refSeq should be same");
+			if (receivedOp.value) {
+				assert.deepEqual(op.value, receivedOp.value, "Op value should be same");
+			}
 			defPromise.resolve();
 			return 0;
 		});
@@ -672,7 +682,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	});
 
 	it("Fire ops during container attach for consensus ordered collection", async () => {
-		const op = { opName: "add", value: JSON.stringify("s") };
+		const op = { opName: "add", value: JSON.stringify("s"), deserializedValue: "s" };
 		const defPromise = new Deferred<void>();
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
@@ -692,19 +702,22 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 				cocId,
 				"Address should be consensus queue",
 			);
-			assert.strictEqual(
-				JSON.stringify(
-					(
-						(
-							(message.contents as { contents: unknown }).contents as {
-								content: unknown;
-							}
-						).content as { contents?: unknown }
-					).contents,
-				),
-				JSON.stringify(op),
-				"Op should be same",
-			);
+			const receivedOp = (
+				(
+					(message.contents as { contents: unknown }).contents as {
+						content: unknown;
+					}
+				).content as { contents?: unknown }
+			).contents as any;
+			assert.strictEqual(op.opName, receivedOp.opName, "Op name should be same");
+			assert.strictEqual(op.value, receivedOp.value, "Op value should be same");
+			if (receivedOp.deserializedValue) {
+				assert.strictEqual(
+					op.deserializedValue,
+					receivedOp.deserializedValue,
+					"Op deserializedValue should be same",
+				);
+			}
 			defPromise.resolve();
 			return 0;
 		});
@@ -1021,12 +1034,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 											existing,
 										);
 
-									return new Proxy(runtime, {
-										get: (t, p: keyof IRuntime, r): any => {
-											if (p === "createSummary") {
-												assert.fail("runtime.createSummary failed!");
-											}
-											return Reflect.get(t, p, r);
+									return wrapObjectAndOverride<IRuntime>(runtime, {
+										createSummary: () => () => {
+											assert.fail("runtime.createSummary failed!");
 										},
 									});
 								},
@@ -1081,12 +1091,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 											existing,
 										);
 
-									return new Proxy(runtime, {
-										get: (t, p: keyof IRuntime, r): any => {
-											if (p === "setAttachState") {
-												assert.fail("runtime.setAttachState failed!");
-											}
-											return Reflect.get(t, p, r);
+									return wrapObjectAndOverride<IRuntime>(runtime, {
+										setAttachState: () => () => {
+											assert.fail("runtime.setAttachState failed!");
 										},
 									});
 								},
