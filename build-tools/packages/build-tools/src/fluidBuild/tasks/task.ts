@@ -13,6 +13,7 @@ import registerDebug from "debug";
 const traceTaskInit = registerDebug("fluid-build:task:init");
 const traceTaskExec = registerDebug("fluid-build:task:exec");
 const traceTaskExecWait = registerDebug("fluid-build:task:exec:wait");
+const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 
 export interface TaskExec {
 	task: LeafTask;
@@ -21,7 +22,7 @@ export interface TaskExec {
 }
 
 export abstract class Task {
-	public dependentTasks?: Task[];
+	private dependentTasks?: Task[];
 	private _transitiveDependentLeafTasks: LeafTask[] | undefined | null;
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
@@ -51,6 +52,10 @@ export abstract class Task {
 		public readonly taskName: string | undefined,
 	) {
 		traceTaskInit(`${this.nameColored}`);
+		if (this.taskName === undefined) {
+			// initializeDependentTasks won't be called for unnamed tasks
+			this.dependentTasks = [];
+		}
 	}
 
 	public get package() {
@@ -68,6 +73,21 @@ export abstract class Task {
 		this.dependentTasks = this.node.getDependsOnTasks(this, this.taskName!, pendingInitDep);
 	}
 
+	// Add dependent task. For group tasks, propagate to unnamed subtask only if it's a default dependency
+	public addDependentTasks(dependentTasks: Task[], isDefault?: boolean) {
+		if (traceTaskDepTask.enabled) {
+			dependentTasks.forEach((dependentTask) => {
+				traceTaskDepTask(
+					`${this.nameColored} -> ${dependentTask.nameColored}${
+						isDefault === true ? " (default)" : ""
+					}`,
+				);
+			});
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.dependentTasks!.push(...dependentTasks);
+	}
+
 	protected get transitiveDependentLeafTask() {
 		if (this._transitiveDependentLeafTasks === null) {
 			// Circular dependency, start unrolling
@@ -75,20 +95,17 @@ export abstract class Task {
 		}
 		try {
 			if (this._transitiveDependentLeafTasks === undefined) {
-				const dependentTasks = this.dependentTasks;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const dependentTasks = this.dependentTasks!;
+				assert.notStrictEqual(dependentTasks, undefined);
 				this._transitiveDependentLeafTasks = null;
-				if (dependentTasks) {
-					const s = new Set<LeafTask>();
-					for (const dependentTask of dependentTasks) {
-						dependentTask.transitiveDependentLeafTask.forEach((t) => s.add(t));
-						dependentTask.collectLeafTasks(s);
-					}
-					this._transitiveDependentLeafTasks = [...s.values()];
-				} else {
-					// Only unnamed sub task from a group task doesn't have the dependentTasks initialized
-					this._transitiveDependentLeafTasks = [];
-					assert.strictEqual(this.taskName, undefined);
+
+				const s = new Set<LeafTask>();
+				for (const dependentTask of dependentTasks) {
+					dependentTask.transitiveDependentLeafTask.forEach((t) => s.add(t));
+					dependentTask.collectLeafTasks(s);
 				}
+				this._transitiveDependentLeafTasks = [...s.values()];
 			}
 			return this._transitiveDependentLeafTasks;
 		} catch (e) {
