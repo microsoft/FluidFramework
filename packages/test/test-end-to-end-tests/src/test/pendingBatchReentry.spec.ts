@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -49,7 +49,7 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
-		let sharedMap: SharedMap;
+		let sharedMap: ISharedMap;
 		let sharedString: SharedString;
 		let sharedDirectory: SharedDirectory;
 		let sharedCell: SharedCell;
@@ -67,7 +67,7 @@ describeCompat(
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			sharedMap = await dataObject.getSharedObject<SharedMap>("map");
+			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
 			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
 			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
 			sharedCell = await dataObject.getSharedObject<SharedCell>("sharedCell");

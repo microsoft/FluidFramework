@@ -12,7 +12,7 @@ import {
 	UnknownContainerRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
@@ -116,10 +116,10 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let container1: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
-	let dataObject1map1: SharedMap;
-	let dataObject1map2: SharedMap;
-	let dataObject2map1: SharedMap;
-	let dataObject2map2: SharedMap;
+	let dataObject1map1: ISharedMap;
+	let dataObject1map2: ISharedMap;
+	let dataObject2map1: ISharedMap;
+	let dataObject2map2: ISharedMap;
 
 	async function setupContainers(runtimeOptions?: IContainerRuntimeOptions) {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
@@ -127,14 +127,14 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
-		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
+		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
+		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
-		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
+		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
+		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
 
 		// To precisely control batch boundary, we need to force the container into write mode upfront
 		// So that the first flush doesn't result in reconnect to write mode and cause batches

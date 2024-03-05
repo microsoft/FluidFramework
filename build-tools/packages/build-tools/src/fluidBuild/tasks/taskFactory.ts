@@ -130,4 +130,30 @@ export class TaskFactory {
 	public static CreateTargetTask(node: BuildPackage, taskName: string | undefined) {
 		return new GroupTask(node, `fluid-build -t ${taskName}`, [], taskName);
 	}
+
+	public static CreateTaskWithLifeCycle(
+		node: BuildPackage,
+		scriptTask: Task,
+		preScriptTask?: Task,
+		postScriptTask?: Task,
+	) {
+		if (preScriptTask === undefined && postScriptTask === undefined) {
+			return scriptTask;
+		}
+		const subTasks: Task[] = [];
+		if (preScriptTask !== undefined) {
+			subTasks.push(preScriptTask);
+		}
+		subTasks.push(scriptTask);
+		if (postScriptTask !== undefined) {
+			subTasks.push(postScriptTask);
+		}
+		return new GroupTask(
+			node,
+			`npm run ${scriptTask.taskName}`,
+			subTasks,
+			scriptTask.taskName,
+			true,
+		);
+	}
 }

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ChannelFactoryRegistry,
@@ -42,8 +42,8 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 	let remoteContainer: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
-	let dataObject1map: SharedMap;
-	let dataObject2map: SharedMap;
+	let dataObject1map: ISharedMap;
+	let dataObject2map: ISharedMap;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
 		return {
@@ -63,12 +63,12 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject1 = (await localContainer.getEntryPoint()) as ITestFluidObject;
-		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
+		dataObject1map = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
 		dataObject2 = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
-		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+		dataObject2map = await dataObject2.getSharedObject<ISharedMap>(mapId);
 		await waitForContainerConnection(localContainer);
 		await waitForContainerConnection(remoteContainer);
 
