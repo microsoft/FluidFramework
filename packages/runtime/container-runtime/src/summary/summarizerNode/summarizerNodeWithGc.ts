@@ -19,8 +19,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { cloneGCData, unpackChildNodesGCDetails } from "../../gc";
-import { SummarizerNode } from "./summarizerNode";
+import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
+import { SummarizerNode } from "./summarizerNode.js";
 import {
 	EscapedPath,
 	ICreateChildDetails,
@@ -28,7 +28,7 @@ import {
 	ISummarizerNodeRootContract,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNodeWithGC
 	extends ISummarizerNodeWithGC,

@@ -35,17 +35,17 @@ import {
 	type IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspCache } from "./odspCache";
-import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
+import { IOdspCache } from "./odspCache.js";
+import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
 	TokenFetchOptionsEx,
-} from "./odspUtils";
-import { fetchJoinSession } from "./vroom";
-import { EpochTracker } from "./epochTracker";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { policyLabelsUpdatesSignalType } from "./contracts";
+} from "./odspUtils.js";
+import { fetchJoinSession } from "./vroom.js";
+import { EpochTracker } from "./epochTracker.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { policyLabelsUpdatesSignalType } from "./contracts.js";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection

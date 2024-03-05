@@ -27,16 +27,16 @@ import {
 	HostStoragePolicy,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import { HostStoragePolicyInternal } from "./contracts";
-import { IOdspCache } from "./odspCache";
-import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
-import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getOdspResolvedUrl } from "./odspUtils";
-import { isOdcOrigin } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OpsCache } from "./opsCaching";
-import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
-import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream";
+import { HostStoragePolicyInternal } from "./contracts.js";
+import { IOdspCache } from "./odspCache.js";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService.js";
+import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
+import { getOdspResolvedUrl } from "./odspUtils.js";
+import { isOdcOrigin } from "./odspUrlHelper.js";
+import { EpochTracker } from "./epochTracker.js";
+import { OpsCache } from "./opsCaching.js";
+import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
+import type { OdspDelayLoadedDeltaStream } from "./odspDelayLoadedDeltaStream.js";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

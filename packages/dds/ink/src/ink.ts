@@ -17,7 +17,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
-import { InkFactory } from "./inkFactory";
+import { InkFactory } from "./inkFactory.js";
 import {
 	IClearOperation,
 	ICreateStrokeOperation,
@@ -28,8 +28,8 @@ import {
 	IPen,
 	IStylusOperation,
 	IInkEvents,
-} from "./interfaces";
-import { InkData, ISerializableInk } from "./snapshot";
+} from "./interfaces.js";
+import { InkData, ISerializableInk } from "./snapshot.js";
 
 /**
  * Filename where the snapshot is stored.

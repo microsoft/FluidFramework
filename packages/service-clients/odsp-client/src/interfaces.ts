@@ -5,7 +5,7 @@
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IOdspTokenProvider } from "./token";
+import { IOdspTokenProvider } from "./token.js";
 
 /**
  * Defines the necessary properties that will be applied to all containers

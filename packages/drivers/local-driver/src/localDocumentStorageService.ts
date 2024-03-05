@@ -32,7 +32,7 @@ import {
 } from "@fluidframework/server-services-client";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { assert } from "@fluidframework/core-utils";
-import { createDocument } from "./localCreateDocument";
+import { createDocument } from "./localCreateDocument.js";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
 /**
@@ -114,7 +114,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 		const metadataString = IsoBuffer.from(blobContents.get(".metadata")).toString("utf-8");
 		const metadata = JSON.parse(metadataString);
-		const sequenceNumber: number = metadata.message.sequenceNumber;
+		const sequenceNumber: number = metadata.message?.sequenceNumber ?? 0;
 		return {
 			snapshotTree,
 			blobContents,

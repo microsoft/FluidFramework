@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IInkStroke } from "./interfaces";
+import { IInkStroke } from "./interfaces.js";
 
 /**
  * Ink snapshot interface.
