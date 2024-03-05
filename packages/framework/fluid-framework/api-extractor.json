@@ -4,7 +4,7 @@
 	"bundledPackages": ["@fluidframework/*"],
 	"messages": {
 		"extractorMessageReporting": {
-			// TODO: Add missing documentation and remove this rule override
+			// TODO: Fix violations and set logLevel to "error"
 			"ae-undocumented": {
 				"logLevel": "none"
 			}
