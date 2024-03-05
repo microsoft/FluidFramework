@@ -5,7 +5,12 @@
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
-const checkFormattingTasks = ["prettier", "check:biome", "check:prettier"];
+// These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
+// define the list here so we can re-use it in multiple task definitions.
+//
+// The "prettier" task should be replaced by "check:prettier" eventually. Once the conversion is done, then the
+// "prettier" task can be removed from this list.
+const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
 
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
@@ -38,7 +43,7 @@ module.exports = {
 		},
 		"lint": {
 			dependsOn: [
-				...checkFormattingTasks,
+				...checkFormatTasks,
 				"eslint",
 				"good-fences",
 				"depcruise",
@@ -47,7 +52,7 @@ module.exports = {
 			script: false,
 		},
 		"checks": {
-			dependsOn: [...checkFormattingTasks],
+			dependsOn: [...checkFormatTasks],
 			script: false,
 		},
 		"checks:fix": {
@@ -98,7 +103,7 @@ module.exports = {
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
 		"check:format": {
-			dependsOn: [...checkFormattingTasks],
+			dependsOn: [...checkFormatTasks],
 			script: false,
 		},
 		"format": {
