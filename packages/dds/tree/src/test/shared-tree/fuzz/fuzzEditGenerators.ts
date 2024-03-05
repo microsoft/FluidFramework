@@ -249,30 +249,6 @@ export const makeEditGenerator = (
 		...opWeightsArg,
 	};
 
-	// const jsonableTree = (state: FuzzTestState): JsonableTree => {
-	// 	const test = getAllowableNodeTypes(state);
-	// 	// Heuristics around what type of tree we insert could be made customizable to tend toward trees of certain characteristics.
-	// 	return state.random.bool(0.3)
-	// 		? {
-	// 				type: brand("com.fluidframework.leaf.number"),
-	// 				value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-	// 		  }
-	// 		: {
-	// 				type: brand("tree2fuzz.node"),
-	// 				fields: {
-	// 					requiredChild: [
-	// 						{
-	// 							type: brand("com.fluidframework.leaf.number"),
-	// 							value: state.random.integer(
-	// 								Number.MIN_SAFE_INTEGER,
-	// 								Number.MAX_SAFE_INTEGER,
-	// 							),
-	// 						},
-	// 					],
-	// 				},
-	// 		  };
-	// };
-
 	const jsonableTree = (state: FuzzTestState): JsonableTree => {
 		const allowableNodeTypes = getAllowableNodeTypes(state);
 		const nodeTypeToGenerate = state.random.pick(allowableNodeTypes);
