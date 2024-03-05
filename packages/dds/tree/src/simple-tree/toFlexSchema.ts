@@ -80,7 +80,7 @@ type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
 /**
  * Generate a {@link FlexTreeSchema} with `root` as the root field.
  *
- * This also has the side effect of populating the cached view schema on the class based schema.
+ * This also has the side effect of populating the cached view schema on the class-based schema.
  */
 export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const schemaMap: SchemaMap = new Map();

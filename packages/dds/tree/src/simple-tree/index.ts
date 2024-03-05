@@ -29,6 +29,7 @@ export {
 	InsertableTypedNode,
 	NodeBuilderData,
 	ObjectFromSchemaRecord,
+	type FieldProps,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";

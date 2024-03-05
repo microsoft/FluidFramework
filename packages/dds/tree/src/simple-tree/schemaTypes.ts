@@ -197,6 +197,8 @@ export enum NodeKind {
 
 /**
  * Properties associated with a field.
+ *
+ * @public
  */
 export interface FieldProps {
 	/**

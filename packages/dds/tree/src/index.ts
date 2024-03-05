@@ -303,6 +303,7 @@ export {
 	typedObjectValues,
 	SchemaFactoryRecursive,
 	ObjectFromSchemaRecordUnsafe,
+	type FieldProps,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	FieldSchemaUnsafe,
