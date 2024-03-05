@@ -996,7 +996,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return !!this.localCollection;
 	}
 
-	/** @internal */
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
 		private readonly requiresClient: boolean,
@@ -1115,7 +1114,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	/** @internal */
 	public attachGraph(client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
@@ -1506,7 +1504,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return entries && entries.length !== 0;
 	}
 
-	/** @internal */
 	public ackChange(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
@@ -1611,7 +1608,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * deleted as a result of rebasing. This can occur if the interval applies
 	 * to a range that no longer exists, and the interval was unable to slide.
 	 *
-	 * @internal
 	 */
 	public rebaseLocalInterval(
 		opName: string,
@@ -1803,7 +1799,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
-	/** @internal */
 	public ackAdd(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
@@ -1849,7 +1844,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return interval;
 	}
 
-	/** @internal */
 	public ackDelete(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
@@ -1873,9 +1867,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
-	/**
-	 * @internal
-	 */
 	public serializeInternal(): ISerializedIntervalCollectionV2 {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");

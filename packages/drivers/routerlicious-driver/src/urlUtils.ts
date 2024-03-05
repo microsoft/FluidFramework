@@ -4,12 +4,7 @@
  */
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import URLParse from "url-parse";
 import { ISession } from "@fluidframework/server-services-client";
-
-export const parseFluidUrl = (fluidUrl: string): URLParse => {
-	return new URLParse(fluidUrl, true);
-};
 
 /**
  * Assume documentId is at end of url path.
@@ -24,15 +19,15 @@ export const getDiscoveredFluidResolvedUrl = (
 	resolvedUrl: IResolvedUrl,
 	session: ISession,
 ): IResolvedUrl => {
-	const discoveredOrdererUrl = new URLParse(session.ordererUrl);
-	const deltaStorageUrl = new URLParse(resolvedUrl.endpoints.deltaStorageUrl);
-	deltaStorageUrl.set("host", discoveredOrdererUrl.host);
+	const discoveredOrdererUrl = new URL(session.ordererUrl);
+	const deltaStorageUrl = new URL(resolvedUrl.endpoints.deltaStorageUrl);
+	deltaStorageUrl.host = discoveredOrdererUrl.host;
 
-	const discoveredStorageUrl = new URLParse(session.historianUrl);
-	const storageUrl = new URLParse(resolvedUrl.endpoints.storageUrl);
-	storageUrl.set("host", discoveredStorageUrl.host);
+	const discoveredStorageUrl = new URL(session.historianUrl);
+	const storageUrl = new URL(resolvedUrl.endpoints.storageUrl);
+	storageUrl.host = discoveredStorageUrl.host;
 
-	const parsedUrl = parseFluidUrl(resolvedUrl.url);
+	const parsedUrl = new URL(resolvedUrl.url);
 	const discoveredResolvedUrl: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: deltaStorageUrl.toString(),
@@ -43,7 +38,7 @@ export const getDiscoveredFluidResolvedUrl = (
 		id: resolvedUrl.id,
 		tokens: resolvedUrl.tokens,
 		type: resolvedUrl.type,
-		url: new URLParse(`https://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
+		url: new URL(`https://${discoveredOrdererUrl.host}${parsedUrl.pathname}`).toString(),
 	};
 	return discoveredResolvedUrl;
 };
