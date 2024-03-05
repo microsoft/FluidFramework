@@ -63,6 +63,8 @@ const DefaultScribe: IScribe = {
 	lastSummarySequenceNumber: 0,
 	validParentSummaries: undefined,
 	isCorrupt: false,
+	protocolHead: undefined,
+	checkpointTimestamp: Date.now(),
 };
 
 /**

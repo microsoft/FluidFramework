@@ -97,6 +97,9 @@
 			},
 			"InterfaceDeclaration_IWebSocketTracker": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IScribe": {
+				"forwardCompat": false
 			}
 		}
 	}
