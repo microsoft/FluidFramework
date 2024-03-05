@@ -74,7 +74,7 @@ async function inferRoot(buildRoot: boolean) {
 			const { rootDir } = await getPackages(process.cwd());
 			return rootDir;
 		} catch (e) {
-			traceInit(`Error getting packages: ${e}`);
+			traceInit(`Error getting workspace packages: ${e}`);
 		}
 	}
 
