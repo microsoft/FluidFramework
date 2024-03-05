@@ -7,8 +7,8 @@
  * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
  */
 const permittedImports = [
-	// Within Fluid Framework allow import of '/internal'.
-	"@fluidframework/*/internal",
+	// Within Fluid Framework allow import of '/internal' from other FF packages.
+	"@fluid*/*/internal",
 
 	// Allow imports from sibling and ancestral sibling directories,
 	// but not from cousin directories. Parent is allowed but only
@@ -435,11 +435,13 @@ module.exports = {
 				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
 
-				// For test files only, additionally allow import of '/test' exports.
+				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
 				"import/no-internal-modules": [
 					"error",
 					{
-						allow: ["@fluidframework/*/test"].concat(permittedImports),
+						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
+							permittedImports,
+						),
 					},
 				],
 			},
