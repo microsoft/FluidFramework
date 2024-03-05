@@ -82,7 +82,6 @@ importers:
 
   azure/packages/azure-local-service:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
@@ -98,7 +97,6 @@ importers:
     dependencies:
       tinylicious: 3.1.0-240326
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -11814,7 +11812,7 @@ packages:
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       fflate: 0.7.4
-      semver: 7.5.4
+      semver: 7.6.0
       typescript: 5.3.2
       validate-npm-package-name: 5.0.0
     dev: true
