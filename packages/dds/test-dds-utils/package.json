@@ -54,6 +54,9 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -67,11 +70,11 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:suite": "npm run test:mocha:base -- \"dist/test/ddsSuiteCases/*js\"",
+		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" --ignore \"lib/test/types/*\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:cjs": "pnpm test:mocha:base --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "pnpm test:mocha:base --recursive \"lib/test/**/*.spec.*js\"",
+		"test:mocha:suite": "pnpm test:mocha:base \"lib/test/ddsSuiteCases/*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -140,7 +143,15 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			}
+			},
+			"build:test:cjs": [
+				"...",
+				"@fluid-private/stochastic-test-utils#build:test"
+			],
+			"build:test:esm": [
+				"...",
+				"@fluid-private/stochastic-test-utils#build:test"
+			]
 		}
 	},
 	"typeValidation": {

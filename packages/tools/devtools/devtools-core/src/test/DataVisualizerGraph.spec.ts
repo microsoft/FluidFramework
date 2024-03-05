@@ -19,8 +19,8 @@ import {
 	type FluidObjectValueNode,
 	VisualNodeKind,
 	defaultEditors,
-} from "../data-visualization";
-import { EditType } from "../CommonInterfaces";
+} from "../data-visualization/index.js";
+import { EditType } from "../CommonInterfaces.js";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {

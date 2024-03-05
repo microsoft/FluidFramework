@@ -4,20 +4,19 @@
 
 ```ts
 
-import { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
-import { AsyncReducer } from '@fluid-private/stochastic-test-utils';
-import { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
+import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
+import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor';
+import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
+import type { ISharedObject } from '@fluidframework/shared-object-base';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';
-import { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
-import { SaveInfo } from '@fluid-private/stochastic-test-utils';
-import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
+import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
+import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
