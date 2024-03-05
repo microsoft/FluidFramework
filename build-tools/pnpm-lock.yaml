@@ -325,7 +325,7 @@ importers:
       jszip: ^3.10.1
       msgpack-lite: ^0.1.26
       pako: ^2.1.0
-      prettier: ~3.0.3
+      prettier: ~3.2.4
       rimraf: ^4.4.1
       typescript: ~5.1.6
       webpack: ^5.88.1
@@ -346,7 +346,7 @@ importers:
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.55.0
-      prettier: 3.0.3
+      prettier: 3.2.5
       rimraf: 4.4.1
 
   packages/readme-command:
