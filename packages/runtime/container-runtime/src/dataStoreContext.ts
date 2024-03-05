@@ -1318,10 +1318,6 @@ export class LocalDetachedFluidDataStoreContext
 
 			await super.bindRuntime(dataStoreChannel, false /* existing */);
 
-			if (await this.isRoot()) {
-				dataStoreChannel.makeVisibleAndAttachGraph();
-			}
-
 			return this.channelToDataStoreFn(dataStoreChannel, this.id);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
