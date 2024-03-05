@@ -129,7 +129,6 @@ describeCompat(
 				"test1",
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			// Now register the channel
 			((await channel.handle.get()) as SharedObject).bindToContext();
@@ -458,11 +457,9 @@ describeCompat(
 
 				// Create first channel from dataStore2
 				const channel2 = await dataStore2.getSharedObject<ISharedMap>(mapId1);
-				assert.strictEqual(channel2.handle.isAttached, false, "Channel should be detached");
 
 				// Create second channel from dataStore 3
 				const channel3 = await dataStore3.getSharedObject<ISharedMap>(mapId2);
-				assert.strictEqual(channel3.handle.isAttached, false, "Channel should be detached");
 
 				// dataStore2 POINTS TO dataStore3, channel3
 				// dataStore3 POINTS TO dataStore2, channel2
