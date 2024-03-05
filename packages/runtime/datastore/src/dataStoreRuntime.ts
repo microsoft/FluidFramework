@@ -531,7 +531,11 @@ export class FluidDataStoreRuntime
 	/**
 	 * This function is called when a handle to this data store is added to a visible DDS.
 	 */
-	public attachGraph() {}
+	public attachGraph() {
+		// Eventually we can remove this call as not required, as data store context will attach data store after creation / initialization
+		// But due to back-compat (and mixing old container runtime - new data store runtime), we have to keep it here for a while
+		this.makeVisibleAndAttachGraph();
+	}
 
 	public bind(handle: IFluidHandle): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
