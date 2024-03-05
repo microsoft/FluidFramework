@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { UniversalSequenceNumber } from "../constants";
-import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes";
-import { MergeTreeDeltaType, ReferenceType } from "../ops";
-import { reservedTileLabelsKey } from "../referencePositions";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
-import { insertSegments } from "./testUtils";
-import { createClientsAtInitialState } from "./testClientLogger";
+import { UniversalSequenceNumber } from "../constants.js";
+import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { reservedTileLabelsKey } from "../referencePositions.js";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
+import { insertSegments } from "./testUtils.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
 
 describe("TestClient", () => {
 	const localUserLongId = "localUser";

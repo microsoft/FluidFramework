@@ -7,49 +7,54 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import {
+import type {
 	IIdCompressor,
 	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
 } from "@fluidframework/id-compressor";
-import {
+import type {
 	BaseFuzzTestState,
+	AsyncGenerator,
+	IRandom,
+	AsyncReducer,
+	SaveInfo,
+} from "@fluid-private/stochastic-test-utils";
+import {
 	chainAsync,
 	createFuzzDescribe,
 	defaultOptions,
 	done,
 	ExitBehavior,
-	AsyncGenerator,
 	asyncGeneratorFromArray,
 	interleaveAsync,
-	IRandom,
 	makeRandom,
 	performFuzzActionsAsync,
-	AsyncReducer,
-	SaveInfo,
 	saveOpsToFile,
 	takeAsync,
+	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
-import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
+import { AttachState } from "@fluidframework/container-definitions";
+import type { MinimizationTransform } from "./minification.js";
+import { FuzzTestMinimizer } from "./minification.js";
+import {
+	hasStashData,
+	type Client,
+	type ClientLoadData,
+	type ClientWithStashData,
+	createLoadData,
+} from "./clientLoading.js";
 
-/**
- * @internal
- */
-export interface Client<TChannelFactory extends IChannelFactory> {
-	channel: ReturnType<TChannelFactory["create"]>;
-	dataStoreRuntime: MockFluidDataStoreRuntime;
-	containerRuntime: MockContainerRuntimeForReconnection;
-}
+const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOperation): op is O =>
+	op.type === type;
 
 /**
  * @internal
@@ -97,8 +102,24 @@ export interface ChangeConnectionState {
 /**
  * @internal
  */
+export interface StashClient {
+	type: "stashClient";
+	clientId: string;
+}
+
+/**
+ * @internal
+ */
 export interface Attach {
 	type: "attach";
+}
+
+/**
+ * @internal
+ */
+export interface Attaching {
+	type: "attaching";
+	beforeRehydrate?: true;
 }
 
 /**
@@ -121,6 +142,7 @@ export interface TriggerRebase {
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
+	canBeStashed: boolean;
 }
 
 /**
@@ -272,6 +294,11 @@ export interface DDSFuzzHarnessEvents {
 	 * Raised after all fuzzActions have been completed.
 	 */
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
+
+	/**
+	 * Raised before each generated operation is run by its reducer.
+	 */
+	(event: "operationStart", listener: (operation: BaseOperation) => void);
 }
 
 /**
@@ -317,6 +344,11 @@ export interface DDSFuzzSuiteOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
+		/**
+		 * The probability for an added client to also be stashable which simulates
+		 * getting the pending state, closing the container, and re-opening with the state.
+		 */
+		stashableClientProbability?: number;
 	};
 
 	/**
@@ -335,6 +367,7 @@ export interface DDSFuzzSuiteOptions {
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
 		rehydrateDisabled?: true;
+		attachingBeforeRehydrateDisable?: true;
 	};
 
 	/**
@@ -514,15 +547,25 @@ export function mixinNewClient<
 				return {
 					type: "addClient",
 					addedClientId: makeFriendlyClientId(random, clients.length),
+					canBeStashed: options.clientJoinOptions?.stashableClientProbability
+						? random.bool(options.clientJoinOptions.stashableClientProbability)
+						: false,
 				};
 			}
 			return baseOp;
 		};
 	};
 
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | AddClient>[]
-		| undefined;
+	const minimizationTransforms: MinimizationTransform<TOperation | AddClient>[] =
+		(model.minimizationTransforms as
+			| MinimizationTransform<TOperation | AddClient>[]
+			| undefined) ?? [];
+
+	minimizationTransforms.push((op: TOperation | AddClient): void => {
+		if (isClientAddOp(op)) {
+			op.canBeStashed = false;
+		}
+	});
 
 	const reducer: AsyncReducer<TOperation | AddClient, TState> = async (state, op) => {
 		if (isClientAddOp(op)) {
@@ -532,6 +575,7 @@ export function mixinNewClient<
 				model.factory,
 				op.addedClientId,
 				options,
+				op.canBeStashed,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -605,15 +649,6 @@ export function mixinReconnect<
 	};
 }
 
-function finalizeAllocatedIds(compressor: IIdCompressorCore | undefined): void {
-	if (compressor !== undefined) {
-		const range = compressor.takeNextCreationRange();
-		if (range.ids !== undefined) {
-			compressor.finalizeCreationRange(range);
-		}
-	}
-}
-
 /**
  * Mixes in functionality to generate an 'attach' op, which
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -626,23 +661,52 @@ export function mixinAttach<
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState> {
-	const { numOpsBeforeAttach, rehydrateDisabled } = options.detachedStartOptions;
+): DDSFuzzModel<TChannelFactory, TOperation | Attach | Attaching | Rehydrate, TState> {
+	const { numOpsBeforeAttach, rehydrateDisabled, attachingBeforeRehydrateDisable } =
+		options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach | Rehydrate, TState>;
+		return model as DDSFuzzModel<
+			TChannelFactory,
+			TOperation | Attach | Attaching | Rehydrate,
+			TState
+		>;
 	}
-	const attachOp = async (): Promise<TOperation | Attach | Rehydrate> => {
+	const attachOp = async (): Promise<TOperation | Attach | Attaching | Rehydrate> => {
 		return { type: "attach" };
 	};
-	const rehydrateOp = async (): Promise<TOperation | Attach | Rehydrate> => {
+	const rehydrateOp = async (): Promise<TOperation | Attach | Attaching | Rehydrate> => {
 		return { type: "rehydrate" };
 	};
-	const generatorFactory: () => AsyncGenerator<TOperation | Attach | Rehydrate, TState> = () => {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | Attach | Attaching | Rehydrate,
+		TState
+	> = () => {
 		const baseGenerator = model.generatorFactory();
 		const rehydrates = rehydrateDisabled
 			? []
-			: [takeAsync(numOpsBeforeAttach, baseGenerator), takeAsync(1, rehydrateOp)];
+			: [
+					// sometimes mix a single attaching op
+					// in before rehydrate so we test
+					// applying stashed ops while detached
+					createWeightedAsyncGenerator<
+						TOperation | Attach | Attaching | Rehydrate,
+						TState
+					>([
+						[takeAsync(numOpsBeforeAttach, baseGenerator), numOpsBeforeAttach],
+						[
+							takeAsync(
+								1,
+								async (): Promise<Attaching> => ({
+									type: "attaching",
+									beforeRehydrate: true,
+								}),
+							),
+							attachingBeforeRehydrateDisable === true ? 0 : 1,
+						],
+					]),
+					takeAsync(1, rehydrateOp),
+			  ];
 		return chainAsync(
 			...rehydrates,
 			takeAsync(numOpsBeforeAttach, baseGenerator),
@@ -652,29 +716,24 @@ export function mixinAttach<
 	};
 
 	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Attach | Rehydrate>[]
+		| MinimizationTransform<TOperation | Attach | Attaching | Rehydrate>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach | Rehydrate, TState> = async (
+	const reducer: AsyncReducer<TOperation | Attach | Attaching | Rehydrate, TState> = async (
 		state,
 		operation,
 	) => {
-		if (operation.type === "attach") {
+		if (isOperationType<Attach>("attach", operation)) {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
-			const clientA = state.clients[0];
-			clientA.dataStoreRuntime.local = false;
+			const clientA: ClientWithStashData<TChannelFactory> = state.clients[0];
+			clientA.dataStoreRuntime.setAttachState(AttachState.Attached);
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			clientA.channel.connect(services);
-
-			// Finalize all id creation ranges before serializing. The production codepath does this
-			// in ContainerRuntime.createSummary.
-			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
-
-			const clients = await Promise.all(
+			const clients: Client<TChannelFactory>[] = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
 					loadClient(
 						state.containerRuntimeFactory,
@@ -682,16 +741,23 @@ export function mixinAttach<
 						model.factory,
 						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 						options,
+						index !== 0 && options.clientJoinOptions?.stashableClientProbability
+							? state.random.bool(
+									options.clientJoinOptions.stashableClientProbability,
+							  )
+							: false,
 					),
 				),
 			);
+			// eslint-disable-next-line require-atomic-updates
+			clientA.stashData = undefined;
 
 			// While detached, the initial state was set up so that the 'summarizer client' was the same as the detached client.
 			// This is actually a pretty reasonable representation of what really happens.
 			// However, now that we're transitioning to an attached state, the summarizer client should never have any edits.
 			// Thus we use one of the clients we just loaded as the summarizer client, and keep the client around that we generated the
 			// attach summary from.
-			const summarizerClient = clients[0];
+			const summarizerClient: Client<TChannelFactory> = clients[0];
 			clients[0] = state.clients[0];
 
 			return {
@@ -700,12 +766,10 @@ export function mixinAttach<
 				clients,
 				summarizerClient,
 			};
-		} else if (operation.type === "rehydrate") {
+		} else if (isOperationType<Rehydrate>("rehydrate", operation)) {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
-			// Finalize all id creation ranges before serializing. The production codepath does this
-			// in ContainerRuntime.createSummary.
-			finalizeAllocatedIds(clientA.dataStoreRuntime.idCompressor);
+
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
 			const summarizerClient = await loadDetached(
@@ -716,14 +780,31 @@ export function mixinAttach<
 				options,
 			);
 
+			model.validateConsistency(clientA.channel, summarizerClient.channel);
+
 			return {
 				...state,
 				isDetached: true,
 				clients: [summarizerClient],
 				summarizerClient,
 			};
+		} else if (isOperationType<Attaching>("attaching", operation)) {
+			assert.equal(state.clients.length, 1);
+			const clientA: ClientWithStashData<IChannelFactory> = state.clients[0];
+
+			if (operation.beforeRehydrate === true) {
+				clientA.stashData = createLoadData(clientA);
+			}
+			clientA.dataStoreRuntime.setAttachState(AttachState.Attaching);
+			const services: IChannelServices = {
+				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			clientA.channel.connect(services);
+
+			return state;
 		}
-		return model.reducer(state, operation as TOperation);
+		return model.reducer(state, operation);
 	};
 	return {
 		...model,
@@ -769,7 +850,7 @@ export function mixinRebase<
 		| undefined;
 
 	const reducer: AsyncReducer<TOperation | TriggerRebase, TState> = async (state, operation) => {
-		if (operation.type === "rebase") {
+		if (isOperationType<TriggerRebase>("rebase", operation)) {
 			assert(
 				state.client.containerRuntime.rebase !== undefined,
 				"Unsupported mock runtime version",
@@ -777,7 +858,7 @@ export function mixinRebase<
 			state.client.containerRuntime.rebase();
 			return state;
 		} else {
-			return model.reducer(state, operation as TOperation);
+			return model.reducer(state, operation);
 		}
 	};
 	return {
@@ -969,6 +1050,80 @@ export function mixinClientSelection<
 	};
 }
 
+export function mixinStashedClient<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState> {
+	if (options.clientJoinOptions?.stashableClientProbability === undefined) {
+		return model as DDSFuzzModel<TChannelFactory, TOperation | StashClient, TState>;
+	}
+
+	const generatorFactory: () => AsyncGenerator<TOperation | StashClient, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | StashClient | typeof done> => {
+			const stashable = state.clients.filter(
+				(c) => hasStashData(c) && c.containerRuntime.isDirty,
+			);
+
+			if (!state.isDetached && stashable.length > 0 && state.random.bool(0.5)) {
+				return {
+					type: "stashClient",
+					clientId: state.random.pick(stashable).containerRuntime.clientId,
+				};
+			}
+			return baseGenerator(state);
+		};
+	};
+
+	const reducer: AsyncReducer<TOperation | StashClient, TState> = async (state, operation) => {
+		const { clients, containerRuntimeFactory } = state;
+		if (isOperationType<StashClient>("stashClient", operation)) {
+			const client = clients.find((c) => c.containerRuntime.clientId === operation.clientId);
+			if (!hasStashData(client)) {
+				throw new ReducerPreconditionError("client not stashable");
+			}
+			const loadData = client.stashData;
+
+			// load a new client from the same state as the original client
+			const newClient = await loadClientFromSummaries(
+				containerRuntimeFactory,
+				loadData,
+				model.factory,
+				client.containerRuntime.clientId,
+				options,
+			);
+
+			await newClient.containerRuntime.initializeWithStashedOps(client.containerRuntime);
+
+			// replace the old client with the new client
+			return {
+				...state,
+				clients: [
+					...clients.filter(
+						(c) => c.containerRuntime.clientId !== client.containerRuntime.clientId,
+					),
+					newClient,
+				],
+			};
+		}
+
+		return model.reducer(state, operation);
+	};
+
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
+			TOperation | StashClient
+		>[],
+	};
+}
+
 /**
  * This modifies the value of "client" while callback is running, then restores it.
  * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
@@ -1012,15 +1167,18 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 		clientId,
 		idCompressor:
 			options.idCompressorFactory === undefined ? undefined : options.idCompressorFactory(),
+		attachState: AttachState.Detached,
 	});
-	dataStoreRuntime.local = true;
 	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
 	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
 	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
 	// consistency validation.
 	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, clientId);
 
-	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
+		// only track remote ops(which enables initialize from stashed ops), if rehydrate is enabled
+		trackRemoteOps: options.detachedStartOptions.rehydrateDisabled !== true,
+	});
 	// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
 	// than IChannel here.
 	const newClient: Client<TChannelFactory> = {
@@ -1034,30 +1192,48 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 
 async function loadClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summarizerClient: Client<TChannelFactory>,
+	summarizerClient: ClientWithStashData<TChannelFactory>,
 	factory: TChannelFactory,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
-): Promise<Client<TChannelFactory>> {
-	const { summary } = summarizerClient.channel.getAttachSummary();
-	let idCompressorSummary: SerializedIdCompressorWithNoSession | undefined;
-	if (summarizerClient.dataStoreRuntime.idCompressor !== undefined) {
-		idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor.serialize(false);
-	}
+	supportStashing: boolean = false,
+): Promise<ClientWithStashData<TChannelFactory>> {
+	const loadData: ClientLoadData = summarizerClient.stashData ?? createLoadData(summarizerClient);
+	return loadClientFromSummaries(
+		containerRuntimeFactory,
+		loadData,
+		factory,
+		clientId,
+		options,
+		supportStashing,
+	);
+}
+
+async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	loadData: ClientLoadData,
+	factory: TChannelFactory,
+	clientId: string,
+	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
+	supportStashing: boolean = false,
+): Promise<ClientWithStashData<TChannelFactory>> {
+	const { summaries, minimumSequenceNumber } = loadData;
+	const stashData = supportStashing ? structuredClone(loadData) : undefined;
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
 		idCompressor:
-			options.idCompressorFactory === undefined
+			options.idCompressorFactory === undefined || summaries.idCompressorSummary === undefined
 				? undefined
-				: options.idCompressorFactory(idCompressorSummary),
+				: options.idCompressorFactory(summaries.idCompressorSummary),
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
-		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
+		minimumSequenceNumber,
+		trackRemoteOps: supportStashing,
 	});
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: MockStorage.createFromSummary(summary),
+		objectStorage: MockStorage.createFromSummary(summaries.summary),
 	};
 
 	const channel = (await factory.load(
@@ -1067,34 +1243,36 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
 	channel.connect(services);
-	const newClient: Client<TChannelFactory> = {
+
+	const newClient: ClientWithStashData<TChannelFactory> = {
 		channel,
 		containerRuntime,
 		dataStoreRuntime,
+		stashData,
 	};
+
 	options.emitter.emit("clientCreate", newClient);
 	return newClient;
 }
 
 async function loadDetached<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summarizerClient: Client<TChannelFactory>,
+	summarizerClient: ClientWithStashData<TChannelFactory>,
 	factory: TChannelFactory,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	const { summary } = await summarizerClient.channel.summarize();
-	const idCompressorSummary = summarizerClient.dataStoreRuntime.idCompressor?.serialize(false);
+	const { summaries } = summarizerClient.stashData ?? createLoadData(summarizerClient);
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
-		idCompressor: options.idCompressorFactory?.(idCompressorSummary),
+		idCompressor: options.idCompressorFactory?.(summaries.idCompressorSummary),
+		attachState: AttachState.Detached,
 	});
-	dataStoreRuntime.local = true;
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
-		objectStorage: MockStorage.createFromSummary(summary),
+		objectStorage: MockStorage.createFromSummary(summaries.summary),
 	};
 
 	const channel = (await factory.load(
@@ -1103,6 +1281,11 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 		services,
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
+
+	if (summarizerClient.stashData) {
+		await containerRuntime.initializeWithStashedOps(summarizerClient.containerRuntime);
+	}
+
 	const newClient: Client<TChannelFactory> = {
 		channel,
 		containerRuntime,
@@ -1148,7 +1331,7 @@ export async function runTestForSeed<
 		options,
 	);
 	if (!startDetached) {
-		initialClient.dataStoreRuntime.local = false;
+		initialClient.dataStoreRuntime.setAttachState(AttachState.Attached);
 		const services: IChannelServices = {
 			deltaConnection: initialClient.dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -1166,6 +1349,9 @@ export async function runTestForSeed<
 						model.factory,
 						makeFriendlyClientId(random, i),
 						options,
+						options.clientJoinOptions?.stashableClientProbability
+							? random.bool(options.clientJoinOptions.stashableClientProbability)
+							: false,
 					),
 				),
 		  );
@@ -1185,6 +1371,7 @@ export async function runTestForSeed<
 	const finalState = await performFuzzActionsAsync(
 		model.generatorFactory(),
 		async (state, operation) => {
+			options.emitter.emit("operation", operation);
 			operationCount++;
 			return model.reducer(state, operation);
 		},
@@ -1208,7 +1395,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	saveInfo: SaveInfo | undefined,
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
-	itFn(`seed ${seed}`, async function () {
+	itFn(`workload: ${model.workloadName} seed: ${seed}`, async function () {
 		const inCi = !!process.env.TF_BUILD;
 		const shouldMinimize = !options.skipMinimization && saveInfo && !inCi;
 
@@ -1257,6 +1444,16 @@ type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set && options.skip instanceof Set;
 }
+
+/**
+ * Some reducers require preconditions be met which are validated by their generator.
+ * The validation can be lost if the generator is not run.
+ * The primary case where this happens is during minimization. If a reducer detects this
+ * problem, they can throw this error type, and minimization will consider the current
+ * test invalid, rather than continuing to test invalid scenarios.
+ * @internal
+ */
+export class ReducerPreconditionError extends Error {}
 
 /**
  * Performs the test again to verify if the DDS still fails with the same error message.
@@ -1360,16 +1557,21 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	| TOperation
 	| AddClient
 	| Attach
+	| Attaching
 	| Rehydrate
 	| ChangeConnectionState
 	| TriggerRebase
 	| Synchronize
+	| StashClient
 > =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(
-				mixinClientSelection(
-					mixinReconnect(mixinRebase(ddsModel, options), options),
+				mixinStashedClient(
+					mixinClientSelection(
+						mixinReconnect(mixinRebase(ddsModel, options), options),
+						options,
+					),
 					options,
 				),
 				options,

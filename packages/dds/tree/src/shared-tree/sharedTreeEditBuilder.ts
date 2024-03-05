@@ -21,7 +21,6 @@ export interface ISchemaEditor {
 	 * Updates the stored schema.
 	 * @param oldSchema - The schema being overwritten.
 	 * @param newSchema - The new schema to apply.
-	 * @internal
 	 */
 	setStoredSchema(oldSchema: TreeStoredSchema, newSchema: TreeStoredSchema): void;
 }
@@ -33,7 +32,6 @@ export interface ISchemaEditor {
 export interface ISharedTreeEditor extends IDefaultEditBuilder {
 	/**
 	 * Editor for schema changes.
-	 * @internal
 	 */
 	schema: ISchemaEditor;
 }

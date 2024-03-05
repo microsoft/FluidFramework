@@ -19,6 +19,7 @@
 export type { DevtoolsPanelProps } from "./DevtoolsPanel";
 export { DevtoolsPanel } from "./DevtoolsPanel";
 export { WindowMessageRelay } from "./WindowMessageRelay";
+export { isTelemetryOptInEnabled } from "./TelemetryUtils";
 
 // Convenience re-exports
 export type { IMessageRelay } from "@fluidframework/devtools-core";

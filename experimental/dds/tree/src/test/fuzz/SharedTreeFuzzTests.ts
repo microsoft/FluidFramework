@@ -18,13 +18,13 @@ import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,
 	withContainerOffline,
-} from '../utilities/TestUtilities';
-import { WriteFormat } from '../../persisted-types';
-import { fail } from '../../Common';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { SharedTree } from '../../SharedTree';
-import { FuzzTestState, EditGenerationConfig, Operation, FuzzChange } from './Types';
-import { makeOpGenerator } from './Generators';
+} from '../utilities/TestUtilities.js';
+import { WriteFormat } from '../../persisted-types/index.js';
+import { fail } from '../../Common.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTree } from '../../SharedTree.js';
+import { FuzzTestState, EditGenerationConfig, Operation, FuzzChange } from './Types.js';
+import { makeOpGenerator } from './Generators.js';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 

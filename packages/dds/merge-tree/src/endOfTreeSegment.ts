@@ -4,11 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { LocalClientId } from "./constants";
-import { LocalReferenceCollection } from "./localReference";
-import { MergeTree } from "./mergeTree";
-import { IMergeBlock, IRemovalInfo, ISegment, ISegmentLeaf } from "./mergeTreeNodes";
-import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
+import { LocalClientId } from "./constants.js";
+import { LocalReferenceCollection } from "./localReference.js";
+import { MergeTree } from "./mergeTree.js";
+import { IMergeBlock, IRemovalInfo, ISegment, ISegmentLeaf } from "./mergeTreeNodes.js";
+import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,

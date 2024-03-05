@@ -85,7 +85,7 @@ export abstract class Task {
 					}
 					this._transitiveDependentLeafTasks = [...s.values()];
 				} else {
-					// Only unnamed sub task from a group task doesn't the dependentTasks initialized
+					// Only unnamed sub task from a group task doesn't have the dependentTasks initialized
 					this._transitiveDependentLeafTasks = [];
 					assert.strictEqual(this.taskName, undefined);
 				}

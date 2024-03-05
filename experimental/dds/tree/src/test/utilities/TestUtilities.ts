@@ -24,7 +24,7 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
+import { AttachState, type IContainer, type IHostLoader } from '@fluidframework/container-definitions';
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -43,12 +43,12 @@ import {
 	OpSpaceNodeId,
 	SessionId,
 	StableNodeId,
-} from '../../Identifiers';
-import { fail, identity, ReplaceRecursive } from '../../Common';
-import { IdCompressor } from '../../id-compressor';
-import { createSessionId } from '../../id-compressor/NumericUuid';
-import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
-import { initialTree } from '../../InitialTree';
+} from '../../Identifiers.js';
+import { fail, identity, ReplaceRecursive } from '../../Common.js';
+import { IdCompressor } from '../../id-compressor/index.js';
+import { createSessionId } from '../../id-compressor/NumericUuid.js';
+import { getChangeNodeFromViewNode } from '../../SerializationUtilities.js';
+import { initialTree } from '../../InitialTree.js';
 import {
 	ChangeInternal,
 	Edit,
@@ -58,16 +58,22 @@ import {
 	SharedTreeOp,
 	SharedTreeOp_0_0_2,
 	WriteFormat,
-} from '../../persisted-types';
-import { TraitLocation, TreeView } from '../../TreeView';
-import { SharedTreeDiagnosticEvent } from '../../EventTypes';
-import { getNodeId, getNodeIdContext, NodeIdContext, NodeIdConverter, NodeIdNormalizer } from '../../NodeIdUtilities';
-import { newEdit, setTrait } from '../../EditUtilities';
-import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree';
-import { BuildNode, Change, StablePlace } from '../../ChangeTypes';
-import { convertEditIds } from '../../IdConversion';
-import { OrderedEditSet } from '../../EditLog';
-import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode';
+} from '../../persisted-types/index.js';
+import { TraitLocation, TreeView } from '../../TreeView.js';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
+import {
+	getNodeId,
+	getNodeIdContext,
+	NodeIdContext,
+	NodeIdConverter,
+	NodeIdNormalizer,
+} from '../../NodeIdUtilities.js';
+import { newEdit, setTrait } from '../../EditUtilities.js';
+import { SharedTree, SharedTreeFactory, SharedTreeOptions_0_0_2 } from '../../SharedTree.js';
+import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';
+import { convertEditIds } from '../../IdConversion.js';
+import { OrderedEditSet } from '../../EditLog.js';
+import { buildLeaf, RefreshingTestTree, SimpleTestTree, TestTree } from './TestNode.js';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -150,6 +156,7 @@ export function setUpTestSharedTree(
 		writeFormat,
 		attributionId,
 	} = options;
+	const attachState = localMode === true ? AttachState.Detached : undefined;
 	let componentRuntime: MockFluidDataStoreRuntime;
 	if (options.logger) {
 		const proxyHandler: ProxyHandler<MockFluidDataStoreRuntime> = {
@@ -160,9 +167,9 @@ export function setUpTestSharedTree(
 				return target[prop as keyof MockFluidDataStoreRuntime];
 			},
 		};
-		componentRuntime = new Proxy(new MockFluidDataStoreRuntime(), proxyHandler);
+		componentRuntime = new Proxy(new MockFluidDataStoreRuntime({ attachState }), proxyHandler);
 	} else {
-		componentRuntime = new MockFluidDataStoreRuntime();
+		componentRuntime = new MockFluidDataStoreRuntime({ attachState });
 	}
 
 	// Enable expensiveValidation
@@ -198,9 +205,7 @@ export function setUpTestSharedTree(
 
 	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
-	if (localMode === true) {
-		componentRuntime.local = true;
-	} else {
+	if (localMode !== true) {
 		const containerRuntime = newContainerRuntimeFactory.createContainerRuntime(componentRuntime);
 		const services = {
 			deltaConnection: componentRuntime.createDeltaConnection(),

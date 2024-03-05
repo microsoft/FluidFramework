@@ -8,9 +8,9 @@ import { assert } from "@fluidframework/core-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { compress } from "lz4js";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "../containerRuntime";
-import { estimateSocketSize } from "./batchManager";
-import { IBatch, BatchMessage } from "./definitions";
+import { CompressionAlgorithms } from "../containerRuntime.js";
+import { estimateSocketSize } from "./batchManager.js";
+import { IBatch, BatchMessage } from "./definitions.js";
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains

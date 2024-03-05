@@ -50,7 +50,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @public
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @alpha
@@ -272,6 +272,8 @@ export interface ISnapshot {
 // @alpha
 export interface ISnapshotFetchOptions {
     cacheSnapshot?: boolean;
+    fetchSource?: FetchSource;
+    loadingGroupIds?: string[];
     scenarioName?: string;
     versionId?: string;
 }

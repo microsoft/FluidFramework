@@ -48,6 +48,7 @@ export class TscTask extends LeafTask {
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
+			this.traceTrigger("no tsBuildInfo file path");
 			return false;
 		}
 
@@ -69,6 +70,7 @@ export class TscTask extends LeafTask {
 
 		const config = this.readTsConfig();
 		if (!config) {
+			this.traceTrigger("unable to read ts config");
 			return false;
 		}
 
@@ -498,6 +500,9 @@ function configKeyForPackageOverrides(overrides: Record<string, unknown> | undef
  *
  * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
  * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
+ *
+ * Jason-Ha observes that caching is only effective after the second build. But since tsc-multi is just orchestrating
+ * tsc, this should be able to derive from {@link TscTask} and override to get to the right config and tsbuildinfo.
  */
 export class TscMultiTask extends LeafWithDoneFileTask {
 	protected async getToolVersion() {
@@ -517,15 +522,31 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 				this.package.directory,
 				commandArgs[configArg + 1],
 			);
+			commandArgs.splice(configArg, 2);
+			commandArgs.shift(); // Remove "tsc-multi" from the command
+			// Assume that the remaining arguments are project paths
+			const tscMultiProjects = commandArgs.filter((arg) => !arg.startsWith("-"));
 			const tscMultiConfig = JSON.parse(
 				await readFileAsync(tscMultiConfigFile, "utf-8"),
 			) as TscMultiConfig;
 
-			if (tscMultiConfig.targets.length !== 1 || tscMultiConfig.projects.length !== 1) {
+			// Command line projects replace any in config projects
+			if (tscMultiProjects.length > 0) {
+				tscMultiConfig.projects = tscMultiProjects;
+			}
+
+			if (tscMultiConfig.projects.length !== 1) {
 				throw new Error(
-					`TscMultiTask does not support ${tscMultiConfigFile} that does not have exactly one target and project.`,
+					`TscMultiTask does not support ${command} that does not have exactly one project.`,
 				);
 			}
+
+			if (tscMultiConfig.targets.length !== 1) {
+				throw new Error(
+					`TscMultiTask does not support ${tscMultiConfigFile} that does not have exactly one target.`,
+				);
+			}
+
 			const project = tscMultiConfig.projects[0];
 			const projectExt = path.extname(project);
 			const target = tscMultiConfig.targets[0];

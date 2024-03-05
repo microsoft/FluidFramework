@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryErrorEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	ISummarizerNode,
 	ISummarizerNodeConfig,
@@ -26,6 +26,7 @@ import {
 	PerformanceEvent,
 	TelemetryDataTag,
 	tagCodeArtifacts,
+	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { mergeStats } from "@fluidframework/runtime-utils";
@@ -38,7 +39,7 @@ import {
 	parseSummaryForSubtrees,
 	SummaryNode,
 	ValidateSummaryResult,
-} from "./summarizerNodeUtils";
+} from "./summarizerNodeUtils.js";
 
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
@@ -667,7 +668,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * Creates and throws an error due to unexpected conditions.
 	 */
-	protected throwUnexpectedError(eventProps: ITelemetryErrorEvent): never {
+	protected throwUnexpectedError(eventProps: ITelemetryErrorEventExt): never {
 		const error = new LoggingError(eventProps.eventName, {
 			...eventProps,
 			referenceSequenceNumber: this.wipReferenceSequenceNumber,
