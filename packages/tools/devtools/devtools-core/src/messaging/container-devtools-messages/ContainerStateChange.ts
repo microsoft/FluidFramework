@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type HasContainerKey } from "../../CommonInterfaces";
-import { type ContainerStateMetadata } from "../../ContainerMetadata";
-import { type IDevtoolsMessage } from "../Messages";
+import { type HasContainerKey } from "../../CommonInterfaces.js";
+import { type ContainerStateMetadata } from "../../ContainerMetadata.js";
+import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link ContainerStateChange.Message}.

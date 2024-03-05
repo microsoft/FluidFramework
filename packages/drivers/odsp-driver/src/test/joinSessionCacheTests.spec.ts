@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { getJoinSessionCacheKey } from "../odspUtils";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { getJoinSessionCacheKey } from "../odspUtils.js";
 
 describe("expose joinSessionInfo Tests", () => {
 	const siteUrl = "https://www.localhost.xxx";

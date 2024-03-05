@@ -37,30 +37,30 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISnapshotCachedEntry,
 	ISnapshotCachedEntry2,
-} from "./contracts";
+} from "./contracts.js";
 import {
 	downloadSnapshot,
 	evalBlobsAndTrees,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
+	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
-	type ISnapshotRequestAndResponseOptions,
-} from "./fetchSnapshot";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache";
+} from "./fetchSnapshot.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
 import {
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
+	IOdspResponse,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-	type IOdspResponse,
-} from "./odspUtils";
-import { EpochTracker } from "./epochTracker";
-import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
-import { FlushResult } from "./odspDocumentDeltaConnection";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
+} from "./odspUtils.js";
+import { EpochTracker } from "./epochTracker.js";
+import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
+import { FlushResult } from "./odspDocumentDeltaConnection.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 

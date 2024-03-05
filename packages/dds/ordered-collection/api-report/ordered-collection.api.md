@@ -35,7 +35,6 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected completeCore(acquireId: string): void;
     // (undocumented)
     protected isActive(): boolean;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
@@ -65,7 +64,6 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
     // (undocumented)
     static Type: string;
