@@ -99,8 +99,7 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
-		"nconf": "^0.12.0",
-		"url": "^0.11.0"
+		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -110,7 +109,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/routerlicious-urlresolver-previous": "npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^18.19.0",

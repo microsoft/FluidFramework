@@ -36,12 +36,12 @@ import {
 	fetchHelper,
 	getOdspResolvedUrl,
 	IOdspResponse,
-} from "./odspUtils";
-import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
-import { ClpCompliantAppHeader } from "./contractsPublic";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { patchOdspResolvedUrl } from "./odspLocationRedirection";
+} from "./odspUtils.js";
+import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache.js";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 
 /**
  * @alpha

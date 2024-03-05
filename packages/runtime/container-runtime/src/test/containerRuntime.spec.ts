@@ -60,16 +60,20 @@ import {
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
-} from "../containerRuntime";
+} from "../containerRuntime.js";
 import {
 	ContainerMessageType,
 	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
-} from "../messageTypes";
-import { IPendingLocalState, IPendingMessage, PendingStateManager } from "../pendingStateManager";
-import { DataStores } from "../dataStores";
-import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary";
+} from "../messageTypes.js";
+import {
+	IPendingLocalState,
+	IPendingMessage,
+	PendingStateManager,
+} from "../pendingStateManager.js";
+import { DataStores } from "../dataStores.js";
+import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
 
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -2255,7 +2259,7 @@ describe("Runtime", () => {
 					(err: IFluidErrorBase) => {
 						assert(
 							err.message ===
-								"Summarizer client behind when loading snapshot with loadingGroupId",
+								"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 							"summarizer client is behind",
 						);
 						return true;

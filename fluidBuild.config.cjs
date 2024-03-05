@@ -158,8 +158,6 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
-			"common/build/build-common/src/cjs/package.json",
-			"common/build/build-common/src/esm/package.json",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
@@ -168,6 +166,11 @@ module.exports = {
 			"server/gitrest/package.json",
 			"server/historian/package.json",
 			"tools/markdown-magic/test/package.json",
+			// Source to output package.json files - not real packages
+			// These should only be files that are not in an pnpm workspace.
+			"common/build/build-common/src/cjs/package.json",
+			"common/build/build-common/src/esm/package.json",
+			"packages/common/client-utils/src/cjs/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {

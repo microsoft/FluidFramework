@@ -38,7 +38,6 @@ import {
 	GenericError,
 	raiseConnectedEvent,
 	PerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
 	TaggedLoggerAdapter,
 	MonitoringContext,
 	wrapError,
@@ -108,17 +107,17 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { ContainerFluidHandleContext } from "./containerHandleContext";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
+import { ContainerFluidHandleContext } from "./containerHandleContext.js";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry.js";
 import {
 	IPendingBatchMessage,
 	IPendingLocalState,
 	PendingStateManager,
-} from "./pendingStateManager";
-import { pkgVersion } from "./packageVersion";
-import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
-import { DataStores, getSummaryForDatastores } from "./dataStores";
+} from "./pendingStateManager.js";
+import { pkgVersion } from "./packageVersion.js";
+import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
+import { DataStores, getSummaryForDatastores } from "./dataStores.js";
 import {
 	aliasBlobName,
 	blobsTreeName,
@@ -159,8 +158,8 @@ import {
 	IBaseSummarizeResult,
 	ISummarizer,
 	rootHasIsolatedChannels,
-} from "./summary";
-import { formExponentialFn, Throttler } from "./throttler";
+} from "./summary/index.js";
+import { formExponentialFn, Throttler } from "./throttler.js";
 import {
 	GarbageCollector,
 	GCNodeType,
@@ -169,10 +168,14 @@ import {
 	IGCRuntimeOptions,
 	IGCStats,
 	trimLeadingAndTrailingSlashes,
-} from "./gc";
-import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { BindBatchTracker } from "./batchTracker";
-import { ScheduleManager } from "./scheduleManager";
+} from "./gc/index.js";
+import {
+	channelToDataStore,
+	IDataStoreAliasMessage,
+	isDataStoreAliasMessage,
+} from "./dataStore.js";
+import { BindBatchTracker } from "./batchTracker.js";
+import { ScheduleManager } from "./scheduleManager.js";
 import {
 	BatchMessage,
 	IBatch,
@@ -184,9 +187,9 @@ import {
 	RemoteMessageProcessor,
 	OpGroupingManager,
 	getLongStack,
-} from "./opLifecycle";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata";
+} from "./opLifecycle/index.js";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
+import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
@@ -196,7 +199,7 @@ import {
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 	ContainerRuntimeGCMessage,
-} from "./messageTypes";
+} from "./messageTypes.js";
 
 /**
  * Utility to implement compat behaviors given an unknown message type
@@ -771,7 +774,6 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -1783,8 +1785,11 @@ export class ContainerRuntime
 		);
 
 		this.logger.sendTelemetryEvent({
-			eventName: "GroupedSnapshotFetched",
-			details: JSON.stringify({ fromCache: loadedFromCache, count: loadingGroupIds.length }),
+			eventName: "GroupIdSnapshotFetched",
+			details: JSON.stringify({
+				fromCache: loadedFromCache,
+				loadingGroupIds: loadingGroupIds.join(","),
+			}),
 		});
 		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
 		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
@@ -1797,21 +1802,50 @@ export class ContainerRuntime
 		const snapshotSeqNumber = snapshot.sequenceNumber;
 		assert(snapshotSeqNumber !== undefined, "snapshotSeqNumber should be present");
 
+		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
+		// Snapshots should only move forward. If we observe an older snapshot than the one we loaded from, then likely
+		// the file has been overwritten or service lost data.
+		if (snapshotSeqNumber < this.deltaManager.initialSequenceNumber) {
+			throw DataProcessingError.create(
+				"Downloaded snapshot older than snapshot we loaded from",
+				"getSnapshotForLoadingGroupId",
+				undefined,
+				{
+					loadingGroupIds: sortedLoadingGroupIds.join(","),
+					snapshotSeqNumber,
+					initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+				},
+			);
+		}
+
 		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
 		// returning the snapshot.
 		if (snapshotSeqNumber > this.deltaManager.lastSequenceNumber) {
 			// If this is a summarizer client, which is trying to load a group and it finds that there is
 			// another snapshot from which the summarizer loaded and it is behind, then just give up as
 			// the summarizer state is not up to date.
+			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
 			if (this.isSummarizerClient) {
 				throw new Error(
-					"Summarizer client behind when loading snapshot with loadingGroupId",
+					"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 				);
 			}
-			// If the inbound deltas queue is paused, then unpause it for now as we need
-			// to catch up to the snapshot sequence number.
+
+			// We want to catchup from sequenceNumber to targetSequenceNumber
+			const props: ITelemetryGenericEventExt = {
+				eventName: "GroupIdSnapshotCatchup",
+				loadingGroupIds: sortedLoadingGroupIds.join(","),
+				targetSequenceNumber: snapshotSeqNumber, // This is so we reuse some columns in telemetry
+				sequenceNumber: this.deltaManager.lastSequenceNumber, // This is so we reuse some columns in telemetry
+			};
+
+			const event = PerformanceEvent.start(this.mc.logger, {
+				...props,
+			});
+			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
+			// as long as it's not a summarizer client.
 			if (this.deltaManager.inbound.paused) {
-				throw new Error("Could not catch up as inbound queue is paused");
+				props.inboundPaused = this.deltaManager.inbound.paused; // reusing telemetry
 			}
 			const defP = new Deferred<boolean>();
 			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
@@ -1820,6 +1854,7 @@ export class ContainerRuntime
 				}
 			});
 			await defP.promise;
+			event.end(props);
 		}
 		return { snapshotTree: snapshotTreeForPath, sequenceNumber: snapshotSeqNumber };
 	}

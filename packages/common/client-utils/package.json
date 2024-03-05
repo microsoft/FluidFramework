@@ -11,11 +11,12 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/indexNode.d.mts",
-				"default": "./lib/indexNode.mjs"
+				"types": "./lib/indexNode.d.ts",
+				"default": "./lib/indexNode.js"
 			},
 			"require": {
 				"types": "./dist/indexNode.d.ts",
@@ -24,28 +25,29 @@
 		}
 	},
 	"main": "dist/indexNode.js",
-	"module": "lib/indexNode.mjs",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./dist/indexNode.d.ts": "./dist/indexBrowser.d.ts",
-		"./lib/indexNode.mjs": "./lib/indexBrowser.mjs",
-		"./lib/indexNode.d.mts": "./lib/indexBrowser.d.mts"
+		"./lib/indexNode.js": "./lib/indexBrowser.js",
+		"./lib/indexNode.d.ts": "./lib/indexBrowser.d.ts"
 	},
 	"types": "dist/indexNode.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
-		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
-		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
+		"build:test:jest": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
+		"build:test:mocha": "concurrently npm:build:test:mocha:esm npm:build:test:mocha:cjs",
+		"build:test:mocha:cjs": "fluid-tsc commonjs --project ./src/test/mocha/tsconfig.cjs.json",
+		"build:test:mocha:esm": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -59,8 +61,10 @@
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
-		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
-		"tsc": "tsc",
+		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -87,10 +91,10 @@
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@types/events": "^3.0.0",
+		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
-		"events": "^3.1.0",
+		"events_pkg": "npm:events@^3.1.0",
 		"lodash": "^4.17.21",
 		"sha.js": "^2.4.11"
 	},
@@ -102,7 +106,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/base64-js": "^1.3.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:",
@@ -132,13 +136,13 @@
 		"sinon": "^17.0.1",
 		"ts-jest": "^29.1.1",
 		"ts-node": "^10.9.1",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
 				"tsc",
+				"build:esnext",
 				"build:test:mocha",
 				"build:test:jest",
 				"build:test:types"
@@ -154,16 +158,22 @@
 			"build:test:jest": [
 				"tsc"
 			],
-			"build:test:mocha": [
+			"build:test:mocha:cjs": [
 				"tsc"
 			],
+			"build:test:mocha:esm": [
+				"build:esnext"
+			],
 			"build:test:types": [
-				"tsc"
+				"build:esnext"
 			]
 		}
 	},
 	"typeValidation": {
 		"broken": {
+			"TypeAliasDeclaration_EventEmitterEventType": {
+				"forwardCompat": false
+			},
 			"RemovedClassDeclaration_EventForwarder": {
 				"backCompat": false,
 				"forwardCompat": false

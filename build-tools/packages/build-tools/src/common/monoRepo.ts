@@ -187,15 +187,17 @@ export class MonoRepo {
 			this.packages.push(Package.load(path.join(pkgDir, "package.json"), kind, this));
 		}
 
+		if (packageManager === "pnpm") {
+			const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
+			const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
+			this.workspaceGlobs = YAML.parse(workspaceString).packages;
+		}
+
 		// only needed for bump tools
 		const lernaPath = path.join(repoPath, "lerna.json");
 		if (existsSync(lernaPath)) {
 			const lerna = readJsonSync(lernaPath);
-			if (packageManager === "pnpm") {
-				const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
-				const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
-				this.workspaceGlobs = YAML.parse(workspaceString).packages;
-			} else if (lerna.packages !== undefined) {
+			if (packageManager !== "pnpm" && lerna.packages !== undefined) {
 				this.workspaceGlobs = lerna.packages;
 			}
 
@@ -204,7 +206,7 @@ export class MonoRepo {
 				this.version = lerna.version;
 				versionFromLerna = true;
 			}
-		} else {
+		} else if (packageManager !== "pnpm") {
 			// Load globs from package.json directly
 			if (this.pkg.packageJson.workspaces instanceof Array) {
 				this.workspaceGlobs = this.pkg.packageJson.workspaces;
