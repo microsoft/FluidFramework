@@ -916,10 +916,10 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 	}
 
 	it("Container uses short DataStore & DDS IDs in delayed mode", async () => {
-		TestCompactIds("delayed");
+		await TestCompactIds("delayed");
 	});
 
 	it("Container uses short DataStore & DDS IDs in On mode", async () => {
-		TestCompactIds("on");
+		await TestCompactIds("on");
 	});
 });
