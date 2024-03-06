@@ -9751,7 +9751,6 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -9788,7 +9787,6 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/test/functional-tests:
