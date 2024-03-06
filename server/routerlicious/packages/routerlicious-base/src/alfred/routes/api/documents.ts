@@ -134,24 +134,11 @@ export function create(
 					getParam(request.params, "id"),
 				)
 				.then((document) => {
-					console.log(`yunho: type of document: ${typeof document}`);
-					console.log(document);
 					if (!document || document.scheduledDeletionTime) {
-						console.log(
-							`yunho: flag: ${
-								!document || document.scheduledDeletionTime
-							}, output 404`,
-						);
-						// response.status(404);
 						throw new NetworkError(404, "Document not found.");
 					}
-					console.log(`yunho: output 200`);
-					// response.status(200).json(document);
 					return document;
 				});
-			// .catch((error) => {
-			// 	response.status(400).json(error);
-			// });
 			handleResponse(documentP, response);
 		},
 	);
