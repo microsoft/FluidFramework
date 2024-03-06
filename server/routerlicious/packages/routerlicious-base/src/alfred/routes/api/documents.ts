@@ -128,20 +128,31 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
-			const documentP = storage.getDocument(
-				getParam(request.params, "tenantId") || appTenants[0].id,
-				getParam(request.params, "id"),
-			);
-			documentP
+			const documentP = storage
+				.getDocument(
+					getParam(request.params, "tenantId") || appTenants[0].id,
+					getParam(request.params, "id"),
+				)
 				.then((document) => {
+					console.log(`yunho: type of document: ${typeof document}`);
+					console.log(document);
 					if (!document || document.scheduledDeletionTime) {
-						response.status(404);
+						console.log(
+							`yunho: flag: ${
+								!document || document.scheduledDeletionTime
+							}, output 404`,
+						);
+						// response.status(404);
+						throw new NetworkError(404, "Document not found.");
 					}
-					response.status(200).json(document);
-				})
-				.catch((error) => {
-					response.status(400).json(error);
+					console.log(`yunho: output 200`);
+					// response.status(200).json(document);
+					return document;
 				});
+			// .catch((error) => {
+			// 	response.status(400).json(error);
+			// });
+			handleResponse(documentP, response);
 		},
 	);
 
