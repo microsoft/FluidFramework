@@ -99,20 +99,3 @@ export {
 	IdCompressorMode,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-
-// Re-exports for backwards compatibility.
-// Will be removed in the future.
-export {
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	assertIsStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	generateStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	isStableId,
-} from "@fluidframework/id-compressor";
