@@ -54,6 +54,7 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ChannelCollection } from "../channelCollection.js";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -72,8 +73,23 @@ import {
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
-import { DataStores } from "../dataStores.js";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
+
+function submitDataStoreOp(
+	runtime: Pick<ContainerRuntime, "submitMessage">,
+	id: string,
+	contents: any,
+	localOpMetadata?: unknown,
+) {
+	runtime.submitMessage(
+		ContainerMessageType.FluidDataStoreOp,
+		{
+			address: id,
+			contents,
+		},
+		localOpMetadata,
+	);
+}
 
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -219,24 +235,25 @@ describe("Runtime", () => {
 				});
 
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				(containerRuntime as any).dataStores = {
+				(containerRuntime as any).channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
-					resubmitDataStoreOp: (envelope, localOpMetadata) => {
-						containerRuntime.submitDataStoreOp(
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
 							envelope.address,
 							envelope.contents,
 							localOpMetadata,
 						);
 					},
-				} as DataStores;
+				} as ChannelCollection;
 
 				containerRuntime.setConnectionState(false);
 
-				containerRuntime.submitDataStoreOp("1", "test");
+				submitDataStoreOp(containerRuntime, "1", "test");
 				(containerRuntime as any).flush();
 
-				containerRuntime.submitDataStoreOp("2", "test");
+				submitDataStoreOp(containerRuntime, "2", "test");
 				containerRuntime.setConnectionState(true);
 				(containerRuntime as any).flush();
 
@@ -432,9 +449,9 @@ describe("Runtime", () => {
 
 					it("Batching property set properly", () => {
 						containerRuntime.orderSequentially(() => {
-							containerRuntime.submitDataStoreOp("1", "test");
-							containerRuntime.submitDataStoreOp("2", "test");
-							containerRuntime.submitDataStoreOp("3", "test");
+							submitDataStoreOp(containerRuntime, "1", "test");
+							submitDataStoreOp(containerRuntime, "2", "test");
+							submitDataStoreOp(containerRuntime, "3", "test");
 						});
 						(containerRuntime as any).flush();
 
@@ -462,31 +479,32 @@ describe("Runtime", () => {
 
 					it("Resubmitting batch preserves original batches", async () => {
 						// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-						(containerRuntime as any).dataStores = {
+						(containerRuntime as any).channelCollection = {
 							setConnectionState: (_connected: boolean, _clientId?: string) => {},
 							// Pass data store op right back to ContainerRuntime
-							resubmitDataStoreOp: (envelope, localOpMetadata) => {
-								containerRuntime.submitDataStoreOp(
+							reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+								submitDataStoreOp(
+									containerRuntime,
 									envelope.address,
 									envelope.contents,
 									localOpMetadata,
 								);
 							},
-						} as DataStores;
+						} as ChannelCollection;
 
 						containerRuntime.setConnectionState(false);
 
 						containerRuntime.orderSequentially(() => {
-							containerRuntime.submitDataStoreOp("1", "test");
-							containerRuntime.submitDataStoreOp("2", "test");
-							containerRuntime.submitDataStoreOp("3", "test");
+							submitDataStoreOp(containerRuntime, "1", "test");
+							submitDataStoreOp(containerRuntime, "2", "test");
+							submitDataStoreOp(containerRuntime, "3", "test");
 						});
 						(containerRuntime as any).flush();
 
 						containerRuntime.orderSequentially(() => {
-							containerRuntime.submitDataStoreOp("4", "test");
-							containerRuntime.submitDataStoreOp("5", "test");
-							containerRuntime.submitDataStoreOp("6", "test");
+							submitDataStoreOp(containerRuntime, "4", "test");
+							submitDataStoreOp(containerRuntime, "5", "test");
+							submitDataStoreOp(containerRuntime, "6", "test");
 						});
 						(containerRuntime as any).flush();
 
@@ -535,7 +553,7 @@ describe("Runtime", () => {
 
 				assert.ok(
 					containerRuntime.ensureNoDataModelChanges(() => {
-						containerRuntime.submitDataStoreOp("id", "test");
+						submitDataStoreOp(containerRuntime, "id", "test");
 						return true;
 					}),
 				);
@@ -544,7 +562,7 @@ describe("Runtime", () => {
 					containerRuntime.ensureNoDataModelChanges(() =>
 						containerRuntime.ensureNoDataModelChanges(() =>
 							containerRuntime.ensureNoDataModelChanges(() => {
-								containerRuntime.submitDataStoreOp("id", "test");
+								submitDataStoreOp(containerRuntime, "id", "test");
 								return true;
 							}),
 						),
@@ -565,7 +583,7 @@ describe("Runtime", () => {
 
 				assert.throws(() =>
 					containerRuntime.ensureNoDataModelChanges(() =>
-						containerRuntime.submitDataStoreOp("id", "test"),
+						submitDataStoreOp(containerRuntime, "id", "test"),
 					),
 				);
 
@@ -573,7 +591,7 @@ describe("Runtime", () => {
 					containerRuntime.ensureNoDataModelChanges(() =>
 						containerRuntime.ensureNoDataModelChanges(() =>
 							containerRuntime.ensureNoDataModelChanges(() =>
-								containerRuntime.submitDataStoreOp("id", "test"),
+								submitDataStoreOp(containerRuntime, "id", "test"),
 							),
 						),
 					),
@@ -594,13 +612,13 @@ describe("Runtime", () => {
 				});
 
 				containerRuntime.ensureNoDataModelChanges(() =>
-					containerRuntime.submitDataStoreOp("id", "test"),
+					submitDataStoreOp(containerRuntime, "id", "test"),
 				);
 
 				containerRuntime.ensureNoDataModelChanges(() =>
 					containerRuntime.ensureNoDataModelChanges(() =>
 						containerRuntime.ensureNoDataModelChanges(() =>
-							containerRuntime.submitDataStoreOp("id", "test"),
+							submitDataStoreOp(containerRuntime, "id", "test"),
 						),
 					),
 				);
@@ -618,7 +636,7 @@ describe("Runtime", () => {
 				mockLogger.clear();
 				containerRuntime.ensureNoDataModelChanges(() => {
 					for (let i = 0; i < 10; i++) {
-						containerRuntime.submitDataStoreOp("id", "test");
+						submitDataStoreOp(containerRuntime, "id", "test");
 					}
 				});
 
@@ -659,7 +677,7 @@ describe("Runtime", () => {
 
 				const callback = () => {
 					containerRuntime.ensureNoDataModelChanges(() => {
-						containerRuntime.submitDataStoreOp("id", "test");
+						submitDataStoreOp(containerRuntime, "id", "test");
 						callback();
 					});
 				};
@@ -872,12 +890,12 @@ describe("Runtime", () => {
 					) => pendingMessages++,
 				} as unknown as PendingStateManager;
 			};
-			const getMockDataStores = (): DataStores => {
+			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				return {
-					processFluidDataStoreOp: (..._args) => {},
+					process: (..._args) => {},
 					setConnectionState: (..._args) => {},
-				} as DataStores;
+				} as ChannelCollection;
 			};
 
 			const getFirstContainerError = (): ICriticalContainerError => {
@@ -909,7 +927,7 @@ describe("Runtime", () => {
 			) {
 				const runtime = containerRuntime as any;
 				runtime.pendingStateManager = pendingStateManager;
-				runtime.dataStores = getMockDataStores();
+				runtime.channelCollection = getMockChannelCollection();
 				runtime.maxConsecutiveReconnects =
 					_maxReconnects ?? runtime.maxConsecutiveReconnects;
 				return runtime as ContainerRuntime;
@@ -1173,29 +1191,30 @@ describe("Runtime", () => {
 				);
 			});
 
-			/** Overwrites dataStores property and exposes private submit function with modified typing */
+			/** Overwrites channelCollection property and exposes private submit function with modified typing */
 			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
 				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 			} {
 				const patched = containerRuntime as unknown as Omit<
 					ContainerRuntime,
-					"submit" | "dataStores"
+					"submit" | "channelCollection"
 				> & {
 					submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-					dataStores: Partial<DataStores>;
+					channelCollection: Partial<ChannelCollection>;
 				};
 
-				patched.dataStores = {
+				patched.channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
-					resubmitDataStoreOp: (envelope, localOpMetadata) => {
-						containerRuntime.submitDataStoreOp(
+					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+						submitDataStoreOp(
+							containerRuntime,
 							envelope.address,
 							envelope.contents,
 							localOpMetadata,
 						);
 					},
-				} satisfies Partial<DataStores>;
+				} satisfies Partial<ChannelCollection>;
 
 				return patched;
 			}
@@ -1205,14 +1224,14 @@ describe("Runtime", () => {
 
 				patchedContainerRuntime.setConnectionState(false);
 
-				patchedContainerRuntime.submitDataStoreOp("1", "test");
-				patchedContainerRuntime.submitDataStoreOp("2", "test");
+				submitDataStoreOp(patchedContainerRuntime, "1", "test");
+				submitDataStoreOp(patchedContainerRuntime, "2", "test");
 				patchedContainerRuntime.submit({
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
 					compatDetails: { behavior: "Ignore" }, // This op should be ignored by resubmit
 				});
-				patchedContainerRuntime.submitDataStoreOp("4", "test");
+				submitDataStoreOp(patchedContainerRuntime, "4", "test");
 
 				assert.strictEqual(
 					submittedOps.length,
@@ -1506,7 +1525,7 @@ describe("Runtime", () => {
 
 			it("modifying op content after submit does not reflect in PendingStateManager", () => {
 				const content = { prop1: 1 };
-				containerRuntime.submitDataStoreOp("1", content);
+				submitDataStoreOp(containerRuntime, "1", content);
 				(containerRuntime as any).flush();
 
 				content.prop1 = 2;
@@ -1761,7 +1780,7 @@ describe("Runtime", () => {
 
 			it("summary fails before generate if there are pending ops", async () => {
 				// Submit an op and yield for it to be flushed from outbox to pending state manager.
-				containerRuntime.submitDataStoreOp("fakeId", "fakeContents");
+				submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 				await yieldEventLoop();
 
 				const summarizeResultP = containerRuntime.submitSummary({
@@ -1793,7 +1812,7 @@ describe("Runtime", () => {
 					const boundFn = fn.bind(containerRuntime);
 					return async (...args: any[]) => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
-						containerRuntime.submitDataStoreOp("fakeId", "fakeContents");
+						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 						await yieldEventLoop();
 						return boundFn(...args);
 					};
@@ -2407,7 +2426,7 @@ describe("Runtime", () => {
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				const missingDataStoreContext =
 					// eslint-disable-next-line @typescript-eslint/dot-notation
-					containerRuntime["dataStores"]["contexts"].get("missingDataStore");
+					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
 				// Add ops to this context.
 				const messages = [
