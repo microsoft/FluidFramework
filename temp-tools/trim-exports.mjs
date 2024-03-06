@@ -19,14 +19,23 @@ const pkgSrc = fs.readFileSync(pkgPath, "utf8");
 const pkg = JSON5.parse(pkgSrc);
 
 function loadDts(exportName) {
-	const dtsPath = pkg.exports[exportName]?.import?.types;
+	try {
+		const dtsPath = pkg.exports[exportName]?.import?.types;
 
-	if (dtsPath !== undefined) {
-		return fs.readFileSync(path.join(packageRoot, dtsPath), "utf8")
-			.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "")
-			.split("\n")
-			.filter((line) => line.trim().length > 0)
-			.join("\n");
+		if (dtsPath !== undefined) {
+			console.log("Loaded dts: ", dtsPath);
+			return fs.readFileSync(path.join(packageRoot, dtsPath), "utf8")
+				.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "")
+				.split("\n")
+				.filter((line) => line.trim().length > 0)
+				.join("\n");
+		} else {
+			console.log("No dts: ", dtsPath);
+		}
+
+
+	} catch {
+		console.warn(`Unable to load *.d.ts for ${exportName}.`);
 	}
 
 	return undefined;
@@ -35,18 +44,20 @@ function loadDts(exportName) {
 const dtsNames = ["./public", "./beta", "./alpha", "./internal"];
 
 let prevDts = loadDts(dtsNames[0]);
-for (let i = 1; i < dtsNames.length; i++) {
-	let dtsName = dtsNames[i];
-	const currentDts = loadDts(dtsName) ?? prevDts;
-	if (currentDts === prevDts) {
-		delete pkg.exports[dtsName];
+if (prevDts !== undefined) { 
+	for (let i = 1; i < dtsNames.length; i++) {
+		let dtsName = dtsNames[i];
+		const currentDts = loadDts(dtsName) ?? prevDts;
+		if (currentDts === prevDts) {
+			delete pkg.exports[dtsName];
+		}
+		prevDts = currentDts;
 	}
-	prevDts = currentDts;
+
+	delete pkg.exports["./fruit"];
+
+	// Write package.json
+	fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
+
+	format();
 }
-
-delete pkg.exports["./fruit"];
-
-// Write package.json
-fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
-
-format();
