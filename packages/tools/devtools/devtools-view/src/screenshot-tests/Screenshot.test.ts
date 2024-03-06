@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import Path from "node:path";
-import { type RPCs } from "@previewjs/api";
+// import { type RPCs } from "@previewjs/api";
 import { expect } from "chai";
 import chalk from "chalk";
 import { run } from "mocha";
@@ -11,6 +11,7 @@ import { chromium } from "playwright";
 import { simpleGit, pathspec } from "simple-git";
 
 import { ThemeOption } from "../ThemeHelper.js";
+import type { RPCs } from "../previewApi.cjs";
 
 /**
  * Viewport configuration for running a screenshot test.

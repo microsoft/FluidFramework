@@ -5289,7 +5289,7 @@ importers:
       c8: ^8.0.1
       chai: ^4.2.0
       chai-as-promised: 7.1.1
-      chalk: ^2.4.2
+      chalk: ^4.1.2
       cls-hooked: 4.2.2
       cross-env: ^7.0.3
       cypress-multi-reporters: 1.1.23
@@ -5341,7 +5341,7 @@ importers:
       async: 3.2.5
       basicauth-middleware: 2.0.0
       body-parser: 1.20.2
-      chalk: 2.4.2
+      chalk: 4.1.2
       cls-hooked: 4.2.2
       empty-dir: 0.2.1
       express: 4.18.2
