@@ -84,6 +84,17 @@ export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean
 }
 
 /**
+ * @returns a ChangeAtomId with the given revision and local ID.
+ */
+export function makeChangeAtomId(localId: ChangesetLocalId, revision?: RevisionTag): ChangeAtomId {
+	return revision === undefined ? { localId } : { localId, revision };
+}
+
+export function asChangeAtomId(id: ChangesetLocalId | ChangeAtomId): ChangeAtomId {
+	return typeof id === "object" ? id : { localId: id };
+}
+
+/**
  * A node in a graph of commits. A commit's parent is the commit on which it was based.
  */
 export interface GraphCommit<TChange> {

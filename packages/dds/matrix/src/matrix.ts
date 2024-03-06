@@ -28,6 +28,8 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
+	ReferenceType,
+	type LocalReferencePosition,
 } from "@fluidframework/merge-tree";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { MatrixOp } from "./ops.js";
@@ -63,8 +65,8 @@ interface ISetOpMetadata {
 	rowHandle: Handle;
 	colHandle: Handle;
 	localSeq: number;
-	rowsRefSeq: number;
-	colsRefSeq: number;
+	rowsRef: LocalReferencePosition;
+	colsRef: LocalReferencePosition;
 	referenceSeqNumber: number;
 }
 
@@ -362,6 +364,20 @@ export class SharedMatrix<T = any>
 		});
 	}
 
+	private createOpMetadataLocalRef(vector: PermutationVector, pos: number, localSeq: number) {
+		const segoff = vector.getContainingSegment(pos, undefined, localSeq);
+		assert(
+			segoff.segment !== undefined && segoff.offset !== undefined,
+			"expected valid position",
+		);
+		return vector.createLocalReferencePosition(
+			segoff.segment,
+			segoff.offset,
+			ReferenceType.StayOnRemove,
+			undefined,
+		);
+	}
+
 	private sendSetCellOp(
 		row: number,
 		col: number,
@@ -370,8 +386,6 @@ export class SharedMatrix<T = any>
 		colHandle: Handle,
 		localSeq = this.nextLocalSeq(),
 	) {
-		const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
-		const colsRefSeq = this.cols.getCollabWindow().currentSeq;
 		assert(
 			this.isAttached(),
 			0x1e2 /* "Caller must ensure 'isAttached()' before calling 'sendSetCellOp'." */,
@@ -386,12 +400,14 @@ export class SharedMatrix<T = any>
 				this.userSwitchedSetCellPolicy || this.setCellLwwToFwwPolicySwitchOpSeqNumber > -1,
 		};
 
+		const rowsRef = this.createOpMetadataLocalRef(this.rows, row, localSeq);
+		const colsRef = this.createOpMetadataLocalRef(this.cols, col, localSeq);
 		const metadata: ISetOpMetadata = {
 			rowHandle,
 			colHandle,
 			localSeq,
-			rowsRefSeq,
-			colsRefSeq,
+			rowsRef,
+			colsRef,
 			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
 		};
 
@@ -631,19 +647,21 @@ export class SharedMatrix<T = any>
 	private rebasePosition(
 		// eslint-disable-next-line import/no-deprecated
 		client: Client,
-		pos: number,
-		referenceSequenceNumber: number,
+		ref: LocalReferencePosition,
 		localSeq: number,
 	): number | undefined {
-		const { clientId } = client.getCollabWindow();
-		const { segment, offset } = client.getContainingSegment(
-			pos,
-			{ referenceSequenceNumber, clientId: client.getLongClientId(clientId) },
-			localSeq,
-		);
-		if (segment === undefined || offset === undefined) {
+		const segment = ref.getSegment();
+		const offset = ref.getOffset();
+		// If the segment that contains the position is removed, then this setCell op should do nothing.
+		if (segment === undefined || offset === undefined || segment.removedSeq !== undefined) {
 			return;
 		}
+
+		assert(
+			segment.localRemovedSeq === undefined ||
+				(segment.localRemovedSeq !== undefined && segment.localRemovedSeq > localSeq),
+			"Attempted to set a cell which was removed locally before the original op applied.",
+		);
 
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
@@ -655,13 +673,15 @@ export class SharedMatrix<T = any>
 
 		if (content.type === MatrixOp.set && content.target === undefined) {
 			const setOp = content;
-			const { rowHandle, colHandle, localSeq, rowsRefSeq, colsRefSeq, referenceSeqNumber } =
+			const { rowHandle, colHandle, localSeq, rowsRef, colsRef, referenceSeqNumber } =
 				localOpMetadata as ISetOpMetadata;
 
 			// If after rebasing the op, we get a valid row/col number, that means the row/col
 			// handles have not been recycled and we can safely use them.
-			const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-			const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+			const row = this.rebasePosition(this.rows, rowsRef, localSeq);
+			const col = this.rebasePosition(this.cols, colsRef, localSeq);
+			this.rows.removeLocalReferencePosition(rowsRef);
+			this.cols.removeLocalReferencePosition(colsRef);
 			if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
 				const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
 					rowHandle,
@@ -810,12 +830,15 @@ export class SharedMatrix<T = any>
 				assert(msg.clientId !== null, 0x861 /* clientId should not be null!! */);
 				if (local) {
 					// We are receiving the ACK for a local pending set operation.
-					const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
+					const { rowHandle, colHandle, localSeq, rowsRef, colsRef } =
+						localOpMetadata as ISetOpMetadata;
 					const isLatestPendingOp = this.isLatestPendingWrite(
 						rowHandle,
 						colHandle,
 						localSeq,
 					);
+					this.rows.removeLocalReferencePosition(rowsRef);
+					this.cols.removeLocalReferencePosition(colsRef);
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
 					// If policy is not switched, then also update the tracker in case it is the latest.
 					if (

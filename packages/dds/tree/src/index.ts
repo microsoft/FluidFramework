@@ -301,10 +301,24 @@ export {
 	enumFromStrings,
 	singletonSchema,
 	typedObjectValues,
+	SchemaFactoryRecursive,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
+	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
 export { SharedTree, TreeFactory } from "./treeFactory.js";
 

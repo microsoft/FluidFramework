@@ -243,7 +243,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
-    // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 

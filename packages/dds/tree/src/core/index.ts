@@ -153,6 +153,8 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,

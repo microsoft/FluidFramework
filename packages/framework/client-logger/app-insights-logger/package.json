@@ -108,7 +108,7 @@
 		"@fluidframework/app-insights-logger-previous": "npm:@fluidframework/app-insights-logger@2.0.0-rc.1.0.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
