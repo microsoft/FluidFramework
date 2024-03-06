@@ -56,9 +56,7 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 		if (flags.renameTypes) {
 			if (pkg.getScript("build:esnext") === undefined) {
-				this.warning(
-					`${pkg.nameColored} has no build:esnext script; skipping renameTypes.`,
-				);
+				this.warning(`${pkg.nameColored} has no build:esnext script; skipping renameTypes.`);
 			} else {
 				await this.renameTypes(pkg);
 			}
@@ -188,8 +186,7 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 					: Object.keys(testTsConfig.compilerOptions).filter((key) => {
 							const base = baseTsConfig.compilerOptions ?? {};
 							const baseTest = baseTestTsConfig.compilerOptions ?? {};
-							const baseHasKey =
-								Object.hasOwn(base, key) || Object.hasOwn(baseTest, key);
+							const baseHasKey = Object.hasOwn(base, key) || Object.hasOwn(baseTest, key);
 							return baseHasKey;
 					  });
 			for (const key of keysToDelete) {
@@ -220,17 +217,13 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (json.devDependencies?.["tsc-multi"] !== undefined) {
-				this.log(
-					`${pkg.nameColored}: Skipping tscMulti because it's already a dependency.`,
-				);
+				this.log(`${pkg.nameColored}: Skipping tscMulti because it's already a dependency.`);
 				return;
 			}
 
 			// ESM-only package
 			if (json.type === "module" || pkg.getScript("build:esnext") === "tsc") {
-				this.log(
-					`${pkg.nameColored}: Skipping tscMulti because this is an ESM-only package`,
-				);
+				this.log(`${pkg.nameColored}: Skipping tscMulti because this is an ESM-only package`);
 				return;
 			}
 
@@ -352,9 +345,8 @@ export default class UpdateProjectCommand extends PackageCommand<typeof UpdatePr
 				(packageJson.exports as any)["."].import.types = "./lib/index.d.mts";
 			}
 
-			packageJson.scripts[
-				"build:rename-types"
-			] = `renamer "lib/**" -f .d.ts -r .d.mts --force`;
+			packageJson.scripts["build:rename-types"] =
+				`renamer "lib/**" -f .d.ts -r .d.mts --force`;
 			// packageJson.scripts[
 			// 	"build:rewrite-type-imports"
 			// ] = `replace-in-file --configFile ${rewriteImportsConfigPath}`;
