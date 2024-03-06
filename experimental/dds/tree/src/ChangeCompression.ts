@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DetachedSequenceId, NodeId, OpSpaceNodeId } from './Identifiers';
+import { DetachedSequenceId, NodeId, OpSpaceNodeId } from './Identifiers.js';
 import {
 	BuildInternal,
 	BuildNodeInternal,
@@ -16,12 +16,12 @@ import {
 	DetachInternal,
 	SetValueInternal,
 	ConstraintInternal,
-} from './persisted-types';
-import { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
-import { copyPropertyIfDefined, fail, Mutable, ReplaceRecursive } from './Common';
-import { TreeCompressor } from './TreeCompressor';
-import { StringInterner } from './StringInterner';
-import { convertStablePlaceIds, convertStableRangeIds } from './IdConversion';
+} from './persisted-types/index.js';
+import { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
+import { copyPropertyIfDefined, fail, Mutable, ReplaceRecursive } from './Common.js';
+import { TreeCompressor } from './TreeCompressor.js';
+import { StringInterner } from './StringInterner.js';
+import { convertStablePlaceIds, convertStableRangeIds } from './IdConversion.js';
 
 /**
  * Encapsulates knowledge of how to compress/decompress a change into a compressed change

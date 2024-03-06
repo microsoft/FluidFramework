@@ -25,7 +25,7 @@ import { getSuiteName } from "./mocha/mochaReporterUtilities";
  *
  * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class, unicorn/prefer-module
 module.exports = class {
 	public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions }) {
 		const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportDir);
@@ -43,9 +43,7 @@ module.exports = class {
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.error(
-					chalk.red(`Test ${test.fullTitle()} failed with error: '${err.message}'`),
-				);
+				console.error(chalk.red(`Test ${test.fullTitle()} failed with error: `, err));
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				// Type signature for `Test.state` indicates it will never be 'pending',

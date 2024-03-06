@@ -29,11 +29,7 @@ export function objectToMapTyped<
 }
 
 /**
- * Convert a Array type into the type of ReadonlySet.
- *
- * Same as `keyof ListToKeys<T, unknown>` but work for values that are not valid keys.
+ * Convert a Array type into a union of its value types.
  * @public
  */
-export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[]
-	? TValue
-	: never;
+export type ArrayToUnion<T extends readonly unknown[]> = T[number];

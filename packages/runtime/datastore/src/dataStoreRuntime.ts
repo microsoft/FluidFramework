@@ -70,14 +70,14 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IChannelContext, summarizeChannel } from "./channelContext";
+import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
 	LocalChannelContext,
 	LocalChannelContextBase,
 	RehydratedLocalChannelContext,
-} from "./localChannelContext";
-import { RemoteChannelContext } from "./remoteChannelContext";
-import { FluidObjectHandle } from "./fluidHandle";
+} from "./localChannelContext.js";
+import { RemoteChannelContext } from "./remoteChannelContext.js";
+import { FluidObjectHandle } from "./fluidHandle.js";
 
 /**
  * @alpha

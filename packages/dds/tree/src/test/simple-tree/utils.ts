@@ -3,30 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { FlexFieldSchema } from "../../feature-libraries/index.js";
-import { FlexTreeView } from "../../shared-tree/index.js";
+import {
+	createMockNodeKeyManager,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
+} from "../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	ImplicitFieldSchema,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	InsertableTreeFieldFromImplicitField,
 	toFlexConfig,
-	WrapperTreeView,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";
-import { flexTreeViewWithContent, flexTreeWithContent } from "../utils.js";
+import { brand } from "../../util/index.js";
+import { checkoutWithContent, flexTreeWithContent } from "../utils.js";
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
  *
  * For minimal/concise targeted unit testing of specific simple-tree content.
  */
-export function getRoot<TSchema extends ImplicitFieldSchema>(
+export function hydrate<TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, initialTree);
+	const config = new TreeConfiguration(schema, () => initialTree);
 	const flexConfig = toFlexConfig(config);
 	const tree = flexTreeWithContent(flexConfig);
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
@@ -40,16 +44,20 @@ export function getRoot<TSchema extends ImplicitFieldSchema>(
  */
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
-): WrapperTreeView<TSchema, FlexTreeView<FlexFieldSchema>> {
+): SchematizingSimpleTreeView<TSchema> {
 	const flexConfig = toFlexConfig(config);
-	const view = flexTreeViewWithContent(flexConfig);
-	return new WrapperTreeView<TSchema, FlexTreeView<FlexFieldSchema>>(view);
+	const checkout = checkoutWithContent(flexConfig);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createMockNodeKeyManager(),
+		brand(defaultNodeKeyFieldKey),
+	);
 }
 
 /**
  * Similar to JSON stringify, but allows `undefined` at the root and returns numbers as-is at the root.
  */
-
 export function pretty(arg: unknown): number | string {
 	if (arg === undefined) {
 		return "undefined";

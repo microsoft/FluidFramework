@@ -27,9 +27,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { ChannelStorageService } from "./channelStorageService";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+import { ChannelStorageService } from "./channelStorageService.js";
+import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
@@ -79,6 +79,7 @@ export function createChannelServiceEndpoints(
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
+	isAttachedAndVisible: () => boolean,
 	storageService: IDocumentStorageService,
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
@@ -89,6 +90,7 @@ export function createChannelServiceEndpoints(
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
 		addedGCOutboundReferenceFn,
+		isAttachedAndVisible,
 	);
 	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);
 

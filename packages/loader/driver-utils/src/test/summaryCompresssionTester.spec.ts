@@ -36,9 +36,9 @@ import {
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
 	blobHeadersBlobName,
-} from "../adapters";
-import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
-import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
+} from "../adapters/index.js";
+import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
+import { snapshotTree, summaryTemplate } from "./summaryCompressionData.js";
 
 /**
  * This function clones the imported summary and returns a new summary with the same content.
@@ -103,7 +103,6 @@ class InternalTestStorage implements IDocumentStorageService {
 	constructor() {}
 	private _uploadedSummary: ISummaryTree | undefined;
 
-	repositoryUrl: string = "";
 	policies?: IDocumentStorageServicePolicies | undefined;
 
 	async getSnapshotTree(

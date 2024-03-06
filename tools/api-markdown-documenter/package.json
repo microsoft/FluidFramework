@@ -63,7 +63,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@microsoft/api-documenter": "7.23.9",
 		"@microsoft/api-extractor-model": "~7.28.2",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/node-core-library": "^3.55.2",
@@ -75,7 +74,7 @@
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "file:../../common/build/eslint-config-fluid",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/chai": "^4.3.4",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.15.11",

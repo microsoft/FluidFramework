@@ -23,11 +23,11 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
-import { createTestConfigProvider } from "./TestConfigs";
-import { waitForContainerConnection } from "./containerUtils";
-import { timeoutAwait } from "./timeoutUtils";
-import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";
+import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
+import { createTestConfigProvider } from "./TestConfigs.js";
+import { waitForContainerConnection } from "./containerUtils.js";
+import { timeoutAwait } from "./timeoutUtils.js";
+import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 
 const summarizerClientType = "summarizer";
 

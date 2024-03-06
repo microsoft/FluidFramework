@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -13,19 +13,20 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	summarizeNow,
 	waitForContainerConnection,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
-import type { SharedObjectCore } from "@fluidframework/shared-object-base";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, type IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import type { IChannel } from "@fluidframework/datastore-definitions";
 
-function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
+function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
@@ -45,7 +46,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		}
 
 		private readonly sharedMapKey = "map";
-		public map!: SharedMap;
+		public map!: ISharedMap;
 
 		private readonly sharedCellKey = "sharedCell";
 		public sharedCell!: SharedCell;
@@ -59,7 +60,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		}
 
 		protected async hasInitialized() {
-			const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.sharedMapKey);
+			const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.sharedMapKey);
 			assert(mapHandle !== undefined, "SharedMap not found");
 			this.map = await mapHandle.get();
 
@@ -95,9 +96,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 	let container2: IContainer;
 	let mainDataStore: TestDataObject;
 
-	let sharedMapContainer1: SharedMap;
-	let sharedMapContainer2: SharedMap;
-	let sharedMapContainer3: SharedMap;
+	let sharedMapContainer1: ISharedMap;
+	let sharedMapContainer2: ISharedMap;
+	let sharedMapContainer3: ISharedMap;
 
 	let sharedCellContainer1: SharedCell;
 
@@ -125,50 +126,41 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		await waitForContainerConnection(container3);
 	});
 
+	const containerConfigNoCompressor: ITestContainerConfig = {
+		registry: [
+			["mapId", SharedMap.getFactory()],
+			["cellId", SharedCell.getFactory()],
+		],
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		loaderProps: {},
+	};
+
+	const containerConfigWithCompressor: ITestContainerConfig = {
+		...containerConfigNoCompressor,
+		runtimeOptions: {
+			enableRuntimeIdCompressor: true,
+		},
+	};
+
 	it("has no compressor if not enabled", async () => {
 		provider.reset();
-		const config: ITestContainerConfig = {
-			registry: [
-				["mapId", SharedMap.getFactory()],
-				["cellId", SharedCell.getFactory()],
-			],
-			fluidDataObjectType: DataObjectFactoryType.Test,
-		};
-		const container = await provider.makeTestContainer(config);
+		const container = await provider.makeTestContainer(containerConfigNoCompressor);
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataObject.getSharedObject<SharedMap>("mapId");
+		const map = await dataObject.getSharedObject<ISharedMap>("mapId");
 
 		assert(getIdCompressor(map) === undefined);
 	});
 
 	it("can't enable compressor on an existing container", async () => {
 		provider.reset();
-		const config: ITestContainerConfig = {
-			registry: [
-				["mapId", SharedMap.getFactory()],
-				["cellId", SharedCell.getFactory()],
-			],
-			fluidDataObjectType: DataObjectFactoryType.Test,
-		};
-		const container = await provider.makeTestContainer(config);
+		const container = await provider.makeTestContainer(containerConfigNoCompressor);
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataObject.getSharedObject<SharedMap>("mapId");
+		const map = await dataObject.getSharedObject<ISharedMap>("mapId");
 		assert(getIdCompressor(map) === undefined);
 
-		const enabledConfig: ITestContainerConfig = {
-			registry: [
-				["mapId", SharedMap.getFactory()],
-				["cellId", SharedCell.getFactory()],
-			],
-			fluidDataObjectType: DataObjectFactoryType.Test,
-			runtimeOptions: {
-				enableRuntimeIdCompressor: true,
-			},
-		};
-
-		const enabledContainer = await provider.loadTestContainer(enabledConfig);
+		const enabledContainer = await provider.loadTestContainer(containerConfigWithCompressor);
 		const enabledDataObject = (await enabledContainer.getEntryPoint()) as ITestFluidObject;
-		const enabledMap = await enabledDataObject.getSharedObject<SharedMap>("mapId");
+		const enabledMap = await enabledDataObject.getSharedObject<ISharedMap>("mapId");
 		assert(getIdCompressor(enabledMap) === undefined);
 	});
 
@@ -288,6 +280,39 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 
 		assert.strictEqual(opSpaceId, 0);
 		assert.strictEqual(normalizedSessionSpaceId, -1);
+	});
+
+	it("finalizes IDs made in a detached state immediately upon attach", async () => {
+		const loader = provider.makeTestLoader(containerConfigWithCompressor);
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container = await loader.createDetachedContainer(defaultCodeDetails);
+
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		const map = await dataObject.getSharedObject<ISharedMap>("mapId");
+		const sessionSpaceId = getIdCompressor(map).generateCompressedId();
+
+		await container.attach(provider.driver.createCreateNewRequest("doc id"));
+		const opSpaceId = getIdCompressor(map).normalizeToOpSpace(sessionSpaceId);
+		assert.notEqual(opSpaceId, sessionSpaceId);
+		await provider.ensureSynchronized();
+
+		const url = await container.getAbsoluteUrl("");
+		assert(url !== undefined);
+		const loader2 = provider.makeTestLoader(containerConfigWithCompressor);
+		const remoteContainer = await loader2.resolve({ url });
+
+		const dataObject2 =
+			await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
+		const map2 = await dataObject2.getSharedObject<ISharedMap>("mapId");
+		const sessionSpaceId2 = getIdCompressor(map2).normalizeToSessionSpace(
+			opSpaceId,
+			getIdCompressor(map).localSessionId,
+		);
+
+		assert.equal(opSpaceId, sessionSpaceId2);
 	});
 
 	it("eagerly allocates final IDs after cluster is finalized", async () => {
@@ -519,6 +544,17 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		// Trigger Id submission
 		sharedMapContainer1.set("key", "value");
+
+		const superResubmit = (sharedMapContainer1 as any).reSubmitCore.bind(sharedMapContainer1);
+		(sharedMapContainer1 as any).reSubmitCore = (
+			content: unknown,
+			localOpMetadata: unknown,
+		) => {
+			// Simulate a DDS that generates IDs as part of the resubmit path (e.g. SharedTree)
+			// This will test that ID allocation ops are correctly sorted into a separate batch in the outbox
+			getIdCompressor(sharedMapContainer1).generateCompressedId();
+			superResubmit(content, localOpMetadata);
+		};
 
 		// Generate ids in a connected container but don't send them yet
 		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();

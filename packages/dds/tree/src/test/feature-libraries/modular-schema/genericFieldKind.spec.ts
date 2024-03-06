@@ -17,15 +17,19 @@ import {
 	FieldKey,
 	DeltaFieldMap,
 	DeltaFieldChanges,
-	RevisionTagCodec,
 	ChangeEncodingContext,
 } from "../../../core/index.js";
-import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	fakeIdAllocator,
+	brand,
+	JsonCompatibleReadOnly,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
+	testRevisionTagCodec,
 } from "../../utils.js";
 import { IJsonCodec } from "../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -105,7 +109,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		taggedChange,
 		unexpectedDelegate,
-		fakeIdAllocator,
+		idAllocatorFromMaxId(),
 		crossFieldManager,
 		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
@@ -360,7 +364,7 @@ describe("GenericField", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
 			childInverter,
-			fakeIdAllocator,
+			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
@@ -434,10 +438,7 @@ describe("GenericField", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(
-				childCodec,
-				new RevisionTagCodec(new MockIdCompressor()),
-			),
+			genericFieldKind.changeHandler.codecsFactory(childCodec, testRevisionTagCodec),
 			encodingTestData,
 		);
 	});

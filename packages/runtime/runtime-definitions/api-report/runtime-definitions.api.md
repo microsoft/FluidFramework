@@ -28,7 +28,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -85,6 +85,7 @@ export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStor
 
 // @alpha
 export enum FlushMode {
+    // @deprecated
     Immediate = 0,
     TurnBased = 1
 }
@@ -120,17 +121,23 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>, groupId?: string): IFluidDataStoreContextDetached;
+    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    readonly disposed: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
+    getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
+        snapshotTree: ISnapshotTree;
+        sequenceNumber: number;
+    }>;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
-    submitSignal(type: string, content: any): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
@@ -145,6 +152,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+    // (undocumented)
+    (event: "dispose", listener: () => void): any;
 }
 
 // @alpha
@@ -170,18 +179,13 @@ export interface IExperimentalIncrementalSummaryContext {
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // @deprecated
-    attachGraph(): void;
-    readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // (undocumented)
-    readonly id: string;
     makeVisibleAndAttachGraph(): void;
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    processSignal(message: any, local: boolean): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown, addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void): void;
+    processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
@@ -189,63 +193,22 @@ export interface IFluidDataStoreChannel extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
-    // (undocumented)
-    readonly visibilityState: VisibilityState;
 }
 
 // @alpha
-export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
-    // @deprecated (undocumented)
-    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, IFluidParentContext {
     addedGCOutboundRoute?(fromPath: string, toPath: string): void;
-    readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    // (undocumented)
-    readonly clientDetails: IClientDetails;
-    // (undocumented)
-    readonly clientId: string | undefined;
-    // (undocumented)
-    readonly connected: boolean;
-    // (undocumented)
-    readonly containerRuntime: IContainerRuntimeBase;
     // @deprecated (undocumented)
     readonly createProps?: any;
-    // (undocumented)
-    deleteChildSummarizerNode(id: string): void;
-    // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    ensureNoDataModelChanges<T>(callback: () => T): T;
-    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getAudience(): IAudience;
     // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
-    getCreateChildSummarizerNodeFn(
-    id: string,
-    createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
-    getQuorum(): IQuorumClients;
-    // (undocumented)
-    readonly groupId?: string;
-    // (undocumented)
     readonly id: string;
-    // (undocumented)
-    readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
-    // (undocumented)
-    readonly logger: ITelemetryBaseLogger;
-    makeLocallyVisible(): void;
-    // (undocumented)
-    readonly options: Record<string | number, any>;
     readonly packagePath: readonly string[];
-    readonly scope: FluidObject;
     setChannelDirty(address: string): void;
-    // (undocumented)
-    readonly storage: IDocumentStorageService;
-    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
-    // (undocumented)
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @alpha (undocumented)
@@ -275,6 +238,56 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+}
+
+// @alpha
+export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
+    // @deprecated (undocumented)
+    addedGCOutboundReference?(srcHandle: {
+        absolutePath: string;
+    }, outboundHandle: {
+        absolutePath: string;
+    }): void;
+    readonly attachState: AttachState;
+    // (undocumented)
+    readonly clientDetails: IClientDetails;
+    // (undocumented)
+    readonly clientId: string | undefined;
+    // (undocumented)
+    readonly connected: boolean;
+    // (undocumented)
+    readonly containerRuntime: IContainerRuntimeBase;
+    // (undocumented)
+    deleteChildSummarizerNode(id: string): void;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
+    readonly gcThrowOnTombstoneUsage: boolean;
+    // (undocumented)
+    readonly gcTombstoneEnforcementAllowed: boolean;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getAudience(): IAudience;
+    // (undocumented)
+    getCreateChildSummarizerNodeFn(
+    id: string,
+    createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    getQuorum(): IQuorumClients;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
+    readonly loadingGroupId?: string;
+    // (undocumented)
+    readonly logger: ITelemetryBaseLogger;
+    makeLocallyVisible(): void;
+    // (undocumented)
+    readonly options: Record<string | number, any>;
+    readonly scope: FluidObject;
+    // (undocumented)
+    readonly storage: IDocumentStorageService;
+    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
+    // (undocumented)
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public
@@ -406,11 +419,11 @@ export interface ISummaryTreeWithStats {
 // @public
 export interface ITelemetryContext {
     // @deprecated
-    get(prefix: string, property: string): TelemetryEventPropertyType;
+    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
     // @deprecated
     serialize(): string;
-    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
 // @alpha

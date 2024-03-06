@@ -64,15 +64,13 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 // @alpha
 export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents> implements ISharedMatrix<T> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
-    // (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(_content: unknown): void;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)
     get colCount(): number;
     // (undocumented)
     protected readonly consumers: Set<IMatrixConsumer<MatrixItem<T>>>;
-    // (undocumented)
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedMatrix<T>;
     // (undocumented)
     protected didAttach(): void;
@@ -88,7 +86,6 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
     insertRows(rowStart: number, count: number): void;
     // (undocumented)
     isSetCellConflictResolutionPolicyFWW(): boolean;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     get matrixProducer(): IMatrixProducer<MatrixItem<T>>;
@@ -100,7 +97,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
     openMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): IMatrixReader<MatrixItem<T>>;
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
-    protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processCore(msg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: IFluidSerializer): void;
     protected protectAgainstReentrancy(callback: () => void): void;
     // (undocumented)
@@ -108,7 +105,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
     // (undocumented)
     removeRows(rowStart: number, count: number): void;
     // (undocumented)
-    protected reSubmitCore(contentArg: any, localOpMetadata: unknown): void;
+    protected reSubmitCore(incoming: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     get rowCount(): number;
     // (undocumented)
@@ -135,8 +132,7 @@ export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): IChannel;
-    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): SharedMatrix;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
     // (undocumented)
     static Type: string;

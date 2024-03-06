@@ -12,6 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISerializableValue, IValueChanged } from "../../interfaces";
 import {
 	IMapSetOperation,
@@ -45,8 +46,16 @@ function createDetachedMap(id: string): TestMap {
 }
 
 class TestMap extends AttributableMap {
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
-		return this.applyStashedOp(content) as MapLocalOpMetadata;
+	private lastMetadata?: MapLocalOpMetadata;
+	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
+		this.lastMetadata = undefined;
+		this.applyStashedOp(content);
+		return this.lastMetadata;
+	}
+
+	public submitLocalMessage(op: IMapOperation, localOpMetadata: unknown): void {
+		this.lastMetadata = localOpMetadata as MapLocalOpMetadata;
+		super.submitLocalMessage(op, localOpMetadata);
 	}
 }
 
@@ -382,7 +391,7 @@ describe("Map", () => {
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
@@ -412,8 +421,14 @@ describe("Map", () => {
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
 				const map1 = new TestMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				map1.connect({
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(undefined),
+				});
 				let metadata = map1.testApplyStashedOp(op);
-				assert.equal(metadata.type, "add");
+				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
 				const editmetadata = map1.testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
 				assert.equal(editmetadata.type, "edit");
@@ -422,7 +437,7 @@ describe("Map", () => {
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
 				metadata = map1.testApplyStashedOp(op2);
-				assert.equal(metadata.type, "add");
+				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
 				metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;

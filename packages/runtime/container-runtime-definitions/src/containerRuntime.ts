@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
-import {
+import type { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
+import type {
 	IEventProvider,
 	IRequest,
 	IResponse,
@@ -12,18 +12,18 @@ import {
 	IFluidHandle,
 	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	IClientDetails,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
+	type IClientDetails,
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	FlushMode,
-	IContainerRuntimeBase,
-	IContainerRuntimeBaseEvents,
-	IFluidDataStoreContextDetached,
-	IProvideFluidDataStoreRegistry,
+	type FlushMode,
+	type IContainerRuntimeBase,
+	type IContainerRuntimeBaseEvents,
+	type IFluidDataStoreContextDetached,
+	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
 /**
@@ -40,7 +40,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * @alpha
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
+	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
 }
 

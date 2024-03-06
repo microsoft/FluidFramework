@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
 	bufferToString,
 	fromBase64ToUtf8,
@@ -133,18 +133,6 @@ export function addBlobToSummary(
 /**
  * @internal
  */
-export function addTreeToSummary(
-	summary: ISummaryTreeWithStats,
-	key: string,
-	summarizeResult: ISummarizeResult,
-): void {
-	summary.summary.tree[key] = summarizeResult.summary;
-	summary.stats = mergeStats(summary.stats, summarizeResult.stats);
-}
-
-/**
- * @internal
- */
 export function addSummarizeResultToSummary(
 	summary: ISummaryTreeWithStats,
 	key: string,
@@ -265,6 +253,7 @@ export function convertToSummaryTreeWithStats(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -326,6 +315,7 @@ export function convertSnapshotTreeToSummaryTree(
 
 	const summaryTree = builder.getSummaryTree();
 	summaryTree.summary.unreferenced = snapshot.unreferenced;
+	summaryTree.summary.groupId = snapshot.groupId;
 	return summaryTree;
 }
 
@@ -372,6 +362,7 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 	return {
 		entries,
 		unreferenced: summaryTree.unreferenced,
+		groupId: summaryTree.groupId,
 	};
 }
 
@@ -418,12 +409,12 @@ export function processAttachMessageGCData(
  * @internal
  */
 export class TelemetryContext implements ITelemetryContext {
-	private readonly telemetry = new Map<string, TelemetryEventPropertyType>();
+	private readonly telemetry = new Map<string, TelemetryBaseEventPropertyType>();
 
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void {
+	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
@@ -433,7 +424,7 @@ export class TelemetryContext implements ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void {
 		// Set the values individually so that they are logged as a flat list along with other properties.
 		for (const key of Object.keys(values)) {
@@ -444,7 +435,7 @@ export class TelemetryContext implements ITelemetryContext {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.get}
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType {
+	get(prefix: string, property: string): TelemetryBaseEventPropertyType {
 		return this.telemetry.get(`${prefix}${property}`);
 	}
 

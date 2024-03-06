@@ -23,7 +23,7 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "fluid-internal",
+        "@fluid-internal/fluid",
         "unicorn",
         "unused-imports",
         "tsdoc",
@@ -40,6 +40,9 @@
         ],
         "@babel/semi": [
             "off"
+        ],
+        "@fluid-internal/fluid/no-member-release-tags": [
+            "error"
         ],
         "@rushstack/no-new-null": [
             "warn"
@@ -528,9 +531,6 @@
         "flowtype/union-intersection-spacing": [
             "off"
         ],
-        "fluid-internal/no-member-release-tags": [
-            "error"
-        ],
         "for-direction": [
             "error"
         ],
@@ -608,12 +608,7 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "error",
-            {
-                "allow": [
-                    "events"
-                ]
-            }
+            "error"
         ],
         "import/no-unassigned-import": [
             "error"

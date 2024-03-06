@@ -18,8 +18,8 @@ import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { CounterFactory } from "./counterFactory";
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces";
+import { CounterFactory } from "./counterFactory.js";
+import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
@@ -178,6 +178,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
-		this.incrementCore(counterOp.incrementAmount);
+		this.increment(counterOp.incrementAmount);
 	}
 }

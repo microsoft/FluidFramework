@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDisposable,
 	IEventProvider,
 	IEvent,
 	IErrorEvent,
 	IErrorBase,
 } from "@fluidframework/core-interfaces";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import {
+import type { IAnyDriverError } from "@fluidframework/driver-definitions";
+import type {
 	IClientConfiguration,
 	IClientDetails,
 	IDocumentMessage,
@@ -25,7 +25,13 @@ import {
  * @public
  */
 export interface IConnectionDetails {
+	/**
+	 * The client's unique identifier assigned by the service.
+	 *
+	 * @remarks It is not stable across reconnections.
+	 */
 	clientId: string;
+
 	claims: ITokenClaims;
 	serviceConfiguration: IClientConfiguration;
 
@@ -34,10 +40,10 @@ export interface IConnectionDetails {
 	 *
 	 * @remarks
 	 *
-	 * It may lap actual last sequence number (quite a bit, if container is very active).
-	 * But it's the best information for client to figure out how far it is behind, at least
-	 * for "read" connections. "write" connections may use own "join" op to similar information,
-	 * that is likely to be more up-to-date.
+	 * It may lag behind the actual last sequence number (quite a bit, if the container is very active),
+	 * but it's the best information the client has to figure out how far behind it is, at least
+	 * for "read" connections. "write" connections may use the client's own "join" op to obtain similar
+	 * information which is likely to be more up-to-date.
 	 */
 	checkpointSequenceNumber: number | undefined;
 }
@@ -143,11 +149,15 @@ export interface IDeltaManagerEvents extends IEvent {
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/**
 	 * The queue of inbound delta messages
+	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
+	 * may break if this is used directly. For example summarization and op processing.
 	 */
 	readonly inbound: IDeltaQueue<T>;
 
 	/**
 	 * The queue of outbound delta messages
+	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
+	 * may break if this is used directly. For example op submission
 	 */
 	readonly outbound: IDeltaQueue<U[]>;
 

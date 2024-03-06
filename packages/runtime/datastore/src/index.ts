@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { FluidObjectHandle } from "./fluidHandle";
+export { FluidObjectHandle } from "./fluidHandle.js";
 export {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 	ISharedObjectRegistry,
 	mixinRequestHandler,
 	mixinSummaryHandler,
-} from "./dataStoreRuntime";
-export { IChannelContext } from "./channelContext";
+} from "./dataStoreRuntime.js";
+export { IChannelContext } from "./channelContext.js";

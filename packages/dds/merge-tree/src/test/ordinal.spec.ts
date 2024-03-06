@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 import assert from "assert";
-import { computeHierarchicalOrdinal } from "../ordinal";
-import { doOverRange } from "./mergeTreeOperationRunner";
+import { computeHierarchicalOrdinal } from "../ordinal.js";
+import { doOverRange } from "./mergeTreeOperationRunner.js";
 
 function computeNumericOrdinal(index: number) {
 	const prefixLen = Math.floor(index / 0xffff);

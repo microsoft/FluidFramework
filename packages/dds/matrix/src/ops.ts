@@ -26,19 +26,17 @@ export enum SnapshotPath {
 // eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
-export type IMatrixVectorMst = IMergeTreeOp & {
-	target: SnapshotPath.cols | SnapshotPath.rows;
-};
-
 export interface ISetOp<T> {
-	// Historically, IMatrixVectorMst format did not use type at all, so all swtich logic is done by target.
+	// Historically, VectorOp format did not use type at all, so all swtich logic is done by target.
 	// That said, old code asserts that if target === undefined, type should be set to "set", do we have to keep it here.
 	type: MatrixOp.set;
-	target: undefined;
+	target?: never;
 	row: number;
 	col: number;
 	value: MatrixItem<T>;
 	fwwMode?: boolean;
 }
 
-export type IMatrixMsg<T> = IMatrixVectorMst | ISetOp<T>;
+export type VectorOp = IMergeTreeOp & Record<"target", SnapshotPath.rows | SnapshotPath.cols>;
+
+export type MatrixSetOrVectorOp<T> = VectorOp | ISetOp<T>;

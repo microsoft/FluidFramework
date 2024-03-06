@@ -4,35 +4,37 @@
  */
 
 import assert from "node:assert";
-import {
+import type {
 	ITelemetryBaseEvent,
-	ITelemetryErrorEvent,
-	ITelemetryGenericEvent,
-	ITelemetryPerformanceEvent,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 
-import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
-import { ITelemetryLoggerExt } from "../telemetryTypes";
+import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
+import {
+	ITelemetryLoggerExt,
+	type ITelemetryErrorEventExt,
+	type ITelemetryPerformanceEventExt,
+	type ITelemetryGenericEventExt,
+} from "../telemetryTypes.js";
 
 /**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper
  * so we can test it.
  */
 class TestLogger implements ITelemetryLoggerExt {
-	public events: ITelemetryPerformanceEvent[] = [];
+	public events: ITelemetryPerformanceEventExt[] = [];
 
-	sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: unknown): void {
+	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown): void {
 		this.events.push(event);
 	}
 
 	send(event: ITelemetryBaseEvent): void {
 		throw new Error("Method not implemented.");
 	}
-	sendTelemetryEvent(event: ITelemetryGenericEvent, error?: unknown): void {
+	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
-	sendErrorEvent(event: ITelemetryErrorEvent, error?: unknown): void {
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 	supportsTags?: true | undefined;
@@ -122,9 +124,9 @@ describe("SampledTelemetryHelper", () => {
 	it("tracks buckets separately and includes per-bucket properties", () => {
 		const bucket1 = "bucket1";
 		const bucket2 = "bucket2";
-		const bucketProperties: Map<string, ITelemetryProperties> = new Map<
+		const bucketProperties: Map<string, ITelemetryBaseProperties> = new Map<
 			string,
-			ITelemetryProperties
+			ITelemetryBaseProperties
 		>([
 			[bucket1, { prop1: "value1" }],
 			[bucket2, { prop2: "value2" }],
@@ -155,9 +157,9 @@ describe("SampledTelemetryHelper", () => {
 		// by the custom properties.
 
 		const bucket1 = "bucket1";
-		const bucketProperties: Map<string, ITelemetryProperties> = new Map<
+		const bucketProperties: Map<string, ITelemetryBaseProperties> = new Map<
 			string,
-			ITelemetryProperties
+			ITelemetryBaseProperties
 		>([
 			// Here just using a duration value that we can be sure will not be the actual value, to make sure the
 			// actuals is different from this one (since it's much harder to guarantee an exact duration
@@ -184,9 +186,9 @@ describe("SampledTelemetryHelper", () => {
 		// custom properties added to the event for each bucket
 		const bucket1 = "bucket1";
 		const bucket2 = "bucket2";
-		const bucketProperties: Map<string, ITelemetryProperties> = new Map<
+		const bucketProperties: Map<string, ITelemetryBaseProperties> = new Map<
 			string,
-			ITelemetryProperties
+			ITelemetryBaseProperties
 		>([
 			[bucket1, { prop1: "value1" }],
 			[bucket2, { prop2: "value2" }],
@@ -233,7 +235,7 @@ describe("SampledTelemetryHelper", () => {
 });
 
 function ensurePropertiesExist(
-	object: ITelemetryPerformanceEvent,
+	object: ITelemetryPerformanceEventExt,
 	propNames: string[],
 	noExtraProperties: boolean = false,
 ): void {

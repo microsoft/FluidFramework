@@ -1,0 +1,6 @@
+{
+	"recursive": true,
+	"reporter": "mocha-multi-reporters",
+	"reporter-options": "configFile=mocha-multi-reporter-config.json",
+	"timeout": 5000
+}

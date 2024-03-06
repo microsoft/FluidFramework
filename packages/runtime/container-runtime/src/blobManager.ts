@@ -39,8 +39,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
-import { disableAttachmentBlobSweepKey } from "./gc";
-import { IBlobMetadata } from "./metadata";
+import { IBlobMetadata } from "./metadata.js";
 
 /**
  * This class represents blob (long string)
@@ -742,11 +741,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * @returns The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
-		// If sweep for attachment blobs is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(disableAttachmentBlobSweepKey) === true) {
-			return [];
-		}
-
 		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
 		return Array.from(sweepReadyBlobRoutes);
 	}

@@ -19,14 +19,10 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 // @internal @sealed
 export class CounterFactory implements IChannelFactory {
     static readonly Attributes: IChannelAttributes;
-    // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedCounter;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedCounter>;
     static readonly Type = "https://graph.microsoft.com/types/counter";
-    // (undocumented)
     get type(): string;
 }
 
@@ -45,12 +41,10 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 // @alpha
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     protected applyStashedOp(op: unknown): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter;
     static getFactory(): IChannelFactory;
     increment(incrementAmount: number): void;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

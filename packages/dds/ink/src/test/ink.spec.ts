@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -12,9 +12,10 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { Ink } from "../ink";
-import { InkFactory } from "../inkFactory";
-import { IPen } from "../interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
+import { Ink } from "../ink.js";
+import { InkFactory } from "../inkFactory.js";
+import { IPen } from "../interfaces.js";
 
 describe("Ink", () => {
 	let ink: Ink;
@@ -132,7 +133,7 @@ describe("Ink", () => {
 			await ink2.load(services2);
 
 			// Now connect the first Ink
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -179,7 +180,7 @@ describe("Ink", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first Ink.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -343,7 +344,7 @@ describe("Ink", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first Ink.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
