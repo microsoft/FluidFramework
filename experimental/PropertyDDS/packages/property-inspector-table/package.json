@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-inspector-table",
-  "version": "1.3.7",
+  "version": "1.3.8",
   "description": "Property Inspector Table component",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,11 +55,11 @@
     "@babel/eslint-parser": "^7.16.5",
     "@babel/plugin-transform-runtime": "^7.2.0",
     "@babel/preset-env": "^7.2.0",
-    "@fluid-experimental/property-binder": "^1.3.7",
-    "@fluid-experimental/property-changeset": "^1.3.7",
-    "@fluid-experimental/property-dds": "^1.3.7",
-    "@fluid-experimental/property-properties": "^1.3.7",
-    "@fluid-experimental/property-proxy": "^1.3.7",
+    "@fluid-experimental/property-binder": "^1.3.8",
+    "@fluid-experimental/property-changeset": "^1.3.8",
+    "@fluid-experimental/property-dds": "^1.3.8",
+    "@fluid-experimental/property-properties": "^1.3.8",
+    "@fluid-experimental/property-proxy": "^1.3.8",
     "@fluidframework/build-common": "^0.24.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@storybook/addon-actions": "^6.4.22",
@@ -108,11 +108,11 @@
     "webpack-merge": "^5.8.0"
   },
   "peerDependencies": {
-    "@fluid-experimental/property-binder": "^1.3.7",
-    "@fluid-experimental/property-changeset": "^1.3.7",
-    "@fluid-experimental/property-dds": "^1.3.7",
-    "@fluid-experimental/property-properties": "^1.3.7",
-    "@fluid-experimental/property-proxy": "^1.3.7",
+    "@fluid-experimental/property-binder": "^1.3.8",
+    "@fluid-experimental/property-changeset": "^1.3.8",
+    "@fluid-experimental/property-dds": "^1.3.8",
+    "@fluid-experimental/property-properties": "^1.3.8",
+    "@fluid-experimental/property-proxy": "^1.3.8",
     "react": "^16.10.2"
   },
   "jest-junit": {

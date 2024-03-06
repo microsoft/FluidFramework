@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/multiview-triangle-view",
-  "version": "1.3.7",
+  "version": "1.3.8",
   "private": true,
   "description": "View for multiview sample",
   "homepage": "https://fluidframework.com",
@@ -42,11 +42,11 @@
     "webpack:dev": "webpack --env development"
   },
   "dependencies": {
-    "@fluid-example/multiview-coordinate-interface": "^1.3.7",
+    "@fluid-example/multiview-coordinate-interface": "^1.3.8",
     "react": "^16.10.2"
   },
   "devDependencies": {
-    "@fluid-tools/webpack-fluid-loader": "^1.3.7",
+    "@fluid-tools/webpack-fluid-loader": "^1.3.8",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
