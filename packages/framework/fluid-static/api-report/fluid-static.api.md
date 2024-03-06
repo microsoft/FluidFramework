@@ -85,7 +85,7 @@ export interface IMember {
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
-    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectClass<infer TChannel> ? TChannel : T["initialObjects"][K] extends DataObjectClass<infer TChannel> ? TChannel : IFluidLoadable;
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer ObjectType> ? ObjectType : unknown;
 };
 
 // @internal (undocumented)
@@ -117,7 +117,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;

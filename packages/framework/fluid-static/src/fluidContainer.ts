@@ -19,8 +19,6 @@ import type {
 	ContainerAttachProps,
 	IRootDataObject,
 	LoadableObjectClass,
-	SharedObjectClass,
-	DataObjectClass,
 } from "./types.js";
 
 /**
@@ -33,14 +31,11 @@ export type InitialObjects<T extends ContainerSchema> = {
 	//
 	// The '? TChannel : unknown' is required because infer can only be used in
 	// a conditional 'extends' expression.
-	// infer doesn't distribute over the union LoadableObjectClass correctly here, so check both cases:
-	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectClass<
-		infer TChannel
+	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<
+		infer ObjectType
 	>
-		? TChannel
-		: T["initialObjects"][K] extends DataObjectClass<infer TChannel>
-		? TChannel
-		: IFluidLoadable;
+		? ObjectType
+		: unknown;
 };
 
 /**
