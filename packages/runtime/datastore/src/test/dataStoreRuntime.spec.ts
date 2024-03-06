@@ -52,6 +52,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 							type,
 							attributes: { type, snapshotFormatVersion: "0" },
 							clientDetails: {},
+							handle: { isAttached: true },
 						}) as any as IChannel,
 					load: async () => Promise.resolve({} as any as IChannel),
 				};
@@ -146,6 +147,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 			type,
 			attributes: { type, snapshotFormatVersion: "0" },
 			clientDetails: {},
+			handle: { isAttached: true },
 		} as any as IChannel;
 		dataStoreRuntime.addChannel(channel);
 		const channel1 = await dataStoreRuntime.getChannel(channel.id);
