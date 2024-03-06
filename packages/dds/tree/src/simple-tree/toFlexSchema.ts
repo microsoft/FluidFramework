@@ -224,8 +224,11 @@ export function convertNodeSchema(
 					// If a `stableName` was provided, use it as the key in the flex schema.
 					// Otherwise, use the developer-facing key.
 					let flexKey: string = propertyKey;
-					if (implicitFieldSchema instanceof FieldSchema) {
-						flexKey = implicitFieldSchema.props?.stableName ?? flexKey;
+					if (
+						implicitFieldSchema instanceof FieldSchema &&
+						implicitFieldSchema.props?.stableName !== undefined
+					) {
+						flexKey = implicitFieldSchema.props.stableName;
 					}
 
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
