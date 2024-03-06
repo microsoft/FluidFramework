@@ -5,6 +5,8 @@
 
 /**
  * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
+ *
+ * TODO: We should avoid the direct exposure of RangeEntry. AB#7414
  */
 export type RangeMap<T> = RangeEntry<T>[];
 
@@ -164,6 +166,9 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
  * 3. If an entry completely includes the deletion range, the original entry may be split into two.
  * e.g.: map = [[1, 6]], delete range: [2, 4]
  * map becomes [[1, 1], [5, 6]]
+ *
+ * TODO: We may find ways to mitigate the code duplication between set and delete, and we need to better
+ * document the API.  AB#7413
  */
 export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
 	const end = start + length - 1;
