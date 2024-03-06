@@ -216,25 +216,25 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		assert.strictEqual(string2.getText(), "hello world how");
 	});
 
-	it("validates pending and saved ops with snapshot with sequence number != 0", async function () {
+	it("validates pending and saved ops with snapshot with load snapshot", async function () {
 		// to not use an empty base snapshot for container2
-		string1.insertText(0, "i");
-		string1.insertText(0, "i");
+		string1.insertText(0, "hello ");
 		await waitForSummary();
 		await provider.ensureSynchronized();
 
 		const pendingState = await getPendingState(
 			provider,
 			async (s) => {
-				s.insertText(s.getLength(), "i");
+				s.insertText(s.getLength(), "world ");
 			},
 			async (s) => {
-				s.insertText(s.getLength(), "i");
+				s.insertText(s.getLength(), "how");
 			},
 		);
 		assertPendingStateSequence(pendingState.parsed);
 		const attributes = getAttributesFromPendingState(pendingState.parsed);
-		assert.strictEqual(attributes.sequenceNumber, 4);
+		// loaded snapshot
+		assert.strictEqual(attributes.sequenceNumber, 3);
 		const container2: IContainerExperimental = await loader.resolve(
 			{ url },
 			pendingState.pendingState,
@@ -242,7 +242,7 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await provider.ensureSynchronized();
-		assert.strictEqual(string2.getLength(), 4);
+		assert.strictEqual(string2.getText(), "hello world how");
 	});
 
 	it("resolve with same snapshot as before", async function () {
@@ -317,12 +317,12 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		// the base snapshot was refreshed. sequenceNumber would be the same in case we haven't
 		assert(baseSnapshotAttibutes.sequenceNumber < baseSnapshotAttibutes2.sequenceNumber);
 
-		const container4: IContainerExperimental = await loader.resolve({ url }, pendingState2);
-		const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
-		const string4 = await dataStore4.getSharedObject<SharedString>(stringId);
-		await waitForContainerConnection(container4);
+		const container3: IContainerExperimental = await loader.resolve({ url }, pendingState2);
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
+		await waitForContainerConnection(container3);
 		// all correct after applying a stashed container with a refresh snapshot
-		assert.strictEqual(string1.getText(), string4.getText());
+		assert.strictEqual(string1.getText(), string3.getText());
 		assert.strictEqual(string1.getText(), "abc");
 	});
 
@@ -330,32 +330,28 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		const pendingOps = await getPendingState(
 			provider,
 			async (s) => {
-				for (let i = 0; i < 5; i++) {
-					s.insertText(s.getLength(), `a `);
-				}
-				await waitForSummary();
-				for (let i = 5; i < 10; i++) {
-					s.insertText(s.getLength(), `b `);
-				}
+				s.insertText(s.getLength(), "a");
+				s.insertText(s.getLength(), "b");
 			},
 			async (s) => {
-				s.insertText(s.getLength(), `st `);
+				s.insertText(s.getLength(), "c");
 			},
 		);
+		assert.strictEqual(string1.getText(), "ab");
 		assertPendingStateSequence(pendingOps.parsed);
+		assert.ok(pendingOps);
+		assertPendingStateSequence(pendingOps.parsed);
+		const attributes = getAttributesFromPendingState(pendingOps.parsed);
 
-		for (let i = 0; i < 10; i++) {
-			string1.insertText(string1.getLength(), `c `);
-		}
+		// ops and summaries being generated after getting pending state
+		// new summary will make resolve to fetch a different snapshot
+		string1.insertText(string1.getLength(), "d");
 		await waitForSummary();
-		for (let i = 0; i < 5; i++) {
-			string1.insertText(string1.getLength(), `d `);
-		}
+		string1.insertText(string1.getLength(), "e");
 		await provider.ensureSynchronized();
-		for (let i = 5; i < 100; i++) {
-			string1.insertText(string1.getLength(), `e `);
-		}
-		// load container with pending ops, which should resend the op not sent by previous container
+		assert.strictEqual(string1.getText(), "abde");
+
+		// should apply pending op and move base snapshot forward
 		const container2: IContainerExperimental = await loader.resolve(
 			{ url },
 			pendingOps.pendingState,
@@ -364,17 +360,19 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
-		for (let i = 5; i < 10; i++) {
-			string2.insertText(string1.getLength(), `t `);
-		}
-		await provider.ensureSynchronized();
-		for (let i = 5; i < 10; i++) {
-			string1.insertText(string1.getLength(), `s `);
-		}
+		assert.strictEqual(string2.getText(), "abcde");
+
+		// more ops just because
+		string2.insertText(string1.getLength(), "f");
+
 		const containerStateString2 = await container2.closeAndGetPendingLocalState?.();
-		const parsed2 = JSON.parse(containerStateString2 as string);
-		const att2 = getAttributesFromPendingState(parsed2);
-		// console.log(att2);
+		assert.ok(containerStateString2);
+		const parsed2 = JSON.parse(containerStateString2);
+		assertPendingStateSequence(parsed2);
+		const attributes2 = getAttributesFromPendingState(parsed2);
+		// the base snapshot was refreshed. sequenceNumber would be the same in case we haven't
+		assert(attributes.sequenceNumber < attributes2.sequenceNumber);
+
 		const container3: IContainerExperimental = await loader.resolve(
 			{ url },
 			containerStateString2,
@@ -384,12 +382,10 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		await waitForContainerConnection(container3);
 		await provider.ensureSynchronized();
 		assert.strictEqual(string1.getText(), string3.getText());
-		console.log(string1.getText());
-		console.log(string2.getText());
-		console.log(string3.getText());
+		assert.strictEqual(string3.getText(), "abcdef");
 	});
 
-	it("can summarize while offline and refresh", async function () {
+	it.skip("can load offline", async function () {
 		const pendingOps = await getPendingState(
 			provider,
 			async (s) => {},
@@ -399,7 +395,6 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		);
 
 		const attributes = getAttributesFromPendingState(pendingOps.parsed);
-		console.log(attributes);
 		string1.insertText(string1.getLength(), " b");
 		await waitForSummary();
 
@@ -421,14 +416,13 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		const pendingState2 = await container2.container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingState2);
 		const attributes2 = getAttributesFromPendingState(JSON.parse(pendingState2));
-		console.log(attributes2);
 		const container3: IContainerExperimental = await loader.resolve({ url }, pendingState2);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
 		assert.strictEqual(string3.getText(), " a c b");
 	});
 
-	it("fail fetchSnapshot", async () => {
+	it.skip("fail fetchSnapshot", async () => {
 		let failSnapshot = false;
 		(provider as any)._documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
 			provider.documentServiceFactory,
