@@ -35,6 +35,7 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
  * In this case, its better to have the desired match and/or the simpler type first.
  * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
 export type LoadableObjectClass<T extends IFluidLoadable> =
 	| SharedObjectClass<T>
