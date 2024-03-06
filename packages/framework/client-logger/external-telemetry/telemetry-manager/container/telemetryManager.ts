@@ -1,20 +1,14 @@
 import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerEventName } from "./events";
-import type { IContainerTelemetry } from "./telemetry";
-import { ContainerEventTelemetryProducer } from "./producers";
-import type { ITelemetryConsumer } from "./consumers";
-
-export interface ContainerTelemetryObserverConfig {
-	// Ignore the given set of containerEvents
-	ignoreList: Set<ContainerEventName>;
-}
+import { ContainerEventName } from "./containerEvents";
+import type { IContainerTelemetry } from "./containerTelemetry";
+import { ContainerEventTelemetryProducer } from "./telemetryProducer";
+import type { ITelemetryConsumer } from "../common/consumers";
 
 export class ContainerTelemetryManager {
 	constructor(
 		private readonly container: IContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
 		private readonly telemetryConsumer: ITelemetryConsumer,
-		config?: ContainerTelemetryObserverConfig,
 	) {
 		this.setupEventHandlers(this.container);
 	}

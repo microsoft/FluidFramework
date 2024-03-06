@@ -1,8 +1,5 @@
-import { ExternalTelemetryEventName, ContainerEventName } from "./events";
-
-export interface IExternalTelemetry {
-	eventName: ExternalTelemetryEventName;
-}
+import type { IExternalTelemetry } from "../common/telemetry";
+import type { ContainerEventName } from "./containerEvents";
 
 export interface IContainerTelemetry extends IExternalTelemetry {
 	eventName: ContainerEventName;

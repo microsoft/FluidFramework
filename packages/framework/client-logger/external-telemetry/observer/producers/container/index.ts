@@ -1,1 +1,0 @@
-export { ContainerEventTelemetryProducer } from "./telemetryProducer";

@@ -13,6 +13,10 @@
 	"license": "ISC",
 	"devDependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
+		"tslib": "^1.10.0",
 		"typescript": "~5.1.6"
+	},
+	"dependencies": {
+		"@microsoft/applicationinsights-web": "^2.8.11"
 	}
 }
