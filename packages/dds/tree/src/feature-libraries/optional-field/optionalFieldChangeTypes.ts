@@ -32,7 +32,8 @@ export type ChildChange<TChildChange = NodeChangeset> = readonly [
  */
 export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	/**
-	 * Each entry represents a node which whose ID has been changed from `src` to `dst`.
+	 * Each entry signifies the intent to move a node from `src` to `dst`.
+	 * Moves to or from the "self" register are represented in {@link valueReplace}.
 	 *
 	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
 	 * As such, changesets should not contain duplicated src or dst entries.
@@ -53,6 +54,9 @@ export interface OptionalChangeset<TChildChange = NodeChangeset> {
 }
 
 export interface Replace {
+	/**
+	 * Whether the field is empty in the input context of this change.
+	 */
 	readonly isEmpty: boolean;
 
 	/**
