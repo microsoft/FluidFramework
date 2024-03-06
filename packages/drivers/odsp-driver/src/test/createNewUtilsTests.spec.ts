@@ -15,14 +15,14 @@ import {
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
-import { createNewFluidFile } from "../createFile";
-import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
-import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils";
-import { LocalPersistentCache } from "../odspCache";
-import { mockFetchOk } from "./mockFetch";
+import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";
+import { createNewFluidFile } from "../createFile.js";
+import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
+import { EpochTracker } from "../epochTracker.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { INewFileInfo, createCacheSnapshotKey, IExistingFileInfo } from "../odspUtils.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { mockFetchOk } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

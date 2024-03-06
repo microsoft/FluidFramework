@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import {
 	ChannelFactoryRegistry,
@@ -49,12 +49,12 @@ function generate(name: string, input: any[], output: any[]) {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+			sharedMap2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
 				container2.dispose?.();
@@ -63,7 +63,7 @@ function generate(name: string, input: any[], output: any[]) {
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+			sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 		});
 
 		it("Should initialize after attach", async () => {

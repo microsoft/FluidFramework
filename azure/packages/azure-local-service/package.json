@@ -67,7 +67,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"pm2": "^5.3.1",

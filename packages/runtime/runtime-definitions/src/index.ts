@@ -20,6 +20,7 @@ export {
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
 	VisibilityState,
@@ -40,7 +41,7 @@ export {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "./garbageCollection";
+} from "./garbageCollectionDefinitions";
 export {
 	IAttachMessage,
 	IEnvelope,
