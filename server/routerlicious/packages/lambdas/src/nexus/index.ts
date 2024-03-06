@@ -1042,10 +1042,11 @@ export function configureWebSocketServices(
 		 * Message sent when a new signal is submitted to the router.
 		 *
 		 * Elements of 'contentBatches':
-		 * - may be individual or nested arrays
-		 * - are `unknown` since the correct typing (1) is not validated and (2) doesn't need to be known to operate on it here
+		 * - may be individual or nested arrays.
+		 * - are `unknown` since the correct typing (1) is not validated and (2) doesn't need to be known to operate on it here.
 		 *
-		 * Note: From debugging client end to end tests (localTestSignals.spec.ts) we expect elements of `contentBatches` to be JSON strings.
+		 * From debugging client end-to-end tests, we expect elements of `contentBatches` to be JSON-encoded strings.
+		 * These strings represent objects that conform to the ISignalEnvelope interface.
 		 */
 		socket.on("submitSignal", (clientId: string, contentBatches: unknown[]) => {
 			// Verify the user has subscription to the room.
