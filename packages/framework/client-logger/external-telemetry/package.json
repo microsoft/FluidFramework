@@ -1,0 +1,17 @@
+{
+	"name": "@fluidframework/external-telemetry",
+	"version": "2.0.0-rc.2.0.0",
+	"description": "External Fluid telemetry types and classes for creating consuming them",
+	"homepage": "https://fluidframework.com",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@fluidframework/container-definitions": "workspace:~",
+		"typescript": "~5.1.6"
+	}
+}
