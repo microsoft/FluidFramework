@@ -145,6 +145,9 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
+			"InterfaceDeclaration_IFluidDataStoreChannel": {
+				"backCompat": false
+			},
 			"InterfaceDeclaration_IContainerRuntimeBase": {
 				"forwardCompat": false
 			}

@@ -12,8 +12,8 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { ContainerRuntime } from "./containerRuntime.js";
 import { DataStores } from "./dataStores.js";
+import { ContainerMessageType } from "./messageTypes.js";
 
 /**
  * Interface for an op to be used for assigning an
@@ -43,10 +43,10 @@ export const isDataStoreAliasMessage = (
 
 export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
-	runtime: ContainerRuntime,
+	internalId: string,
 	datastores: DataStores,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, runtime, datastores, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, datastores, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -109,13 +109,12 @@ class DataStore implements IDataStore {
 
 	async trySetAliasInternal(alias: string): Promise<AliasResult> {
 		const message: IDataStoreAliasMessage = {
-			internalId: this.fluidDataStoreChannel.id,
+			internalId: this.internalId,
 			alias,
 		};
-
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
-		if (this.runtime.attachState === AttachState.Detached) {
+		if (this.parentContext.attachState === AttachState.Detached) {
 			const localResult = this.datastores.processAliasMessageCore(message);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
@@ -124,7 +123,7 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.runtime.submitDataStoreAliasOp(message, resolve);
+			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(
@@ -135,7 +134,7 @@ class DataStore implements IDataStore {
 							tag: TelemetryDataTag.UserData,
 						},
 						internalId: {
-							value: this.fluidDataStoreChannel.id,
+							value: this.internalId,
 							tag: TelemetryDataTag.CodeArtifact,
 						},
 					},
@@ -168,9 +167,10 @@ class DataStore implements IDataStore {
 
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
-		private readonly runtime: ContainerRuntime,
+		private readonly internalId: string,
 		private readonly datastores: DataStores,
 		private readonly logger: ITelemetryLoggerExt,
+		private readonly parentContext = datastores.parentContext,
 	) {
 		this.pendingAliases = datastores.pendingAliases;
 	}
@@ -188,15 +188,15 @@ class DataStore implements IDataStore {
 					new Error("ContainerRuntime disposed while this ack-based Promise was pending"),
 				);
 
-			if (this.runtime.disposed) {
+			if (this.parentContext.containerRuntime.disposed) {
 				rejectBecauseDispose();
 				return;
 			}
 
-			this.runtime.on("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.on("dispose", rejectBecauseDispose);
 			executor(resolve, reject);
 		}).finally(() => {
-			this.runtime.off("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.off("dispose", rejectBecauseDispose);
 		});
 	}
 }
