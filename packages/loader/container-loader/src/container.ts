@@ -7,12 +7,12 @@ import { v4 as uuid } from "uuid";
 import { assert, unreachableCase, isPromiseLike } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
-	IEvent,
-	ITelemetryBaseProperties,
-	FluidObject,
+	type IEvent,
+	type ITelemetryBaseProperties,
+	type FluidObject,
 	LogLevel,
-	IRequest,
-	ISignalEnvelope,
+	type IRequest,
+	type ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -2347,7 +2347,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(content: ISignalEnvelope, targetClientId?: string) {
+	// unknown should be removed once @alpha tag is removed from IContainerContext
+	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 

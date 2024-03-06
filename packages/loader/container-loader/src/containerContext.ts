@@ -15,7 +15,7 @@ import {
 	IFluidCodeDetails,
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
-import { FluidObject, ISignalEnvelope } from "@fluidframework/core-interfaces";
+import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -85,7 +85,12 @@ export class ContainerContext implements IContainerContext {
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		public readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void,
+		// `unknown` should be removed once @alpha tag is removed from IContainerContext
+		// Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+		public readonly submitSignalFn: (
+			content: unknown | ISignalEnvelope,
+			targetClientId?: string,
+		) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,
