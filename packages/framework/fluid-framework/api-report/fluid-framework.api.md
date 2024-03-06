@@ -80,7 +80,7 @@ export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof Cont
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
+    dynamicObjectTypes?: LoadableObjectClass[];
     initialObjects: LoadableObjectClassRecord;
 }
 
@@ -275,10 +275,10 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;

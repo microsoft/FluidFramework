@@ -21,8 +21,7 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
  * or `SharedObject`.
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 /**
  * A class object of `DataObject` or `SharedObject`.
@@ -37,7 +36,7 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable> =
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
 	| SharedObjectClass<T>
 	| DataObjectClass<T>;
 
@@ -118,8 +117,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dynamicObjectTypes?: LoadableObjectClass<any>[];
+	dynamicObjectTypes?: LoadableObjectClass[];
 }
 
 /**

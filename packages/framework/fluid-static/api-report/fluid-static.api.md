@@ -20,7 +20,7 @@ export type ContainerAttachProps<T = unknown> = T;
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
+    dynamicObjectTypes?: LoadableObjectClass[];
     initialObjects: LoadableObjectClassRecord;
 }
 
@@ -117,10 +117,10 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
