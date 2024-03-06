@@ -857,24 +857,19 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			"short data store ID created in detached container",
 		);
 
+		const pkg = defaultDataStore._context.packagePath;
+
 		// This will do a lot of things!
 		// 1) it will attempt to use ID Compressor to get short ID. This will force ID Compressor to do #3
 		// 2) it will send op - providing opportunity for ID compressor to do #3
 		// 3) ID compressor will send an op to reserve short IDs
-		await defaultDataStore._context.containerRuntime.createDataStore(
-			defaultDataStore._context.packagePath,
-		);
+		const ds = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
+		await ds.trySetAlias("anyName");
 
-		await provider.ensureSynchronized();
-
-		// Give an opportunity for ID compressor to acqure a block of short IDs
-		defaultDataStore._root.set("bar", "foo");
 		await provider.ensureSynchronized();
 
 		// create another datastore
-		const res = await defaultDataStore._context.containerRuntime.createDataStore(
-			defaultDataStore._context.packagePath,
-		);
+		const res = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
 		const defaultDataStore2 = (await res.entryPoint.get()) as ITestDataObject;
 
 		// This data store was created in attached  container, and should have used ID compressor to assign ID!
