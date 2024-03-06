@@ -4051,9 +4051,9 @@ export class ContainerRuntime
 		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
 		const getSyncState = (
-			downloadedSnapshotTrees: IDownloadedSnapshotTrees,
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
+			const downloadedSnapshotTrees = this.dataStores.getDownloadedSnapshotTrees();
 			const pending = this.pendingStateManager.getLocalState();
 			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
 				return; // no pending state to save
@@ -4089,18 +4089,20 @@ export class ContainerRuntime
 		// to close current batch.
 		this.flush();
 
-		return PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) => {
-			let pendingBlobState: IPendingBlobs | undefined;
-			if (props?.notifyImminentClosure === true) {
-				pendingBlobState = await this.blobManager.attachAndGetPendingBlobs(
-					props?.stopBlobAttachingSignal,
-				);
-			}
-			const downloadedSnapshotTrees = this.dataStores.getDownloadedSnapshotTrees();
-
-			const syncState = getSyncState(downloadedSnapshotTrees, pendingBlobState);
-			return logAndReturnPendingState(event, syncState);
-		});
+		return props?.notifyImminentClosure === true
+			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
+					logAndReturnPendingState(
+						event,
+						getSyncState(
+							await this.blobManager.attachAndGetPendingBlobs(
+								props?.stopBlobAttachingSignal,
+							),
+						),
+					),
+			  )
+			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
+					logAndReturnPendingState(event, getSyncState()),
+			  );
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
