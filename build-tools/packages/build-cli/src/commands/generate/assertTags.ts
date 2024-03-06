@@ -6,7 +6,7 @@ import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
-import { Package, getFluidBuildConfig } from "@fluidframework/build-tools";
+import { Package, loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { PackageKind } from "../../filter";
 
 import {
@@ -51,7 +51,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		await super.selectAndFilterPackages();
 
 		const context = await this.getContext();
-		const { assertTagging } = getFluidBuildConfig(context.gitRepo.resolvedRoot);
+		const { assertTagging } = loadFluidBuildConfig(context.gitRepo.resolvedRoot);
 		const assertTaggingEnabledPaths = this.flags.disableConfig
 			? undefined
 			: assertTagging?.enabledPaths;

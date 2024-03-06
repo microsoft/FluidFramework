@@ -11,7 +11,7 @@ import {
 	VersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { getFluidBuildConfig } from "./fluidUtils";
+import { loadFluidBuildConfig } from "./fluidUtils";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
@@ -313,17 +313,23 @@ export type IFluidRepoPackageEntry =
 	| (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-	private readonly monoRepos = new Map<string, MonoRepo>();
+	private readonly _releaseGroups = new Map<string, MonoRepo>();
 
 	public get releaseGroups() {
-		return this.monoRepos;
+		return this._releaseGroups;
 	}
 
 	public readonly packages: Packages;
 
-	constructor(public readonly resolvedRoot: string) {
-		const packageManifest = getFluidBuildConfig(resolvedRoot);
+	public static create(resolvedRoot: string) {
+		const packageManifest = loadFluidBuildConfig(resolvedRoot);
+		return new FluidRepo(resolvedRoot, packageManifest);
+	}
 
+	protected constructor(
+		public readonly resolvedRoot: string,
+		packageManifest: IFluidBuildConfig,
+	) {
 		// Expand to full IFluidRepoPackage and full path
 		const normalizeEntry = (
 			item: IFluidRepoPackageEntry,

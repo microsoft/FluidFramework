@@ -11,7 +11,7 @@ import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
 import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
 
@@ -141,7 +141,7 @@ export function packageMayChooseToPublishToInternalFeedOnly(
  * private to prevent publishing.
  */
 export function packageMustBePrivate(name: string, root: string): boolean {
-	const config = getFluidBuildConfig(root).policy?.packageNames;
+	const config = loadFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -160,7 +160,7 @@ export function packageMustBePrivate(name: string, root: string): boolean {
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
 export function packageMustNotBePrivate(name: string, root: string): boolean {
-	const config = getFluidBuildConfig(root).policy?.packageNames;
+	const config = loadFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -176,7 +176,7 @@ export function packageMustNotBePrivate(name: string, root: string): boolean {
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
 function packageIsFluidPackage(name: string, root: string): boolean {
-	const config = getFluidBuildConfig(root).policy?.packageNames;
+	const config = loadFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages are considered Fluid packages
@@ -905,7 +905,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-dep",
 		match,
 		handler: async (file, root) => {
-			const manifest = getFluidBuildConfig(root);
+			const manifest = loadFluidBuildConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
 				return;
@@ -1438,7 +1438,7 @@ export const handlers: Handler[] = [
 			}
 
 			const requirements =
-				getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+				loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			if (requirements === undefined) {
 				// If no requirements have been specified, we have nothing to validate.
 				return;
@@ -1492,7 +1492,7 @@ export const handlers: Handler[] = [
 				}
 
 				const requirements =
-					getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+					loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 				if (requirements === undefined) {
 					// If no requirements have been specified, we have nothing to validate.
 					return;

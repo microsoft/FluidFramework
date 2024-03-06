@@ -10,7 +10,7 @@ import { EOL as newline } from "node:os";
 
 import {
 	Context,
-	getFluidBuildConfig,
+	loadFluidBuildConfig,
 	Handler,
 	policyHandlers,
 } from "@fluidframework/build-tools";
@@ -165,7 +165,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.info("Resolving errors if possible.");
 		}
 
-		const manifest = getFluidBuildConfig(this.flags.root ?? process.cwd());
+		const manifest = loadFluidBuildConfig(this.flags.root ?? process.cwd());
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =

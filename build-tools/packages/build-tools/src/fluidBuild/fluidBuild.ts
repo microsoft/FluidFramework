@@ -18,12 +18,12 @@ parseOptions(process.argv);
 
 async function main() {
 	const timer = new Timer(commonOptions.timer);
-	const resolvedRoot = await getResolvedFluidRoot();
+	const resolvedRoot = await getResolvedFluidRoot(true);
 
-	log(`Fluid Repo Root: ${resolvedRoot}`);
+	log(`Build Root: ${resolvedRoot}`);
 
 	// Load the package
-	const repo = new FluidRepoBuild(resolvedRoot);
+	const repo = FluidRepoBuild.create(resolvedRoot);
 	timer.time("Package scan completed");
 
 	// Set matched package based on options filter
