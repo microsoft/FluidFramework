@@ -656,9 +656,7 @@ export class BuildGraph {
 						version.startsWith("workspace:") || semver.satisfies(dep.version, version);
 					if (satisfied) {
 						if (depFilter(dep)) {
-							traceGraph(
-								`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`,
-							);
+							traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
 							node.dependentPackages.push(
 								this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
 							);
