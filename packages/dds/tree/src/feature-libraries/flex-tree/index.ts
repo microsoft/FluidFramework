@@ -24,6 +24,7 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	onNextChange,
+	internalEmitterSymbol,
 	FlexTreeUnknownUnboxed,
 	FlexTreeUnboxField,
 	flexTreeMarker,
@@ -47,7 +48,7 @@ export {
 
 export { getTreeContext, FlexTreeContext, Context } from "./context.js";
 
-export { TreeEvent, EditableTreeEvents } from "./treeEvents.js";
+export { ITreeEvent, EditableTreeEvents } from "./treeEvents.js";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 export {

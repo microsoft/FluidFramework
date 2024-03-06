@@ -38,7 +38,8 @@ import {
 } from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { LocalNodeKey } from "../node-key/index.js";
-import { EditableTreeEvents, TreeEvent } from "./treeEvents.js";
+import { IEmitter, createEmitter } from "../../events/index.js";
+import { EditableTreeEvents, ITreeEvent, TreeEvent } from "./treeEvents.js";
 import { Context } from "./context.js";
 import {
 	FlexTreeFieldNode,
@@ -57,6 +58,7 @@ import {
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	onNextChange,
+	internalEmitterSymbol,
 	FlexTreeEntityKind,
 	flexTreeMarker,
 	PropertyNameFromFieldKey,
@@ -167,6 +169,31 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
 		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
+
+		this.#listeners = {
+			beforeChange: [],
+			afterChange: [],
+		};
+
+		// Subscribe to events on the backing anchorNode
+		this.#anchorNode.on("afterChange", (anchorNodeInEvent: AnchorNode) => {
+			this.#internalEmitter.emit("afterChange", new TreeEvent(this));
+		});
+		this.#anchorNode.on("beforeChange", (anchorNodeInEvent: AnchorNode) => {
+			this.#internalEmitter.emit("beforeChange", new TreeEvent(this));
+		});
+
+		// Set up listeners for internal emitter. This will handle events triggered by this node, and by other nodes
+		// that get the emitter and make it fire (e.g. child nodes that want to bubble up events).
+		// NOTE: by design, the listeners on #internalEmitter just want to be signaled to do their thing, they don't need an
+		// event object, even if IEmitter kind of forces one type-wise. Inside the #onInternalEvent method we have to do
+		// some casting to keep TypeScript happy because of this.
+		this.#internalEmitter.on("beforeChange", () => {
+			this.#onInternalEvent("beforeChange");
+		});
+		this.#internalEmitter.on("afterChange", () => {
+			this.#onInternalEvent("afterChange");
+		});
 	}
 
 	public is<TSchemaInner extends FlexTreeNodeSchema>(
@@ -270,6 +297,50 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
+	readonly #listeners: {
+		[eventName in keyof Pick<
+			EditableTreeEvents,
+			"beforeChange" | "afterChange"
+		>]: EditableTreeEvents[eventName][];
+	};
+	readonly #internalEmitter = createEmitter<EditableTreeEvents>();
+
+	// Note: as far as we can tell, @ineritdoc probably doesn't work for symbol-keyed properties; using it anyway to follow
+	// the usual documentation patterns and because it still points people reading the code to the relevant documentation.
+	/**
+	 * {@inheritdoc FlexTreeNode.[internalEmitterSymbol]}
+	 */
+	public [internalEmitterSymbol](): IEmitter<EditableTreeEvents> {
+		return this.#internalEmitter;
+	}
+
+	/**
+	 * Handler for internal events emitted by this node's own internal emitter.
+	 *
+	 * @param eventName - Name of the event that was emitted.
+	 */
+	readonly #onInternalEvent = (
+		eventName: keyof Pick<EditableTreeEvents, "afterChange" | "beforeChange">,
+	) => {
+		const event = new TreeEvent(this);
+		for (const listener of this.#listeners[eventName]) {
+			// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+			// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+			// for changing and subtreeChanging match the one for beforeChange and afterChange.
+			listener(event as unknown as AnchorNode & ITreeEvent);
+		}
+		if (event.propagationStopped) {
+			return;
+		}
+		const parentNode = this.#anchorNode.parent?.slots.get(lazyTreeSlot);
+		if (parentNode !== undefined) {
+			// NOTE: by design, the listeners on a node's #internalEmitter do not need an event object, they just need to
+			// be signaled to do do their thing, but since IEmitter requires an event object to be passed we need to trick
+			// the compiler into thinking we're passing one.
+			parentNode[internalEmitterSymbol]().emit(eventName, undefined as unknown as ITreeEvent);
+		}
+	};
+
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -282,7 +353,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+						listener(anchorNode as unknown as AnchorNode & ITreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
 			}
@@ -293,43 +364,23 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+						listener(anchorNode as unknown as AnchorNode & ITreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
-			case "beforeChange": {
-				const unsubscribeFromChildrenBeforeChange = this.#anchorNode.on(
-					"beforeChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d3 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
-				);
-				return unsubscribeFromChildrenBeforeChange;
-			}
+			case "beforeChange":
 			case "afterChange": {
-				const unsubscribeFromChildrenAfterChange = this.#anchorNode.on(
-					"afterChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d4 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for beforeChange and afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
+				// Type narrowing and casts to make TS happy, because the switch() statement having entered this branch doesn't
+				// seem to be enough.
+				const localEventName: "beforeChange" | "afterChange" = eventName;
+				this.#listeners[localEventName].push(
+					listener as EditableTreeEvents["beforeChange"],
 				);
-				return unsubscribeFromChildrenAfterChange;
+				return () => {
+					this.#listeners[localEventName] = this.#listeners[localEventName].filter(
+						(x) => x !== listener,
+					);
+				};
 			}
 			default:
 				unreachableCase(eventName);

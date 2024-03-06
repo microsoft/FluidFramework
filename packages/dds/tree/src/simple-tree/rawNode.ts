@@ -4,6 +4,7 @@
  */
 
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { IEmitter } from "../events/index.js";
 import {
 	EditableTreeEvents,
 	FlexFieldNodeSchema,
@@ -25,6 +26,7 @@ import {
 	FlexTreeNodeSchema,
 	TreeStatus,
 	FlexTreeFieldNode,
+	internalEmitterSymbol,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";
@@ -113,6 +115,10 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 
 	public boxedIterator(): IterableIterator<FlexTreeField> {
 		throw rawError("Boxed iteration");
+	}
+
+	public [internalEmitterSymbol](): IEmitter<EditableTreeEvents> {
+		throw rawError("Internal emitter");
 	}
 
 	public treeStatus(): TreeStatus {

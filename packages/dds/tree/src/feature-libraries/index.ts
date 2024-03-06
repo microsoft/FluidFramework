@@ -250,10 +250,11 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	Context,
-	TreeEvent,
+	ITreeEvent,
 	EditableTreeEvents,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
+	internalEmitterSymbol,
 	isFlexTreeNode,
 
 	// Internal

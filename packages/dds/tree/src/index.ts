@@ -207,7 +207,7 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	TreeEvent,
+	ITreeEvent,
 	SchemaCollection,
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,

@@ -23,6 +23,7 @@ import {
 } from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
+import { IEmitter } from "../../events/index.js";
 import { EditableTreeEvents } from "./treeEvents.js";
 import { FlexTreeContext } from "./context.js";
 
@@ -121,10 +122,17 @@ export enum TreeStatus {
 }
 
 /**
- * {@inheritdoc TreeNode.[onNextChange]}
+ * Symbol key for {@link FlexTreeNode#[onNextChange]}.
+ * See the documentation of that member for more details.
  * @internal
  */
 export const onNextChange = Symbol("onNextChange");
+
+/**
+ * Symbol key for {@link FlexTreeNode#[internalEmitterSymbol]}.
+ * See the documentation of that member for more details.
+ */
+export const internalEmitterSymbol = Symbol("internalEmitter");
 
 /**
  * Generic tree node API.
@@ -193,6 +201,16 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	 * It is not a public API and thus the symbol for this property is not exported.
 	 */
 	[onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+
+	/**
+	 * Accessor for the internal event emitter for this node.
+	 *
+	 * @remarks This is only for use by the framework itself, so a node can tell its parent to emit an event (bubble it up).
+	 *
+	 * @privateRemarks Defined as a getter instead of a plain property so it's not enumerable; otherwise some tests fail
+	 * because they iterate over the enumerable properties of tree nodes and find this one which breaks deep-equality checks.
+	 */
+	[internalEmitterSymbol](): IEmitter<EditableTreeEvents>;
 }
 
 /**

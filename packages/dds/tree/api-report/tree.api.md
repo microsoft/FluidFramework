@@ -400,8 +400,8 @@ export const disposeSymbol: unique symbol;
 
 // @internal
 export interface EditableTreeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
+    afterChange(event: ITreeEvent): void;
+    beforeChange(event: ITreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -709,6 +709,7 @@ export const flexTreeMarker: unique symbol;
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
+    [internalEmitterSymbol](): IEmitter<EditableTreeEvents>;
     [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
     // (undocumented)
     boxedIterator(): IterableIterator<FlexTreeField>;
@@ -1116,6 +1117,12 @@ export interface ITreeCursor {
 export interface ITreeCursorSynchronous extends ITreeCursor {
     // (undocumented)
     readonly pending: false;
+}
+
+// @internal
+export interface ITreeEvent {
+    stopPropagation(): void;
+    readonly target: FlexTreeNode;
 }
 
 // @internal
@@ -1821,11 +1828,6 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema> ex
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
     readonly schema: FlexTreeSchema;
-}
-
-// @internal
-export interface TreeEvent {
-    readonly target: FlexTreeNode;
 }
 
 // @internal

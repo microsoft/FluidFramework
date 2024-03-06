@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 
-import { FieldKinds } from "../../../feature-libraries/index.js";
+import { FieldKinds, ITreeEvent } from "../../../feature-libraries/index.js";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
@@ -629,6 +629,53 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterCounter, 1);
 		assert.strictEqual(childBeforeCounter, 1);
 		assert.strictEqual(childAfterCounter, 1);
+	});
+
+	it("stopPropagation works", () => {
+		const root = flexTreeWithContent({
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				myNumberSequence: [],
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+		}).content;
+
+		let rootBeforeChangeFired = false;
+		let rootAfterChangeFired = false;
+		let childBeforeChangeFired = false;
+		let childAfterChangeFired = false;
+
+		root.on("beforeChange", (event: ITreeEvent) => {
+			rootBeforeChangeFired = true;
+		});
+		root.on("afterChange", (event: ITreeEvent) => {
+			rootAfterChangeFired = true;
+		});
+		root.child.on("beforeChange", (event: ITreeEvent) => {
+			childBeforeChangeFired = true;
+			event.stopPropagation();
+		});
+		root.child.on("afterChange", (event: ITreeEvent) => {
+			childAfterChangeFired = true;
+			event.stopPropagation();
+		});
+
+		assert.strictEqual(rootBeforeChangeFired, false);
+		assert.strictEqual(rootAfterChangeFired, false);
+		assert.strictEqual(childBeforeChangeFired, false);
+		assert.strictEqual(childAfterChangeFired, false);
+
+		// Apply a change that causes events to fire
+		root.child.myInnerString = "new string in original child";
+
+		// Events should have fired on the child node
+		assert.strictEqual(childBeforeChangeFired, true);
+		assert.strictEqual(childAfterChangeFired, true);
+		// Events should NOT have fired on the root node because the child called stopPropagation().
+		assert.strictEqual(rootBeforeChangeFired, false);
+		assert.strictEqual(rootAfterChangeFired, false);
 	});
 });
 

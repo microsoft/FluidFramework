@@ -638,21 +638,12 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 			},
-			// Run `withNode` on every node from the current `this.parent` to the root.
-			// Should only be called when in a field.
-			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
-				assert(
-					this.parentField !== undefined,
-					0x7cd /* Must be in a field to call withNodeUpToRoot */,
-				);
-				// This function gets called when we attach a node to the root field, in which case there is no parent.
-				// It's expected this will do nothing in that case.
-				let currentParent: UpPath | undefined = this.parent;
-				while (currentParent !== undefined) {
-					if (currentParent instanceof PathNode) {
-						withNode(currentParent);
-					}
-					currentParent = currentParent.parent;
+			emitBeforeOrAfterChange(eventName: "beforeChange" | "afterChange"): void {
+				// Brought this 'if' check over from maybeWithNode when we first implemented beforeChange/afterChange.
+				// Needed to make sure we're emitting from a Node, not a Field, and acts as a type-guard to give access to
+				// events.emit().
+				if (this.parent instanceof PathNode) {
+					this.parent.events.emit(eventName, this.parent);
 				}
 			},
 			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
@@ -695,9 +686,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
+				this.emitBeforeOrAfterChange("beforeChange");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeAttach(sourcePath, destinationPath);
@@ -718,9 +707,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
-				});
+				this.emitBeforeOrAfterChange("afterChange");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterAttach(sourcePath, destinationPath);
@@ -763,9 +750,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
+				this.emitBeforeOrAfterChange("beforeChange");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeDetach(sourcePath, destinationPath);
@@ -787,9 +772,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
-				});
+				this.emitBeforeOrAfterChange("afterChange");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterDetach(sourcePath, destinationPath);
@@ -837,9 +820,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
+				this.emitBeforeOrAfterChange("beforeChange");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeReplace(
@@ -873,9 +854,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: newContent.end - newContent.start,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
-				});
+				this.emitBeforeOrAfterChange("afterChange");
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterReplace(
