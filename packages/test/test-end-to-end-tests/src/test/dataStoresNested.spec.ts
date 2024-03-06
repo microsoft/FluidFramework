@@ -25,7 +25,7 @@ import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IDataStoreCollection, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -67,7 +67,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	async function addContainer(container: IContainer) {
 		containers.push(container);
-		const dataStores = (await container.getEntryPoint()) as IDataStores;
+		const dataStores = (await container.getEntryPoint()) as IDataStoreCollection;
 		await provider.ensureSynchronized();
 		return { container, dataStores };
 	}
