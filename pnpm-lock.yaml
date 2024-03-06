@@ -2417,6 +2417,7 @@ importers:
 
   examples/data-objects/multiview/slider-coordinate-view:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2453,6 +2454,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
