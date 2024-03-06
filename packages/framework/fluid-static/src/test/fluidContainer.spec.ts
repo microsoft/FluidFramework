@@ -45,7 +45,7 @@ export type requireAssignableTo<_A extends B, B> = true;
 
 	// LoadableObjectClass case
 	{
-		type _a = InitialObjects<ContainerSchemaWith<LoadableObjectClass<IFluidLoadable>>>["item"];
+		type _a = InitialObjects<ContainerSchemaWith<LoadableObjectClass>>["item"];
 		type _b = requireAssignableTo<_a, IFluidLoadable>;
 		type _c = requireAssignableTo<IFluidLoadable, _a>;
 	}
