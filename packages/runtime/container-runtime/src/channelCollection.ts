@@ -231,7 +231,7 @@ export function wrapContextForInnerChannel(
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
  */
-export class DataStores implements IFluidDataStoreChannel, IDisposable {
+export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 	// 0.24 back-compat attachingBeforeSummary
@@ -277,7 +277,7 @@ export class DataStores implements IFluidDataStoreChannel, IDisposable {
 		) => void,
 		private readonly isDataStoreDeleted: (nodePath: string) => boolean,
 		private readonly aliasMap: Map<string, string>,
-		provideEntryPoint: (runtime: DataStores) => Promise<FluidObject>,
+		provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>,
 	) {
 		this.mc = createChildMonitoringContext({ logger: baseLogger });
 		this.contexts = new DataStoreContexts(baseLogger);
@@ -1411,8 +1411,8 @@ export function detectOutboundReferences(
 }
 
 /** @internal */
-export class DataStoresFactory implements IFluidDataStoreFactory {
-	public readonly type = "DataStoresChannel";
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
+	public readonly type = "ChannelCollectionChannel";
 
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 
@@ -1434,7 +1434,7 @@ export class DataStoresFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		_existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const runtime = new DataStores(
+		const runtime = new ChannelCollection(
 			context.baseSnapshot,
 			context, // parentContext
 			context.logger,

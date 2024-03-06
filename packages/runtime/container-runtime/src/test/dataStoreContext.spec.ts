@@ -48,6 +48,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
 
+import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
@@ -64,7 +65,6 @@ import {
 	summarizerClientType,
 } from "../summary/index.js";
 import { channelToDataStore } from "../dataStore.js";
-import { DataStores, wrapContextForInnerChannel } from "../dataStores.js";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
@@ -1056,9 +1056,9 @@ describe("Data Store Context Tests", () => {
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
 		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
-			channelToDataStore(fluidDataStore, "id", dataStores, containerRuntime.logger);
+			channelToDataStore(fluidDataStore, "id", channelCollection, containerRuntime.logger);
 		let containerRuntime: ContainerRuntime;
-		let dataStores: DataStores;
+		let channelCollection: ChannelCollection;
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
@@ -1115,9 +1115,9 @@ describe("Data Store Context Tests", () => {
 			} as ContainerRuntime;
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			dataStores = {
+			channelCollection = {
 				parentContext: containerRuntime as IFluidParentContext,
-			} as DataStores;
+			} as ChannelCollection;
 		});
 
 		describe("Initialization", () => {

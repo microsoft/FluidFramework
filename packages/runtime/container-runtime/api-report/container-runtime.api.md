@@ -71,6 +71,19 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 export { assertIsStableId }
 
+// @internal (undocumented)
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
+    // (undocumented)
+    get IFluidDataStoreFactory(): this;
+    // (undocumented)
+    IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+    // (undocumented)
+    instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    readonly type = "ChannelCollectionChannel";
+}
+
 // @internal
 export type CompatModeBehavior =
 /** Ignore the op. It won't be persisted if this client summarizes */
@@ -248,19 +261,6 @@ export interface ContainerRuntimeMessage {
     compatDetails?: IContainerRuntimeMessageCompatDetails;
     contents: any;
     type: ContainerMessageType;
-}
-
-// @internal (undocumented)
-export class DataStoresFactory implements IFluidDataStoreFactory {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
-    // (undocumented)
-    get IFluidDataStoreFactory(): this;
-    // (undocumented)
-    IFluidDataStoreRegistry: IFluidDataStoreRegistry;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean): Promise<IFluidDataStoreChannel>;
-    // (undocumented)
-    readonly type = "DataStoresChannel";
 }
 
 // @alpha (undocumented)
