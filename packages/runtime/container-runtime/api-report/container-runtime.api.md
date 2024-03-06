@@ -4,14 +4,12 @@
 
 ```ts
 
-import { assertIsStableId } from '@fluidframework/id-compressor';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
-import { generateStableId } from '@fluidframework/id-compressor';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
@@ -45,7 +43,6 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { isStableId } from '@fluidframework/id-compressor';
 import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
@@ -69,7 +66,18 @@ export const AllowInactiveRequestHeaderKey = "allowInactive";
 // @alpha
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
-export { assertIsStableId }
+// @internal (undocumented)
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
+    // (undocumented)
+    get IFluidDataStoreFactory(): this;
+    // (undocumented)
+    IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+    // (undocumented)
+    instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    readonly type = "ChannelCollectionChannel";
+}
 
 // @internal
 export type CompatModeBehavior =
@@ -247,19 +255,6 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
-// @internal (undocumented)
-export class DataStoresFactory implements IFluidDataStoreFactory {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
-    // (undocumented)
-    get IFluidDataStoreFactory(): this;
-    // (undocumented)
-    IFluidDataStoreRegistry: IFluidDataStoreRegistry;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean): Promise<IFluidDataStoreChannel>;
-    // (undocumented)
-    readonly type = "DataStoresChannel";
-}
-
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
@@ -307,8 +302,6 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 // @alpha (undocumented)
 export type GCVersion = number;
-
-export { generateStableId }
 
 // @alpha
 export interface IAckedSummary {
@@ -548,8 +541,6 @@ export interface ISerializedElection {
 
 // @internal @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
-
-export { isStableId }
 
 // @alpha
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {

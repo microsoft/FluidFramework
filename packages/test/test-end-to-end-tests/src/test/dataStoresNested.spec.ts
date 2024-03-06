@@ -19,7 +19,7 @@ import {
 	IContainerRuntimeOptions,
 	ISummarizer,
 	SummaryCollection,
-	DataStoresFactory,
+	ChannelCollectionFactory,
 } from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -67,7 +67,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 		"testObjectFactoryType",
 	);
 
-	const dataStoreFactory = new DataStoresFactory(
+	const dataStoreFactory = new ChannelCollectionFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
 		async (runtime: IFluidDataStoreChannel) => runtime,
 	);

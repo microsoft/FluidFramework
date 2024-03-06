@@ -4,6 +4,14 @@
  */
 
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
+
+// These tasks are used to check code formatting. We currently format code in both the lint and format tasks, so we
+// define the list here so we can re-use it in multiple task definitions.
+//
+// The "prettier" task should be replaced by "check:prettier" eventually. Once the conversion is done, then the
+// "prettier" task can be removed from this list.
+const checkFormatTasks = ["check:biome", "check:prettier", "prettier"];
+
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -34,11 +42,17 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences", "depcruise", "check:release-tags"],
+			dependsOn: [
+				...checkFormatTasks,
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
-			dependsOn: ["prettier"],
+			dependsOn: [...checkFormatTasks],
 			script: false,
 		},
 		"checks:fix": {
@@ -88,10 +102,22 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["build"],
+		"check:format": {
+			dependsOn: [...checkFormatTasks],
+			script: false,
+		},
+		"format": {
+			dependsOn: ["format:prettier", "format:biome"],
+			script: false,
+		},
+		"check:biome": [],
+		"check:prettier": [],
 		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
 		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
 		"eslint": ["compile", "build:test:esm"],
 		"good-fences": [],
+		"format:biome": [],
+		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],
@@ -206,9 +232,6 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			],
-			"package-lockfiles-npm-version": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
-			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
@@ -240,6 +263,13 @@ module.exports = {
 				"tools/changelog-generator-wrapper/src/getReleaseLine.js",
 				"tools/changelog-generator-wrapper/src/index.js",
 				"tools/getkeys/index.js",
+			],
+			"package-lockfiles-npm-version": [
+				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"npm-package-json-prettier": [
+				// These packages use biome for formatting
+				"build-tools/",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
