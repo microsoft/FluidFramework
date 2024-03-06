@@ -46,7 +46,10 @@ export class SerializedStateManager {
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
-		private readonly getDocumentAttributes: (storage, tree: ISnapshotTree) => Promise<IDocumentAttributes>,
+		private readonly getDocumentAttributes: (
+			storage,
+			tree: ISnapshotTree,
+		) => Promise<IDocumentAttributes>,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -76,10 +79,7 @@ export class SerializedStateManager {
 		const { snapshot, version } =
 			this.pendingLocalState === undefined
 				? await this.fetchSnapshotCore(specifiedVersion, supportGetSnapshotApi)
-				: {
-						snapshot: this.pendingLocalState.baseSnapshot,
-						version: this.pendingLocalState.version,
-				  };
+				: { snapshot: this.pendingLocalState.baseSnapshot, version: undefined };
 		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 			? snapshot.snapshotTree
 			: snapshot;
@@ -156,42 +156,46 @@ export class SerializedStateManager {
 	public refreshAttributes(supportGetSnapshotApi: boolean | undefined) {
 		this.fetchSnapshotCore(undefined, supportGetSnapshotApi)
 			.then(async ({ snapshot }) => {
-					const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-						? snapshot.snapshotTree
-						: snapshot;
-					assert(snapshotTree !== undefined, "Snapshot should exist");
-					const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
+				const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+					? snapshot.snapshotTree
+					: snapshot;
+				assert(snapshotTree !== undefined, "Snapshot should exist");
+				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 
-					const attributes: IDocumentAttributes = await this.getDocumentAttributes(
-						this.storageAdapter,
-						snapshotTree,
+				const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+					this.storageAdapter,
+					snapshotTree,
+				);
+				const snapshotSN = attributes.sequenceNumber;
+				const firstSavedOpSN = this.processedOps[0].sequenceNumber;
+				const lastSavedOpSN =
+					this.processedOps[this.processedOps.length - 1].sequenceNumber;
+
+				if (snapshotSN < firstSavedOpSN - 1) {
+					throw new Error("Fetched snapshot is not latest available");
+				} else if (snapshotSN < firstSavedOpSN) {
+					// snapshotSN === firstSavedOpSN - 1:
+					// Snapshot is exactly one less than the first processed op sequence number.
+					// Meaning new snapshot is the same as before refreshing. Do nothing.
+					// Add telemetry here to check we tried to update the snapshot but got the same one.
+					return;
+				} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
+					// Snapshot is between the first and last saved operation.
+					this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+					this.snapshot = { tree: snapshotTree, blobs };
+				} else if (snapshotSN > lastSavedOpSN) {
+					// Snapshot is newer than the newest processed op.
+					// We need to wait and catch up with the operations to reach the snapshot's state.
+					throw new Error(
+						"Snapshot is newer than the newest saved operation. Synchronization might be needed.",
 					);
-					const snapshotSN = attributes.sequenceNumber;
-					const firstSavedOpSN = this.processedOps[0].sequenceNumber;
-					const lastSavedOpSN = this.processedOps[this.processedOps.length - 1].sequenceNumber;
-
-					if (snapshotSN < firstSavedOpSN - 1) {
-						throw new Error("Fetched snapshot is not latest available");
-					} else if (snapshotSN < firstSavedOpSN) {
-						// snapshotSN === firstSavedOpSN - 1: 
-						// Snapshot is exactly one less than the first processed op sequence number.
-						// Meaning new snapshot is the same as before refreshing. Do nothing.
-						// Add telemetry here to check we tried to update the snapshot but got the same one.
-						return;
-					} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
-						// Snapshot is between the first and last saved operation.
-						this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
-						this.snapshot = { tree: snapshotTree, blobs };
-					} else if (snapshotSN > lastSavedOpSN) {
-						// Snapshot is newer than the newest processed op.
-						// We need to wait and catch up with the operations to reach the snapshot's state.
-						throw new Error("Snapshot is newer than the newest saved operation. Synchronization might be needed.");
-					} else {
-						assert(!true, "Impossible case");
-					}
-				
+				} else {
+					assert(!true, "Impossible case");
+				}
 			})
-			.catch((error) => { console.log("FAILUREEEEEEEEEE: ", error)});
+			.catch((error) => {
+				console.log("FAILUREEEEEEEEEE: ", error);
+			});
 	}
 	/**
 	 * This method is only meant to be used by Container.attach() to set the initial

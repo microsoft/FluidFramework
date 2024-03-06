@@ -343,7 +343,6 @@ export async function ReportIfTooLong(
 export interface IPendingContainerState {
 	attached: true;
 	pendingRuntimeState: unknown;
-	version?: IVersion | undefined;
 	/**
 	 * Snapshot from which container initially loaded.
 	 */

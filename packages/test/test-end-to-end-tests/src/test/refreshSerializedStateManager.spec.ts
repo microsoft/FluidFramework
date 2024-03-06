@@ -276,10 +276,7 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		// no new summary generated since first stashing
 		assert(baseSnapshotAttibutes.sequenceNumber === baseSnapshotAttibutes2.sequenceNumber);
 
-		const container4: IContainerExperimental = await loader.resolve(
-			{ url },
-			pendingState2,
-		);
+		const container4: IContainerExperimental = await loader.resolve({ url }, pendingState2);
 		const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
 		const string4 = await dataStore4.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container4);
@@ -320,10 +317,7 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		// the base snapshot was refreshed. sequenceNumber would be the same in case we haven't
 		assert(baseSnapshotAttibutes.sequenceNumber < baseSnapshotAttibutes2.sequenceNumber);
 
-		const container4: IContainerExperimental = await loader.resolve(
-			{ url },
-			pendingState2,
-		);
+		const container4: IContainerExperimental = await loader.resolve({ url }, pendingState2);
 		const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
 		const string4 = await dataStore4.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container4);
@@ -467,6 +461,5 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 			pendingState.pendingState,
 		);
 		await waitForContainerConnection(container2);
-
 	});
 });
