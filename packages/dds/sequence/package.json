@@ -161,7 +161,7 @@
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.8.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/diff": "^3.5.1",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^9.1.1",

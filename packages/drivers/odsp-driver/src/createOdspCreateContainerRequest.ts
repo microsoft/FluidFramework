@@ -5,7 +5,7 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
-import { buildOdspShareLinkReqParams } from "./odspUtils";
+import { buildOdspShareLinkReqParams } from "./odspUtils.js";
 
 /**
  * Create the request object with url and headers for creating a new file on OneDrive Sharepoint

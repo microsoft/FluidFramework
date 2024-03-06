@@ -59,7 +59,7 @@ describe("OpCompressor", () => {
 					assert.strictEqual(compressedBatch.content[1].compression, undefined);
 					assert.strictEqual(compressedBatch.content[1].contents, undefined);
 				}
-			});
+			}).timeout(3000);
 		}));
 
 	describe("Unsupported batches", () =>

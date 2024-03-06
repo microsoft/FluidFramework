@@ -40,7 +40,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * @alpha
  */
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
-	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
+	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
 }
 
