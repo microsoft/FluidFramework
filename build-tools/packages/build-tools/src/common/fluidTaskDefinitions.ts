@@ -115,7 +115,9 @@ export type TaskDefinition = TaskConfig & { isDefault?: boolean };
  * @returns default task definition
  */
 export function getDefaultTaskDefinition(taskName: string) {
-	return taskName === defaultCleanTaskName ? defaultCleanTaskDefinition : defaultTaskDefinition;
+	return taskName === defaultCleanTaskName
+		? defaultCleanTaskDefinition
+		: defaultTaskDefinition;
 }
 
 const defaultTaskDefinition = {
@@ -166,8 +168,7 @@ export function normalizeGlobalTaskDefinitions(
 			}
 			detectInvalid(
 				full.dependsOn,
-				(value) =>
-					value === "..." || value.includes("#") || value === "*" || value === "^*",
+				(value) => value === "..." || value.includes("#") || value === "*" || value === "^*",
 				name,
 				"dependsOn",
 				true,
