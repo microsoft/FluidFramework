@@ -857,13 +857,15 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			"short data store ID created in detached container",
 		);
 
-		// Ensure we establish "write" connection - this kicks out loading of ID compressor
-		defaultDataStore._root.set("foo", "bar");
-		await provider.ensureSynchronized();
+		// This will do a lot of things!
+		// 1) it will attempt to use ID Compressor to get short ID. This will force ID Compressor to do #3
+		// 2) it will send op - providing opportunity for ID compressor to do #3
+		// 3) ID compressor will send an op to reserve short IDs
+		await defaultDataStore._context.containerRuntime.createDataStore(
+			defaultDataStore._context.packagePath,
+		);
 
-		// Generate one ID to force ID Compressor to request a range of short IDs on next op.
-		// Without that call, ID Compressor will not attempt to allocate a block of IDs on a map op that follows.
-		defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
+		await provider.ensureSynchronized();
 
 		// Give an opportunity for ID compressor to acqure a block of short IDs
 		defaultDataStore._root.set("bar", "foo");

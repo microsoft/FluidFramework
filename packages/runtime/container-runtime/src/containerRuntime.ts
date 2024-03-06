@@ -1010,7 +1010,7 @@ export class ContainerRuntime
 
 	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
 	// (such ops will be marked by Loader layer as savedOp === true)
-	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before we getPendingLocalState() is called.
+	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
 	// In such case we have to process all ops, including those marked with saveOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
