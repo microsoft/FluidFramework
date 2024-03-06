@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import nconf from "nconf";
+import { Provider } from "./nconf.cjs";
 
 const r11sServers = [
 	"www.wu2-ppe.prague.office-int.com",
@@ -21,7 +21,7 @@ const r11sServers = [
 export class RouterliciousUrlResolver implements IUrlResolver {
 	constructor(
 		private readonly config:
-			| { provider: nconf.Provider; tenantId: string; documentId: string }
+			| { provider: Provider; tenantId: string; documentId: string }
 			| undefined,
 		private readonly getToken: () => Promise<string>,
 		private readonly hostUrl: string,
@@ -55,7 +55,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		const path = reqUrl.pathname.split("/");
 		let tenantId: string;
 		let documentId: string;
-		let provider: nconf.Provider | undefined;
+		let provider: Provider | undefined;
 		if (this.config) {
 			tenantId = this.config.tenantId;
 			documentId = this.config.documentId;

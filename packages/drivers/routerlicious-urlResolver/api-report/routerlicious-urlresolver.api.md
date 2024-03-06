@@ -8,7 +8,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
-import nconf from 'nconf';
+import { Provider } from 'nconf';
 
 // @internal (undocumented)
 export interface IAlfredUser extends IUser {
@@ -33,7 +33,7 @@ export interface IConfig {
 // @internal (undocumented)
 export class RouterliciousUrlResolver implements IUrlResolver {
     constructor(config: {
-        provider: nconf.Provider;
+        provider: Provider;
         tenantId: string;
         documentId: string;
     } | undefined, getToken: () => Promise<string>, hostUrl: string);
