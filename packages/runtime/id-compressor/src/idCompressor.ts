@@ -18,8 +18,8 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "./types";
-import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
+} from "./types/index.js";
+import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers.js";
 import {
 	createSessionId,
 	localIdFromGenCount,
@@ -28,7 +28,7 @@ import {
 	offsetNumericUuid,
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
-} from "./utilities";
+} from "./utilities.js";
 import {
 	Index,
 	readBoolean,
@@ -37,7 +37,7 @@ import {
 	writeBoolean,
 	writeNumber,
 	writeNumericUuid,
-} from "./persistanceUtilities";
+} from "./persistanceUtilities.js";
 import {
 	getAlignedLocal,
 	getAlignedFinal,
@@ -46,9 +46,9 @@ import {
 	Session,
 	Sessions,
 	lastFinalizedFinal,
-} from "./sessions";
-import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
-import { FinalSpace } from "./finalSpace";
+} from "./sessions.js";
+import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
+import { FinalSpace } from "./finalSpace.js";
 
 /**
  * The version of IdCompressor that is currently persisted.

@@ -11,7 +11,7 @@ import {
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree";
 import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided

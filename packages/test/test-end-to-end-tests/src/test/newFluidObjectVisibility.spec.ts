@@ -6,7 +6,7 @@
 import assert from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
@@ -326,11 +326,11 @@ describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvi
 			const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
 
 			// Validate that the DDSes are present in the second container.
-			const map1C2 = await dataObject2C2._root.get<IFluidHandle<SharedMap>>("map1")?.get();
+			const map1C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map1")?.get();
 			assert(map1C2 !== undefined, "map1 not found in second container");
-			const map2C2 = await dataObject2C2._root.get<IFluidHandle<SharedMap>>("map2")?.get();
+			const map2C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map2")?.get();
 			assert(map2C2 !== undefined, "map2 not found in second container");
-			const map3C2 = await dataObject2C2._root.get<IFluidHandle<SharedMap>>("map3")?.get();
+			const map3C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map3")?.get();
 			assert(map3C2 !== undefined, "map3 not found in second container");
 
 			// Send ops for all the DDSes created above in both local and remote container and validate that the ops are
@@ -394,9 +394,9 @@ describeCompat("New Fluid objects visibility", "FullCompat", (getTestObjectProvi
 			const dataObject2C2 = (await dsEntryPoint.get()) as ITestDataObject;
 
 			// Validate that the DDSes are present in the second container.
-			const map1C2 = await dataObject2C2._root.get<IFluidHandle<SharedMap>>("map1")?.get();
+			const map1C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map1")?.get();
 			assert(map1C2 !== undefined, "map1 not found in second container");
-			const map2C2 = await dataObject2C2._root.get<IFluidHandle<SharedMap>>("map2")?.get();
+			const map2C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map2")?.get();
 			assert(map2C2 !== undefined, "map2 not found in second container");
 
 			// Send ops for all the DDSes created above in both local and remote container and validate that the ops are

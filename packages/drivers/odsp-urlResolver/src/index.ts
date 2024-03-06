@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { isOdspUrl, FluidAppOdspUrlResolver, OdspUrlResolver } from "./urlResolver";
+export { isOdspUrl, FluidAppOdspUrlResolver, OdspUrlResolver } from "./urlResolver.js";

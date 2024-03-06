@@ -24,8 +24,8 @@ import {
 	IMockContainerRuntimeForSummarizerOptions,
 	MockContainerRuntimeFactoryForSummarizer,
 	MockContainerRuntimeForSummarizer,
-} from "./summarizerFuzzMocks";
-import type { SummarizerOperation } from "./fuzzUtils";
+} from "./summarizerFuzzMocks.js";
+import type { SummarizerOperation } from "./fuzzUtils.js";
 
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;

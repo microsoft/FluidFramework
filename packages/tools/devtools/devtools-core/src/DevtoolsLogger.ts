@@ -17,8 +17,8 @@ import {
 	postMessagesToWindow,
 	TelemetryHistory,
 	TelemetryEvent,
-} from "./messaging";
-import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
+} from "./messaging/index.js";
+import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).

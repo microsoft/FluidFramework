@@ -15,7 +15,8 @@ import { PackageJson } from "./npmPackage";
  * When specify task dependencies, the following syntax is supported:
  * - "<name>": another task within the package
  * - "^<name>": all the task with the name in dependent packages.
- * - "*": any other task within the package (for 'before' and 'after' only, not allowed for 'dependsOn')
+ * - "*": any other task within the package (for 'before' and 'after' only, not allowed in 'dependsOn')
+ * - "^*": all the task in the dependent packages (for 'after' only, not allowed in 'dependsOn' or 'before')
  *
  * When task definition is augmented in the package.json itself, the dependencies can also be:
  * - "<package>#<name>": specific dependent package's task
@@ -32,19 +33,19 @@ export interface TaskConfig {
 
 	/**
 	 * Tasks that needs to run before the current task (example clean). See Task Dependencies Expansion above for
-	 * details. As compared to "dependsOn", that this will only affect ordering if matched task is already
+	 * details. As compared to "dependsOn", "before" is a weak dependency. It will only affect ordering if matched task is already
 	 * scheduled. It won't cause the matched tasks to be scheduled if it isn't already.
 	 *
-	 * Notes 'before' is disallowed for non-script tasks since it has no effect on non-script tasks because they has no
+	 * Notes 'before' is disallowed for non-script tasks since it has no effect on non-script tasks as they has no
 	 * action to perform.
 	 */
 	before: TaskDependencies;
 	/**
 	 * Tasks that needs to run after the current task (example copy tasks). See Task Dependencies Expansion above for
-	 * details. As compared to "dependsOn", that this will only affect ordering if matched task is already
+	 * details. As compared to "dependsOn", "after" is a weak dependency. It will only affect ordering if matched task is already
 	 * scheduled. It won't cause the matched tasks to be scheduled if it isn't already.
 	 *
-	 * Notes 'after' is disallowed for non-script tasks since it has no effect on non-script tasks because they has no
+	 * Notes 'after' is disallowed for non-script tasks since it has no effect on non-script tasks as they has no
 	 * action to perform.
 	 */
 	after: TaskDependencies;
@@ -90,6 +91,47 @@ function getFullTaskConfig(config: TaskConfigOnDisk): TaskConfig {
 	}
 }
 
+// Known task names
+export const defaultBuildTaskName = "build";
+export const defaultCleanTaskName = "clean";
+
+// Default task definitions (for non root tasks).  User task config will override these.
+//
+// clean:
+// - For "clean", just assume that it needs to before all other tasks
+//
+// All other tasks:
+// - Follow the topological order of the package and wait until all the task for the other
+//   packages first (i.e. after: ["^*"]).
+// - These default dependencies for "before" and "after" propagate differently in a group task, where only
+//   subtasks that has no name inherit the dependency. (where as normally, all subtask does)
+//	 (i.e. isDefault: true)
+
+export type TaskDefinition = TaskConfig & { isDefault?: boolean };
+
+/**
+ * Get the default task definition for the given task name
+ * @param taskName task name
+ * @returns default task definition
+ */
+export function getDefaultTaskDefinition(taskName: string) {
+	return taskName === defaultCleanTaskName ? defaultCleanTaskDefinition : defaultTaskDefinition;
+}
+
+const defaultTaskDefinition = {
+	dependsOn: [],
+	script: true,
+	before: [],
+	after: ["^*"], // TODO: include "*" so the user configured task will run first, but we need to make sure it doesn't cause circular dependency first
+	isDefault: true, // only propagate to unnamed sub tasks if it is a group task
+};
+const defaultCleanTaskDefinition = {
+	dependsOn: [],
+	script: true,
+	before: ["*"], // clean are ran before all the tasks, add a week dependency.
+	after: [],
+};
+
 const detectInvalid = (
 	config: string[],
 	isInvalid: (value: string) => boolean,
@@ -124,14 +166,15 @@ export function normalizeGlobalTaskDefinitions(
 			}
 			detectInvalid(
 				full.dependsOn,
-				(value) => value === "..." || value.includes("#") || value === "*",
+				(value) =>
+					value === "..." || value.includes("#") || value === "*" || value === "^*",
 				name,
 				"dependsOn",
 				true,
 			);
 			detectInvalid(
 				full.before,
-				(value) => value === "..." || value.includes("#"),
+				(value) => value === "..." || value.includes("#") || value === "^*",
 				name,
 				"before",
 				true,
@@ -147,6 +190,14 @@ export function normalizeGlobalTaskDefinitions(
 		}
 	}
 	return taskDefinitions;
+}
+
+function expandDotDotDot(config: string[], inherited: string[]) {
+	const expanded = config.filter((value) => value !== "...");
+	if (inherited !== undefined && expanded.length !== config.length) {
+		return expanded.concat(inherited);
+	}
+	return expanded;
 }
 
 /**
@@ -185,14 +236,6 @@ export function getTaskDefinitions(
 		taskDefinition.after = taskDefinition.after.filter(globalAllowExpansionsStar);
 	}
 
-	const expandDotDotDot = (packageConfig, globalConfig) => {
-		const expanded = packageConfig.filter((value) => value !== "...");
-		if (globalConfig !== undefined && expanded.length !== packageConfig.length) {
-			return expanded.concat(globalConfig);
-		}
-		return expanded;
-	};
-
 	// Override from the package.json, and resolve "..." to the global dependencies if any
 	if (packageTaskDefinitions) {
 		for (const name in packageTaskDefinitions) {
@@ -225,18 +268,19 @@ export function getTaskDefinitions(
 	// For release group root, the default for any task is to run all the tasks in the group
 	// even if there is not task definition or script for it.
 	if (!isReleaseGroupRoot) {
-		const packageInvalid = (value) =>
+		const invalidDependOn = (value) =>
 			!value.includes("#") &&
 			!value.startsWith("^") &&
 			taskDefinitions[value] === undefined &&
 			json.scripts?.[value] === undefined;
-		const packageInvalidAllowStar = (value) => value !== "*" && packageInvalid(value);
+		const invalidBefore = (value) => value !== "*" && invalidDependOn(value);
+		const invalidAfter = (value) => value !== "^*" && invalidBefore(value);
 		for (const name in taskDefinitions) {
 			const taskDefinition = taskDefinitions[name];
 			// Find any non-existent tasks or scripts in the dependencies
-			detectInvalid(taskDefinition.dependsOn, packageInvalid, name, "dependsOn", false);
-			detectInvalid(taskDefinition.before, packageInvalidAllowStar, name, "before", false);
-			detectInvalid(taskDefinition.after, packageInvalidAllowStar, name, "after", false);
+			detectInvalid(taskDefinition.dependsOn, invalidDependOn, name, "dependsOn", false);
+			detectInvalid(taskDefinition.before, invalidBefore, name, "before", false);
+			detectInvalid(taskDefinition.after, invalidAfter, name, "after", false);
 		}
 	}
 	return taskDefinitions;

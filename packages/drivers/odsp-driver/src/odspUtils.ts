@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
@@ -42,11 +42,11 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { fetch } from "./fetch";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IOdspSnapshot } from "./contracts";
+import { fetch } from "./fetch.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IOdspSnapshot } from "./contracts.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./odspPublicUtils.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -61,7 +61,7 @@ export const getOrigin = (url: string): string => new URL(url).origin;
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	duration: number;
 }
 

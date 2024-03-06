@@ -8,19 +8,19 @@ import { assert } from "@fluidframework/core-utils";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { scheduleIdleTask } from "./scheduleIdleTask";
+import { scheduleIdleTask } from "./scheduleIdleTask.js";
 import {
 	getFluidCacheIndexedDbInstance,
 	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
 	getKeyForCacheEntry,
-} from "./FluidCacheIndexedDb";
+} from "./FluidCacheIndexedDb.js";
 import {
 	FluidCacheErrorEvent,
 	FluidCacheEventSubCategories,
 	FluidCacheGenericEvent,
-} from "./fluidCacheTelemetry";
-import { pkgVersion } from "./packageVersion";
+} from "./fluidCacheTelemetry.js";
+import { pkgVersion } from "./packageVersion.js";
 
 // Some browsers have a usageDetails property that will tell you more detailed information
 // on how the storage is being used
