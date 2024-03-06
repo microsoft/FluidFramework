@@ -8320,6 +8320,101 @@ importers:
       tslib: 1.14.1
       typescript: 5.1.6
 
+  packages/framework/collabspaces:
+    specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
+      '@fluid-internal/client-utils': workspace:~
+      '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluid-private/test-drivers': workspace:~
+      '@fluid-tools/build-cli': ^0.34.0
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.34.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/container-runtime': workspace:~
+      '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/counter': workspace:~
+      '@fluidframework/datastore': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/protocol-definitions': ^3.2.0-231454
+      '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@microsoft/api-extractor': ^7.42.3
+      '@tiny-calc/nano': 0.0.0-alpha.5
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
+      '@types/uuid': ^9.0.2
+      c8: ^8.0.1
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.55.0
+      lz4js: ^0.2.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluid-internal/client-utils': link:../../common/client-utils
+      '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/datastore': link:../../runtime/datastore
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/matrix': link:../../dds/matrix
+      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base': link:../../dds/shared-object-base
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      '@tiny-calc/nano': 0.0.0-alpha.5
+      lz4js: 0.2.0
+      uuid: 9.0.1
+    devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
+      '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluid-private/test-drivers': link:../../test/test-drivers
+      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
+      '@fluidframework/aqueduct': link:../aqueduct
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
+      '@fluidframework/container-loader': link:../../loader/container-loader
+      '@fluidframework/counter': link:../../dds/counter
+      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/test-utils': link:../../test/test-utils
+      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
+      '@types/uuid': 9.0.7
+      c8: 8.0.1
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.55.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
+      typescript: 5.1.6
+
   packages/framework/data-object-base:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
@@ -15590,7 +15685,7 @@ packages:
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.0
       semver-utils: 1.1.4
       simple-git: 3.21.0
       sort-json: 2.0.1
@@ -15654,7 +15749,7 @@ packages:
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.0
       semver-utils: 1.1.4
       simple-git: 3.21.0
       sort-json: 2.0.1
@@ -15718,7 +15813,7 @@ packages:
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.0
       semver-utils: 1.1.4
       simple-git: 3.21.0
       sort-json: 2.0.1
@@ -21836,7 +21931,7 @@ packages:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
       '@types/responselike': 1.0.3
     dev: true
 
@@ -21860,7 +21955,7 @@ packages:
   /@types/cli-progress/3.11.5:
     resolution: {integrity: sha512-D4PbNRbviKyppS5ivBGyFO29POlySLmA2HyUFE4p5QGazAMM3CwkKWcvTl8gvElSuxRh6FPKL8XmidX873ou4g==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
 
   /@types/codemirror/5.60.7:
     resolution: {integrity: sha512-QXIC+RPzt/1BGSuD6iFn6UMC9TDp+9hkOANYNPVsjjrDdzKphfRkwQDKGp2YaC54Yhz0g6P5uYTCCibZZEiMAA==}
@@ -21871,7 +21966,7 @@ packages:
   /@types/concat-stream/1.6.1:
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/connect/3.4.38:
@@ -22017,7 +22112,7 @@ packages:
   /@types/form-data/0.0.33:
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/fs-extra/5.1.0:
@@ -22036,7 +22131,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/glob/8.1.0:
@@ -22177,7 +22272,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/lodash.isequal/4.5.8:
@@ -22235,7 +22330,7 @@ packages:
   /@types/mute-stream/0.0.4:
     resolution: {integrity: sha512-CPM9nzrCPPJHQNA9keH9CVkVI+WR5kMa+7XEs5jcGQ0VoAGnLv242w8lIVgwAEfmE4oufJRaTc9PNLQl0ioAow==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/nconf/0.10.6:
@@ -22263,7 +22358,6 @@ packages:
     resolution: {integrity: sha512-nNPsNE65wjMxEKI93yOP+NPGGBJz/PoN3kZsVLee0XMiJolxSekEVD8wRwBUBqkwc7UWop0edW50yrCQW4CyRw==}
     dependencies:
       undici-types: 5.26.5
-    dev: true
 
   /@types/normalize-package-data/2.4.4:
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -22360,7 +22454,7 @@ packages:
   /@types/responselike/1.0.3:
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/retry/0.12.0:
@@ -22485,7 +22579,7 @@ packages:
     resolution: {integrity: sha512-vPXzCLmRp74e9LsP8oltnWKTH+jBwt86WgRUb4Pc9Lf3pkMVGyvIo2gm9bODeGfCay2DBB/hAWDuvf07JcK4rw==}
     dependencies:
       '@types/expect': 1.20.4
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
     dev: true
 
   /@types/webpack-dev-middleware/5.3.0_webpack@5.89.0:
@@ -22540,7 +22634,7 @@ packages:
   /@types/ws/6.0.4:
     resolution: {integrity: sha512-PpPrX7SZW9re6+Ha8ojZG4Se8AZXgf0GK6zmfqEuCsY49LFDNXO3SByp44X3dFEqtB73lkCDAdUazhAjVPiNwg==}
     dependencies:
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
 
   /@types/yargs-parser/21.0.3:
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -23165,7 +23259,7 @@ packages:
         optional: true
     dependencies:
       webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
+      webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
 
   /@webpack-cli/serve/1.7.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-oxnCNGj88fL+xzV+dacXs44HcDwf1ovs3AuEzvP7mqXw7fQntqIhQ1BRmynh4qEKQSSSRSWVyXRjmTbZIX9V2Q==}
@@ -23176,7 +23270,7 @@ packages:
       webpack-dev-server:
         optional: true
     dependencies:
-      webpack-cli: 4.10.0_fzn43tb6bdtdxy2s3aqevve2su
+      webpack-cli: 4.10.0_webpack@5.89.0
     dev: true
 
   /@wojtekmaj/enzyme-adapter-react-17/0.6.7_7ltvq4e2railvf5uya4ffxpe2a:
@@ -24098,7 +24192,7 @@ packages:
   /axios/0.26.1:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
     transitivePeerDependencies:
       - debug
     dev: true
@@ -24122,7 +24216,7 @@ packages:
   /axios/1.6.2:
     resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -29171,7 +29265,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.11
       '@types/lodash': 4.14.202
-      '@types/node': 18.19.1
+      '@types/node': 20.10.5
       '@types/sinon': 17.0.3
       lodash: 4.17.21
       mock-stdin: 1.0.0
@@ -29621,15 +29715,6 @@ packages:
 
   /fn.name/1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
-
-  /follow-redirects/1.15.3:
-    resolution: {integrity: sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
 
   /follow-redirects/1.15.3_debug@4.3.4:
     resolution: {integrity: sha512-1VzOtuEM8pC9SFU1E+8KfTjZyMztRsgEfwQl44z8A25uy13jSzTj6dyK2Df52iV0vgHCfBwLhDWevLn95w5v6Q==}
@@ -31134,6 +31219,7 @@ packages:
       micromatch: 4.0.5
     transitivePeerDependencies:
       - debug
+    dev: true
 
   /http-proxy-middleware/2.0.6_@types+express@4.17.21:
     resolution: {integrity: sha512-ya/UeJ6HVBYxrgYotAZo1KvPWlgB48kUJLDePFeneHsVujFaW5WNj2NgWCAE//B1Dl02BIfYlpNgBy8Kf8Rjmw==}
@@ -31176,7 +31262,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -40794,7 +40880,7 @@ packages:
       abab: 2.0.6
       iconv-lite: 0.6.3
       source-map-js: 0.6.2
-      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack: 5.89.0
 
   /source-map-resolve/0.5.3:
     resolution: {integrity: sha512-Htz+RnsXWk5+P2slx5Jh3Q66vhQj1Cllm0zvnaY98+NFx+Dv2CF/f5O/t8x+KaNdrdIAsruNzoh/KpialbqAnw==}
@@ -42328,7 +42414,7 @@ packages:
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0_5hr63yjncn3tlo6qh7e6tsd2me
       jest-util: 29.7.0
       json5: 2.2.3
       lodash.memoize: 4.1.2
@@ -42351,7 +42437,7 @@ packages:
       semver: 7.5.4
       source-map: 0.7.4
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
+      webpack: 5.89.0
     dev: true
 
   /ts-morph/17.0.1:
@@ -43863,7 +43949,7 @@ packages:
       interpret: 2.2.0
       rechoir: 0.7.1
       webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
+      webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
       webpack-merge: 5.10.0
 
   /webpack-cli/4.10.0_webpack@5.89.0:
@@ -44115,6 +44201,7 @@ packages:
       - debug
       - supports-color
       - utf-8-validate
+    dev: true
 
   /webpack-filter-warnings-plugin/1.2.1_webpack@4.47.0:
     resolution: {integrity: sha512-Ez6ytc9IseDMLPo0qCuNNYzgtUl8NovOqjIq4uAU8LTD4uoa1w1KpZyyzFtLTEMZpkkOkLfL9eN+KGYdk1Qtwg==}
@@ -44251,7 +44338,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack/5.89.0_webpack-cli@4.10.0:
     resolution: {integrity: sha512-qyfIC10pOr70V+jkmud8tMfajraGCZMBWJtrmuBymQKCrLTRejBI8STDp1MCyZu/QTdZSeacCQYpYNQVOzX5kw==}
