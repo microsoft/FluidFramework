@@ -4060,7 +4060,7 @@ export class ContainerRuntime
 		const getSyncState = (
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
-			const downloadedSnapshotTrees = this.dataStores.getDownloadedSnapshotTrees();
+			const downloadedSnapshotTrees = this.channelCollection.getDownloadedSnapshotTrees();
 			const pending = this.pendingStateManager.getLocalState();
 			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
 				return; // no pending state to save
