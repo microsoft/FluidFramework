@@ -106,11 +106,11 @@ export class DocumentCheckpointManager implements IDocumentCheckpointManager {
 		return this.checkpointInfo;
 	}
 
-    public setLastCheckpointTime(timestamp: number) {
-        this.checkpointInfo.lastCheckpointTime = timestamp;
-    }
+	public setLastCheckpointTime(timestamp: number) {
+		this.checkpointInfo.lastCheckpointTime = timestamp;
+	}
 
-    public getLastCheckpointTime() {
-        return this.checkpointInfo.lastCheckpointTime;
-    }
+	public getLastCheckpointTime() {
+		return this.checkpointInfo.lastCheckpointTime;
+	}
 }
