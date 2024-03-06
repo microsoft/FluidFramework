@@ -29,7 +29,7 @@ import { IPendingContainerState } from "./container.js";
 
 export class SerializedStateManager {
 	// eslint-disable-next-line @typescript-eslint/prefer-readonly
-	private savedOps: ISequencedDocumentMessage[] = [];
+	private processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot:
 		| {
 				tree: ISnapshotTree;
@@ -37,7 +37,6 @@ export class SerializedStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
-	private currentSnapshotVersion: IVersion | undefined = undefined;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -47,7 +46,7 @@ export class SerializedStateManager {
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
-		private readonly getDocumentAttributes: (storage, tree) => Promise<IDocumentAttributes>,
+		private readonly getDocumentAttributes: (storage, tree: ISnapshotTree) => Promise<IDocumentAttributes>,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -59,9 +58,9 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
-	public addSavedOp(message: ISequencedDocumentMessage) {
+	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.savedOps.push(message);
+			this.processedOps.push(message);
 		}
 	}
 
@@ -81,7 +80,6 @@ export class SerializedStateManager {
 						snapshot: this.pendingLocalState.baseSnapshot,
 						version: this.pendingLocalState.version,
 				  };
-		this.currentSnapshotVersion = version;
 		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 			? snapshot.snapshotTree
 			: snapshot;
@@ -157,9 +155,7 @@ export class SerializedStateManager {
 
 	public refreshAttributes(supportGetSnapshotApi: boolean | undefined) {
 		this.fetchSnapshotCore(undefined, supportGetSnapshotApi)
-			.then(async ({ snapshot, version }) => {
-				if (this.currentSnapshotVersion && this.currentSnapshotVersion.id !== version?.id) {
-					this.currentSnapshotVersion = version;
+			.then(async ({ snapshot }) => {
 					const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 						? snapshot.snapshotTree
 						: snapshot;
@@ -171,37 +167,31 @@ export class SerializedStateManager {
 						snapshotTree,
 					);
 					const snapshotSN = attributes.sequenceNumber;
-					const firstSavedOpSN = this.savedOps[0].sequenceNumber;
-					const lastSavedOpSN = this.savedOps[this.savedOps.length - 1].sequenceNumber;
-					if (snapshotSN < firstSavedOpSN) {
-						// This should be an impossible case
-						console.log("snapshotSN <<<<<< firstSavedOpSN");
-						console.log(snapshotSN, " ", firstSavedOpSN);
+					const firstSavedOpSN = this.processedOps[0].sequenceNumber;
+					const lastSavedOpSN = this.processedOps[this.processedOps.length - 1].sequenceNumber;
+
+					if (snapshotSN < firstSavedOpSN - 1) {
+						throw new Error("Fetched snapshot is not latest available");
+					} else if (snapshotSN < firstSavedOpSN) {
+						// snapshotSN === firstSavedOpSN - 1: 
+						// Snapshot is exactly one less than the first processed op sequence number.
+						// Meaning new snapshot is the same as before refreshing. Do nothing.
+						// Add telemetry here to check we tried to update the snapshot but got the same one.
 						return;
+					} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
+						// Snapshot is between the first and last saved operation.
+						this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+						this.snapshot = { tree: snapshotTree, blobs };
+					} else if (snapshotSN > lastSavedOpSN) {
+						// Snapshot is newer than the newest processed op.
+						// We need to wait and catch up with the operations to reach the snapshot's state.
+						throw new Error("Snapshot is newer than the newest saved operation. Synchronization might be needed.");
+					} else {
+						assert(!true, "Impossible case");
 					}
-					this.snapshot = { tree: snapshotTree, blobs };
-					if (firstSavedOpSN < snapshotSN && snapshotSN < lastSavedOpSN) {
-						// verify next saved op is a summarize (?)
-						assert(
-							this.savedOps[snapshotSN - firstSavedOpSN + 1].type === "summarize",
-							"err",
-						);
-						console.log("firstSavedOpSN < snapshotSN && snapshotSN < lastSavedOpSN");
-						console.log(firstSavedOpSN, " ", snapshotSN, " ", lastSavedOpSN);
-						this.savedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
-						assert(this.savedOps[0].type === "summarize", "error");
-						assert(this.savedOps[1].type === "summaryAck", "error");
-					}
-					if (snapshotSN > lastSavedOpSN) {
-						console.log("snapshotSN >>>>>> lastSavedOpSN");
-						console.log(snapshotSN, " ", lastSavedOpSN);
-						// this.savedOps = [];
-						// wait for process ops to catch up on latest snapshot.
-						return;
-					}
-				}
+				
 			})
-			.catch(() => {});
+			.catch((error) => { console.log("FAILUREEEEEEEEEE: ", error)});
 	}
 	/**
 	 * This method is only meant to be used by Container.attach() to set the initial
@@ -225,13 +215,12 @@ export class SerializedStateManager {
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
 	) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.savedOps.length,
+				savedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
@@ -245,10 +234,9 @@ export class SerializedStateManager {
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
-					version: this.currentSnapshotVersion,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
-					savedOps: this.savedOps,
+					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? clientId : undefined,

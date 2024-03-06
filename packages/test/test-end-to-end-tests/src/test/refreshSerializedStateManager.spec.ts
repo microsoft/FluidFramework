@@ -245,66 +245,91 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		assert.strictEqual(string2.getLength(), 4);
 	});
 
-	it("refresh the base snapshot at loading", async function () {
-		// to not use an empty base snapshot for container2
-		string1.insertText(0, "a");
-		await waitForSummary();
-		await provider.ensureSynchronized();
-		const container2: IContainerExperimental = await loader.resolve({ url });
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-
-		// to have more savedOps in the stashed container
-		string2.insertText(0, "CCC");
-		string2.insertText(0, "DDD");
-		await provider.ensureSynchronized();
-
-		const containerStateString2 = await container2.closeAndGetPendingLocalState?.();
-		assert(containerStateString2);
-		const containerState2 = JSON.parse(containerStateString2);
-		assertPendingStateSequence(containerState2);
-
-		const baseSnapshotAttibutes2 = getAttributesFromPendingState(containerState2);
-		assert.strictEqual(
-			baseSnapshotAttibutes2.sequenceNumber,
-			containerState2.savedOps[0].sequenceNumber - 1,
+	it("resolve with same snapshot as before", async function () {
+		const pendingState = await getPendingState(
+			provider,
+			async (s) => {
+				s.insertText(s.getLength(), "a");
+				s.insertText(s.getLength(), "b");
+			},
+			async (s) => {
+				s.insertText(s.getLength(), "c");
+			},
 		);
-		// send ops and summarize after stashing
-		string1.insertText(0, "EEE");
-		await waitForSummary();
-		// send another op just to check it works with saved ops after summarize
-		string1.insertText(0, "FFF");
-		await provider.ensureSynchronized();
-		const container3: IContainerExperimental = await loader.resolve(
+		assertPendingStateSequence(pendingState.parsed);
+
+		const baseSnapshotAttibutes = getAttributesFromPendingState(pendingState.parsed);
+
+		const container2: IContainerExperimental = await loader.resolve(
 			{ url },
-			containerStateString2,
+			pendingState.pendingState,
 		);
-		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
-		const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
-		await waitForContainerConnection(container3);
-		string1.insertText(0, "GGG");
+		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
-		// no corruption after "coming back online" and ops were sent in the meanwhile
-		assert.strictEqual(string1.getText(), string3.getText());
-		const containerStateString3 = await container3.closeAndGetPendingLocalState?.();
-		const containerState3 = JSON.parse(containerStateString3 as string);
+		const pendingState2 = await container2.closeAndGetPendingLocalState?.();
+		assert.ok(pendingState2);
+		const parsed2 = JSON.parse(pendingState2);
+		assertPendingStateSequence(parsed2);
 
-		const baseSnapshotAttibutes3 = getAttributesFromPendingState(containerState3);
-		// the base snapshot was refreshed. sequenceNumber would be the same in case we don't
-		assert(baseSnapshotAttibutes2.sequenceNumber < baseSnapshotAttibutes3.sequenceNumber);
-		assert.strictEqual(
-			baseSnapshotAttibutes3.sequenceNumber,
-			containerState3.savedOps[0].sequenceNumber - 1,
-		);
+		const baseSnapshotAttibutes2 = getAttributesFromPendingState(parsed2);
+
+		// no new summary generated since first stashing
+		assert(baseSnapshotAttibutes.sequenceNumber === baseSnapshotAttibutes2.sequenceNumber);
+
 		const container4: IContainerExperimental = await loader.resolve(
 			{ url },
-			containerStateString3,
+			pendingState2,
+		);
+		const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
+		const string4 = await dataStore4.getSharedObject<SharedString>(stringId);
+		await waitForContainerConnection(container4);
+		assert.strictEqual(string1.getText(), string4.getText());
+		assert.strictEqual(string1.getText(), "abc");
+	});
+
+	it("refresh the base snapshot at loading", async function () {
+		const pendingState = await getPendingState(
+			provider,
+			async (s) => {
+				s.insertText(s.getLength(), "a");
+				// new summary, will fetch new snapshot at resolve
+				await waitForSummary();
+				s.insertText(s.getLength(), "b");
+			},
+			async (s) => {
+				s.insertText(s.getLength(), "c");
+			},
+		);
+		assertPendingStateSequence(pendingState.parsed);
+
+		const baseSnapshotAttibutes = getAttributesFromPendingState(pendingState.parsed);
+
+		const container2: IContainerExperimental = await loader.resolve(
+			{ url },
+			pendingState.pendingState,
+		);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		const pendingState2 = await container2.closeAndGetPendingLocalState?.();
+		assert.ok(pendingState2);
+		const parsed2 = JSON.parse(pendingState2);
+		assertPendingStateSequence(parsed2);
+
+		const baseSnapshotAttibutes2 = getAttributesFromPendingState(parsed2);
+
+		// the base snapshot was refreshed. sequenceNumber would be the same in case we haven't
+		assert(baseSnapshotAttibutes.sequenceNumber < baseSnapshotAttibutes2.sequenceNumber);
+
+		const container4: IContainerExperimental = await loader.resolve(
+			{ url },
+			pendingState2,
 		);
 		const dataStore4 = (await container4.getEntryPoint()) as ITestFluidObject;
 		const string4 = await dataStore4.getSharedObject<SharedString>(stringId);
 		await waitForContainerConnection(container4);
 		// all correct after applying a stashed container with a refresh snapshot
 		assert.strictEqual(string1.getText(), string4.getText());
+		assert.strictEqual(string1.getText(), "abc");
 	});
 
 	it("works with summary while offline", async function () {

@@ -267,7 +267,7 @@ describe("serializedStateManager", () => {
 		// equivalent to attach
 		serializedStateManager.setSnapshot({ tree: { trees: {}, blobs: {} }, blobs: {} });
 		for (let num = 0; num < 10; ++num) {
-			serializedStateManager.addSavedOp(generateSavedOp());
+			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
 		await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
