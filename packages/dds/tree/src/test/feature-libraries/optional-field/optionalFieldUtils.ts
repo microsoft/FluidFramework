@@ -20,12 +20,14 @@ import {
 	Move,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { Mutable } from "../../../util/index.js";
+import { Mutable, brand } from "../../../util/index.js";
 import {
 	ChildChange,
 	Replace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+
+const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
 function asRegister(input: RegisterId | ChangesetLocalId): RegisterId {
 	if (typeof input === "string" || typeof input === "object") {
@@ -185,7 +187,19 @@ export function assertTaggedEqual(
 	aCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 	bCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
 
-	assert.equal(aCopy.change.valueReplace !== undefined, bCopy.change.valueReplace !== undefined);
+	if (aCopy.change.valueReplace !== undefined) {
+		assert(bCopy.change.valueReplace !== undefined);
+
+		if (aCopy.change.valueReplace.isEmpty) {
+			assert(bCopy.change.valueReplace.isEmpty);
+
+			// Detach IDs are only relevant if the field was not empty, so we tolerate compose
+			// assigning them arbitrarily in this case.
+			aCopy.change.valueReplace = { ...aCopy.change.valueReplace, dst: dummyDetachId };
+			bCopy.change.valueReplace = { ...bCopy.change.valueReplace, dst: dummyDetachId };
+		}
+	}
+
 	delete aCopy.change.valueReplace;
 	delete bCopy.change.valueReplace;
 	assert.deepEqual(aCopy, bCopy);

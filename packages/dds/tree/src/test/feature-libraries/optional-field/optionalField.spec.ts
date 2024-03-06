@@ -297,7 +297,7 @@ describe("optionalField", () => {
 				};
 				const expected = Change.atOnce(
 					Change.child(nodeChange2),
-					Change.move("self", { localId: brand(41), revision: change1.revision }),
+					Change.move("self", { localId: brand(0) }),
 				);
 				const actual = undo(change1, childInverter);
 				assertEqual(actual, expected);

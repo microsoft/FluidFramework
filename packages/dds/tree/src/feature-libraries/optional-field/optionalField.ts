@@ -451,7 +451,7 @@ function getComposedReplaceDst(
 	const dst1 = taggedOptAtomId(change1?.dst, revision1);
 	if (change2.valueReplace === undefined) {
 		assert(dst1 !== undefined, "Both replace replaces should not be undefined");
-		return dst1;
+		return getIdAfterMoves(dst1, change2.moves);
 	}
 
 	if (
@@ -460,15 +460,20 @@ function getComposedReplaceDst(
 		(change2.valueReplace.src !== undefined &&
 			areEqualRegisterIds(taggedRegister(change2.valueReplace.src, revision2), dst1))
 	) {
+		assert(change2.valueReplace !== undefined, "Both replace replaces should not be undefined");
 		return taggedAtomId(change2.valueReplace.dst, revision2);
 	} else {
-		for (const [src, dst] of change2.moves) {
-			if (areEqualChangeAtomIds(dst1, src)) {
-				return dst;
-			}
-		}
-		return dst1;
+		return getIdAfterMoves(dst1, change2.moves);
 	}
+}
+
+function getIdAfterMoves(id: ChangeAtomId, moves: readonly Move[]): ChangeAtomId {
+	for (const [src, dst] of moves) {
+		if (areEqualChangeAtomIds(id, src)) {
+			return dst;
+		}
+	}
+	return id;
 }
 
 function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
