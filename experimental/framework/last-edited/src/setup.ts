@@ -6,7 +6,7 @@
 import { ISequencedDocumentMessage, IQuorumClients } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
+import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces.js";
 
 /**
  * Default implementation of {@link setupLastEditedTrackerForContainer}'s `shouldDiscardMessageFn` parameter,

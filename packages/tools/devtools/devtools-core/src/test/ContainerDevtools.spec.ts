@@ -5,8 +5,8 @@
 
 import { expect } from "chai";
 
-import { type ContainerDevtoolsProps, ContainerDevtools } from "../ContainerDevtools";
-import { addAudienceMember, createMockContainer, removeAudienceMember } from "./Utilities";
+import { type ContainerDevtoolsProps, ContainerDevtools } from "../ContainerDevtools.js";
+import { addAudienceMember, createMockContainer, removeAudienceMember } from "./Utilities.js";
 
 // TODOs:
 // - Test window messaging

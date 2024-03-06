@@ -11,9 +11,9 @@ import {
 	getContainerAlreadyRegisteredErrorText,
 	initializeDevtools,
 	useAfterDisposeErrorText,
-} from "../FluidDevtools";
-import { type ContainerDevtoolsProps } from "../ContainerDevtools";
-import { createMockContainer } from "./Utilities";
+} from "../FluidDevtools.js";
+import { type ContainerDevtoolsProps } from "../ContainerDevtools.js";
+import { createMockContainer } from "./Utilities.js";
 
 // TODOs:
 // - Test window messaging

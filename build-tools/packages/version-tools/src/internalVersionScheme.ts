@@ -62,7 +62,11 @@ export function fromInternalScheme(
 	internalVersion: semver.SemVer | string,
 	allowPrereleases = false,
 	allowAnyPrereleaseId = false,
-): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string] {
+): [
+	publicVersion: semver.SemVer,
+	internalVersion: semver.SemVer,
+	prereleaseIndentifier: string,
+] {
 	const parsedVersion = semver.parse(internalVersion);
 	validateVersionScheme(
 		parsedVersion,
@@ -140,7 +144,8 @@ export function toInternalScheme(
 	}
 
 	const prereleaseSections = parsedVersion.prerelease;
-	const newPrerelease = prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
+	const newPrerelease =
+		prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
 	const newSemVerString = `${publicVersion}-${prereleaseIdentifier}.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}${newPrerelease}`;
 	const newSemVer = semver.parse(newSemVerString);
 	if (newSemVer === null) {

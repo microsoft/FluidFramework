@@ -8,23 +8,23 @@ import { ISnapshot } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { delay } from "@fluidframework/core-utils";
-import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
+import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker.js";
 import {
 	IOdspSnapshot,
 	HostStoragePolicyInternal,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
-} from "../contracts";
-import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo } from "../odspUtils";
-import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
+} from "../contracts.js";
+import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
+import { INewFileInfo } from "../odspUtils.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import {
 	OdspDocumentStorageService,
 	defaultSummarizerCacheExpiryTimeout,
-} from "../odspDocumentStorageManager";
-import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
+} from "../odspDocumentStorageManager.js";
+import { mockFetchSingle, notFound, createResponse } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
