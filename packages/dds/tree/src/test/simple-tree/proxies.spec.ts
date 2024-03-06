@@ -82,6 +82,7 @@ describe("SharedTreeObject", () => {
 		content: sb.number,
 		child: numberChild,
 		optional: sb.optional(numberChild),
+		optionalWithStableName: sb.optional(stringChild, { stableName: "stable-name" }),
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
@@ -94,6 +95,7 @@ describe("SharedTreeObject", () => {
 		content: 42,
 		child: { content: 42 },
 		optional: { content: 42 },
+		optionalWithStableName: { content: "Stable" },
 		polyValue: "42",
 		polyChild: new stringChild({ content: "42" }),
 		polyValueChild: { content: 42 },
@@ -144,19 +146,30 @@ describe("SharedTreeObject", () => {
 		const root = hydrate(schema, initialTree());
 		assert.equal(root.child.content, 42);
 		assert.equal(root.optional?.content, 42);
+		assert.equal(root.optionalWithStableName?.content, "Stable");
+
 		const newChild = new numberChild({ content: 43 });
 		root.child = newChild;
 		assert.equal(root.child, newChild);
+
 		root.optional = new numberChild({ content: 43 });
 		root.optional = new numberChild({ content: 43 }); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 		assert.equal(root.optional.content, 43);
+
+		root.optionalWithStableName = new stringChild({ content: "New" });
+		assert.equal(root.optionalWithStableName.content, "New");
 	});
 
 	it("can unset fields", () => {
 		const root = hydrate(schema, initialTree());
 		assert.equal(root.optional?.content, 42);
+		assert.equal(root.optionalWithStableName?.content, "Stable");
+
 		root.optional = undefined;
 		assert.equal(root.optional, undefined);
+
+		root.optionalWithStableName = undefined;
+		assert.equal(root.optionalWithStableName, undefined);
 	});
 });
 
