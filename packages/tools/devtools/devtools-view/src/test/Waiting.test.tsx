@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable import/no-internal-modules */
 import React from "react";
 
 import { render, screen } from "@testing-library/react";

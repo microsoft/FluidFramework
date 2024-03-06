@@ -6,6 +6,7 @@
 // All of the components in this directory are intended to be used within this package,
 // so we will export * here
 /* eslint-disable no-restricted-syntax */
+/* eslint-disable import/no-internal-modules */
 
 export * from "./data-visualization/index.js";
 
