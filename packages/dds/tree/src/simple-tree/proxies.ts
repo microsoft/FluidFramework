@@ -211,6 +211,9 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
+
+			// TODO: map key
+
 			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
 			if (fieldSchema === undefined) {
@@ -252,18 +255,23 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			return true;
 		},
 		has: (target, key) => {
+			// TODO: map key
+			// If schema was specified with a `stableName`, we need to convert from the developer-facing key
+			// to the stable name prior to lookup on the FlexNode.
 			return (
 				schema.objectNodeFields.has(key as FieldKey) ||
 				(allowAdditionalProperties ? Reflect.has(target, key) : false)
 			);
 		},
 		ownKeys: (target) => {
+			// TODO: map keys
 			return [
 				...schema.objectNodeFields.keys(),
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
+			// TODO: map key
 			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
 
 			if (field === undefined) {

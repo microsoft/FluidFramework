@@ -204,7 +204,7 @@ export interface FieldProps {
 	/**
 	 * Optional explicit stable name (key) for the field.
 	 *
-	 * TODO: implications (persistance, behavior with things like Object.keys, etc.)
+	 * TODO: implications (persistance, behavior with things like Object.keys, potential for collisions, etc.)
 	 *
 	 * @defaultValue TODO
 	 */
