@@ -406,7 +406,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * Validate user provided channel ID
 	 * Channel ID has limitations. "/" is not allowed as IDs in storage can not have slashes - we parse tree paths and use "/" as separator.
-	 * "_" can't be used as it could result in collision of IDs with auto-assigned (by FF) short ID
+	 * IDs cannot start with "_" as it could result in collision of IDs with auto-assigned (by FF) short IDs.
 	 * @param id - channel ID.
 	 */
 	protected validateChannelId(id: string) {

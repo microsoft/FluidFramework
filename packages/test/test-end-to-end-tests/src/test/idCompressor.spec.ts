@@ -859,6 +859,19 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 
 		const pkg = defaultDataStore._context.packagePath;
 
+		// Ensure that we have a connection, and thus had a chance to delay-create ID compressor
+		// This should only be required for "delayed" mode.
+		if (enableRuntimeIdCompressor === "delayed") {
+			defaultDataStore._root.set("foo", "bar");
+			await provider.ensureSynchronized();
+		}
+
+		// Note: This theoretically could fail, as Id compressor is loaded async.
+		// This could happen only in delayed mode test. If it happens, the only thing I can think of to fix it - spin here until it shows up.
+		const idCompressor = (defaultDataStore._context.containerRuntime as any)
+			._idCompressor as IIdCompressor;
+		assert(idCompressor !== undefined, "we should have ID compressor by now");
+
 		// This will do a lot of things!
 		// 1) it will attempt to use ID Compressor to get short ID. This will force ID Compressor to do #3
 		// 2) it will send op - providing opportunity for ID compressor to do #3
@@ -866,46 +879,64 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		const ds = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
 		await ds.trySetAlias("anyName");
 
+		// This should not be required (as alias assignment is essentially a barrier), but let's make sure we wait for all op acks,
+		// and thus ID compressor to go around and reserve short IDs.
 		await provider.ensureSynchronized();
 
+		const entryPoint = (await ds.entryPoint.get()) as ITestDataObject;
+		const id = entryPoint._context.id;
+		// ID will be long in all cases, as that was the first attempt to use ID compressor, and thus it could only issue us UUIDs.
+		assert(id.length > 8, "long ID");
+
+		// Validate that ID compressor is in good shape and has reserved ID range.
+		// We will validate that by attempting to convert earlier issued StableId into SessionSpaceCompressedId
+		const idShort = idCompressor.recompress(id as StableId);
+
+		// NOTE: THIS IS WRONG! We should get here final ID (non-negative).
+		// This is here only for demostration purposes that this is broken and needs to be taken care of.
+		assert(idShort < 0, "BUG IS GONE?");
+
+		// Check directly that ID compressor is issuing short IDs!
+		// If it does not, the rest of the tests would fail - this helps isolate where the bug is.
+		const idTest = defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
+		assert(typeof idTest === "number", "short IDs should be issued");
+		assert(idTest >= 0, "finalId");
+
 		// create another datastore
-		const res = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
-		const defaultDataStore2 = (await res.entryPoint.get()) as ITestDataObject;
+		const ds2 = await defaultDataStore._context.containerRuntime.createDataStore(pkg);
+		const entryPoint2 = (await ds2.entryPoint.get()) as ITestDataObject;
 
 		// This data store was created in attached  container, and should have used ID compressor to assign ID!
 		assert(
-			defaultDataStore2._runtime.id.length <= 2,
+			entryPoint2._runtime.id.length <= 2,
 			"short data store ID created in attached container",
 		);
 
 		// Test assumption
-		assert(
-			defaultDataStore2._runtime.attachState === AttachState.Detached,
-			"data store is detached",
-		);
+		assert(entryPoint2._runtime.attachState === AttachState.Detached, "data store is detached");
 
 		// Create some channel. Assume that data store has directory factory (ITestDataObject exposes _root that is directory,
 		// so it has such entry). This could backfire if non-default type is used for directory - a test would need to be changed
 		// if it changes in the future.
-		const channel = defaultDataStore2._runtime.createChannel(
+		const channel = entryPoint2._runtime.createChannel(
 			undefined,
 			SharedDirectory.getFactory().type,
 		);
 		assert(channel.id.length <= 2, "DDS ID created in detached data store");
 
 		// attached data store.
-		await res.trySetAlias("foo");
+		await ds2.trySetAlias("foo");
 
 		assert(
 			// For some reason TSC gets it wrong - it assumes that attachState is constant and that assert above
 			// established it's AttachState.Detached, so this comparison is useless.
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			defaultDataStore2._runtime.attachState === AttachState.Attached,
+			entryPoint2._runtime.attachState === AttachState.Attached,
 			"data store is detached",
 		);
 
-		const channel2 = defaultDataStore2._runtime.createChannel(
+		const channel2 = entryPoint2._runtime.createChannel(
 			undefined,
 			SharedDirectory.getFactory().type,
 		);
