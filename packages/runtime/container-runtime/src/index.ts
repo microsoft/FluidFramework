@@ -34,10 +34,10 @@ export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
 	RuntimeHeaders,
-	DataStoresFactory,
+	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 	AllowInactiveRequestHeaderKey,
-} from "./dataStores.js";
+} from "./channelCollection.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -98,20 +98,3 @@ export {
 	ISummarizeEventProps,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-
-// Re-exports for backwards compatibility.
-// Will be removed in the future.
-export {
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	assertIsStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	generateStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	isStableId,
-} from "@fluidframework/id-compressor";

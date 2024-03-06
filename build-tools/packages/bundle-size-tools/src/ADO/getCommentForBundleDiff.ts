@@ -113,7 +113,9 @@ function formatBytes(bytes: number) {
 
 	const exponent = Math.floor(Math.log(Math.abs(bytes)) / Math.log(base));
 
-	return parseFloat((bytes / Math.pow(base, exponent)).toFixed(decimals)) + " " + sizes[exponent];
+	return (
+		parseFloat((bytes / Math.pow(base, exponent)).toFixed(decimals)) + " " + sizes[exponent]
+	);
 }
 
 /**
