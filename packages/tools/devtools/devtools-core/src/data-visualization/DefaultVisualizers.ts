@@ -18,18 +18,24 @@ import type {
 	JsonableTree,
 	TreeStoredSchema,
 	FieldKey,
+	TreeNodeStoredSchema,
+	TreeFieldStoredSchema,
 } from "@fluidframework/tree/internal";
 import {
 	SharedTree,
 	ObjectNodeStoredSchema,
-	LeafNodeStoredSchema,
+	LeafNodeSchema,
 	MapNodeStoredSchema,
 } from "@fluidframework/tree/internal";
-import { assert } from "@fluidframework/core-utils";
+// import { assert } from "@fluidframework/core-utils";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { EditType } from "../CommonInterfaces";
-import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization";
+import {
+	type visualizeChildData,
+	type VisualizeChildData,
+	type VisualizeSharedObject,
+} from "./DataVisualization";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -38,6 +44,8 @@ import {
 	VisualNodeKind,
 	type VisualChildNode,
 	type VisualTreeNode,
+	type FluidObjectNodeBase,
+	type VisualValueNode,
 } from "./VisualTree";
 
 /**
@@ -263,103 +271,148 @@ interface VisualizedObject {
 
 type VisualizedTreeNode = VisualizedObject | VisualizedLeaf;
 
-// function objectNodeSchemaVisualizer(
-// 	treeView: JsonableTree,
-// 	objectNodeStoredSchema: ObjectNodeStoredSchema,
-// 	objectNodeSchemaKeys: IterableIterator<FieldKey>,
-// ): VisualizedObject {
-// 	const fields: VisualizedField[] = [];
-
-// 	for (const objectKey of objectNodeSchemaKeys) {
-// 		const field = objectNodeStoredSchema.objectNodeFields.get(objectKey);
-
-// 		fields.push({});
-// 	}
-
-// 	return {
-// 		name: treeView.type,
-// 		fields,
-// 	};
-// }
-
-function objectNodeStoredSchemaHelper(
-	tree: JsonableTree,
-	objectNodeSchema: ObjectNodeStoredSchema,
-	objectNodeStoredSchemaKeys: Iterable<FieldKey>,
-): void {
-	const fields: VisualizedField[] = [];
-
-	for (const objectKey of objectNodeStoredSchemaKeys) {
-		const field = objectNodeSchema.objectNodeFields.get(objectKey);
-
-		if (field === undefined) {
-			continue;
-		}
-
-		const children = tree.fields?.[objectKey];
-		if (children === undefined) {
-			continue;
-		}
-
-		assert(children !== undefined, "Tree schema not defined!");
-		const visualizedChildren = children.map((child: JsonableTree) =>
-			jsonableToVisualized(child, field as unknown as TreeStoredSchema),
-		);
-
-		console.log(visualizedChildren);
-	}
+function visualizeFieldSchema(schema: TreeFieldStoredSchema): VisualTreeNode {
+	return {
+		nodeKind: VisualNodeKind.TreeNode,
+		children: {
+			kind: {
+				nodeKind: VisualNodeKind.ValueNode,
+				value: schema.kind.identifier,
+			},
+			types: {
+				nodeKind: VisualNodeKind.ValueNode,
+				value: schema.types === undefined ? "undefined" : [...schema.types].join(", "),
+			},
+		},
+	};
 }
 
-function jsonableToVisualized(tree: JsonableTree, schema: TreeStoredSchema): VisualizedTreeNode {
-	if (tree.value !== undefined) {
-		return tree.value;
-	}
+function visualizeLeafSchema(schema: LeafNodeSchema): VisualValueNode {
+	return {
+		nodeKind: VisualNodeKind.ValueNode,
+		value: schema.name,
+	};
+}
 
-	const nodeSchemaType = schema.nodeSchema.get(tree.type);
-	assert(nodeSchemaType !== undefined, "Tree schema not defined!");
+function visualizeObjectSchema(schema: ObjectNodeStoredSchema): VisualTreeNode {
+	const fields = schema.objectNodeFields;
 
-	if (nodeSchemaType instanceof ObjectNodeStoredSchema) {
-		const objectNodeStoredSchemaKeys = nodeSchemaType.objectNodeFields.keys();
-
-		objectNodeStoredSchemaHelper(tree, nodeSchemaType, objectNodeStoredSchemaKeys);
-
-		console.log(objectNodeStoredSchemaKeys);
-	}
-
-	/**
-	 * in the same file as the type for tree stored schema, there are classes that inherit from that one
-	 * you need to use instanceof to check for instances of those classes (leaf schema, object schema, and map schema)
-	 * then you can use those to print what you need
-	 */
-	// if (nodeSchemaType instanceof LeafNodeStoredSchema) {
-	// 	console.log("LeafNodeStoredSchema!");
-	// } else if (nodeSchemaType instanceof ObjectNodeStoredSchema) {
-	// 	const objectNodeSchemaKeys = nodeSchemaType.objectNodeFields.keys();
-
-	// 	objectNodeSchemaVisualizer(tree, nodeSchemaType, objectNodeSchemaKeys);
-	// } else {
-	// 	console.log("MapNodeStoredSchema");
-	// }
-
-	const fields: VisualizedField[] = [];
-	if (tree.fields !== undefined) {
-		for (const fieldKey of Object.keys(tree.fields)) {
-			const field = tree.fields[fieldKey];
-
-			fields.push({
-				schema: [], // This should be what is returned from the fooSchemaVisualizer function above.
-				required: true, // This should be what is returned from the fooSchemaVisualizer function above.
-				children: field.map((child: JsonableTree) => {
-					return jsonableToVisualized(child, schema);
-				}),
-			});
-		}
+	const children: Record<string, VisualChildNode> = {};
+	for (const [key, field] of fields) {
+		children[key] = visualizeFieldSchema(field);
 	}
 
 	return {
-		name: tree.type,
-		fields,
+		nodeKind: VisualNodeKind.TreeNode,
+		children,
 	};
+}
+
+// visualizeObjectNode
+function objectNodeStoredSchemaHelper(
+	tree: JsonableTree,
+	objectNodeSchema: ObjectNodeStoredSchema,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualChildNode[]> {
+	const result: VisualChildNode[] = [];
+
+	for (const [key, fieldSchema] of objectNodeSchema.objectNodeFields) {
+		const treeField = tree.fields?.[key];
+		if (treeField === undefined) {
+			continue;
+		}
+
+		// TODO: special case treeField.length === 1 to reduce visual hierarchy
+		const children: Record<string, VisualChildNode> = {};
+		for (let i = 0; i < treeField.length; i++) {
+			children[i] = await sharedTreeVisualizerHelper(
+				treeField[i], 
+				/* TODO: get child schema */,
+				visualizeChildData,
+			);
+		}
+
+		result.push({
+			nodeKind: VisualNodeKind.TreeNode,
+			children,
+		});
+	}
+
+	return result;
+
+	// const objectNodeStoredSchemaKeys =
+	// 	objectNodeSchema.objectNodeFields.keys() as Iterable<FieldKey>;
+
+	// const fields: VisualizedField[] = [];
+
+	// for (const objectKey of objectNodeStoredSchemaKeys) {
+	// 	const field = objectNodeSchema.objectNodeFields.get(objectKey);
+
+	// 	if (field === undefined) {
+	// 		continue;
+	// 	}
+
+	// 	const children = tree.fields?.[objectKey];
+	// 	if (children === undefined) {
+	// 		continue;
+	// 	}
+
+	// 	fields.push({
+	// 		schema: [],
+	// 		required: true,
+	// 		children: children.map((child: JsonableTree) => {
+	// 			return sharedTreeVisualizerHelper(
+	// 				child,
+	// 				objectNodeSchema as unknown as TreeStoredSchema,
+	// 			);
+	// 		}),
+	// 	});
+	// }
+
+	// return fields;
+}
+
+// visualizeTreeNode
+async function sharedTreeVisualizerHelper(
+	tree: JsonableTree,
+	schema: TreeNodeStoredSchema | TreeStoredSchema | undefined,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualTreeNode> {
+	if (schema instanceof LeafNodeSchema) {
+		return {
+			nodeKind: VisualNodeKind.TreeNode,
+			metadata: { required: true },
+			children: {
+				schema: visualizeLeafSchema(schema), // TODO: schema for leaf nodes may not be interesting, maybe remove?
+				value: await visualizeChildData(tree.value),
+			},
+		};
+	} else if (schema instanceof ObjectNodeStoredSchema) {
+		const children: Record<string, VisualChildNode> = {
+			schema: visualizeObjectSchema(schema),
+		};
+
+		// TODO: iterate fields and call `visualizeTreeField` on each, and insert into record
+
+		const fields = await objectNodeStoredSchemaHelper(tree, schema);
+		// TODO: map fields to children
+		return {
+			nodeKind: VisualNodeKind.TreeNode,
+			metadata: { required: true },
+			children,
+		};
+	} else if (schema instanceof MapNodeStoredSchema) {
+		return {
+			nodeKind: VisualNodeKind.TreeNode,
+			metadata: { required: true },
+			children: {
+				schema: await visualizeMapSchema(schema),
+				value: await visualizeChildData(tree.value),
+			},
+		};
+	} else {
+		throw new Error("Unrecognized schema type.");
+	}
 }
 
 /**
@@ -368,20 +421,22 @@ function jsonableToVisualized(tree: JsonableTree, schema: TreeStoredSchema): Vis
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
+): Promise<FluidObjectNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 	const content = sharedTree.contentSnapshot();
 
 	const treeRoot = content.tree[0];
-	const treeSchema = content.schema;
+	const treeRootNodeSchema = content.schema.nodeSchema.get(treeRoot.type);
 
-	const visualTree = jsonableToVisualized(treeRoot, treeSchema);
+	const visualTree = await sharedTreeVisualizerHelper(
+		treeRoot,
+		treeRootNodeSchema,
+		visualizeChildData,
+	);
 
 	return {
+		...visualTree,
 		fluidObjectId: sharedTree.id,
-		children: {
-			tree: await visualizeChildData(visualTree),
-		},
 		typeMetadata: "SharedTree",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};

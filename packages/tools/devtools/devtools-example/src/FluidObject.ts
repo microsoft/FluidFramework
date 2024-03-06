@@ -210,7 +210,7 @@ export class AppData extends DataObject {
 
 	private populateSharedTree(sharedTree: ITree): void {
 		// Set up SharedTree for visualization
-		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaFactory("devtools-example");
 
 		// TODO: Maybe include example handle
 
