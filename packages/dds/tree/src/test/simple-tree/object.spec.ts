@@ -235,6 +235,18 @@ const tcs: TestCase[] = [
 		initialTree: {},
 	},
 	{
+		// Case with `stableName`s provided for some fields.
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("optional", {
+				boolean: _.optional(_.boolean, { stableName: "stable-boolean" }),
+				number: _.optional(_.number),
+				string: _.optional(_.string, { stableName: "stable-string" }),
+			});
+		})(),
+		initialTree: {},
+	},
+	{
 		schema: (() => {
 			const _ = new SchemaFactory("test");
 			return _.object("optional (defined)", {
