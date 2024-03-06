@@ -458,7 +458,7 @@ describe("AnchorSet", () => {
 		]);
 	});
 
-	it("triggers beforeChange and afterChange callbacks in the right order and always as a pair", () => {
+	it("arguments for afterChange events are the expected object", () => {
 		const detachMark: DeltaMark = {
 			count: 1,
 			detach: detachId,
@@ -477,101 +477,8 @@ describe("AnchorSet", () => {
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
-		let beforeCounter = 0;
 		let afterCounter = 0;
 
-		const unsubscribeBeforeChange = node0.on("beforeChange", (n: AnchorNode) => {
-			beforeCounter++;
-			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
-		});
-		const unsubscribeAfterChange = node0.on("afterChange", (n: AnchorNode) => {
-			afterCounter++;
-			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
-		});
-
-		// Test an insert delta
-		const insertAtFoo4 = makeFieldDelta(
-			{
-				local: [{ count: 4 }, { count: 1, attach: buildId }],
-			},
-			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
-		);
-		announceTestDelta(insertAtFoo4, anchors, undefined, build);
-		assert.strictEqual(beforeCounter, 1);
-		assert.strictEqual(afterCounter, 1);
-
-		// Test a replace delta
-		const replaceAtFoo5 = makeFieldDelta(
-			{
-				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
-			},
-			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
-		);
-		announceTestDelta(replaceAtFoo5, anchors, undefined, build);
-		assert.strictEqual(beforeCounter, 2);
-		assert.strictEqual(afterCounter, 2);
-
-		// Test a detach delta
-		announceTestDelta(
-			makeDelta(detachMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
-			anchors,
-		);
-		assert.strictEqual(beforeCounter, 3);
-		assert.strictEqual(afterCounter, 3);
-
-		// Test a move delta
-		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
-		// once when detaching nodes from the source location, and once when attaching them at the target location.
-		const moveOutMark: DeltaMark = {
-			count: 1,
-			detach: { minor: 1 },
-		};
-		const moveInMark: DeltaMark = {
-			count: 1,
-			attach: moveOutMark.detach,
-		};
-		const moveDelta = makeFieldDelta(
-			{ local: [moveOutMark, { count: 1 }, moveInMark] },
-			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
-		);
-		announceTestDelta(moveDelta, anchors);
-		assert.strictEqual(beforeCounter, 5);
-		assert.strictEqual(afterCounter, 5);
-
-		// Remove listeners and validate another delta doesn't trigger the listeners anymore
-		unsubscribeBeforeChange();
-		unsubscribeAfterChange();
-		announceTestDelta(insertAtFoo4, anchors, undefined, build);
-		assert.strictEqual(beforeCounter, 5);
-		assert.strictEqual(afterCounter, 5);
-	});
-
-	it("arguments for beforeChange and afterChange events are the expected object", () => {
-		const detachMark: DeltaMark = {
-			count: 1,
-			detach: detachId,
-		};
-		const anchors = new AnchorSet();
-
-		// Insert a node at the root to set up listeners on it
-		const insertAtFoo3 = makeFieldDelta(
-			{
-				local: [{ count: 3 }, { count: 1, attach: buildId }],
-			},
-			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
-		);
-		const build = [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }];
-		announceTestDelta(insertAtFoo3, anchors, undefined, build);
-		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
-		const node0 = anchors.locate(anchor0) ?? assert.fail();
-
-		let beforeCounter = 0;
-		let afterCounter = 0;
-
-		node0.on("beforeChange", (n: AnchorNode) => {
-			assert.strictEqual(node0, n); // This is the important bit in this test
-			beforeCounter++;
-		});
 		node0.on("afterChange", (n: AnchorNode) => {
 			assert.strictEqual(node0, n); // This is the important bit in this test
 			afterCounter++;
@@ -619,7 +526,6 @@ describe("AnchorSet", () => {
 		announceTestDelta(moveDelta, anchors);
 
 		// Make sure the listeners were actually called
-		assert.strictEqual(beforeCounter, 5);
 		assert.strictEqual(afterCounter, 5);
 	});
 

@@ -113,14 +113,6 @@ export interface AnchorEvents {
 	childrenChanged(anchor: AnchorNode): void;
 
 	/**
-	 * Before a change in this subtree happens.
-	 *
-	 * @remarks
-	 * Includes edits of child subtrees.
-	 */
-	beforeChange(anchor: AnchorNode): void;
-
-	/**
 	 * After a change in this subtree happened.
 	 *
 	 * @remarks
@@ -728,9 +720,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeAttach(sourcePath, destinationPath);
@@ -795,9 +784,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				const destinationPath: DetachedPlaceUpPath = brand({
 					field: destination,
 					index: 0,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -869,9 +855,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				const oldNodesDestinationPath: DetachedPlaceUpPath = brand({
 					field: destination,
 					index: 0,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
