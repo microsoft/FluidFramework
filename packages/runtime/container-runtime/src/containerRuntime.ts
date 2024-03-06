@@ -2625,42 +2625,21 @@ export class ContainerRuntime
 		pkg: Readonly<string[]>,
 		rootDataStoreId: string,
 	): IFluidDataStoreContextDetached {
-		if (rootDataStoreId.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-		}
-		return this.channelCollection.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
+		return this.channelCollection.createDetachedRootDataStore(pkg, rootDataStoreId);
 	}
 
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.channelCollection.createDetachedDataStoreCore(
-			pkg,
-			false,
-			undefined,
-			loadingGroupId,
-		);
+		return this.channelCollection.createDetachedDataStore(pkg, loadingGroupId);
 	}
 
 	public async createDataStore(
 		pkg: string | string[],
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
-		const id = uuid();
-		return channelToDataStore(
-			await this.channelCollection
-				._createFluidDataStoreContext(
-					Array.isArray(pkg) ? pkg : [pkg],
-					id,
-					undefined,
-					loadingGroupId,
-				)
-				.realize(),
-			id,
-			this.channelCollection,
-			this.mc.logger,
-		);
+		return this.channelCollection.createDataStore(pkg, loadingGroupId);
 	}
 
 	/**

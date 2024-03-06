@@ -32,6 +32,7 @@ import {
 	IFluidDataStoreContext,
 	NamedFluidDataStoreRegistryEntries,
 	IFluidDataStoreRegistry,
+	type IDataStore,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -55,6 +56,7 @@ import {
 	MonitoringContext,
 	tagCodeArtifacts,
 	createChildLogger,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
@@ -567,7 +569,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.contexts.bind(id);
 	}
 
-	public createDetachedDataStoreCore(
+	private createDetachedDataStoreCore(
 		pkg: Readonly<string[]>,
 		isRoot: boolean,
 		id = uuid(),
@@ -600,6 +602,47 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return context;
 	}
 
+	public createDetachedRootDataStore(
+		pkg: Readonly<string[]>,
+		rootDataStoreId: string,
+	): IFluidDataStoreContextDetached {
+		if (rootDataStoreId.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
+		}
+		return this.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
+	}
+
+	public createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		loadingGroupId?: string,
+	): IFluidDataStoreContextDetached {
+		return this.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
+	}
+
+	public async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
+		const id = uuid();
+		return channelToDataStore(
+			await this._createFluidDataStoreContext(
+				Array.isArray(pkg) ? pkg : [pkg],
+				id,
+				undefined,
+				loadingGroupId,
+			).realize(),
+			id,
+			this,
+			this.mc.logger,
+		);
+	}
+
+	/**
+	 * This function should not be used.
+	 * After `_createDataStoreWithProps` is finally removed, this function should be private.
+	 *
+	 * @internal
+	 */
 	public _createFluidDataStoreContext(
 		pkg: string[],
 		id: string,

@@ -166,7 +166,9 @@ export interface IDataStore {
  * TODO: this should be merged into IFluidDataStoreContext
  * @alpha
  */
-export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
+export interface IContainerRuntimeBase
+	extends IEventProvider<IContainerRuntimeBaseEvents>,
+		IDataStoreCollection {
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly disposed: boolean;
@@ -195,32 +197,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		props?: any,
 		id?: string,
 	): Promise<IDataStore>;
-
-	/**
-	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
-	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
-	 * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
-	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
-	 * store being attached to storage.
-	 * @param pkg - Package name of the data store factory
-	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
-	 * When not specified the datastore will belong to a `default` group. Read more about it in this
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
-	 */
-	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
-
-	/**
-	 * Creates detached data store context. Only after context.attachRuntime() is called,
-	 * data store initialization is considered complete.
-	 * @param pkg - Package name of the data store factory
-	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
-	 * When not specified the datastore will belong to a `default` group. Read more about it in this
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
-	 */
-	createDetachedDataStore(
-		pkg: Readonly<string[]>,
-		loadingGroupId?: string,
-	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.
@@ -370,6 +346,56 @@ export type CreateChildSummarizerNodeFn = (
  */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
+}
+
+/**
+ * @alpha
+ */
+export interface IDataStoreCollection extends IFluidDataStoreChannel {
+	/**
+	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
+	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
+	 * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
+	 * already attached DDS (or non-attached DDS that will eventually get attached to storage) will result in this
+	 * store being attached to storage.
+	 * @param pkg - Package name of the data store factory
+	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 */
+	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+
+	/**
+	 * Creates detached data store context. Only after context.attachRuntime() is called,
+	 * data store initialization is considered complete.
+	 * @param pkg - Package name of the data store factory
+	 * @param loadingGroupId - This represents the group of the datastore within a container or its snapshot.
+	 * When not specified the datastore will belong to a `default` group. Read more about it in this
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
+	 */
+	createDetachedDataStore(
+		pkg: Readonly<string[]>,
+		loadingGroupId?: string,
+	): IFluidDataStoreContextDetached;
+
+	/**
+	 * Creates detached data store context. Data store initialization is considered complete
+	 * only after context.attachRuntime() is called.
+	 * @param pkg - package path
+	 * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
+	 */
+	createDetachedRootDataStore(
+		pkg: Readonly<string[]>,
+		rootDataStoreId: string,
+	): IFluidDataStoreContextDetached;
+
+	/**
+	 * Returns the aliased data store's entryPoint, given the alias.
+	 * @param alias - The alias for the data store.
+	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
+	 * Returns undefined if no data store has been assigned the given alias.
+	 */
+	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 }
 
 /**

@@ -27,19 +27,6 @@ import { Loader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
-/**
- * ADO:7302 This needs to be revisited after settling on a set of
- * unified creation APIs for the nested datastores and the container runtime.
- */
-interface IDataStores extends IFluidDataStoreChannel {
-	_createFluidDataStoreContext(
-		pkg: string[],
-		id: string,
-		props?: any,
-		loadingGroupId?: string,
-	): unknown;
-}
-
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 

@@ -9,7 +9,6 @@ import type {
 	IRequest,
 	IResponse,
 	FluidObject,
-	IFluidHandle,
 	IFluidHandleContext,
 } from "@fluidframework/core-interfaces";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -22,7 +21,7 @@ import {
 	type FlushMode,
 	type IContainerRuntimeBase,
 	type IContainerRuntimeBaseEvents,
-	type IFluidDataStoreContextDetached,
+	type IDataStoreCollection,
 	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
@@ -56,7 +55,8 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
-		IContainerRuntimeBaseWithCombinedEvents {
+		IContainerRuntimeBaseWithCombinedEvents,
+		IDataStoreCollection {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
@@ -70,25 +70,6 @@ export interface IContainerRuntime
 	 * Indicates the attachment state of the container to a host service.
 	 */
 	readonly attachState: AttachState;
-
-	/**
-	 * Returns the aliased data store's entryPoint, given the alias.
-	 * @param alias - The alias for the data store.
-	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
-	 * Returns undefined if no data store has been assigned the given alias.
-	 */
-	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
-
-	/**
-	 * Creates detached data store context. Data store initialization is considered complete
-	 * only after context.attachRuntime() is called.
-	 * @param pkg - package path
-	 * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
-	 */
-	createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached;
 
 	/**
 	 * Returns true if document is dirty, i.e. there are some pending local changes that

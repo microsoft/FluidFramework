@@ -118,13 +118,11 @@ export interface IAttachMessage {
 }
 
 // @alpha
-export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IDataStoreCollection {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -160,6 +158,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 export interface IDataStore {
     readonly entryPoint: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
+}
+
+// @alpha (undocumented)
+export interface IDataStoreCollection extends IFluidDataStoreChannel {
+    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
+    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 }
 
 // @alpha
