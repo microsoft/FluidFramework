@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { strict as assert } from "assert";
 import {
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
@@ -151,15 +151,13 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	it("Basic test", async () => {
-		const dataStores = await initialize();
-
-		const res1 = (dataStores as any)._createFluidDataStoreContext(
+		const dataStores1 = await initialize();
+		const datastoreContext = (dataStores1 as any)._createFluidDataStoreContext(
 			[testObjectFactory.type],
 			"test",
 		);
-		const res2 = await res1.realize();
-		res2.makeVisibleAndAttachGraph();
-		const testObject1 = (await dataStores.request({ url: "/test" })).value as TestFluidObject;
+		(await datastoreContext.realize()).makeVisibleAndAttachGraph();
+		const testObject1 = (await dataStores1.request({ url: "/test" })).value as TestFluidObject;
 		testObject1.root.set("testKey", 100);
 
 		await waitForSummary();
@@ -169,6 +167,32 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 		const testObject2 = (await dataStores2.request({ url: "/test" })).value as TestFluidObject;
 		const value = testObject2.root.get("testKey");
-		assert(value === 100, "same value");
+		assert.strictEqual(value, 100, "Expecting the same value");
+	});
+
+	it("Aliasing", async () => {
+		const dataStores1 = await initialize();
+		const datastore11 = await dataStores1.createDataStore([testObjectFactory.type]);
+		const datastore12 = await dataStores1.createDataStore([testObjectFactory.type]);
+		const alias1 = "alias1";
+		const aliasResult11 = await datastore11.trySetAlias(alias1);
+		const aliasResult12 = await datastore12.trySetAlias(alias1);
+
+		assert.equal(aliasResult11, "Success");
+		assert.equal(aliasResult12, "Conflict");
+		assert.ok(await dataStores1.getAliasedDataStoreEntryPoint(alias1));
+
+		// The nested datastore should not have the alias set, as the namespace for
+		// aliasing is the only the level of the current datastore collection
+		const nestedDataStore1 = (await datastore11.entryPoint.get()) as INestedDataStore;
+		const childDatastore11 = await nestedDataStore1.createDataStore([testObjectFactory.type]);
+		const childDatastore12 = await nestedDataStore1.createDataStore([testObjectFactory.type]);
+
+		assert.ok((await dataStores1.getAliasedDataStoreEntryPoint(alias1)) === undefined);
+
+		const aliasResult21 = await childDatastore11.trySetAlias(alias1);
+		const aliasResult22 = await childDatastore12.trySetAlias(alias1);
+		assert.equal(aliasResult21, "Success");
+		assert.equal(aliasResult22, "Conflict");
 	});
 });
