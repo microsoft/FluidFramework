@@ -226,7 +226,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 		// Get dataObject
 		const containerRuntime = defaultDataObject._context.containerRuntime as any;
-		const dataStoreContext = containerRuntime.dataStores.contexts.get(id);
+		const dataStoreContext = containerRuntime.channelCollection.contexts.get(id);
 		const dataStoreRuntime: IFluidDataStoreChannel = await dataStoreContext.realize();
 		return (await dataStoreRuntime.entryPoint?.get()) as ITestDataObject;
 	};

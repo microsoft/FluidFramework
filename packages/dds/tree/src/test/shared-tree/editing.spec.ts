@@ -2368,8 +2368,7 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
-		// TODO:AB6664 - fix and re-enable the fuzz seed
-		it.skip("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
+		it("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
 			const tree = makeTreeFromJson([1]);
 			const fork = tree.fork();
 

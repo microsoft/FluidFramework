@@ -93,10 +93,15 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IContainerRuntime": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
+				"forwardCompat": false
 			}
 		}
 	}
