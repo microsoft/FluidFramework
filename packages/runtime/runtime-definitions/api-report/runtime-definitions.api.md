@@ -161,7 +161,7 @@ export interface IDataStore {
 }
 
 // @alpha (undocumented)
-export interface IDataStoreCollection extends IFluidDataStoreChannel {
+export interface IDataStoreCollection {
     createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;

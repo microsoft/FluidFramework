@@ -27,6 +27,8 @@ import { Loader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { IDataStoreCollection, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
+type INestedDataStore = IDataStoreCollection & IFluidDataStoreChannel;
+
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
 
@@ -67,7 +69,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	async function addContainer(container: IContainer) {
 		containers.push(container);
-		const dataStores = (await container.getEntryPoint()) as IDataStoreCollection;
+		const dataStores = (await container.getEntryPoint()) as INestedDataStore;
 		await provider.ensureSynchronized();
 		return { container, dataStores };
 	}
@@ -151,8 +153,8 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	it("Basic test", async () => {
 		const dataStores = await initialize();
 
-		const res1 = dataStores._createFluidDataStoreContext([testObjectFactory.type], "test");
-		const res2 = await (res1 as any).realize();
+		const res1 = (dataStores as any)._createFluidDataStoreContext([testObjectFactory.type], "test");
+		const res2 = await res1.realize();
 		res2.makeVisibleAndAttachGraph();
 		const testObject1 = (await dataStores.request({ url: "/test" })).value as TestFluidObject;
 		testObject1.root.set("testKey", 100);

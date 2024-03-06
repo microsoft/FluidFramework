@@ -351,7 +351,7 @@ export interface IFluidDataStoreContextEvents extends IEvent {
 /**
  * @alpha
  */
-export interface IDataStoreCollection extends IFluidDataStoreChannel {
+export interface IDataStoreCollection {
 	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
 	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
