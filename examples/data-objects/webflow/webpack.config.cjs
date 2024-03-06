@@ -51,8 +51,8 @@ module.exports = (env) => {
 			output: {
 				filename: "[name].bundle.js",
 				chunkFilename: "[name].async.js",
-				path: path.resolve(__dirname, "dist"),
-				publicPath: "/dist/",
+				path: path.resolve(__dirname, "lib"),
+				publicPath: "/lib/",
 				library: "[name]",
 				libraryTarget: "umd",
 				globalObject: "self",
