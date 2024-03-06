@@ -153,7 +153,10 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	it("Basic test", async () => {
 		const dataStores = await initialize();
 
-		const res1 = (dataStores as any)._createFluidDataStoreContext([testObjectFactory.type], "test");
+		const res1 = (dataStores as any)._createFluidDataStoreContext(
+			[testObjectFactory.type],
+			"test",
+		);
 		const res2 = await res1.realize();
 		res2.makeVisibleAndAttachGraph();
 		const testObject1 = (await dataStores.request({ url: "/test" })).value as TestFluidObject;
