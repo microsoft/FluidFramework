@@ -5,6 +5,8 @@
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	mintCommit,
 	GraphCommit,
 	RevisionTag,
