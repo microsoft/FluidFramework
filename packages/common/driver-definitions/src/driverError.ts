@@ -106,6 +106,7 @@ export const DriverErrorTypes = {
 	outOfStorageError: "outOfStorageError",
 } as const;
 /**
+ * {@inheritDoc (DriverErrorTypes:variable)}
  * @public
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];

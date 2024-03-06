@@ -1764,7 +1764,7 @@ describe("Editing", () => {
 			);
 		});
 
-		it.skip("concurrent cycle creating move", () => {
+		it("concurrent cycle creating move", () => {
 			const tree = makeTreeFromJson([["foo"], ["bar"]]);
 			const tree2 = tree.fork();
 
@@ -1789,8 +1789,6 @@ describe("Editing", () => {
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
-
-			// This fails because the trees disagree on who detached the content
 			expectJsonTree([tree, tree2], []);
 		});
 
@@ -2368,8 +2366,7 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
-		// TODO:AB6664 - fix and re-enable the fuzz seed
-		it.skip("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
+		it("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
 			const tree = makeTreeFromJson([1]);
 			const fork = tree.fork();
 

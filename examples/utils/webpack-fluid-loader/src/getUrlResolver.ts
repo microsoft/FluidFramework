@@ -6,8 +6,8 @@
 import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { assert } from "@fluidframework/core-utils";
-import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
-import { OdspUrlResolver } from "./odspUrlResolver";
+import { ITinyliciousRouteOptions, RouteOptions } from "./loader.js";
+import { OdspUrlResolver } from "./odspUrlResolver.js";
 
 const dockerUrls = {
 	deltaStreamUrl: "http://localhost:3002",
