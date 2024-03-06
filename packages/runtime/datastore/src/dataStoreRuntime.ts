@@ -470,26 +470,26 @@ export class FluidDataStoreRuntime
 			channel.attributes.type,
 		);
 
-        // Immediately make it visible.
-        // Why: we want to get rid of complicated management of detached states, bindings, attachGraph() workflows.
-        // That's a lot of complicated code, attempts to make fixes or changes in it caused (in the past) serious bugs.
-        // The complexity of it and mental overhead of developers needing to understand all these states is too high,
-        // well beyond any gains we receive.
-        //
-        // This will result in more cases where DDS or data store gets representation in storage where it would not in the past,
-        // creating garbage (if app did not had intention to attach it or exit/crashed before it had a chance to do so).
-        // GC is the right answer to solve such problems.
-        //
-        // Some consideration on correctness:
-        // 1. Attached data store:
-        //   - clients should not create named DDSs, as that would result in collision of two clients do the same.
-        //   - creation of unnamed DDS is fine - it becomes visible when its handle is put into existing DDS.
-        //     Client has a chance to initialize DDS before it becomes visible.
-        // 2. Detached data store:
-        //   - DDS would get attached before data store is attached: no change.
-        //   - DDS is unnamed: no change (see #1)
-        //   - Named DDS is created in detached data store, and is not being attached by user by the time data store is visible in the graph (through aliasing or handle)
-        //     That's the only case where this change would change visibility of DDS (and could cause trouble).
+		// Immediately make it visible.
+		// Why: we want to get rid of complicated management of detached states, bindings, attachGraph() workflows.
+		// That's a lot of complicated code, attempts to make fixes or changes in it caused (in the past) serious bugs.
+		// The complexity of it and mental overhead of developers needing to understand all these states is too high,
+		// well beyond any gains we receive.
+		//
+		// This will result in more cases where DDS or data store gets representation in storage where it would not in the past,
+		// creating garbage (if app did not had intention to attach it or exit/crashed before it had a chance to do so).
+		// GC is the right answer to solve such problems.
+		//
+		// Some consideration on correctness:
+		// 1. Attached data store:
+		//   - clients should not create named DDSs, as that would result in collision of two clients do the same.
+		//   - creation of unnamed DDS is fine - it becomes visible when its handle is put into existing DDS.
+		//     Client has a chance to initialize DDS before it becomes visible.
+		// 2. Detached data store:
+		//   - DDS would get attached before data store is attached: no change.
+		//   - DDS is unnamed: no change (see #1)
+		//   - Named DDS is created in detached data store, and is not being attached by user by the time data store is visible in the graph (through aliasing or handle)
+		//     That's the only case where this change would change visibility of DDS (and could cause trouble).
 		this.bindChannel(channel);
 	}
 
