@@ -888,14 +888,6 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 		// ID will be long in all cases, as that was the first attempt to use ID compressor, and thus it could only issue us UUIDs.
 		assert(id.length > 8, "long ID");
 
-		// Validate that ID compressor is in good shape and has reserved ID range.
-		// We will validate that by attempting to convert earlier issued StableId into SessionSpaceCompressedId
-		const idShort = idCompressor.recompress(id as StableId);
-
-		// NOTE: THIS IS WRONG! We should get here final ID (non-negative).
-		// This is here only for demostration purposes that this is broken and needs to be taken care of.
-		assert(idShort < 0, "BUG IS GONE?");
-
 		// Check directly that ID compressor is issuing short IDs!
 		// If it does not, the rest of the tests would fail - this helps isolate where the bug is.
 		const idTest = defaultDataStore._context.containerRuntime.generateDocumentUniqueId();
