@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
 import { strict as assert } from "assert";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
+	IOnDemandSummarizeOptions,
 	ISummarizer,
 	TombstoneResponseHeaderKey,
 } from "@fluidframework/container-runtime";
@@ -36,11 +39,19 @@ import {
 } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreChannel,
+	IGarbageCollectionDetailsBase,
+} from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
+
+type ExpectedTombstoneError = Error & {
+	code: number;
+	underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean };
+};
 
 /**
  * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
@@ -127,9 +138,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 	) => {
 		return createSummarizer(provider, container, summarizerTestConfig, summaryVersion, logger);
 	};
-	const summarize = async (summarizer: ISummarizer) => {
+	const summarize = async (summarizer: ISummarizer, options?: IOnDemandSummarizeOptions) => {
 		await provider.ensureSynchronized();
-		return summarizeNow(summarizer);
+		return summarizeNow(summarizer, options);
 	};
 
 	// This function creates an unreferenced datastore and returns the datastore's id and the summary version that
@@ -215,7 +226,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 		// Get dataObject
 		const containerRuntime = defaultDataObject._context.containerRuntime as any;
-		const dataStoreContext = containerRuntime.dataStores.contexts.get(id);
+		const dataStoreContext = containerRuntime.channelCollection.contexts.get(id);
 		const dataStoreRuntime: IFluidDataStoreChannel = await dataStoreContext.realize();
 		return (await dataStoreRuntime.entryPoint?.get()) as ITestDataObject;
 	};
@@ -528,7 +539,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				// handle.get on a DDS in a tombstoned object should succeed (despite not being able to pass the header)
 				const dataObject = tombstoneSuccessResponse.value as ITestDataObject;
-				const ddsHandle = dataObject._root.get<IFluidHandle<SharedMap>>("dds1");
+				const ddsHandle = dataObject._root.get<IFluidHandle<ISharedMap>>("dds1");
 				assert(ddsHandle !== undefined, "Expected to find a handle to the DDS");
 				await assert.doesNotReject(
 					async () => ddsHandle.get(),
@@ -611,7 +622,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			async function () {
 				// This will become the persisted value in the container(s) created below (except the one with disableTombstoneFailureViaOption)
 				// NOTE: IT IS RESET AT THE END OF THE TEST
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				testContainerConfig.runtimeOptions!.gcOptions!.gcGeneration = 1;
 
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
@@ -644,7 +654,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					"DID NOT Expect tombstone header to be set on the response",
 				);
 
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				testContainerConfig.runtimeOptions!.gcOptions!.gcGeneration = undefined;
 			},
 		);
@@ -689,12 +698,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				);
 
 				// This fails because the DataStore is tombstoned
-				let tombstoneError:
-					| (Error & {
-							code: number;
-							underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean };
-					  })
-					| undefined;
+				let tombstoneError: ExpectedTombstoneError | undefined;
 				try {
 					await handle.get();
 				} catch (error: any) {
@@ -1046,6 +1050,205 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					tombstoneErrorResponse3B.value,
 					`DataStore was tombstoned: ${dataStoreBId}`,
 					"Expected the Tombstone error message (3B)",
+				);
+			},
+		);
+
+		itExpects(
+			"Requesting WRONGLY-tombstoned datastore triggers auto-recovery and self-repair",
+			[
+				// 1A
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
+				// 1A again
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
+					category: "error",
+				},
+				// During the Summarize after auto-recovery is triggered (results in summaryVersion2)
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
+					clientType: "noninteractive/summarizer",
+					// id: { value: "/default/root", tag: "CodeArtifact" }, (nested object comparison not supported)
+					summarizeReason: "onDemand/Summarize after auto-recovery",
+				},
+			],
+			async () => {
+				const mockLogger = new MockLogger();
+				const summarizerMockLogger = new MockLogger();
+				const initialContainer = await makeContainer();
+				const { container: summarizingContainer0, summarizer: summarizer0 } =
+					await loadSummarizer(
+						initialContainer,
+						/* summaryVersion: */ undefined,
+						summarizerMockLogger,
+					);
+				await waitForContainerConnection(initialContainer);
+
+				const defaultDataObject =
+					(await initialContainer.getEntryPoint()) as ITestDataObject;
+
+				// Create dataStoreA and dataStoreX and reference them from the default data object.
+				// They will both remain referenced, but the reference will be "lost" (by intentionally corrupting the GC Data)
+				// dataStoreX's purpose is for updating the currentReferenceTimestamp before summarizing by sending ops
+				const dataStoreA = await createDataStore(defaultDataObject);
+				const dataStoreX = await createDataStore(defaultDataObject);
+				const dataStoreAId = dataStoreA._context.id;
+				defaultDataObject._root.set("dsA", dataStoreA.handle);
+				defaultDataObject._root.set("dsX", dataStoreX.handle);
+
+				// Summarize to get a baseline for incremental summary/GC, then load a new summarizer (and close the first one)
+				const { summaryVersion: summaryVersion0 } = await summarize(summarizer0);
+				summarizingContainer0.close();
+				const { container: closeMe, summarizer: summarizer_toBeCorrupted } =
+					await loadSummarizer(initialContainer, summaryVersion0, summarizerMockLogger);
+
+				// Monkey patch in the tweak to GC Data, removing outbound routes from default's root DDS
+				const garbageCollector_toBeCorrupted = (
+					summarizer_toBeCorrupted as unknown as {
+						runtime: {
+							garbageCollector: {
+								baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
+							};
+						};
+					}
+				).runtime.garbageCollector;
+				garbageCollector_toBeCorrupted.baseGCDetailsP =
+					garbageCollector_toBeCorrupted.baseGCDetailsP.then((baseGCDetails) => {
+						// baseGCDetails outbound routes for this DDS currently include dataStoreA and dataStoreX. Remove those.
+						baseGCDetails.gcData!.gcNodes["/default/root"] = ["/default"];
+						return baseGCDetails;
+					});
+
+				// Generate a summary with corrupted GC Data (missing route to dataStore A)
+				const { summaryVersion: summaryVersion_corrupted } = await summarize(
+					summarizer_toBeCorrupted,
+					{
+						reason: "Summarize with corrupted GC Data",
+					},
+				);
+				closeMe.close();
+
+				// Then wait the Tombstone timeout and update current timestamp, and summarize again
+				await delay(tombstoneTimeoutMs);
+				dataStoreX._root.set("update", "timestamp");
+				const { summarizer } = await loadSummarizer(
+					initialContainer,
+					summaryVersion_corrupted,
+					summarizerMockLogger,
+				);
+				const { summaryVersion: summaryVersion_withTombstone } =
+					await summarize(summarizer);
+
+				// The datastore should be tombstoned in the snapshot this container loads from,
+				// even though the datastores are properly referenced and easily reachable.
+				const container1 = await loadContainer(
+					summaryVersion_withTombstone,
+					/* disableTombstoneFailureViaGCGenerationOption: */ false,
+					mockLogger,
+				);
+
+				// Load DataStoreA, which will incorrectly be Tombstoned, triggering auto-recovery.
+				const defaultDataObject1 = (await container1.getEntryPoint()) as ITestDataObject;
+				const handleA1 = defaultDataObject1._root.get<IFluidHandle>("dsA");
+				let tombstoneError: ExpectedTombstoneError | undefined;
+				try {
+					await handleA1!.get();
+				} catch (error: any) {
+					tombstoneError = error;
+				}
+				assert.equal(
+					tombstoneError?.code,
+					404,
+					"Tombstone error from handle.get should have 404 status code (1A)",
+				);
+				assert.equal(
+					tombstoneError?.message,
+					`DataStore was tombstoned: /${dataStoreAId}`,
+					"Incorrect message for Tombstone error from handle.get (1A)",
+				);
+				assert.equal(
+					tombstoneError?.underlyingResponseHeaders?.[TombstoneResponseHeaderKey],
+					true,
+					"Tombstone error from handle.get should include the tombstone flag (1A)",
+				);
+
+				// The GC TombstoneLoaded op should roundtrip here
+				await provider.ensureSynchronized();
+
+				// TombstoneLoaded op should trigger Revived event
+				[mockLogger, summarizerMockLogger].forEach((logger, i) =>
+					logger.assertMatch(
+						[
+							{
+								eventName:
+									"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
+								clientType: i === 0 ? "interactive" : "noninteractive/summarizer",
+							},
+						],
+						`Missing expected revived event from Auto-Recovery [${
+							i === 0 ? "mockLogger" : "summarizerMockLogger"
+						}]`,
+					),
+				);
+
+				// This request still fails because Auto-Recovery only affects the next summary (via next GC run)
+				// NOTE: We have to use request pattern because handleA1 has its result cached so will not exercise the right codepath
+				const tombstoneErrorResponse_Interactive = await (
+					defaultDataObject1._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: dataStoreAId,
+				});
+				assert.equal(
+					tombstoneErrorResponse_Interactive.status,
+					404,
+					"Expected tombstone error - Auto-Recovery shouldn't affect in-progress Interactive sessions (1A again)",
+				);
+
+				// Auto-Recovery: This summary will have the unref timestamp reset and will run full GC due to the GC TombstoneLoaded op
+				const { summaryVersion: summaryVersion_repaired } = await summarize(summarizer, {
+					reason: "Summarize after auto-recovery",
+				});
+				const container2 = await loadContainer(summaryVersion_repaired);
+
+				// Verify that the object is not Tombstoned in summarizingContainer - it just summarized with the TombstoneLoaded op
+				const tombstones = (
+					summarizer as unknown as {
+						runtime: { garbageCollector: { tombstones: string[] } };
+					}
+				).runtime.garbageCollector.tombstones;
+				assert.deepEqual(
+					tombstones,
+					[],
+					"Expected no Tombstones. Auto-Recovery should have kicked in immediately in Summarizer after summarizing with the TombstoneLoaded op",
+				);
+
+				// Container2 loaded after auto-recovery: These requests succeed because the datastores are no longer tombstoned
+				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
+				await assert.doesNotReject(
+					async () => entryPoint2._root.get<IFluidHandle>("dsA")!.get(),
+					"Auto-Recovery should have made the object no longer tombstoned (2A)",
+				);
+
+				// Wait the Tombstone timeout then summarize and load another container
+				// Since auto-recovery triggered full GC, the corruption was repaired and GC knows dataStoreA is referenced
+				// Otherwise it would have been unreferenced and would have become tombstoned again
+				await delay(tombstoneTimeoutMs);
+				dataStoreX._root.set("update", "timestamp again");
+				const { summaryVersion: summaryVersion_stillRepaired } =
+					await summarize(summarizer);
+				const container3 = await loadContainer(summaryVersion_stillRepaired);
+				const defaultDataObject3 = (await container3.getEntryPoint()) as ITestDataObject;
+				const handleA3 = defaultDataObject3._root.get<IFluidHandle>("dsA");
+				await assert.doesNotReject(
+					async () => handleA3!.get(),
+					"Corrupted GC Data should have been repaired such that this object is known to be referenced (3A)",
 				);
 			},
 		);

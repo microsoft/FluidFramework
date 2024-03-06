@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AppendOnlySortedMap } from "./appendOnlySortedMap";
-import { LocalCompressedId } from "./identifiers";
-import { compareFiniteNumbers, genCountFromLocalId } from "./utilities";
+import { AppendOnlySortedMap } from "./appendOnlySortedMap.js";
+import { LocalCompressedId } from "./identifiers.js";
+import { compareFiniteNumbers, genCountFromLocalId } from "./utilities.js";
 
 /**
  * The `SessionSpaceNormalizer` tracks the form of the IDs created by the local session.

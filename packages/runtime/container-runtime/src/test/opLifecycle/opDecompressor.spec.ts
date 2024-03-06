@@ -9,9 +9,9 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import type { IEnvelope } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "../..";
-import { OpDecompressor } from "../../opLifecycle";
-import type { InboundContainerRuntimeMessage } from "../../messageTypes";
+import { ContainerMessageType } from "../../index.js";
+import { OpDecompressor } from "../../opLifecycle/index.js";
+import type { InboundContainerRuntimeMessage } from "../../messageTypes.js";
 
 /**
  * Format of test messages generated in this test.

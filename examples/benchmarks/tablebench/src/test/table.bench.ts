@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeFromSchema, SharedTree } from "@fluidframework/tree";
+import { NodeFromSchema, SharedTree, type ISharedTree } from "@fluidframework/tree";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions";
@@ -69,7 +69,7 @@ describe("Table", () => {
 			title: `SharedTree`,
 			before: () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as SharedTree;
+				const tree = channel as ISharedTree;
 
 				const view = tree.schematize({
 					schema: Table,
@@ -99,50 +99,102 @@ describe("Table", () => {
 		});
 	});
 
-	describe("attachment summary size", () => {
-		let tree: SharedTree;
-		let matrix: SharedMatrix;
+	describe(`@Size of ${numRows} rows`, () => {
+		describe("attachment summary size", () => {
+			let tree: ISharedTree;
+			let matrix: SharedMatrix;
 
-		const dataBytes = measureEncodedLength(JSON.stringify(data));
-		let summaryBytes: number;
-
-		afterEach(() => {
-			const ratio = summaryBytes / dataBytes;
-
-			process.stdout.write(`Data: ${dataBytes} bytes\n`);
-			process.stdout.write(`Summary: ${summaryBytes} bytes\n`);
-			process.stdout.write(`Ratio: ${ratio}\n`);
-		});
-
-		it("SharedMatrix", () => {
-			const columnNames = Object.keys(data[0]);
-
-			const { channel, processAllMessages } = create(SharedMatrix.getFactory());
-			matrix = channel as SharedMatrix;
-			matrix.insertCols(0, columnNames.length);
-			matrix.insertRows(0, data.length);
-
-			for (let r = 0; r < data.length; r++) {
-				for (const [c, key] of columnNames.entries()) {
-					matrix.setCell(r, c, (data as any)[r][key]);
-				}
+			/**
+			 * Transpose a table in row-major "array of objects" format to column-major "object of arrays" format.
+			 * The column-major "object of arrays" form removes the redundancy of repeating column names in each row.
+			 * This is used when measuring the baseline size of the table.
+			 */
+			function transposeTable(rows: typeof data) {
+				return data.reduce(
+					(cols, row) => {
+						Object.entries(row).forEach(([key, value]) => {
+							cols[key].push(value);
+						});
+						return cols;
+					},
+					// Create the 'cols' object, pre-initialing each row key with an empty array:
+					//    { "Country": [], "Region": [], ... }
+					Object.keys(rows[0]).reduce<Record<string, unknown[]>>((cols, key) => {
+						cols[key] = [];
+						return cols;
+					}, {}),
+				);
 			}
 
-			processAllMessages();
-			summaryBytes = measureAttachmentSummary(channel);
-		});
+			const rowMajorJsonBytes = measureEncodedLength(JSON.stringify(data));
+			const colMajorJsonBytes = measureEncodedLength(JSON.stringify(transposeTable(data)));
+			let summaryBytes: number;
 
-		it("SharedTree", () => {
-			const { channel, processAllMessages } = create(SharedTree.getFactory());
-			tree = channel as SharedTree;
-
-			tree.schematize({
-				schema: Table,
-				initialTree: () => data,
+			// After each test, print the summary size information to the console.
+			afterEach(() => {
+				// When using a logger, Mocha suppresses 'console.log()' by default.
+				// Writing directly to 'process.stdout' bypasses this suppression.
+				process.stdout.write(`          Summary: ${summaryBytes} bytes\n`);
+				process.stdout.write(
+					`              vs row-major: ${(
+						summaryBytes / rowMajorJsonBytes
+					).toLocaleString(undefined, {
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 2,
+					})}x\n`,
+				);
+				process.stdout.write(
+					`              vs col-major: ${(
+						summaryBytes / colMajorJsonBytes
+					).toLocaleString(undefined, {
+						maximumFractionDigits: 2,
+						minimumFractionDigits: 2,
+					})}x\n`,
+				);
 			});
 
-			processAllMessages();
-			summaryBytes = measureAttachmentSummary(channel);
+			it("Row-major JSON (Typical Database Baseline)", () => {
+				// Row/col major sizes are precalculated before the test run.
+				// Copy the value to 'summaryBytes' for reporting by 'afterEach' above.
+				summaryBytes = rowMajorJsonBytes;
+			});
+
+			it("Column-major JSON (Compact REST Baseline)", () => {
+				// Row/col major sizes are precalculated before the test run.
+				// Copy the value to 'summaryBytes' for reporting by 'afterEach' above.
+				summaryBytes = colMajorJsonBytes;
+			});
+
+			it("SharedMatrix", () => {
+				const columnNames = Object.keys(data[0]);
+
+				const { channel, processAllMessages } = create(SharedMatrix.getFactory());
+				matrix = channel as SharedMatrix;
+				matrix.insertCols(0, columnNames.length);
+				matrix.insertRows(0, data.length);
+
+				for (let r = 0; r < data.length; r++) {
+					for (const [c, key] of columnNames.entries()) {
+						matrix.setCell(r, c, (data as any)[r][key]);
+					}
+				}
+
+				processAllMessages();
+				summaryBytes = measureAttachmentSummary(channel);
+			});
+
+			it("SharedTree", () => {
+				const { channel, processAllMessages } = create(SharedTree.getFactory());
+				tree = channel as ISharedTree;
+
+				tree.schematize({
+					schema: Table,
+					initialTree: () => data,
+				});
+
+				processAllMessages();
+				summaryBytes = measureAttachmentSummary(channel);
+			});
 		});
 	});
 });

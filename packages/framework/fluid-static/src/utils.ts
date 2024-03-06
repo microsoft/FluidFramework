@@ -9,7 +9,7 @@ import {
 	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type ContainerSchema, type DataObjectClass, type SharedObjectClass } from "./types";
+import { type ContainerSchema, type DataObjectClass, type SharedObjectClass } from "./types.js";
 
 /**
  * An internal type used by the internal type guard isDataObjectClass to cast a

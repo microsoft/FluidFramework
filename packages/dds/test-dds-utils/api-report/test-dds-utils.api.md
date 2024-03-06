@@ -4,25 +4,27 @@
 
 ```ts
 
-import { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
-import { AsyncReducer } from '@fluid-private/stochastic-test-utils';
-import { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochastic-test-utils';
+import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
+import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor';
+import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
+import type { ISharedObject } from '@fluidframework/shared-object-base';
 import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test-runtime-utils';
-import { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
-import { SaveInfo } from '@fluid-private/stochastic-test-utils';
-import { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
+import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
+import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
 export interface AddClient {
     // (undocumented)
     addedClientId: string;
+    // (undocumented)
+    canBeStashed: boolean;
     // (undocumented)
     type: "addClient";
 }
@@ -66,11 +68,15 @@ export namespace createDDSFuzzSuite {
     const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
+// @internal
+export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite;
+
 // @internal (undocumented)
 export interface DDSFuzzHarnessEvents {
     (event: "clientCreate", listener: (client: Client<IChannelFactory>) => void): any;
     (event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void): any;
     (event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void): any;
+    (event: "operationStart", listener: (operation: BaseOperation) => void): any;
 }
 
 // @internal
@@ -88,11 +94,14 @@ export interface DDSFuzzSuiteOptions {
     clientJoinOptions?: {
         maxNumberOfClients: number;
         clientAddProbability: number;
+        stashableClientProbability?: number;
     };
     containerRuntimeOptions?: IMockContainerRuntimeOptions;
     defaultTestCount: number;
     detachedStartOptions: {
         numOpsBeforeAttach: number;
+        rehydrateDisabled?: true;
+        attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
     idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
@@ -144,6 +153,13 @@ export interface IGCTestProvider {
     deleteOutboundRoutes(): Promise<void>;
     readonly expectedOutboundRoutes: string[];
     readonly sharedObject: ISharedObject;
+}
+
+// @internal (undocumented)
+export interface ISnapshotSuite {
+    readSnapshot: () => string;
+    takeSnapshot: (data: string) => string;
+    useSnapshotSubdirectory: (dirPath: string) => void;
 }
 
 // @internal

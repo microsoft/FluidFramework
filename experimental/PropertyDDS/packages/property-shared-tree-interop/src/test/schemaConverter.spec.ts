@@ -20,14 +20,14 @@ import {
 	FlexMapNodeSchema,
 	LeafNodeSchema,
 	FlexFieldNodeSchema,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,
 	nodePropertyField,
 	nodePropertySchema,
-} from "../schemaConverter";
-import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
+} from "../schemaConverter.js";
+import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {

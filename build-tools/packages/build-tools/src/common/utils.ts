@@ -248,3 +248,12 @@ export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) 
 	}
 	return result.stdout;
 }
+
+export async function loadModule(modulePath: string, moduleType?: string) {
+	const ext = path.extname(modulePath);
+	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
+	if (esm) {
+		return await import(modulePath);
+	}
+	return require(modulePath);
+}

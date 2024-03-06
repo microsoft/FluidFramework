@@ -8,13 +8,14 @@ import { typeboxValidator } from "../../external-utilities/index.js";
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
-import { ChangeEncodingContext, RevisionTagCodec } from "../../core/index.js";
+import { ChangeEncodingContext } from "../../core/index.js";
 import { TestChange } from "../testChange.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 } from "../utils.js";
 
 const commit1 = {
@@ -40,15 +41,13 @@ const commitInvalid = {
 	change: "Invalid change",
 };
 
-const idCompressor = new MockIdCompressor();
-
-const dummyContext = { originatorId: idCompressor.localSessionId };
+const dummyContext = { originatorId: testIdCompressor.localSessionId };
 const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		[
 			"Message with commit 1",
 			{
-				sessionId: idCompressor.localSessionId,
+				sessionId: testIdCompressor.localSessionId,
 				commit: commit1,
 			},
 			dummyContext,
@@ -56,7 +55,7 @@ const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEnc
 		[
 			"Message with commit 2",
 			{
-				sessionId: idCompressor.localSessionId,
+				sessionId: testIdCompressor.localSessionId,
 				commit: commit2,
 			},
 			dummyContext,
@@ -108,7 +107,7 @@ const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEnc
 };
 
 describe("message codec", () => {
-	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(idCompressor), {
+	const codec = makeMessageCodec(TestChange.codec, testRevisionTagCodec, {
 		jsonValidator: typeboxValidator,
 	});
 

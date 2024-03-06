@@ -4,22 +4,22 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { FluidObject } from '@fluidframework/core-interfaces';
+import type { AttachState } from '@fluidframework/container-definitions';
+import type { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
 // @alpha
@@ -53,7 +53,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 // @alpha
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
-    (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
+    (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
 }

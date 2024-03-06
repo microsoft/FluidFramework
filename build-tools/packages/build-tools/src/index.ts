@@ -11,9 +11,14 @@ export {
 	FluidRepo,
 	type VersionDetails,
 } from "./common/fluidRepo";
-export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
+export { getResolvedFluidRoot, loadFluidBuildConfig } from "./common/fluidUtils";
 export type { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
-export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
+export {
+	isMonoRepoKind,
+	MonoRepo,
+	MonoRepoKind,
+	supportedMonoRepoValues,
+} from "./common/monoRepo";
 export {
 	Package,
 	type PackageJson,

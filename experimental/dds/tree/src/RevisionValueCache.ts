@@ -6,7 +6,7 @@
 import { assert } from '@fluidframework/core-utils';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import LRU from 'lru-cache';
-import { fail, compareFiniteNumbers } from './Common';
+import { fail, compareFiniteNumbers } from './Common.js';
 
 /**
  * A revision corresponds to an index in an `EditLog`.

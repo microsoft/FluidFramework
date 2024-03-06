@@ -4,7 +4,6 @@
  */
 
 import { sequenceConfig } from "./config.js";
-import { isVestigialEndpoint } from "./helperTypes.js";
 import { Mark, MarkList } from "./types.js";
 import { isNoopMark, isTombstone, tryMergeMarks as tryMergeMarks } from "./utils.js";
 
@@ -35,12 +34,7 @@ export class MarkListFactory<TNodeChange> {
 		if (isTombstone(mark) && sequenceConfig.cellOrdering !== "Tombstone") {
 			return;
 		}
-		if (
-			isNoopMark(mark) &&
-			mark.changes === undefined &&
-			!isVestigialEndpoint(mark) &&
-			!isTombstone(mark)
-		) {
+		if (isNoopMark(mark) && mark.changes === undefined && !isTombstone(mark)) {
 			this.pushOffset(mark.count);
 			return;
 		}

@@ -5,16 +5,16 @@
 
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { noop } from '../../Common';
-import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers';
-import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { SharedTree } from '../../SharedTree';
-import { Change, StablePlace, StableRange } from '../../ChangeTypes';
-import { deepCompareNodes } from '../../EditUtilities';
-import { NodeData } from '../../persisted-types';
-import { expectDefined } from './TestCommon';
-import { buildLeaf, TestTree } from './TestNode';
-import { setUpTestSharedTree, setUpTestTree, translateId } from './TestUtilities';
+import { noop } from '../../Common.js';
+import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { SharedTree } from '../../SharedTree.js';
+import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { deepCompareNodes } from '../../EditUtilities.js';
+import { NodeData } from '../../persisted-types/index.js';
+import { expectDefined } from './TestCommon.js';
+import { buildLeaf, TestTree } from './TestNode.js';
+import { setUpTestSharedTree, setUpTestTree, translateId } from './TestUtilities.js';
 
 /** Options used to generate a SharedTree undo/redo test suite. */
 interface SharedTreeUndoRedoOptions {

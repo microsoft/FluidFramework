@@ -8,7 +8,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import {
 	combineAppAndProtocolSummary,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
-} from "../utils";
+} from "../utils.js";
 
 describe("Dehydrate Container", () => {
 	const protocolSummary: ISummaryTree = {
@@ -47,6 +47,11 @@ describe("Dehydrate Container", () => {
 						type: SummaryType.Tree,
 						tree: {},
 						unreferenced: true,
+					},
+					"groupId": {
+						type: SummaryType.Tree,
+						tree: {},
+						groupId: "group",
 					},
 				},
 			},
@@ -94,6 +99,20 @@ describe("Dehydrate Container", () => {
 			tree.trees.default.trees.unref.unreferenced,
 			true,
 			"The unref sub-tree should be marked as unreferenced",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			tree.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			tree.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
 		);
 	});
 });
