@@ -153,7 +153,7 @@ export interface IScribe {
 	protocolHead: number | undefined;
 
 	// Time checkpoint was created
-	checkpointTimestamp: number;
+	checkpointTimestamp: number | undefined;
 }
 
 /**
