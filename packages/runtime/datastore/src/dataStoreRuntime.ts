@@ -101,8 +101,8 @@ export interface ISharedObjectRegistry {
  * Base data store class
  * @alpha
  */
-export class FluidDataStoreRuntime
-	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
+export class FluidDataStoreRuntime<TEvents = Record<string, never>>
+	extends TypedEventEmitter<TEvents & IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
@@ -161,12 +161,13 @@ export class FluidDataStoreRuntime
 		return this._disposed;
 	}
 
-	private readonly contexts = new Map<string, IChannelContext>();
+	/** @internal */
+	protected readonly contexts = new Map<string, IChannelContext>();
 	private readonly pendingAttach = new Set<string>();
 
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
-	private readonly notBoundedChannelContextSet = new Set<string>();
+	protected readonly notBoundedChannelContextSet = new Set<string>();
 	private _attachState: AttachState;
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
@@ -218,8 +219,8 @@ export class FluidDataStoreRuntime
 	 * and the primary way of interacting with some Fluid objects, and should be used if possible.
 	 */
 	public constructor(
-		private readonly dataStoreContext: IFluidDataStoreContext,
-		private readonly sharedObjectRegistry: ISharedObjectRegistry,
+		protected readonly dataStoreContext: IFluidDataStoreContext,
+		protected readonly sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 	) {
@@ -391,6 +392,12 @@ export class FluidDataStoreRuntime
 		}
 	}
 
+	private getChannelContext(id: string) {
+		const channelContext = this.contexts.get(id);
+		assert(!!channelContext, 0x185 /* "Channel not found" */);
+		return channelContext;
+	}
+
 	public async getChannel(id: string): Promise<IChannel> {
 		this.verifyNotClosed();
 
@@ -402,6 +409,21 @@ export class FluidDataStoreRuntime
 		return context.getChannel();
 	}
 
+	protected createChannelCore(channel: IChannel) {
+		this.verifyNotClosed();
+
+		const id = channel.id;
+		if (id.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: ${id}`);
+		}
+
+		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
+
+		this.createChannelContext(channel);
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, channel.attributes.type);
+	}
+
 	/**
 	 * Api which allows caller to create the channel first and then add it to the runtime.
 	 * The channel type should be present in the registry, otherwise the runtime would reject
@@ -410,34 +432,16 @@ export class FluidDataStoreRuntime
 	 * @param channel - channel which needs to be added to the runtime.
 	 */
 	public addChannel(channel: IChannel): void {
-		const id = channel.id;
-		if (id.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: ${id}`);
-		}
-
-		this.verifyNotClosed();
-
-		assert(!this.contexts.has(id), 0x865 /* addChannel() with existing ID */);
-
 		const type = channel.attributes.type;
-		const factory = this.sharedObjectRegistry.get(channel.attributes.type);
+		const factory = this.sharedObjectRegistry.get(type);
 		if (factory === undefined) {
 			throw new Error(`Channel Factory ${type} not registered`);
 		}
 
-		this.createChannelContext(channel);
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+		this.createChannelCore(channel);
 	}
 
 	public createChannel(id: string = uuid(), type: string): IChannel {
-		if (id.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: ${id}`);
-		}
-
-		this.verifyNotClosed();
-		assert(!this.contexts.has(id), 0x179 /* "createChannel() with existing ID" */);
-
 		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
 		const factory = this.sharedObjectRegistry.get(type);
 		if (factory === undefined) {
@@ -445,9 +449,8 @@ export class FluidDataStoreRuntime
 		}
 
 		const channel = factory.create(this, id);
-		this.createChannelContext(channel);
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
+
+		this.createChannelCore(channel);
 		return channel;
 	}
 
@@ -474,6 +477,8 @@ export class FluidDataStoreRuntime
 	 * @param channel - channel to be registered.
 	 */
 	public bindChannel(channel: IChannel): void {
+		this.verifyNotClosed();
+
 		assert(
 			this.notBoundedChannelContextSet.has(channel.id),
 			0x17b /* "Channel to be bound should be in not bounded set" */,
@@ -604,7 +609,8 @@ export class FluidDataStoreRuntime
 
 		try {
 			// catches as data processing error whether or not they come from async pending queues
-			switch (message.type) {
+			const type = message.type as DataStoreMessageType;
+			switch (type) {
 				case DataStoreMessageType.Attach: {
 					const attachMessage = message.contents as IAttachMessage;
 					const id = attachMessage.id;
@@ -624,27 +630,23 @@ export class FluidDataStoreRuntime
 							0x17c /* "Unexpected attach (local) channel OP" */,
 						);
 					} else {
-						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
-
-						const summarizerNodeParams = {
-							type: CreateSummarizerNodeSource.FromAttach,
-							sequenceNumber: message.sequenceNumber,
-							snapshot: attachMessage.snapshot,
-						};
-
-						const remoteChannelContext = this.createRemoteChannelContext(
-							attachMessage,
-							summarizerNodeParams,
-						);
-						this.contexts.set(id, remoteChannelContext);
+						this.attachRemoteChannel(id, message.sequenceNumber, attachMessage);
 					}
 					break;
 				}
 
-				case DataStoreMessageType.ChannelOp:
-					this.processChannelOp(message, local, localOpMetadata);
+				case DataStoreMessageType.ChannelOp: {
+					const envelope = message.contents as IEnvelope;
+
+					const transformed: ISequencedDocumentMessage = {
+						...message,
+						contents: envelope.contents,
+					};
+					this.processChannelOp(envelope.address, transformed, local, localOpMetadata);
 					break;
+				}
 				default:
+					unreachableCase(type, "unreached");
 			}
 
 			this.emit("op", message);
@@ -655,6 +657,26 @@ export class FluidDataStoreRuntime
 				message,
 			);
 		}
+	}
+
+	/** @internal */
+	protected attachRemoteChannel(
+		id: string,
+		sequenceNumber: number,
+		attachMessage: IAttachMessage,
+	) {
+		const summarizerNodeParams = {
+			type: CreateSummarizerNodeSource.FromAttach,
+			sequenceNumber,
+			snapshot: attachMessage.snapshot,
+		};
+
+		const remoteChannelContext = this.createRemoteChannelContext(
+			attachMessage,
+			summarizerNodeParams,
+		);
+		assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
+		this.contexts.set(id, remoteChannelContext);
 	}
 
 	public processSignal(message: IInboundSignalMessage, local: boolean) {
@@ -669,7 +691,7 @@ export class FluidDataStoreRuntime
 			// Added in bindChannel only if this is not attached yet
 			// Removed when this is attached by calling attachGraph
 			!this.localChannelContextQueue.has(id) &&
-			// Added in attachChannel called by bindChannel
+			// Added in sendAttachChannelOp called by bindChannel
 			// Removed when attach op is broadcast
 			!this.pendingAttach.has(id)
 		);
@@ -907,10 +929,6 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
-		this.submit(type, content, localOpMetadata);
-	}
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
@@ -933,21 +951,7 @@ export class FluidDataStoreRuntime
 	 * Assuming this DataStore is already attached, this will make the given channel locally visible
 	 * by submitting its attach op.
 	 */
-	private makeChannelLocallyVisible(channel: IChannel): void {
-		this.verifyNotClosed();
-		// If this handle is already attached no need to attach again.
-		if (channel.handle.isAttached) {
-			return;
-		}
-
-		channel.handle.attachGraph();
-
-		assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
-		assert(
-			this.visibilityState === VisibilityState.GloballyVisible,
-			0x2d0 /* "Data store should be globally visible to attach channels." */,
-		);
-
+	protected sendAttachChannelOp(channel: IChannel): void {
 		const summarizeResult = summarizeChannel(
 			channel,
 			true /* fullTree */,
@@ -968,12 +972,30 @@ export class FluidDataStoreRuntime
 		};
 		this.pendingAttach.add(channel.id);
 		this.submit(DataStoreMessageType.Attach, message);
+	}
+
+	private makeChannelLocallyVisible(channel: IChannel): void {
+		this.verifyNotClosed();
+		// If this handle is already attached no need to attach again.
+		if (channel.handle.isAttached) {
+			return;
+		}
+
+		channel.handle.attachGraph();
+
+		assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
+		assert(
+			this.visibilityState === VisibilityState.GloballyVisible,
+			0x2d0 /* "Data store should be globally visible to attach channels." */,
+		);
+
+		this.sendAttachChannelOp(channel);
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
 	}
 
-	private submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+	protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
 		const envelope: IEnvelope = { address, contents };
 		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
 	}
@@ -1001,12 +1023,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x183 /* "There should be a channel context for the op" */,
-				);
-				channelContext.reSubmit(envelope.contents, localOpMetadata);
+				this.reSubmitChannelOp(envelope.address, envelope.contents, localOpMetadata);
 				break;
 			}
 			case DataStoreMessageType.Attach:
@@ -1016,6 +1033,11 @@ export class FluidDataStoreRuntime
 			default:
 				unreachableCase(type);
 		}
+	}
+
+	protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown) {
+		const channelContext = this.getChannelContext(address);
+		channelContext.reSubmit(contents, localOpMetadata);
 	}
 
 	/**
@@ -1030,11 +1052,7 @@ export class FluidDataStoreRuntime
 			case DataStoreMessageType.ChannelOp: {
 				// For Operations, find the right channel and trigger resubmission on it.
 				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x2ed /* "There should be a channel context for the op" */,
-				);
+				const channelContext = this.getChannelContext(envelope.address);
 				channelContext.rollback(envelope.contents, localOpMetadata);
 				break;
 			}
@@ -1062,43 +1080,32 @@ export class FluidDataStoreRuntime
 			}
 			case DataStoreMessageType.ChannelOp: {
 				const envelope = content.content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(
-					!!channelContext,
-					0x184 /* "There should be a channel context for the op" */,
-				);
-				await channelContext.getChannel();
-				return channelContext.applyStashedOp(envelope.contents);
+				return this.applyStashedChannelChannelOp(envelope.address, envelope.contents);
 			}
 			default:
 				unreachableCase(type);
 		}
 	}
 
-	private setChannelDirty(address: string): void {
+	protected async applyStashedChannelChannelOp(address: string, contents: any) {
+		const channelContext = this.getChannelContext(address);
+		await channelContext.getChannel();
+		return channelContext.applyStashedOp(contents);
+	}
+
+	protected setChannelDirty(address: string): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.setChannelDirty(address);
 	}
 
-	private processChannelOp(
+	protected processChannelOp(
+		address: string,
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		this.verifyNotClosed();
-
-		const envelope = message.contents as IEnvelope;
-
-		const transformed: ISequencedDocumentMessage = {
-			...message,
-			contents: envelope.contents,
-		};
-
-		const channelContext = this.contexts.get(envelope.address);
-		assert(!!channelContext, 0x185 /* "Channel not found" */);
-		channelContext.processOp(transformed, local, localOpMetadata);
-
-		return channelContext;
+		const channelContext = this.getChannelContext(address);
+		channelContext.processOp(message, local, localOpMetadata);
 	}
 
 	private attachListener() {
@@ -1143,7 +1150,7 @@ export class FluidDataStoreRuntime
 		});
 	}
 
-	private verifyNotClosed() {
+	protected verifyNotClosed() {
 		if (this._disposed) {
 			throw new LoggingError("Runtime is closed");
 		}

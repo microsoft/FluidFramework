@@ -6,6 +6,7 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAttachMessage } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -25,6 +26,7 @@ import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
@@ -40,14 +42,18 @@ export enum DataStoreMessageType {
 }
 
 // @alpha
-export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+export class FluidDataStoreRuntime<TEvents = Record<string, never>> extends TypedEventEmitter<TEvents & IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
     constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
     addChannel(channel: IChannel): void;
     // (undocumented)
+    protected applyStashedChannelChannelOp(address: string, contents: any): Promise<unknown>;
+    // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     attachGraph(): void;
+    // @internal (undocumented)
+    protected attachRemoteChannel(id: string, sequenceNumber: number, attachMessage: IAttachMessage): void;
     // (undocumented)
     get attachState(): AttachState;
     // (undocumented)
@@ -61,8 +67,14 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get clientId(): string | undefined;
     // (undocumented)
     get connected(): boolean;
+    // @internal (undocumented)
+    protected readonly contexts: Map<string, IChannelContext>;
     // (undocumented)
     createChannel(id: string | undefined, type: string): IChannel;
+    // (undocumented)
+    protected createChannelCore(channel: IChannel): void;
+    // (undocumented)
+    protected readonly dataStoreContext: IFluidDataStoreContext;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -93,11 +105,15 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
+    protected readonly notBoundedChannelContextSet: Set<string>;
+    // (undocumented)
     get objectsRoutingContext(): this;
     // (undocumented)
     readonly options: Record<string | number, any>;
     // (undocumented)
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected processChannelOp(address: string, message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // (undocumented)
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
@@ -105,20 +121,29 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     reSubmit(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected reSubmitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
     rollback?(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     get rootRoutingContext(): this;
     // (undocumented)
     get routeContext(): IFluidHandleContext;
+    protected sendAttachChannelOp(channel: IChannel): void;
+    // (undocumented)
+    protected setChannelDirty(address: string): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
-    submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;
+    protected readonly sharedObjectRegistry: ISharedObjectRegistry;
+    // (undocumented)
+    protected submitChannelOp(address: string, contents: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    protected verifyNotClosed(): void;
     // (undocumented)
     visibilityState: VisibilityState;
     waitAttached(): Promise<void>;
@@ -139,6 +164,26 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T | Promise<T>;
+}
+
+// @internal (undocumented)
+export interface IChannelContext {
+    // (undocumented)
+    applyStashedOp(content: any): unknown;
+    // (undocumented)
+    getChannel(): Promise<IChannel>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    // (undocumented)
+    processOp(message: ISequencedDocumentMessage, local: boolean, localOpMetadata?: unknown): void;
+    // (undocumented)
+    reSubmit(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollback(message: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): any;
+    // (undocumented)
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @alpha (undocumented)

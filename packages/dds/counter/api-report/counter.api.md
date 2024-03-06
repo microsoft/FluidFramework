@@ -6,6 +6,7 @@
 
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -14,6 +15,16 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+
+// @internal @sealed
+export class CounterFactory implements IChannelFactory {
+    static readonly Attributes: IChannelAttributes;
+    get attributes(): IChannelAttributes;
+    create(document: IFluidDataStoreRuntime, id: string): ISharedCounter;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedCounter>;
+    static readonly Type = "https://graph.microsoft.com/types/counter";
+    get type(): string;
+}
 
 // @alpha
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
@@ -39,6 +50,8 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     get value(): number;
+    // (undocumented)
+    protected _value: number;
 }
 
 ```

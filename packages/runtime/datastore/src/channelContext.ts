@@ -33,6 +33,7 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
+/** @internal */
 export interface IChannelContext {
 	getChannel(): Promise<IChannel>;
 

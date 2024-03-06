@@ -191,7 +191,10 @@ export class PermutationVector extends Client {
 		return handle;
 	}
 
-	public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+	public adjustPosition(
+		pos: number,
+		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
+	) {
 		const { segment, offset } = this.getContainingSegment(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,

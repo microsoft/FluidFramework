@@ -11,4 +11,5 @@
  */
 
 export { SharedCounter } from "./counter.js";
+export { CounterFactory } from "./counterFactory.js";
 export type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";
