@@ -20,7 +20,7 @@ import {
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FileDeltaStorageService } from "./fileDeltaStorageService";
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 const MaxBatchDeltas = 2000;
 

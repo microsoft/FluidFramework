@@ -81,13 +81,11 @@ export function serializeHandles(value: any, serializer: IFluidSerializer, bind:
 // @public
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
-    // (undocumented)
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): IGarbageCollectionData;
     protected processGCDataCore(serializer: IFluidSerializer): void;
     // (undocumented)
     protected get serializer(): IFluidSerializer;
-    // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
@@ -99,13 +97,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
-    // (undocumented)
     connect(services: IChannelServices): void;
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
-    // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
     readonly handle: IFluidHandle;
@@ -116,7 +112,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     get IFluidLoadable(): this;
     initializeLocal(): void;
     protected initializeLocalCore(): void;
-    // (undocumented)
     isAttached(): boolean;
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
@@ -131,7 +126,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;
     protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
-    // (undocumented)
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 

@@ -22,16 +22,16 @@ import {
 	createOdspLogger,
 	getOdspResolvedUrl,
 	toInstrumentedOdspTokenFetcher,
-} from "./odspUtils";
+} from "./odspUtils.js";
 import {
 	downloadSnapshot,
 	fetchSnapshotWithRedeem,
+	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
-	type ISnapshotRequestAndResponseOptions,
-} from "./fetchSnapshot";
-import { IVersionedValueWithEpoch } from "./contracts";
-import { IPrefetchSnapshotContents } from "./odspCache";
-import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
+} from "./fetchSnapshot.js";
+import { IVersionedValueWithEpoch } from "./contracts.js";
+import { IPrefetchSnapshotContents } from "./odspCache.js";
+import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded

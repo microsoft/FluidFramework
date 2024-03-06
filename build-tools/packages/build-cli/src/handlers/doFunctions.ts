@@ -10,7 +10,12 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { difference, getPreReleaseDependencies, npmCheckUpdates, setVersion } from "../library";
+import {
+	difference,
+	getPreReleaseDependencies,
+	npmCheckUpdates,
+	setVersion,
+} from "../library";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
