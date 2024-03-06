@@ -15,7 +15,7 @@ import {
 	IFluidCodeDetails,
 	IBatchMessage,
 } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -27,7 +27,6 @@ import {
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import type { ISignalEnvelope } from "@fluidframework/core-interfaces";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}

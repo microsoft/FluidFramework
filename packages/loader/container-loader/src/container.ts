@@ -12,6 +12,7 @@ import {
 	FluidObject,
 	LogLevel,
 	IRequest,
+	ISignalEnvelope,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -90,7 +91,6 @@ import {
 	IFluidErrorBase,
 	type TelemetryEventCategory,
 } from "@fluidframework/telemetry-utils";
-import type { ISignalEnvelope } from "@fluidframework/core-interfaces";
 import structuredClone from "@ungap/structured-clone";
 import { Audience } from "./audience.js";
 import { ContainerContext } from "./containerContext.js";
