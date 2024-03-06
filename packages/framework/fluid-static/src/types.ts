@@ -28,6 +28,12 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
  * @public
+ *
+ * @privateRemarks
+ * There are some edge cases in TypeScript where the order of the members in a union matter.
+ * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
+ * In this case, its better to have the desired match and/or the simpler type first.
+ * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  */
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
 	| SharedObjectClass<T>

@@ -38,60 +38,9 @@ export type {
 export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
 export { SharedMap } from "@fluidframework/map";
 
-export type {
-	AllowedTypes,
-	ApplyKind,
-	ArrayToUnion,
-	Events,
-	ExtractItemType,
-	FlexList,
-	FlexListToUnion,
-	IDisposable,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableObjectFromSchemaRecord,
-	InsertableTreeFieldFromImplicitField,
-	InsertableTreeNodeFromImplicitAllowedTypes,
-	InsertableTypedNode,
-	IsEvent,
-	ISubscribable,
-	ITree,
-	LazyItem,
-	MakeNominal,
-	NodeBuilderData,
-	NodeFromSchema,
-	ObjectFromSchemaRecord,
-	RestrictiveReadonlyRecord,
-	ScopedSchemaName,
-	TreeApi,
-	TreeArrayNodeBase,
-	TreeFieldFromImplicitField,
-	TreeLeafValue,
-	TreeMapNode,
-	TreeNodeEvents,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaCore,
-	TreeNodeSchemaNonClass,
-	TreeView,
-	TreeViewEvents,
-	Unhydrated,
-	WithType,
-	SchemaIncompatible,
-} from "@fluidframework/tree";
-export {
-	disposeSymbol,
-	FieldKind,
-	FieldSchema,
-	IterableTreeArrayContent,
-	NodeKind,
-	SchemaFactory,
-	SharedTree,
-	Tree,
-	TreeArrayNode,
-	TreeConfiguration,
-	TreeNode,
-	TreeStatus,
-	type,
-} from "@fluidframework/tree";
+// Let the tree package manage its own API surface, we will simply reflect it here.
+// Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
+// desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
+// alpha` to surface everything `@alpha` and higher).
+// eslint-disable-next-line no-restricted-syntax
+export * from "@fluidframework/tree";
