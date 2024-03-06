@@ -241,7 +241,7 @@ const tcs: TestCase[] = [
 			return _.object("optional", {
 				boolean: _.optional(_.boolean, { stableName: "stable-boolean" }),
 				number: _.optional(_.number),
-				string: _.optional(_.string, { stableName: "stable-string" }),
+				string: _.required(_.string, { stableName: "stable-string" }),
 			});
 		})(),
 		initialTree: {},
