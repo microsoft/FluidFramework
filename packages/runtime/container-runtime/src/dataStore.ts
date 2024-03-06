@@ -12,7 +12,7 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { DataStores } from "./dataStores.js";
+import { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
 /**
@@ -44,9 +44,9 @@ export const isDataStoreAliasMessage = (
 export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
-	datastores: DataStores,
+	channelCollection: ChannelCollection,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, datastores, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -113,7 +113,7 @@ class DataStore implements IDataStore {
 			alias,
 		};
 		if (this.parentContext.attachState === AttachState.Detached) {
-			const localResult = this.datastores.processAliasMessageCore(message);
+			const localResult = this.channelCollection.processAliasMessageCore(message);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
 			this.aliasState = AliasState.Aliased;
@@ -166,11 +166,11 @@ class DataStore implements IDataStore {
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
-		private readonly datastores: DataStores,
+		private readonly channelCollection: ChannelCollection,
 		private readonly logger: ITelemetryLoggerExt,
-		private readonly parentContext = datastores.parentContext,
+		private readonly parentContext = channelCollection.parentContext,
 	) {
-		this.pendingAliases = datastores.pendingAliases;
+		this.pendingAliases = channelCollection.pendingAliases;
 	}
 
 	private async ackBasedPromise<T>(

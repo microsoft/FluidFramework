@@ -11,7 +11,12 @@ import { VersionDetails } from "@fluidframework/build-tools";
 import { detectBumpType } from "@fluid-tools/version-tools";
 
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
-import { ReleaseReport, getDisplayDate, getDisplayDateRelative, sortVersions } from "../../library";
+import {
+	ReleaseReport,
+	getDisplayDate,
+	getDisplayDateRelative,
+	sortVersions,
+} from "../../library";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
 import { findPackageOrReleaseGroup } from "../../args";

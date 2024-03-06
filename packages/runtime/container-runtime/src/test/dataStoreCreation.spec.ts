@@ -20,7 +20,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
-import { wrapContextForInnerChannel } from "../dataStores.js";
+import { wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
