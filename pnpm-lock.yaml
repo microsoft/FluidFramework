@@ -258,6 +258,7 @@ importers:
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       commander: ^5.1.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       js-yaml: ^4.1.0
@@ -307,6 +308,7 @@ importers:
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      copyfiles: 2.4.1
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
