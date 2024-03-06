@@ -389,11 +389,10 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		branch.on("commitApplied", (data, getRevertible) => {
 			this.events.emit("commitApplied", data, getRevertible);
 		});
-		// todoj emit this
-		// branch.on("revertibleDisposed", (revertible, revision) => {
-		// 	// We do not expose the revision in this API
-		// 	this.events.emit("revertibleDisposed", revertible);
-		// });
+		branch.on("revertibleDisposed", (revertible, revision) => {
+			// We do not expose the revision in this API
+			this.events.emit("revertibleDisposed", revertible);
+		});
 	}
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {

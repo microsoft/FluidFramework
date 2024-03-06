@@ -109,9 +109,8 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	/**
 	 * Fired when a revertible made on this branch is disposed.
 	 *
-	 * todoj figure out if we need to pass the revertible
 	 * @param revertible - The revertible that was disposed.
-	 * This revertible was previously passed to the `newRevertible` event.
+	 * This revertible was previously obtained through the `commitApplied` event.
 	 * @param revision - The revision associated with the revertible that was disposed.
 	 */
 	revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
@@ -145,7 +144,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	public readonly editor: TEditor;
 	// set of revertibles maintained for automatic disposal
-	// todoj deal with this
 	private readonly revertibles = new Set<RevertibleRevision>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
@@ -442,7 +440,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 	}
 
-	// todoj figure out if we need to pass the revertible
 	private disposeRevertible(revertible: RevertibleRevision, revision: RevisionTag): void {
 		// TODO: delete the repair data from the forest
 		this._revertibleCommits.delete(revision);
