@@ -8,7 +8,12 @@ import chalk from "chalk";
 import { strict as assert } from "node:assert";
 
 import { BaseCommand } from "../../base";
-import { Repository, createPullRequest, getCommitInfo, pullRequestExists } from "../../library";
+import {
+	Repository,
+	createPullRequest,
+	getCommitInfo,
+	pullRequestExists,
+} from "../../library";
 
 interface CleanupBranch {
 	branch: string;
@@ -192,7 +197,10 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		);
 
 		// Check out a new temp branch at the same commit as the target branch.
-		await this.gitRepo.gitClient.checkoutBranch(tempBranchToCheckConflicts, remoteTargetBranch);
+		await this.gitRepo.gitClient.checkoutBranch(
+			tempBranchToCheckConflicts,
+			remoteTargetBranch,
+		);
 
 		const commitBatchSize = Math.min(flags.batchSize, unmergedCommitList.length);
 		const [commitListHasConflicts, conflictingCommitIndex] = await hasConflicts(

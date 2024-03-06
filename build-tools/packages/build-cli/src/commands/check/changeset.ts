@@ -10,7 +10,8 @@ import { BaseCommand } from "../../base";
 import { Repository } from "../../library";
 
 export default class CheckChangesetCommand extends BaseCommand<typeof CheckChangesetCommand> {
-	static readonly summary = `Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.`;
+	static readonly summary =
+		`Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.`;
 
 	static readonly enableJsonFlag = true;
 
