@@ -1789,8 +1789,6 @@ describe("Editing", () => {
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
-
-			// This fails because the trees disagree on who detached the content
 			expectJsonTree([tree, tree2], []);
 		});
 
