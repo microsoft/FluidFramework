@@ -287,7 +287,7 @@ describe("MapWithExpiration", () => {
 					map.set(1, "one");
 					map.forEach(() => {
 						assert.notEqual(
-							this,
+							globalThis,
 							thisArg,
 							"Expected 'this' to be unchanged for arrow fn",
 						);
