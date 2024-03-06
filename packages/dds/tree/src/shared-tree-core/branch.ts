@@ -146,11 +146,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	// set of revertibles maintained for automatic disposal
 	// todoj deal with this
-	private readonly revertibles = new Set<Revertible>();
-	private readonly _revertibleCommits = new Map<
-		RevisionTag,
-		{ commit: GraphCommit<TChange>; refCount: number }
-	>();
+	private readonly revertibles = new Set<RevertibleRevision>();
+	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	/**
 	 * After pushing a starting revision to the transaction stack, this branch might be rebased
@@ -392,13 +389,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public purgeRevertibles(): void {
-		for (const revision of this._revertibleCommits.keys()) {
-			// todoj does the event need to be emitted for this case?
-			// yeah, it does, need to put the set of revertibles back in prob
-			// TODO: delete the repair data from the forest
-			this._revertibleCommits.delete(revision);
+		for (const revertible of this.revertibles) {
+			revertible.dispose();
 		}
-		this._revertibleCommits.clear();
 	}
 
 	/**
@@ -409,7 +402,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// todoj clean up/verify
 		const revertibleCommit = this._revertibleCommits.get(commit.revision);
 		if (revertibleCommit !== undefined) {
-			revertibleCommit.commit = commit;
+			this._revertibleCommits.set(commit.revision, commit);
 		}
 	}
 
@@ -427,38 +420,30 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				"cannot get the revertible more than once",
 			);
 
-			const revertible: Revertible = {
-				status: RevertibleStatus.Valid,
-				revert: () => {
-					assert(
-						revertible.status === RevertibleStatus.Valid,
-						"a disposed revertible cannot be reverted",
-					);
+			const revertible = new RevertibleRevision(
+				() => {
 					this.revertRevertible(revision, data.kind);
 				},
-				release: () => {
-					// todoj
+				() => {
 					this.disposeRevertible(revertible, revision);
 				},
-			};
+			);
 
-			this._revertibleCommits.set(revision, { commit, refCount: 1 });
+			this._revertibleCommits.set(revision, commit);
 			this.revertibles.add(revertible);
 			return revertible;
 		};
 
 		this.emit("commitApplied", data, getRevertible);
 		withinEventContext = false;
-		// Decrements the ref count for the revertible.
-		// This ensures that the revertible is disposed if no listener has retained it.
-		if (this._revertibleCommits.get(revision) === undefined) {
+		// if no one has acquired the revertible within the context of the event callback, garbage collect the revertible data
+		if (!this._revertibleCommits.has(revision)) {
 			// TODO: delete the repair data from the forest
-			this._revertibleCommits.delete(revision);
 		}
 	}
 
 	// todoj figure out if we need to pass the revertible
-	private disposeRevertible(revertible: Revertible, revision: RevisionTag): void {
+	private disposeRevertible(revertible: RevertibleRevision, revision: RevisionTag): void {
 		// TODO: delete the repair data from the forest
 		this._revertibleCommits.delete(revision);
 		this.revertibles.delete(revertible);
@@ -468,9 +453,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private revertRevertible(revision: RevisionTag, kind: CommitKind): void {
 		assert(!this.isTransacting(), 0x7cb /* Undo is not yet supported during transactions */);
 
-		const revertible = this._revertibleCommits.get(revision);
-		assert(revertible !== undefined, 0x7cc /* expected to find a revertible commit */);
-		const { commit } = revertible;
+		const commit = this._revertibleCommits.get(revision);
+		assert(commit !== undefined, 0x7cc /* expected to find a revertible commit */);
 
 		let change = this.changeFamily.rebaser.invert(tagChange(commit.change, revision), false);
 
@@ -689,4 +673,43 @@ export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void 
 		}),
 	);
 	return () => offs.forEach((off) => off());
+}
+
+class RevertibleRevision implements Revertible {
+	private referenceCount = 1;
+
+	public constructor(
+		private readonly onRevert: () => void,
+		private readonly onDispose: () => void,
+	) {}
+
+	public get status(): RevertibleStatus {
+		return this.referenceCount === 0 ? RevertibleStatus.Disposed : RevertibleStatus.Valid;
+	}
+
+	public acquire(): RevertibleRevision {
+		assert(this.status === RevertibleStatus.Valid, "cannot acquire a disposed revertible");
+		this.referenceCount += 1;
+		return this;
+	}
+
+	public revert(): void {
+		assert(this.status === RevertibleStatus.Valid, "a disposed revertible cannot be reverted");
+		this.onRevert();
+	}
+
+	public release(): void {
+		assert(this.status === RevertibleStatus.Valid, "revertible has already been disposed");
+		this.referenceCount -= 1;
+
+		if (this.referenceCount === 0) {
+			this.onDispose();
+		}
+	}
+
+	public dispose(): void {
+		assert(this.status === RevertibleStatus.Valid, "revertible has already been disposed");
+		this.referenceCount = 0;
+		this.onDispose();
+	}
 }

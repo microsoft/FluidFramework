@@ -592,9 +592,6 @@ describe("sharedTreeView", () => {
 		provider.processMessages();
 		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
 
-		// Simulate the presence of a host application that retains the revertibles in multiple ways
-		const checkout1RevertiblesReadonly = createTestUndoRedoStacks(checkout1.events);
-
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
@@ -626,8 +623,6 @@ describe("sharedTreeView", () => {
 		// The undo stack is not empty because it contains the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 0);
-		assert.equal(checkout1RevertiblesReadonly.undoStack.length, 1);
-		assert.equal(checkout1RevertiblesReadonly.redoStack.length, 0);
 		assert.deepEqual(checkout1.getRemovedRoots(), []);
 
 		provider.processMessages();

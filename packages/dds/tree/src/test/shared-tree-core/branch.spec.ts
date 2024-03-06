@@ -625,7 +625,7 @@ describe("Branches", () => {
 			unsubscribe();
 		});
 
-		it("triggers a revertibleDisposed event for discarded and reverted revertibles", () => {
+		it("only triggers a revertibleDisposed event for when a released revertible has no more references", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
@@ -652,16 +652,30 @@ describe("Branches", () => {
 			assert.equal(revertiblesDisposed.length, 1);
 			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
 
+			// reverting does not release the revertible
 			revertiblesCreated[1].revert();
-
-			assert.equal(revertiblesDisposed.length, 2);
-			assert.equal(revertiblesDisposed[1], revertiblesCreated[1]);
+			assert.equal(revertiblesDisposed.length, 1);
 
 			unsubscribe1();
 			unsubscribe2();
 		});
 
-		it("Non-retained Revertibles are automatically GC'ed", () => {
+		it("revertibles cannot be acquired outside of the commitApplied event callback", () => {
+			const branch = create();
+
+			let acquireRevertible;
+			const unsubscribe = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				acquireRevertible = getRevertible;
+			});
+
+			change(branch);
+			assert(acquireRevertible !== undefined);
+			assert.throws(acquireRevertible);
+			unsubscribe();
+		});
+
+		it("revertibles cannot be acquired more than once", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
@@ -671,111 +685,17 @@ describe("Branches", () => {
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
-			const revertiblesDisposed: Revertible[] = [];
-			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
-				assert.equal(revertible.status, RevertibleStatus.Disposed);
-				revertiblesDisposed.push(revertible);
-			});
-
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 1);
-			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
-			assert.equal(revertiblesDisposed[0].status, RevertibleStatus.Disposed);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
-		it("Retained Revertibles are not GC'ed until they are reverted or discarded", () => {
-			const branch = create();
-
-			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const revertible = getRevertible();
-				assert.equal(revertible.status, RevertibleStatus.Valid);
-				revertiblesCreated.push(revertible);
-			});
-			const revertiblesDisposed: Revertible[] = [];
-			const unsubscribe2 = branch.on("revertibleDisposed", (revertible) => {
-				assert.equal(revertible.status, RevertibleStatus.Disposed);
-				revertiblesDisposed.push(revertible);
-			});
-
-			// Make change that we will retain then revert
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 0);
-			assert.equal(revertiblesCreated[0].status, RevertibleStatus.Valid);
-
-			revertiblesCreated[0].revert();
-
-			assert.equal(revertiblesCreated.length, 2); // The revert creates a new revertible
-			assert.equal(revertiblesDisposed.length, 1);
-			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
-			assert.equal(revertiblesDisposed[0].status, RevertibleStatus.Disposed);
-
-			revertiblesCreated.length = 0;
-			revertiblesDisposed.length = 0;
-
-			// Make change that we will retain then discard
-			change(branch);
-
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 0);
-			assert.equal(revertiblesCreated[0].status, RevertibleStatus.Valid);
-
-			revertiblesCreated[0].release();
-
-			assert.equal(revertiblesCreated.length, 1);
-			assert.equal(revertiblesDisposed.length, 1);
-			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
-			assert.equal(revertiblesDisposed[0].status, RevertibleStatus.Disposed);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
-		it("Revertibles can be retained by multiple listeners", () => {
-			const branch = create();
-
-			const revertiblesCreated1: Revertible[] = [];
-			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
-				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
-				assert.equal(r.status, RevertibleStatus.Valid);
-				revertiblesCreated1.push(r);
-			});
-
-			const revertiblesCreated2: Revertible[] = [];
 			const unsubscribe2 = branch.on("commitApplied", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
-				const r = getRevertible();
-				assert.equal(r.status, RevertibleStatus.Valid);
-				revertiblesCreated2.push(r);
+				assert.throws(getRevertible);
 			});
 
 			change(branch);
-
-			assert.equal(revertiblesCreated1.length, 1);
-			assert.equal(revertiblesCreated2.length, 1);
-			assert.equal(revertiblesCreated1[0], revertiblesCreated2[0]);
-			const revertible = revertiblesCreated1[0];
-
-			revertible.release();
-			assert.equal(revertible.status, RevertibleStatus.Valid);
-
-			revertible.release();
-			assert.equal(revertible.status, RevertibleStatus.Disposed);
-
 			unsubscribe1();
 			unsubscribe2();
 		});
 
-		it("Disposed revertibles cannot be retained or discarded or reverted", () => {
+		it("disposed revertibles cannot be released or reverted", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
@@ -801,7 +721,7 @@ describe("Branches", () => {
 			unsubscribe();
 		});
 
-		it("Disposing of a branch also disposes of its revertibles", () => {
+		it("disposing of a branch also disposes of its revertibles", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
