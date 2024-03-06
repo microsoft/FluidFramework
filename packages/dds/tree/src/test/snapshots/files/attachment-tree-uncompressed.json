@@ -14,76 +14,7 @@
               "String": {
                 "type": "blob",
                 "content": {
-                  "trunk": [
-                    {
-                      "change": [
-                        {
-                          "data": {
-                            "maxId": 1,
-                            "changes": [
-                              {
-                                "fieldKey": "rootFieldKey",
-                                "fieldKind": "Optional",
-                                "change": {
-                                  "m": [
-                                    [
-                                      1,
-                                      null,
-                                      true
-                                    ]
-                                  ],
-                                  "d": 0
-                                }
-                              }
-                            ],
-                            "builds": {
-                              "builds": [
-                                [
-                                  [
-                                    [
-                                      1,
-                                      0
-                                    ]
-                                  ]
-                                ]
-                              ],
-                              "trees": {
-                                "version": 1,
-                                "identifiers": [],
-                                "shapes": [
-                                  {
-                                    "c": {
-                                      "extraFields": 1
-                                    }
-                                  },
-                                  {
-                                    "a": 0
-                                  }
-                                ],
-                                "data": [
-                                  [
-                                    1,
-                                    [
-                                      "com.fluidframework.leaf.handle",
-                                      true,
-                                      {
-                                        "type": "__fluid_handle__",
-                                        "url": "/test/TestSharedTree"
-                                      },
-                                      []
-                                    ]
-                                  ]
-                                ]
-                              }
-                            }
-                          }
-                        }
-                      ],
-                      "revision": 3,
-                      "sequenceNumber": 4,
-                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
-                    }
-                  ],
+                  "trunk": [],
                   "branches": [],
                   "version": 1
                 },
@@ -103,6 +34,34 @@
                 "content": {
                   "version": 1,
                   "nodes": {
+                    "com.fluidframework.json.array": {
+                      "object": {
+                        "": {
+                          "kind": "Sequence",
+                          "types": [
+                            "com.fluidframework.json.object",
+                            "com.fluidframework.json.array",
+                            "com.fluidframework.leaf.number",
+                            "com.fluidframework.leaf.boolean",
+                            "com.fluidframework.leaf.string",
+                            "com.fluidframework.leaf.null"
+                          ]
+                        }
+                      }
+                    },
+                    "com.fluidframework.json.object": {
+                      "map": {
+                        "kind": "Optional",
+                        "types": [
+                          "com.fluidframework.json.object",
+                          "com.fluidframework.json.array",
+                          "com.fluidframework.leaf.number",
+                          "com.fluidframework.leaf.boolean",
+                          "com.fluidframework.leaf.string",
+                          "com.fluidframework.leaf.null"
+                        ]
+                      }
+                    },
                     "com.fluidframework.leaf.boolean": {
                       "leaf": 2
                     },
@@ -120,9 +79,14 @@
                     }
                   },
                   "root": {
-                    "kind": "Optional",
+                    "kind": "Sequence",
                     "types": [
-                      "com.fluidframework.leaf.handle"
+                      "com.fluidframework.json.object",
+                      "com.fluidframework.json.array",
+                      "com.fluidframework.leaf.number",
+                      "com.fluidframework.leaf.boolean",
+                      "com.fluidframework.leaf.string",
+                      "com.fluidframework.leaf.null"
                     ]
                   }
                 },
@@ -160,12 +124,9 @@
                       [
                         1,
                         [
-                          "com.fluidframework.leaf.handle",
+                          "com.fluidframework.leaf.string",
                           true,
-                          {
-                            "type": "__fluid_handle__",
-                            "url": "/test/TestSharedTree"
-                          },
+                          "y",
                           []
                         ]
                       ]

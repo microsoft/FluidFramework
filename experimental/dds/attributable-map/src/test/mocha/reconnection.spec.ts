@@ -10,7 +10,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { MapFactory, AttributableMap } from "../../map";
+import { MapFactory, AttributableMap } from "../../map.js";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {
