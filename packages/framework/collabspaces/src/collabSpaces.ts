@@ -753,7 +753,7 @@ export class CollabSpacesRuntime
 
 		assert(
 			this.areEqualUuid(this.matrix.getCell(row, 0) as unknown as uuidType, rowId),
-			`channel's rowId mismatch ${row} ${rowId} ${this.matrix.getCell(row, 0)}`,
+			"channel's rowId mismatch",
 		);
 
 		if (col === undefined) {
@@ -761,7 +761,7 @@ export class CollabSpacesRuntime
 		}
 		assert(
 			this.areEqualUuid(this.matrix.getCell(0, col) as unknown as uuidType, colId),
-			`channel's colId mismatch ${col} ${colId} ${this.matrix.getCell(0, col)}`,
+			"channel's colId mismatch",
 		);
 		return { row, col };
 	}
