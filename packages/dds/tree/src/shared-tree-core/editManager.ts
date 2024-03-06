@@ -439,15 +439,18 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const [_, oldestCommitInCollabWindow] = this.getClosestTrunkCommit(
-			this.minimumSequenceNumber,
+		let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
+		assert(
+			oldestCommitInCollabWindow.parent !== undefined ||
+				oldestCommitInCollabWindow === this.trunkBase,
+			"Expected oldest commit in collab window to have a parent or be the trunk base",
 		);
 
-		const trunk = getPathFromBase(
-			this.trunk.getHead(),
-			// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
-			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow,
-		).map((c) => {
+		// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
+		oldestCommitInCollabWindow =
+			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+
+		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map((c) => {
 			const metadata =
 				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 			const commit: SequencedCommit<TChangeset> = {
