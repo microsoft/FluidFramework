@@ -41,7 +41,7 @@ export function vueRenderDiceRoller(diceRoller: IDiceRoller, div: HTMLDivElement
 			},
 		},
 		mounted() {
-			diceRoller.on("diceRolled", (this as any).updateDiceValue);
+			diceRoller.on("diceRolled", this.updateDiceValue);
 		},
 	});
 
