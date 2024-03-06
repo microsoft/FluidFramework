@@ -13,7 +13,6 @@ import {
 import {
 	GraphCommit,
 	Revertible,
-	RevertibleResult,
 	RevertibleStatus,
 	RevisionTag,
 	findAncestor,
@@ -603,10 +602,10 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = branch.on("newRevertible", (revertible) => {
+			const unsubscribe = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
-				const retainResult = revertible.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated.push(revertible);
 			});
 
@@ -630,10 +629,10 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
-				const retainResult = revertible.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated.push(revertible);
 			});
 			const revertiblesDisposed: Revertible[] = [];
@@ -648,14 +647,12 @@ describe("Branches", () => {
 			assert.equal(revertiblesCreated.length, 2);
 			assert.equal(revertiblesDisposed.length, 0);
 
-			const discardResult = revertiblesCreated[0].discard();
-			assert.equal(discardResult, RevertibleResult.Success);
+			revertiblesCreated[0].release();
 
 			assert.equal(revertiblesDisposed.length, 1);
 			assert.equal(revertiblesDisposed[0], revertiblesCreated[0]);
 
-			const revertResult = revertiblesCreated[1].revert();
-			assert.equal(revertResult, RevertibleResult.Success);
+			revertiblesCreated[1].revert();
 
 			assert.equal(revertiblesDisposed.length, 2);
 			assert.equal(revertiblesDisposed[1], revertiblesCreated[1]);
@@ -668,7 +665,9 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
@@ -693,10 +692,10 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("newRevertible", (revertible) => {
+			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
-				const retainResult = revertible.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated.push(revertible);
 			});
 			const revertiblesDisposed: Revertible[] = [];
@@ -712,8 +711,7 @@ describe("Branches", () => {
 			assert.equal(revertiblesDisposed.length, 0);
 			assert.equal(revertiblesCreated[0].status, RevertibleStatus.Valid);
 
-			const revertResult = revertiblesCreated[0].revert();
-			assert.equal(revertResult, RevertibleResult.Success);
+			revertiblesCreated[0].revert();
 
 			assert.equal(revertiblesCreated.length, 2); // The revert creates a new revertible
 			assert.equal(revertiblesDisposed.length, 1);
@@ -730,8 +728,7 @@ describe("Branches", () => {
 			assert.equal(revertiblesDisposed.length, 0);
 			assert.equal(revertiblesCreated[0].status, RevertibleStatus.Valid);
 
-			const discardResult = revertiblesCreated[0].discard();
-			assert.equal(discardResult, RevertibleResult.Success);
+			revertiblesCreated[0].release();
 
 			assert.equal(revertiblesCreated.length, 1);
 			assert.equal(revertiblesDisposed.length, 1);
@@ -746,18 +743,18 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated1: Revertible[] = [];
-			const unsubscribe1 = branch.on("newRevertible", (r) => {
+			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const r = getRevertible();
 				assert.equal(r.status, RevertibleStatus.Valid);
-				const retainResult = r.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated1.push(r);
 			});
 
 			const revertiblesCreated2: Revertible[] = [];
-			const unsubscribe2 = branch.on("newRevertible", (r) => {
+			const unsubscribe2 = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const r = getRevertible();
 				assert.equal(r.status, RevertibleStatus.Valid);
-				const retainResult = r.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated2.push(r);
 			});
 
@@ -768,12 +765,10 @@ describe("Branches", () => {
 			assert.equal(revertiblesCreated1[0], revertiblesCreated2[0]);
 			const revertible = revertiblesCreated1[0];
 
-			const discard1Result = revertible.discard();
-			assert.equal(discard1Result, RevertibleResult.Success);
+			revertible.release();
 			assert.equal(revertible.status, RevertibleStatus.Valid);
 
-			const discard2Result = revertible.discard();
-			assert.equal(discard2Result, RevertibleResult.Success);
+			revertible.release();
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
 			unsubscribe1();
@@ -784,10 +779,10 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = branch.on("newRevertible", (r) => {
+			const unsubscribe = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const r = getRevertible();
 				assert.equal(r.status, RevertibleStatus.Valid);
-				const retainResult = r.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated.push(r);
 			});
 
@@ -796,13 +791,11 @@ describe("Branches", () => {
 			assert.equal(revertiblesCreated.length, 1);
 			const revertible = revertiblesCreated[0];
 
-			const discard1Result = revertible.discard();
-			assert.equal(discard1Result, RevertibleResult.Success);
+			revertible.release();
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 
-			assert.equal(revertible.retain(), RevertibleResult.Failure);
-			assert.equal(revertible.discard(), RevertibleResult.Failure);
-			assert.equal(revertible.revert(), RevertibleResult.Failure);
+			assert.throws(() => revertible.release());
+			assert.throws(() => revertible.revert());
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 			unsubscribe();
@@ -812,10 +805,10 @@ describe("Branches", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = branch.on("newRevertible", (r) => {
+			const unsubscribe1 = branch.on("commitApplied", (_, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const r = getRevertible();
 				assert.equal(r.status, RevertibleStatus.Valid);
-				const retainResult = r.retain();
-				assert.equal(retainResult, RevertibleResult.Success);
 				revertiblesCreated.push(r);
 			});
 
@@ -845,7 +838,7 @@ describe("Branches", () => {
 			const childBranch = parentBranch.fork();
 
 			let revertibleCount = 0;
-			const unsubscribe = parentBranch.on("newRevertible", () => {
+			const unsubscribe = parentBranch.on("commitApplied", () => {
 				revertibleCount += 1;
 			});
 

@@ -10,42 +10,27 @@
  * @internal
  */
 export interface Revertible {
-	/** Indicates the type of edit that produced this revertible. */
-	readonly kind: RevertibleKind;
-	/**
-	 * Information about which client created the edit.
-	 */
-	readonly origin: {
-		/**
-		 * Indicates if the {@link Revertible} is from the local client (true) or a remote client (false).
-		 */
-		readonly isLocal: boolean;
-	};
 	/**
 	 * The current status of the revertible.
 	 */
 	readonly status: RevertibleStatus;
 	/**
-	 * Reverts the associated change and decrements the reference count of the revertible.
+	 * Reverts the associated change.
 	 */
-	revert(): RevertibleResult;
-	/**
-	 * Increments the reference count of the revertible.
-	 * Should be called to prevent/delay the garbage collection of the resources associated with this revertible.
-	 */
-	retain(): RevertibleResult;
+	revert(): void;
 	/**
 	 * Decrements the reference count of the revertible.
 	 */
-	discard(): RevertibleResult;
+	release(): void;
 }
 
 /**
- * The type of revertible commit.
+ * The type of commit.
+ * todo: move this somewhere that makes more sense
  *
  * @internal
  */
-export enum RevertibleKind {
+export enum CommitKind {
 	/** A typical local commit */
 	Default,
 	/** A revertible that is the result of an undo. */
@@ -72,13 +57,17 @@ export enum RevertibleStatus {
 }
 
 /**
- * The result of a revert operation.
+ * todoj move this somewhere that makes sense and figure out what release tag to use
  *
  * @internal
  */
-export enum RevertibleResult {
-	/** The operation was successful. */
-	Success,
-	/** The operation failed. This occurs when attempting an operation on a disposed revertible */
-	Failure,
+export interface CommitMetadata {
+	/**
+	 * A {@link CommitKind} enum value describing whether the commit represents an Edit, an Undo, or a Redo.
+	 */
+	kind: CommitKind;
+	/**
+	 * Indicates whether the commit is a local edit
+	 */
+	isLocal: boolean;
 }

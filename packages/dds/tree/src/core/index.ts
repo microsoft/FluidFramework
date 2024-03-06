@@ -192,9 +192,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export {
-	Revertible,
-	RevertibleKind,
-	RevertibleStatus,
-	RevertibleResult,
-} from "./revertible/index.js";
+export { Revertible, CommitKind, RevertibleStatus, CommitMetadata } from "./revertible/index.js";
