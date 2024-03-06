@@ -16,8 +16,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
-import { IConsensusRegisterCollection } from "../interfaces";
+import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
+import { IConsensusRegisterCollection } from "../interfaces.js";
 
 function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

@@ -15,8 +15,9 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory } from "../../map";
-import { ISharedMap } from "../../interfaces";
+import { MapFactory } from "../../map.js";
+import { ISharedMap } from "../../interfaces.js";
+import { _dirname } from "./dirname.cjs";
 
 interface Clear {
 	type: "clear";
@@ -118,7 +119,7 @@ describe("Map fuzz tests", () => {
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../../src/test/mocha/results/map") },
+		saveFailures: { directory: path.join(_dirname, "../../../src/test/mocha/results/map") },
 	});
 
 	createDDSFuzzSuite(
@@ -135,7 +136,7 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+				directory: path.join(_dirname, "../../../src/test/mocha/results/map-reconnect"),
 			},
 		},
 	);
@@ -158,7 +159,7 @@ describe("Map fuzz tests", () => {
 			// Uncomment to replay a particular seed.
 			// replay: 0,
 			saveFailures: {
-				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
+				directory: path.join(_dirname, "../../../src/test/mocha/results/map-rebase"),
 			},
 		},
 	);

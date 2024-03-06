@@ -7,19 +7,19 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { IAttributionCollection } from "./attributionCollection";
-import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferenceCollection } from "./localReference";
-import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
-import { TrackingGroupCollection } from "./mergeTreeTracking";
-import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
-import { computeHierarchicalOrdinal } from "./ordinal";
-import { PartialSequenceLengths } from "./partialLengths";
+import { IAttributionCollection } from "./attributionCollection.js";
+import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
+import { LocalReferenceCollection } from "./localReference.js";
+import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback.js";
+import { TrackingGroupCollection } from "./mergeTreeTracking.js";
+import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import { computeHierarchicalOrdinal } from "./ordinal.js";
+import { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { clone, createMap, MapLike, PropertySet } from "./properties";
-import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions";
-import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
+import { clone, createMap, MapLike, PropertySet } from "./properties.js";
+import { refTypeIncludesFlag, ReferencePosition, refGetTileLabels } from "./referencePositions.js";
+import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
 
 /**
  * Common properties for a node in a merge tree.

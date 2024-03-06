@@ -14,16 +14,13 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
-	RuntimeHeaders,
-	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
-} from "./containerRuntime";
+} from "./containerRuntime.js";
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
@@ -31,10 +28,16 @@ export {
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
-} from "./messageTypes";
-export { IBlobManagerLoadInfo } from "./blobManager";
-export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { detectOutboundReferences } from "./dataStores";
+} from "./messageTypes.js";
+export { IBlobManagerLoadInfo } from "./blobManager.js";
+export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+export {
+	detectOutboundReferences,
+	RuntimeHeaders,
+	ChannelCollectionFactory,
+	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
+} from "./channelCollection.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -44,7 +47,7 @@ export {
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCStats,
-} from "./gc";
+} from "./gc/index.js";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -93,8 +96,8 @@ export {
 	SummaryStage,
 	IRetriableFailureResult,
 	ISummarizeEventProps,
-} from "./summary";
-export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
+} from "./summary/index.js";
+export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 
 // Re-exports for backwards compatibility.
 // Will be removed in the future.

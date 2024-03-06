@@ -643,4 +643,38 @@ describe("schemaFactory", () => {
 		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
 		assert.equal(schemaFromValue(false), f.boolean);
 	});
+
+	it("extra fields in object constructor", () => {
+		const f = new SchemaFactory("");
+
+		class Empty extends f.object("C", {}) {}
+
+		// TODO: should not build
+		// BUG: object schema with no fields permit construction with any object, not just empty object.
+		// TODO: this should runtime error when constructed (not just when hydrated)
+		const c2 = new Empty({ x: {} });
+
+		class NonEmpty extends f.object("C", { a: f.null }) {}
+
+		// @ts-expect-error Invalid extra field
+		// TODO: this should error when constructed (not just when hydrated)
+		new NonEmpty({ a: null, b: 0 });
+	});
+
+	it("object nested implicit construction", () => {
+		const f = new SchemaFactory("");
+
+		class C extends f.object("C", {}) {
+			public readonly c = "X";
+		}
+		class B extends f.object("B", {
+			b: C,
+		}) {}
+		class A extends f.object("A", {
+			a: B,
+		}) {}
+
+		const tree = hydrate(A, { a: { b: {} } });
+		assert.equal(tree.a.b.c, "X");
+	});
 });

@@ -55,6 +55,7 @@ declare function get_old_TypeAliasDeclaration_EventEmitterEventType():
 declare function use_current_TypeAliasDeclaration_EventEmitterEventType(
     use: TypeOnly<current.EventEmitterEventType>): void;
 use_current_TypeAliasDeclaration_EventEmitterEventType(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_EventEmitterEventType());
 
 /*

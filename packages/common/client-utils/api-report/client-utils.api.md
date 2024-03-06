@@ -4,31 +4,28 @@
 
 ```ts
 
-/// <reference types="node" />
-
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'events_pkg';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventTransformer } from '@fluidframework/core-interfaces';
 import { TransformedEvent } from '@fluidframework/core-interfaces';
 
 // @internal
-class Buffer_2 extends Uint8Array {
+export class Buffer extends Uint8Array {
     static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
     // (undocumented)
-    static isBuffer(obj: unknown): obj is Buffer_2;
+    static isBuffer(obj: unknown): obj is Buffer;
     // (undocumented)
     toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 }
-export { Buffer_2 as Buffer }
 
 // @alpha
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
 
+export { EventEmitter }
+
 // @public
-export type EventEmitterEventType = EventEmitter extends {
-    on(event: infer E, listener: any): any;
-} ? E : never;
+export type EventEmitterEventType = string;
 
 // @internal
 export const fromBase64ToUtf8: (input: string) => string;
@@ -43,10 +40,10 @@ export function gitHashFile(file: IsoBuffer): Promise<string>;
 export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
 // @internal (undocumented)
-export const IsoBuffer: typeof Buffer_2;
+export const IsoBuffer: typeof Buffer;
 
 // @internal (undocumented)
-export type IsoBuffer = Buffer_2;
+export type IsoBuffer = Buffer;
 
 // @internal
 export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;

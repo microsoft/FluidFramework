@@ -70,7 +70,6 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get disposed(): boolean;
     ensureNoDataModelChanges<T>(callback: () => T): T;
-    // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     // (undocumented)
@@ -128,17 +127,11 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 // @alpha
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
-    // (undocumented)
     readonly absolutePath: string;
-    // (undocumented)
     attachGraph(): void;
-    // (undocumented)
     bind(handle: IFluidHandle): void;
-    // (undocumented)
     get(): Promise<any>;
-    // (undocumented)
     get IFluidHandle(): IFluidHandle;
-    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;

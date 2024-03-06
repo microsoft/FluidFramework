@@ -6,7 +6,7 @@ import React from "react";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
@@ -44,7 +44,7 @@ function getContainerIdFromLocation(location: Location): string {
  * Populate the app's `rootMap` with the desired initial data for use with the client debug view.
  */
 async function populateRootMap(container: IFluidContainer): Promise<void> {
-	const rootMap = container.initialObjects.rootMap as SharedMap;
+	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
@@ -129,7 +129,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
 	const { container, containerId } = containerInfo;
 
-	const rootMap = container.initialObjects.rootMap as SharedMap;
+	const rootMap = container.initialObjects.rootMap as ISharedMap;
 	if (rootMap === undefined) {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
