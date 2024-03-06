@@ -8,7 +8,12 @@ import * as path from "node:path";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
 
-import { Context, getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
+import {
+	Context,
+	loadFluidBuildConfig,
+	Handler,
+	policyHandlers,
+} from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 import { Repository } from "../../library";
@@ -160,7 +165,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.info("Resolving errors if possible.");
 		}
 
-		const manifest = getFluidBuildConfig(this.flags.root ?? process.cwd());
+		const manifest = loadFluidBuildConfig(this.flags.root ?? process.cwd());
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =
