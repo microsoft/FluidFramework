@@ -429,8 +429,8 @@ describe("Tests for Epoch Tracker", () => {
 			);
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(error as any).retryAfterMs === retryAfterSeconds * 1000,
-				"retryAfterMs should exist",
+				(error as any).retryAfterSeconds === retryAfterSeconds,
+				"retryAfterSeconds should exist",
 			);
 		}
 	});
