@@ -424,6 +424,12 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
 }
 
 // @public
+export interface TreeChangeEvents {
+    afterDeepChange(): void;
+    afterShallowChange(): void;
+}
+
+// @public
 export class TreeConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
     constructor(schema: TSchema, initialTree: () => InsertableTreeFieldFromImplicitField<TSchema>);
     // (undocumented)
@@ -453,16 +459,10 @@ export abstract class TreeNode implements WithType {
 export interface TreeNodeApi {
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
-    on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
+    on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     readonly status: (node: TreeNode) => TreeStatus;
-}
-
-// @public
-export interface TreeNodeEvents {
-    afterDeepChange(): void;
-    afterShallowChange(): void;
 }
 
 // @public

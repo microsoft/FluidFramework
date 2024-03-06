@@ -70,10 +70,10 @@ export interface TreeNodeApi {
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
-	on<K extends keyof TreeNodeEvents>(
+	on<K extends keyof TreeChangeEvents>(
 		node: TreeNode,
 		eventName: K,
-		listener: TreeNodeEvents[K],
+		listener: TreeChangeEvents[K],
 	): () => void;
 
 	/**
@@ -109,10 +109,10 @@ export const treeNodeApi: TreeNodeApi = {
 		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
 		return parentField.parent.key;
 	},
-	on: <K extends keyof TreeNodeEvents>(
+	on: <K extends keyof TreeChangeEvents>(
 		node: TreeNode,
 		eventName: K,
-		listener: TreeNodeEvents[K],
+		listener: TreeChangeEvents[K],
 	) => {
 		const flex = getFlexNode(node);
 		const anchor = flex.anchorNode;
@@ -174,7 +174,7 @@ export const treeNodeApi: TreeNodeApi = {
  *
  * @public
  */
-export interface TreeNodeEvents {
+export interface TreeChangeEvents {
 	/**
 	 * Raised on a node after a change is applied to one of its fields.
 	 *
@@ -203,7 +203,7 @@ export interface TreeNodeEvents {
 	/**
 	 * Raised after a batch of changes is applied to a subtree.
 	 * @remarks
-	 * Occurs after more specific {@link TreeNodeEvents.afterShallowChange} events were fired for this node or its decedents.
+	 * Occurs after more specific {@link TreeChangeEvents.afterShallowChange} events were fired for this node or its decedents.
 	 *
 	 * @privateRemarks
 	 * Triggered by {@link AnchorEvents.afterChange}
