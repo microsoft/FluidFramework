@@ -11,10 +11,12 @@ Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alp
 
 ```
 USAGE
-  $ flub update fluid-imports [-v | --quiet] [--onlyInternal]
+  $ flub update fluid-imports [-v | --quiet] [--organize] [--onlyInternal]
 
 FLAGS
   --onlyInternal  Use /internal for all non-public APIs instead of /alpha or /beta.
+  --organize      Organize the imports in any file that is modified. Note that this can make it more difficult to see
+                  the rewritten import changes.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
