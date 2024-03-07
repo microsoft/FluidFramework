@@ -86,7 +86,7 @@ describe("Odsp Error", () => {
 		);
 		assert(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			networkError.responseType === "default",
+			(networkError as any).responseType === "default",
 			"message should contain Response.type",
 		);
 		assert.equal(false, networkError.canRetry, "canRetry should be false");

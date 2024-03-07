@@ -214,12 +214,12 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			// packageInfoSource is cast to any as it is typed to IContainerPackageInfo instead of IFluidCodeDetails
 			// TODO: use stronger type
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		} else if (isFluidPackage(packageInfoSource?.package)) {
+		} else if (isFluidPackage((packageInfoSource as any)?.package)) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			containerPackageName = packageInfoSource?.package.name;
+			containerPackageName = (packageInfoSource as any)?.package.name;
 		} else {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			containerPackageName = packageInfoSource?.package;
+			containerPackageName = (packageInfoSource as any)?.package;
 		}
 		containerPackageName =
 			containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;

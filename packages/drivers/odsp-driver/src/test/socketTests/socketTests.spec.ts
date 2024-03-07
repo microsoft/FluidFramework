@@ -339,9 +339,9 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		);
 		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		assert(errorReceived.socketErrorType === details.context.type);
+		assert((errorReceived as any).socketErrorType === details.context.type);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		assert(errorReceived.socketCode === details.context.code);
+		assert((errorReceived as any).socketCode === details.context.code);
 		assert(socket !== undefined && !socket.connected, "socket should be closed");
 		checkListenerCount(socket);
 	});
