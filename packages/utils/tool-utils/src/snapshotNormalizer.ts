@@ -115,6 +115,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		if (metadata.telemetryDocumentId !== undefined) {
 			metadata.telemetryDocumentId = "x";
 		}
+		// default was not written before, now it's written in.
+		if (metadata.idCompressorMode === undefined) {
+			metadata.idCompressorMode = "off";
+		}
 		content = JSON.stringify(metadata);
 	}
 

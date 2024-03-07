@@ -59,6 +59,8 @@ const change1WithChildChange = Change.atOnce(
 	Change.child(nodeChange1),
 );
 
+const clearEmpty = Change.reserve("self", brand(3));
+
 export function testCodecs() {
 	describe("Codecs", () => {
 		const sessionId = { originatorId: "session1" as SessionId };
@@ -73,6 +75,7 @@ export function testCodecs() {
 				["child change", changeWithChildChange, sessionId],
 				["field set with child change", change1WithChildChange, sessionId], // Note: should only get sent over the wire when using transaction APIs.
 				["undone field change", change2Inverted, sessionId],
+				["clear from empty", clearEmpty, sessionId],
 			],
 		};
 
