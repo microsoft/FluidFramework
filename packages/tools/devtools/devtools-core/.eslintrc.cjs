@@ -18,7 +18,7 @@ module.exports = {
 	overrides: [
 		{
 			// Overrides for test files
-			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
+			files: ["src/test/**"],
 			plugins: ["chai-expect"],
 			extends: ["plugin:chai-expect/recommended"],
 			rules: {

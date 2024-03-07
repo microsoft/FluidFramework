@@ -96,7 +96,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"events": "^3.1.0",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
 	},
@@ -108,7 +107,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

@@ -132,7 +132,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	// V1 of the registry -----------------------------------------

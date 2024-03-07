@@ -427,6 +427,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of `ReferenceType`. To handle this case specifically, one may wish
+	 * to look at the segment returned by `ReferencePosition.getSegment`.
 	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this.client.localReferencePositionToPosition(lref);

@@ -131,7 +131,9 @@ export class DocumentDeltaConnection
 			logger.sendErrorEvent(
 				{
 					eventName: "DeltaConnection:EventException",
-					name: name as string,
+					// Coerce to string as past typings also allowed symbols and number, but
+					// we want telemtry properties to be consistently string.
+					name: String(name),
 				},
 				error,
 			);

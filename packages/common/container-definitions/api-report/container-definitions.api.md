@@ -4,7 +4,7 @@
 
 ```ts
 
-import type { EventEmitter } from 'events';
+import type { EventEmitter } from 'events_pkg';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
@@ -63,7 +63,7 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha (undocumented)
+// @alpha
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
@@ -293,7 +293,6 @@ export { IErrorBase }
 
 // @alpha
 export interface IFluidBrowserPackage extends IFluidPackage {
-    // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
         [environment: string]: IFluidPackageEnvironment;

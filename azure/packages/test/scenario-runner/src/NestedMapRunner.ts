@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 import { ConnectionState } from "@fluidframework/container-loader";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
-import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
 import {
 	FluidSummarizerTelemetryEventNames,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
-} from "./utils";
-import { getLogger, loggerP } from "./logger";
-import { ScenarioRunner } from "./ScenarioRunner";
+} from "./utils.js";
+import { getLogger, loggerP } from "./logger.js";
+import { ScenarioRunner } from "./ScenarioRunner.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
@@ -84,7 +84,9 @@ export class NestedMapRunner extends ScenarioRunner<
 
 		const writeRatePerMin = runConfig.writeRatePerMin ?? -1;
 		const msBetweenWrites = writeRatePerMin < 0 ? 0 : 60000 / writeRatePerMin;
-		let currentMap: SharedMap = container.initialObjects[runConfig.initialMapKey] as SharedMap;
+		let currentMap: ISharedMap = container.initialObjects[
+			runConfig.initialMapKey
+		] as ISharedMap;
 		const tenPercent = Math.floor(runConfig.numMaps / 10);
 		const getData = () => {
 			const dataType = runConfig.dataType;
