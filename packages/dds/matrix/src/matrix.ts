@@ -425,13 +425,8 @@ export class SharedMatrix<T = any>
 		currentVector: PermutationVector,
 		oppositeVector: PermutationVector,
 		target: SnapshotPath.rows | SnapshotPath.cols,
-		message: IMergeTreeOp | undefined,
+		message: IMergeTreeOp,
 	) {
-		assert(
-			message !== undefined,
-			"Logical error - we should never get undefined as result on operating on col/row vectors",
-		);
-
 		// Ideally, we would have a single 'localSeq' counter that is shared between both PermutationVectors
 		// and the SharedMatrix's cell data.  Instead, we externally advance each MergeTree's 'localSeq' counter
 		// for each submitted op it not aware of to keep them synchronized.
@@ -462,7 +457,7 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	private submitColMessage(message: IMergeTreeOp | undefined) {
+	private submitColMessage(message: IMergeTreeOp) {
 		this.submitVectorMessage(this.cols, this.rows, SnapshotPath.cols, message);
 	}
 
@@ -473,9 +468,11 @@ export class SharedMatrix<T = any>
 		if (colStart > this.colCount) {
 			throw new UsageError("insertCols: out of bounds");
 		}
-		this.protectAgainstReentrancy(() =>
-			this.submitColMessage(this.cols.insert(colStart, count)),
-		);
+		this.protectAgainstReentrancy(() => {
+			const message = this.cols.insert(colStart, count);
+			assert(message !== undefined, "must be defined");
+			this.submitColMessage(message);
+		});
 	}
 
 	public removeCols(colStart: number, count: number) {
@@ -490,7 +487,7 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	private submitRowMessage(message: IMergeTreeOp | undefined) {
+	private submitRowMessage(message: IMergeTreeOp) {
 		this.submitVectorMessage(this.rows, this.cols, SnapshotPath.rows, message);
 	}
 
@@ -501,9 +498,11 @@ export class SharedMatrix<T = any>
 		if (rowStart > this.rowCount) {
 			throw new UsageError("insertRows: out of bounds");
 		}
-		this.protectAgainstReentrancy(() =>
-			this.submitRowMessage(this.rows.insert(rowStart, count)),
-		);
+		this.protectAgainstReentrancy(() => {
+			const message = this.rows.insert(rowStart, count);
+			assert(message !== undefined, "must be defined");
+			this.submitRowMessage(message);
+		});
 	}
 
 	public removeRows(rowStart: number, count: number) {
