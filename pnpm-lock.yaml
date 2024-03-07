@@ -258,6 +258,7 @@ importers:
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       commander: ^5.1.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       js-yaml: ^4.1.0
@@ -307,6 +308,7 @@ importers:
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      copyfiles: 2.4.1
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -1369,7 +1371,6 @@ importers:
       eslint: ~8.55.0
       express: ^4.16.3
       fs-extra: ^9.1.0
-      nconf: ^0.12.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       source-map-loader: ^2.0.0
@@ -1391,7 +1392,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       '@fluidframework/tool-utils': link:../../../packages/utils/tool-utils
       express: 4.18.2
-      nconf: 0.12.1
       webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
     devDependencies:
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
@@ -5316,7 +5316,6 @@ importers:
       mocha-xunit-reporter: 1.1.0
       mochawesome: 3.1.2
       moment: ^2.21.0
-      nconf: ^0.12.0
       npm-run-all: 4.1.5
       prettier: ~3.0.3
       promisify: 0.0.3
@@ -5353,7 +5352,6 @@ importers:
       lodash: 4.17.21
       long: 4.0.0
       lru-cache: 6.0.0
-      nconf: 0.12.1
       qs: 6.11.2
       rmfr: 2.0.0
       sanitize: 2.1.0
@@ -5402,6 +5400,7 @@ importers:
 
   experimental/dds/attributable-map:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/attributable-map-previous': npm:@fluid-experimental/attributable-map@2.0.0-internal.8.0.0
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -5427,6 +5426,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/path-browserify': ^1.0.0
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -5449,6 +5449,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
       path-browserify: 1.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-experimental/attributable-map-previous': /@fluid-experimental/attributable-map/2.0.0-internal.8.0.0
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
@@ -5465,6 +5466,7 @@ importers:
       '@types/node': 18.19.1
       '@types/path-browserify': 1.0.2
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
@@ -7164,6 +7166,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^4.0.0
@@ -7191,6 +7194,7 @@ importers:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
@@ -7958,7 +7962,6 @@ importers:
       nconf: ^0.12.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7988,7 +7991,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/tinylicious-driver:
@@ -9745,7 +9747,6 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -9782,7 +9783,6 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/test/functional-tests:

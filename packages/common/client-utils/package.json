@@ -143,7 +143,7 @@
 			"eslint": [
 				"tsc",
 				"build:esnext",
-				"build:test:mocha",
+				"build:test:mocha:esm",
 				"build:test:jest",
 				"build:test:types"
 			],

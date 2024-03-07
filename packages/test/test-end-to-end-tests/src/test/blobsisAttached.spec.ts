@@ -171,7 +171,7 @@ describeCompat("blob handle isAttached", "NoCompat", (getTestObjectProvider, api
 		let detachedBlobStorage: MockDetachedBlobStorage;
 		let detachedDataStore: ITestFluidObject;
 		let map: ISharedMap;
-		let directory: SharedDirectory;
+		let directory: ISharedDirectory;
 		let text: string;
 		let blobHandle: IFluidHandle<ArrayBufferLike>;
 

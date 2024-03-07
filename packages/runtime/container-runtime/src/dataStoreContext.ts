@@ -122,7 +122,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /** Properties necessary for creating a local FluidDataStoreContext */
 export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
-	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel, id: string) => IDataStore;
+	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
@@ -1281,10 +1281,7 @@ export class LocalDetachedFluidDataStoreContext
 		this.detachedRuntimeCreation = true;
 		this.channelToDataStoreFn = props.channelToDataStoreFn;
 	}
-	private readonly channelToDataStoreFn: (
-		channel: IFluidDataStoreChannel,
-		id: string,
-	) => IDataStore;
+	private readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 
 	public async attachRuntime(
 		registry: IProvideFluidDataStoreFactory,
@@ -1306,8 +1303,6 @@ export class LocalDetachedFluidDataStoreContext
 			this.registry = entry.registry;
 
 			await super.bindRuntime(dataStoreChannel, false /* existing */);
-
-			return this.channelToDataStoreFn(dataStoreChannel, this.id);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
 			this.mc.logger.sendErrorEvent({ eventName: "AttachRuntimeError" }, error);
@@ -1317,6 +1312,8 @@ export class LocalDetachedFluidDataStoreContext
 			await this.channelDeferred.promise;
 			throw error;
 		}
+
+		return this.channelToDataStoreFn(dataStoreChannel);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
