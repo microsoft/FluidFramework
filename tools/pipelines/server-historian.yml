@@ -81,7 +81,7 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
 
 variables:
-  - template: /tools/pipelines/template/include-vars.yml@self
+  - template: /tools/pipelines/templates/include-vars.yml@self
     parameters:
       releaseImage: true
       publishOverride: ${{ parameters.publishOverride }}
