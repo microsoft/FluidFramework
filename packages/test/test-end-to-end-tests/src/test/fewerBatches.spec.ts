@@ -193,7 +193,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 			contents: {
 				type: "component",
 				contents: {
-					address: "default",
+					address: dataObject1.runtime.id,
 					contents: {
 						content: {
 							address: mapId,
