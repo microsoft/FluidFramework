@@ -31,7 +31,7 @@ export class WebpackTask extends LeafWithDoneFileTask {
 				sources: {},
 			};
 
-			// TODO: this is specific to repo set up.
+			// TODO: this is specific to the microsoft/FluidFramework repo set up.
 			const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
 			const srcFiles = await globFn(srcGlob);
 			for (const srcFile of srcFiles) {
