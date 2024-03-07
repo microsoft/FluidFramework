@@ -10,14 +10,12 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary/index.js";
 import {
-	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
 	GCFeatureMatrix,
 	gcTestModeKey,
 	GCVersion,
-	gcVersionUpgradeToV4Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -25,7 +23,6 @@ import {
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
-	stableGCVersion,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 	gcDisableThrowOnTombstoneLoadOptionName,
@@ -35,7 +32,7 @@ import {
 	disableDatastoreSweepKey,
 	gcDisableDataStoreSweepOptionName,
 } from "./gcDefinitions.js";
-import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers.js";
+import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -113,9 +110,7 @@ export function generateGCConfigs(
 		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
 	);
 
-	// If version upgrade is not enabled, fall back to the stable GC version.
-	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV4Key) === true ? nextGCVersion : stableGCVersion;
+	const gcVersionInEffect = getGCVersionInEffect(mc.config);
 
 	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
 	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC

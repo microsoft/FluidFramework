@@ -24,6 +24,7 @@ import {
 	GCFeatureMatrix,
 } from "./gcDefinitions.js";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
+import { getGCVersionInEffect } from "./gcHelpers.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -429,6 +430,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
+	event.gcVersion = getGCVersionInEffect(mc.config);
 
 	mc.logger.sendTelemetryEvent(event, error);
 }

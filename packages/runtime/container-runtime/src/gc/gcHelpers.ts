@@ -12,7 +12,15 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions.js";
+import type { IConfigProvider } from "@fluidframework/telemetry-utils";
+import {
+	GCFeatureMatrix,
+	GCVersion,
+	gcVersionUpgradeToV4Key,
+	IGCMetadata,
+	nextGCVersion,
+	stableGCVersion,
+} from "./gcDefinitions.js";
 import {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
@@ -25,6 +33,14 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 		return 0;
 	}
 	return metadata.gcFeature ?? 0;
+}
+
+/** Indicates what GC version is in effect for new GC data being written in this session */
+export function getGCVersionInEffect(configProvider: IConfigProvider): number {
+	// If version upgrade is not enabled, fall back to the stable GC version.
+	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
+		? nextGCVersion
+		: stableGCVersion;
 }
 
 /**
