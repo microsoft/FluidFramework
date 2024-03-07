@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"description": "Fluid server services",
 	"homepage": "https://fluidframework.com",
 	"repository": {

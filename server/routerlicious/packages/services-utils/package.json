@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-utils",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"description": "Fluid server services shared utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
