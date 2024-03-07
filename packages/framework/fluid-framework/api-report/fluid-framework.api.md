@@ -80,7 +80,7 @@ export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof Cont
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
+    dynamicObjectTypes?: LoadableObjectClass[];
     initialObjects: LoadableObjectClassRecord;
 }
 
@@ -275,10 +275,10 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
@@ -361,7 +361,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedMap>;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
     protected loadCore(storage: IChannelStorageService): Promise<void>;
@@ -389,7 +389,7 @@ export class SharedTree implements ITree {
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ITree>;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)

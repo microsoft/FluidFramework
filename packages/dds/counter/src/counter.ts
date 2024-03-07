@@ -54,7 +54,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 *
 	 * @returns newly create shared counter (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedCounter {
 		return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
 	}
 
@@ -71,7 +71,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 *
 	 * @returns a factory that creates and load SharedCounter
 	 */
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ISharedCounter> {
 		return new CounterFactory();
 	}
 

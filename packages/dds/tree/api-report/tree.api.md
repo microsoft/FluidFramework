@@ -1643,7 +1643,7 @@ export class SharedTree implements ITree {
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ITree>;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
@@ -1668,7 +1668,7 @@ export interface SharedTreeContentSnapshot {
 }
 
 // @internal
-export class SharedTreeFactory implements IChannelFactory {
+export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
@@ -1829,7 +1829,7 @@ export interface TreeEvent {
 }
 
 // @internal
-export class TreeFactory implements IChannelFactory {
+export class TreeFactory implements IChannelFactory<ITree> {
     constructor(options: SharedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;

@@ -18,7 +18,7 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @sealed
  */
-export class CounterFactory implements IChannelFactory {
+export class CounterFactory implements IChannelFactory<ISharedCounter> {
 	/**
 	 * Static value for {@link CounterFactory."type"}.
 	 */
