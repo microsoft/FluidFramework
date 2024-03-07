@@ -10,11 +10,8 @@ import {
 	FlexTreeNode,
 	LeafNodeSchema as FlexLeafNodeSchema,
 	isFlexTreeNode,
-	FlexObjectNodeSchema,
 	isLazy,
 	markEager,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
 	isFluidHandle,
 } from "../feature-libraries/index.js";
 import { leaf } from "../domains/index.js";
@@ -28,7 +25,7 @@ import {
 	mapStaticDispatchMap,
 	isTreeNode,
 } from "./proxies.js";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
+import { setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -359,12 +356,17 @@ export class SchemaFactory<
 				const customizable = this.constructor !== schema;
 				const proxyTarget = customizable ? this : undefined;
 
+				// eslint-disable-next-line unicorn/prefer-ternary
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
+					return createNodeProxy(
+						this.constructor as TreeNodeSchema,
+						input,
+						customizable,
+						proxyTarget,
+					) as schema;
 				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FlexObjectNodeSchema,
+						this.constructor as TreeNodeSchema,
 						input,
 						customizable,
 						proxyTarget,
@@ -501,12 +503,17 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
+				// eslint-disable-next-line unicorn/prefer-ternary
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
+					return createNodeProxy(
+						this.constructor as TreeNodeSchema,
+						input,
+						customizable,
+						proxyTarget,
+					) as schema;
 				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FlexMapNodeSchema,
+						this.constructor as TreeNodeSchema,
 						input,
 						customizable,
 						proxyTarget,
@@ -661,12 +668,17 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
+				// eslint-disable-next-line unicorn/prefer-ternary
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
+					return createNodeProxy(
+						this.constructor as TreeNodeSchema,
+						input,
+						customizable,
+						proxyTarget,
+					) as schema;
 				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FlexFieldNodeSchema,
+						this.constructor as TreeNodeSchema,
 						[...input],
 						customizable,
 						proxyTarget,

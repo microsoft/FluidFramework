@@ -40,12 +40,16 @@ import {
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
+	type TreeNodeSchema,
+	type ImplicitFieldSchema,
+	FieldSchema,
 } from "./schemaTypes.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
+import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -125,26 +129,29 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	let output: TreeNode | TreeValue;
+	if (schemaIsLeaf(schema)) {
+		// Can't use `??` here since null is a valid TreeValue.
+		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
+		return flexNode.value;
+	}
+
 	const classSchema = getClassSchema(schema);
-	if (classSchema !== undefined) {
-		if (typeof classSchema === "function") {
-			const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-			output = new simpleSchema(flexNode);
-		} else {
-			output = (schema as unknown as { create: (data: FlexTreeNode) => TreeNode }).create(
-				flexNode,
-			);
-		}
-	} else {
+	if (classSchema === undefined) {
+		throw new Error("Couldn't find ClassSchema. TODO");
 		// Fallback to createNodeProxy if needed.
 		// TODO: maybe remove this fallback and error once migration to class based schema is done.
-		output = createNodeProxy(flexNode, false);
+		// output = createNodeProxy(flexNode, false);
+	} else if (typeof classSchema === "function") {
+		// TODO: document this
+		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
+		return new simpleSchema(flexNode);
+	} else {
+		return (schema as unknown as { create: (data: FlexTreeNode) => TreeNode }).create(flexNode);
 	}
-	return output;
 }
 
 /**
+ * @param simpleNodeSchema - TODO
  * @param flexNode - underlying tree node which this proxy should wrap.
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
@@ -153,23 +160,24 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
  * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide needed functionality depending on the schema kind.
  */
 export function createNodeProxy(
+	simpleNodeSchema: TreeNodeSchema,
 	flexNode: FlexTreeNode,
 	allowAdditionalProperties: boolean,
 	targetObject?: object,
 ): TreeNode | TreeValue {
-	const schema = flexNode.schema;
-	if (schemaIsLeaf(schema)) {
+	const flexSchema = flexNode.schema;
+	if (schemaIsLeaf(flexSchema)) {
 		// Can't use `??` here since null is a valid TreeValue.
 		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
 		return flexNode.value;
 	}
 	let proxy: TreeNode;
-	if (schemaIsMap(schema)) {
+	if (schemaIsMap(flexSchema)) {
 		proxy = createMapProxy(allowAdditionalProperties, targetObject);
-	} else if (schemaIsFieldNode(schema)) {
+	} else if (schemaIsFieldNode(flexSchema)) {
 		proxy = createArrayNodeProxy(allowAdditionalProperties, targetObject);
-	} else if (schemaIsObjectNode(schema)) {
-		proxy = createObjectProxy(schema, allowAdditionalProperties, targetObject);
+	} else if (schemaIsObjectNode(flexSchema)) {
+		proxy = createObjectProxy(simpleNodeSchema, allowAdditionalProperties, targetObject);
 	} else {
 		fail("unrecognized node kind");
 	}
@@ -183,8 +191,8 @@ export function createNodeProxy(
  * @param customTargetObject - Target object of the proxy.
  * If not provided `{}` is used for the target.
  */
-export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
-	schema: TSchema,
+export function createObjectProxy(
+	schema: TreeNodeSchema,
 	allowAdditionalProperties: boolean,
 	targetObject: object = {},
 ): TreeNode {
@@ -199,7 +207,10 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy(targetObject, {
 		get(target, key): unknown {
-			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
+			const flexKey = getFlexObjectKey(key as FieldKey, schema);
+			const field = getFlexNode(proxy).tryGetField(flexKey);
+
+			// TODO: document this
 			if (field !== undefined) {
 				return getProxyForField(field);
 			}
@@ -212,10 +223,10 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
 
-			// TODO: map key
+			const flexKey = getFlexObjectKey(key as FieldKey, schema);
+			const fieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
 
-			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
-
+			// TODO: document this
 			if (fieldSchema === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
 			}
@@ -223,7 +234,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
 			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 			assert(typeof key === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, brand(key), fieldSchema);
+			const field = getBoxedField(flexNode, flexKey, fieldSchema);
 
 			switch (field.schema.kind) {
 				case FieldKinds.required:
@@ -255,25 +266,24 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			return true;
 		},
 		has: (target, key) => {
-			// TODO: map key
-			// If schema was specified with a `stableName`, we need to convert from the developer-facing key
-			// to the stable name prior to lookup on the FlexNode.
+			const fields = schema.info as Record<string, ImplicitFieldSchema>;
 			return (
-				schema.objectNodeFields.has(key as FieldKey) ||
+				fields[key as FieldKey] !== undefined ||
 				(allowAdditionalProperties ? Reflect.has(target, key) : false)
 			);
 		},
 		ownKeys: (target) => {
-			// TODO: map keys
+			const fields = schema.info as Record<string, ImplicitFieldSchema>;
 			return [
-				...schema.objectNodeFields.keys(),
+				...Object.keys(fields),
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
-			// TODO: map key
-			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
+			const flexKey = getFlexObjectKey(key as FieldKey, schema);
+			const field = getFlexNode(proxy).tryGetField(flexKey);
 
+			// TODO: document this
 			if (field === undefined) {
 				return allowAdditionalProperties
 					? Reflect.getOwnPropertyDescriptor(target, key)
@@ -291,6 +301,22 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 		},
 	}) as TreeNode;
 	return proxy;
+}
+
+/**
+ * TODO
+ * @param simpleKey - TODO
+ * @param classSchema - TODO
+ */
+function getFlexObjectKey(simpleKey: string, classSchema: TreeNodeSchema): FieldKey {
+	const fields = classSchema.info as Record<string, ImplicitFieldSchema>;
+	// TODO: Document when this can be undefined and what it means
+	const field = fields[simpleKey];
+	return brand(
+		field instanceof FieldSchema && field.props?.stableName !== undefined
+			? field.props.stableName
+			: simpleKey,
+	);
 }
 
 /**
@@ -819,8 +845,8 @@ function createMapProxy(
 
 /**
  * Create a proxy to a {@link TreeObjectNode} that is backed by a raw object node (see {@link createRawNode}).
- * @param schema - the schema of the object node
- * @param content - the content to be stored in the raw node.
+ * @param simpleNodeSchema - The schema of the object node
+ * @param content - The content to be stored in the raw node.
  * A copy of content is stored, the input `content` is not modified and can be safely reused in another call to {@link createRawObjectProxy}.
  * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
  * Otherwise setting of unexpected properties will error.
@@ -831,26 +857,28 @@ function createMapProxy(
  * Most of its properties and methods will error if read/called.
  */
 export function createRawNodeProxy(
-	schema: FlexTreeNodeSchema,
+	simpleNodeSchema: TreeNodeSchema,
 	content: InsertableTypedNode<TreeNodeSchemaClass> & object,
 	allowAdditionalProperties: boolean,
 	target?: object,
 ): Unhydrated<TreeNode> {
+	const flexSchema = getFlexSchema(simpleNodeSchema);
+
 	// Shallow copy the content and then add the type name symbol to it.
 	let flexNode: RawTreeNode<FlexTreeNodeSchema, InsertableTypedNode<TreeNodeSchemaClass>>;
 	let proxy: TreeNode;
-	if (schema instanceof FlexObjectNodeSchema) {
-		const contentCopy = copyContent(schema.name, content);
-		flexNode = createRawNode(schema, contentCopy);
-		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
-	} else if (schema instanceof FlexFieldNodeSchema) {
+	if (flexSchema instanceof FlexObjectNodeSchema) {
+		const contentCopy = copyContent(flexSchema.name, content);
+		flexNode = createRawNode(flexSchema, contentCopy);
+		proxy = createObjectProxy(simpleNodeSchema, allowAdditionalProperties, target);
+	} else if (flexSchema instanceof FlexFieldNodeSchema) {
 		// simple-tree uses field nodes exclusively to represent array nodes
-		const contentCopy = copyContent(schema.name, content);
-		flexNode = createRawNode(schema, contentCopy);
+		const contentCopy = copyContent(flexSchema.name, content);
+		flexNode = createRawNode(flexSchema, contentCopy);
 		proxy = createArrayNodeProxy(allowAdditionalProperties, target);
-	} else if (schema instanceof FlexMapNodeSchema) {
-		const contentCopy = copyContent(schema.name, content);
-		flexNode = createRawNode(schema, contentCopy);
+	} else if (flexSchema instanceof FlexMapNodeSchema) {
+		const contentCopy = copyContent(flexSchema.name, content);
+		flexNode = createRawNode(flexSchema, contentCopy);
 		proxy = createMapProxy(allowAdditionalProperties, target);
 	} else {
 		fail("Unrecognized content schema");
