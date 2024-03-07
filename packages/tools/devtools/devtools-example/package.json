@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/devtools"
+		"directory": "packages/tools/devtools/devtools-example"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -23,8 +23,8 @@
 		"format-and-compile": "npm run format && npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"start": "concurrently \"npm:watch:*\" npm:start:client",
 		"start:client": "webpack serve --config webpack.config.cjs",
@@ -34,8 +34,8 @@
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
-		"watch:devtools-core": "tsc --watch --project ../../packages/tools/devtools/devtools-core/tsconfig.json --preserveWatchOutput",
-		"watch:devtools-view": "tsc --watch --project ../../packages/tools/devtools/devtools-view/tsconfig.json --preserveWatchOutput",
+		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
+		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.json --preserveWatchOutput",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
