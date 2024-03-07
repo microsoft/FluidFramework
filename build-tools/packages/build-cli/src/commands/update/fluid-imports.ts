@@ -13,10 +13,7 @@ import { BaseCommand } from "../../base";
 type ApiLevel = "internal" | "public" | "alpha" | "beta";
 
 /**
- * Renames all d.ts files in the lib/ folder to .d.mts.
- *
- * @remarks
- * This command is primarily used in our build system to rename type declarations in ESM builds.
+ * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.).
  */
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
