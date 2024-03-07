@@ -1,5 +1,5 @@
 ---
-"@fluid-experimental/data-object-base": major
+"@fluid-experimental/data-object-base": minor
 ---
 
 @fluidframework/data-object-base demoted to experimental status
