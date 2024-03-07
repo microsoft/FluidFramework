@@ -244,9 +244,9 @@ export abstract class LeafTask extends Task {
 			cwd: this.node.pkg.directory,
 			env: {
 				...process.env,
-				PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${
-					path.delimiter
-				}${process.env["PATH"]}`,
+				PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${
+					process.env["PATH"]
+				}`,
 			},
 		});
 	}
@@ -510,7 +510,11 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	protected get doneFile(): string {
 		const name = path.parse(this.executable).name.replace(/\s/g, "_");
 		// use 8 char of the sha256 hash of the command to distinguish different tasks
-		const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
+		const hash = crypto
+			.createHash("sha256")
+			.update(this.command)
+			.digest("hex")
+			.substring(0, 8);
 		return `${name}-${hash}.done.build.log`;
 	}
 
@@ -537,6 +541,7 @@ export class UnknownLeafTask extends LeafTask {
 			return true;
 		}
 		// Because we don't know, it is always out of date and need to rebuild
+		this.traceTrigger("Unknown task");
 		return false;
 	}
 }

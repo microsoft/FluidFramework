@@ -47,15 +47,11 @@ export class PactMap<T = unknown> extends SharedObject<IPactMapEvents> implement
     static getFactory(): IChannelFactory;
     getPending(key: string): T | undefined;
     getWithDetails(key: string): IAcceptedPact<T> | undefined;
-    // (undocumented)
     protected initializeLocalCore(): void;
     isPending(key: string): boolean;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: T | undefined): void;
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;

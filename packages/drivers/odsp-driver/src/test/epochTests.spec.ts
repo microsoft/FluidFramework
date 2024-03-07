@@ -10,13 +10,14 @@ import {
 	IOdspResolvedUrl,
 	ICacheEntry,
 	IEntry,
+	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
-import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
-import { LocalPersistentCache } from "../odspCache";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
+import { IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
+import { EpochTracker } from "../epochTracker.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -57,15 +58,12 @@ describe("Tests for Epoch Tracker", () => {
 
 	it("defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs policy", () => {
 		// This is the maximum allowed value per the policy - 5 days
-		const maximumCacheDurationMs: Exclude<
+		const expected: Exclude<
 			IDocumentStorageServicePolicies["maximumCacheDurationMs"],
 			undefined
 		> = 432000000;
 
-		assert(
-			defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs,
-			"Actual cache expiry used must meet the policy",
-		);
+		assert(maximumCacheDurationMs <= expected, "Actual cache expiry used must meet the policy");
 	});
 
 	it("Cache, old versions", async () => {

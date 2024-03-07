@@ -13,14 +13,14 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	toInstrumentedOdspTokenFetcher,
-} from "./odspUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils";
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils.js";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();

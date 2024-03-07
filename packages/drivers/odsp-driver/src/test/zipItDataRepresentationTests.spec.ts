@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ReadBuffer } from "../ReadBufferUtils";
-import { TreeBuilderSerializer } from "../WriteBufferUtils";
+import { ReadBuffer } from "../ReadBufferUtils.js";
+import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
 import {
 	TreeBuilder,
 	BlobCore,
@@ -19,7 +19,7 @@ import {
 	assertNumberInstance,
 	assertBoolInstance,
 	IStringElement,
-} from "../zipItDataRepresentationUtils";
+} from "../zipItDataRepresentationUtils.js";
 
 function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
 	if (node1 instanceof NodeCore) {

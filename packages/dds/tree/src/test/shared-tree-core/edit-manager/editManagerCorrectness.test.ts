@@ -496,7 +496,7 @@ export function testCorrectness() {
 							sequenceNumber: brand(1),
 						},
 					],
-					branches: new Map(),
+					peerLocalBranches: new Map(),
 				});
 				manager.addSequencedChange(
 					{
