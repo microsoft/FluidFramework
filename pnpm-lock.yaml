@@ -10486,7 +10486,6 @@ importers:
 
   packages/test/test-service-load:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
@@ -10558,7 +10557,6 @@ importers:
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
