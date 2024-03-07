@@ -27,7 +27,7 @@ import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerS
 import { IPendingContainerState } from "./container.js";
 
 export class SerializedStateManager {
-	private readonly savedOps: ISequencedDocumentMessage[] = [];
+	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot:
 		| {
 				tree: ISnapshotTree;
@@ -55,9 +55,9 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
-	public addSavedOp(message: ISequencedDocumentMessage) {
+	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.savedOps.push(message);
+			this.processedOps.push(message);
 		}
 	}
 
@@ -178,7 +178,7 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.savedOps.length,
+				savedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
@@ -194,7 +194,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
-					savedOps: this.savedOps,
+					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
