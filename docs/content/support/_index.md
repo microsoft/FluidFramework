@@ -3,7 +3,7 @@ title: Support
 description: Get help and support for Fluid Framework.
 ---
 
-If you have any questions or need assistance with Fluid Framework, please reach out to our support team. We are here to help!
+If you have any questions or need assistance with Fluid Framework, please reach out to us on GitHub. We are here to help!
 
 ### Q: How do I get started with Fluid Framework?
 
