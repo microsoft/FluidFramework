@@ -7,41 +7,44 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import {
+import type {
 	IIdCompressor,
 	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
 } from "@fluidframework/id-compressor";
-import {
+import type {
 	BaseFuzzTestState,
+	AsyncGenerator,
+	IRandom,
+	AsyncReducer,
+	SaveInfo,
+} from "@fluid-private/stochastic-test-utils";
+import {
 	chainAsync,
 	createFuzzDescribe,
 	defaultOptions,
 	done,
 	ExitBehavior,
-	AsyncGenerator,
 	asyncGeneratorFromArray,
 	interleaveAsync,
-	IRandom,
 	makeRandom,
 	performFuzzActionsAsync,
-	AsyncReducer,
-	SaveInfo,
 	saveOpsToFile,
 	takeAsync,
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
-	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
-import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FuzzTestMinimizer, MinimizationTransform } from "./minification.js";
+import type { MinimizationTransform } from "./minification.js";
+import { FuzzTestMinimizer } from "./minification.js";
 import {
 	hasStashData,
 	type Client,

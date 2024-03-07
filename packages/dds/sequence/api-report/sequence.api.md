@@ -530,7 +530,6 @@ export class SharedIntervalCollection extends SharedObject implements ISharedInt
     // (undocumented)
     getIntervalCollection(label: string): IIntervalCollection<Interval>;
     protected getIntervalCollectionPath(label: string): string;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
@@ -550,7 +549,6 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): SharedIntervalCollection;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedIntervalCollection>;
     // (undocumented)
     static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -562,12 +560,10 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     annotateRange(start: number, end: number, props: PropertySet): void;
-    // (undocumented)
     protected applyStashedOp(content: any): void;
     // (undocumented)
     protected client: Client;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    // (undocumented)
     protected didAttach(): void;
     getContainingSegment(pos: number): {
         segment: T | undefined;
@@ -592,23 +588,18 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
     // (undocumented)
     id: string;
-    // (undocumented)
     protected initializeLocalCore(): void;
     insertAtReferencePosition(pos: ReferencePosition, segment: T): void;
     insertFromSpec(pos: number, spec: IJSONSegment): void;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     get loaded(): Promise<void>;
     protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     obliterateRange(start: number, end: number): void;
-    // (undocumented)
     protected onConnect(): void;
-    // (undocumented)
     protected onDisconnect(): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
-    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: IFluidSerializer): void;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
@@ -616,11 +607,9 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     removeRange(start: number, end: number): void;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
-    // (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly segmentFromSpec: (spec: IJSONSegment) => ISegment;
-    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start?: number, end?: number, accum?: TClientData, splitRange?: boolean): void;
 }
@@ -669,9 +658,7 @@ export class SharedStringFactory implements IChannelFactory {
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): SharedString;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
     // (undocumented)
     static segmentFromSpec(spec: any): SharedStringSegment;

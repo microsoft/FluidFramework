@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import type {
@@ -927,17 +927,17 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
-			sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
+			sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 		});
 
 		// This functionality is used in Word and FlowView's "add comment" functionality.
@@ -996,7 +996,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					story: comment2Text.handle,
 				},
 			});
-			const nestedMap = SharedMap.create(dataObject1.runtime);
+			const nestedMap = SharedMap.create(dataObject1.runtime, "nestedMap");
 			nestedMap.set("nestedKey", "nestedValue");
 			intervalCollection1.add({ start: 8, end: 9, props: { story: nestedMap.handle } });
 			await provider.ensureSynchronized();
@@ -1033,7 +1033,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			const interval3From3Properties = serialized3[2].properties;
 			assert(interval3From3Properties);
 			const mapFrom3 = await (
-				interval3From3Properties.story as IFluidHandle<SharedMap>
+				interval3From3Properties.story as IFluidHandle<ISharedMap>
 			).get();
 			assert.equal(
 				mapFrom3.get("nestedKey"),

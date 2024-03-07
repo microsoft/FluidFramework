@@ -4,7 +4,7 @@
  */
 
 import { type IEvent, type IEventProvider } from "@fluidframework/core-interfaces";
-import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages";
+import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages.js";
 
 /**
  * Events emitted by {@link IMessageRelay}.

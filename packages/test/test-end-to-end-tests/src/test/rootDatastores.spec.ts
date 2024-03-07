@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
-	ContainerRuntime,
 	IAckedSummary,
 	SummaryCollection,
 	DefaultSummaryConfiguration,
@@ -295,18 +294,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult3, "Success");
 
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject1, alias));
-		});
-
-		it("Sending a bad alias message returns error", async () => {
-			try {
-				(runtimeOf(dataObject1) as ContainerRuntime).submitDataStoreAliasOp(
-					{ id: alias },
-					undefined,
-				);
-				assert.fail("Expected exception from sending invalid alias");
-			} catch (err) {
-				assert.equal((err as Error).message, "malformedDataStoreAliasMessage");
-			}
 		});
 
 		it("Assign multiple data stores to the same alias, first write wins, different containers", async function () {

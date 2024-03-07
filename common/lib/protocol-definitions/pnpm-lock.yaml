@@ -4,9 +4,6 @@ overrides:
   sharp: ^0.33.2
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.39.1':
-    hash: 5jttfhtxwdhxb7mhu7m3cyak6i
-    path: ../../../patches/@microsoft__api-extractor@7.39.1.patch
   tsc-multi@1.1.0:
     hash: 5vqev4kbz4ggrzgqvobqxx6cgq
     path: ../../../patches/tsc-multi@1.1.0.patch
@@ -21,7 +18,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@2.0.0
-      '@microsoft/api-extractor': ^7.39.1
+      '@microsoft/api-extractor': ^7.42.3
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       eslint: ~8.55.0
@@ -37,7 +34,7 @@ importers:
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/2.0.0
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
+      '@microsoft/api-extractor': 7.42.3
       concurrently: 6.5.1
       copyfiles: 2.4.1
       eslint: 8.55.0
@@ -195,7 +192,7 @@ packages:
       '@fluid-tools/version-tools': 0.26.1_typescript@5.1.6
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/bundle-size-tools': 0.26.1
-      '@microsoft/api-extractor': 7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i
+      '@microsoft/api-extractor': 7.42.3
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@5.1.6
       '@oclif/plugin-commands': 3.0.3
@@ -698,28 +695,29 @@ packages:
       read-yaml-file: 1.1.0
     dev: true
 
-  /@microsoft/api-extractor-model/7.28.4:
-    resolution: {integrity: sha512-vucgyPmgHrJ/D4/xQywAmjTmSfxAx2/aDmD6TkIoLu51FdsAfuWRbijWA48AePy60OO+l+mmy9p2P/CEeBZqig==}
+  /@microsoft/api-extractor-model/7.28.13:
+    resolution: {integrity: sha512-39v/JyldX4MS9uzHcdfmjjfS6cYGAoXV+io8B5a338pkHiSt+gy2eXQ0Q7cGFJ7quSa1VqqlMdlPrB6sLR/cAw==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.63.0
+      '@rushstack/node-core-library': 4.0.2
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor/7.39.1_5jttfhtxwdhxb7mhu7m3cyak6i:
-    resolution: {integrity: sha512-V0HtCufWa8hZZvSmlEzQZfINcJkHAU/bmpyJQj6w+zpI87EkR8DuBOW6RWrO9c7mUYFZoDaNgUTyKo83ytv+QQ==}
+  /@microsoft/api-extractor/7.42.3:
+    resolution: {integrity: sha512-JNLJFpGHz6ekjS6bvYXxUBeRGnSHeCMFNvRbCQ+7XXB/ZFrgLSMPwWtEq40AiWAy+oyG5a4RSNwdJTp0B2USvQ==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.28.4
+      '@microsoft/api-extractor-model': 7.28.13
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.63.0
-      '@rushstack/rig-package': 0.5.1
-      '@rushstack/ts-command-line': 4.17.1
-      colors: 1.2.5
+      '@rushstack/node-core-library': 4.0.2
+      '@rushstack/rig-package': 0.5.2
+      '@rushstack/terminal': 0.10.0
+      '@rushstack/ts-command-line': 4.19.1
       lodash: 4.17.21
+      minimatch: 3.0.8
       resolve: 1.22.8
       semver: 7.5.4
       source-map: 0.6.1
@@ -727,7 +725,6 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
     dev: true
-    patched: true
 
   /@microsoft/tsdoc-config/0.16.2:
     resolution: {integrity: sha512-OGiIzzoBLgWWR0UdRJX98oYO+XKGf7tiK4Zk6tQ/E4IJqGCe7dvkTvgDZV5cFJUzLGDOjeAXrnZoA6QkVySuxw==}
@@ -1480,15 +1477,14 @@ packages:
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/node-core-library/3.63.0:
-    resolution: {integrity: sha512-Q7B3dVpBQF1v+mUfxNcNZh5uHVR8ntcnkN5GYjbBLrxUYHBGKbnCM+OdcN+hzCpFlLBH6Ob0dEHhZ0spQwf24A==}
+  /@rushstack/node-core-library/4.0.2:
+    resolution: {integrity: sha512-hyES82QVpkfQMeBMteQUnrhASL/KHPhd7iJ8euduwNJG4mu2GSOKybf0rOEjOm1Wz7CwJEUm9y0yD7jg2C1bfg==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
       '@types/node':
         optional: true
     dependencies:
-      colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
       jju: 1.4.0
@@ -1497,24 +1493,38 @@ packages:
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/rig-package/0.5.1:
-    resolution: {integrity: sha512-pXRYSe29TjRw7rqxD4WS3HN/sRSbfr+tJs4a9uuaSIBAITbUggygdhuG0VrO0EO+QqH91GhYMN4S6KRtOEmGVA==}
+  /@rushstack/rig-package/0.5.2:
+    resolution: {integrity: sha512-mUDecIJeH3yYGZs2a48k+pbhM6JYwWlgjs2Ca5f2n1G2/kgdgP9D/07oglEGf6mRyXEnazhEENeYTSNDRCwdqA==}
     dependencies:
       resolve: 1.22.8
       strip-json-comments: 3.1.1
+    dev: true
+
+  /@rushstack/terminal/0.10.0:
+    resolution: {integrity: sha512-UbELbXnUdc7EKwfH2sb8ChqNgapUOdqcCIdQP4NGxBpTZV2sQyeekuK3zmfQSa/MN+/7b4kBogl2wq0vpkpYGw==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@rushstack/node-core-library': 4.0.2
+      supports-color: 8.1.1
     dev: true
 
   /@rushstack/tree-pattern/0.3.1:
     resolution: {integrity: sha512-2yn4qTkXZTByQffL3ymS6viYuyZk3YnJT49bopGBlm9Thtyfa7iuFUV6tt+09YIRO1sjmSWILf4dPj6+Dr5YVA==}
     dev: true
 
-  /@rushstack/ts-command-line/4.17.1:
-    resolution: {integrity: sha512-2jweO1O57BYP5qdBGl6apJLB+aRIn5ccIRTPDyULh0KMwVzFqWtw6IZWt1qtUoZD/pD2RNkIOosH6Cq45rIYeg==}
+  /@rushstack/ts-command-line/4.19.1:
+    resolution: {integrity: sha512-J7H768dgcpG60d7skZ5uSSwyCZs/S2HrWP1Ds8d1qYAyaaeJmpmmLr9BVw97RjFzmQPOYnoXcKA4GkqDCkduQg==}
     dependencies:
+      '@rushstack/terminal': 0.10.0
       '@types/argparse': 1.0.38
       argparse: 1.0.10
-      colors: 1.2.5
       string-argv: 0.3.2
+    transitivePeerDependencies:
+      - '@types/node'
     dev: true
 
   /@sigstore/protobuf-specs/0.1.0:
@@ -6227,6 +6237,12 @@ packages:
   /min-indent/1.0.1:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
+    dev: true
+
+  /minimatch/3.0.8:
+    resolution: {integrity: sha512-6FsRAQsxQ61mw+qP1ZzbL9Bc78x2p5OqNgNpnoAFLTrX8n5Kxph0CsnhmKKNXTWjXqU5L0pGPR7hYk+XWZr60Q==}
+    dependencies:
+      brace-expansion: 1.1.11
     dev: true
 
   /minimatch/3.1.2:
