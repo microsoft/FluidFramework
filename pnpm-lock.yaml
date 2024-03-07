@@ -79,11 +79,9 @@ importers:
 
   azure/packages/azure-local-service:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
-      '@microsoft/api-extractor': ^7.42.3
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
       pm2: ^5.3.1
@@ -95,11 +93,9 @@ importers:
     dependencies:
       tinylicious: 3.1.0-240326
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
       eslint: 8.55.0
       eslint-config-prettier: 9.0.0_eslint@8.55.0
       pm2: 5.3.1
@@ -6854,7 +6850,6 @@ importers:
       random-js: ^2.1.0
       replace-in-file: ^6.3.5
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -6902,7 +6897,6 @@ importers:
       random-js: 2.1.0
       replace-in-file: 6.3.5
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-object-base:
