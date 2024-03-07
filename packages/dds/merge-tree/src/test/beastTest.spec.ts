@@ -741,13 +741,11 @@ export function TestPack(verbose = true) {
 	function clientServer(startFile?: string, initRounds = 1000) {
 		const clientCount = 5;
 		const fileSegCount = 0;
-		let initString = "";
-
-		if (!startFile) {
-			initString = "don't ask for whom the bell tolls; it tolls for thee";
-		}
 		const server = new TestServer();
-		server.insertTextLocal(0, initString);
+		const initString = !startFile ? "don't ask for whom the bell tolls; it tolls for thee" : "";
+		if (initString.length > 0) {
+			server.insertTextLocal(0, initString);
+		}
 		server.measureOps = true;
 		if (startFile) {
 			loadTextFromFile(startFile, server.mergeTree, fileSegCount);
@@ -756,7 +754,9 @@ export function TestPack(verbose = true) {
 		const clients = new Array<TestClient>(clientCount);
 		for (let i = 0; i < clientCount; i++) {
 			clients[i] = new TestClient();
-			clients[i].insertTextLocal(0, initString);
+			if (initString.length > 0) {
+				clients[i].insertTextLocal(0, initString);
+			}
 			clients[i].measureOps = true;
 			if (startFile) {
 				loadTextFromFile(startFile, clients[i].mergeTree, fileSegCount);

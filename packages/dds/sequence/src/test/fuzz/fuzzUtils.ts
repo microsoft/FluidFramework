@@ -285,7 +285,7 @@ export function createSharedStringGeneratorOperations(
 		return {
 			type: "addText",
 			index: random.integer(0, client.channel.getLength()),
-			content: random.string(random.integer(0, options.maxInsertLength)),
+			content: random.string(random.integer(1, options.maxInsertLength)),
 		};
 	}
 
