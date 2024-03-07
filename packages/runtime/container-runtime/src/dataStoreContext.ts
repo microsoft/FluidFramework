@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -251,7 +251,7 @@ export abstract class FluidDataStoreContext
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
 	protected pending: ISequencedDocumentMessage[] | undefined = [];
-	protected channelDeferred: Deferred<IFluidDataStoreChannel> | undefined;
+	protected channelP: Promise<IFluidDataStoreChannel> | undefined;
 	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
@@ -348,9 +348,9 @@ export abstract class FluidDataStoreContext
 		this._disposed = true;
 
 		// Dispose any pending runtime after it gets fulfilled
-		// Errors are logged where this.channelDeferred is consumed/generated (realizeCore(), bindRuntime())
-		if (this.channelDeferred) {
-			this.channelDeferred.promise
+		// Errors are logged where this.channelP is consumed/generated (realizeCore(), bindRuntime())
+		if (this.channelP) {
+			this.channelP
 				.then((runtime) => {
 					runtime.dispose();
 				})
@@ -391,9 +391,8 @@ export abstract class FluidDataStoreContext
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
 		assert(!this.detachedRuntimeCreation, 0x13d /* "Detached runtime creation on realize()" */);
-		if (!this.channelDeferred) {
-			this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
-			this.realizeCore(this.existing).catch((error) => {
+		if (!this.channelP) {
+			this.channelP = this.realizeCore(this.existing).catch((error) => {
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
 					error,
 					"realizeFluidDataStoreContext",
@@ -404,15 +403,15 @@ export abstract class FluidDataStoreContext
 						fluidDataStoreId: this.id,
 					}),
 				);
-				this.channelDeferred?.reject(errorWrapped);
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				throw errorWrapped;
 			});
 		}
-		return this.channelDeferred.promise;
+		return this.channelP;
 	}
 
-	protected async factoryFromPackagePath(packages?: readonly string[]) {
-		assert(this.pkg === packages, 0x13e /* "Unexpected package path" */);
+	protected async factoryFromPackagePath() {
+		const packages = this.pkg;
 		if (packages === undefined) {
 			this.rejectDeferredRealize("packages is undefined");
 		}
@@ -441,25 +440,22 @@ export abstract class FluidDataStoreContext
 			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
 		}
 
-		return { factory, registry };
+		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
+		this.registry = registry;
+
+		return factory;
 	}
 
-	private async realizeCore(existing: boolean): Promise<void> {
+	private async realizeCore(existing: boolean) {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
 		// It is important that this be in sync with the pending ops, and also
 		// that it is set here, before bindRuntime is called.
 		this._baseSnapshot = details.snapshot;
 		this.baseSnapshotSequenceNumber = details.sequenceNumber;
-		const packages = details.pkg;
+		assert(this.pkg === details.pkg, 0x13e /* "Unexpected package path" */);
 
-		const { factory, registry } = await this.factoryFromPackagePath(packages);
-
-		assert(
-			this.registry === undefined,
-			0x13f /* "datastore context registry is already set" */,
-		);
-		this.registry = registry;
+		const factory = await this.factoryFromPackagePath();
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
@@ -469,6 +465,8 @@ export abstract class FluidDataStoreContext
 		if (this.disposed) {
 			channel.dispose();
 		}
+
+		return channel;
 	}
 
 	/**
@@ -789,7 +787,6 @@ export abstract class FluidDataStoreContext
 			!this.detachedRuntimeCreation,
 			0x148 /* "Detached runtime creation on runtime bind" */,
 		);
-		assert(this.channelDeferred !== undefined, 0x149 /* "Undefined channel deferral" */);
 		assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
 
 		if (existing) {
@@ -809,9 +806,9 @@ export abstract class FluidDataStoreContext
 		} else {
 			assert(this.pending?.length === 0, "no pending ops");
 
-			// Load the handle to the data store's entryPoint to make sure that for a detached data store, the entryPoint
-			// initialization function is called before the data store gets attached and potentially connected to the
-			// delta stream, so it gets a chance to do things while the data store is still "purely local".
+			// Execute data store's entry point to make sure that for a local (aka detached from container) data store, the
+			// entryPoint initialization function is called before the data store gets attached and potentially connected to
+			// the delta stream, so it gets a chance to do things while the data store is still "purely local".
 			// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
 			// of data store factories tends to construct the data object (at least kick off an async method that returns
 			// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
@@ -836,9 +833,6 @@ export abstract class FluidDataStoreContext
 		 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
 		 */
 		this.updateChannelUsedRoutes();
-
-		// And notify the pending promise it is now available
-		this.channelDeferred.resolve(this.channel);
 
 		if (!existing) {
 			// Test immediate attachment of data store.
@@ -1290,30 +1284,33 @@ export class LocalDetachedFluidDataStoreContext
 		assert(this.detachedRuntimeCreation, 0x154 /* "runtime creation is already attached" */);
 		this.detachedRuntimeCreation = false;
 
-		assert(this.channelDeferred === undefined, 0x155 /* "channel deferral is already set" */);
-		this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
+		assert(this.channelP === undefined, 0x155 /* "channel deferral is already set" */);
 
-		try {
-			const factory = registry.IFluidDataStoreFactory;
+		this.channelP = Promise.resolve()
+			.then(async () => {
+				const factory = registry.IFluidDataStoreFactory;
 
-			const entry = await this.factoryFromPackagePath(this.pkg);
-			assert(entry.factory === factory, 0x156 /* "Unexpected factory for package path" */);
+				const factory2 = await this.factoryFromPackagePath();
+				assert(factory2 === factory, 0x156 /* "Unexpected factory for package path" */);
 
-			assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
-			this.registry = entry.registry;
+				await super.bindRuntime(dataStoreChannel, false /* existing */);
 
-			await super.bindRuntime(dataStoreChannel, false /* existing */);
-		} catch (error) {
-			this.channelDeferred?.reject(error);
-			this.mc.logger.sendErrorEvent({ eventName: "AttachRuntimeError" }, error);
-			// The following two lines result in same exception thrown.
-			// But we need to ensure that this.channelDeferred.promise is "observed", as otherwise
-			// out UT reports unhandled exception
-			await this.channelDeferred.promise;
-			throw error;
-		}
+				assert(
+					!(await this.isRoot()),
+					"there are no more createRootDataStore() kind of APIs!",
+				);
 
-		return this.channelToDataStoreFn(dataStoreChannel);
+				return dataStoreChannel;
+			})
+			.catch((error) => {
+				this.mc.logger.sendErrorEvent({ eventName: "AttachRuntimeError" }, error);
+				// The following two lines result in same exception thrown.
+				// But we need to ensure that this.channelDeferred.promise is "observed", as otherwise
+				// out UT reports unhandled exception
+				throw error;
+			});
+
+		return this.channelToDataStoreFn(await this.channelP);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
