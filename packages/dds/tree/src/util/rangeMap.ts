@@ -170,7 +170,7 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
  * TODO: We may find ways to mitigate the code duplication between set and delete, and we need to better
  * document the API.  AB#7413
  */
-export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
+export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): boolean {
 	const end = start + length - 1;
 
 	let iBefore = -1;
@@ -190,7 +190,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	if (numOverlappingEntries === 0) {
 		// No entry will be removed
-		return;
+		return false;
 	}
 
 	const iFirst = iBefore + 1;
@@ -226,4 +226,5 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 			}
 		}
 	}
+	return true;
 }

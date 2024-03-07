@@ -127,3 +127,12 @@ export {
 	IdAllocationState,
 	fakeIdAllocator,
 } from "./idAllocator.js";
+
+export {
+	IRange,
+	NestedRangeMap,
+	tryGetFromNestedRangeMap,
+	setInNestedRangeMap,
+	populateNestedRangeMap,
+	deleteFromNestedRangeMap,
+} from "./nestedRangeMap.js";
