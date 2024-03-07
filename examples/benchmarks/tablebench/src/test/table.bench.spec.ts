@@ -7,8 +7,8 @@ import { NodeFromSchema, SharedTree } from "@fluidframework/tree";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { generateTable, Table } from "..";
-import { create, measureAttachmentSummary, measureEncodedLength } from "./utils";
+import { generateTable, Table } from "../index.js";
+import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
 const numRows = isInPerformanceTestingMode ? 10000 : 100;
 
