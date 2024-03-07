@@ -96,7 +96,7 @@ variables:
   - group: container-registry-info
 
 extends:
-  template: /tools/pipelines/templates/1ES/include-vars.yml@self
+  template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
   parameters:
     testBuild: ${{ variables.testBuild }}
     shouldPushDockerImage: ${{ variables.pushImage }}
