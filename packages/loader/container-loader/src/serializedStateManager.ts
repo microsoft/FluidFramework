@@ -178,7 +178,7 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.processedOps.length,
+				processedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
