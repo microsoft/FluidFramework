@@ -183,17 +183,17 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			provider.documentServiceFactory,
 			{
 				createDocumentService: {
-					connectToDeltaStream: (_ds) => async (client) => {
+					connectToDeltaStream: (ds) => async (client) => {
 						await p.promise;
-						return _ds.connectToDeltaStream(client);
+						return ds.connectToDeltaStream(client);
 					},
-					connectToDeltaStorage: (_ds) => async () => {
+					connectToDeltaStorage: (ds) => async () => {
 						await p.promise;
-						return _ds.connectToDeltaStorage();
+						return ds.connectToDeltaStorage();
 					},
-					connectToStorage: (_ds) => async () => {
+					connectToStorage: (ds) => async () => {
 						await p.promise;
-						return _ds.connectToStorage();
+						return ds.connectToStorage();
 					},
 				},
 			},
