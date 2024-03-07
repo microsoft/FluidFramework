@@ -23,10 +23,10 @@ import {
 	getSlideToSegoff,
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
-import { InteriorSequencePlace, Side } from "./intervalCollection";
-import { IntervalOpType, SequenceInterval } from "./intervals";
-import { SharedString, SharedStringSegment } from "./sharedString";
-import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
+import { InteriorSequencePlace, Side } from "./intervalCollection.js";
+import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
+import { SharedString, SharedStringSegment } from "./sharedString.js";
+import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 
 /**
  * Data for undoing edits on SharedStrings and Intervals.
