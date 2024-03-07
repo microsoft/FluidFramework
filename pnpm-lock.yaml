@@ -2748,7 +2748,6 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
-      '@microsoft/api-extractor': ^7.42.3
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -2785,7 +2784,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
