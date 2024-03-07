@@ -13,7 +13,6 @@ import {
 	FieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeFromSchema,
-	SchemaFactoryRecursive,
 	TreeConfiguration,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
@@ -27,6 +26,11 @@ import {
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/typesUnsafe.js";
+import {
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
 import { hydrate } from "./utils.js";
@@ -302,6 +306,49 @@ describe("SchemaFactoryRecursive", () => {
 			{
 				const tree = hydrate(A, new A({ a: new B({ b: new A({ a: 6 }) }) }));
 				assert.equal((tree.a as B).b!.a, 6);
+			}
+		});
+	});
+	describe("ValidateRecursiveSchema", () => {
+		it("Valid cases", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.objectRecursive("Test", {
+					x: sf.optionalRecursive([() => Test]),
+				}) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.mapRecursive("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+		});
+
+		it("Invalid cases", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", () => Test) {}
+				// @ts-expect-error Invalid schema should be rejected by check.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.objectRecursive("Test", sf.optionalRecursive([() => Test])) {}
+				// @ts-expect-error Invalid schema should be rejected by check.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class MapRecursive extends sf.mapRecursive(
+					"Test",
+					sf.optionalRecursive([() => MapRecursive]),
+				) {}
+				// @ts-expect-error Invalid schema should be rejected by check.
+				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
 			}
 		});
 	});
