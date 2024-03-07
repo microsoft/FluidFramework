@@ -2425,16 +2425,13 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^4.0.0
-      '@fluidframework/test-tools': ^1.0.195075
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      expect-puppeteer: ^9.0.2
       prettier: ~3.0.3
-      puppeteer: ^22.2.0
       react: ^17.0.1
       rimraf: ^4.4.0
       style-loader: ^1.0.0
@@ -2452,16 +2449,13 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/test-tools': 1.0.195075
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
-      expect-puppeteer: 9.0.2
       prettier: 3.0.3
-      puppeteer: 22.2.0_typescript@5.1.6
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
