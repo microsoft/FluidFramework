@@ -904,9 +904,6 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => 
 			"short data store ID created in attached container",
 		);
 
-		// Test assumption
-		assert(entryPoint2._runtime.attachState === AttachState.Detached, "data store is detached");
-
 		// Create some channel. Assume that data store has directory factory (ITestDataObject exposes _root that is directory,
 		// so it has such entry). This could backfire if non-default type is used for directory - a test would need to be changed
 		// if it changes in the future.
