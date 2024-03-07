@@ -6,7 +6,7 @@ import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
-import { Package, getFluidBuildConfig } from "@fluidframework/build-tools";
+import { Package, loadFluidBuildConfig } from "@fluidframework/build-tools";
 import { PackageKind } from "../../filter";
 
 import {
@@ -51,7 +51,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		await super.selectAndFilterPackages();
 
 		const context = await this.getContext();
-		const { assertTagging } = getFluidBuildConfig(context.gitRepo.resolvedRoot);
+		const { assertTagging } = loadFluidBuildConfig(context.gitRepo.resolvedRoot);
 		const assertTaggingEnabledPaths = this.flags.disableConfig
 			? undefined
 			: assertTagging?.enabledPaths;
@@ -175,10 +175,8 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 							// way. If we clean up the assert comments that have them, this code could go away.
 							const shouldRemoveSurroundingQuotes = (input: string): boolean => {
 								return (
-									(input.startsWith('"') &&
-										input.indexOf('"', 1) === input.length - 1) ||
-									(input.startsWith("`") &&
-										input.indexOf("`", 1) === input.length - 1)
+									(input.startsWith('"') && input.indexOf('"', 1) === input.length - 1) ||
+									(input.startsWith("`") && input.indexOf("`", 1) === input.length - 1)
 								);
 							};
 
@@ -297,7 +295,9 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 	private async getTsConfigPath(pkg: Package): Promise<string> {
 		const context = await this.getContext();
-		const tsconfigPath = context.repo.relativeToRepo(path.join(pkg.directory, "tsconfig.json"));
+		const tsconfigPath = context.repo.relativeToRepo(
+			path.join(pkg.directory, "tsconfig.json"),
+		);
 		return tsconfigPath;
 	}
 }

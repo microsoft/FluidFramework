@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
@@ -34,7 +34,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	public constructor(
 		private readonly _id: string,
 		private readonly _name: SharedString,
-		private readonly _quantity: SharedMap,
+		private readonly _quantity: ISharedMap,
 	) {
 		super();
 		// this._name.on("sequenceDelta", () =>{
@@ -46,7 +46,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 	}
 }
 
-// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedMap> };
+// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<ISharedMap> };
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
@@ -57,7 +57,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 	public readonly addItem = (name: string, quantity: number) => {
 		const nameString = SharedString.create(this.runtime);
 		nameString.insertText(0, name);
-		const quantityMap: SharedMap = SharedMap.create(this.runtime);
+		const quantityMap: ISharedMap = SharedMap.create(this.runtime);
 		quantityMap.set(quantityKey, quantity);
 		const id = uuid();
 		this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });

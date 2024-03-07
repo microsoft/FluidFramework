@@ -12,19 +12,19 @@ import {
 import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
-import { ContainerMessageType } from "../messageTypes";
+import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	sequenceNumbersMatch,
-} from "./batchManager";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
-import { OpCompressor } from "./opCompressor";
-import { OpGroupingManager } from "./opGroupingManager";
-import { OpSplitter } from "./opSplitter";
+} from "./batchManager.js";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import { OpCompressor } from "./opCompressor.js";
+import { OpGroupingManager } from "./opGroupingManager.js";
+import { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;

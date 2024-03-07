@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type HasContainerKey } from "../../CommonInterfaces";
-import { type AudienceChangeLogEntry } from "../../Logs";
-import { type AudienceClientMetadata } from "../../AudienceMetadata";
-import { type IDevtoolsMessage } from "../Messages";
+import { type HasContainerKey } from "../../CommonInterfaces.js";
+import { type AudienceChangeLogEntry } from "../../Logs.js";
+import { type AudienceClientMetadata } from "../../AudienceMetadata.js";
+import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link AudienceSummary.Message}.

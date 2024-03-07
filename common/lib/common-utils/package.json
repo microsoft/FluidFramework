@@ -90,7 +90,7 @@
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/base64-js": "^1.3.0",
 		"@types/benchmark": "^2.1.0",
 		"@types/jest": "22.2.3",
@@ -150,9 +150,6 @@
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
-		"patchedDependencies": {
-			"@microsoft/api-extractor@7.39.1": "../../../patches/@microsoft__api-extractor@7.39.1.patch"
-		},
 		"overrides": {
 			"sharp": "^0.33.2"
 		}
