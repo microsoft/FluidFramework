@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type {
 	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { IChannelAttributes } from "./storage";
-import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
+import type { IChannelAttributes } from "./storage.js";
+import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
 
 /**
  * @public
