@@ -332,13 +332,13 @@ describe("SchemaFactoryRecursive", () => {
 		it("Invalid cases", () => {
 			{
 				class Test extends sf.arrayRecursive("Test", () => Test) {}
-				// @ts-expect-error Invalid schema should be rejected by check.
+				// @ts-expect-error Missing [] around allowed types.
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 
 			{
 				class Test extends sf.objectRecursive("Test", sf.optionalRecursive([() => Test])) {}
-				// @ts-expect-error Invalid schema should be rejected by check.
+				// @ts-expect-error Objects take a record type with fields, not a field directly.
 				type _check = ValidateRecursiveSchema<typeof Test>;
 			}
 
@@ -347,7 +347,7 @@ describe("SchemaFactoryRecursive", () => {
 					"Test",
 					sf.optionalRecursive([() => MapRecursive]),
 				) {}
-				// @ts-expect-error Invalid schema should be rejected by check.
+				// @ts-expect-error Maps accept allowed types, not field schema.
 				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
 			}
 		});
