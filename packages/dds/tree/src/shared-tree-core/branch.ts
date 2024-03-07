@@ -403,8 +403,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.
 	 */
 	public updateRevertibleCommit(commit: GraphCommit<TChange>) {
-		const revertibleCommit = this._revertibleCommits.get(commit.revision);
-		if (revertibleCommit !== undefined) {
+		if (this._revertibleCommits.get(commit.revision) !== undefined) {
 			this._revertibleCommits.set(commit.revision, commit);
 		}
 	}

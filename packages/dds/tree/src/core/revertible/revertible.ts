@@ -6,7 +6,9 @@
 /**
  * Allows reversion of a change made to SharedTree.
  *
+ * @remarks
  * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
+ * 
  * @public
  */
 export interface Revertible {
@@ -19,7 +21,7 @@ export interface Revertible {
 	 */
 	revert(): void;
 	/**
-	 * Decrements the reference count of the revertible.
+	 * Releases this revertible so that it can no longer be used.
 	 */
 	release(): void;
 }

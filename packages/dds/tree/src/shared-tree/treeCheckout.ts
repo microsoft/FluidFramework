@@ -65,7 +65,6 @@ export interface CheckoutEvents {
 	 *
 	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	// newRevertible(revertible: Revertible): void;
 
 	/**
 	 * Fired when:
