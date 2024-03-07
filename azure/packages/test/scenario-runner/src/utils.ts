@@ -20,7 +20,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface";
+import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface.js";
 
 export interface AzureClientConfig {
 	userId?: string;

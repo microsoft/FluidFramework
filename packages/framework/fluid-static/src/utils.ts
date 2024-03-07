@@ -14,14 +14,14 @@ import { type ContainerSchema, type DataObjectClass, type SharedObjectClass } fr
 /**
  * An internal type used by the internal type guard isDataObjectClass to cast a
  * DataObjectClass to a type that is strongly coupled to IFluidDataStoreFactory.
- * Unlike the external and exported type DataObjectClass  which is
+ * Unlike the external and exported type DataObjectClass which is
  * weakly coupled to the IFluidDataStoreFactory to prevent leaking internals.
  */
 export type InternalDataObjectClass<T extends IFluidLoadable> = DataObjectClass<T> &
 	Record<"factory", IFluidDataStoreFactory>;
 
 /**
- * Runtime check to determine if a class is a DataObject type
+ * Runtime check to determine if a class is a DataObject type.
  */
 export const isDataObjectClass = (obj: unknown): obj is InternalDataObjectClass<IFluidLoadable> => {
 	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>> | undefined;
@@ -41,7 +41,7 @@ export const isSharedObjectClass = (obj: unknown): obj is SharedObjectClass<IFlu
 
 /**
  * The ContainerSchema consists of initialObjects and dynamicObjectTypes. These types can be
- * of both SharedObject or DataObject. This function seperates the two and returns a registery
+ * of both SharedObject or DataObject. This function separates the two and returns a registry
  * of DataObject types and an array of SharedObjects.
  */
 export const parseDataObjectsFromSharedObjects = (

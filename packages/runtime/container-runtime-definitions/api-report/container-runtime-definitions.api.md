@@ -53,7 +53,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 // @alpha
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
-    (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
+    (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
 }
