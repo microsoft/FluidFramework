@@ -470,6 +470,7 @@ export class SharedMatrix<T = any>
 		}
 		this.protectAgainstReentrancy(() => {
 			const message = this.cols.insert(colStart, count);
+			assert(message !== undefined, "must be defined");
 			this.submitColMessage(message);
 		});
 	}
@@ -499,6 +500,7 @@ export class SharedMatrix<T = any>
 		}
 		this.protectAgainstReentrancy(() => {
 			const message = this.rows.insert(rowStart, count);
+			assert(message !== undefined, "must be defined");
 			this.submitRowMessage(message);
 		});
 	}

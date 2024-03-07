@@ -257,9 +257,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param pos - The position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
-	public insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg {
+	public insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg | undefined {
 		if (segment.cachedLength <= 0) {
-			throw new UsageError("Cannot insert a 0 length segment.");
+			return undefined;
 		}
 		const insertOp = createInsertSegmentOp(pos, segment);
 		this.applyInsertOp({ op: insertOp });
@@ -273,7 +273,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public insertAtReferencePositionLocal(
 		refPos: ReferencePosition,
 		segment: ISegment,
-	): IMergeTreeInsertMsg {
+	): IMergeTreeInsertMsg | undefined {
 		const pos = this._mergeTree.referencePositionToLocalPosition(
 			refPos,
 			this.getCurrentSeq(),
@@ -283,10 +283,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		if (pos === DetachedReferencePosition) {
 			throw new UsageError("Cannot insert at detached local reference.");
 		}
-		const op = createInsertSegmentOp(pos, segment);
-
-		this.applyInsertOp({ op });
-		return op;
+		return this.insertSegmentLocal(pos, segment);
 	}
 
 	public walkSegments<TClientData>(

@@ -55,9 +55,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 
 	public readonly addItem = (name: string, quantity: number) => {
 		const nameString = SharedString.create(this.runtime);
-		if (name.length > 0) {
-			nameString.insertText(0, name);
-		}
+		nameString.insertText(0, name);
 		const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
 		quantityCell.set(quantity);
 		const id = uuid();

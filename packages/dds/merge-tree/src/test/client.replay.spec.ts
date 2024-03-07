@@ -25,9 +25,7 @@ describe("MergeTree.Client", () => {
 			>();
 			const originalClient = new TestClient();
 			msgClients.set("A", { client: originalClient, msgs: [] });
-			if (file[0].initialText.length > 0) {
-				originalClient.insertTextLocal(0, file[0].initialText);
-			}
+			originalClient.insertTextLocal(0, file[0].initialText);
 			originalClient.startOrUpdateCollaboration("A");
 			for (const group of file) {
 				for (const msg of group.msgs) {
