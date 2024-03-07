@@ -5,10 +5,14 @@
 
 import { strict as assert } from "node:assert";
 import { ISnapshot } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl, ICacheEntry } from "@fluidframework/odsp-driver-definitions";
+import {
+	IOdspResolvedUrl,
+	ICacheEntry,
+	maximumCacheDurationMs,
+} from "@fluidframework/odsp-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { delay } from "@fluidframework/core-utils";
-import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker.js";
+import { EpochTracker } from "../epochTracker.js";
 import {
 	IOdspSnapshot,
 	HostStoragePolicyInternal,
@@ -335,7 +339,7 @@ describe("Tests for snapshot fetch", () => {
 				type: "snapshot",
 				file: { docId: hashedDocumentId, resolvedUrl },
 			};
-			await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+			await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
 
 			const version = await mockFetchSingle(
 				async () => service.getVersions(null, 1),
@@ -355,7 +359,7 @@ describe("Tests for snapshot fetch", () => {
 				type: "snapshot",
 				file: { docId: hashedDocumentId, resolvedUrl },
 			};
-			await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+			await localCache.put(cacheEntry, valueWithExpiredCache(maximumCacheDurationMs));
 
 			await assert.rejects(
 				async () => {

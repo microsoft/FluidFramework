@@ -10,16 +10,16 @@ import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
-import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
 import {
 	FluidSummarizerTelemetryEventNames,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
-} from "./utils";
-import { getLogger, loggerP } from "./logger";
-import { ScenarioRunner } from "./ScenarioRunner";
+} from "./utils.js";
+import { getLogger, loggerP } from "./logger.js";
+import { ScenarioRunner } from "./ScenarioRunner.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 

@@ -23,7 +23,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @alpha @sealed
-export class DirectoryFactory implements IChannelFactory {
+export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
@@ -191,7 +191,7 @@ export class LocalValueMaker {
 }
 
 // @alpha @sealed
-export class MapFactory implements IChannelFactory {
+export class MapFactory implements IChannelFactory<ISharedMap> {
     static readonly Attributes: IChannelAttributes;
     get attributes(): IChannelAttributes;
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
@@ -209,7 +209,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected applyStashedOp(op: unknown): void;
     clear(): void;
     countSubDirectory(): number;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory;
     createSubDirectory(subdirName: string): IDirectory;
     delete(key: string): boolean;
     deleteSubDirectory(subdirName: string): boolean;
@@ -220,7 +220,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     entries(): IterableIterator<[string, any]>;
     forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedDirectory>;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     has(key: string): boolean;
@@ -254,7 +254,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedMap>;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
     protected loadCore(storage: IChannelStorageService): Promise<void>;
