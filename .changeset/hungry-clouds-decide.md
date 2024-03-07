@@ -15,6 +15,6 @@
 "@fluidframework/test-runtime-utils": minor
 ---
 
-repositoryUrl removed from IDocumentStorageService
+driver-definitions: repositoryUrl removed from IDocumentStorageService
 
-The repositoryUrl member of IDocumentStorageService was unused and always equal to the empty string. It has been removed.
+The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.

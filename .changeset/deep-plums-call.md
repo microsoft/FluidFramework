@@ -2,7 +2,7 @@
 "@fluidframework/core-interfaces": minor
 ---
 
-Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType
+core-interfaces: Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType
 
 The `ITelemetryProperties` interface was deprecated and has been removed.
 Use the identical `ITelemetryBaseProperties` instead.

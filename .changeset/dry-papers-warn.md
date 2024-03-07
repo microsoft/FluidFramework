@@ -7,7 +7,7 @@
 "@fluidframework/test-utils": minor
 ---
 
-New feature: ID compression for DataStores & DDSs
+container-runtime: New feature: ID compression for DataStores & DDSs
 
 ### Key changes
 
