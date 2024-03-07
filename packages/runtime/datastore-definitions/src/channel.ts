@@ -260,9 +260,16 @@ export interface IChannelServices {
  *
  * If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
  * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
+ *
+ * @privateRemarks
+ * TChannel extends IFluidLoadable instead of TChannel since doing so enables LoadableObjectClass to be covariant over its input parameter.
+ * This means that code like fluid-static's `InitialObjects` can be simple and type safe and LoadableObjectClass<any> is not needed.
+ * This approach (not requiring TChannel to extend IChannel) also makes it possible for SharedObject's public interfaces to not include IChannel if desired
+ * (while still requiring the implementation to implement it).
+ *
  * @public
  */
-export interface IChannelFactory {
+export interface IChannelFactory<out TChannel extends IFluidLoadable = IFluidLoadable> {
 	/**
 	 * String representing the type of the factory.
 	 */
@@ -293,7 +300,7 @@ export interface IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<IChannel>;
+	): Promise<TChannel & IChannel>;
 
 	/**
 	 * Creates a local version of the channel.
@@ -306,5 +313,5 @@ export interface IChannelFactory {
 	 * NOTE here - When we attach we need to submit all the pending ops prior to actually doing the attach
 	 * for consistency.
 	 */
-	create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
+	create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
 }
