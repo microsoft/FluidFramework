@@ -136,18 +136,6 @@
 			}
 		}
 	},
-	"fluidBuild": {
-		"tasks": {
-			"eslint": [
-				"build:esnext",
-				"build:test"
-			],
-			"build:test": [
-				"...",
-				"build:esnext"
-			]
-		}
-	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
