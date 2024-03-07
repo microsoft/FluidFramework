@@ -285,10 +285,11 @@ describe("MapWithExpiration", () => {
 			for (const thisArg of thisArgs) {
 				for (const map of maps) {
 					map.set(1, "one");
+					thisArg.globalThis = globalThis;
 					map.forEach(() => {
 						assert.notEqual(
 							globalThis,
-							thisArg,
+							thisArg.globalThis,
 							"Expected 'this' to be unchanged for arrow fn",
 						);
 					}, thisArg);
