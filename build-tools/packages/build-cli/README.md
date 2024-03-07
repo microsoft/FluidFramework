@@ -48,6 +48,7 @@ USAGE
 * [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+* [`flub update`](docs/update.md) - Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
