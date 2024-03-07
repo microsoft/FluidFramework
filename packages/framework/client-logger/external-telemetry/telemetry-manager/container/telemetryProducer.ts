@@ -1,6 +1,6 @@
-import type { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerEventName } from "./containerEvents";
-import type { ContainerConnectedTelemetry, IContainerTelemetry } from "./containerTelemetry";
+import { ContainerConnectedTelemetry, IContainerTelemetry } from "./containerTelemetry";
 
 export class ContainerEventTelemetryProducer {
 	private telemetryProducers = {
