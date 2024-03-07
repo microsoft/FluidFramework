@@ -16,11 +16,11 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles";
-import { SharedStringFactory } from "../../sequenceFactory";
-import { SharedString } from "../../sharedString";
-import { Side } from "../../intervalCollection";
-import { assertEquivalentSharedStrings } from "../intervalTestUtils";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles.js";
+import { SharedStringFactory } from "../../sequenceFactory.js";
+import { SharedString } from "../../sharedString.js";
+import { Side } from "../../intervalCollection.js";
+import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];

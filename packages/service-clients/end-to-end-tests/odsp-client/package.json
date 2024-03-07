@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
+	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -27,8 +27,8 @@
 		"test": "npm run test:realsvc:odsp:run",
 		"test:coverage": "c8 npm test",
 		"test:realsvc:odsp": "cross-env npm run test:realsvc:odsp:run",
-		"test:realsvc:odsp:run": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.cjs",
-		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.cjs",
+		"test:realsvc:odsp:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 20000",
+		"test:realsvc:run": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"c8": {
@@ -36,12 +36,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [

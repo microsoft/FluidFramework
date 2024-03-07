@@ -5,13 +5,13 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
-import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnerStatus } from "./interface";
+import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnerStatus } from "./interface.js";
 import {
 	createAzureClient,
 	getAzureClientConnectionConfigFromEnv,
 	getScenarioRunnerTelemetryEventMap,
-} from "./utils";
-import { getLogger } from "./logger";
+} from "./utils.js";
+import { getLogger } from "./logger.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("AzureClient");
 

@@ -50,16 +50,16 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./defaultMap";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
-import { SequenceInterval } from "./intervals";
+import { DefaultMap, IMapOperation } from "./defaultMap.js";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces.js";
+import { SequenceInterval } from "./intervals/index.js";
 import {
 	IIntervalCollection,
 	IntervalCollection,
 	SequenceIntervalCollectionValueType,
-} from "./intervalCollection";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection";
+} from "./intervalCollection.js";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -427,6 +427,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of `ReferenceType`. To handle this case specifically, one may wish
+	 * to look at the segment returned by `ReferencePosition.getSegment`.
 	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this.client.localReferencePositionToPosition(lref);

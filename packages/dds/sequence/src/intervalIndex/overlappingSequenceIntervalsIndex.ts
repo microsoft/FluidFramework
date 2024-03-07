@@ -16,10 +16,10 @@ import {
 	IntervalType,
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
-} from "../intervals";
-import { SharedString } from "../sharedString";
-import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
-import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
+} from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
+import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
+import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 
 /**
  * @public

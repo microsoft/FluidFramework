@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { AllowList } from "./allowList";
-export { SemVerCdnCodeResolver } from "./semVerCdnCodeResolver";
+export { AllowList } from "./allowList.js";
+export { SemVerCdnCodeResolver } from "./semVerCdnCodeResolver.js";
 export {
 	extractPackageIdentifierDetails,
 	IPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
-} from "./utils";
-export { WebCodeLoader } from "./webLoader";
+} from "./utils.js";
+export { WebCodeLoader } from "./webLoader.js";
