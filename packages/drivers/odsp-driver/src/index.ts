@@ -4,7 +4,7 @@
  */
 
 // Constants
-export { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants";
+export { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants.js";
 
 export {
 	ClpCompliantAppHeader,
@@ -12,34 +12,34 @@ export {
 	ISharingLinkHeader,
 	OdspFluidDataStoreLocator,
 	SharingLinkHeader,
-} from "./contractsPublic";
+} from "./contractsPublic.js";
 
 // public utils
-export { checkUrl } from "./checkUrl";
-export { createOdspUrl } from "./createOdspUrl";
-export { getHashedDocumentId, ISnapshotContents } from "./odspPublicUtils";
-export { getApiRoot, getOdspUrlParts, isOdcOrigin, isOdcUrl, isSpoUrl } from "./odspUrlHelper";
+export { checkUrl } from "./checkUrl.js";
+export { createOdspUrl } from "./createOdspUrl.js";
+export { getHashedDocumentId, ISnapshotContents } from "./odspPublicUtils.js";
+export { getApiRoot, getOdspUrlParts, isOdcOrigin, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
 
 // prefetch latest snapshot before container load
-export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot";
+export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
 
 // Factory
 export {
 	createLocalOdspDocumentServiceFactory,
 	OdspDocumentServiceFactory,
-} from "./odspDocumentServiceFactory";
-export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
-export { OdspDocumentServiceFactoryWithCodeSplit } from "./odspDocumentServiceFactoryWithCodeSplit";
+} from "./odspDocumentServiceFactory.js";
+export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
+export { OdspDocumentServiceFactoryWithCodeSplit } from "./odspDocumentServiceFactoryWithCodeSplit.js";
 
 // File creation
-export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest";
+export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";
 
 // URI Resolver functionality, URI management
-export { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+export { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 export {
 	OdspDriverUrlResolverForShareLink,
 	ShareLinkFetcherProps,
-} from "./odspDriverUrlResolverForShareLink";
+} from "./odspDriverUrlResolverForShareLink.js";
 
 // It's used by URL resolve code, but also has some public functions
 export {
@@ -47,15 +47,23 @@ export {
 	getLocatorFromOdspUrl,
 	locatorQueryParamName,
 	storeLocatorInOdspUrl,
-} from "./odspFluidFileLink";
+} from "./odspFluidFileLink.js";
 
 export {
 	IOdspCache,
 	IPersistedFileCache,
 	INonPersistentCache,
 	IPrefetchSnapshotContents,
-} from "./odspCache";
-export { ICacheAndTracker, type EpochTracker, FetchType, FetchTypeInternal } from "./epochTracker";
-export { IOdspResponse, isOdspResolvedUrl } from "./odspUtils";
-export { SnapshotFormatSupportType } from "./fetchSnapshot";
-export { ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";
+} from "./odspCache.js";
+export {
+	ICacheAndTracker,
+	type EpochTracker,
+	FetchType,
+	FetchTypeInternal,
+} from "./epochTracker.js";
+export { IOdspResponse, isOdspResolvedUrl } from "./odspUtils.js";
+export { SnapshotFormatSupportType } from "./fetchSnapshot.js";
+export {
+	ISnapshotContentsWithProps,
+	parseCompactSnapshotResponse,
+} from "./compactSnapshotParser.js";

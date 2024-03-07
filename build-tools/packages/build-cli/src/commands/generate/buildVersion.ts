@@ -18,7 +18,8 @@ import { BaseCommand } from "../../base";
 export default class GenerateBuildVersionCommand extends BaseCommand<
 	typeof GenerateBuildVersionCommand
 > {
-	static readonly description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
+	static readonly description =
+		`This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
 
 	static readonly examples = ["<%= config.bin %> <%= command.id %>"];
 
@@ -171,15 +172,17 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 	private getFileVersion(): string {
 		if (fs.existsSync("./lerna.json")) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" }))
-				.version as string;
+			return (
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" })).version as string
+			);
 		}
 
 		if (fs.existsSync("./package.json")) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
-				.version as string;
+			return (
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" })).version as string
+			);
 		}
 
 		this.error(`lerna.json or package.json not found`);

@@ -129,7 +129,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // @deprecated (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // @deprecated (undocumented)
+    // @deprecated
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
     static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
@@ -161,7 +161,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // @deprecated (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // @deprecated (undocumented)
+    // @deprecated
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
     static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
@@ -213,7 +213,6 @@ export class SparseMatrixFactory implements IChannelFactory {
     get attributes(): IChannelAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // (undocumented)
     static segmentFromSpec(spec: IJSONSegment): ISegment;
