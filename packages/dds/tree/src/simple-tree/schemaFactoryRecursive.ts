@@ -263,13 +263,13 @@ export class SchemaFactoryRecursive<
  * Hopefully over time this can grow toward being robust, at least for common mistakes.
  *
  * This check duplicates logic that ideally would be entirely decided by the actual schema building methods.
- * Therefor changes to those methods may require updating `ValidateRecursiveSchema`.
+ * Therefore changes to those methods may require updating `ValidateRecursiveSchema`.
  * @beta
  */
 export type ValidateRecursiveSchema<
 	// Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as thats part of the requirements for the type to work across compilation boundaries correctly.
 	T extends TreeNodeSchemaClass<
-		// Name: This validator places no restrictions on the name other than that its a string (as required by TreeNodeSchemaClass).
+		// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
 		string,
 		// NodeKind: These are the NodeKinds which currently can be used recursively.
 		NodeKind.Array | NodeKind.Map | NodeKind.Object,
@@ -290,7 +290,7 @@ export type ValidateRecursiveSchema<
 		}[T["kind"]],
 		// ImplicitlyConstructable: recursive types are not implicitly constructable.
 		false,
-		// Info: Whats passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
+		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 		{
 			[NodeKind.Object]: RestrictiveReadonlyRecord<string, FieldSchema>;
 			[NodeKind.Array]: ImplicitAllowedTypes;
