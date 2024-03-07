@@ -764,7 +764,7 @@ export class DocumentDeltaConnection
 					...this.getConnectionDetailsProps(),
 				}),
 				// We use this param to clear the joinSession cache if the error happens in connect_document flow.
-				isSocketError: handler === "connect_document_error" ? false : true
+				isSocketError: handler === "connect_document_error" ? false : true,
 			},
 		);
 	}

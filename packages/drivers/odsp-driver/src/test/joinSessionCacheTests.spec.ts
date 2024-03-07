@@ -8,19 +8,17 @@ import { stub, type SinonStub } from "sinon";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
-import { getJoinSessionCacheKey } from "../odspUtils.js";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { Socket } from "socket.io-client";
 import type { IClient } from "@fluidframework/protocol-definitions";
-import { createOdspUrl } from "../createOdspUrl";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { getJoinSessionCacheKey } from "../odspUtils";
-import * as socketModule from "../socketModule";
-import * as joinSession from "../vroom";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { getJoinSessionCacheKey } from "../odspUtils.js";
+import * as socketModule from "../socketModule.js";
+import * as joinSession from "../vroom.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ClientSocketMock } from "./socketTests/socketMock";
+import { ClientSocketMock } from "./socketTests/socketMock.js";
 
 describe("expose joinSessionInfo Tests", () => {
 	const siteUrl = "https://www.localhost.xxx";

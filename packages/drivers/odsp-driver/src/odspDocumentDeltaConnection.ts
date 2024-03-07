@@ -626,7 +626,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					sequenceNumber: seq,
 					category,
 				});
-				this.flushDeferred!.resolve(result);
+				this.flushDeferred.resolve(result);
 				this.flushDeferred = undefined;
 				this.flushOpNonce = undefined;
 			}

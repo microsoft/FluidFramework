@@ -306,7 +306,7 @@ export class OdspDocumentServiceFactoryCore
 						toInstrumentedOdspTokenFetcher(
 							extLogger,
 							resolvedUrlData,
-							this.getWebsocketToken!,
+							this.getWebsocketToken,
 							false /* throwOnNullToken */,
 						)(options, "GetWebsocketToken");
 
