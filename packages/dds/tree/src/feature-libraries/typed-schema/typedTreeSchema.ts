@@ -48,7 +48,7 @@ export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
 };
 
 /**
- * A placeholder to use in [extends constraints](https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints) when using the real type breaks compilation of some recursive types due to [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ * A placeholder to use in {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints | extends constraints} when using the real type breaks compilation of some recursive types due to {@link https://github.com/microsoft/TypeScript/issues/55758 | a design limitation of TypeScript}.
  *
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
