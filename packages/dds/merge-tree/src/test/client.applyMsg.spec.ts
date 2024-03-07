@@ -753,7 +753,7 @@ describe("client.applyMsg", () => {
 			ops.push(
 				localClient.makeOpMessage(
 					localClient.regeneratePendingOp(
-						resubmittedOp!,
+						resubmittedOp,
 						localClient.peekPendingSegmentGroups()!,
 					),
 					/* seq */ 18,

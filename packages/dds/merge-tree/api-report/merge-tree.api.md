@@ -139,9 +139,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     protected getShortClientId(longClientId: string): number;
     // (undocumented)
-    insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
+    insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg;
     // (undocumented)
-    insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg | undefined;
+    insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, serializer: IFluidSerializer): Promise<{
         catchupOpsP: Promise<ISequencedDocumentMessage[]>;
