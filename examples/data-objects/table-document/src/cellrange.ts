@@ -47,9 +47,6 @@ export function parseRange(range: string) {
 	return { minRow, minCol, maxRow, maxCol };
 }
 
-/**
- * @alpha
- */
 export class CellRange {
 	constructor(
 		private readonly interval: SequenceInterval,
