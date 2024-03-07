@@ -63,7 +63,11 @@
 			"html",
 			"text"
 		],
-		"temp-directory": "nyc/.nyc_output"
+		"temp-directory": "nyc/.nyc_output",
+		"exclude": [
+			"src/test/**/*.*ts",
+			"lib/test/**/*.*js"
+		]
 	},
 	"dependencies": {
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
