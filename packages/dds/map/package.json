@@ -171,6 +171,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_SharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedMap": {
+				"backCompat": false
+			}
+		}
 	}
 }

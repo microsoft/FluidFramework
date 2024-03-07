@@ -241,6 +241,10 @@
 			"InterfaceDeclaration_ISubmitSummaryOptions": {
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_IContainerRuntimeOptions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
 			"RemovedFunctionDeclaration_assertIsStableId": {
 				"backCompat": false,
 				"forwardCompat": false

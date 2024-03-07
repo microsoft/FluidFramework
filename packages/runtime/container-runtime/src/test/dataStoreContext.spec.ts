@@ -1055,8 +1055,8 @@ describe("Data Store Context Tests", () => {
 		let scope: FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
-		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel, id: string) =>
-			channelToDataStore(fluidDataStore, id, channelCollection, containerRuntime.logger);
+		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
+			channelToDataStore(fluidDataStore, "id", channelCollection, containerRuntime.logger);
 		let containerRuntime: ContainerRuntime;
 		let channelCollection: ChannelCollection;
 		let provideDsRuntimeWithFailingEntrypoint = false;
