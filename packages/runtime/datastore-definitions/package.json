@@ -15,46 +15,38 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/index.d.ts"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/index.d.ts"
 			}
 		},
 		"./public": {
 			"import": {
-				"types": "./lib/datastore-definitions-public.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/datastore-definitions-public.d.ts"
 			},
 			"require": {
-				"types": "./dist/datastore-definitions-public.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/datastore-definitions-public.d.ts"
 			}
 		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/datastore-definitions-alpha.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/datastore-definitions-alpha.d.ts"
 			},
 			"require": {
-				"types": "./dist/datastore-definitions-alpha.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/datastore-definitions-alpha.d.ts"
 			}
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
+				"types": "./lib/index.d.ts"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/index.d.ts"
 			}
 		}
 	},
-	"main": "dist/index.js",
+	"main": "",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
