@@ -11,11 +11,12 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
@@ -24,8 +25,8 @@
 		},
 		"./test/container": {
 			"import": {
-				"types": "./lib/container.d.mts",
-				"default": "./lib/container.mjs"
+				"types": "./lib/container.d.ts",
+				"default": "./lib/container.js"
 			},
 			"require": {
 				"types": "./dist/container.d.ts",
@@ -34,8 +35,8 @@
 		},
 		"./test/contracts": {
 			"import": {
-				"types": "./lib/contracts.d.mts",
-				"default": "./lib/contracts.mjs"
+				"types": "./lib/contracts.d.ts",
+				"default": "./lib/contracts.js"
 			},
 			"require": {
 				"types": "./dist/contracts.d.ts",
@@ -44,8 +45,8 @@
 		},
 		"./test/connectionManager": {
 			"import": {
-				"types": "./lib/connectionManager.d.mts",
-				"default": "./lib/connectionManager.mjs"
+				"types": "./lib/connectionManager.d.ts",
+				"default": "./lib/connectionManager.js"
 			},
 			"require": {
 				"types": "./dist/connectionManager.d.ts",
@@ -54,8 +55,8 @@
 		},
 		"./test/deltaManager": {
 			"import": {
-				"types": "./lib/deltaManager.d.mts",
-				"default": "./lib/deltaManager.mjs"
+				"types": "./lib/deltaManager.d.ts",
+				"default": "./lib/deltaManager.js"
 			},
 			"require": {
 				"types": "./dist/deltaManager.d.ts",
@@ -64,69 +65,60 @@
 		},
 		"./test/utils": {
 			"import": {
-				"types": "./lib/utils.d.mts",
-				"default": "./lib/utils.mjs"
+				"types": "./lib/utils.d.ts",
+				"default": "./lib/utils.js"
 			},
 			"require": {
 				"types": "./dist/utils.d.ts",
 				"default": "./dist/utils.js"
 			}
 		},
+		"./public": {
+			"import": {
+				"types": "./lib/container-loader-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/container-loader-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./alpha": {
 			"import": {
-				"types": "./lib/container-loader-alpha.d.mts",
-				"default": "./lib/index.mjs"
+				"types": "./lib/container-loader-alpha.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/container-loader-alpha.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/container-loader-beta.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/container-loader-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./internal": {
 			"import": {
-				"types": "./lib/index.d.mts",
-				"default": "./lib/index.mjs"
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
 			},
 			"require": {
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/container-loader-public.d.mts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/container-loader-public.d.ts",
-				"default": "./dist/index.js"
-			}
 		}
 	},
 	"main": "dist/index.js",
-	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
@@ -140,9 +132,11 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -180,8 +174,6 @@
 		"@ungap/structured-clone": "^1.2.0",
 		"debug": "^4.3.4",
 		"double-ended-queue": "^2.1.0-0",
-		"events": "^3.1.0",
-		"url": "^0.11.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -193,10 +185,9 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/debug": "^4.1.5",
 		"@types/double-ended-queue": "^2.1.0",
-		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
@@ -213,7 +204,6 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -231,6 +221,9 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IContainerExperimental": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IParsedUrl": {
 				"forwardCompat": false
 			}
 		}

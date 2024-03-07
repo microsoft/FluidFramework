@@ -5,9 +5,14 @@
 import { strict as assert } from "node:assert";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 
-import { Attributor, type IAttributor } from "../attributor";
-import { AttributorSerializer, chain, type Encoder, type SerializedAttributor } from "../encoders";
-import { type InternedStringId } from "../stringInterner";
+import { Attributor, type IAttributor } from "../attributor.js";
+import {
+	AttributorSerializer,
+	chain,
+	type Encoder,
+	type SerializedAttributor,
+} from "../encoders.js";
+import { type InternedStringId } from "../stringInterner.js";
 
 function makeNoopEncoder<T>(): Encoder<T, T> {
 	return {

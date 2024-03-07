@@ -22,16 +22,16 @@ import {
 	PerformanceEvent,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { BlobManager } from "../blobManager";
+import { BlobManager } from "../blobManager.js";
 import {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
 	TombstoneResponseHeaderKey,
-} from "../containerRuntime";
-import { ClientSessionExpiredError } from "../error";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes";
-import { IRefreshSummaryResult } from "../summary";
-import { generateGCConfigs } from "./gcConfigs";
+} from "../containerRuntime.js";
+import { ClientSessionExpiredError } from "../error.js";
+import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
+import { IRefreshSummaryResult } from "../summary/index.js";
+import { generateGCConfigs } from "./gcConfigs.js";
 import {
 	GCNodeType,
 	IGarbageCollector,
@@ -47,21 +47,21 @@ import {
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	disableAutoRecoveryKey,
-} from "./gcDefinitions";
+} from "./gcDefinitions.js";
 import {
 	cloneGCData,
 	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
 	getGCDataFromSnapshot,
-} from "./gcHelpers";
-import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
-import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
-import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
+} from "./gcHelpers.js";
+import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
+import { GCSummaryStateTracker } from "./gcSummaryStateTracker.js";
 import {
 	UnreferencedStateTracker,
 	UnreferencedStateTrackerMap,
-} from "./gcUnreferencedStateTracker";
-import { GCTelemetryTracker } from "./gcTelemetry";
+} from "./gcUnreferencedStateTracker.js";
+import { GCTelemetryTracker } from "./gcTelemetry.js";
 
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains

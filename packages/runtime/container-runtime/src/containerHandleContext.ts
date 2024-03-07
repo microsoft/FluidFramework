@@ -6,7 +6,7 @@
 import { IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
-import { ContainerRuntime } from "./containerRuntime";
+import { ContainerRuntime } from "./containerRuntime.js";
 
 export class ContainerFluidHandleContext implements IFluidHandleContext {
 	public get IFluidHandleContext() {

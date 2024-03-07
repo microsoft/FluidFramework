@@ -23,8 +23,8 @@ import {
 	ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
-import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter";
-import { IPendingContainerState } from "./container";
+import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import { IPendingContainerState } from "./container.js";
 
 export class SerializedStateManager {
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
@@ -116,6 +116,10 @@ export class SerializedStateManager {
 					eventName: "getSnapshotTreeFailed",
 					id: version.id,
 				});
+			} else if (snapshot !== undefined && version === undefined) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "getSnapshotFetchedTreeWithoutVersion",
+				});
 			}
 			return { snapshot, version };
 		}
@@ -186,6 +190,7 @@ export class SerializedStateManager {
 				assert(this.snapshot !== undefined, "no base data");
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
+					attached: true,
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,

@@ -14,7 +14,7 @@ import {
 	Context,
 } from "../feature-libraries/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
-import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout.js";
+import { ITreeCheckoutFork, ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
@@ -68,7 +68,7 @@ export interface ITreeViewFork<in out TRoot extends FlexFieldSchema> extends Fle
  */
 export class CheckoutFlexTreeView<
 	in out TRoot extends FlexFieldSchema,
-	out TCheckout extends ITreeCheckout = ITreeCheckout,
+	out TCheckout extends TreeCheckout = TreeCheckout,
 > implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
@@ -95,7 +95,7 @@ export class CheckoutFlexTreeView<
 		this.onDispose?.();
 	}
 
-	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, TreeCheckout & ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new CheckoutFlexTreeView(
 			branch,

@@ -35,9 +35,9 @@ import {
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	IValueChanged,
-} from "./interfaces";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
-import { pkgVersion } from "./packageVersion";
+} from "./interfaces.js";
+import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
+import { pkgVersion } from "./packageVersion.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -274,7 +274,7 @@ export interface IDirectoryNewStorageFormat {
  * @sealed
  * @alpha
  */
-export class DirectoryFactory implements IChannelFactory {
+export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -467,8 +467,8 @@ export class SharedDirectory
 	 * @param id - Optional name of the shared directory
 	 * @returns Newly create shared directory (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
+		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
 	}
 
 	/**
@@ -476,7 +476,7 @@ export class SharedDirectory
 	 *
 	 * @returns A factory that creates and load SharedDirectory
 	 */
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ISharedDirectory> {
 		return new DirectoryFactory();
 	}
 
@@ -1712,7 +1712,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processClearMessage(
 		msg: ISequencedDocumentMessage,
@@ -1746,7 +1745,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processDeleteMessage(
 		msg: ISequencedDocumentMessage,
@@ -1773,7 +1771,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processSetMessage(
 		msg: ISequencedDocumentMessage,
@@ -1805,7 +1802,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processCreateSubDirectoryMessage(
 		msg: ISequencedDocumentMessage,
@@ -1838,7 +1834,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @internal
 	 */
 	public processDeleteSubDirectoryMessage(
 		msg: ISequencedDocumentMessage,
@@ -1880,7 +1875,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * Resubmit a clear operation.
 	 * @param op - The operation
-	 * @internal
 	 */
 	public resubmitClearMessage(op: IDirectoryClearOperation, localOpMetadata: unknown): void {
 		assert(
@@ -1927,7 +1921,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a key message to remote clients based on a previous submit.
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
-	 * @internal
 	 */
 	public resubmitKeyMessage(op: IDirectoryKeyOperation, localOpMetadata: unknown): void {
 		assert(
@@ -2020,7 +2013,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a subdirectory operation again
 	 * @param op - The operation
 	 * @param localOpMetadata - metadata submitted with the op originally
-	 * @internal
 	 */
 	public resubmitSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
@@ -2064,7 +2056,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Get the storage of this subdirectory in a serializable format, to be used in snapshotting.
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns The JSONable string representing the storage of this subdirectory
-	 * @internal
 	 */
 	public *getSerializedStorage(
 		serializer: IFluidSerializer,
@@ -2090,7 +2081,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Populate a key value in this subdirectory's storage, to be used when loading from snapshot.
 	 * @param key - The key to populate
 	 * @param localValue - The local value to populate into it
-	 * @internal
 	 */
 	public populateStorage(key: string, localValue: ILocalValue): void {
 		this.throwIfDisposed();
@@ -2101,7 +2091,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Populate a subdirectory into this subdirectory, to be used when loading from snapshot.
 	 * @param subdirName - The name of the subdirectory to add
 	 * @param newSubDir - The new subdirectory to add
-	 * @internal
 	 */
 	public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
 		this.throwIfDisposed();
@@ -2113,7 +2102,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * value so op handlers can be retrieved
 	 * @param key - The key to retrieve from
 	 * @returns The local value
-	 * @internal
 	 */
 	public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
 		this.throwIfDisposed();

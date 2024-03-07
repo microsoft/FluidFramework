@@ -16,6 +16,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -24,7 +25,6 @@ import {
 	ISnapshotTree,
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	channelsTreeName,
 	CreateChildSummarizerNodeFn,
@@ -32,6 +32,8 @@ import {
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidParentContext,
+	IContainerRuntimeBase,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
 	IFluidDataStoreRegistry,
@@ -44,9 +46,9 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	VisibilityState,
 	ISummaryTreeWithStats,
 	IDataStore,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
@@ -55,13 +57,11 @@ import {
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	generateStack,
-	ITelemetryLoggerExt,
 	LoggingError,
 	MonitoringContext,
 	tagCodeArtifacts,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -71,9 +71,8 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	summarizerClientType,
-} from "./summary";
-import { ContainerRuntime } from "./containerRuntime";
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc";
+} from "./summary/index.js";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -98,15 +97,10 @@ interface ISnapshotDetails {
 	sequenceNumber?: number;
 }
 
-interface FluidDataStoreMessage {
-	content: any;
-	type: string;
-}
-
 /** Properties necessary for creating a FluidDataStoreContext */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
-	readonly runtime: ContainerRuntime;
+	readonly parentContext: IFluidParentContext;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
@@ -128,7 +122,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /** Properties necessary for creating a local FluidDataStoreContext */
 export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
-	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel, id: string) => IDataStore;
+	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
 /** Properties necessary for creating a remote FluidDataStoreContext */
@@ -141,7 +135,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContext, IDisposable
+	implements IFluidDataStoreContext, IFluidParentContext, IDisposable
 {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -149,39 +143,39 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get options(): Record<string | number, any> {
-		return this._containerRuntime.options;
+		return this.parentContext.options;
 	}
 
 	public get clientId(): string | undefined {
-		return this._containerRuntime.clientId;
+		return this.parentContext.clientId;
 	}
 
 	public get clientDetails(): IClientDetails {
-		return this._containerRuntime.clientDetails;
+		return this.parentContext.clientDetails;
 	}
 
-	public get logger(): ITelemetryLoggerExt {
-		return this._containerRuntime.logger;
+	public get logger() {
+		return this.parentContext.logger;
 	}
 
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this._containerRuntime.deltaManager;
+		return this.parentContext.deltaManager;
 	}
 
 	public get connected(): boolean {
-		return this._containerRuntime.connected;
+		return this.parentContext.connected;
 	}
 
 	public get IFluidHandleContext() {
-		return this._containerRuntime.IFluidHandleContext;
+		return this.parentContext.IFluidHandleContext;
 	}
 
-	public get containerRuntime(): IContainerRuntime {
+	public get containerRuntime(): IContainerRuntimeBase {
 		return this._containerRuntime;
 	}
 
 	public ensureNoDataModelChanges<T>(callback: () => T): T {
-		return this._containerRuntime.ensureNoDataModelChanges(callback);
+		return this.parentContext.ensureNoDataModelChanges(callback);
 	}
 
 	public get isLoaded(): boolean {
@@ -192,8 +186,8 @@ export abstract class FluidDataStoreContext
 		return this._baseSnapshot;
 	}
 
-	public get idCompressor(): (IIdCompressorCore & IIdCompressor) | undefined {
-		return this._containerRuntime.idCompressor;
+	public get idCompressor(): IIdCompressor | undefined {
+		return this.parentContext.idCompressor;
 	}
 
 	private _disposed = false;
@@ -210,7 +204,8 @@ export abstract class FluidDataStoreContext
 		return this._tombstoned;
 	}
 	/** If true, throw an error when a tombstone data store is used. */
-	private readonly throwOnTombstoneUsage: boolean;
+	public readonly gcThrowOnTombstoneUsage: boolean;
+	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	private deleted: boolean = false;
@@ -220,6 +215,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
+		assert(
+			this.channel !== undefined,
+			"This should be called after the channel is created, when the registry is populated",
+		);
 		return this.registry;
 	}
 
@@ -273,7 +272,8 @@ export abstract class FluidDataStoreContext
 	private lastUsedRoutes: string[] | undefined;
 
 	public readonly id: string;
-	private readonly _containerRuntime: ContainerRuntime;
+	private readonly _containerRuntime: IContainerRuntimeBase;
+	private readonly parentContext: IFluidParentContext;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
 	// Represents the group to which the data store belongs too.
@@ -288,7 +288,8 @@ export abstract class FluidDataStoreContext
 	) {
 		super();
 
-		this._containerRuntime = props.runtime;
+		this._containerRuntime = props.parentContext.containerRuntime;
+		this.parentContext = props.parentContext;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;
@@ -300,8 +301,8 @@ export abstract class FluidDataStoreContext
 		assert(!this.id.includes("/"), 0x13a /* Data store ID contains slash */);
 
 		this._attachState =
-			this.containerRuntime.attachState !== AttachState.Detached && this.existing
-				? this.containerRuntime.attachState
+			this.parentContext.attachState !== AttachState.Detached && this.existing
+				? this.parentContext.attachState
 				: AttachState.Detached;
 
 		const thisSummarizeInternal = async (
@@ -332,7 +333,8 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		this.throwOnTombstoneUsage = this._containerRuntime.gcThrowOnTombstoneUsage;
+		this.gcThrowOnTombstoneUsage = this.parentContext.gcThrowOnTombstoneUsage;
+		this.gcTombstoneEnforcementAllowed = this.parentContext.gcTombstoneEnforcementAllowed;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -417,7 +419,7 @@ export abstract class FluidDataStoreContext
 
 		let entry: FluidDataStoreRegistryEntry | undefined;
 		let registry: IFluidDataStoreRegistry | undefined =
-			this._containerRuntime.IFluidDataStoreRegistry;
+			this.parentContext.IFluidDataStoreRegistry;
 		let lastPkg: string | undefined;
 		for (const pkg of packages) {
 			if (!registry) {
@@ -491,27 +493,20 @@ export abstract class FluidDataStoreContext
 	}
 
 	public process(
-		messageArg: ISequencedDocumentMessage,
+		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		const safeTelemetryProps = extractSafePropertiesFromMessage(messageArg);
+		const safeTelemetryProps = extractSafePropertiesFromMessage(message);
 		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
 		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
 		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
-		if (this.tombstoned && this.throwOnTombstoneUsage) {
+		if (this.tombstoned && this.gcThrowOnTombstoneUsage) {
 			throw new DataCorruptionError(
 				"Context is tombstoned! Call site [process]",
 				safeTelemetryProps,
 			);
 		}
-
-		const innerContents = messageArg.contents as FluidDataStoreMessage;
-		const message = {
-			...messageArg,
-			type: innerContents.type,
-			contents: innerContents.content,
-		};
 
 		this.summarizerNode.recordChange(message);
 
@@ -537,11 +532,11 @@ export abstract class FluidDataStoreContext
 	}
 
 	public getQuorum(): IQuorumClients {
-		return this._containerRuntime.getQuorum();
+		return this.parentContext.getQuorum();
 	}
 
 	public getAudience(): IAudience {
-		return this._containerRuntime.getAudience();
+		return this.parentContext.getAudience();
 	}
 
 	/**
@@ -677,7 +672,7 @@ export abstract class FluidDataStoreContext
 		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
 		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
 			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
+			this.parentContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
 		}
 	}
 
@@ -691,7 +686,7 @@ export abstract class FluidDataStoreContext
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 */
 	public addedGCOutboundRoute(fromPath: string, toPath: string) {
-		this._containerRuntime.addedGCOutboundReference(
+		this.parentContext.addedGCOutboundReference?.(
 			{ absolutePath: fromPath },
 			{ absolutePath: toPath },
 		);
@@ -733,15 +728,10 @@ export abstract class FluidDataStoreContext
 	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
-		const fluidDataStoreContent: FluidDataStoreMessage = {
-			content,
-			type,
-		};
-
 		// Summarizer clients should not submit messages.
 		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
 
-		this._containerRuntime.submitDataStoreOp(this.id, fluidDataStoreContent, localOpMetadata);
+		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}
 
 	/**
@@ -778,7 +768,7 @@ export abstract class FluidDataStoreContext
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
-		return this._containerRuntime.submitDataStoreSignal(this.id, type, content, targetClientId);
+		return this.parentContext.submitSignal(type, content, targetClientId);
 	}
 
 	/**
@@ -787,10 +777,6 @@ export abstract class FluidDataStoreContext
 	 */
 	public makeLocallyVisible() {
 		assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
-		assert(
-			this.channel.visibilityState === VisibilityState.LocallyVisible,
-			0x590 /* Channel must be locally visible */,
-		);
 		this.makeLocallyVisibleFn();
 	}
 
@@ -856,7 +842,7 @@ export abstract class FluidDataStoreContext
 		if (this.attachState !== AttachState.Attached) {
 			return undefined;
 		}
-		return this._containerRuntime.getAbsoluteUrl(relativeUrl);
+		return this.parentContext.getAbsoluteUrl(relativeUrl);
 	}
 
 	/**
@@ -871,7 +857,6 @@ export abstract class FluidDataStoreContext
 	): {
 		attachSummary: ISummaryTreeWithStats;
 		type: string;
-		gcData?: IGarbageCollectionData;
 	};
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
@@ -892,21 +877,19 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(contents: any, localOpMetadata: unknown) {
+	public reSubmit(type: string, contents: any, localOpMetadata: unknown) {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		const innerContents = contents as FluidDataStoreMessage;
-		this.channel.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
+		this.channel.reSubmit(type, contents, localOpMetadata);
 	}
 
-	public rollback(contents: any, localOpMetadata: unknown) {
+	public rollback(type: string, contents: any, localOpMetadata: unknown) {
 		if (!this.channel) {
 			throw new Error("Channel must exist when rolling back ops");
 		}
 		if (!this.channel.rollback) {
 			throw new Error("Channel doesn't support rollback");
 		}
-		const innerContents = contents as FluidDataStoreMessage;
-		this.channel.rollback(innerContents.type, innerContents.content, localOpMetadata);
+		this.channel.rollback(type, contents, localOpMetadata);
 	}
 
 	public async applyStashedOp(contents: any): Promise<unknown> {
@@ -948,15 +931,14 @@ export abstract class FluidDataStoreContext
 				this.mc,
 				{
 					eventName: "GC_Tombstone_DataStore_Changed",
-					category: this.throwOnTombstoneUsage ? "error" : "generic",
-					gcTombstoneEnforcementAllowed:
-						this._containerRuntime.gcTombstoneEnforcementAllowed,
+					category: this.gcThrowOnTombstoneUsage ? "error" : "generic",
+					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 					callSite,
 				},
 				this.pkg,
 				error,
 			);
-			if (this.throwOnTombstoneUsage) {
+			if (this.gcThrowOnTombstoneUsage) {
 				throw error;
 			}
 		}
@@ -1001,18 +983,22 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
+	public deleteChildSummarizerNode(id: string) {
+		this.summarizerNode.deleteChild(id);
+	}
+
 	public async uploadBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
 	): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.containerRuntime.uploadBlob(blob, signal);
+		return this.parentContext.uploadBlob(blob, signal);
 	}
 }
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean;
-	private readonly runtime: ContainerRuntime;
+	private readonly runtime: IContainerRuntimeBase;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
 		super(props, true /* existing */, false /* isLocalDataStore */, () => {
@@ -1021,7 +1007,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 		this._baseSnapshot = props.snapshotTree;
 		this.snapshotFetchRequired = !!props.snapshotTree?.omitted;
-		this.runtime = props.runtime;
+		this.runtime = props.parentContext.containerRuntime;
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
 		}
@@ -1083,9 +1069,9 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
+		assert(this.pkg !== undefined, "The datastore context package should be defined");
 		return {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			pkg: this.pkg!,
+			pkg: this.pkg,
 			isRootDataStore,
 			snapshot: tree,
 			sequenceNumber,
@@ -1102,7 +1088,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	public getAttachData(includeGCData: boolean): {
 		attachSummary: ISummaryTreeWithStats;
 		type: string;
-		gcData?: IGarbageCollectionData;
 	} {
 		throw new Error("Cannot attach remote store");
 	}
@@ -1163,7 +1148,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	): {
 		attachSummary: ISummaryTreeWithStats;
 		type: string;
-		gcData?: IGarbageCollectionData;
 	} {
 		assert(
 			this.channel !== undefined,
@@ -1182,6 +1166,12 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
 		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
+		if (includeGCData) {
+			const gcData = this.channel.getAttachGCData?.(telemetryContext);
+			if (gcData !== undefined) {
+				addBlobToSummary(attachSummary, gcDataBlobKey, JSON.stringify(gcData));
+			}
+		}
 
 		// Add loadingGroupId to the summary
 		if (this.loadingGroupId !== undefined) {
@@ -1191,7 +1181,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return {
 			attachSummary,
 			type: this.pkg[this.pkg.length - 1],
-			gcData: includeGCData ? this.channel.getAttachGCData?.(telemetryContext) : undefined,
 		};
 	}
 
@@ -1284,10 +1273,7 @@ export class LocalDetachedFluidDataStoreContext
 		this.detachedRuntimeCreation = true;
 		this.channelToDataStoreFn = props.channelToDataStoreFn;
 	}
-	private readonly channelToDataStoreFn: (
-		channel: IFluidDataStoreChannel,
-		id: string,
-	) => IDataStore;
+	private readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 
 	public async attachRuntime(
 		registry: IProvideFluidDataStoreFactory,
@@ -1322,7 +1308,7 @@ export class LocalDetachedFluidDataStoreContext
 			dataStoreChannel.makeVisibleAndAttachGraph();
 		}
 
-		return this.channelToDataStoreFn(dataStoreChannel, this.id);
+		return this.channelToDataStoreFn(dataStoreChannel);
 	}
 
 	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {

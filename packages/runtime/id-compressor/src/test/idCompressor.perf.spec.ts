@@ -15,10 +15,10 @@ import {
 	SessionSpaceCompressedId,
 	SessionId,
 	StableId,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
-import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon";
+} from "..//index.js";
+import { IdCompressor } from "../idCompressor.js";
+import { createSessionId } from "../utilities.js";
+import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon.js";
 import {
 	Client,
 	DestinationClient,
@@ -27,7 +27,7 @@ import {
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
-} from "./idCompressorTestUtilities";
+} from "./idCompressorTestUtilities.js";
 
 const initialClusterCapacity = 512;
 

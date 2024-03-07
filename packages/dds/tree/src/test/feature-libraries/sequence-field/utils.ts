@@ -335,6 +335,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		cleanChange,
 		TestChange.invert,
+		true,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
@@ -348,6 +349,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.invert(
 			cleanChange,
 			TestChange.invert,
+			true,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,

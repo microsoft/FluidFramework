@@ -27,16 +27,16 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
-import { createAzureAudienceMember } from "./AzureAudience";
-import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
+import { createAzureAudienceMember } from "./AzureAudience.js";
+import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import {
 	type AzureClientProps,
 	type AzureConnectionConfig,
 	type AzureContainerServices,
 	type AzureContainerVersion,
 	type AzureGetVersionsOptions,
-} from "./interfaces";
-import { isAzureRemoteConnectionConfig } from "./utils";
+} from "./interfaces.js";
+import { isAzureRemoteConnectionConfig } from "./utils.js";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -103,7 +103,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer<TContainerSchema extends ContainerSchema>(
+	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
