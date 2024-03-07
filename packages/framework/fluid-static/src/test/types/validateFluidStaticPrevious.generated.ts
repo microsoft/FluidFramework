@@ -293,7 +293,7 @@ use_old_TypeAliasDeclaration_InitialObjects(
 declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
     TypeOnly<old.LoadableObjectClass<any>>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<current.LoadableObjectClass<any>>): void;
+    use: TypeOnly<current.LoadableObjectClass>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClass(
     get_old_TypeAliasDeclaration_LoadableObjectClass());
 
@@ -303,7 +303,7 @@ use_current_TypeAliasDeclaration_LoadableObjectClass(
 * "TypeAliasDeclaration_LoadableObjectClass": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_LoadableObjectClass():
-    TypeOnly<current.LoadableObjectClass<any>>;
+    TypeOnly<current.LoadableObjectClass>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectClass(
     use: TypeOnly<old.LoadableObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_LoadableObjectClass(

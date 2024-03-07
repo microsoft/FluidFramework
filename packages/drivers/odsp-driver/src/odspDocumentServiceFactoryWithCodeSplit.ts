@@ -10,7 +10,7 @@ import {
 	IPersistedCache,
 	HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
-import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 
 /**
  * @deprecated This is deprecated in favour of OdspDocumentServiceFactory as the socket io is now loaded inside the

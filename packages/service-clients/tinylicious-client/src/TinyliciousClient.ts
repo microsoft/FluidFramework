@@ -31,8 +31,8 @@ import { type IClient } from "@fluidframework/protocol-definitions";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces";
-import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
+import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

@@ -49,7 +49,6 @@ export interface IMapValueTypeOperation {
 
 	/**
 	 * Value of the operation, specific to the value type.
-	 * @alpha
 	 */
 	value: IValueTypeOperationValue;
 }
@@ -413,7 +412,6 @@ export class DefaultMap<T extends IntervalCollection<any> = IntervalCollection<a
 
 	/**
 	 * Create an emitter for a value type to emit ops from the given key.
-	 * @alpha
 	 * @param key - The key of the map that the value type will be stored on
 	 * @returns A value op emitter for the given key
 	 */
