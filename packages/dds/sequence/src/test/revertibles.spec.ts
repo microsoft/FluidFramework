@@ -282,6 +282,60 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertSequenceIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 	});
+	it("performs two acked interval removes and reverts to ensure interval returns to correct position", () => {
+		const uRevertibles: SharedStringRevertible[] = [];
+		const rRevertibles: SharedStringRevertible[] = [];
+
+		sharedString.insertText(0, "123456789");
+		collection.add({ start: 2, end: 2 });
+
+		sharedString.on("sequenceDelta", (op) => {
+			if (op.isLocal) {
+				appendSharedStringDeltaToRevertibles(sharedString, op, uRevertibles);
+			}
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				uRevertibles,
+			);
+		});
+		// remove "34"
+		// gets pushed to urevertibles
+		sharedString.removeRange(2, 4);
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(sharedString.getText(), "1256789");
+		assertSequenceIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
+
+		// revert undo[0]
+		// gets pushed to urevertibles - need to put it on rrevertibles and remove from urevertibles (line 75)
+		revertSharedStringRevertibles(sharedString, uRevertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+		rRevertibles.push(...uRevertibles.splice(0));
+		assert.equal(uRevertibles.length, 0);
+		// urevertibles has the revert remove op and the changeInterval op that came from the revert
+		assert.equal(rRevertibles.length, 4);
+
+		assert.equal(sharedString.getText(), "123456789");
+		assertSequenceIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
+
+		// remove "5"
+		// gets pushed to urevertibles --> undo[0]
+		sharedString.removeRange(4, 5);
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(sharedString.getText(), "12346789");
+		assert.equal(uRevertibles.length, 1);
+		assertSequenceIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
+
+		// revert undo[0]
+		// this reinserts "5"
+		revertSharedStringRevertibles(sharedString, uRevertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+		assert.equal(sharedString.getText(), "123456789");
+		assertSequenceIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
+	});
 });
 describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;

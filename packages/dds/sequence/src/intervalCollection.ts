@@ -1438,6 +1438,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
+				if (interval instanceof SequenceInterval) {
+					this.client?.removeLocalReferencePosition(interval.start);
+					this.client?.removeLocalReferencePosition(interval.end);
+				}
 			}
 			return newInterval;
 		}
