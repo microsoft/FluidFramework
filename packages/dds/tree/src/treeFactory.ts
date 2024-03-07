@@ -53,9 +53,17 @@ export class TreeFactory implements IChannelFactory<ITree> {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
+ * @remarks
+ * This implements {@link @fluidframework/fluid-static#SharedObjectClass}.
+ * @privateRemarks
+ * Due to the dependency structure and the placement of that interface SharedObjectClass,
+ * this interface implementation can not be recorded in the type here.
  * @public
  */
 export const SharedTree = {
+	/**
+	 * Gets the factory this factory is a wrapper for.
+	 */
 	getFactory(): IChannelFactory<ITree> {
 		return new TreeFactory({});
 	},

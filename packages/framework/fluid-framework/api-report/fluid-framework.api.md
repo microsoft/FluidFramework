@@ -350,7 +350,6 @@ export type SharedMap = ISharedMap;
 
 // @public
 export interface SharedObjectClass<T extends IFluidLoadable> {
-    // (undocumented)
     readonly getFactory: () => IChannelFactory<T>;
 }
 

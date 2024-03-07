@@ -52,13 +52,15 @@ export type DataObjectClass<T extends IFluidLoadable> = {
 } & LoadableObjectCtor<T>;
 
 /**
- * A class that has a factory that can create a DDSes (`SharedObject`s) and a
- * constructor that will return the type of the `DataObject`.
+ * A factory that produces a factory that can create a DDSes (`SharedObject`s).
  *
  * @typeParam T - The class of the `SharedObject`.
  * @public
  */
 export interface SharedObjectClass<T extends IFluidLoadable> {
+	/**
+	 * Gets the factory this factory is a wrapper for.
+	 */
 	readonly getFactory: () => IChannelFactory<T>;
 }
 

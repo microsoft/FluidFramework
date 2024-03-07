@@ -138,7 +138,6 @@ export type Myself<M extends IMember = IMember> = M & {
 
 // @public
 export interface SharedObjectClass<T extends IFluidLoadable> {
-    // (undocumented)
     readonly getFactory: () => IChannelFactory<T>;
 }
 
