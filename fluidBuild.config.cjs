@@ -344,6 +344,7 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 
 				// Tools packages that are not library packages
+				"^azure/packages/azure-local-service/",
 				"^packages/tools/fetch-tool/",
 				"^tools/test-tools/",
 
