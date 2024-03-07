@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
@@ -14,30 +14,30 @@ import {
 	IResponse,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import {
+import type { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type {
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
-import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import {
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "./garbageCollectionDefinitions";
-import { IInboundSignalMessage } from "./protocol";
-import {
+} from "./garbageCollectionDefinitions.js";
+import type { IInboundSignalMessage } from "./protocol.js";
+import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
-} from "./summary";
+} from "./summary.js";
 
 /**
  * Runtime flush mode handling
