@@ -5,12 +5,11 @@
 
 import Deque from "double-ended-queue";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import { IEventThisPlaceHolder, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	Serializable,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
@@ -32,7 +31,6 @@ import {
 	type LocalReferencePosition,
 } from "@fluidframework/merge-tree";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { MatrixOp } from "./ops.js";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { SparseArray2D } from "./sparsearray2d.js";
 import { SharedMatrixFactory } from "./runtime.js";
@@ -41,25 +39,14 @@ import { deserializeBlob } from "./serialization.js";
 import { ensureRange } from "./range.js";
 import { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
-
-const enum SnapshotPath {
-	rows = "rows",
-	cols = "cols",
-	cells = "cells",
-}
-
-interface ISetOp<T> {
-	type: MatrixOp.set;
-	target?: never;
-	row: number;
-	col: number;
-	value: MatrixItem<T>;
-	fwwMode?: boolean;
-}
-
-export type VectorOp = IMergeTreeOp & Record<"target", SnapshotPath.rows | SnapshotPath.cols>;
-
-export type MatrixSetOrVectorOp<T> = VectorOp | ISetOp<T>;
+import {
+	MatrixOp,
+	MatrixItem,
+	SnapshotPath,
+	ISetOp,
+	VectorOp,
+	MatrixSetOrVectorOp,
+} from "./ops.js";
 
 interface ISetOpMetadata {
 	rowHandle: Handle;
@@ -74,7 +61,7 @@ interface ISetOpMetadata {
  * Events emitted by Shared Matrix.
  * @alpha
  */
-export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
+export interface ISharedMatrixEvents<T> extends IEvent {
 	/**
 	 * This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW).
 	 * This is emitted when two clients race and send changes without observing each other changes,
@@ -114,13 +101,19 @@ interface CellLastWriteTrackerItem {
 	clientId: string; // clientId of the client which last modified this cell
 }
 
-/**
- * A matrix cell value may be undefined (indicating an empty cell) or any serializable type,
- * excluding null.  (However, nulls may be embedded inside objects and arrays.)
- * @alpha
- */
-// eslint-disable-next-line @rushstack/no-new-null -- Using 'null' to disallow 'null'.
-export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
+/** @alpha */
+export interface ISharedMatrix<T = any>
+	extends IEventProvider<ISharedMatrixEvents<T>>,
+		IMatrixProducer<MatrixItem<T>>,
+		IMatrixReader<MatrixItem<T>>,
+		IMatrixWriter<MatrixItem<T>> {
+	insertCols(colStart: number, count: number): void;
+	removeCols(colStart: number, count: number): void;
+	insertRows(rowStart: number, count: number): void;
+	removeRows(rowStart: number, count: number): void;
+
+	openUndo(consumer: IUndoConsumer): void;
+}
 
 /**
  * A SharedMatrix holds a rectangular 2D array of values.  Supported operations
@@ -136,11 +129,8 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
  * @alpha
  */
 export class SharedMatrix<T = any>
-	extends SharedObject<ISharedMatrixEvents<T>>
-	implements
-		IMatrixProducer<MatrixItem<T>>,
-		IMatrixReader<MatrixItem<T>>,
-		IMatrixWriter<MatrixItem<T>>
+	extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents>
+	implements ISharedMatrix<T>
 {
 	private readonly consumers = new Set<IMatrixConsumer<MatrixItem<T>>>();
 
@@ -472,6 +462,12 @@ export class SharedMatrix<T = any>
 	}
 
 	public insertCols(colStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
+		if (colStart > this.colCount) {
+			throw new UsageError("insertCols: out of bounds");
+		}
 		this.protectAgainstReentrancy(() => {
 			const message = this.cols.insert(colStart, count);
 			this.submitColMessage(message);
@@ -479,6 +475,12 @@ export class SharedMatrix<T = any>
 	}
 
 	public removeCols(colStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
+		if (colStart > this.colCount) {
+			throw new UsageError("removeCols: out of bounds");
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitColMessage(this.cols.remove(colStart, count)),
 		);
@@ -489,6 +491,12 @@ export class SharedMatrix<T = any>
 	}
 
 	public insertRows(rowStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
+		if (rowStart > this.rowCount) {
+			throw new UsageError("insertRows: out of bounds");
+		}
 		this.protectAgainstReentrancy(() => {
 			const message = this.rows.insert(rowStart, count);
 			this.submitRowMessage(message);
@@ -496,6 +504,12 @@ export class SharedMatrix<T = any>
 	}
 
 	public removeRows(rowStart: number, count: number) {
+		if (count === 0) {
+			return;
+		}
+		if (rowStart > this.rowCount) {
+			throw new UsageError("removeRows: out of bounds");
+		}
 		this.protectAgainstReentrancy(() =>
 			this.submitRowMessage(this.rows.remove(rowStart, count)),
 		);
@@ -802,16 +816,17 @@ export class SharedMatrix<T = any>
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
-		const contents: MatrixSetOrVectorOp<T> = msg.contents as MatrixSetOrVectorOp<T>;
+		const contents = msg.contents as MatrixSetOrVectorOp<T>;
+		const target = contents.target;
 
-		switch (contents.target) {
+		switch (target) {
 			case SnapshotPath.cols:
 				this.cols.applyMsg(msg, local);
 				break;
 			case SnapshotPath.rows:
 				this.rows.applyMsg(msg, local);
 				break;
-			default: {
+			case undefined: {
 				assert(
 					contents.type === MatrixOp.set,
 					0x021 /* "SharedMatrix message contents have unexpected type!" */,
@@ -912,7 +927,10 @@ export class SharedMatrix<T = any>
 						}
 					}
 				}
+				break;
 			}
+			default:
+				unreachableCase(target, "unknown target");
 		}
 	}
 
