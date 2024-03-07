@@ -7,7 +7,7 @@
  * Allows reversion of a change made to SharedTree.
  *
  * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
- * @internal
+ * @public
  */
 export interface Revertible {
 	/**
@@ -25,49 +25,13 @@ export interface Revertible {
 }
 
 /**
- * The type of commit.
- * todo: move this somewhere that makes more sense
- *
- * @internal
- */
-export enum CommitKind {
-	/** A typical local commit */
-	Default,
-	/** A revertible that is the result of an undo. */
-	Undo,
-	/** A revertible that is the result of a redo. */
-	Redo,
-	/**
-	 * A revertible that is the result of a rebase and should replace a previously generated revertible.
-	 * todo: improve error reporting in this case
-	 */
-	Rebase,
-}
-
-/**
  * The status of a {@link Revertible}.
  *
- * @internal
+ * @public
  */
 export enum RevertibleStatus {
 	/** The revertible can be reverted. */
 	Valid,
 	/** The revertible has been disposed. Reverting it will have no effect. */
 	Disposed,
-}
-
-/**
- * todoj move this somewhere that makes sense and figure out what release tag to use
- *
- * @internal
- */
-export interface CommitMetadata {
-	/**
-	 * A {@link CommitKind} enum value describing whether the commit represents an Edit, an Undo, or a Redo.
-	 */
-	kind: CommitKind;
-	/**
-	 * Indicates whether the commit is a local edit
-	 */
-	isLocal: boolean;
 }

@@ -116,9 +116,15 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
 
 	/**
-	 * todoj
+	 * Fired when:
+	 * - a local commit is applied outside of a transaction
+	 * - a local transaction is committed
 	 *
-	 * @param data - todoj
+	 * The event is not fired when:
+	 * - a local commit is applied within a transaction
+	 * - a remote commit is applied
+	 *
+	 * @param data - information about the commit that was applied
 	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
 	 * this commit is not revertible.
 	 */
@@ -397,7 +403,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.
 	 */
 	public updateRevertibleCommit(commit: GraphCommit<TChange>) {
-		// todoj clean up/verify
 		const revertibleCommit = this._revertibleCommits.get(commit.revision);
 		if (revertibleCommit !== undefined) {
 			this._revertibleCommits.set(commit.revision, commit);

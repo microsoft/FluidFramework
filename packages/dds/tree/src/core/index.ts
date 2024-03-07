@@ -159,6 +159,8 @@ export {
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -194,4 +196,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { Revertible, CommitKind, RevertibleStatus, CommitMetadata } from "./revertible/index.js";
+export { Revertible, RevertibleStatus } from "./revertible/index.js";

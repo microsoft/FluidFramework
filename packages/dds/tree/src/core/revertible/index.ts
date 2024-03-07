@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Revertible, CommitKind, RevertibleStatus, CommitMetadata } from "./revertible.js";
+export { Revertible, RevertibleStatus } from "./revertible.js";

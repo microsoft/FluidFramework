@@ -109,6 +109,41 @@ export interface GraphCommit<TChange> {
 }
 
 /**
+ * The type of commit.
+ *
+ * @public
+ */
+export enum CommitKind {
+	/** A typical local commit */
+	Default,
+	/** A commit that is the result of an undo. */
+	Undo,
+	/** A commit that is the result of a redo. */
+	Redo,
+	/**
+	 * A commit that is the result of a rebase and should replace a previously generated revertible.
+	 * todo: improve error reporting in this case
+	 */
+	Rebase,
+}
+
+/**
+ * Information about a commit that has been applied.
+ *
+ * @public
+ */
+export interface CommitMetadata {
+	/**
+	 * A {@link CommitKind} enum value describing whether the commit represents an Edit, an Undo, or a Redo.
+	 */
+	kind: CommitKind;
+	/**
+	 * Indicates whether the commit is a local edit
+	 */
+	isLocal: boolean;
+}
+
+/**
  * Creates a new graph commit object. This is useful for creating copies of commits with different parentage.
  * @param parent - the parent of the new commit
  * @param commit - the contents of the new commit object

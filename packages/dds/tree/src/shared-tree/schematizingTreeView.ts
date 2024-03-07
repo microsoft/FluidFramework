@@ -58,6 +58,13 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.flexConfig = toFlexConfig(config);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
 		this.update();
+
+		this.checkout.events.on("commitApplied", (data, getRevertible) =>
+			this.events.emit("commitApplied", data, getRevertible),
+		);
+		this.checkout.events.on("revertibleDisposed", (revertible) =>
+			this.events.emit("revertibleDisposed", revertible),
+		);
 	}
 
 	public upgradeSchema(): void {

@@ -232,7 +232,7 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
     [valueSymbol]: TreeValue<TValueSchema>;
 } : EmptyObject)> & TTypedFields : TValueSchema extends ValueSchema ? TreeValue<TValueSchema> : undefined;
 
-// @internal
+// @public
 export enum CommitKind {
     Default = 0,
     Rebase = 3,
@@ -240,7 +240,7 @@ export enum CommitKind {
     Undo = 1
 }
 
-// @internal
+// @public
 export interface CommitMetadata {
     isLocal: boolean;
     kind: CommitKind;
@@ -1450,14 +1450,14 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @internal
+// @public
 export interface Revertible {
     release(): void;
     revert(): void;
     readonly status: RevertibleStatus;
 }
 
-// @internal
+// @public
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
@@ -1995,6 +1995,8 @@ export interface TreeView<in out TRoot> extends IDisposable {
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
     rootChanged(): void;
 }
 
