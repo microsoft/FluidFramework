@@ -407,7 +407,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0.1,
 	},
 	defaultTestCount: 100,
-	saveFailures: { directory: path.join(_dirname, "../../../src/test/fuzz/results") },
+	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
 	parseOperations: (serialized: string) => {
 		const operations: Operation[] = JSON.parse(serialized);
 		// Replace this value with some other interval ID and uncomment to filter replay of the test
