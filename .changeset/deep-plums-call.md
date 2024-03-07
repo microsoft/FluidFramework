@@ -1,5 +1,5 @@
 ---
-"@fluidframework/core-interfaces": major
+"@fluidframework/core-interfaces": minor
 ---
 
 Removed ITelemetryProperties, TelemetryEventCategory, TelemetryEventPropertyType, and ITaggedTelemetryPropertyType

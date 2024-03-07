@@ -1,18 +1,18 @@
 ---
-"@fluidframework/container-definitions": major
-"@fluidframework/container-loader": major
-"@fluidframework/container-runtime": major
-"@fluidframework/container-runtime-definitions": major
-"@fluidframework/debugger": major
-"@fluidframework/driver-definitions": major
-"@fluidframework/driver-utils": major
-"@fluidframework/file-driver": major
-"@fluidframework/local-driver": major
-"@fluidframework/odsp-driver": major
-"@fluidframework/replay-driver": major
-"@fluidframework/routerlicious-driver": major
-"@fluidframework/runtime-definitions": major
-"@fluidframework/test-runtime-utils": major
+"@fluidframework/container-definitions": minor
+"@fluidframework/container-loader": minor
+"@fluidframework/container-runtime": minor
+"@fluidframework/container-runtime-definitions": minor
+"@fluidframework/debugger": minor
+"@fluidframework/driver-definitions": minor
+"@fluidframework/driver-utils": minor
+"@fluidframework/file-driver": minor
+"@fluidframework/local-driver": minor
+"@fluidframework/odsp-driver": minor
+"@fluidframework/replay-driver": minor
+"@fluidframework/routerlicious-driver": minor
+"@fluidframework/runtime-definitions": minor
+"@fluidframework/test-runtime-utils": minor
 ---
 
 repositoryUrl removed from IDocumentStorageService

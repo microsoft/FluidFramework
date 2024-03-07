@@ -1,5 +1,5 @@
 ---
-"@fluidframework/datastore-definitions": major
+"@fluidframework/datastore-definitions": minor
 ---
 
 IFluidDataStoreRuntime.logger is now an ITelemetryBaseLogger

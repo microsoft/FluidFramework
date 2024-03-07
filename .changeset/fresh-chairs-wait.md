@@ -1,5 +1,5 @@
 ---
-"@fluidframework/common-utils": major
+"@fluidframework/common-utils": minor
 ---
 
 EventForwarder removed from common-utils

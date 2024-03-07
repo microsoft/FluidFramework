@@ -1,5 +1,5 @@
 ---
-"@fluidframework/view-adapters": major
+"@fluidframework/view-adapters": minor
 ---
 
 @fluidframework/view-adapters package removed

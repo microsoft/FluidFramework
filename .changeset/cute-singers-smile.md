@@ -1,5 +1,5 @@
 ---
-"@fluidframework/replay-driver": major
+"@fluidframework/replay-driver": minor
 ---
 
 Remove OpStorage export

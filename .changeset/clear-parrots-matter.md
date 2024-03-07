@@ -1,5 +1,5 @@
 ---
-"@fluidframework/telemetry-utils": major
+"@fluidframework/telemetry-utils": minor
 ---
 
 logIfFalse() is removed

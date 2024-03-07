@@ -1,5 +1,5 @@
 ---
-"@fluidframework/routerlicious-driver": major
+"@fluidframework/routerlicious-driver": minor
 ---
 
 Ephemeral containers now controlled in attach() call rather than as driver policy

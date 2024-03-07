@@ -1,5 +1,5 @@
 ---
-"@fluidframework/container-loader": major
+"@fluidframework/container-loader": minor
 ---
 
 IParsedUrl does not accept null version

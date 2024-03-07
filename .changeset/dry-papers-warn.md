@@ -1,7 +1,7 @@
 ---
-"@fluidframework/container-runtime": major
+"@fluidframework/container-runtime": minor
 "@fluidframework/container-runtime-definitions": minor
-"@fluidframework/datastore": major
+"@fluidframework/datastore": minor
 "@fluidframework/runtime-definitions": minor
 "@fluidframework/runtime-utils": minor
 "@fluid-private/test-end-to-end-tests": minor

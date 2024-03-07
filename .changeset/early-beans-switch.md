@@ -1,14 +1,14 @@
 ---
-"@fluidframework/driver-utils": major
-"@fluidframework/local-driver": major
-"@fluidframework/odsp-driver": major
-"@fluidframework/odsp-urlresolver": major
-"@fluid-experimental/property-dds": major
-"@fluidframework/routerlicious-driver": major
-"@fluidframework/routerlicious-urlresolver": major
-"@fluid-private/test-end-to-end-tests": major
-"@fluidframework/test-utils": major
-"@fluidframework/tinylicious-driver": major
+"@fluidframework/driver-utils": minor
+"@fluidframework/local-driver": minor
+"@fluidframework/odsp-driver": minor
+"@fluidframework/odsp-urlresolver": minor
+"@fluid-experimental/property-dds": minor
+"@fluidframework/routerlicious-driver": minor
+"@fluidframework/routerlicious-urlresolver": minor
+"@fluid-private/test-end-to-end-tests": minor
+"@fluidframework/test-utils": minor
+"@fluidframework/tinylicious-driver": minor
 ---
 
 Resolved URLs no longer use non-standard protocols

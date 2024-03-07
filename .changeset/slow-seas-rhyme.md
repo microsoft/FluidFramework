@@ -1,6 +1,6 @@
 ---
-"@fluidframework/odsp-driver": major
-"@fluidframework/odsp-driver-definitions": major
+"@fluidframework/odsp-driver": minor
+"@fluidframework/odsp-driver-definitions": minor
 ---
 
 Removed deprecated implementation of SingleRT feature which was enabled via enableShareLinkWithCreate boolean flag in HostStoragePolicy
