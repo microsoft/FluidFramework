@@ -15,8 +15,8 @@ import {
 	TextSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence } from "./sequence";
-import { SharedStringFactory } from "./sequenceFactory";
+import { SharedSegmentSequence } from "./sequence.js";
+import { SharedStringFactory } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
