@@ -20,8 +20,8 @@ export type ContainerAttachProps<T = unknown> = T;
 
 // @public
 export interface ContainerSchema {
-    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
-    readonly initialObjects: LoadableObjectClassRecord;
+    dynamicObjectTypes?: LoadableObjectClass[];
+    initialObjects: LoadableObjectClassRecord;
 }
 
 // @internal

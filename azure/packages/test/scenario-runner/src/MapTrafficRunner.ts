@@ -8,15 +8,15 @@ import { SharedMap } from "@fluidframework/map";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface";
+import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
 import {
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
-} from "./utils";
-import { getLogger } from "./logger";
-import { ScenarioRunner } from "./ScenarioRunner";
+} from "./utils.js";
+import { getLogger } from "./logger.js";
+import { ScenarioRunner } from "./ScenarioRunner.js";
 
 // This was originally namespaced as "DocLoader"
 const eventMap = getScenarioRunnerTelemetryEventMap("MapTraffic");

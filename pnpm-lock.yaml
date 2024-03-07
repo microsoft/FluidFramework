@@ -258,6 +258,7 @@ importers:
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       commander: ^5.1.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       js-yaml: ^4.1.0
@@ -307,6 +308,7 @@ importers:
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      copyfiles: 2.4.1
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -9751,7 +9753,6 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^3.1.0-240326
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -9788,7 +9789,6 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 3.1.0-240326
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/test/functional-tests:
