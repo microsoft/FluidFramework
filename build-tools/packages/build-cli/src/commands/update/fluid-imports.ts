@@ -21,8 +21,7 @@ type ApiLevel = "internal" | "public" | "alpha" | "beta";
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
 > {
-	static readonly description =
-		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
+	static readonly description = `Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
 		organize: Flags.boolean({
@@ -104,12 +103,14 @@ async function updateImports(
 			if (moduleSpecifier.startsWith("@fluid")) {
 				log?.verbose(`Found a fluid import: '${moduleSpecifier}'`);
 				const modulePieces = moduleSpecifier.split("/");
+				const moduleName = modulePieces.slice(0, 2).join("/");
 				const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
 				log?.verbose(`subpath: ${subpath}`);
-				const data = mappingData.get(moduleSpecifier);
+				const data = mappingData.get(moduleName);
 
-				// eslint-disable-next-line unicorn/no-negated-condition
-				if (data !== undefined) {
+				if (data === undefined) {
+					log?.verbose(`Skipping ${moduleSpecifier}`);
+				} else {
 					// TODO: Handle default import if needed.
 					// const defaultImport = importDeclaration.getDefaultImport();
 					const namedImports = importDeclaration.getNamedImports();
@@ -126,13 +127,20 @@ async function updateImports(
 						// is trimmed, but leading or trailing text like "type" or "as foo" is still included. This is the string
 						// that will be used in the new imports.
 						const fullImportSpecifierText = importSpecifier.getFullText().trim();
-						const expectedLevel = getApiLevelForImportName(name, data, "public", onlyInternal);
+						const expectedLevel = getApiLevelForImportName(
+							name,
+							data,
+							"public",
+							onlyInternal,
+						);
 
-						log?.verbose(`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`);
+						log?.verbose(
+							`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
+						);
 						const newSpecifier =
 							expectedLevel === "public"
-								? moduleSpecifier
-								: `${moduleSpecifier}/${expectedLevel}`;
+								? moduleName
+								: `${moduleName}/${expectedLevel}`;
 
 						if (!newImports.has(newSpecifier)) {
 							newImports.set(newSpecifier, []);
@@ -146,8 +154,6 @@ async function updateImports(
 					importDeclaration.remove();
 					sourceFileChanged = true;
 					log?.info(`REMOVED import from ${moduleSpecifier}`);
-				} else {
-					log?.verbose(`Skipping.`);
 				}
 			}
 		}
