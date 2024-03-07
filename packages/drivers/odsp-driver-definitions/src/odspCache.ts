@@ -6,7 +6,10 @@
 import { IResolvedUrl, type FiveDaysMs } from "@fluidframework/driver-definitions";
 
 /**
- * Must be less than policy of 5 days
+ * Must be less than IDocumentStorageServicePolicies.maximumCacheDurationMs policy of 5 days.
+ * That policy is the outward expression and this value is the implementation - using a larger value
+ * would violate that statement of the driver's behavior.
+ * Other parts of the system (such as Garbage Collection) depend on that policy being properly implemented.
  *
  * @internal
  */
