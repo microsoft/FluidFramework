@@ -1764,7 +1764,7 @@ describe("Editing", () => {
 			);
 		});
 
-		it.skip("concurrent cycle creating move", () => {
+		it("concurrent cycle creating move", () => {
 			const tree = makeTreeFromJson([["foo"], ["bar"]]);
 			const tree2 = tree.fork();
 
@@ -1789,8 +1789,6 @@ describe("Editing", () => {
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
-
-			// This fails because the trees disagree on who detached the content
 			expectJsonTree([tree, tree2], []);
 		});
 
