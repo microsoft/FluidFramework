@@ -5,7 +5,7 @@
 		"strictNullChecks": false,
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["node", "react", "react-dom"],
+		"types": ["react", "react-dom"],
 		"resolveJsonModule": true,
 	},
 	"include": ["src/**/*"],
