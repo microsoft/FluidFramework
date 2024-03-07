@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
+import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../../../core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
@@ -16,11 +17,6 @@ import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
 const localSessionId: SessionId = "0" as SessionId;
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;
-
-// TODO:#4557: Change the number of steps back to 5 once the way these tests are run changes
-const NUM_STEPS = 4;
-const NUM_PEERS = 2;
-const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 
 export function testCorrectness() {
 	describe("Correctness", () => {
@@ -180,38 +176,6 @@ export function testCorrectness() {
 			);
 
 			describe("Trunk eviction", () => {
-				function applyLocalCommit(
-					manager: EditManager<
-						ChangeFamilyEditor,
-						TestChange,
-						ChangeFamily<ChangeFamilyEditor, TestChange>
-					>,
-					inputContext: readonly number[] = [],
-					intention: number | number[] = [],
-				): Commit<TestChange> {
-					const [_, commit] = manager.localBranch.apply(
-						TestChange.mint(inputContext, intention),
-						mintRevisionTag(),
-					);
-					return {
-						change: commit.change,
-						revision: commit.revision,
-						sessionId: localSessionId,
-					};
-				}
-
-				function peerCommit(
-					peer: typeof peer1 | typeof peer2,
-					inputContext: readonly number[] = [],
-					intention: number | number[] = [],
-				): Commit<TestChange> {
-					return {
-						change: TestChange.mint(inputContext, intention),
-						revision: mintRevisionTag(),
-						sessionId: peer,
-					};
-				}
-
 				it("Evicts trunk commits according to a provided minimum sequence number", () => {
 					const { manager } = testChangeEditManagerFactory({});
 					for (let i = 1; i <= 10; ++i) {
@@ -326,12 +290,12 @@ export function testCorrectness() {
 					manager.addSequencedChange(local, brand(2), brand(1));
 					checkChangeList(manager, [1, 2]);
 					manager.advanceMinimumSequenceNumber(brand(2));
-					checkChangeList(manager, [1, 2]);
+					checkChangeList(manager, [2]);
 					fork.dispose();
 					checkChangeList(manager, []);
 				});
 
-				it("Evicts after the oldest branch rebases", () => {
+				it("Evicts after the oldest branch rebases (fast-forward)", () => {
 					const { manager } = testChangeEditManagerFactory({});
 					const local1 = applyLocalCommit(manager, [], 1);
 					const fork1 = manager.localBranch.fork();
@@ -340,14 +304,78 @@ export function testCorrectness() {
 					const fork2 = manager.localBranch.fork();
 					manager.addSequencedChange(local2, brand(2), brand(1));
 					checkChangeList(manager, [1, 2]);
+
+					// The code above defines the following relationships between commits:
+					//   (r)─(1)─(2) <- local
+					//     |   └─(2) <- fork2
+					//     └─(1)  <- fork1
+
+					// However, commits 1 and 2 are sequenced as-is (i.e., without rebasing), which leads to those commits becoming part of the trunk.
+					// This leads to fork1 and fork2 being fast-forwarded onto the trunk:
+					//   (r)─(1)─(2)
+					//         |   └─ <- fork2
+					//         └─ <- fork1
+
 					manager.advanceMinimumSequenceNumber(brand(2));
+					// Advancing the minimum sequence number does not evict any commits because fork1 branches off of the trunk at commit 1.
 					checkChangeList(manager, [1, 2]);
+
 					fork1.rebaseOnto(fork2);
-					checkChangeList(manager, [1, 2]);
-					fork1.rebaseOnto(manager.localBranch);
-					checkChangeList(manager, [1, 2]);
-					fork2.rebaseOnto(manager.localBranch);
+					// Rebasing fork1 onto fork2 leads to the following configuration:
+					//   (r)─(1)─(2) <- local
+					//             └─ <- fork1 & fork2
+					// This allows the eviction of commit 1.
+					//   (r)─(2) <- local
+					//         └─ <- fork1 & fork2
 					checkChangeList(manager, [2]);
+
+					fork1.rebaseOnto(manager.localBranch);
+					fork2.rebaseOnto(manager.localBranch);
+					// Rebasing the forks onto the local branch has no effect because they were already at the tip.
+					checkChangeList(manager, [2]);
+				});
+
+				it("Evicts after the oldest branch rebases (no fast-forward)", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					const local1 = applyLocalCommit(manager, [], 2);
+					const fork1 = manager.localBranch.fork();
+					manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
+					manager.addSequencedChange(local1, brand(2), brand(0));
+					const local2 = applyLocalCommit(manager, [1, 2], 4);
+					const fork2 = manager.localBranch.fork();
+					manager.addSequencedChange(peerCommit(peer1, [1, 2], 3), brand(3), brand(2));
+					manager.addSequencedChange(local2, brand(4), brand(2));
+					checkChangeList(manager, [1, 2, 3, 4]);
+
+					// The code above defines the following relationships between commits:
+					//   (r)─(1)─(2')─(3)─(4') <- local
+					//     |        └─(4) <- fork2
+					//     └─(2)          <- fork1
+					// The peer commits (1 and 3) prevent the forks from being fast-forwarded onto the trunk.
+
+					manager.advanceMinimumSequenceNumber(brand(4));
+					// Advancing the minimum sequence number does not evict any commits because fork1 branches off of the trunk before commit 1.
+					checkChangeList(manager, [1, 2, 3, 4]);
+
+					fork1.rebaseOnto(manager.localBranch);
+					// Rebasing fork1 onto the local branch leads to the following configuration:
+					//   (r)─(1)─(2')─(3)─(4') <- local
+					//              |        └─ <- fork1
+					//              └─(4) <- fork2
+					// This allows commit 1 to be evicted:
+					//   (r)─(2')─(3)─(4') <- local
+					//          |        └─ <- fork1
+					//          └─(4) <- fork2
+					checkChangeList(manager, [2, 3, 4]);
+
+					fork2.rebaseOnto(manager.localBranch);
+					// Rebasing fork2 onto the local branch leads to the following configuration:
+					//   (r)─(2')─(3)─(4') <- local
+					//                   └─ <- fork1 & fork2
+					// This allows commit 2' & 3 to be evicted:
+					//   (r)─(4') <- local
+					//          └─ <- fork1 & fork2
+					checkChangeList(manager, [4]);
 				});
 
 				it("Evicts properly when changes come in batches having the same sequence number", () => {
@@ -468,7 +496,7 @@ export function testCorrectness() {
 							sequenceNumber: brand(1),
 						},
 					],
-					branches: new Map(),
+					peerLocalBranches: new Map(),
 				});
 				manager.addSequencedChange(
 					{
@@ -480,6 +508,74 @@ export function testCorrectness() {
 					brand(1),
 				);
 				assert.equal(manager.localBranch.getHead(), manager.getTrunkHead());
+			});
+
+			describe("fast-forwarding", () => {
+				it("supports fast-forwarding of local commits onto the trunk", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					const local1 = applyLocalCommit(manager, [], 1);
+					const local2 = applyLocalCommit(manager, [1], 2);
+					const [commit1, commit2] = manager.getLocalCommits();
+
+					manager.addSequencedChange(local1, brand(1), brand(0));
+					assert.deepEqual([commit1], manager.getTrunkCommits());
+					assert.deepEqual([commit2], manager.getLocalCommits());
+
+					const local3 = applyLocalCommit(manager, [1, 2], 3);
+					const [_, commit3] = manager.getLocalCommits();
+
+					manager.addSequencedChange(local2, brand(2), brand(0));
+					manager.addSequencedChange(local3, brand(3), brand(1));
+					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits());
+					assert.deepEqual([], manager.getLocalCommits());
+				});
+
+				it("local branches do not prevent and are not perturbed by fast-forwarding", () => {
+					const { manager } = testChangeEditManagerFactory({});
+					const forkA = manager.localBranch.fork();
+					const local1 = applyLocalCommit(manager, [], 1);
+					const forkB = manager.localBranch.fork();
+					const local2 = applyLocalCommit(manager, [1], 2);
+					const forkC = manager.localBranch.fork();
+					const local3 = applyLocalCommit(manager, [1, 2], 3);
+					const forkD = manager.localBranch.fork();
+					const [commit1, commit2, commit3] = manager.getLocalCommits();
+
+					// The code above defines the following relationships between commits:
+					//   (r) <- forkA
+					//     └─(1) <- forkB
+					//         └─(2) <- forkC
+					//             └─(3) <- forkD & local
+
+					manager.addSequencedChange(local1, brand(1), brand(0));
+					manager.addSequencedChange(local2, brand(2), brand(0));
+					manager.addSequencedChange(local3, brand(3), brand(0));
+
+					// Because of fast-forwarding, we should now be in the following state:
+					//   (r)─(1)─(2)─(3) <- local
+					//     |   |   |   └─ <- forkD
+					//     |   |   └─ <- forkC
+					//     |   └─ <- forkB
+					//     └─ <- forkA
+
+					assert.deepEqual([commit1, commit2, commit3], manager.getTrunkCommits());
+					assert.deepEqual([], manager.getLocalCommits());
+
+					assert.equal(forkA.getHead(), commit1.parent);
+					assert.equal(forkB.getHead(), commit1);
+					assert.equal(forkC.getHead(), commit2);
+					assert.equal(forkD.getHead(), commit3);
+
+					// Test the disposal of the forks in an order that exercises different cases:
+					// A fork with earlier and later forks
+					forkB.dispose();
+					// A fork with later but no earlier forks
+					forkA.dispose();
+					// A fork with earlier but no later forks
+					forkD.dispose();
+					// A fork with no earlier and no later forks
+					forkC.dispose();
+				});
 			});
 
 			describe("Reports correct max branch length", () => {
@@ -565,28 +661,69 @@ export function testCorrectness() {
 		 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 		 * but this one doesn't, then there might be something wrong with this test).
 		 */
-		it("Combinatorial test", () => {
+		describeStress("Combinatorial exhaustive", function ({ isStress }) {
+			const NUM_STEPS = isStress ? 5 : 4;
+			const NUM_PEERS = isStress ? 3 : 2;
+			if (isStress) {
+				this.timeout(60_000);
+			}
+
+			const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1) as SessionId);
 			const meta = {
 				peerRefs: makeArray(NUM_PEERS, () => 0),
 				seq: 0,
 				inFlight: 0,
 			};
-			for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
-				// Uncomment the code below to log the titles of generated scenarios.
-				// This is helpful for creating a unit test out of a generated scenario that fails.
-				// const title = scenario
-				// 	.map((s) => {
-				// 		if (s.type === "Pull") {
-				// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-				// 		} else if (s.type === "Ack") {
-				// 			return `Ack(${s.seq})`;
-				// 		}
-				// 		return `Push(${s.seq})`;
-				// 	})
-				// 	.join("|");
-				// console.debug(title);
-				runUnitTestScenario(undefined, scenario);
-			}
+			it(`for ${NUM_PEERS} peers and ${NUM_STEPS} steps`, () => {
+				for (const scenario of buildScenario([], meta, peers, NUM_STEPS)) {
+					// Uncomment the code below to log the titles of generated scenarios.
+					// This is helpful for creating a unit test out of a generated scenario that fails.
+					// const title = scenario
+					// 	.map((s) => {
+					// 		if (s.type === "Pull") {
+					// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+					// 		} else if (s.type === "Ack") {
+					// 			return `Ack(${s.seq})`;
+					// 		}
+					// 		return `Push(${s.seq})`;
+					// 	})
+					// 	.join("|");
+					// console.debug(title);
+					runUnitTestScenario(undefined, scenario);
+				}
+			});
 		});
 	});
+}
+
+function applyLocalCommit(
+	manager: EditManager<
+		ChangeFamilyEditor,
+		TestChange,
+		ChangeFamily<ChangeFamilyEditor, TestChange>
+	>,
+	inputContext: readonly number[] = [],
+	intention: number | number[] = [],
+): Commit<TestChange> {
+	const [_, commit] = manager.localBranch.apply(
+		TestChange.mint(inputContext, intention),
+		mintRevisionTag(),
+	);
+	return {
+		change: commit.change,
+		revision: commit.revision,
+		sessionId: localSessionId,
+	};
+}
+
+function peerCommit(
+	peer: typeof peer1 | typeof peer2,
+	inputContext: readonly number[] = [],
+	intention: number | number[] = [],
+): Commit<TestChange> {
+	return {
+		change: TestChange.mint(inputContext, intention),
+		revision: mintRevisionTag(),
+		sessionId: peer,
+	};
 }

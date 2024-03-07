@@ -44,7 +44,7 @@ export function getSequentialStates<TContent, TChangeset>(
  * - revision metadata source
  */
 export interface BoundFieldChangeRebaser<TChangeset> {
-	invert(change: TaggedChange<TChangeset>): TChangeset;
+	invert(change: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
 	rebase(
 		change: TChangeset,
 		base: TaggedChange<TChangeset>,
@@ -63,7 +63,12 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
-	compose(changes: TaggedChange<TChangeset>[], metadata?: RevisionMetadataSource): TChangeset;
+	compose(
+		change1: TaggedChange<TChangeset>,
+		change2: TaggedChange<TChangeset>,
+		metadata?: RevisionMetadataSource,
+	): TChangeset;
+	createEmpty(): TChangeset;
 	assertEqual?(
 		change1: TaggedChange<TChangeset> | undefined,
 		change2: TaggedChange<TChangeset> | undefined,

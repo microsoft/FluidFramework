@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as dirPath from "path";
-import { strict as assert } from "assert";
+import * as dirPath from "node:path";
+import { strict as assert } from "node:assert";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -19,9 +19,10 @@ import {
 	DDSFuzzTestState,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DirectoryFactory } from "../../directory";
-import { IDirectory } from "../../interfaces";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+import { DirectoryFactory } from "../../directory.js";
+import { IDirectory } from "../../interfaces.js";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
@@ -88,7 +89,7 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): AsyncGenerator<Operation, FuzzTestState> {
-	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
+	const options = { ...defaultOptions, ...optionsParam };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
 	function pickAbsolutePathForCreateDirectoryOp(state: FuzzTestState): string {
@@ -109,10 +110,10 @@ function makeOperationGenerator(
 				continue;
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirectories]);
-			if (subDir !== undefined) {
-				dir = subDir;
-			} else {
+			if (subDir === undefined) {
 				break;
+			} else {
+				dir = subDir;
 			}
 		}
 		return dir.absolutePath;
@@ -133,11 +134,11 @@ function makeOperationGenerator(
 				subDirs.push(b);
 			}
 			const subDir = random.pick<IDirectory | undefined>([undefined, ...subDirs]);
-			if (subDir !== undefined) {
+			if (subDir === undefined) {
+				break;
+			} else {
 				parentDir = dirToDelete;
 				dirToDelete = subDir;
-			} else {
-				break;
 			}
 		}
 		return parentDir.absolutePath;
@@ -266,12 +267,10 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 	const withLogging =
 		<T>(baseReducer: AsyncReducer<T, FuzzTestState>): AsyncReducer<T, FuzzTestState> =>
 		async (state, operation) => {
-			if (loggingInfo !== undefined) {
-				if (loggingInfo.printConsoleLogs) {
-					logCurrentState(state.clients, loggingInfo);
-					console.log("-".repeat(20));
-					console.log("Next operation:", JSON.stringify(operation, undefined, 4));
-				}
+			if (loggingInfo !== undefined && loggingInfo.printConsoleLogs) {
+				logCurrentState(state.clients, loggingInfo);
+				console.log("-".repeat(20));
+				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
 			try {
 				await baseReducer(state, operation);
@@ -341,11 +340,12 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 21,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1") },
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
 	createDDSFuzzSuite(
@@ -365,17 +365,18 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			clientJoinOptions: {
 				maxNumberOfClients: 3,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
 			skip: [
-				4, 6, 8, 19, 29, 48, 82, 83, 87, 94, 95, 110, 118, 123, 138, 143, 154, 159, 180,
-				181, 188, 190, 195,
+				13, 40, 43, 55, 66, 93, 94, 107, 110, 123, 136, 148, 160, 163, 168, 172, 177, 191,
+				196,
 			],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
 			saveFailures: {
-				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1"),
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
 			},
 		},
 	);
@@ -399,11 +400,12 @@ describe("SharedDirectory fuzz", () => {
 			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			clientAddProbability: 0.08,
+			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2") },
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
 	});
 
 	createDDSFuzzSuite(
@@ -425,14 +427,15 @@ describe("SharedDirectory fuzz", () => {
 				// was refactored to use the DDS fuzz harness.
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				clientAddProbability: 0.08,
+				stashableClientProbability: undefined,
 			},
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
-			skip: [30, 50, 133, 137, 144, 177, 195, 196],
+			skip: [73],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
-				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2"),
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
 			},
 		},
 	);

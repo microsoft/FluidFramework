@@ -7,7 +7,7 @@ import chalk from "chalk";
 
 import { MonoRepoKind } from "@fluidframework/build-tools";
 
-import { indentString } from "./lib";
+import { indentString } from "./library";
 import { CommandLogger } from "./logging";
 import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 
@@ -51,8 +51,14 @@ interface Section {
  * Map release groups to ADO pipeline
  */
 export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefined, string>([
-	[MonoRepoKind.Client, "https://dev.azure.com/fluidframework/internal/_build?definitionId=12"],
-	[MonoRepoKind.Server, "https://dev.azure.com/fluidframework/internal/_build?definitionId=30"],
+	[
+		MonoRepoKind.Client,
+		"https://dev.azure.com/fluidframework/internal/_build?definitionId=12",
+	],
+	[
+		MonoRepoKind.Server,
+		"https://dev.azure.com/fluidframework/internal/_build?definitionId=30",
+	],
 	[MonoRepoKind.Azure, "https://dev.azure.com/fluidframework/internal/_build?definitionId=85"],
 	[
 		MonoRepoKind.BuildTools,

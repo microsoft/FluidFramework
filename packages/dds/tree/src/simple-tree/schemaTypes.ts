@@ -34,7 +34,8 @@ export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitF
  *
  * 3. Union of 1 and 2.
  *
- * TODO: consider separating these cases into different types.
+ * @privateRemarks TODO: consider separating these cases into different types.
+ *
  * @public
  */
 export type InsertableObjectFromSchemaRecord<
@@ -97,7 +98,8 @@ export interface TreeNodeSchemaClass<
 	out TNode = unknown,
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -116,10 +118,19 @@ export interface TreeNodeSchemaCore<
 	out Name extends string,
 	out Kind extends NodeKind,
 	out ImplicitlyConstructable extends boolean,
+	out Info = unknown,
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
-	readonly info: unknown;
+
+	/**
+	 * Data used to define this schema.
+	 *
+	 * @remarks
+	 * The format depends on the kind of node it is for.
+	 * For example, the "object" node kind could store the field schema here.
+	 */
+	readonly info: Info;
 
 	/**
 	 * When constructing insertable content,

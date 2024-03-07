@@ -11,6 +11,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection } from "../intervalCollection";
@@ -40,7 +41,7 @@ describe("SharedString interval collection event spec", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -386,6 +387,196 @@ describe("SharedString interval collection event spec", () => {
 			}
 			containerRuntimeFactory.processAllMessages();
 			assert.equal(eventLog.length, 1);
+		});
+	});
+
+	describe("changed", () => {
+		const eventLog: (Omit<IntervalEventInfo, "op"> & {
+			id: string;
+			deltas: PropertySet;
+			previousEndpoints: { start: number; end: number } | undefined;
+			previousInterval: SequenceInterval | undefined;
+			slide: boolean;
+		})[] = [];
+		let intervalId: string;
+		beforeEach(() => {
+			collection.on("changed", (interval, deltas, previousInterval, local, slide) =>
+				eventLog.push({
+					id: interval.getIntervalId() ?? assert.fail("Expected interval to have id"),
+					deltas,
+					previousEndpoints: previousInterval
+						? {
+								start: sharedString.localReferencePositionToPosition(
+									previousInterval.start,
+								),
+								end: sharedString.localReferencePositionToPosition(
+									previousInterval.end,
+								),
+						  }
+						: undefined,
+					previousInterval: previousInterval ?? undefined,
+					interval: {
+						start: sharedString.localReferencePositionToPosition(interval.start),
+						end: sharedString.localReferencePositionToPosition(interval.end),
+					},
+					local,
+					slide,
+				}),
+			);
+			intervalId =
+				collection
+					.add({ start: 0, end: 1, props: { initialProp: "baz" } })
+					.getIntervalId() ?? fail("Expected interval to have id");
+			containerRuntimeFactory.processAllMessages();
+			eventLog.length = 0;
+		});
+
+		it("is emitted on initial local change but not ack of that change", () => {
+			collection.change(intervalId, { start: 2, end: 3 });
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ interval, previousEndpoints, previousInterval, local, slide }] = eventLog;
+				assert.notEqual(previousInterval, undefined);
+				assert.deepEqual(interval, { start: 2, end: 3 });
+				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
+				assert.equal(local, true);
+				assert.equal(slide, false);
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
+		});
+
+		it("is emitted on a remote change", () => {
+			const collection2 = sharedString2.getIntervalCollection("test");
+			collection2.change(intervalId, { start: 2, end: 3 });
+			assert.equal(eventLog.length, 0);
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ interval, previousEndpoints, local, slide }] = eventLog;
+				assert.deepEqual(interval, { start: 2, end: 3 });
+				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
+				assert.equal(local, false);
+				assert.equal(slide, false);
+			}
+		});
+
+		it("is emitted on change of properties and endpoints", () => {
+			collection.change(intervalId, { start: 2, end: 3, props: { foo: "bar" } });
+			// for now: allow both events to be logged (in endpoint path and props path)
+			assert.equal(eventLog.length, 2);
+			{
+				const [{ interval, previousEndpoints, local, slide }] = eventLog;
+				assert.deepEqual(interval, { start: 2, end: 3 });
+				assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
+				assert.equal(local, true);
+				assert.equal(slide, false);
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 2);
+		});
+
+		describe("is emitted on a change due to an endpoint sliding", () => {
+			it("on ack of a segment remove containing a ref", () => {
+				sharedString.removeRange(1, 3);
+				assert.equal(eventLog.length, 0);
+				containerRuntimeFactory.processAllMessages();
+				assert.equal(eventLog.length, 1);
+				{
+					const [{ interval, previousInterval, previousEndpoints, local, slide }] =
+						eventLog;
+					assert.deepEqual(interval, { start: 0, end: 1 });
+					assert(previousInterval !== undefined);
+					assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
+					assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
+					assert.equal(local, true);
+					assert.equal(slide, true);
+				}
+			});
+
+			it("on ack of an add to a concurrently removed segment", () => {
+				sharedString2.removeRange(3, sharedString2.getLength());
+				collection.add({ start: 4, end: 4 });
+				assert.equal(eventLog.length, 0);
+				containerRuntimeFactory.processAllMessages();
+				assert.equal(eventLog.length, 1);
+				{
+					const [{ interval, previousInterval, previousEndpoints, local, slide }] =
+						eventLog;
+					assert.deepEqual(interval, { start: 2, end: 2 });
+					assert(previousInterval !== undefined);
+					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
+					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
+					assert.equal(local, true);
+					assert.equal(slide, true);
+				}
+			});
+
+			it("on ack of a change to a concurrently removed segment", () => {
+				sharedString2.removeRange(3, sharedString2.getLength());
+				collection.change(intervalId, { start: 4, end: 4 });
+				assert.equal(eventLog.length, 1);
+				containerRuntimeFactory.processAllMessages();
+				assert.equal(eventLog.length, 2);
+				{
+					const { interval, previousInterval, previousEndpoints, local, slide } =
+						eventLog[1];
+					assert.deepEqual(interval, { start: 2, end: 2 });
+					assert(previousInterval !== undefined);
+					assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+					// Note: this isn't 4 because we're interpreting the segment+offset from the current view.
+					assert.deepEqual(previousEndpoints, { start: 3, end: 3 });
+					assert.equal(local, true);
+					assert.equal(slide, true);
+				}
+			});
+		});
+
+		it("is emitted on initial local property change but not ack of that change", () => {
+			collection.change(intervalId, { props: { foo: "bar" } });
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ previousInterval, id, deltas, local }] = eventLog;
+				assert.equal(previousInterval, undefined);
+				assert.equal(id, intervalId);
+				assert.equal(local, true);
+				assert.deepEqual(deltas, { foo: null });
+			}
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
+		});
+
+		it("is emitted on ack of remote property change", () => {
+			const collection2 = sharedString2.getIntervalCollection("test");
+			collection2.change(intervalId, { props: { foo: "bar" } });
+			assert.equal(eventLog.length, 0);
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 1);
+			{
+				const [{ id, deltas, previousInterval, local }] = eventLog;
+				assert.equal(previousInterval, undefined);
+				assert.equal(id, intervalId);
+				assert.equal(local, false);
+				assert.deepEqual(deltas, { foo: null });
+			}
+		});
+
+		it("only includes deltas for values that actually changed", () => {
+			const collection2 = sharedString2.getIntervalCollection("test");
+			collection2.change(intervalId, { props: { applies: true, conflictedDoesNotApply: 5 } });
+			assert.equal(eventLog.length, 0);
+			collection.change(intervalId, { props: { conflictedDoesNotApply: 2 } });
+			assert.equal(eventLog.length, 1);
+			containerRuntimeFactory.processAllMessages();
+			assert.equal(eventLog.length, 2);
+			{
+				const { id, deltas, previousInterval, local } = eventLog[1];
+				assert.equal(previousInterval, undefined);
+				assert.equal(id, intervalId);
+				assert.equal(local, false);
+				assert.deepEqual(deltas, { applies: null });
+			}
 		});
 	});
 });

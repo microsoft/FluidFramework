@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import path from "node:path";
+import * as path from "node:path";
 
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
-import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
+import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
+import { baseModel } from "../sharedNothing.js";
+import type { DDSFuzzModel } from "../../ddsFuzzHarness.js";
+import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import { _dirname } from "./dirname.cjs";
 
 let currentIndex = 0;
 const expectedOps = [
@@ -34,8 +37,8 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 
 createDDSFuzzSuite(model, {
 	defaultTestCount: 5,
-	detachedStartOptions: { enabled: false, attachProbability: 0 },
+	detachedStartOptions: { numOpsBeforeAttach: 0 },
 	replay: 2,
 	// Note: this should point the replay to the source-controlled 2.json file in this directory.
-	saveFailures: { directory: path.join(__dirname, "../../../src/test/ddsSuiteCases") },
+	saveFailures: { directory: path.join(_dirname, "../../../src/test/ddsSuiteCases") },
 });

@@ -21,8 +21,8 @@ import {
 	ISummarizer,
 	ISummarizerEvents,
 	SummarizerStopReason,
-} from "../../summary";
-import { TestQuorumClients } from "./testQuorumClients";
+} from "../../summary/index.js";
+import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Summarizer Client Election", () => {
 	const maxOps = 1000;

@@ -10,6 +10,41 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
+const stashedOpMetadataMark = Symbol();
+
+type StashedOpMetadata = { contents: any; metadata: unknown }[] &
+	Record<typeof stashedOpMetadataMark, typeof stashedOpMetadataMark>;
+
+function createStashedOpMetadata(): StashedOpMetadata {
+	const arr = [];
+	Object.defineProperty(arr, stashedOpMetadataMark, {
+		value: stashedOpMetadataMark,
+		writable: false,
+		enumerable: true,
+	});
+	return arr as any as StashedOpMetadata;
+}
+
+function isStashedOpMetadata(md: unknown): md is StashedOpMetadata {
+	return (
+		Array.isArray(md) &&
+		stashedOpMetadataMark in md &&
+		md[stashedOpMetadataMark] === stashedOpMetadataMark
+	);
+}
+
+function processWithStashedOpMetadataHandling(
+	content: any,
+	localOpMetaData: unknown,
+	func: (contents: any, metadata: unknown) => void,
+) {
+	if (isStashedOpMetadata(localOpMetaData)) {
+		localOpMetaData.forEach(({ contents, metadata }) => func(contents, metadata));
+	} else {
+		func(content, localOpMetaData);
+	}
+}
+
 export class ChannelDeltaConnection
 	extends TypedEventEmitter<{
 		(
@@ -34,17 +69,20 @@ export class ChannelDeltaConnection
 				outboundHandle: IFluidHandle,
 			) => void;
 			logger?: ITelemetryBaseLogger;
+			isAttachedAndVisible?: () => boolean;
 		},
 	) {
 		return new ChannelDeltaConnection(
 			overrides._connected ?? original._connected,
-			overrides.submit ?? original.submit,
+			overrides.submit ?? original.submitFn,
 			overrides.dirty ?? original.dirty,
 			overrides.addedGCOutboundReference ?? original.addedGCOutboundReference,
+			overrides.isAttachedAndVisible ?? original.isAttachedAndVisible,
 		);
 	}
 
 	private _handler: IDeltaHandler | undefined;
+	private stashedOpMd: StashedOpMetadata | undefined;
 
 	private get handler(): IDeltaHandler {
 		assert(!!this._handler, 0x177 /* "Missing delta handler" */);
@@ -56,13 +94,14 @@ export class ChannelDeltaConnection
 
 	constructor(
 		private _connected: boolean,
-		public readonly submit: (content: any, localOpMetadata: unknown) => void,
+		private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
 		/** @deprecated There is no replacement for this, its functionality is no longer needed at this layer. */
 		public readonly addedGCOutboundReference: (
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,
 		) => void,
+		private readonly isAttachedAndVisible: () => boolean,
 	) {
 		super();
 	}
@@ -80,7 +119,12 @@ export class ChannelDeltaConnection
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		try {
 			// catches as data processing error whether or not they come from async pending queues
-			this.handler.process(message, local, localOpMetadata);
+			processWithStashedOpMetadataHandling(
+				message.contents,
+				localOpMetadata,
+				(contents, metadata) =>
+					this.handler.process({ ...message, contents }, local, metadata),
+			);
 		} catch (error) {
 			throw DataProcessingError.wrapIfUnrecognized(
 				error,
@@ -92,17 +136,39 @@ export class ChannelDeltaConnection
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
-		this.handler.reSubmit(content, localOpMetadata);
+		processWithStashedOpMetadataHandling(
+			content,
+			localOpMetadata,
+			this.handler.reSubmit.bind(this.handler),
+		);
 	}
 
 	public rollback(content: any, localOpMetadata: unknown) {
 		if (this.handler.rollback === undefined) {
 			throw new Error("Handler doesn't support rollback");
 		}
-		this.handler.rollback(content, localOpMetadata);
+		processWithStashedOpMetadataHandling(
+			content,
+			localOpMetadata,
+			this.handler.rollback.bind(this.handler),
+		);
 	}
 
 	public applyStashedOp(content: any): unknown {
-		return this.handler.applyStashedOp(content);
+		try {
+			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
+			this.handler.applyStashedOp(content);
+			return this.stashedOpMd;
+		} finally {
+			this.stashedOpMd = undefined;
+		}
+	}
+
+	public submit(contents: any, metadata: unknown): void {
+		if (this.stashedOpMd !== undefined) {
+			this.stashedOpMd.push({ contents, metadata });
+		} else {
+			this.submitFn(contents, metadata);
+		}
 	}
 }

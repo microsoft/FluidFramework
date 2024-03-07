@@ -81,7 +81,7 @@ const resolvedUrl: IFluidResolvedUrl = {
     },
     tokens: { jwt: "token" },
     type: "fluid",
-    url: "fluid://www.ContosoFluidService.com/ContosoTenant/documentIdentifier",
+    url: "https://www.ContosoFluidService.com/ContosoTenant/documentIdentifier",
 }
 ```
 
@@ -138,15 +138,16 @@ As the Fluid Framework expands, we intend to make further use of these responses
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/api/v1/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/api/v1/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/api/v1/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
-[IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

@@ -8,13 +8,14 @@ import { typeboxValidator } from "../../external-utilities/index.js";
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
-import { RevisionTagCodec } from "../../core/index.js";
+import { ChangeEncodingContext } from "../../core/index.js";
 import { TestChange } from "../testChange.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testIdCompressor,
+	testRevisionTagCodec,
 } from "../utils.js";
 
 const commit1 = {
@@ -40,38 +41,42 @@ const commitInvalid = {
 	change: "Invalid change",
 };
 
-const idCompressor = new MockIdCompressor();
-const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
+const dummyContext = { originatorId: testIdCompressor.localSessionId };
+const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
 		[
 			"Message with commit 1",
 			{
-				sessionId: idCompressor.localSessionId,
+				sessionId: testIdCompressor.localSessionId,
 				commit: commit1,
 			},
+			dummyContext,
 		],
 		[
 			"Message with commit 2",
 			{
-				sessionId: idCompressor.localSessionId,
+				sessionId: testIdCompressor.localSessionId,
 				commit: commit2,
 			},
+			dummyContext,
 		],
 	],
 	failures: {
 		0: [
-			["Empty message", {}],
+			["Empty message", {}, dummyContext],
 			[
 				"Missing sessionId",
 				{
 					commit: commit1,
 				},
+				dummyContext,
 			],
 			[
 				"Missing commit",
 				{
 					sessionId: "session1",
 				},
+				dummyContext,
 			],
 			[
 				"Message with invalid sessionId",
@@ -79,6 +84,7 @@ const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
 					sessionId: 1,
 					commit: commit1,
 				},
+				dummyContext,
 			],
 			[
 				"Message with commit without revision",
@@ -86,6 +92,7 @@ const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
 					sessionId: "session1",
 					commit: commitWithoutRevision,
 				},
+				dummyContext,
 			],
 			[
 				"Message with invalid commit",
@@ -93,13 +100,14 @@ const testCases: EncodingTestData<DecodedMessage<TestChange>, unknown> = {
 					sessionId: "session1",
 					commit: commitInvalid,
 				},
+				dummyContext,
 			],
 		],
 	},
 };
 
 describe("message codec", () => {
-	const codec = makeMessageCodec(TestChange.codec, new RevisionTagCodec(idCompressor), {
+	const codec = makeMessageCodec(TestChange.codec, testRevisionTagCodec, {
 		jsonValidator: typeboxValidator,
 	});
 

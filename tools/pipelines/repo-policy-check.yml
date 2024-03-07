@@ -15,52 +15,83 @@ pr:
 - lts
 - release/*
 
-pool:
-  Small
-
 variables:
 - name: skipComponentGovernanceDetection
   value: true
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
 
-steps:
-- template: templates/include-use-node-version.yml
-
-- template: templates/include-install-pnpm.yml
+# The `resources` specify the location and version of the 1ES PT.
+resources:
+  repositories:
+  - repository: m365Pipelines
+    type: git
+    name: 1ESPipelineTemplates/M365GPT
+    ref: refs/tags/release
+extends:
+  # The pipeline extends the 1ES PT which will inject different SDL and compliance tasks.
+  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
-    buildDirectory: .
+    pool:
+      name: Small-1ES # This is one of the Fluid Orgs new 1ES hosted pools.
+      os: linux
+    sdl:
+      arrow:
+        # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+        # Currently we want to use different names for internal and public builds for Arrow Service Connection
+        ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+          serviceConnection: Arrow_FluidFramework_internal
+        ${{ else }}:
+          serviceConnection: Arrow_FluidFramework_public
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+    # Skip tagging if Github PR coming from a fork
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    customBuildTags:
+      - ES365AIMigrationTooling
+    stages:
+    - stage: run_policy_check
+      jobs:
+      - job: run_policy_check
+        steps:
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: .
 
-- task: Bash@3
-  displayName: Install root dependencies
-  inputs:
-    targetType: 'inline'
-    workingDirectory: .
-    script: |
-      # We only need to install the root dependencies
-      pnpm install --workspace-root --frozen-lockfile
+        - task: Bash@3
+          displayName: Install root dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: .
+            script: |
+              # We only need to install the root dependencies
+              pnpm install --workspace-root --frozen-lockfile
 
-- task: Npm@1
-  displayName: Policy Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run policy-check'
+        - task: Npm@1
+          displayName: Policy Check
+          inputs:
+            command: 'custom'
+            customCommand: 'run policy-check'
 
-- task: Npm@1
-  displayName: Layer Check
-  inputs:
-    command: 'custom'
-    customCommand: 'run layer-check'
+        - task: Npm@1
+          displayName: Layer Check
+          inputs:
+            command: 'custom'
+            customCommand: 'run layer-check'
 
-- task: Npm@1
-  displayName: npm run prettier:root
-  inputs:
-    command: 'custom'
-    customCommand: 'run prettier:root'
+        - task: Npm@1
+          displayName: npm run prettier:root
+          inputs:
+            command: 'custom'
+            customCommand: 'run prettier:root'
 
-- task: Bash@3
-  displayName: Prune pnpm store
-  inputs:
-    targetType: 'inline'
-    script: |
-      pnpm store prune
+        - task: Bash@3
+          displayName: Prune pnpm store
+          inputs:
+            targetType: 'inline'
+            script: |
+              pnpm store prune

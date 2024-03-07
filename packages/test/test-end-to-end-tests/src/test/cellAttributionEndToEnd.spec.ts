@@ -10,7 +10,7 @@ import {
 	enableOnNewFileKey,
 	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -22,12 +22,6 @@ import {
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-const cellId = "sharedCellKey";
-const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
 function assertAttributionMatches(
 	sharedCell: SharedCell,
@@ -76,9 +70,18 @@ function assertAttributionMatches(
 	}
 }
 
-describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCell } = apis.dds;
+
+	const cellId = "sharedCellKey";
+	const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -99,11 +102,13 @@ describeCompat("Attributor for SharedCell", "NoCompat", (getTestObjectProvider) 
 			configProvider: configProvider({
 				[enableOnNewFileKey]: runtimeAttributor !== undefined,
 			}),
+			// TODO this option shouldn't live here - this options object is global to the container
+			// and not specific to the individual dataStoreRuntime.
 			options: {
 				attribution: {
 					track: runtimeAttributor !== undefined,
 				},
-			},
+			} as any,
 		},
 	});
 

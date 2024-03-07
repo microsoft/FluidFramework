@@ -88,39 +88,17 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
+# TODO: Move trigger to pipeline designated for artifact model generation. Currently, 
+# the website docs builds and deploys on each commit. However, inconsistencies between 
+# the release branches and main is causing the website to change unexpectedly we can 
+# move the release/* trigger after separating the deploy step to another pipeline
 # no PR triggers
 trigger:
   branches:
     include:
-    - release/*
+    # - release/*
     - main
 pr: none
-
-resources:
-  pipelines:
-  - pipeline: common_definitions
-    source: Build - common-definitions
-  - pipeline: common_utils
-    source: Build - common-utils
-  - pipeline: container_definitions
-    source: Build - container-definitions
-  - pipeline: core_interfaces
-    source: Build - core-interfaces
-  - pipeline: driver_definitions
-    source: Build - driver-definitions
-  - pipeline: protocol_definitions
-    source: Build - protocol-definitions
-  - pipeline: azure
-    source: Build - azure
-  - pipeline: client
-    source: Build - client packages
-    trigger:
-      branches:
-        include:
-        - main
-        - docs/**
-  - pipeline: server
-    source: server-routerlicious
 
 stages:
 - stage: build
@@ -186,13 +164,6 @@ stages:
           submodules: false
           clean: true
 
-        - task: DownloadPipelineArtifact@2
-          displayName: 'Copy api-extractor JSON to staging folder'
-          inputs:
-            source: current
-            artifact: api-extractor-combined
-            path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
-
         - template: templates/include-use-node-version.yml
 
         - template: templates/include-install-pnpm.yml
@@ -207,36 +178,12 @@ stages:
             script: |
               pnpm i --frozen-lockfile
 
-        - task: Bash@3
-          displayName: Download and extract previous version API
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
-            script: |
-              # Run helper script to read versions.json
-              output=$(node docs/readVersionData.js)
-              
-              # Pipe script output and loop through each value in the array
-              if [ -n "$output" ]; then
-                echo "$output" | while IFS= read -r version; do
-                  version=$(echo "$version" | sed 's/"//g')
-                  echo "Version: $version"
-
-                  echo "creating api-extractor-temp-$version folder"
-                  mkdir -p $(Build.SourcesDirectory)/_api-extractor-temp-$version/doc-models
-
-                  az storage blob download -f latest-$version.tar.gz -c 'api-extractor-json' -n latest-$version.tar.gz --account-name $(STORAGE_ACCOUNT) --account-key $(STORAGE_KEY) --overwrite --verbose
-                  
-                  tar -xzf latest-$version.tar.gz -C _api-extractor-temp-$version/doc-models
-
-                done
-              fi
         - task: Npm@1
-          displayName: npm run build:multi-version
+          displayName: npm run build
           inputs:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
-            customCommand: 'run build:multi-version'
+            customCommand: 'run ci:build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
@@ -315,6 +262,47 @@ stages:
             artifactName: .gdn
 # END Secure development tasks
 
+- stage: link_check
+  displayName: 'Website Link Check'
+  dependsOn: [] # run in parallel
+  pool: Large
+  jobs:
+    - job: link_check
+      displayName: 'Website Link Check'
+      continueOnError: true
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: templates/include-use-node-version.yml
+
+        - template: templates/include-install-pnpm.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)/docs
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              pnpm i --frozen-lockfile
+
+        - task: Npm@1
+          displayName: npm run build
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:build'
+
+        - task: Npm@1
+          displayName: npm run ci:linkcheck
+          inputs:
+            command: 'custom'
+            workingDir: $(Build.SourcesDirectory)/docs
+            customCommand: 'run ci:linkcheck'
+
 - stage: deploy
   displayName: 'Deploy website'
   pool: Small
@@ -339,7 +327,9 @@ stages:
           condition: eq(variables.shouldDeploy, true)
           inputs:
             skip_app_build: true # site was built in previous stage
+            skip_api_build: true # api is written in js, no build needed
             cwd: $(Build.SourcesDirectory)
             app_location: 'docs/public'
+            api_location: 'docs/api'
             output_location: ''
             azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'

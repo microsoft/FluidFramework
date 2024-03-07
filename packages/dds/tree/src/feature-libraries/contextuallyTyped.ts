@@ -19,17 +19,17 @@ import {
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema/index.js";
-import { FieldKind } from "./modular-schema/index.js";
+import { FlexFieldKind } from "./modular-schema/index.js";
 import {
 	AllowedTypeSet,
-	AllowedTypes,
+	FlexAllowedTypes,
 	Any,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	FlexTreeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
-	TreeFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexFieldSchema,
 	FlexTreeNodeSchema,
 	allowedTypesSchemaSet,
 } from "./typed-schema/index.js";
@@ -109,7 +109,7 @@ export function isTreeValue(nodeValue: unknown): nodeValue is TreeValue {
 	}
 }
 
-export function getFieldKind(fieldSchema: TreeFieldSchema): FieldKind {
+export function getFieldKind(fieldSchema: FlexFieldSchema): FlexFieldKind {
 	// TODO:
 	// This module currently is assuming use of defaultFieldKinds.
 	// The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -305,7 +305,7 @@ function shallowCompatibilityTest(
 		return false;
 	}
 	if (isArrayLike(data)) {
-		if (schema instanceof FieldNodeSchema) {
+		if (schema instanceof FlexFieldNodeSchema) {
 			const field = schema.getFieldSchema();
 			return field.kind.multiplicity === Multiplicity.Sequence;
 		} else {
@@ -355,7 +355,7 @@ export function cursorForTypedTreeData<T extends FlexTreeNodeSchema>(
  * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @internal
  */
-export function cursorForTypedData<T extends AllowedTypes>(
+export function cursorForTypedData<T extends FlexAllowedTypes>(
 	context: TreeDataContext,
 	schema: T,
 	data: AllowedTypesToFlexInsertableTree<T>,
@@ -375,7 +375,7 @@ export function cursorForTypedData<T extends AllowedTypes>(
  */
 export function cursorsFromContextualData(
 	context: TreeDataContext,
-	field: TreeFieldSchema,
+	field: FlexFieldSchema,
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous {
 	const mapTrees = applyFieldTypesFromContext(context, field, data);
@@ -386,7 +386,7 @@ export function cursorsFromContextualData(
  * Strongly typed {@link cursorsFromContextualData} for a TreeFieldSchema
  * @internal
  */
-export function cursorsForTypedFieldData<T extends TreeFieldSchema>(
+export function cursorsForTypedFieldData<T extends FlexFieldSchema>(
 	context: TreeDataContext,
 	schema: T,
 	data: InsertableFlexField<T>,
@@ -433,8 +433,8 @@ export function applyTypesFromContext(
 		);
 		return { value, type: schema.name, fields: new Map() };
 	}
-	assert(!isTreeValue(data), "leaf value for non leaf");
-	if (schema instanceof FieldNodeSchema) {
+	assert(!isTreeValue(data), 0x880 /* leaf value for non leaf */);
+	if (schema instanceof FlexFieldNodeSchema) {
 		if (isArrayLike(data)) {
 			const children = applyFieldTypesFromContext(context, schema.getFieldSchema(), data);
 			return {
@@ -444,11 +444,11 @@ export function applyTypesFromContext(
 			};
 		}
 	}
-	assert(!isArrayLike(data), "array for non field node");
+	assert(!isArrayLike(data), 0x881 /* array for non field node */);
 	if (
-		schema instanceof MapNodeSchema ||
-		schema instanceof ObjectNodeSchema ||
-		schema instanceof FieldNodeSchema
+		schema instanceof FlexMapNodeSchema ||
+		schema instanceof FlexObjectNodeSchema ||
+		schema instanceof FlexFieldNodeSchema
 	) {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {
@@ -461,7 +461,7 @@ export function applyTypesFromContext(
 			}
 		}
 
-		if (schema instanceof ObjectNodeSchema) {
+		if (schema instanceof FlexObjectNodeSchema) {
 			for (const key of schema.objectNodeFields.keys()) {
 				if (data[key] === undefined) {
 					setFieldForKey(key, context, schema, fields);
@@ -513,7 +513,7 @@ function fieldKeysFromData(data: ContextuallyTypedNodeDataObject): FieldKey[] {
  */
 export function applyFieldTypesFromContext(
 	context: TreeDataContext,
-	field: TreeFieldSchema,
+	field: FlexFieldSchema,
 	data: ContextuallyTypedFieldData,
 ): MapTree[] {
 	const multiplicity = getFieldKind(field).multiplicity;
@@ -543,7 +543,7 @@ export function applyFieldTypesFromContext(
  *
  * When used, this content will be deeply copied into the tree, and must comply with the schema.
  *
- * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
+ * The content must follow the {@link Multiplicity} of the {@link FlexFieldKind}:
  * - use a single cursor for an `optional` or `value` field;
  * - use array of cursors for a `sequence` field;
  *
@@ -562,7 +562,7 @@ export type NewFieldContent =
  */
 export function normalizeNewFieldContent(
 	context: TreeDataContext,
-	schema: TreeFieldSchema,
+	schema: FlexFieldSchema,
 	content: NewFieldContent,
 ): ITreeCursorSynchronous {
 	if (areCursors(content)) {

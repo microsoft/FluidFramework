@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
@@ -42,7 +43,10 @@ const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
  * clients.
  */
 // eslint-disable-next-line import/namespace
-export class DocumentService implements api.IDocumentService {
+export class DocumentService
+	extends TypedEventEmitter<api.IDocumentServiceEvents>
+	implements api.IDocumentService
+{
 	private lastDiscoveredAt: number = Date.now();
 	private discoverP: Promise<void> | undefined;
 
@@ -73,7 +77,9 @@ export class DocumentService implements api.IDocumentService {
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
 		private readonly storageTokenFetcher: TokenFetcher,
 		private readonly ordererTokenFetcher: TokenFetcher,
-	) {}
+	) {
+		super();
+	}
 
 	private documentStorageService: DocumentStorageService | undefined;
 

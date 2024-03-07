@@ -25,25 +25,16 @@ import {
 	SummaryInfo,
 } from "@fluidframework/test-utils";
 import {
-	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
-	IIdCompressor,
-	IIdCompressorCore,
-	IdCreationRange,
-	OpSpaceCompressedId,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-	createIdCompressor,
-} from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+
+// eslint-disable-next-line import/no-internal-modules -- test import
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ISharedTree,
@@ -56,15 +47,13 @@ import {
 	InitializeAndSchematizeConfiguration,
 	SharedTreeContentSnapshot,
 	CheckoutFlexTreeView,
+	TreeCheckout,
 } from "../shared-tree/index.js";
 import {
 	buildForest,
 	createMockNodeKeyManager,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	jsonableTreeFromFieldCursor,
-	mapFieldChanges,
-	mapFieldsChanges,
-	mapMarkList,
 	mapTreeFromCursor,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	NodeKeyManager,
@@ -76,6 +65,10 @@ import {
 	mapRootChanges,
 	intoStoredSchema,
 	cursorForMapTreeNode,
+	SchemaBuilderBase,
+	FieldKinds,
+	ViewSchema,
+	defaultSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
@@ -111,8 +104,11 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 	DeltaRoot,
+	RevisionTagCodec,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeDestruction,
 } from "../core/index.js";
-import { JsonCompatible, brand, nestedMapFromFlatList } from "../util/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -120,12 +116,17 @@ import {
 	jsonRoot,
 	jsonSchema,
 	singleJsonCursor,
-	SchemaBuilder,
 	leaf,
 } from "../domains/index.js";
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ensureSchema } from "../shared-tree/schematizeTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { requireSchema } from "../shared-tree/schematizingTreeView.js";
 
 // Testing utilities
 
@@ -270,7 +271,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
-					enableRuntimeIdCompressor: true,
+					enableRuntimeIdCompressor: "on",
 				},
 			);
 
@@ -370,13 +371,19 @@ export class TestTreeProvider {
 	}
 }
 
+export interface ConnectionSetter {
+	readonly setConnected: (connectionState: boolean) => void;
+}
+
+export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
+
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactory();
-	public readonly trees: readonly SharedTree[];
+	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -398,7 +405,7 @@ export class TestTreeProviderLite {
 		useDeterministicSessionIds = true,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		const t: SharedTree[] = [];
+		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
@@ -407,12 +414,20 @@ export class TestTreeProviderLite {
 				id: "test",
 				idCompressor: createIdCompressor(sessionId),
 			});
-			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId) as SharedTree;
-			this.runtimeFactory.createContainerRuntime(runtime);
+			const tree = this.factory.create(
+				runtime,
+				TestTreeProviderLite.treeId,
+			) as SharedTreeWithConnectionStateSetter;
+			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
+			(tree as Mutable<SharedTreeWithConnectionStateSetter>).setConnected = (
+				connectionState: boolean,
+			) => {
+				containerRuntime.connected = connectionState;
+			};
 			t.push(tree);
 		}
 		this.trees = t;
@@ -485,27 +500,21 @@ export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
-	const aTree = mapFieldChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertMarkListEqual(a: readonly DeltaMark[], b: readonly DeltaMark[]): void {
-	const aTree = mapMarkList(a, mapTreeFromCursor);
-	const bTree = mapMarkList(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
  * Assert two Delta are equal, handling cursors.
  */
 export function assertDeltaFieldMapEqual(a: DeltaFieldMap, b: DeltaFieldMap): void {
-	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
-	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
-	assert.deepStrictEqual(aTree, bTree);
+	assert.deepStrictEqual(a, b);
 }
 
 /**
@@ -537,13 +546,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
+	): Promise<SharedTree> {
 		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
 		this.onLoad?.(tree);
 		return tree;
 	}
 
-	public override create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const tree = super.create(runtime, id) as SharedTree;
 		this.onCreate(tree);
 		return tree;
@@ -654,11 +663,11 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): ITreeCheckout {
+): TreeCheckout {
 	return flexTreeViewWithContent(content, args).checkout;
 }
 
-export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -669,7 +678,7 @@ export function flexTreeViewWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): CheckoutFlexTreeView<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createTreeCheckout(testIdCompressor, {
+	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -693,11 +702,11 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	const nodeCursors = mapCursorField(fieldCursor, (c) =>
 		cursorForMapTreeNode(mapTreeFromCursor(c)),
 	);
-	initializeForest(forest, nodeCursors, testIdCompressor);
+	initializeForest(forest, nodeCursors, testRevisionTagCodec);
 	return forest;
 }
 
-export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
+export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
@@ -708,7 +717,7 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createTreeCheckout(testIdCompressor, {
+	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
 		schema: new TreeStoredSchemaRepository(intoStoredSchema(content.schema)),
@@ -720,35 +729,33 @@ export function flexTreeWithContent<TRoot extends TreeFieldSchema>(
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
-	return view.editableTree;
+	return view.flexTree;
 }
 
-export const requiredBooleanRootSchema = new SchemaBuilder({
-	scope: "RequiredBool",
-}).intoSchema(SchemaBuilder.required(leaf.boolean));
-
-export const jsonSequenceRootSchema = new SchemaBuilder({
+export const jsonSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.sequence(jsonRoot));
+}).intoSchema(jsonRoot);
 
-export const stringSequenceRootSchema = new SchemaBuilder({
+export const stringSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
+	libraries: [leaf.library],
 	scope: "StringSequenceRoot",
-}).intoSchema(SchemaBuilder.sequence(leaf.string));
+}).intoSchema(leaf.string);
 
-export const numberSequenceRootSchema = new SchemaBuilder({
+export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequence, {
+	libraries: [leaf.library],
 	scope: "NumberSequenceRoot",
-}).intoSchema(SchemaBuilder.sequence(leaf.number));
+}).intoSchema(leaf.number);
 
 export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
+	allowedSchemaModifications: AllowedUpdateType.Initialize,
 	initialTree: [],
 } satisfies InitializeAndSchematizeConfiguration;
 
 export const emptyStringSequenceConfig = {
 	schema: stringSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
+	allowedSchemaModifications: AllowedUpdateType.Initialize,
 	initialTree: [],
 } satisfies InitializeAndSchematizeConfiguration;
 
@@ -1003,12 +1010,14 @@ export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	applyDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 
@@ -1016,17 +1025,37 @@ export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
 	detachedFieldIndex?: DetachedFieldIndex,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): void {
-	const rootDelta: DeltaRoot = { fields: delta };
+	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
 	announceDelta(
 		rootDelta,
 		deltaProcessor,
-		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(undefined, testRevisionTagCodec),
 	);
 }
 
+export function rootFromDeltaFieldMap(
+	delta: DeltaFieldMap,
+	build?: readonly DeltaDetachedNodeBuild[],
+	destroy?: readonly DeltaDetachedNodeDestruction[],
+): Mutable<DeltaRoot> {
+	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (build !== undefined) {
+		rootDelta.build = build;
+	}
+	if (destroy !== undefined) {
+		rootDelta.destroy = destroy;
+	}
+	return rootDelta;
+}
+
 export function createTestUndoRedoStacks(
-	events: ISubscribable<{ revertible(type: Revertible): void }>,
+	events: ISubscribable<{
+		newRevertible(type: Revertible): void;
+		revertibleDisposed(revertible: Revertible): void;
+	}>,
 ): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
@@ -1035,7 +1064,8 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = events.on("revertible", (revertible) => {
+	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
+		revertible.retain();
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
@@ -1043,58 +1073,101 @@ export function createTestUndoRedoStacks(
 		}
 	});
 
+	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			const index = redoStack.indexOf(revertible);
+			if (index !== -1) {
+				redoStack.splice(index, 1);
+			}
+		} else {
+			const index = undoStack.indexOf(revertible);
+			if (index !== -1) {
+				undoStack.splice(index, 1);
+			}
+		}
+	});
+
+	const unsubscribe = () => {
+		unsubscribeFromNew();
+		unsubscribeFromDisposed();
+		for (const revertible of undoStack) {
+			revertible.discard();
+		}
+		for (const revertible of redoStack) {
+			revertible.discard();
+		}
+	};
 	return { undoStack, redoStack, unsubscribe };
 }
 
-/**
- * Mock IdCompressor for testing that returns an incrementing ID.
- * Should not be used for tests that have multiple clients as doing so will generate
- * duplicate IDs that collide.
- */
-export class MockIdCompressor implements IIdCompressor, IIdCompressorCore {
-	private count = 0;
-	public localSessionId: SessionId = "MockLocalSessionId" as SessionId;
-
-	public serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
-	public serialize(withSession: false): SerializedIdCompressorWithNoSession;
-	public serialize(hasLocalState: boolean): SerializedIdCompressor {
-		throw new Error("Method not implemented.");
-	}
-
-	public takeNextCreationRange(): IdCreationRange {
-		return undefined as unknown as IdCreationRange;
-	}
-	public finalizeCreationRange(range: IdCreationRange): void {
-		throw new Error("Method not implemented.");
-	}
-
-	public generateCompressedId(): SessionSpaceCompressedId {
-		return this.count++ as SessionSpaceCompressedId;
-	}
-	public normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId {
-		return id as unknown as OpSpaceCompressedId;
-	}
-	public normalizeToSessionSpace(
-		id: OpSpaceCompressedId,
-		originSessionId: SessionId,
-	): SessionSpaceCompressedId {
-		return id as unknown as SessionSpaceCompressedId;
-	}
-	public decompress(id: SessionSpaceCompressedId): StableId {
-		throw new Error("Method not implemented.");
-	}
-	public recompress(uncompressed: StableId): SessionSpaceCompressedId {
-		throw new Error("Method not implemented.");
-	}
-	public tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined {
-		throw new Error("Method not implemented.");
-	}
-	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
-		throw new Error("Method not implemented.");
-	}
-}
-
-export const testIdCompressor = createIdCompressor();
+export const testIdCompressor = createAlwaysFinalizedIdCompressor(
+	"00000000-0000-4000-b000-000000000000" as SessionId,
+);
 export function mintRevisionTag(): RevisionTag {
 	return testIdCompressor.generateCompressedId();
+}
+
+export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
+
+/**
+ * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+ */
+export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
+	tree: SharedTree,
+	config: InitializeAndSchematizeConfiguration<TRoot>,
+	onDispose?: () => void,
+	nodeKeyManager?: NodeKeyManager,
+	nodeKeyFieldKey?: FieldKey,
+): CheckoutFlexTreeView<TRoot> {
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
+	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
+		assert.fail("Schematize failed");
+	}
+
+	return requireSchema(
+		tree.checkout,
+		viewSchema,
+		onDispose ?? (() => {}),
+		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
+	);
+}
+
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+// Note: trees which simulate attach scenarios using the mocks should finalize ids created
+// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
+// finalization when messages are processed.
+const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+
+/**
+ * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
+ *
+ * See TestTreeProvider, TestTreeProviderLite and SharedTreeFactory for other ways to build trees.
+ *
+ * If what is needed is a view, see options to create one without making a SharedTree instance.
+ */
+export function treeTestFactory(
+	options: {
+		id?: string;
+		runtime?: IFluidDataStoreRuntime;
+		attributes?: IChannelAttributes;
+		options?: SharedTreeOptions;
+		telemetryContextPrefix?: string;
+	} = {},
+): SharedTree {
+	return new SharedTree(
+		options.id ?? "tree",
+		options.runtime ??
+			new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(testSessionId),
+				clientId: "test-client",
+				id: "test",
+			}),
+		options.attributes ?? new SharedTreeFactory().attributes,
+		options.options ?? { jsonValidator: typeboxValidator },
+		options.telemetryContextPrefix ?? "SharedTree",
+	);
 }

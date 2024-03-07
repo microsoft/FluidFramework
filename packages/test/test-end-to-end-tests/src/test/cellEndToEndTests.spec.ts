@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISharedCell, SharedCell } from "@fluidframework/cell";
+import type { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
@@ -21,15 +21,18 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 
 const cellId = "cellKey";
-const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
 
-describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
+describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedCell } = apis.dds;
+
+	const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -41,7 +44,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	let sharedCell2: ISharedCell;
 	let sharedCell3: ISharedCell;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
@@ -301,9 +304,11 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider) => {
 	});
 });
 
-describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider) => {
+describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedCell } = apis.dds;
+
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
@@ -318,9 +323,10 @@ describeCompat("SharedCell orderSequentially", "NoCompat", (getTestObjectProvide
 	});
 	const errorMessage = "callback failure";
 
-	beforeEach(async () => {
-		const configWithFeatureGates = {
-			...testContainerConfig,
+	beforeEach("setup", async () => {
+		const configWithFeatureGates: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry: [[cellId, SharedCell.getFactory()]],
 			loaderProps: {
 				configProvider: configProvider({
 					"Fluid.ContainerRuntime.EnableRollback": true,

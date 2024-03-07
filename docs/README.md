@@ -219,9 +219,17 @@ The lighter an item is, the higher it goes in order (closer to the top).
 
 ### API menu
 
-The API menu is a bit more complex since it's driven by content.
-The left menu (API overview) is a list of grouped packages, the grouping comes from a yaml file in the `data` folder (`packages.yaml`).
-The API documentation is generated with metadata which allows the template to link pages and load the right information.
+FluidFramework.com's Logical Hierarchy is defined in `packages.json` within the `data` folder. It's structured around two main concepts; FluidFramework and Service Clients.
+
+#### Concepts
+
+- **FluidFramework**: The core uber package with sub-categories like `Audience`, `Container`, and `DDSes`. Each containing the APIs which should be exposed for that concept.
+- **Service Clients**: Packages connecting with FluidFramework (e.g., `@fluidframework/azure-client`).
+
+#### Structure
+
+- **FluidFramework**: FluidFramework is split up into groupings which is then divided into the sub-categories; Classes, Enums, Interfaces and Types. The sub-categories contain the APIs that should be exposed in the Logical Hierarchy.
+- **Service Clients**: Lists integration packages for the framework.
 
 ### Table of Contents
 
@@ -309,13 +317,13 @@ This shortcode can be found in `layouts/shortcodes/apiref.html`.
 `Markdown` like the following:
 
 ```markdown
-The {{< apiref "FluidContainer" "class" >}} class can be used to...
+The {{< apiref "fluid-static" "FluidContainer" "class" >}} class can be used to...
 ```
 
 will generate something like:
 
 ```markdown
-The <a href="{{ relref /docs/api/v1/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
+The <a href="{{ relref /docs/apis/fluid-static/ifluidcontainer-interface.md }}"><code>FluidContainer</code></a> class can be used to...
 ```
 
 ## Working on the template
@@ -336,22 +344,15 @@ The following npm scripts are supported in this directory:
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:api-documentation` |
 | `build:api-documentation` | Convert package API reports (`.api.json` files) into Markdown. |
-| `build:api-documentation:multi-version` | Convert package API reports (`.api.json` files) into Markdown. Includes API content from all major release branches. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `build:md-magic:code` | `node markdown-magic-code.js` |
-| `build:md-magic:website` | `node markdown-magic-website.js` |
-| `build:multi-version` | Build the site; outputs to `public/` by default. Includes API content from all major release branches. |
-| `build:redirects` | `node ./build-redirects.js` |
+| `build:redirects` | Copies the versions file from Hugo's data directory, so the redirection azure function has access to it. |
 | `build:repo-docs` | `npm run build:md-magic:code` |
-| `build:website` | Build the website (including generating API docs and running markdown-magic) |
-| `build:website:multi-version` | `Build the website (including generating API docs and running markdown-magic). Includes API content from all major release branches. |
 | `ci:build` | `npm run download && npm run build` |
 | `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
 | `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
-| `download` | Download the latest API JSON files from `main` locally and runs a build. |
 | `download:api` | Download the latest API JSON files from `main` locally. |
-| `download:api:multi-version` | Download and extract all latest API JSON from all major release branches files locally. |
 | `format` | `npm run prettier:fix` |
 | `hugo` | Run the local copy of Hugo. |
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |

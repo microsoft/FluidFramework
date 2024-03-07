@@ -10,8 +10,8 @@ import type {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 
-import { getLatestVersion } from "./app";
-import { DiceRollerContainerRuntimeFactory } from "./modelVersion1";
+import { getLatestVersion } from "./app.js";
+import { DiceRollerContainerRuntimeFactory } from "./modelVersion1/index.js";
 
 const v1ModuleWithDetails: IFluidModuleWithDetails = {
 	module: { fluidExport: new DiceRollerContainerRuntimeFactory() },

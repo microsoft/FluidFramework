@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { MapFactory, SharedMap } from "../../map";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+import { DirectoryFactory, SharedDirectory } from "../../directory.js";
+import { MapFactory, SharedMap } from "../../map.js";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {
@@ -22,7 +22,7 @@ describe("Reconnection", () => {
 		let map1: SharedMap;
 		let map2: SharedMap;
 
-		beforeEach(async () => {
+		beforeEach("createMaps", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Create the first SharedMap.
@@ -124,7 +124,7 @@ describe("Reconnection", () => {
 		let directory1: SharedDirectory;
 		let directory2: SharedDirectory;
 
-		beforeEach(async () => {
+		beforeEach("createDirectories", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Create the first SharedDirectory.

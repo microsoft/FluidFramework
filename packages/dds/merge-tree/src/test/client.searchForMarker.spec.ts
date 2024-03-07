@@ -5,13 +5,14 @@
 
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { UniversalSequenceNumber } from "../constants";
-import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes";
-import { MergeTreeDeltaType, ReferenceType } from "../ops";
-import { reservedTileLabelsKey } from "../referencePositions";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
-import { insertSegments } from "./testUtils";
+import { UniversalSequenceNumber } from "../constants.js";
+import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { reservedTileLabelsKey } from "../referencePositions.js";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
+import { insertSegments } from "./testUtils.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
 
 describe("TestClient", () => {
 	const localUserLongId = "localUser";
@@ -704,6 +705,128 @@ describe("TestClient", () => {
 
 				assert.equal(marker, undefined, "Returned marker should be undefined.");
 			});
+		});
+	});
+	describe(".getMarkerById", () => {
+		it("removed marker", () => {
+			const clients = createClientsAtInitialState({ initialState: "hello world" }, "A", "B");
+
+			const randomMarkerKey = "randomKey1";
+
+			assert(!clients.A.getMarkerFromId(randomMarkerKey), "local client before insert");
+
+			const ops = [
+				clients.A.makeOpMessage(
+					clients.A.insertMarkerLocal(5, ReferenceType.Simple, {
+						[reservedMarkerIdKey]: randomMarkerKey,
+					}),
+					1,
+				),
+			];
+
+			assert(
+				clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after insert before ack",
+			);
+
+			ops.splice(0).forEach((op) => {
+				clients.all.forEach((c) => c.applyMsg(op));
+			});
+
+			assert(
+				clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after insert after ack",
+			);
+			assert(
+				clients.B.getMarkerFromId(randomMarkerKey),
+				"remote client after insert after ack",
+			);
+
+			ops.push(clients.A.makeOpMessage(clients.A.removeRangeLocal(5, 6), 1));
+
+			assert(
+				!clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after remove before ack",
+			);
+			assert(
+				clients.B.getMarkerFromId(randomMarkerKey),
+				"remote client after remove before ack",
+			);
+
+			ops.splice(0).forEach((op) => {
+				clients.all.forEach((c) => c.applyMsg(op));
+			});
+
+			assert(
+				!clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after remove after ack",
+			);
+			assert(
+				!clients.B.getMarkerFromId(randomMarkerKey),
+				"remote client after remove after ack",
+			);
+		});
+		it("obliterate marker", () => {
+			const clients = createClientsAtInitialState(
+				{ initialState: "hello world", options: { mergeTreeEnableObliterate: true } },
+				"A",
+				"B",
+			);
+
+			const randomMarkerKey = "randomKey1";
+
+			assert(!clients.A.getMarkerFromId(randomMarkerKey), "local client before insert");
+
+			const ops = [
+				clients.A.makeOpMessage(
+					clients.A.insertMarkerLocal(5, ReferenceType.Simple, {
+						[reservedMarkerIdKey]: randomMarkerKey,
+					}),
+					1,
+				),
+			];
+
+			assert(
+				clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after insert before ack",
+			);
+
+			ops.splice(0).forEach((op) => {
+				clients.all.forEach((c) => c.applyMsg(op));
+			});
+
+			assert(
+				clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after insert after ack",
+			);
+			assert(
+				clients.B.getMarkerFromId(randomMarkerKey),
+				"remote client after insert after ack",
+			);
+
+			ops.push(clients.A.makeOpMessage(clients.A.obliterateRangeLocal(5, 6), 1));
+
+			assert(
+				!clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after obliterate before ack",
+			);
+			assert(
+				clients.B.getMarkerFromId(randomMarkerKey),
+				"remote client after obliterate before ack",
+			);
+
+			ops.splice(0).forEach((op) => {
+				clients.all.forEach((c) => c.applyMsg(op));
+			});
+
+			assert(
+				!clients.A.getMarkerFromId(randomMarkerKey),
+				"local client after obliterate after ack",
+			);
+			assert(
+				!clients.B.getMarkerFromId(randomMarkerKey),
+				"remote client after obliterate after ack",
+			);
 		});
 	});
 });

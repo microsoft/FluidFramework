@@ -6,7 +6,14 @@
 import assert from "assert";
 import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
-import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
+import { Provider } from "nconf";
+import IoRedisMock from "ioredis-mock";
+import {
+	IWholeFlatSummary,
+	LatestSummaryId,
+	NetworkError,
+	isNetworkError,
+} from "@fluidframework/server-services-client";
 import { ISummaryTestMode } from "./utils";
 import {
 	GitWholeSummaryManager,
@@ -15,8 +22,13 @@ import {
 	IRepositoryManager,
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
+	RedisFsManagerFactory,
+	checkSoftDeleted,
+	type IRepoManagerParams,
 } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
+import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
+import { RedisFs } from "../utils/redisFs/redisFsManager";
 import {
 	sampleChannelSummaryUpload,
 	sampleContainerSummaryUpload,
@@ -30,7 +42,6 @@ import {
 	checkFullStorageAccessBaselinePerformance,
 	checkInitialWriteStorageAccessBaselinePerformance,
 } from "./storageAccess";
-import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
 import {
 	ElaborateFirstChannelPayload,
 	ElaborateFirstChannelResult,
@@ -104,36 +115,81 @@ const testModes = permuteFlags({
 	enableSlimGitInit: false,
 }) as unknown as ISummaryTestMode[];
 
+type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
+
 const getFsManagerFactory = (
-	fileSystem: string,
+	fileSystem: GitFileSystem,
 ): {
 	fsManagerFactory: IFileSystemManagerFactory;
 	getFsSpy: () => SinonSpiedInstance<IFileSystemPromises>;
-	fsCleanup: () => void;
-	fsCheckSizeBytes: () => number;
+	fsCleanup: () => Promise<void>;
+	fsCheckSizeBytes: () => Promise<number>;
 } => {
 	if (fileSystem === "memfs") {
 		const memfsManagerFactory = new MemFsManagerFactory();
 		return {
 			fsManagerFactory: memfsManagerFactory,
 			getFsSpy: () => spy(memfsManagerFactory.volume as unknown as IFileSystemPromises),
-			fsCheckSizeBytes: () =>
+			fsCheckSizeBytes: async () =>
 				JSON.stringify(Object.values(memfsManagerFactory.volume.toJSON()).join()).length,
-			fsCleanup: () => {
+			fsCleanup: async () => {
 				memfsManagerFactory.volume.reset();
+			},
+		};
+	}
+	if (fileSystem === "redisfs" || fileSystem === "hashmap-redisfs") {
+		const redisConfig = new Provider({}).use("memory").defaults({
+			git: {
+				enableRedisFsMetrics: false,
+				enableHashmapRedisFs: fileSystem === "hashmap-redisfs",
+				redisApiMetricsSamplingPeriod: 0,
+			},
+			redis: {
+				host: "localhost",
+				port: 6379,
+				connectTimeout: 10000,
+				maxRetriesPerRequest: 20,
+				enableAutoPipelining: false,
+				enableOfflineQueue: true,
+				keyExpireAfterSeconds: 60 * 60, // 1 hour
+			},
+		});
+		const redisfsManagerFactory = new RedisFsManagerFactory(
+			redisConfig,
+			(options) => new IoRedisMock(options),
+		);
+		// Internally, this will create a new RedisFs instance that is shared across all `create` calls.
+		const redisFsManager = redisfsManagerFactory.create();
+		// This is the RedisFs instance that is shared across all `create` calls. It is a static instance.
+		const redisFs = redisFsManager.promises;
+		return {
+			fsManagerFactory: redisfsManagerFactory,
+			getFsSpy: () => spy(redisFs),
+			fsCheckSizeBytes: async () => {
+				const redisClient = (redisFs as RedisFs).redisFsClient;
+				const keys = await redisClient.keysByPrefix("");
+				const getPs: Promise<unknown>[] = [];
+				for (const key of keys) {
+					getPs.push(redisClient.get(key).then((value) => JSON.stringify(value)));
+				}
+				return JSON.stringify((await Promise.all(getPs)).join()).length;
+			},
+			fsCleanup: async () => {
+				const redisClient = (redisFs as RedisFs).redisFsClient;
+				await redisClient.delAll("");
 			},
 		};
 	}
 	throw new Error(`Unknown file system ${fileSystem}`);
 };
 
-const testFileSystems = ["memfs"];
+const testFileSystems: GitFileSystem[] = ["memfs", "redisfs", "hashmap-redisfs"];
 testFileSystems.forEach((fileSystem) => {
 	const { fsManagerFactory, fsCleanup, fsCheckSizeBytes, getFsSpy } =
 		getFsManagerFactory(fileSystem);
 	testModes.forEach((testMode) => {
-		describe(`Summaries (${JSON.stringify(testMode)})`, () => {
-			const tenantId = "gitrest-summaries-test";
+		describe(`Summaries (${JSON.stringify({ fileSystem, ...testMode })})`, () => {
+			const tenantId = "gitrest-summaries-test-tenantId";
 			let documentId: string;
 			let repoManager: IRepositoryManager;
 			const getWholeSummaryManager = (
@@ -153,7 +209,9 @@ testFileSystems.forEach((fileSystem) => {
 				);
 			};
 			let fsSpy: SinonSpiedInstance<IFileSystemPromises>;
-			const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts => ({
+			const getCurrentStorageAccessCallCounts = (): StorageAccessCallCounts & {
+				[fn: string]: number;
+			} => ({
 				readFile: fsSpy.readFile.callCount,
 				writeFile: fsSpy.writeFile.callCount,
 				mkdir: fsSpy.mkdir.callCount,
@@ -184,9 +242,9 @@ testFileSystems.forEach((fileSystem) => {
 				});
 			});
 
-			afterEach(() => {
+			afterEach(async () => {
 				// Reset storage volume after each test.
-				fsCleanup();
+				await fsCleanup();
 				// Reset Sinon spies after each test.
 				restore();
 			});
@@ -289,10 +347,13 @@ testFileSystems.forEach((fileSystem) => {
 					);
 					// Tests run against commit 7620034bac63c5e3c4cb85f666a41c46012e8a49 on Dec 13, 2023
 					// showed that the final storage size was 13kb, or 23kb for low-io mode where summary blobs are not shared.
-					const finalStorageSizeKb = Math.ceil(fsCheckSizeBytes() / 1_024);
+					const finalStorageSizeKb = Math.ceil((await fsCheckSizeBytes()) / 1_024);
 					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 23 : 13;
+					process.stdout.write(
+						`Final storage size: ${finalStorageSizeKb}kb; expected: ${expectedMaxStorageSizeKb}\n`,
+					);
 					assert(
-						Math.ceil(fsCheckSizeBytes() / 1_024) <= expectedMaxStorageSizeKb,
+						finalStorageSizeKb <= expectedMaxStorageSizeKb,
 						`Storage size should be <= ${expectedMaxStorageSizeKb}kb. Got ${finalStorageSizeKb}`,
 					);
 				}
@@ -394,19 +455,6 @@ testFileSystems.forEach((fileSystem) => {
 					await getWholeSummaryManager().writeSummary(
 						// Replace the referenced channel summary with the one we just wrote.
 						// This matters when low-io write is enabled, because it alters how the tree is stored.
-						// JSON.parse(
-						// 	JSON.stringify(ElaborateFirstServiceContainerPayload)
-						// 		.replace(
-						// 			ElaborateFirstContainerResult.id,
-						// 			firstContainerWriteResponse.writeSummaryResponse.id,
-						// 		)
-						// 		.replace(
-						// 			ElaborateFirstContainerResult.trees[0].id,
-						// 			(
-						// 				firstContainerWriteResponse.writeSummaryResponse as IWholeFlatSummary
-						// 			).trees[0].id,
-						// 		),
-						// ),
 						replaceTestShas(ElaborateFirstServiceContainerPayload, [
 							{
 								sha: ElaborateFirstContainerResult.id,
@@ -492,6 +540,120 @@ testFileSystems.forEach((fileSystem) => {
 					"Container summary read response should match expected response.",
 				);
 			});
+
+			if (testMode.repoPerDocEnabled) {
+				/**
+				 * Test that we can write an initial summary, read it, then delete the document's summary data.
+				 * Validates that after deletion we cannot read and subsequent delete attempts are no-ops, not errors.
+				 */
+				it("Can hard-delete a document's summary data", async () => {
+					// Write and validate initial summary.
+					const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+						ElaborateInitialPayload,
+						true,
+					);
+					assert.strictEqual(
+						initialWriteResponse.isNew,
+						true,
+						"Initial summary write `isNew` should be `true`.",
+					);
+					assertEqualSummaries(
+						initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+						ElaborateInitialResult,
+						"Initial summary write response should match expected response.",
+					);
+					const initialReadResponse =
+						await getWholeSummaryManager().readSummary(LatestSummaryId);
+					assertEqualSummaries(
+						initialReadResponse,
+						ElaborateInitialResult,
+						"Initial summary read response should match expected response.",
+					);
+
+					// Delete document.
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
+					await getWholeSummaryManager().deleteSummary(fsManager, false /* softDelete */);
+					// Validate that we cannot read the summary.
+					await assert.rejects(
+						async () => getWholeSummaryManager().readSummary(LatestSummaryId),
+						(thrown) => isNetworkError(thrown) && thrown.code === 404,
+						"Reading a deleted summary should throw an 404 error.",
+					);
+					// Validate that we can delete the summary again.
+					assert.doesNotReject(
+						async () =>
+							getWholeSummaryManager().deleteSummary(
+								fsManager,
+								false /* softDelete */,
+							),
+						"Deleting a deleted summary should not throw an error.",
+					);
+				});
+
+				/**
+				 * Test that we can write an initial summary, read it, then delete the document's summary data.
+				 * Validates that after deletion we cannot read and subsequent delete attempts are no-ops, not errors.
+				 */
+				it("Can soft-delete a document's summary data", async () => {
+					// Write and validate initial summary.
+					const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+						ElaborateInitialPayload,
+						true,
+					);
+					assert.strictEqual(
+						initialWriteResponse.isNew,
+						true,
+						"Initial summary write `isNew` should be `true`.",
+					);
+					assertEqualSummaries(
+						initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+						ElaborateInitialResult,
+						"Initial summary write response should match expected response.",
+					);
+					const initialReadResponse =
+						await getWholeSummaryManager().readSummary(LatestSummaryId);
+					assertEqualSummaries(
+						initialReadResponse,
+						ElaborateInitialResult,
+						"Initial summary read response should match expected response.",
+					);
+
+					// Delete document.
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
+					await getWholeSummaryManager().deleteSummary(fsManager, true /* softDelete */);
+					// Validate that soft-deletion flag is detected.
+					assert.rejects(
+						async () =>
+							checkSoftDeleted(
+								fsManager,
+								repoManager.path,
+								// only used for telemetry
+								{} as unknown as IRepoManagerParams,
+								testMode.repoPerDocEnabled,
+							),
+						(thrown) => isNetworkError(thrown) && (thrown as NetworkError).code === 410,
+						"CheckSoftDeleted on deleted document should throw 410.",
+					);
+					// Validate that we can hard-delete the soft-deleted summary.
+					assert.doesNotReject(
+						async () =>
+							getWholeSummaryManager().deleteSummary(
+								fsManager,
+								false /* softDelete */,
+							),
+						"Deleting a deleted summary should not throw an error.",
+					);
+					await assert.rejects(
+						async () => getWholeSummaryManager().readSummary(LatestSummaryId),
+						(thrown) => isNetworkError(thrown) && thrown.code === 404,
+						"Reading a deleted summary should throw an 404 error.",
+					);
+				});
+			}
 
 			// Test cross-compat between low-io and non-low-io write modes for same summary.
 			[true, false].forEach((enableLowIoWrite) => {

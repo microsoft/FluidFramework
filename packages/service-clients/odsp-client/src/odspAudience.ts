@@ -5,11 +5,11 @@
 import { assert } from "@fluidframework/core-utils";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
-import { type OdspMember } from "./interfaces";
+import { type OdspMember } from "./interfaces.js";
 
 /**
  * Since ODSP provides user names, email and oids for all of its members, we extend the
- * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * {@link @fluidframework/fluid-static#IMember} interface to include this service-specific value.
  * @internal
  */
 interface OdspUser {

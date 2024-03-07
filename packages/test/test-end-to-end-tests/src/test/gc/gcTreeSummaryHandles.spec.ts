@@ -18,18 +18,22 @@ import {
 	SummarizerStopReason,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	DriverHeader,
+	IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	wrapDocumentServiceFactory,
 	waitForContainerConnection,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -114,6 +118,7 @@ async function submitFailingSummary(
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 ) {
 	await provider.ensureSynchronized();
@@ -123,6 +128,7 @@ async function submitFailingSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken: new ControlledCancellationToken(failingStage),
+		latestSummaryRefSeqNum,
 	});
 
 	const stageMap = new Map<FailingSubmitSummaryStage, string>();
@@ -145,6 +151,7 @@ async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
 	logger: ITelemetryLoggerExt,
+	latestSummaryRefSeqNum: number,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {
@@ -157,6 +164,7 @@ async function submitAndAckSummary(
 		refreshLatestAck: false,
 		summaryLogger: logger,
 		cancellationToken,
+		latestSummaryRefSeqNum,
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
@@ -265,10 +273,13 @@ describeCompat(
 			},
 			isHandle: boolean,
 		): Promise<string> {
+			const latestSummaryRefSeqNum =
+				latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0;
 			const summaryResult = await submitAndAckSummary(
 				provider,
 				summarizerClient,
 				logger,
+				latestSummaryRefSeqNum,
 				false, // fullTree
 			);
 			latestAckedSummary = summaryResult.ackedSummary;
@@ -293,14 +304,25 @@ describeCompat(
 		}
 
 		describe("Stores handle in summary when GC state does not change", () => {
-			beforeEach(async () => {
+			beforeEach("setup", async () => {
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
-				(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-					provider.documentServiceFactory,
-					uploadSummaryCb,
-				);
+				(provider as any)._documentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									uploadSummaryWithContext: (dss) => async (summary, context) => {
+										uploadSummaryCb(summary, context);
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+										return dss.uploadSummaryWithContext(summary, context);
+									},
+								},
+							},
+						},
+					);
 
 				mainContainer = await createContainer();
 				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
@@ -398,6 +420,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob handle expected
@@ -415,6 +438,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Upload,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob expected as the summary had changed
@@ -434,6 +458,7 @@ describeCompat(
 					summarizerClient1,
 					logger,
 					FailingSubmitSummaryStage.Generate,
+					latestAckedSummary?.summaryOp.referenceSequenceNumber ?? 0,
 				);
 
 				// GC blob expected as the summary had changed

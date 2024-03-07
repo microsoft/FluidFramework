@@ -7,11 +7,13 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
 import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
+import { Commit } from "../../../shared-tree-core/index.js";
 import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
 import { noopValidator } from "../../../codec/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
+import { brand } from "../../../util/index.js";
 import { Editor, makeEditMinter } from "../../editMinter.js";
-import { failCodec, testIdCompressor } from "../../utils.js";
+import { failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
 import {
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
@@ -45,7 +47,7 @@ describe("EditManager - Bench", () => {
 		readonly maxEditCount: number;
 	}
 
-	const defaultFamily = new DefaultChangeFamily(testIdCompressor, failCodec, {
+	const defaultFamily = new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
 		jsonValidator: noopValidator,
 	});
 	const sequencePrepend: Editor = (builder) => {
@@ -235,4 +237,58 @@ describe("EditManager - Bench", () => {
 			});
 		});
 	}
+
+	describe("No concurrency", () => {
+		describe("Many local edits", () => {
+			for (const [type, count] of [
+				[BenchmarkType.Perspective, 1],
+				[BenchmarkType.Perspective, 10],
+				[BenchmarkType.Perspective, 100],
+				[BenchmarkType.Perspective, 1000],
+			]) {
+				benchmark({
+					type,
+					title: `Process the sequencing of ${count} local commits`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+
+							// Setup
+							const family = testChangeFamilyFactory(new NoOpChangeRebaser());
+							const manager = editManagerFactory(family);
+							// Subscribe to the local branch to emulate the behavior of SharedTree
+							manager.localBranch.on("afterChange", ({ change }) => {});
+							const sequencedEdits: Commit<TestChange>[] = [];
+							for (let iChange = 0; iChange < count; iChange++) {
+								const revision = mintRevisionTag();
+								manager.localBranch.apply(TestChange.emptyChange, revision);
+								sequencedEdits.push({
+									change: TestChange.emptyChange,
+									revision,
+									sessionId: manager.localSessionId,
+								});
+							}
+
+							// Measure
+							const before = state.timer.now();
+							for (let iChange = 0; iChange < count; iChange++) {
+								manager.addSequencedChange(
+									sequencedEdits[iChange],
+									brand(iChange + 1),
+									brand(0),
+								);
+							}
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
+							// Collect data
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				});
+			}
+		});
+	});
 });

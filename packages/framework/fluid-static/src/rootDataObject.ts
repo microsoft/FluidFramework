@@ -7,26 +7,33 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import {
+	type FluidObject,
+	type IFluidLoadable,
+	type IRequest,
+	type IResponse,
+} from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IRuntimeFactory } from "@fluidframework/container-definitions";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { type ContainerRuntime } from "@fluidframework/container-runtime";
+import { type IDirectory } from "@fluidframework/map";
+
 import {
-	ContainerSchema,
-	IRootDataObject,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
-	LoadableObjectRecord,
-	SharedObjectClass,
-} from "./types";
+	type ContainerSchema,
+	type IRootDataObject,
+	type LoadableObjectClass,
+	type LoadableObjectClassRecord,
+	type LoadableObjectRecord,
+	type SharedObjectClass,
+} from "./types.js";
 import {
-	InternalDataObjectClass,
+	type InternalDataObjectClass,
 	isDataObjectClass,
 	isSharedObjectClass,
 	parseDataObjectsFromSharedObjects,
-} from "./utils";
+} from "./utils.js";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -50,11 +57,12 @@ class RootDataObject
 {
 	private readonly initialObjectsDirKey = "initial-objects-key";
 	private readonly _initialObjects: LoadableObjectRecord = {};
-	public get IRootDataObject() {
+
+	public get IRootDataObject(): IRootDataObject {
 		return this;
 	}
 
-	private get initialObjectsDir() {
+	private get initialObjectsDir(): IDirectory {
 		const dir = this.root.getSubDirectory(this.initialObjectsDirKey);
 		if (dir === undefined) {
 			throw new Error("InitialObjects sub-directory was not initialized");
@@ -68,18 +76,18 @@ class RootDataObject
 	 *
 	 * @see {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
 	 */
-	protected async initializingFirstTime(props: RootDataObjectProps) {
+	protected async initializingFirstTime(props: RootDataObjectProps): Promise<void> {
 		this.root.createSubDirectory(this.initialObjectsDirKey);
 
 		// Create initial objects provided by the developer
 		const initialObjectsP: Promise<void>[] = [];
-		Object.entries(props.initialObjects).forEach(([id, objectClass]) => {
-			const createObject = async () => {
-				const obj = await this.create(objectClass);
+		for (const [id, objectClass] of Object.entries(props.initialObjects)) {
+			const createObject = async (): Promise<void> => {
+				const obj = await this.create<IFluidLoadable>(objectClass);
 				this.initialObjectsDir.set(id, obj.handle);
 			};
 			initialObjectsP.push(createObject());
-		});
+		}
 
 		await Promise.all(initialObjectsP);
 	}
@@ -90,12 +98,13 @@ class RootDataObject
 	 *
 	 * @see {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
 	 */
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		// We will always load the initial objects so they are available to the developer
 		const loadInitialObjectsP: Promise<void>[] = [];
-		for (const [key, value] of Array.from(this.initialObjectsDir.entries())) {
-			const loadDir = async () => {
-				const obj = await value.get();
+		for (const [key, value] of this.initialObjectsDir.entries()) {
+			const loadDir = async (): Promise<void> => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				const obj: unknown = await value.get();
 				Object.assign(this._initialObjects, { [key]: obj });
 			};
 			loadInitialObjectsP.push(loadDir());
@@ -148,6 +157,9 @@ class RootDataObject
 const rootDataStoreId = "rootDOId";
 
 /**
+ * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} for a container with a single
+ * {@link IRootDataObject}, which is constructed from the provided schema.
+ *
  * @internal
  */
 export function createDOProviderContainerRuntimeFactory(props: {
@@ -176,7 +188,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	constructor(schema: ContainerSchema) {
+	public constructor(schema: ContainerSchema) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -185,7 +197,10 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			{},
 			registryEntries,
 		);
-		const provideEntryPoint = async (containerRuntime: IContainerRuntime) => {
+		const provideEntryPoint = async (
+			containerRuntime: IContainerRuntime,
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): Promise<FluidObject> => {
 			const entryPoint =
 				await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 			if (entryPoint === undefined) {
@@ -193,7 +208,11 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			}
 			return entryPoint.get();
 		};
-		const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
+		const getDefaultObject = async (
+			request: IRequest,
+			runtime: IContainerRuntime,
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+		): Promise<IResponse | undefined> => {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
 				// This cast is safe as ContainerRuntime.loadRuntime is called in the base class
@@ -212,7 +231,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				// resolution progress is tracked by the Feature 465 work item in AzDO
 				flushMode: FlushMode.Immediate,
 				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: true,
+				enableRuntimeIdCompressor: "on",
 			},
 			provideEntryPoint,
 		});
@@ -223,7 +242,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	/**
 	 * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {
 			initialObjects: this.initialObjects,

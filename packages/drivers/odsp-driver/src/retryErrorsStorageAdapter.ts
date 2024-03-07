@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { LoggingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { LoggingError, ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -18,7 +20,7 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
-import { runWithRetry } from "./retryUtils";
+import { runWithRetry } from "./retryUtils.js";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
@@ -30,15 +32,11 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
-	}
-
-	public get repositoryUrl(): string {
-		return this.internalStorageService.repositoryUrl;
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
@@ -47,6 +45,15 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 			async () => this.internalStorageService.getSnapshotTree(version),
 			"storage_getSnapshotTree",
 		);
+	}
+
+	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		return this.runWithRetry(async () => {
+			if (this.internalStorageService.getSnapshot !== undefined) {
+				return this.internalStorageService.getSnapshot(snapshotFetchOptions);
+			}
+			throw new UsageError("getSnapshot should exist in storage adapter in ODSP driver");
+		}, "storage_getSnapshot");
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -100,7 +107,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		);
 	}
 
-	private checkStorageDisposed() {
+	private checkStorageDisposed(): void {
 		if (this._disposed) {
 			// pre-0.58 error message: storageServiceDisposedCannotRetry
 			throw new LoggingError("Storage Service is disposed. Cannot retry", {

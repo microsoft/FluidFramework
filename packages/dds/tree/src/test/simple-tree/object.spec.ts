@@ -11,7 +11,9 @@ import {
 	TreeFieldFromImplicitField,
 	TreeNodeSchema,
 } from "../../simple-tree/index.js";
-import { getRoot, makeSchema, pretty } from "./utils.js";
+import { hydrate, pretty } from "./utils.js";
+
+const schemaFactory = new SchemaFactory("Test");
 
 interface TestCase<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> {
 	schema: TSchema;
@@ -40,11 +42,9 @@ export function testObjectPrototype(proxy: object, prototype: object) {
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("satisfies 'deepEqual'", () => {
+		describe("satisfies 'deepEqual'", () => {
 			for (const { schema, initialTree } of testCases) {
-				const proxy = getRoot(schema, () => initialTree);
+				const proxy = hydrate(schema, initialTree);
 				const real = initialTree;
 
 				it(`deepEqual(${pretty(proxy)}, ${pretty(real)})`, () => {
@@ -53,9 +53,7 @@ function testObjectLike(testCases: TestCase[]) {
 			}
 		});
 
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("inherits from Object.prototype", () => {
+		describe("inherits from Object.prototype", () => {
 			function findObjectPrototype(o: unknown) {
 				return Object.getPrototypeOf(
 					// If 'root' is an array, the immediate prototype is Array.prototype.  We need to go
@@ -67,7 +65,7 @@ function testObjectLike(testCases: TestCase[]) {
 			for (const { schema, initialTree } of testCases) {
 				describe("instanceof Object", () => {
 					it(`${pretty(initialTree)} -> true`, () => {
-						const root = getRoot(schema, () => initialTree);
+						const root = hydrate(schema, initialTree);
 						assert(root instanceof Object, "object must be instanceof Object");
 					});
 				});
@@ -79,7 +77,7 @@ function testObjectLike(testCases: TestCase[]) {
 						it(`Object.getOwnPropertyDescriptor(${pretty(
 							initialTree,
 						)}, ${key}) -> ${pretty(descriptor)}`, () => {
-							const root = getRoot(schema, () => initialTree);
+							const root = hydrate(schema, initialTree);
 							assert.deepEqual(
 								Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
 								descriptor,
@@ -91,14 +89,14 @@ function testObjectLike(testCases: TestCase[]) {
 
 				describe("methods inherited from Object.prototype", () => {
 					it(`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`, () => {
-						const root = getRoot(schema, () => initialTree);
+						const root = hydrate(schema, initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
 					});
 
 					it(`${pretty(initialTree)}.isPrototypeOf(root) -> false`, () => {
-						const root = getRoot(schema, () => initialTree);
+						const root = hydrate(schema, initialTree);
 						const asObject = root as object;
 						// eslint-disable-next-line no-prototype-builtins -- compatibility test
 						assert.equal(asObject.isPrototypeOf(asObject), false);
@@ -113,7 +111,7 @@ function testObjectLike(testCases: TestCase[]) {
 						);
 
 						it(`${key} -> ${expected}`, () => {
-							const root = getRoot(schema, () => initialTree);
+							const root = hydrate(schema, initialTree);
 							const asObject = root as object;
 							// eslint-disable-next-line no-prototype-builtins -- compatibility test
 							assert.equal(asObject.propertyIsEnumerable(key), expected);
@@ -129,7 +127,7 @@ function testObjectLike(testCases: TestCase[]) {
 				const expected = fn(real);
 
 				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const proxy = getRoot(schema, () => initialTree);
+					const proxy = hydrate(schema, initialTree);
 					const actual = fn(proxy as object);
 					assert.deepEqual(actual, expected);
 				});
@@ -140,16 +138,12 @@ function testObjectLike(testCases: TestCase[]) {
 			test1((subject) => Object.keys(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.values", () => {
+		describe("Object.values", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			test1((subject) => Object.values(subject));
 		});
 
-		// TODO: Make 'class-schema' property values match original object.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.entries", () => {
+		describe("Object.entries", () => {
 			test1((subject) => Object.entries(subject));
 		});
 
@@ -164,16 +158,12 @@ function testObjectLike(testCases: TestCase[]) {
 		});
 
 		// 'deepEqual' requires that objects have the same prototype to be considered equal.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getPrototypeOf", () => {
+		describe("Object.getPrototypeOf", () => {
 			test1((subject) => Object.getPrototypeOf(subject) as unknown);
 		});
 
 		// 'deepEqual' enumerates and compares the own properties of objects.
-		// TODO: Fix prototype for objects declared using 'class-schema'.
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		describe.skip("Object.getOwnPropertyDescriptors", () => {
+		describe("Object.getOwnPropertyDescriptors", () => {
 			test1((subject) => {
 				return Object.getOwnPropertyDescriptors(subject);
 			});
@@ -292,6 +282,27 @@ const tcs: TestCase[] = [
 		})(),
 		initialTree: ["A", "B"],
 	},
+	{
+		schema: (() => {
+			const _ = new SchemaFactory("test");
+			return _.object("special keys", {
+				value: _.number,
+				[""]: _.number,
+				set: _.number,
+				__proto__: _.number,
+				constructor: _.number,
+				setting: _.number,
+			});
+		})(),
+		initialTree: {
+			value: 1,
+			[""]: 2,
+			set: 3,
+			__proto__: 4,
+			constructor: 5,
+			setting: 6,
+		},
+	},
 ];
 
 testObjectLike(tcs);
@@ -299,18 +310,41 @@ testObjectLike(tcs);
 const factory = new SchemaFactory("test");
 
 describe("Object-like", () => {
-	describe("setting an invalid field", () => {
-		// TODO: Restore original behavior for bare '_.object()'?
-		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6549
-		it.skip("throws TypeError in strict mode", () => {
-			const root = getRoot(
-				makeSchema((_) => _.object("no fields", {})),
-				() => ({}),
-			);
+	describe("setting an local field", () => {
+		it("throws TypeError in POJO emulation mode", () => {
+			const root = hydrate(schemaFactory.object("no fields", {}), {});
 			assert.throws(() => {
 				// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
 				(root as unknown as any).foo = 3;
 			}, "attempting to set an invalid field must throw.");
+		});
+
+		it("works in Customizable mode", () => {
+			class Custom extends schemaFactory.object("no fields", {}) {
+				public foo?: number;
+			}
+			const root = hydrate(Custom, {});
+			root.foo = 3;
+		});
+	});
+
+	describe("deep equality and types", () => {
+		it("types are ignored in POJO emulation mode", () => {
+			const a = hydrate(schemaFactory.object("a", {}), {});
+			const b = hydrate(schemaFactory.object("b", {}), {});
+			assert.deepEqual(a, {});
+			assert.deepEqual(a, b);
+		});
+
+		it("types are compared in Customizable mode", () => {
+			class A extends schemaFactory.object("a", {}) {}
+			class B extends schemaFactory.object("b", {}) {}
+			const a = hydrate(A, {});
+			const b = hydrate(B, {});
+			assert.notDeepEqual(a, {});
+			assert.notDeepEqual(a, b);
+			const a2 = hydrate(A, {});
+			assert.deepEqual(a, a2);
 		});
 	});
 
@@ -323,44 +357,32 @@ describe("Object-like", () => {
 			) {
 				describe(`required ${typeof before} `, () => {
 					it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-						const Root = factory.object("", { _value: schema });
-						const root = getRoot(Root, () => ({ _value: before }));
-						assert.equal(root._value, before);
-						root._value = after;
-						assert.equal(root._value, after);
+						const Root = factory.object("", { value: schema });
+						const root = hydrate(Root, { value: before });
+						assert.equal(root.value, before);
+						root.value = after;
+						assert.equal(root.value, after);
 					});
 				});
 
 				describe(`optional ${typeof before}`, () => {
 					it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-						const root = getRoot(
-							makeSchema((_) => _.object("", { _value: _.optional(schema) })),
-							() => ({ _value: undefined }),
+						const root = hydrate(
+							schemaFactory.object("", { value: schemaFactory.optional(schema) }),
+							{ value: undefined },
 						);
-						assert.equal(root._value, undefined);
-						root._value = before;
-						assert.equal(root._value, before);
-						root._value = after;
-						assert.equal(root._value, after);
+						assert.equal(root.value, undefined);
+						root.value = before;
+						assert.equal(root.value, before);
+						root.value = after;
+						assert.equal(root.value, after);
 					});
 				});
 			}
 
-			check(
-				makeSchema((_) => _.boolean),
-				false,
-				true,
-			);
-			check(
-				makeSchema((_) => _.number),
-				0,
-				1,
-			);
-			check(
-				makeSchema((_) => _.string),
-				"",
-				"!",
-			);
+			check(schemaFactory.boolean, false, true);
+			check(schemaFactory.number, 0, 1);
+			check(schemaFactory.string, "", "!");
 		});
 
 		describe("required object", () => {
@@ -375,7 +397,7 @@ describe("Object-like", () => {
 			const after = { objId: 1 };
 
 			it(`(${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(Schema, () => ({ child: before }));
+				const root = hydrate(Schema, { child: before });
 				assert.equal(root.child.objId, 0);
 				root.child = new Child(after);
 				assert.equal(root.child.objId, 1);
@@ -394,7 +416,7 @@ describe("Object-like", () => {
 			const after = { objId: 1 };
 
 			it(`(undefined -> ${pretty(before)} -> ${pretty(after)})`, () => {
-				const root = getRoot(Schema, () => ({ child: undefined }));
+				const root = hydrate(Schema, { child: undefined });
 				assert.equal(root.child, undefined);
 				root.child = new Child(before);
 				assert.equal(root.child.objId, 0);

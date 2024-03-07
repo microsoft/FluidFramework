@@ -13,9 +13,9 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor, deserializeIdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
+} from "..//index.js";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import { createSessionId } from "../utilities.js";
 import {
 	performFuzzActions,
 	sessionIds,
@@ -27,8 +27,8 @@ import {
 	roundtrip,
 	makeOpGenerator,
 	CompressorFactory,
-} from "./idCompressorTestUtilities";
-import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon";
+} from "./idCompressorTestUtilities.js";
+import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon.js";
 
 describe("IdCompressor", () => {
 	it("reports the proper session ID", () => {
@@ -43,6 +43,19 @@ describe("IdCompressor", () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			assert.equal(id, compressor.recompress(uuid));
+		});
+
+		it("can generate document unique IDs", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+			let id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
 		});
 
 		describe("Eager final ID allocation", () => {
@@ -378,24 +391,9 @@ describe("IdCompressor", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1);
 			const range = compressor.takeNextCreationRange();
 			compressor.beginGhostSession(createSessionId(), () => {
-				assert.throws(
-					() => compressor.takeNextCreationRange(),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.finalizeCreationRange(range),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
-				assert.throws(
-					() => compressor.serialize(false),
-					(e: Error) =>
-						e.message ===
-						"IdCompressor should not be operated normally when in a ghost session",
-				);
+				assert.throws(() => compressor.takeNextCreationRange());
+				assert.throws(() => compressor.finalizeCreationRange(range));
+				assert.throws(() => compressor.serialize(false));
 			});
 		});
 
@@ -785,6 +783,18 @@ describe("IdCompressor", () => {
 					size: 72,
 					clusterCount: 1,
 					sessionCount: 1,
+				},
+			]);
+		});
+
+		it("correctly passes logger when no session specified", () => {
+			const mockLogger = new MockLogger();
+			const compressor = createIdCompressor(mockLogger);
+			compressor.generateCompressedId();
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			mockLogger.assertMatchAny([
+				{
+					eventName: "RuntimeIdCompressor:FirstCluster",
 				},
 			]);
 		});

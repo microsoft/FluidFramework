@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { GarbageCollector } from "./garbageCollection";
+export { GarbageCollector } from "./garbageCollection.js";
 export {
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
@@ -11,6 +11,7 @@ export {
 	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	gcTestModeKey,
+	gcDisableDataStoreSweepOptionName,
 	gcDisableThrowOnTombstoneLoadOptionName,
 	gcGenerationOptionName,
 	GCFeatureMatrix,
@@ -32,31 +33,32 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	disableAttachmentBlobSweepKey,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
 	ISweepMessage,
-} from "./gcDefinitions";
+} from "./gcDefinitions.js";
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
-} from "./gcHelpers";
-export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+} from "./gcHelpers.js";
+export { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
 export {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
-} from "./gcSummaryDefinitions";
+} from "./gcSummaryDefinitions.js";
 export {
 	gcStateBlobKey,
 	GCSummaryStateTracker,
 	IGCSummaryTrackingData,
-} from "./gcSummaryStateTracker";
-export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
-export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+} from "./gcSummaryStateTracker.js";
+export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry.js";
+export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";

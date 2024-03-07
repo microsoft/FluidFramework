@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -17,8 +19,13 @@ import { IClient } from "@fluidframework/protocol-definitions";
  * It delegates all calls to IDocumentService implementation passed to constructor.
  */
 
-export abstract class DocumentServiceProxy implements IDocumentService {
-	constructor(private readonly _service: IDocumentService) {}
+export abstract class DocumentServiceProxy
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
+	constructor(private readonly _service: IDocumentService) {
+		super();
+	}
 
 	public get service(): IDocumentService {
 		return this._service;

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -15,7 +15,7 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -25,7 +25,7 @@ describeCompat(
 	"Concurrent op processing via DDS event handlers",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory } = apis.dds;
+		const { SharedMap, SharedDirectory, SharedString } = apis.dds;
 		const mapId = "mapKey";
 		const sharedStringId = "sharedStringKey";
 		const sharedDirectoryId = "sharedDirectoryKey";
@@ -43,8 +43,8 @@ describeCompat(
 		let container2: IContainer;
 		let dataObject1: ITestFluidObject;
 		let dataObject2: ITestFluidObject;
-		let sharedMap1: SharedMap;
-		let sharedMap2: SharedMap;
+		let sharedMap1: ISharedMap;
+		let sharedMap2: ISharedMap;
 		let sharedString1: SharedString;
 		let sharedString2: SharedString;
 		let sharedDirectory1: SharedDirectory;
@@ -54,10 +54,10 @@ describeCompat(
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 
-		const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
+		const mapsAreEqual = (a: ISharedMap, b: ISharedMap) =>
 			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 
@@ -75,8 +75,8 @@ describeCompat(
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
-			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
-			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
+			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);

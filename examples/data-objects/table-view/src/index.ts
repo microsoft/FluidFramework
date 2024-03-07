@@ -5,7 +5,7 @@
 
 // set the base path for all dynamic imports first
 // eslint-disable-next-line import/no-unassigned-import
-import "./publicpath";
+import "./publicpath.js";
 
-export { fluidExport } from "./runtime";
-export { TableModel, tableModelType } from "./tableModel";
+export { fluidExport } from "./runtime.js";
+export { TableModel, tableModelType } from "./tableModel.js";

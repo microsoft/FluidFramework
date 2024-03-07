@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IDisposable, FluidObject } from "@fluidframework/core-interfaces";
+import type {
+	ITelemetryBaseLogger,
+	IDisposable,
+	FluidObject,
+} from "@fluidframework/core-interfaces";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import {
+import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
+import type {
 	IClientDetails,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -17,11 +21,11 @@ import {
 	IQuorumClients,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { IAudience } from "./audience";
-import { IDeltaManager } from "./deltas";
-import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions } from "./loader";
-import { IFluidCodeDetails } from "./fluidPackage";
+import type { IAudience } from "./audience.js";
+import type { IDeltaManager } from "./deltas.js";
+import type { ICriticalContainerError } from "./error.js";
+import type { ILoader } from "./loader.js";
+import type { IFluidCodeDetails } from "./fluidPackage.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -123,7 +127,14 @@ export interface IBatchMessage {
  * @alpha
  */
 export interface IContainerContext {
-	readonly options: ILoaderOptions;
+	/**
+	 * Not recommended for general use, is used in some cases to control various runtime behaviors.
+	 *
+	 * @remarks
+	 * Used to be ILoaderOptions, this is staging for eventual removal.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
 	readonly storage: IDocumentStorageService;
@@ -198,6 +209,11 @@ export interface IContainerContext {
 	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
+
+	/**
+	 * This contains all parts of a snapshot like blobContents, ops etc.
+	 */
+	readonly snapshotWithContents?: ISnapshot;
 }
 
 /**

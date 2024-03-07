@@ -4,43 +4,28 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-loader';
-import { ContainerErrorTypes } from '@fluidframework/container-definitions';
-import { ContainerSchema } from '@fluidframework/fluid-static';
-import { DataObjectClass } from '@fluidframework/fluid-static';
-import { DriverErrorTypes } from '@fluidframework/driver-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IConnection } from '@fluidframework/fluid-static';
-import { ICriticalContainerError } from '@fluidframework/container-definitions';
+import type { IErrorBase } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IFluidContainerEvents } from '@fluidframework/fluid-static';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IMember } from '@fluidframework/fluid-static';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IServiceAudience } from '@fluidframework/fluid-static';
-import { IServiceAudienceEvents } from '@fluidframework/fluid-static';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { LoadableObjectClass } from '@fluidframework/fluid-static';
-import { LoadableObjectClassRecord } from '@fluidframework/fluid-static';
-import { LoadableObjectCtor } from '@fluidframework/fluid-static';
-import { MemberChangedListener } from '@fluidframework/fluid-static';
 import { SharedObject } from '@fluidframework/shared-object-base';
-import { SharedObjectClass } from '@fluidframework/fluid-static';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -49,34 +34,90 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required ? T : undefined | T;
 
 // @public
-export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
-
-export { AttachState }
+export type ArrayToUnion<T extends readonly unknown[]> = T[number];
 
 // @public
-export interface CheckoutEvents {
-    afterBatch(): void;
-    revertible(revertible: Revertible): void;
+export enum AttachState {
+    Attached = "Attached",
+    Attaching = "Attaching",
+    Detached = "Detached"
 }
-
-export { ConnectionState }
-
-export { ContainerErrorTypes }
-
-export { ContainerSchema }
-
-export { DataObjectClass }
 
 // @public
-export enum DiscardResult {
-    Failure = 1,
-    Success = 0
+export enum ConnectionState {
+    CatchingUp = 1,
+    Connected = 2,
+    Disconnected = 0,
+    EstablishingConnection = 3
 }
+
+// @public
+export namespace ConnectionStateType {
+    export type CatchingUp = 1;
+    export type Connected = 2;
+    export type Disconnected = 0;
+    export type EstablishingConnection = 3;
+}
+
+// @public
+export type ConnectionStateType = ConnectionStateType.Disconnected | ConnectionStateType.EstablishingConnection | ConnectionStateType.CatchingUp | ConnectionStateType.Connected;
+
+// @public
+export type ContainerAttachProps<T = unknown> = T;
+
+// @alpha
+export const ContainerErrorTypes: {
+    readonly clientSessionExpiredError: "clientSessionExpiredError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly dataCorruptionError: "dataCorruptionError";
+    readonly dataProcessingError: "dataProcessingError";
+    readonly usageError: "usageError";
+};
+
+// @alpha
+export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
+
+// @public
+export interface ContainerSchema {
+    dynamicObjectTypes?: LoadableObjectClass[];
+    initialObjects: LoadableObjectClassRecord;
+}
+
+// @public
+export type DataObjectClass<T extends IFluidLoadable> = {
+    readonly factory: {
+        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+    };
+} & LoadableObjectCtor<T>;
 
 // @public
 export const disposeSymbol: unique symbol;
 
-export { DriverErrorTypes }
+// @public
+export const DriverErrorTypes: {
+    readonly genericNetworkError: "genericNetworkError";
+    readonly authorizationError: "authorizationError";
+    readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
+    readonly offlineError: "offlineError";
+    readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
+    readonly writeError: "writeError";
+    readonly fetchFailure: "fetchFailure";
+    readonly fetchTokenError: "fetchTokenError";
+    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
+    readonly locationRedirection: "locationRedirection";
+    readonly fluidInvalidSchema: "fluidInvalidSchema";
+    readonly fileIsLocked: "fileIsLocked";
+    readonly outOfStorageError: "outOfStorageError";
+    readonly genericError: "genericError";
+    readonly throttlingError: "throttlingError";
+    readonly usageError: "usageError";
+};
+
+// @public
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
 export type Events<E> = {
@@ -108,26 +149,59 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
-export { IConnection }
+// @public
+export interface IConnection {
+    id: string;
+    mode: "write" | "read";
+}
 
-export { ICriticalContainerError }
+// @public
+export type ICriticalContainerError = IErrorBase;
 
 // @public
 export interface IDisposable {
     [disposeSymbol](): void;
 }
 
-export { IFluidContainer }
+// @public @sealed
+export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IEventProvider<IFluidContainerEvents> {
+    attach(props?: ContainerAttachProps): Promise<string>;
+    readonly attachState: AttachState;
+    connect(): void;
+    readonly connectionState: ConnectionStateType;
+    create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+    disconnect(): void;
+    dispose(): void;
+    readonly disposed: boolean;
+    readonly initialObjects: InitialObjects<TContainerSchema>;
+    readonly isDirty: boolean;
+}
 
-export { IFluidContainerEvents }
+// @public @sealed
+export interface IFluidContainerEvents extends IEvent {
+    (event: "connected", listener: () => void): void;
+    (event: "disconnected", listener: () => void): void;
+    (event: "saved", listener: () => void): void;
+    (event: "dirty", listener: () => void): void;
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
+}
 
-export { IMember }
+// @public
+export interface IMember {
+    connections: IConnection[];
+    userId: string;
+}
 
 // @public
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 
 // @public
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+
+// @public
+export type InitialObjects<T extends ContainerSchema> = {
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<infer TChannel> ? TChannel : never;
+};
 
 // @public
 export type InsertableObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = {
@@ -145,9 +219,21 @@ export type InsertableTypedNode<T extends TreeNodeSchema> = (T extends {
     implicitlyConstructable: true;
 } ? NodeBuilderData<T> : never) | Unhydrated<NodeFromSchema<T>>;
 
-export { IServiceAudience }
+// @public
+export interface IServiceAudience<M extends IMember> extends IEventProvider<IServiceAudienceEvents<M>> {
+    getMembers(): Map<string, M>;
+    getMyself(): Myself<M> | undefined;
+}
 
-export { IServiceAudienceEvents }
+// @public
+export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
+    // @eventProperty
+    (event: "membersChanged", listener: () => void): void;
+    // @eventProperty
+    (event: "memberAdded", listener: MemberChangedListener<M>): void;
+    // @eventProperty
+    (event: "memberRemoved", listener: MemberChangedListener<M>): void;
+}
 
 // @public
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
@@ -188,17 +274,26 @@ export interface IValueChanged {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-export { LoadableObjectClass }
+// @public
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
-export { LoadableObjectClassRecord }
+// @public
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
-export { LoadableObjectCtor }
+// @public
+export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 // @public
 export interface MakeNominal {
 }
 
-export { MemberChangedListener }
+// @public
+export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+
+// @public
+export type Myself<M extends IMember = IMember> = M & {
+    currentConnection: string;
+};
 
 // @public
 export type NodeBuilderData<T extends TreeNodeSchema> = T extends TreeNodeSchema<string, NodeKind, unknown, infer TBuild> ? TBuild : never;
@@ -224,85 +319,66 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @public
-export interface Revertible {
-    discard(): DiscardResult;
-    readonly kind: RevertibleKind;
-    readonly origin: {
-        readonly isLocal: boolean;
-    };
-    revert(): RevertResult;
-}
-
-// @public
-export enum RevertibleKind {
-    Default = 0,
-    Rebase = 3,
-    Redo = 2,
-    Undo = 1
-}
-
-// @public
-export enum RevertResult {
-    Failure = 1,
-    Success = 0
-}
-
 // @public @sealed
-export class SchemaFactory<TScope extends string = string, TName extends number | string = string> {
+export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> {
     constructor(scope: TScope);
-    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Array<${string}>`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.Array<${string}>`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
-    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${Name}`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
+    // @deprecated
     fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
-    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.Map<${string}>`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.Map<${string}>`>, ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, true>;
-    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
-    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Array, TreeArrayNode<T> & WithType<`${TScope}.${string}`>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
-    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Map, TreeMapNode<T> & WithType<`${TScope}.${Name}`>, ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable>;
+    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true>;
+    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true>;
+    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, unknown>;
+    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, ImplicitlyConstructable, unknown>;
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<`${TScope}.${Name}`, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<T> & WithType<`${TScope}.${Name}`>, object & InsertableObjectFromSchemaRecord<T>, true>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.Optional, T>;
     // (undocumented)
     readonly scope: TScope;
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string>;
 }
 
+// @public
+export interface SchemaIncompatible {
+    readonly canUpgrade: boolean;
+}
+
+// @public
+export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
+
 // @public @deprecated
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;
     entries(): IterableIterator<[string, any]>;
     forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
     get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ISharedMap>;
     has(key: string): boolean;
     keys(): IterableIterator<string>;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // (undocumented)
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     set(key: string, value: unknown): this;
     get size(): number;
-    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 
-export { SharedObjectClass }
+// @public
+export type SharedObjectClass<T extends IFluidLoadable> = {
+    readonly getFactory: () => IChannelFactory;
+} & LoadableObjectCtor<T>;
 
 // @public
 export class SharedTree implements ITree {
@@ -313,7 +389,7 @@ export class SharedTree implements ITree {
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
-    static getFactory(): IChannelFactory;
+    static getFactory(): IChannelFactory<ITree>;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
@@ -411,18 +487,17 @@ export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedType
 export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
 
 // @public
-export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // @sealed
     new (data: TInsertable): Unhydrated<TNode>;
 }
 
 // @public
-export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean> {
+export interface TreeNodeSchemaCore<out Name extends string, out Kind extends NodeKind, out ImplicitlyConstructable extends boolean, out Info = unknown> {
     // (undocumented)
     readonly identifier: Name;
     readonly implicitlyConstructable: ImplicitlyConstructable;
-    // (undocumented)
-    readonly info: unknown;
+    readonly info: Info;
     // (undocumented)
     readonly kind: Kind;
 }
@@ -442,8 +517,16 @@ export enum TreeStatus {
 
 // @public
 export interface TreeView<in out TRoot> extends IDisposable {
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly error?: SchemaIncompatible;
+    readonly events: ISubscribable<TreeViewEvents>;
     readonly root: TRoot;
+    upgradeSchema(): void;
+}
+
+// @public
+export interface TreeViewEvents {
+    afterBatch(): void;
+    rootChanged(): void;
 }
 
 // @public

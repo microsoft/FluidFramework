@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
@@ -24,8 +24,8 @@ import { create404Response } from "@fluidframework/runtime-utils";
 
 import React, { useEffect, useRef } from "react";
 
-import { nodeTypeKey } from "./fluidBridge";
-import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager";
+import { nodeTypeKey } from "./fluidBridge.js";
+import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
 
 function insertMarkers(
 	text: SharedString,

@@ -5,6 +5,7 @@
 ```ts
 
 import { DriverError } from '@fluidframework/driver-definitions';
+import { FiveDaysMs } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 
@@ -189,6 +190,7 @@ export interface ISocketStorageDiscovery {
     refreshSessionDurationSeconds?: number;
     // (undocumented)
     runtimeTenantId?: string;
+    sensitivityLabelsInfo?: string;
     // (undocumented)
     snapshotStorageUrl: string;
     socketToken?: string;
@@ -198,6 +200,9 @@ export interface ISocketStorageDiscovery {
 
 // @internal
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
+
+// @internal
+export const maximumCacheDurationMs: FiveDaysMs;
 
 // @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);
@@ -244,18 +249,11 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @alpha
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | ISharingLinkKind;
-        link?: string | ISharingLink;
+        link?: ISharingLink;
         error?: any;
         shareId?: string;
     };
     sharingLinkToRedeem?: string;
-}
-
-// @alpha @deprecated (undocumented)
-export enum ShareLinkTypes {
-    // (undocumented)
-    csl = "csl"
 }
 
 // @alpha

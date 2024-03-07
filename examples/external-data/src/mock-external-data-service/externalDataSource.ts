@@ -6,7 +6,7 @@
 import type { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { Response } from "node-fetch";
-import { ITaskListData, ITaskData } from "../model-interface";
+import { ITaskListData, ITaskData } from "../model-interface/index.js";
 
 const taskList1: ITaskData = {
 	12: {

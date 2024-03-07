@@ -23,7 +23,7 @@ npm i @fluidframework/telemetry-utils
 
 ## API Documentation
 
-API documentation for **@fluidframework/telemetry-utils** is available at <https://fluidframework.com/docs/api/v1/telemetry-utils>.
+API documentation for **@fluidframework/telemetry-utils** is available at <https://fluidframework.com/docs/apis/telemetry-utils>.
 
 ## Contribution Guidelines
 

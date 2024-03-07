@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 import {
+	ApiItemKind,
 	type ApiItem,
 	type IResolveDeclarationReferenceResult,
+	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
@@ -106,8 +108,15 @@ function resolveSymbolicLink(
 		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
 
 	if (resolvedReference.resolvedApiItem === undefined) {
+		const linkSource =
+			contextApiItem.kind === ApiItemKind.Package
+				? (contextApiItem as ApiPackage).displayName
+				: `${
+						contextApiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
+				  }#${contextApiItem.getScopedNameWithinPackage()}`;
+
 		logger.warning(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${contextApiItem.getScopedNameWithinPackage()}":`,
+			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${linkSource}":`,
 			resolvedReference.errorMessage,
 		);
 

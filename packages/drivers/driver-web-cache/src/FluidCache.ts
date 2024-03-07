@@ -5,22 +5,31 @@
 
 import { IDBPDatabase } from "idb";
 import { assert } from "@fluidframework/core-utils";
-import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
+import {
+	IPersistedCache,
+	ICacheEntry,
+	IFileEntry,
+	maximumCacheDurationMs,
+} from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { scheduleIdleTask } from "./scheduleIdleTask";
+import {
+	ITelemetryLoggerExt,
+	UsageError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
+import { scheduleIdleTask } from "./scheduleIdleTask.js";
 import {
 	getFluidCacheIndexedDbInstance,
 	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
 	getKeyForCacheEntry,
-} from "./FluidCacheIndexedDb";
+} from "./FluidCacheIndexedDb.js";
 import {
 	FluidCacheErrorEvent,
 	FluidCacheEventSubCategories,
 	FluidCacheGenericEvent,
-} from "./fluidCacheTelemetry";
-import { pkgVersion } from "./packageVersion";
+} from "./fluidCacheTelemetry.js";
+import { pkgVersion } from "./packageVersion.js";
 
 // Some browsers have a usageDetails property that will tell you more detailed information
 // on how the storage is being used
@@ -77,10 +86,30 @@ export class FluidCache implements IPersistedCache {
 	private dbReuseCount: number = -1;
 
 	constructor(config: FluidCacheConfig) {
-		this.logger = createChildLogger({ logger: config.logger });
-		this.partitionKey = config.partitionKey;
-		this.maxCacheItemAge = config.maxCacheItemAge;
-		this.closeDbAfterMs = config.closeDbAfterMs ?? 0;
+		const { logger, partitionKey, maxCacheItemAge, closeDbAfterMs } = config;
+		this.logger = createChildLogger({ logger });
+		this.partitionKey = partitionKey;
+		if (maxCacheItemAge > maximumCacheDurationMs) {
+			const error = new UsageError(
+				`maxCacheItemAge(${maxCacheItemAge}) cannot be greater than ${maximumCacheDurationMs}`,
+				{
+					maxCacheItemAge,
+					maximumCacheDurationMs,
+					pkgVersion,
+				},
+			);
+			// go with logging, rather than throwing for now
+			// as throwing could break existing usages
+			this.logger.sendErrorEvent(
+				{
+					eventName: "maxCacheItemAgeTooLarge",
+					subCategory: FluidCacheEventSubCategories.FluidCache,
+				},
+				error,
+			);
+		}
+		this.maxCacheItemAge = Math.min(maxCacheItemAge, maximumCacheDurationMs);
+		this.closeDbAfterMs = closeDbAfterMs ?? 0;
 		if (this.closeDbAfterMs > 0) {
 			this.closeDbImmediately = false;
 		}

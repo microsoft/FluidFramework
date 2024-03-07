@@ -14,9 +14,9 @@ import {
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ConnectionManager } from "../connectionManager";
-import { IConnectionManagerFactoryArgs } from "../contracts";
-import { pkgVersion } from "../packageVersion";
+import { ConnectionManager } from "../connectionManager.js";
+import { IConnectionManagerFactoryArgs } from "../contracts.js";
+import { pkgVersion } from "../packageVersion.js";
 
 describe("connectionManager", () => {
 	let nextClientId = 0;
@@ -190,6 +190,37 @@ describe("connectionManager", () => {
 			!mockLogger.matchEvents([{ eventName: "reconnectingDespiteFatalError" }]),
 			"Should not see reconnectingDespiteFatalError event after fatal nack",
 		);
+	});
+
+	it("reconnectOnError - nack retryAfter", async () => {
+		const connectionManager = createConnectionManager();
+		connectionManager.connect({ text: "test:reconnectOnError" });
+		let connection = await waitForConnection();
+
+		const nack: Partial<INack> = {
+			content: {
+				code: 429,
+				type: NackErrorType.ThrottlingError,
+				message: "throttled",
+				retryAfter: 0.5, // 500 ms
+			},
+		};
+		connection.emitNack("docId", [nack]);
+
+		assert(!closed, "Don't expect closeHandler to be called with retryable Nack");
+		assert(connection.disposed, "Expect connection to be disconnected");
+		assert.strictEqual(disconnectCount, 1, "Expect 1 disconnect from emitting a Nack");
+
+		// Async test we aren't connected within 300 ms
+		let checkedTimeout = false;
+		setTimeout(() => {
+			assert.strictEqual(connectionCount, 1, "Expect there to still not be a connection yet");
+			checkedTimeout = true;
+		}, 300);
+
+		connection = await waitForConnection();
+		assert.strictEqual(connectionCount, 2, "Expect there to be a connection after waiting");
+		assert(checkedTimeout, "Expected to have checked 300ms timeout");
 	});
 
 	describe("readonly", () => {

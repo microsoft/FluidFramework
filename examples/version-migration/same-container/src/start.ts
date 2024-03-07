@@ -15,10 +15,10 @@ import {
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 
-import { inventoryListDataTransformationCallback } from "./dataTransform";
-import { DemoCodeLoader } from "./demoCodeLoader";
-import type { IInventoryListAppModel } from "./modelInterfaces";
-import { DebugView, InventoryListAppView } from "./view";
+import { inventoryListDataTransformationCallback } from "./dataTransform.js";
+import { DemoCodeLoader } from "./demoCodeLoader.js";
+import type { IInventoryListAppModel } from "./modelInterfaces.js";
+import { DebugView, InventoryListAppView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -14,19 +14,26 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedMatrix } from "@fluidframework/matrix";
+import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedMatrix } from "@fluidframework/matrix";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedMap, SharedDirectory } = apis.dds;
+		const {
+			SharedMap,
+			SharedDirectory,
+			SharedMatrix,
+			SharedCounter,
+			SharedString,
+			SharedCell,
+		} = apis.dds;
 		const registry: ChannelFactoryRegistry = [
 			["map", SharedMap.getFactory()],
 			["sharedString", SharedString.getFactory()],
@@ -42,14 +49,14 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
-		let sharedMap: SharedMap;
+		let sharedMap: ISharedMap;
 		let sharedString: SharedString;
 		let sharedDirectory: SharedDirectory;
 		let sharedCell: SharedCell;
 		let sharedCounter: SharedCounter;
 		let sharedMatrix: SharedMatrix;
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider();
 		});
 
@@ -60,7 +67,7 @@ describeCompat(
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			sharedMap = await dataObject.getSharedObject<SharedMap>("map");
+			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
 			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
 			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
 			sharedCell = await dataObject.getSharedObject<SharedCell>("sharedCell");

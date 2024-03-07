@@ -6,7 +6,7 @@ editor: tylerbutler
 
 The audience is the collection of users connected to a container.  When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the [Tinylicious]({{< relref "tinylicious.md" >}}) Fluid service is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence.  For anything service-specific, the [Tinylicious]({{< relref "/docs/testing/tinylicious.md" >}}) Fluid service is used.
 
 ## Working with the audience
 
@@ -131,15 +131,16 @@ In some cases, the user data could be generated locally or fetched from an exter
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/api/v1/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/api/v1/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/api/v1/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
-[IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

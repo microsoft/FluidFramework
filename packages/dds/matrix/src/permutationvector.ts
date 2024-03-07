@@ -26,10 +26,10 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { HandleTable, Handle, isHandleValid } from "./handletable";
-import { deserializeBlob } from "./serialization";
-import { HandleCache } from "./handlecache";
-import { VectorUndoProvider } from "./undoprovider";
+import { HandleTable, Handle, isHandleValid } from "./handletable.js";
+import { deserializeBlob } from "./serialization.js";
+import { HandleCache } from "./handlecache.js";
+import { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	segments = "segments",
@@ -135,15 +135,17 @@ export class PermutationVector extends Client {
 			numInserted: number,
 		) => void,
 		private readonly handlesRecycledCallback: (handles: Handle[]) => void,
+		getMinInFlightRefSeq: () => number | undefined,
 	) {
 		super(
 			PermutationSegment.fromJSONObject,
 			createChildLogger({ logger, namespace: `Matrix.${path}.MergeTreeClient` }),
 			{
 				...runtime.options,
-				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
+				newMergeTreeSnapshotFormat: true, // Force new snapshot format as it's generally more efficient for matrices.
 			},
-		); // (See https://github.com/microsoft/FluidFramework/issues/84)
+			getMinInFlightRefSeq,
+		);
 
 		this.on("delta", this.onDelta);
 		this.on("maintenance", this.onMaintenance);

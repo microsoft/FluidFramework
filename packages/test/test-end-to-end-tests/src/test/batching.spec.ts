@@ -9,9 +9,10 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	IContainerRuntimeOptions,
+	UnknownContainerRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
@@ -108,17 +109,17 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 
 	let container1: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
-	let dataObject1map1: SharedMap;
-	let dataObject1map2: SharedMap;
-	let dataObject2map1: SharedMap;
-	let dataObject2map2: SharedMap;
+	let dataObject1map1: ISharedMap;
+	let dataObject1map2: ISharedMap;
+	let dataObject2map1: ISharedMap;
+	let dataObject2map2: ISharedMap;
 
 	async function setupContainers(runtimeOptions?: IContainerRuntimeOptions) {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
@@ -126,14 +127,14 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
-		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
+		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
+		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
-		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
+		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
+		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
 
 		// To precisely control batch boundary, we need to force the container into write mode upfront
 		// So that the first flush doesn't result in reconnect to write mode and cause batches
@@ -146,12 +147,55 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
+	it("can send and a batch containing a future/unknown op type", async () => {
+		await setupContainers({
+			flushMode: FlushMode.TurnBased,
+			compressionOptions: {
+				minimumBatchSizeInBytes: 10,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
+			enableGroupedBatching: true,
+			chunkSizeInBytes: 100,
+		});
+		const futureOpSubmitter2 = dataObject2.context.containerRuntime as unknown as {
+			submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
+		};
+		const dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
+		const dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
+		setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
+		setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
+
+		// Submit two ops, one of which is unrecognized
+		dataObject2map1.set("key1", "value1");
+		futureOpSubmitter2.submit({
+			type: "FUTURE_TYPE" as any,
+			contents: "Hello",
+			compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed
+		});
+
+		// Wait for the ops to get flushed and processed.
+		await provider.ensureSynchronized();
+
+		assert.equal(
+			dataObject1BatchMessages.filter((m) => m.type !== ContainerMessageType.ChunkedOp)[1]
+				.type,
+			"FUTURE_TYPE",
+			"Unknown op type not preserved (dataObject1)",
+		);
+		assert.equal(
+			dataObject2BatchMessages.filter((m) => m.type !== ContainerMessageType.ChunkedOp)[1]
+				.type,
+			"FUTURE_TYPE",
+			"Unknown op type not preserved (dataObject2)",
+		);
+	});
+
 	describe("Batch metadata verification when ops are flushed in batches", () => {
 		let dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
 		function testFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers(options);
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -317,7 +361,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("TurnBased flushing of batches", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({ flushMode: FlushMode.TurnBased });
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -429,7 +473,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("TurnBased flushing of batches with compression", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({
 					flushMode: FlushMode.TurnBased,
 					compressionOptions: {
@@ -548,7 +592,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("Immediate flushing of ops", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({ flushMode: FlushMode.Immediate });
 				setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
 				setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
@@ -578,7 +622,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("Immediate flushing of ops with compression", () => {
-			beforeEach(async () => {
+			beforeEach("setupBatchMessageListeners", async () => {
 				await setupContainers({
 					flushMode: FlushMode.Immediate,
 					compressionOptions: {
@@ -627,7 +671,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		function testAutomaticFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
-			beforeEach(async () => {
+			beforeEach("setupContainers", async () => {
 				await setupContainers(options);
 			});
 
@@ -726,7 +770,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe("TurnBased flushing of batches", () => {
-			beforeEach(async () => {
+			beforeEach("setupContainers", async () => {
 				await setupContainers({ flushMode: FlushMode.TurnBased });
 			});
 

@@ -43,7 +43,7 @@ export function makeFieldBatchCodec(options: ICodecOptions): FieldBatchCodec {
 			for (const cursor of data) {
 				assert(
 					cursor.mode === CursorLocationType.Fields,
-					"FieldBatch expects fields cursors",
+					0x8a3 /* FieldBatch expects fields cursors */,
 				);
 			}
 			let encoded: EncodedFieldBatch;

@@ -10,6 +10,9 @@ import {
 	prefixPath,
 	prefixFieldPath,
 	Any,
+	FieldKinds,
+	SchemaBuilderBase,
+	FlexFieldSchema,
 } from "../feature-libraries/index.js";
 import {
 	FieldKey,
@@ -25,21 +28,29 @@ import {
 	PathRootPrefix,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
-import { SchemaBuilder, leaf } from "../domains/index.js";
+import { leaf } from "../domains/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
 
-const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
+const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
+	scope: "Cursor Test Suite",
+	libraries: [leaf.library],
+});
 
 export const emptySchema = schemaBuilder.object("Empty object", {});
 const emptySchema2 = schemaBuilder.object("Empty object 2", {});
 const emptySchema3 = schemaBuilder.object("Empty object 3", {});
-export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.sequence(Any));
+export const mapSchema = schemaBuilder.map(
+	"Map",
+	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
+);
 // object with fixed shape
 export const objectSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
 
-export const testTreeSchema = schemaBuilder.intoSchema(SchemaBuilder.sequence(Any));
+export const testTreeSchema = schemaBuilder.intoSchema(
+	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
+);
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: emptySchema.name }],

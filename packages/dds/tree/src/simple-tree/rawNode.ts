@@ -6,7 +6,7 @@
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	EditableTreeEvents,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	FlexTreeContext,
 	FlexTreeField,
 	FlexTreeNode,
@@ -17,12 +17,11 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnboxField,
 	FlexibleFieldContent,
-	boxedIterator,
 	flexTreeMarker,
 	onNextChange,
 	LocalNodeKey,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	TreeStatus,
 	FlexTreeFieldNode,
@@ -64,13 +63,13 @@ export function createRawNode(
 	schema: FlexTreeNodeSchema,
 	content: InsertableContent,
 ): RawTreeNode<FlexTreeNodeSchema, InsertableContent> {
-	if (schema instanceof ObjectNodeSchema) {
+	if (schema instanceof FlexObjectNodeSchema) {
 		return new RawObjectNode(schema, content as object);
 	}
-	if (schema instanceof MapNodeSchema) {
+	if (schema instanceof FlexMapNodeSchema) {
 		return new RawMapNode(schema, content as ReadonlyMap<string, InsertableContent>);
 	}
-	if (schema instanceof FieldNodeSchema) {
+	if (schema instanceof FlexFieldNodeSchema) {
 		return new RawFieldNode(schema, content);
 	}
 	fail("Unrecognized schema");
@@ -112,7 +111,7 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 		throw rawError("Reading fields");
 	}
 
-	public [boxedIterator](): IterableIterator<FlexTreeField> {
+	public boxedIterator(): IterableIterator<FlexTreeField> {
 		throw rawError("Boxed iteration");
 	}
 
@@ -138,7 +137,7 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 /**
  * The implementation of an object node created by {@link createRawNode}.
  */
-export class RawObjectNode<TSchema extends ObjectNodeSchema, TContent extends object>
+export class RawObjectNode<TSchema extends FlexObjectNodeSchema, TContent extends object>
 	extends RawTreeNode<TSchema, TContent>
 	implements FlexTreeObjectNode
 {
@@ -150,7 +149,7 @@ export class RawObjectNode<TSchema extends ObjectNodeSchema, TContent extends ob
 /**
  * The implementation of a map node created by {@link createRawNode}.
  */
-export class RawMapNode<TSchema extends MapNodeSchema>
+export class RawMapNode<TSchema extends FlexMapNodeSchema>
 	extends RawTreeNode<TSchema, ReadonlyMap<string, InsertableContent>>
 	implements FlexTreeMapNode<TSchema>
 {
@@ -206,7 +205,7 @@ export class RawMapNode<TSchema extends MapNodeSchema>
 		return this.entries();
 	}
 
-	public [boxedIterator](): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
+	public override boxedIterator(): IterableIterator<FlexTreeTypedField<TSchema["info"]>> {
 		throw rawError("Boxed iteration");
 	}
 }
@@ -214,16 +213,16 @@ export class RawMapNode<TSchema extends MapNodeSchema>
 /**
  * The implementation of a field node created by {@link createRawNode}.
  */
-export class RawFieldNode<TSchema extends FieldNodeSchema>
+export class RawFieldNode<TSchema extends FlexFieldNodeSchema>
 	extends RawTreeNode<TSchema, InsertableContent>
 	implements FlexTreeFieldNode<TSchema>
 {
 	public get content(): FlexTreeUnboxField<TSchema["info"]> {
-		throw rawError("Reading content of a list");
+		throw rawError("Reading content of an array node");
 	}
 
 	public get boxedContent(): FlexTreeTypedField<TSchema["info"]> {
-		throw rawError("Reading boxed content of a list");
+		throw rawError("Reading boxed content of an array node");
 	}
 }
 

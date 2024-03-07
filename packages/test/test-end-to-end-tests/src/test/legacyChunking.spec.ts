@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -32,9 +32,9 @@ describeInstallVersions(
 	/* timeoutMs: 3 minutes */ 180000,
 )("Legacy chunking", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let oldMap: SharedMap;
-	let newMap: SharedMap;
-	beforeEach(() => {
+	let oldMap: ISharedMap;
+	let newMap: ISharedMap;
+	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
 	afterEach(async () => provider.reset());
@@ -81,11 +81,11 @@ describeInstallVersions(
 		const oldContainer = await createOldContainer();
 		const oldDataObject =
 			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);
-		oldMap = await oldDataObject.getSharedObject<SharedMap>(mapId);
+		oldMap = await oldDataObject.getSharedObject<ISharedMap>(mapId);
 
 		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
 		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
-		newMap = await newDataObject.getSharedObject<SharedMap>(mapId);
+		newMap = await newDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
 	};

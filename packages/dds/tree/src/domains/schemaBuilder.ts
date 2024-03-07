@@ -6,23 +6,23 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	Any,
-	FieldKind,
+	FlexFieldKind,
 	FieldKinds,
-	TreeFieldSchema,
-	ImplicitAllowedTypes,
+	FlexFieldSchema,
+	FlexImplicitAllowedTypes,
 	NormalizeAllowedTypes,
 	NormalizeField,
 	SchemaBuilderOptions,
 	FlexTreeNodeSchema,
-	MapFieldSchema,
+	FlexMapFieldSchema,
 	normalizeField,
 	SchemaBuilderBase,
-	ImplicitFieldSchema,
-	ObjectNodeSchema,
+	FlexImplicitFieldSchema,
+	FlexObjectNodeSchema,
 	Unenforced,
-	AllowedTypes,
-	FieldNodeSchema,
-	MapNodeSchema,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexMapNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
@@ -32,11 +32,11 @@ import { leaf } from "./leafDomain.js";
  * Builds schema libraries, and the schema within them.
  *
  * @remarks
- * Fields, when inferred from {@link ImplicitFieldSchema}, default to the `Required` {@link FieldKind} (except for in Maps, which default to `Optional`).
+ * Fields, when inferred from {@link FlexImplicitFieldSchema}, default to the `Required` {@link FlexFieldKind} (except for in Maps, which default to `Optional`).
  * Implicitly includes `leaf` schema library by default.
  *
  * This type has some built in defaults which impact compatibility.
- * This includes which {@link FieldKind}s it uses.
+ * This includes which {@link FlexFieldKind}s it uses.
  * To ensure that these defaults can be updated without compatibility issues,
  * this class is versioned: the number in its name indicates its compatibility,
  * and if its defaults are changed to ones that would not be compatible with a version of the application using the previous versions,
@@ -48,7 +48,7 @@ import { leaf } from "./leafDomain.js";
  * Same applies to SchemaBuilder.
  * TODO: figure out a way to link `leaf` above without breaking API Extractor.
  * @sealed
- * @deprecated Users of this class should either use {@link SchemaBuilderBase} and explicitly work with {@link TreeFieldSchema}, or use SchemaFactory and work at its higher level of abstraction.
+ * @deprecated Users of this class should either use {@link SchemaBuilderBase} and explicitly work with {@link FlexFieldSchema}, or use SchemaFactory and work at its higher level of abstraction.
  */
 export class SchemaBuilder<
 	TScope extends string = string,
@@ -65,16 +65,16 @@ export class SchemaBuilder<
 
 	public override objectRecursive<
 		const Name extends TName,
-		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>>,
 	>(name: Name, t: T) {
 		return this.object(
 			name,
-			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-		) as unknown as ObjectNodeSchema<`${TScope}.${Name}`, T>;
+			t as unknown as RestrictiveReadonlyRecord<string, FlexImplicitFieldSchema>,
+		) as unknown as FlexObjectNodeSchema<`${TScope}.${Name}`, T>;
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link FieldNodeSchema} for a {@link (TreeListNode:interface)}.
+	 * Define (and add to this library if not already present) a structurally typed {@link FlexFieldNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this List is defined as a function of the provided types.
@@ -92,32 +92,32 @@ export class SchemaBuilder<
 	 */
 	public list<const T extends FlexTreeNodeSchema | Any | readonly FlexTreeNodeSchema[]>(
 		allowedTypes: T,
-	): FieldNodeSchema<
+	): FlexFieldNodeSchema<
 		`${TScope}.List<${string}>`,
-		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
+		FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeListNode:interface)}.
+	 * Define (and add to this library) a {@link FlexFieldNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
-	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
+	public list<Name extends TName, const T extends FlexImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): FieldNodeSchema<
+	): FlexFieldNodeSchema<
 		`${TScope}.${Name}`,
-		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
+		FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	>;
 
-	public list<const T extends ImplicitAllowedTypes>(
+	public list<const T extends FlexImplicitAllowedTypes>(
 		nameOrAllowedTypes:
 			| TName
 			| ((T & FlexTreeNodeSchema) | Any | readonly FlexTreeNodeSchema[]),
 		allowedTypes?: T,
-	): FieldNodeSchema<
+	): FlexFieldNodeSchema<
 		`${TScope}.${string}`,
-		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
+		FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as
@@ -127,30 +127,30 @@ export class SchemaBuilder<
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedList(fullName, nameOrAllowedTypes as T),
-			) as FieldNodeSchema<
+			) as FlexFieldNodeSchema<
 				`${TScope}.${string}`,
-				TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
+				FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 			>;
 		}
 		return this.namedList(nameOrAllowedTypes as TName, allowedTypes);
 	}
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link (TreeListNode:interface)}.
+	 * Define (and add to this library) a {@link FlexFieldNodeSchema} for a {@link (TreeListNode:interface)}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *
 	 * @privateRemarks
 	 * TODO: If A custom "List" API is added as a subtype of {@link FieldNode}, this would opt into that.
 	 */
-	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
+	private namedList<Name extends TName | string, const T extends FlexImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): FieldNodeSchema<
+	): FlexFieldNodeSchema<
 		`${TScope}.${Name}`,
-		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
+		FlexFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	> {
-		const schema = FieldNodeSchema.create(
+		const schema = FlexFieldNodeSchema.create(
 			this,
 			this.scoped(name as TName & Name),
 			this.sequence(allowedTypes),
@@ -160,7 +160,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link MapNodeSchema} for a {@link TreeMapNode}.
+	 * Define (and add to this library if not already present) a structurally typed {@link FlexMapNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
@@ -174,22 +174,25 @@ export class SchemaBuilder<
 	 */
 	public override map<const T extends FlexTreeNodeSchema | Any | readonly FlexTreeNodeSchema[]>(
 		allowedTypes: T,
-	): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
+	): FlexMapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
 
 	/**
-	 * Define (and add to this library) a {@link MapNodeSchema} for a {@link TreeMapNode}.
+	 * Define (and add to this library) a {@link FlexMapNodeSchema} for a {@link TreeMapNode}.
 	 */
-	public override map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(
+	public override map<
+		Name extends TName,
+		const T extends FlexMapFieldSchema | FlexImplicitAllowedTypes,
+	>(
 		name: Name,
 		fieldSchema: T,
-	): MapNodeSchema<`${TScope}.${Name}`, NormalizeField<T, typeof FieldKinds.optional>>;
+	): FlexMapNodeSchema<`${TScope}.${Name}`, NormalizeField<T, typeof FieldKinds.optional>>;
 
-	public override map<const T extends MapFieldSchema | ImplicitAllowedTypes>(
+	public override map<const T extends FlexMapFieldSchema | FlexImplicitAllowedTypes>(
 		nameOrAllowedTypes:
 			| TName
 			| ((T & FlexTreeNodeSchema) | Any | readonly FlexTreeNodeSchema[]),
 		allowedTypes?: T,
-	): MapNodeSchema<`${TScope}.${string}`, NormalizeField<T, typeof FieldKinds.optional>> {
+	): FlexMapNodeSchema<`${TScope}.${string}`, NormalizeField<T, typeof FieldKinds.optional>> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as
 				| (T & FlexTreeNodeSchema)
@@ -204,7 +207,7 @@ export class SchemaBuilder<
 						fullName as TName,
 						normalizeField(nameOrAllowedTypes as T, FieldKinds.optional),
 					) as FlexTreeNodeSchema,
-			) as MapNodeSchema<
+			) as FlexMapNodeSchema<
 				`${TScope}.${string}`,
 				NormalizeField<T, typeof FieldKinds.optional>
 			>;
@@ -218,7 +221,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link FieldKinds.optional|optional field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.optional` to {@link FlexFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
@@ -227,9 +230,9 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link FieldKinds.optional|optional field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.optional` to {@link FlexFieldSchema.create}.
 	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly optional = SchemaBuilder.optional;
@@ -237,7 +240,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.required|required field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.required` to {@link TreeFieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
@@ -246,11 +249,11 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.required|required field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.required` to {@link TreeFieldSchema.create}.
-	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link ImplicitFieldSchema}
+	 * Shorthand or passing `FieldKinds.required` to {@link FlexFieldSchema.create}.
+	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link FlexImplicitFieldSchema}
 	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link FieldKinds.required|required field}.
 	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly required = SchemaBuilder.required;
@@ -258,7 +261,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}
 	 */
@@ -267,9 +270,9 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.sequence` to {@link FlexFieldSchema.create}.
 	 *
-	 * Since this creates a {@link TreeFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link FlexFieldSchema} (and not a {@link FlexTreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
@@ -310,16 +313,16 @@ export class SchemaBuilder<
 	 * Focusing the file with the errors before running `TypeScript: Restart TS Server` can also help.
 	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
 	 */
-	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
+	public fixRecursiveReference<T extends FlexAllowedTypes>(...types: T): void {}
 }
 
 /**
  * Returns a wrapper around SchemaBuilder.field for a specific FieldKind.
  */
-function fieldHelper<Kind extends FieldKind>(kind: Kind) {
-	return <const T extends ImplicitAllowedTypes>(
+function fieldHelper<Kind extends FlexFieldKind>(kind: Kind) {
+	return <const T extends FlexImplicitAllowedTypes>(
 		allowedTypes: T,
-	): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
+	): FlexFieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
 }
 
 export function structuralName<const T extends string>(

@@ -17,8 +17,9 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { ReferenceType } from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence";
 import {
+	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
@@ -31,6 +32,10 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { Deferred } from "@fluidframework/core-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -40,25 +45,28 @@ import {
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
-const testContainerConfig: ITestContainerConfig = {
-	runtimeOptions: {
-		summaryOptions: {
-			initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					minIdleTime: 5000,
-					maxIdleTime: 5000,
-					maxTime: 5000 * 12,
-					maxAckWaitTime: 120000,
-					maxOps: 1,
-					initialSummarizerDelayMs: 20,
+
+function makeTestContainerConfig(registry: ChannelFactoryRegistry): ITestContainerConfig {
+	return {
+		runtimeOptions: {
+			summaryOptions: {
+				initialSummarizerDelayMs: 20, // Previous Containers had this property under SummaryOptions.
+				summaryConfigOverrides: {
+					...DefaultSummaryConfiguration,
+					...{
+						minIdleTime: 5000,
+						maxIdleTime: 5000,
+						maxTime: 5000 * 12,
+						maxAckWaitTime: 120000,
+						maxOps: 1,
+						initialSummarizerDelayMs: 20,
+					},
 				},
 			},
 		},
-	},
-	registry: [["sharedString", SharedString.getFactory()]],
-};
+		registry,
+	};
+}
 
 const usageErrorMessage = "Empty file summary creation isn't supported in this driver.";
 
@@ -70,9 +78,14 @@ const ContainerCloseUsageError: ExpectedEvents = {
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
 
-describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
+describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const testContainerConfig = makeTestContainerConfig([
+		["sharedString", SharedString.getFactory()],
+	]);
+
 	let provider: ITestObjectProvider;
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
@@ -254,9 +267,14 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider) => {
 
 // this functionality was added in 0.47 and can be added to the compat-enabled
 // tests above when the LTS version is bumped > 0.47
-describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
+describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedString } = apis.dds;
+	const testContainerConfig = makeTestContainerConfig([
+		["sharedString", SharedString.getFactory()],
+	]);
+
 	let provider: ITestObjectProvider;
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
 		// Currently FRS does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
@@ -405,6 +423,70 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 		);
 
 		const snapshot = serializeContainer.serialize();
+		const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+		const rehydratedDataStore = (await rehydratedContainer.getEntryPoint()) as ITestDataObject;
+		assert.strictEqual(
+			bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+	});
+
+	it("serialize while attaching and rehydrate container with blobs", async function () {
+		// build a fault injected driver to fail attach on the  summary upload
+		// after create that happens in the blob flow
+		const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createContainer: {
+					connectToStorage: {
+						uploadSummaryWithContext: () => assert.fail("fail on real summary upload"),
+					},
+				},
+			},
+		);
+		const loader = provider.makeTestLoader({
+			...testContainerConfig,
+			loaderProps: {
+				detachedBlobStorage: new MockDetachedBlobStorage(),
+				documentServiceFactory,
+				configProvider: {
+					getRawConfig: (name) =>
+						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+				},
+			},
+		});
+		const serializeContainer = await loader.createDetachedContainer(
+			provider.defaultCodeDetails,
+		);
+
+		const text = "this is some example text";
+		const serializeDataStore = (await serializeContainer.getEntryPoint()) as ITestDataObject;
+		const blobHandle = await serializeDataStore._runtime.uploadBlob(
+			stringToBuffer(text, "utf-8"),
+		);
+		assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
+
+		serializeDataStore._root.set("my blob", blobHandle);
+		assert.strictEqual(
+			bufferToString(await serializeDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+
+		await serializeContainer.attach(provider.driver.createCreateNewRequest()).then(
+			() => assert.fail("should fail"),
+			() => {},
+		);
+		assert.strictEqual(serializeContainer.closed, false);
+		// only drivers that support blobs will transition to attaching
+		// but for other drivers the test still ensures we can capture
+		// after an attach attempt
+		if (driverSupportsBlobs(provider.driver)) {
+			assert.strictEqual(serializeContainer.attachState, AttachState.Attaching);
+		} else {
+			assert.strictEqual(serializeContainer.attachState, AttachState.Detached);
+		}
+		const snapshot = serializeContainer.serialize();
+
 		const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
 		const rehydratedDataStore = (await rehydratedContainer.getEntryPoint()) as ITestDataObject;
 		assert.strictEqual(
@@ -606,28 +688,24 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	it("reconnection does not block ops when having pending blobs", async () => {
-		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
-		const runtimeStorage = (container1 as any).runtime.storage;
-
-		let resolveUploadBlob = () => {};
-		const uploadBlobPromise = new Promise<void>((resolve) => {
-			resolveUploadBlob = resolve;
-		});
-
-		const uploadBlobWithDelay = async (target, thisArg, args) => {
-			// Wait for the uploadBlobPromise to be resolved
-			await uploadBlobPromise;
-			const result = Reflect.apply(target, thisArg, args);
-			return result;
-		};
-
-		const delayedUploadBlob = new Proxy(runtimeStorage.createBlob.bind(runtimeStorage), {
-			async apply(target, thisArg, args) {
-				return uploadBlobWithDelay(target, thisArg, args);
+		const uploadBlobPromise = new Deferred<void>();
+		const container1 = await provider.makeTestContainer({
+			...testContainerConfig,
+			loaderProps: {
+				documentServiceFactory: wrapObjectAndOverride(provider.documentServiceFactory, {
+					createDocumentService: {
+						connectToStorage: {
+							createBlob: (dss) => async (blob) => {
+								// Wait for the uploadBlobPromise to be resolved
+								await uploadBlobPromise.promise;
+								return dss.createBlob(blob);
+							},
+						},
+					},
+				}),
 			},
 		});
-		runtimeStorage.createBlob = delayedUploadBlob;
+		const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 
 		const handleP = dataStore1._runtime.uploadBlob(stringToBuffer("test string", "utf8"));
 
@@ -645,8 +723,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider) => {
 		assert.strictEqual(dataStore2._root.get("key"), "value");
 		assert.strictEqual(dataStore2._root.get("another key"), "another value");
 
-		resolveUploadBlob();
+		uploadBlobPromise.resolve();
 		await assert.doesNotReject(handleP);
-		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });

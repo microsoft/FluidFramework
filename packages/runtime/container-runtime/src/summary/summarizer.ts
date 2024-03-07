@@ -14,10 +14,10 @@ import {
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { ISummaryConfiguration } from "../containerRuntime";
-import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
-import { SummaryCollection } from "./summaryCollection";
-import { RunningSummarizer } from "./runningSummarizer";
+import { ISummaryConfiguration } from "../containerRuntime.js";
+import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import { SummaryCollection } from "./summaryCollection.js";
+import { RunningSummarizer } from "./runningSummarizer.js";
 import {
 	IConnectableRuntime,
 	ISummarizer,
@@ -32,9 +32,9 @@ import {
 	EnqueueSummarizeResult,
 	ISummarizerEvents,
 	ISummarizeEventProps,
-} from "./summarizerTypes";
-import { SummarizeHeuristicData } from "./summarizerHeuristics";
-import { SummarizeResultBuilder } from "./summaryGenerator";
+} from "./summarizerTypes.js";
+import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
+import { SummarizeResultBuilder } from "./summaryGenerator.js";
 
 const summarizingError = "summarizingError";
 

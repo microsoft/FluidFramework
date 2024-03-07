@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-properties",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.2.0.0",
 	"description": "definitions of properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,7 +35,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
@@ -71,15 +71,16 @@
 		"underscore": "^1.13.6"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.29.0-227332",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
+		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
@@ -87,7 +88,7 @@
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^7.4.2",
+		"sinon": "^17.0.1",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

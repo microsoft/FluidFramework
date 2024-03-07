@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 
-import { type FluidObjectId } from "../CommonInterfaces";
-import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
+import { type FluidObjectId } from "../CommonInterfaces.js";
+import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {
 	createHandleNode,
 	type FluidObjectNode,
@@ -26,8 +26,8 @@ import {
 	type Primitive,
 	type RootHandleNode,
 	unknownObjectNode,
-} from "./VisualTree";
-import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing";
+} from "./VisualTree.js";
+import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing.js";
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?
@@ -282,7 +282,7 @@ export class DataVisualizerGraph
 	}
 
 	/**
-	 * Adds a visualizer node to the collection for the specified {@link @fluidframework/core-interfaces#IFluidHandle}
+	 * Adds a visualizer node to the collection for the specified {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}
 	 * if one does not already exist.
 	 *
 	 * @returns
@@ -470,8 +470,8 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
  * See {@link VisualizeChildData}.
  *
  * @param data - The child data to (recursively) render.
- * @param resolveHandle - Function which accepts an {@link @fluidframework/core-interfaces#IFluidHandle} and
- * returns its resolved object ID.
+ * @param resolveHandle - Function which accepts an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}
+ * and returns its resolved object ID.
  *
  * @privateRemarks Exported from this module for testing purposes. This is not intended to be exported by the package.
  */

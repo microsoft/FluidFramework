@@ -8,5 +8,4 @@ children:
   - '@fluidframework/azure-client'
   - '@fluid-experimental/odsp-client'
 layout: aggPackage
-draft: true
 ---

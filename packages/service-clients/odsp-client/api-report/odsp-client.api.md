@@ -25,13 +25,13 @@ export interface IOdspTokenProvider {
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
     // (undocumented)
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }
@@ -46,6 +46,7 @@ export interface OdspClientProps {
 // @beta
 export interface OdspConnectionConfig {
     driveId: string;
+    filePath: string;
     siteUrl: string;
     tokenProvider: IOdspTokenProvider;
 }
@@ -63,7 +64,5 @@ export interface OdspMember extends IMember {
 }
 
 export { TokenResponse }
-
-// (No @packageDocumentation comment for this package)
 
 ```

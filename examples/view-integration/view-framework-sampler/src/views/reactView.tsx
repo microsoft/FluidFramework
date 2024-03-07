@@ -5,7 +5,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { IDiceRoller } from "../dataObject";
+import { IDiceRoller } from "../dataObject.js";
 
 /**
  * Render Dice into a given HTMLElement as a text character, with a button to roll it.

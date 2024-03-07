@@ -112,7 +112,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	// V2 of the registry (the migration registry) -----------------------------------------
@@ -142,11 +142,11 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 
-	it.skip("Can create and retrieve tree without migration", async () => {
+	it("Can create and retrieve tree without migration", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -157,6 +157,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 
 		const container2 = await provider.loadContainer(runtimeFactory);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		// This is a silent check that we can get the tree after storing the handle
 		const shim2 = (await testObj2.getShim()) as MigrationShim;
 
@@ -201,6 +202,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		const shim3 = await testObj3.getShim();
 		const tree3 = shim3.currentTree as LegacySharedTree;
 
@@ -217,7 +219,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 		assert(getQuantity(tree1) === getQuantity(tree3), `Failed to sync new shared trees`);
 	});
 
-	it.skip("Can create and retrieve tree with migration", async () => {
+	it("Can create and retrieve tree with migration", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -228,6 +230,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 
 		const container2 = await provider.loadContainer(runtimeFactory);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		// This is a silent check that we can get the tree after storing the handle
 		const shim2 = await testObj2.getShim();
 
@@ -281,6 +284,7 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 		});
 
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		const shim3 = await testObj3.getShim();
 		const tree3 = shim3.currentTree as ITree;
 		const view3 = getNewTreeView(tree3);

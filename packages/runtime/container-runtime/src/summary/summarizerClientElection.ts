@@ -12,8 +12,8 @@ import {
 	IOrderedClientElection,
 	ISerializedElection,
 	ITrackedClient,
-} from "./orderedClientElection";
-import { ISummaryCollectionOpEvents } from "./summaryCollection";
+} from "./orderedClientElection.js";
+import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export interface ISummarizerClientElectionEvents extends IEvent {
 	(event: "electedSummarizerChanged", handler: () => void): void;

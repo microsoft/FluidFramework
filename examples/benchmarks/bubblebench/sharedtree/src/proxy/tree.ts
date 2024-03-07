@@ -14,7 +14,7 @@ import {
 } from "@fluid-experimental/tree";
 import { IArrayish } from "@fluid-example/bubblebench-common";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { fromJson, NodeKind } from "./treeutils";
+import { fromJson, NodeKind } from "./treeutils.js";
 
 function getChild(
 	tree: SharedTree,

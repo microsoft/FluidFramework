@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { Coordinate } from "./model";
+export { Coordinate } from "./model.js";

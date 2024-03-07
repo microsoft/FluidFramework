@@ -90,10 +90,14 @@ describe("AnchorSet", () => {
 
 		const trees = [node, node].map(cursorForJsonableTreeNode);
 		const fieldChanges: DeltaFieldChanges = {
-			build: [{ id: buildId, trees }],
 			local: [{ count: 4 }, { count: 2, attach: buildId }],
 		};
-		announceTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors);
+		announceTestDelta(
+			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)),
+			anchors,
+			undefined,
+			[{ id: buildId, trees }],
+		);
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
@@ -331,27 +335,24 @@ describe("AnchorSet", () => {
 			count: 1,
 			attach: buildId,
 		};
+		const build = [
+			{
+				id: buildId,
+				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
+			},
+		];
 		announceTestDelta(
 			new Map([
 				[
 					rootFieldKey,
 					{
-						build: [
-							{
-								id: buildId,
-								trees: [
-									cursorForJsonableTreeNode({
-										type: leaf.string.name,
-										value: "x",
-									}),
-								],
-							},
-						],
 						local: [detachMark, insertMark],
 					},
 				],
 			]),
 			anchors,
+			undefined,
+			build,
 		);
 
 		log.expect([
@@ -362,17 +363,11 @@ describe("AnchorSet", () => {
 
 		const insertAtFoo5 = makeFieldDelta(
 			{
-				build: [
-					{
-						id: buildId,
-						trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
-					},
-				],
 				local: [{ count: 5 }, insertMark],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(insertAtFoo5, anchors);
+		announceTestDelta(insertAtFoo5, anchors, undefined, build);
 
 		log.expect([["root treeChange", 1]]);
 		log.clear();
@@ -394,12 +389,12 @@ describe("AnchorSet", () => {
 		// Insert a node at the root to set up listeners on it
 		const insertAtFoo3 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 3 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(insertAtFoo3, anchors);
+		const build = [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }];
+		announceTestDelta(insertAtFoo3, anchors, undefined, build);
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
@@ -418,24 +413,22 @@ describe("AnchorSet", () => {
 		// Test an insert delta
 		const insertAtFoo4 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 4 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(insertAtFoo4, anchors);
+		announceTestDelta(insertAtFoo4, anchors, undefined, build);
 		assert.strictEqual(beforeCounter, 1);
 		assert.strictEqual(afterCounter, 1);
 
 		// Test a replace delta
 		const replaceAtFoo5 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(replaceAtFoo5, anchors);
+		announceTestDelta(replaceAtFoo5, anchors, undefined, build);
 		assert.strictEqual(beforeCounter, 2);
 		assert.strictEqual(afterCounter, 2);
 
@@ -469,7 +462,7 @@ describe("AnchorSet", () => {
 		// Remove listeners and validate another delta doesn't trigger the listeners anymore
 		unsubscribeBeforeChange();
 		unsubscribeAfterChange();
-		announceTestDelta(insertAtFoo4, anchors);
+		announceTestDelta(insertAtFoo4, anchors, undefined, build);
 		assert.strictEqual(beforeCounter, 5);
 		assert.strictEqual(afterCounter, 5);
 	});
@@ -484,12 +477,12 @@ describe("AnchorSet", () => {
 		// Insert a node at the root to set up listeners on it
 		const insertAtFoo3 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 3 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(insertAtFoo3, anchors);
+		const build = [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }];
+		announceTestDelta(insertAtFoo3, anchors, undefined, build);
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
@@ -508,22 +501,20 @@ describe("AnchorSet", () => {
 		// Test an insert delta
 		const insertAtFoo4 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 4 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(insertAtFoo4, anchors);
+		announceTestDelta(insertAtFoo4, anchors, undefined, build);
 
 		// Test a replace delta
 		const replaceAtFoo5 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
-		announceTestDelta(replaceAtFoo5, anchors);
+		announceTestDelta(replaceAtFoo5, anchors, undefined, build);
 
 		// Test a detach delta
 		announceTestDelta(
@@ -554,14 +545,14 @@ describe("AnchorSet", () => {
 	});
 
 	it("triggers path visitor callbacks", () => {
+		const build = [
+			{
+				id: buildId,
+				trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
+			},
+		];
 		const insertAtFoo4 = makeFieldDelta(
 			{
-				build: [
-					{
-						id: buildId,
-						trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
-					},
-				],
 				local: [{ count: 4 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -577,12 +568,6 @@ describe("AnchorSet", () => {
 		};
 		const replaceAtFoo5 = makeFieldDelta(
 			{
-				build: [
-					{
-						id: buildId,
-						trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
-					},
-				],
 				local: [{ count: 5 }, replaceMark],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -591,12 +576,13 @@ describe("AnchorSet", () => {
 		const anchors = new AnchorSet();
 		const trees = [cursorForJsonableTreeNode(node)];
 		const fieldChanges: DeltaFieldChanges = {
-			build: [{ id: buildId, trees }],
 			local: [{ count: 3 }, { count: 1, attach: buildId }],
 		};
 		announceTestDelta(
 			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo, [rootFieldKey, 0])),
 			anchors,
+			undefined,
+			[{ id: buildId, trees }],
 		);
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
@@ -672,16 +658,14 @@ describe("AnchorSet", () => {
 			},
 		};
 		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
-		announceTestDelta(insertAtFoo4, anchors);
+		announceTestDelta(insertAtFoo4, anchors, undefined, build);
 		log.expect([
-			["visitSubtreeChange.afterCreate-Temp-0[0, 1]", 1],
 			["visitSubtreeChange.beforeAttach-src:Temp-0[0, 1]-dst:foo[4]", 1],
 			["visitSubtreeChange.afterAttach-src:Temp-0[0]-dst:foo[4, 5]", 1],
 		]);
 		log.clear();
-		announceTestDelta(replaceAtFoo5, anchors);
+		announceTestDelta(replaceAtFoo5, anchors, undefined, build);
 		log.expect([
-			["visitSubtreeChange.afterCreate-Temp-0[0, 1]", 1],
 			["visitSubtreeChange.beforeReplace-old:foo[5, 6]-new:Temp-0[0, 1]", 1],
 			["visitSubtreeChange.afterReplace-old:Temp-1[0, 1]-new:foo[5, 6]", 1],
 		]);
@@ -696,7 +680,7 @@ describe("AnchorSet", () => {
 		]);
 		log.clear();
 		unsubscribePathVisitor();
-		announceTestDelta(insertAtFoo4, anchors);
+		announceTestDelta(insertAtFoo4, anchors, undefined, build);
 		log.expect([]);
 	});
 

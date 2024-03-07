@@ -13,7 +13,7 @@ import { CleanOptions } from "simple-git";
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import { Repository } from "../../lib";
+import { Repository } from "../../library";
 import { isReleaseGroup } from "../../releaseGroups";
 
 async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
@@ -22,7 +22,9 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 	await writeFile(path, newContent, "utf8");
 }
 
-export default class GenerateChangeLogCommand extends BaseCommand<typeof GenerateChangeLogCommand> {
+export default class GenerateChangeLogCommand extends BaseCommand<
+	typeof GenerateChangeLogCommand
+> {
 	static readonly description = "Generate a changelog for packages based on changesets.";
 
 	static readonly flags = {

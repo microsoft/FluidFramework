@@ -15,9 +15,9 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces";
-import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
-import { pkgVersion } from "./packageVersion";
+import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
+import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
+import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];
@@ -27,12 +27,12 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
  *
  * @sealed
  * @alpha
  */
-export class MapFactory implements IChannelFactory {
+export class MapFactory implements IChannelFactory<ISharedMap> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -114,7 +114,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * Get a factory for SharedMap to register with the data store.
 	 * @returns A factory that creates SharedMaps and loads them from storage.
 	 */
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ISharedMap> {
 		return new MapFactory();
 	}
 
@@ -361,8 +361,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: unknown): unknown {
-		return this.kernel.tryApplyStashedOp(content as IMapOperation);
+	protected applyStashedOp(content: unknown): void {
+		this.kernel.tryApplyStashedOp(content as IMapOperation);
 	}
 
 	/**

@@ -24,7 +24,7 @@ require("codemirror/mode/javascript/javascript.js");
 /* eslint-enable @typescript-eslint/no-require-imports,
 import/no-internal-modules, import/no-unassigned-import */
 
-import { CodeMirrorPresenceManager, PresenceManager } from "./presence";
+import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";
 
 class CodeMirrorView {
 	private textArea: HTMLTextAreaElement | undefined;

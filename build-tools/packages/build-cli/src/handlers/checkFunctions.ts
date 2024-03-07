@@ -19,7 +19,7 @@ import {
 	getPreReleaseDependencies,
 	getReleaseSourceForReleaseGroup,
 	isReleased,
-} from "../lib";
+} from "../library";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseSource, isReleaseGroup } from "../releaseGroups";
@@ -64,9 +64,7 @@ export const checkBranchName: StateHandlerFunction = async (
 
 			case "major":
 			case "minor": {
-				log.verbose(
-					`Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`,
-				);
+				log.verbose(`Checking if ${context.originalBranchName} is 'main', 'next', or 'lts'.`);
 				if (!["main", "next", "lts"].includes(context.originalBranchName)) {
 					log.warning(
 						`Release prep should only be done on 'main', 'next', or 'lts' branches, but current branch is '${context.originalBranchName}'.`,

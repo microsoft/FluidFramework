@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -57,10 +57,10 @@ import {
 	IConnectionManagerFactoryArgs,
 	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { SignalType } from "./protocol";
-import { isDeltaStreamConnectionForbiddenError } from "./utils";
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { SignalType } from "./protocol.js";
+import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const InitialReconnectDelayInMs = 500;
@@ -229,7 +229,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
-	private _connectionProps: ITelemetryProperties = {};
+	private _connectionProps: ITelemetryBaseProperties = {};
 
 	private _disposed = false;
 
@@ -290,7 +290,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * Returns set of props that can be logged in telemetry that provide some insights / statistics
 	 * about current or last connection (if there is no connection at the moment)
 	 */
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return this.connection !== undefined
 			? this._connectionProps
 			: {
@@ -654,8 +654,12 @@ export class ConnectionManager implements IConnectionManager {
 				if (retryDelayFromError !== undefined || globalThis.navigator?.onLine !== false) {
 					delayMs = calculateMaxWaitTime(delayMs, origError);
 				}
-				// Raise event in case the delay was there.
-				this.props.reconnectionDelayHandler(delayMs, origError);
+
+				// Raise event in case the delay was there from the error.
+				if (retryDelayFromError !== undefined) {
+					this.props.reconnectionDelayHandler(delayMs, origError);
+				}
+
 				await new Promise<void>((resolve) => {
 					setTimeout(resolve, delayMs);
 				});

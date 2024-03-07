@@ -7,14 +7,14 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	fail,
 	FieldKinds,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	SchemaBuilderBase,
 	FlexFieldKind as FieldKind,
 	Any,
 	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
 	leaf,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 
@@ -123,7 +123,7 @@ function buildTreeNodeSchema(
 			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
 			const cache: { nodeSchema?: TreeNodeSchema } = {};
 			nodeSchemaMap.set(typeid, () => cache.nodeSchema ?? fail("missing schema"));
-			const fields = new Map<string, TreeFieldSchema>();
+			const fields = new Map<string, FlexFieldSchema>();
 			buildLocalFields(builder, nodeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
 			for (const inheritanceType of inheritanceChain) {
@@ -146,7 +146,7 @@ function buildTreeNodeSchema(
 				);
 				fields.set(
 					nodePropertyField,
-					TreeFieldSchema.create(FieldKinds.required, [nodePropertySchema]),
+					FlexFieldSchema.create(FieldKinds.required, [nodePropertySchema]),
 				);
 			}
 			const fieldsObject = mapToObject(fields);
@@ -218,7 +218,7 @@ function buildLocalFields(
 	treeSchemaMap: Map<string, LazyTreeNodeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	typeid: string,
-	local: Map<string, TreeFieldSchema>,
+	local: Map<string, FlexFieldSchema>,
 ): void {
 	const schemaTemplate = PropertyFactory.getTemplate(typeid);
 	if (schemaTemplate === undefined) {
@@ -297,7 +297,7 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	allChildrenByType: InheritingChildrenByType,
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
-): TreeFieldSchema<Kind> {
+): FlexFieldSchema<Kind> {
 	const allowedTypes: Set<LazyTreeNodeSchema> = new Set();
 	let isAny = false;
 	for (const typeid of fieldTypes) {
@@ -314,8 +314,8 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 		}
 	}
 	return isAny
-		? TreeFieldSchema.create(fieldKind, [Any])
-		: TreeFieldSchema.create(fieldKind, [...allowedTypes]);
+		? FlexFieldSchema.create(fieldKind, [Any])
+		: FlexFieldSchema.create(fieldKind, [...allowedTypes]);
 }
 
 const builtinBuilder: SchemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
@@ -328,7 +328,7 @@ const builtinBuilder: SchemaBuilder = new SchemaBuilderBase(FieldKinds.required,
 // to be put into one library like this.
 export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
-	TreeFieldSchema.create(FieldKinds.optional, [Any]),
+	FlexFieldSchema.create(FieldKinds.optional, [Any]),
 );
 const builtinLibrary = builtinBuilder.intoLibrary();
 

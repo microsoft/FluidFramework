@@ -528,7 +528,7 @@ describeCompat(
 			);
 		}
 
-		beforeEach(async () => {
+		beforeEach("getTestObjectProvider", async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 		});
 

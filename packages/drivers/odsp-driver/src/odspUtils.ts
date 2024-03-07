@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ITelemetryBaseProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	isOnline,
 	OnlineStatus,
 	RetryableError,
 	NonRetryableError,
 	NetworkErrorBasic,
+	type AuthorizationError,
 } from "@fluidframework/driver-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
@@ -20,12 +21,13 @@ import {
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils";
+} from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspResolvedUrl,
 	TokenFetchOptions,
@@ -33,7 +35,6 @@ import {
 	tokenFromResponse,
 	isTokenFromCache,
 	OdspResourceTokenFetchOptions,
-	ShareLinkTypes,
 	ISharingLinkKind,
 	TokenFetcher,
 	ICacheEntry,
@@ -41,14 +42,18 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
-import { fetch } from "./fetch";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IOdspSnapshot } from "./contracts";
+import { fetch } from "./fetch.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IOdspSnapshot } from "./contracts.js";
+// eslint-disable-next-line import/no-deprecated
+import { ISnapshotContents } from "./odspPublicUtils.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
-/** Parse the given url and return the origin (host name) */
-export const getOrigin = (url: string) => new URL(url).origin;
+/**
+ * Parse the given url and return the origin (host name)
+ */
+export const getOrigin = (url: string): string => new URL(url).origin;
 
 /**
  * @alpha
@@ -56,16 +61,18 @@ export const getOrigin = (url: string) => new URL(url).origin;
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	duration: number;
 }
 
 export interface TokenFetchOptionsEx extends TokenFetchOptions {
-	/** previous error we hit in getWithRetryForTokenRefresh */
-	previousError?: any;
+	/**
+	 * The previous error we hit in {@link getWithRetryForTokenRefresh}.
+	 */
+	previousError?: unknown;
 }
 
-function headersToMap(headers: Headers) {
+function headersToMap(headers: Headers): Map<string, string> {
 	const newHeaders = new Map<string, string>();
 	for (const [key, value] of headers.entries()) {
 		newHeaders.set(key, value);
@@ -81,24 +88,30 @@ function headersToMap(headers: Headers) {
  */
 export async function getWithRetryForTokenRefresh<T>(
 	get: (options: TokenFetchOptionsEx) => Promise<T>,
-) {
-	return get({ refresh: false }).catch(async (e) => {
-		const options: TokenFetchOptionsEx = { refresh: true, previousError: e };
-		switch (e.errorType) {
+): Promise<T> {
+	return get({ refresh: false }).catch(async (error) => {
+		const options: TokenFetchOptionsEx = { refresh: true, previousError: error };
+		switch ((error as Partial<IFluidErrorBase>).errorType) {
 			// If the error is 401 or 403 refresh the token and try once more.
-			case OdspErrorTypes.authorizationError:
-				return get({ ...options, claims: e.claims, tenantId: e.tenantId });
+			case OdspErrorTypes.authorizationError: {
+				const authError = error as AuthorizationError;
+				return get({ ...options, claims: authError.claims, tenantId: authError.tenantId });
+			}
 
 			case OdspErrorTypes.incorrectServerResponse: // some error on the wire, retry once
-			case OdspErrorTypes.fetchTokenError: // If the token was null, then retry once.
+			case OdspErrorTypes.fetchTokenError: {
+				// If the token was null, then retry once.
 				return get(options);
+			}
 
-			default:
+			default: {
 				// Caller may determine that it wants one retry
-				if (e[getWithRetryForTokenRefreshRepeat] === true) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-explicit-any
+				if ((error as any)[getWithRetryForTokenRefreshRepeat] === true) {
 					return get(options);
 				}
-				throw e;
+				throw error;
+			}
 		}
 	});
 }
@@ -112,7 +125,7 @@ export async function fetchHelper(
 	// Node-fetch and dom have conflicting typing, force them to work by casting for now
 	return fetch(requestInfo, requestInit).then(
 		async (fetchResponse) => {
-			const response = fetchResponse as any as Response;
+			const response = fetchResponse as unknown as Response;
 			// Let's assume we can retry.
 			if (!response) {
 				throw new NonRetryableError(
@@ -153,6 +166,7 @@ export async function fetchHelper(
 			const redactedErrorText = taggedErrorMessage.value.replace(urlRegex, "REDACTED_URL");
 
 			// This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (error.name === "AbortError") {
 				throw new RetryableError(
 					"Fetch Timeout (AbortError)",
@@ -210,7 +224,7 @@ export async function fetchArray(
 	let arrayBuffer: ArrayBuffer;
 	try {
 		arrayBuffer = await content.arrayBuffer();
-	} catch (e) {
+	} catch {
 		// Parsing can fail and message could contain full request URI, including
 		// tokens, etc. So do not log error object itself.
 		throwOdspNetworkError(
@@ -244,7 +258,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 	let text: string | undefined;
 	try {
 		text = await content.text();
-	} catch (e) {
+	} catch {
 		// JSON.parse() can fail and message would container full request URI, including
 		// tokens... It fails for me with "Unexpected end of JSON input" quite often - an attempt to download big file
 		// (many ops) almost always ends up with this error - I'd guess 1% of op request end up here... It always
@@ -263,7 +277,7 @@ export async function fetchAndParseAsJSONHelper<T>(
 	propsToLog.bodySize = text.length;
 	const res = {
 		headers,
-		content: JSON.parse(text),
+		content: JSON.parse(text) as T,
 		propsToLog,
 		duration,
 	};
@@ -283,11 +297,8 @@ export interface INewFileInfo extends IFileInfoBase {
 	/**
 	 * application can request creation of a share link along with the creation of a new file
 	 * by passing in an optional param to specify the kind of sharing link
-	 * (at the time of adding this comment Sept/2021), odsp only supports csl
-	 * ShareLinkTypes will deprecated in future. Use ISharingLinkKind instead which specifies both
-	 * share link type and the role type.
 	 */
-	createLinkType?: ShareLinkTypes | ISharingLinkKind;
+	createLinkType?: ISharingLinkKind;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
@@ -310,13 +321,15 @@ export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl 
 }
 
 /**
+ * Type narrowing utility to determine if the provided {@link @fluidframework/driver-definitions#IResolvedUrl}
+ * is an {@link @fluidframework/odsp-driver-definitions#IOdspResolvedUrl}.
  * @internal
  */
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl {
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
 }
 
-export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
+export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLoggerExt =>
 	createChildLogger({
 		logger,
 		namespace: "OdspDriver",
@@ -327,7 +340,12 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
 		},
 	});
 
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
+export function evalBlobsAndTrees(snapshot: IOdspSnapshot): {
+	numTrees: number;
+	numBlobs: number;
+	encodedBlobsSize: number;
+	decodedBlobsSize: number;
+} {
 	let numTrees = 0;
 	let numBlobs = 0;
 	let encodedBlobsSize = 0;
@@ -404,6 +422,7 @@ export function toInstrumentedOdspTokenFetcher(
 					(error) => {
 						// There is an important but unofficial contract here where token providers can set canRetry: true
 						// to hook into the driver's retry logic (e.g. the retry loop when initiating a connection)
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 						const rawCanRetry = error?.canRetry;
 						const tokenError = wrapError(
 							error,
@@ -448,18 +467,14 @@ export const maxUmpPostBodySize = 79872;
  * @returns A string of request parameters that can be concatenated with the base URI
  */
 export function buildOdspShareLinkReqParams(
-	shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined,
-) {
+	shareLinkType: ISharingLinkKind | undefined,
+): string | undefined {
 	if (!shareLinkType) {
 		return;
 	}
-	const scope = (shareLinkType as ISharingLinkKind).scope;
-	if (!scope) {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		return `createLinkType=${shareLinkType}`;
-	}
+	const scope = shareLinkType.scope;
 	let shareLinkRequestParams = `createLinkScope=${scope}`;
-	const role = (shareLinkType as ISharingLinkKind).role;
+	const role = shareLinkType.role;
 	shareLinkRequestParams = role
 		? `${shareLinkRequestParams}&createLinkRole=${role}`
 		: shareLinkRequestParams;
@@ -480,6 +495,36 @@ export async function measureP<T>(callback: () => Promise<T>): Promise<[T, numbe
 	return [result, time];
 }
 
-export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl) {
+export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl): string {
 	return `${odspResolvedUrl.hashedDocumentId}/joinsession`;
+}
+
+/**
+ * Utility API to check if the type of snapshot contents is `ISnapshot`.
+ * @internal
+ * @param obj - obj whose type needs to be identified.
+ */
+export function isInstanceOfISnapshot(
+	// eslint-disable-next-line import/no-deprecated
+	obj: ISnapshotContents | ISnapshot | undefined,
+): obj is ISnapshot {
+	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;
+}
+
+/**
+ * This tells whether request if for a specific loading group or not. The snapshot which
+ * we fetch on initial load, fetches all ungrouped content.
+ */
+export function isSnapshotFetchForLoadingGroup(loadingGroupIds: string[] | undefined): boolean {
+	return loadingGroupIds !== undefined && loadingGroupIds.length > 0;
+}
+
+/*
+ * This tells whether we are using legacy flow for fetching snapshot where we don't use
+ * groupId query param in the trees latest network call.
+ */
+export function useLegacyFlowWithoutGroupsForSnapshotFetch(
+	loadingGroupIds: string[] | undefined,
+): boolean {
+	return loadingGroupIds === undefined;
 }

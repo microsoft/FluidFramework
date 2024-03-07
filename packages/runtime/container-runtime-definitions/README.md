@@ -23,7 +23,7 @@ npm i @fluidframework/container-runtime-definitions
 
 ## API Documentation
 
-API documentation for **@fluidframework/container-runtime-definitions** is available at <https://fluidframework.com/docs/api/v1/container-runtime-definitions>.
+API documentation for **@fluidframework/container-runtime-definitions** is available at <https://fluidframework.com/docs/apis/container-runtime-definitions>.
 
 ## Contribution Guidelines
 

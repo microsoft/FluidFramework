@@ -4,13 +4,12 @@
  */
 
 export {
-	isNeverField,
-	isNeverTree,
 	allowsRepoSuperset,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
 } from "./comparison.js";
+export { isNeverField, isNeverTree } from "./isNeverTree.js";
 export {
 	addCrossFieldQuery,
 	CrossFieldManager,
@@ -25,7 +24,8 @@ export {
 	EncodedRevisionInfo,
 	EncodedModularChangeset,
 } from "./modularChangeFormat.js";
-export { FieldKind, FullSchemaPolicy, FieldKindWithEditor } from "./fieldKind.js";
+export { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
+export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	FieldChangeHandler,
 	FieldChangeRebaser,

@@ -7,22 +7,29 @@
 /* eslint-disable import/no-internal-modules */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
-import { boxedIterator } from "../../feature-libraries/flex-tree/index.js";
+import { leaf } from "../../domains/index.js";
 import { brand } from "../../util/index.js";
 import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
 import { extractRawNodeContent, RawObjectNode } from "../../simple-tree/rawNode.js";
-import { ObjectNodeSchema } from "../../feature-libraries/index.js";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	FlexObjectNodeSchema,
+	SchemaBuilderBase,
+} from "../../feature-libraries/index.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
-		const builder = new SchemaBuilder({ scope: "raw object test" });
+		const builder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "raw object test",
+			libraries: [leaf.library],
+		});
 		const objectSchema = builder.object("object", {
 			foo: leaf.number,
-			bar: builder.optional(leaf.string),
-			baz: builder.sequence(leaf.boolean),
+			bar: FlexFieldSchema.create(FieldKinds.optional, [leaf.string]),
+			baz: FlexFieldSchema.create(FieldKinds.sequence, [leaf.boolean]),
 		});
-		const rootFieldSchema = SchemaBuilder.required(objectSchema);
+		const rootFieldSchema = FlexFieldSchema.create(FieldKinds.required, [objectSchema]);
 		const schema = builder.intoSchema(rootFieldSchema);
 		const context = contextWithContentReadonly({
 			schema,
@@ -30,7 +37,7 @@ describe("raw object nodes", () => {
 		});
 
 		assert(context.root.is(rootFieldSchema));
-		const rawObjectNode = new RawObjectNode(objectSchema as ObjectNodeSchema, {
+		const rawObjectNode = new RawObjectNode(objectSchema as FlexObjectNodeSchema, {
 			foo: 42,
 			bar: undefined,
 			baz: [],
@@ -54,7 +61,7 @@ describe("raw object nodes", () => {
 		assert.throws(() => rawObjectNode.context);
 		assert.throws(() => rawObjectNode.parentField);
 		assert.throws(() => rawObjectNode.tryGetField(brand("foo")));
-		assert.throws(() => rawObjectNode[boxedIterator]());
+		assert.throws(() => rawObjectNode.boxedIterator());
 		assert.throws(() => rawObjectNode.on("changing", () => {}));
 		assert.throws(() => rawObjectNode.treeStatus());
 		assert.throws(() => rawObjectNode.localNodeKey);

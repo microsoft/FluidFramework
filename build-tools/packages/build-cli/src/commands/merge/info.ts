@@ -6,7 +6,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 
 import { BaseCommand } from "../../base";
-import { Repository } from "../../lib";
+import { Repository } from "../../library";
 
 /**
  * An object containing merge status between two branches.
@@ -29,7 +29,8 @@ interface BranchMergeInfo {
 }
 
 export default class MergeInfoCommand extends BaseCommand<typeof MergeInfoCommand> {
-	static readonly description = `Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
+	static readonly description =
+		`Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided. Output the data as JSON using --json.`;
 
 	static readonly enableJsonFlag = true;
 	static readonly flags = {

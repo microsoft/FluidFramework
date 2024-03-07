@@ -12,9 +12,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	applyDelta,
+	DeltaDetachedNodeBuild,
 	DeltaFieldChanges,
 	FieldKey,
 	forEachField,
@@ -23,6 +23,7 @@ import {
 	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
+	RevisionTagCodec,
 	TreeNavigationResult,
 } from "../../core/index.js";
 import {
@@ -55,7 +56,7 @@ export class ForestSummarizer implements Summarizable {
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		options: ICodecOptions = { jsonValidator: noopValidator },
@@ -82,7 +83,7 @@ export class ForestSummarizer implements Summarizable {
 					{ fieldKey: key, parent: undefined },
 					innerCursor,
 				) === TreeNavigationResult.Ok,
-				"failed to navigate to field",
+				0x892 /* failed to navigate to field */,
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
@@ -135,22 +136,20 @@ export class ForestSummarizer implements Summarizable {
 			);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
+			const build: DeltaDetachedNodeBuild[] = [];
 			for (const [fieldKey, field] of fields) {
 				const chunked = chunkField(field, defaultChunkPolicy);
 				const nodeCursors = chunked.flatMap((chunk) =>
 					mapCursorField(chunk.cursor(), (cursor) => cursor.fork()),
 				);
 				const buildId = { minor: allocator.allocate(nodeCursors.length) };
-
+				build.push({
+					id: buildId,
+					trees: nodeCursors,
+				});
 				fieldChanges.push([
 					fieldKey,
 					{
-						build: [
-							{
-								id: buildId,
-								trees: nodeCursors,
-							},
-						],
 						local: [{ count: nodeCursors.length, attach: buildId }],
 					},
 				]);
@@ -158,9 +157,9 @@ export class ForestSummarizer implements Summarizable {
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
 			applyDelta(
-				{ fields: new Map(fieldChanges) },
+				{ build, fields: new Map(fieldChanges) },
 				this.forest,
-				makeDetachedFieldIndex("init", this.idCompressor),
+				makeDetachedFieldIndex("init", this.revisionTagCodec),
 			);
 		}
 	}

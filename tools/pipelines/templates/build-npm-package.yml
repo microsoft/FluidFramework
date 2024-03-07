@@ -172,11 +172,9 @@ stages:
           # CI builds run more aggressive compat configurations which can take longer.
           # See "FullCompat" under packages\test\test-version-utils\README.md for more details.
           # At the time of adding this comment, the full compat config is on the smaller side and so
-          # CI builds consistently pass with a 60 minutes timeout. However, it will naturally grow
-          # over time and it might be necessary to bump it.
           # AB#6680 is also relevant here, which tracks rethinking how and where we run tests (likely with
           # a focus on e2e tests)
-          timeoutInMinutes: 60
+          timeoutInMinutes: 90
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}

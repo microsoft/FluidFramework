@@ -20,6 +20,7 @@ export {
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
 	VisibilityState,
@@ -34,12 +35,13 @@ export {
 } from "./dataStoreRegistry";
 export {
 	gcBlobPrefix,
+	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "./garbageCollection";
+} from "./garbageCollectionDefinitions";
 export {
 	IAttachMessage,
 	IEnvelope,

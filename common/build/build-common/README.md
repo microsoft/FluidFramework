@@ -13,6 +13,18 @@ It can be extended in your package's local configuration file like the following
 "extends": "@fluidframework/build-common/api-extractor-base.json",
 ```
 
+### Dual Build Considerations
+
+A variety of configuration files were build and named while dual build pattern was being developed and have not been rationalized for what is believed to be the final state. The import aspect is to select a set of files that generate the report once. With the current dual build pattern this means using both of the `api-extractor-base.(cjs|esm).primary.json` files and then configuration override of:
+
+```json
+	"apiReport": {
+		"enabled": false
+	}
+```
+
+preferrably for the CommonJS case.
+
 ### Legacy Configurations
 
 This package previously exported a series of configurations with differing levels of validation.
@@ -20,26 +32,70 @@ These configurations are now deprecated and have been replaced with the configur
 
 ## TypeScript Configurations (`tsconfig.json`)
 
-This package includes several TypeScript config (tsconfig) files that are contain the common configurations used within
+This package includes several TypeScript project (tsconfig) files that are contain the common configurations used within
 the Fluid Framework repo. These configs are designed to be used together using [TypeScript's support for extending
 multiple config
 files](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html#supporting-multiple-configuration-files-in-extends).
 
 -   tsconfig.base.json - This base config contains defaults that all packages within the repo should use as a baseline.
--   tsconfig.cjs.json - This config sets `module: Node16` and `moduleResolution: Node16` and is intended for CommonJS
-    builds. This config is intended to be layered on top of the base config.
--   tsconfig.esm.json - This config sets `module: ESNext` and `moduleResolution: Node10` and is intended for ESM builds
-    in packages that build both CJS and ESM. This config is intended to be layered on top of the base config. This config
-    uses `Node10` module resolution because `Node16` cannot be used to build both CJS and ESM from a common source.
--   tsconfig.esm-only.json - This config sets `module: Node16` and `moduleResolution: Node16` and is intended for
-    packages that build _only_ ESM. It should only be used in ESM-only packages, and it assumes the `type` field in
-    package.json is set to `"module"`. This config is intended to be layered on top of the base config. Note that while
-    this config is currently the same as tsconfig.cjs.json, that may not always be true, and having "tsm-only" in the
-    name means it won't confuse people why an ESM-only package would be inheriting from the CJS base config.
--   tsconfig.test.json - This config disables some settings that we don't want to use in test code, like `declaration` and
+-   tsconfig.node16.json - This config extends base and sets `module: Node16` and `moduleResolution: Node16`. It is intended for all
+    builds.
+-   tsconfig.test.node16.json - This config disables some settings that we don't want to use in test code, like `declaration` and
     `decarationMap`. It also enables the `node` types by default.
+
+### Dual Build Pattern
+
+Proper ESM build with full validation via Typescript compiler requires Node16 or NodeNext module and `"type": "module"` in package.json. To get a same package CommonJS build, a second tsconfig file should be create with a different `outDir` and `fluid-tsc` should be used for the build in place of `tsc`. Example:
+
+```shell
+fluid-tsc commonjs --project ./tsconfig.cjs.json
+```
+
+Then an additional `package.json` should be injected into the `outDir` so that references understand those `.js` files are CommonJs. `common/build/build-common/src/cjs/package.json` can be copied for this purpose. Example:
+
+```shell
+copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist
+```
+
+#### Recommended Secondary Project Files
+
+tsconfig.cjs.json:
+
+```json
+{
+	// This config must be used in a "type": "commonjs" environment. (Use `fluid-tsc commonjs`.)
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./dist"
+	}
+}
+```
+
+src/test/tsconfig.cjs.json:
+
+```json
+{
+	// This config must be used in a "type": "commonjs" environment. (Use `fluid-tsc commonjs`.)
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../dist/test"
+	},
+	"references": [
+		{
+			"path": "../../tsconfig.cjs.json"
+		}
+	]
+}
+```
 
 ### Legacy tsconfig
 
 This package also contains a legacy base tsconfig, `ts-common-config.json`. This config is still used in some places
 within the repo but is considered deprecated.
+
+And there are a handful of tsconfigs that we thought we'd want but no longer think they have common purpose:
+`tsconfig.cjs.json`, `tsconfig.esm.json`, `tsconfig.esm-only.json`, and `tsconfig.test.json`
+
+## Deprecated Tsc-Multi Configurations (`tsc-multi.*.json`)
+
+Several Tsc-Multi config files remain that use a deprecated style of dual build that emit modified .js extensions. As extension modification means rewriting files the likelihood of error is signficant and this has been superceded by package type override pattern. All uses of `tsc-multi` should be removed/replaced.

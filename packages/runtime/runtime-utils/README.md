@@ -23,7 +23,7 @@ npm i @fluidframework/runtime-utils
 
 ## API Documentation
 
-API documentation for **@fluidframework/runtime-utils** is available at <https://fluidframework.com/docs/api/v1/runtime-utils>.
+API documentation for **@fluidframework/runtime-utils** is available at <https://fluidframework.com/docs/apis/runtime-utils>.
 
 ## Contribution Guidelines
 

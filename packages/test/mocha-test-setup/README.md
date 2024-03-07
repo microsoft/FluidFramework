@@ -1,14 +1,21 @@
-# @fluidframework/mocha-test-setup
+# @fluid-internal/mocha-test-setup
+
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) -->
+
+**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
+**We make no stability guarantees regarding its APIs.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 This package has a few main purposes:
 
--   Expose/generate a default `.mocharc.js` configuration for running [mocha](https://mochajs.org) tests, which other
+-   Expose/generate a default `.mocharc.cjs` configuration for running [mocha](https://mochajs.org) tests, which other
     packages can extend.
 -   Map paths for required packages/modules to account for [Lerna](https://lerna.js.org/)'s dependency hoisting.
 -   Add mocha `beforeAll`, `beforeEach` and `afterEach` [root hook plugins](https://mochajs.org/#root-hook-plugins) to add
     some special behavior when we run tests.
 
-## Base `mocharc.js` configuration
+## Base `mocharc.cjs` configuration
 
 To leverage the base mocha configuration exposed by this package, first add it as a `devDependency` to your `package.json`
 (the rest of the file has been omitted):
@@ -16,17 +23,17 @@ To leverage the base mocha configuration exposed by this package, first add it a
 ```json
 {
 	"devDependencies": {
-		"@fluidframework/mocha-test-setup": "version-that-matches-the-rest-of-the-release-group"
+		"@fluid-internal/mocha-test-setup": "version-that-matches-the-rest-of-the-release-group"
 	}
 }
 ```
 
-Then put this in a `.mocharc.js` file at the root of your package:
+Then put this in a `.mocharc.cjs` file at the root of your package:
 
 ```javascript
 "use strict";
 
-const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common");
+const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const packageDir = __dirname;
 const config = getFluidTestMochaConfig(packageDir);
@@ -101,7 +108,7 @@ required packages that you can pass to `getFluidTestMochaConfig()`.
 For example, the path to a reporter file:
 
 ```console
-mocha --require @fluidframework/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaMemoryTestReporter.js
+mocha --require @fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaMemoryTestReporter.js
 ```
 
 Depending on where that file is coming from, you'll need to be careful with how that path is specified.

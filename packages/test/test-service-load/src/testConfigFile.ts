@@ -22,6 +22,7 @@ export interface ILoadTestConfig {
 	totalSignalsSendCount?: number;
 	readWriteCycleMs: number;
 	signalsPerMin?: number;
+	futureOpRatePerMin?: number;
 	faultInjectionMs?: {
 		min: number;
 		max: number;

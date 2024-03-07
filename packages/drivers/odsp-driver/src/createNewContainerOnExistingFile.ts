@@ -6,24 +6,24 @@
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/driver-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IFileEntry,
 	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
-import { IWriteSummaryResponse } from "./contracts";
-import { createCacheSnapshotKey, getOrigin, IExistingFileInfo } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { IWriteSummaryResponse } from "./contracts.js";
+import { createCacheSnapshotKey, getOrigin, IExistingFileInfo } from "./odspUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { EpochTracker } from "./epochTracker.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
-} from "./createNewUtils";
-import { ClpCompliantAppHeader } from "./contractsPublic";
+} from "./createNewUtils.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 
 /**
  * Creates a new Fluid container on an existing file.
@@ -81,7 +81,7 @@ export async function createNewContainerOnExistingFile(
 
 	if (createNewCaching) {
 		// converting summary and getting sequence number
-		const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(
+		const snapshot: ISnapshot = convertCreateNewSummaryTreeToTreeAndBlobs(
 			createNewSummary,
 			summaryHandle,
 		);

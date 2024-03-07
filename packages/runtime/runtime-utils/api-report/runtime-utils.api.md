@@ -28,16 +28,13 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
-import { TelemetryEventPropertyType } from '@fluidframework/core-interfaces';
+import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
 
 // @internal (undocumented)
 export function addSummarizeResultToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
-
-// @internal (undocumented)
-export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
 // @internal (undocumented)
 export function calculateStats(summary: SummaryObject): ISummaryStats;
@@ -64,6 +61,9 @@ export function createDataStoreFactory(type: string, factory: Factory | Promise<
 export function createResponseError(status: number, value: string, request: IRequest, headers?: {
     [key: string]: any;
 }): IResponse;
+
+// @internal
+export function encodeCompactIdToString(idArg: number | string, prefix?: string): string;
 
 // @internal (undocumented)
 export function exceptionToResponse(err: any): IResponse;
@@ -129,6 +129,9 @@ export class ObjectStoragePartition implements IChannelStorageService {
 }
 
 // @internal
+export function processAttachMessageGCData(snapshot: ITree | null, addedGCOutboundRoute: (fromNodeId: string, toPath: string) => void): boolean;
+
+// @internal
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
 
 // @alpha
@@ -191,14 +194,10 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 // @internal (undocumented)
 export class TelemetryContext implements ITelemetryContext {
-    // (undocumented)
-    get(prefix: string, property: string): TelemetryEventPropertyType;
-    // (undocumented)
+    get(prefix: string, property: string): TelemetryBaseEventPropertyType;
     serialize(): string;
-    // (undocumented)
-    set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
-    // (undocumented)
-    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
 // @internal

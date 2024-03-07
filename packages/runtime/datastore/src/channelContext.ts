@@ -27,9 +27,10 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { ChannelStorageService } from "./channelStorageService";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
-import { ISharedObjectRegistry } from "./dataStoreRuntime";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ChannelStorageService } from "./channelStorageService.js";
+import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 
@@ -78,6 +79,7 @@ export function createChannelServiceEndpoints(
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
+	isAttachedAndVisible: () => boolean,
 	storageService: IDocumentStorageService,
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
@@ -88,6 +90,7 @@ export function createChannelServiceEndpoints(
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
 		addedGCOutboundReferenceFn,
+		isAttachedAndVisible,
 	);
 	const objectStorage = new ChannelStorageService(tree, storageService, logger, extraBlobs);
 
@@ -97,6 +100,7 @@ export function createChannelServiceEndpoints(
 	};
 }
 
+/** Used to get the channel's summary for the DDS or DataStore attach op */
 export function summarizeChannel(
 	channel: IChannel,
 	fullTree: boolean = false,
@@ -183,7 +187,7 @@ export async function loadChannel(
 	attributes: IChannelAttributes,
 	factory: IChannelFactory,
 	services: ChannelServiceEndpoints,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 	channelId: string,
 ): Promise<IChannel> {
 	// Compare snapshot version to collaborative object version
@@ -191,8 +195,9 @@ export async function loadChannel(
 		attributes.snapshotFormatVersion !== undefined &&
 		attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion
 	) {
-		logger.sendTelemetryEvent({
+		logger.send({
 			eventName: "ChannelAttributesVersionMismatch",
+			category: "generic",
 			...tagCodeArtifacts({
 				channelType: attributes.type,
 				channelSnapshotVersion: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
@@ -209,7 +214,7 @@ export async function branchChannel(
 	channelServices: ChannelServiceEndpoints,
 	dataStoreRuntime: IFluidDataStoreRuntime,
 	factory: IChannelFactory,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 ) {
 	const services: ChannelServiceEndpoints = {
 		deltaConnection: ChannelDeltaConnection.clone(channelServices.deltaConnection, {

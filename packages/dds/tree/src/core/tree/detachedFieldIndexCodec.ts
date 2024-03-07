@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import {
@@ -17,16 +16,13 @@ import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { ForestRootId } from "./detachedFieldIndex.js";
 
 class MajorCodec implements IJsonCodec<Major> {
-	private readonly revisionTagCodec: RevisionTagCodec;
 	public constructor(
-		private readonly idCompressor: IIdCompressor,
+		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly options: ICodecOptions,
-	) {
-		this.revisionTagCodec = new RevisionTagCodec(idCompressor);
-	}
+	) {}
 
 	public encode(major: Major) {
-		assert(major !== undefined, "Unexpected undefined revision");
+		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
 		const id = this.revisionTagCodec.encode(major);
 		/**
 		 * Preface: this codec is only used at summarization time (not for ops).
@@ -43,7 +39,7 @@ class MajorCodec implements IJsonCodec<Major> {
 		 */
 		assert(
 			id === "root" || id >= 0,
-			"Expected final id on encode of detached field index revision",
+			0x88f /* Expected final id on encode of detached field index revision */,
 		);
 		return id;
 	}
@@ -51,17 +47,19 @@ class MajorCodec implements IJsonCodec<Major> {
 	public decode(major: EncodedRevisionTag) {
 		assert(
 			major === "root" || major >= 0,
-			"Expected final id on decode of detached field index revision",
+			0x890 /* Expected final id on decode of detached field index revision */,
 		);
-		return this.revisionTagCodec.decode(major, this.idCompressor.localSessionId);
+		return this.revisionTagCodec.decode(major, {
+			originatorId: this.revisionTagCodec.localSessionId,
+		});
 	}
 }
 
 export function makeDetachedNodeToFieldCodec(
-	idCompressor: IIdCompressor,
+	revisionTagCodec: RevisionTagCodec,
 	options: ICodecOptions,
 ): IJsonCodec<DetachedFieldSummaryData, Format> {
-	const majorCodec = new MajorCodec(idCompressor, options);
+	const majorCodec = new MajorCodec(revisionTagCodec, options);
 	return makeVersionedValidatedCodec(options, new Set([version]), Format, {
 		encode: (data: DetachedFieldSummaryData): Format => {
 			const rootsForRevisions: EncodedRootsForRevision[] = [];

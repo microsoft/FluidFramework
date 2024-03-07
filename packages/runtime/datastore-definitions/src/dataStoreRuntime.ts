@@ -3,29 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IEvent,
 	IEventProvider,
-	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
 	IFluidHandle,
 	FluidObject,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import {
+import type { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
+import type {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IChannel } from "./channel";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
@@ -53,7 +48,8 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
-	readonly options: ILoaderOptions;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
@@ -61,7 +57,7 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryBaseLogger;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.

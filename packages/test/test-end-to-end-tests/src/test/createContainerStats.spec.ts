@@ -119,7 +119,7 @@ describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, api
 		);
 	}
 
-	beforeEach(async function () {
+	beforeEach("setup", async function () {
 		provider = getTestObjectProvider();
 		if (provider.driver.type === "odsp") {
 			this.skip();

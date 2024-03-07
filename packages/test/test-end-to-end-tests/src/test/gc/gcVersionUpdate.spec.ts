@@ -123,7 +123,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		containerRuntime.garbageCollector.getMetadata = getMetadataOverride;
 	}
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.createContainer(defaultRuntimeFactory);
 		const dataStore1 = (await mainContainer.getEntryPoint()) as ITestFluidObject;

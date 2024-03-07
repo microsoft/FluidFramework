@@ -50,6 +50,7 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
 	invertChild: NodeChangeInverter<TNodeChange>,
+	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
@@ -204,7 +205,7 @@ function invertMark<TNodeChange>(
 		}
 		case "MoveIn": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
-			assert(inputId !== undefined, "Active move-ins should target empty cells");
+			assert(inputId !== undefined, 0x89e /* Active move-ins should target empty cells */);
 			const invertedMark: Mutable<CellMark<MoveOut, TNodeChange>> = {
 				type: "MoveOut",
 				id: mark.id,

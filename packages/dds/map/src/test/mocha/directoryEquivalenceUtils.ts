@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { IDirectory } from "../../interfaces";
+import { strict as assert } from "node:assert";
+import { IDirectory } from "../../interfaces.js";
 
 export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
 	assertEventualConsistencyCore(first.getWorkingDirectory("/"), second.getWorkingDirectory("/"));
@@ -13,7 +13,7 @@ export function assertEquivalentDirectories(first: IDirectory, second: IDirector
 function assertEventualConsistencyCore(
 	first: IDirectory | undefined,
 	second: IDirectory | undefined,
-) {
+): void {
 	assert(first !== undefined, "first root dir should be present");
 	assert(second !== undefined, "second root dir should be present");
 
@@ -58,7 +58,7 @@ function assertEventualConsistencyCore(
 	}
 
 	// Check for consistency of subdirectories ordering of both directories
-	const firstSubdirNames = Array.from(first.subdirectories()).map(([dirName, _]) => dirName);
-	const secondSubdirNames = Array.from(second.subdirectories()).map(([dirName, _]) => dirName);
+	const firstSubdirNames = [...first.subdirectories()].map(([dirName, _]) => dirName);
+	const secondSubdirNames = [...second.subdirectories()].map(([dirName, _]) => dirName);
 	assert.deepStrictEqual(firstSubdirNames, secondSubdirNames);
 }

@@ -10,7 +10,7 @@ describe("sharedTreeView", () => {
 		// This is a regression test for a scenario in which a transaction would apply its delta twice,
 		// inserting two nodes instead of just one
 		const view = flexTreeViewWithContent(emptyStringSequenceConfig);
-		view.editableTree.insertAtStart("x");
-		assert.deepEqual(view.editableTree.asArray, ["x"]);
+		view.flexTree.insertAtStart("x");
+		assert.deepEqual([...view.flexTree], ["x"]);
 	});
 });

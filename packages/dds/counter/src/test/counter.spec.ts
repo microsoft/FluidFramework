@@ -13,8 +13,9 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { type ISharedCounter, SharedCounter } from "../index";
-import { CounterFactory } from "../counterFactory";
+import { AttachState } from "@fluidframework/container-definitions";
+import { type ISharedCounter, SharedCounter } from "../index.js";
+import { CounterFactory } from "../counterFactory.js";
 
 class TestSharedCounter extends SharedCounter {
 	public testApplyStashedOp(content: unknown): void {
@@ -27,7 +28,7 @@ describe("SharedCounter", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let factory: IChannelFactory;
 
-	beforeEach(async () => {
+	beforeEach("createTestCounter", async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		factory = SharedCounter.getFactory();
 		testCounter = factory.create(dataStoreRuntime, "counter") as ISharedCounter;
@@ -123,11 +124,11 @@ describe("SharedCounter", () => {
 		let testCounter2: ISharedCounter;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
-		beforeEach(() => {
+		beforeEach("createTestCounters", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
@@ -209,11 +210,11 @@ describe("SharedCounter", () => {
 		let containerRuntime2: MockContainerRuntimeForReconnection;
 		let testCounter2: ISharedCounter;
 
-		beforeEach(() => {
+		beforeEach("createTestCounters", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),
