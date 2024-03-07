@@ -94,31 +94,6 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
-	 * Create a new shared map.
-	 * @param runtime - The data store runtime that the new shared map belongs to.
-	 * @param id - Optional name of the shared map.
-	 * @returns Newly created shared map.
-	 *
-	 * @example
-	 * To create a `SharedMap`, call the static create method:
-	 *
-	 * ```typescript
-	 * const myMap = SharedMap.create(this.runtime, id);
-	 * ```
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
-		return runtime.createChannel(id, MapFactory.Type) as SharedMap;
-	}
-
-	/**
-	 * Get a factory for SharedMap to register with the data store.
-	 * @returns A factory that creates SharedMaps and loads them from storage.
-	 */
-	public static getFactory(): IChannelFactory<ISharedMap> {
-		return new MapFactory();
-	}
-
-	/**
 	 * String representation for the class.
 	 */
 	public readonly [Symbol.toStringTag]: string = "SharedMap";
