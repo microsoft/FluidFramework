@@ -9,7 +9,6 @@ import {
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import {
 	type IContainerRuntimeBase,
 	type IDataStore,
@@ -22,7 +21,6 @@ import {
 	type NamedFluidDataStoreRegistryEntry,
 	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	type IChannelFactory,
 	type IFluidDataStoreRuntime,
@@ -34,6 +32,8 @@ import {
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	type IDataObjectProps,
 	type PureDataObject,
