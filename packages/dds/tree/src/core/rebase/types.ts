@@ -109,22 +109,17 @@ export interface GraphCommit<TChange> {
 }
 
 /**
- * The type of commit.
+ * The type of a commit. This is used to describe the context in which the commit was created.
  *
  * @public
  */
 export enum CommitKind {
-	/** A typical local commit */
+	/** A commit that is the result of a change made by the user. */
 	Default,
 	/** A commit that is the result of an undo. */
 	Undo,
 	/** A commit that is the result of a redo. */
 	Redo,
-	/**
-	 * A commit that is the result of a rebase and should replace a previously generated revertible.
-	 * todo: improve error reporting in this case
-	 */
-	Rebase,
 }
 
 /**
