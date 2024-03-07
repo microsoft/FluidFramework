@@ -70,9 +70,9 @@
     "@fluidframework/runtime-definitions": "^1.3.8",
     "@fluidframework/runtime-utils": "^1.3.8",
     "@fluidframework/telemetry-utils": "^1.3.8",
-    "axios": "^0.26.0",
+    "axios": "^0.28.0",
     "events": "^3.1.0",
-    "jsrsasign": "^10.5.25",
+    "jsrsasign": "^11.1.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {

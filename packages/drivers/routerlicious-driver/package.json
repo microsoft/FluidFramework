@@ -89,7 +89,7 @@
     "@types/nock": "^9.3.0",
     "@types/url-parse": "1.4.4",
     "@types/uuid": "^8.3.0",
-    "axios": "^0.26.0",
+    "axios": "^0.28.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
