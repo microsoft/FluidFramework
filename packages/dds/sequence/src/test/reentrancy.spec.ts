@@ -16,8 +16,8 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString";
-import { resetReentrancyLogCounter } from "../sequence";
+import { SharedString } from "../sharedString.js";
+import { resetReentrancyLogCounter } from "../sequence.js";
 
 describe("SharedString op-reentrancy", () => {
 	/**
