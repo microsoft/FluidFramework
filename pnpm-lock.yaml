@@ -7170,6 +7170,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^4.0.0
@@ -7197,6 +7198,7 @@ importers:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/id-compressor': link:../../runtime/id-compressor
