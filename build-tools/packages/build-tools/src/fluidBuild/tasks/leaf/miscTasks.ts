@@ -131,6 +131,12 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private _srcFiles: string[] | undefined;
 	private _dstFiles: string[] | undefined;
 
+	protected get recheckLeafIsUpToDate(): boolean {
+		// The task knows all the input, so we can check if this task needs to execute
+		// even dependent tasks are out of date.
+		return true;
+	}
+
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}
@@ -278,9 +284,7 @@ export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
 					const fullPath = path.join(this.node.pkg.directory, scan.base);
 					const files = await readdir(fullPath, { recursive: true });
 					inputFiles.push(
-						...files
-							.filter((file) => match(file))
-							.map((file) => path.join(fullPath, file)),
+						...files.filter((file) => match(file)).map((file) => path.join(fullPath, file)),
 					);
 				} else {
 					const fullPath = path.resolve(this.node.pkg.directory, file);

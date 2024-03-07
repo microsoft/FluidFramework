@@ -518,7 +518,8 @@ export class BuildGraph {
 	}
 
 	public async build(timer?: Timer): Promise<BuildResult> {
-		// TODO: This function can only be called once
+		// This function must only be called once here at the beginning of the build.
+		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
@@ -656,9 +657,7 @@ export class BuildGraph {
 						version.startsWith("workspace:") || semver.satisfies(dep.version, version);
 					if (satisfied) {
 						if (depFilter(dep)) {
-							traceGraph(
-								`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`,
-							);
+							traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
 							node.dependentPackages.push(
 								this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
 							);

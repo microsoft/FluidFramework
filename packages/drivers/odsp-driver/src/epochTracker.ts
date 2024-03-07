@@ -29,6 +29,7 @@ import {
 	IOdspError,
 	IOdspErrorAugmentations,
 	IOdspResolvedUrl,
+	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions";
 import {
 	fetchAndParseAsJSONHelper,
@@ -65,9 +66,6 @@ export type FetchType =
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
-
-// Must be less than policy of 5 days
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
  * In ODSP, the concept of "epoch" refers to binary updates to files. For example, this might include using
@@ -107,7 +105,7 @@ export class EpochTracker implements IPersistedFileCache {
 			"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache",
 		)
 			? 0
-			: defaultCacheExpiryTimeoutMs;
+			: maximumCacheDurationMs;
 	}
 
 	// public for UT purposes only!

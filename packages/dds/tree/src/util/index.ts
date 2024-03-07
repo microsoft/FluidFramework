@@ -117,6 +117,7 @@ export {
 	RangeMap,
 	RangeQueryResult,
 	setInRangeMap,
+	deleteFromRangeMap,
 } from "./rangeMap.js";
 
 export {

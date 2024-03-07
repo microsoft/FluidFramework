@@ -307,7 +307,10 @@ export interface IFluidRepoPackage {
 	defaultInterdependencyRange: InterdependencyRange;
 }
 
-export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
+export type IFluidRepoPackageEntry =
+	| string
+	| IFluidRepoPackage
+	| (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
 	private readonly _releaseGroups = new Map<string, MonoRepo>();
