@@ -41,7 +41,7 @@ export function createFieldSchemaUnsafe<
 
 /**
  * Extends SchemaFactory with utilities for recursive schema.
- *
+ * @see {@link ValidateRecursiveSchema}
  * @remarks
  * This is separated from {@link SchemaFactory} as these APIs are more experimental and may be stabilized independently.
  *
@@ -261,13 +261,22 @@ export class SchemaFactoryRecursive<
  * @privateRemarks
  * There are probably mistakes this misses: it's hard to guess all the wrong things people will accidentally do and defend against them.
  * Hopefully over time this can grow toward being robust, at least for common mistakes.
+ *
+ * This check duplicates logic that ideally would be entirely decided by the actual schema building methods.
+ * Therefor changes to those methods may require updating `ValidateRecursiveSchema`.
  * @beta
  */
 export type ValidateRecursiveSchema<
+	// Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as thats part of the requirements for the type to work across compilation boundaries correctly.
 	T extends TreeNodeSchemaClass<
+		// Name: This validator places no restrictions on the name other than that its a string (as required by TreeNodeSchemaClass).
 		string,
+		// NodeKind: These are the NodeKinds which currently can be used recursively.
 		NodeKind.Array | NodeKind.Map | NodeKind.Object,
-		TreeNode,
+		// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
+		TreeNode & WithType<T["identifier"]>,
+		// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
+		// These match whats defined in the methods on `SchemaFactoryRecursive` except they do not use `Unenforced`.
 		{
 			[NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<string, FieldSchema>
 				? InsertableObjectFromSchemaRecord<T["info"]>
@@ -279,7 +288,9 @@ export type ValidateRecursiveSchema<
 				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
 				: unknown;
 		}[T["kind"]],
+		// ImplicitlyConstructable: recursive types are not implicitly constructable.
 		false,
+		// Info: Whats passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 		{
 			[NodeKind.Object]: RestrictiveReadonlyRecord<string, FieldSchema>;
 			[NodeKind.Array]: ImplicitAllowedTypes;
