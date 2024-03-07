@@ -70,8 +70,8 @@ export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof Cont
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass[];
-    initialObjects: LoadableObjectClassRecord;
+    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
+    readonly initialObjects: LoadableObjectClassRecord;
 }
 
 // @public
@@ -340,61 +340,24 @@ export interface SchemaIncompatible {
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @deprecated
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected applyStashedOp(content: unknown): void;
-    clear(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
-    delete(key: string): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory<ISharedMap>;
-    has(key: string): boolean;
-    keys(): IterableIterator<string>;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    set(key: string, value: unknown): this;
-    get size(): number;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
+export const SharedMap: {
+    getFactory(): IChannelFactory<ISharedMap>;
+    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
+};
+
+// @public @deprecated
+export type SharedMap = ISharedMap;
+
+// @public
+export interface SharedObjectClass<T extends IFluidLoadable> {
+    // (undocumented)
+    readonly getFactory: () => IChannelFactory<T>;
 }
 
 // @public
-export type SharedObjectClass<T extends IFluidLoadable> = {
-    readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
-
-// @public
-export class SharedTree implements ITree {
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    connect(services: IChannelServices): void;
-    // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
-    // (undocumented)
-    static getFactory(): IChannelFactory<ITree>;
-    // (undocumented)
-    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
-    // (undocumented)
-    get handle(): IFluidHandle;
-    // (undocumented)
-    get id(): string;
-    // (undocumented)
-    get IFluidLoadable(): IFluidLoadable;
-    // (undocumented)
-    isAttached(): boolean;
-    // (undocumented)
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
-    // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-}
+export const SharedTree: {
+    getFactory(): IChannelFactory<ITree>;
+};
 
 // @public
 export const Tree: TreeApi;
