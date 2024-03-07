@@ -18,8 +18,11 @@ const DEFAULT_FILE = "UPCOMING.md";
  * Generates a summary of all changesets and outputs the results to a file. This is used to generate an UPCOMING.md file
  * that provides a single place where developers can see upcoming changes.
  */
-export default class GenerateUpcomingCommand extends BaseCommand<typeof GenerateUpcomingCommand> {
-	static readonly summary = `Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
+export default class GenerateUpcomingCommand extends BaseCommand<
+	typeof GenerateUpcomingCommand
+> {
+	static readonly summary =
+		`Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
 
 	// Enables the global JSON flag in oclif.
 	static readonly enableJsonFlag = true;

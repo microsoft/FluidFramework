@@ -75,7 +75,7 @@ describeCompat("IntervalCollection with stashed ops", "NoCompat", (getTestObject
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({

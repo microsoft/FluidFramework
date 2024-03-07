@@ -30,7 +30,7 @@ import { pkgVersion } from "./packageVersion.js";
  * A channel factory that creates an {@link ITree}.
  * @internal
  */
-export class TreeFactory implements IChannelFactory {
+export class TreeFactory implements IChannelFactory<ITree> {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 
@@ -75,7 +75,7 @@ export class SharedTree implements ITree {
 	// Temporarily, we provide one until the following work items is addressed:
 	// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
 
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ITree> {
 		return new TreeFactory({});
 	}
 
