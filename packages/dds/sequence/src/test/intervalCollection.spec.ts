@@ -20,12 +20,12 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, Side } from "../intervalCollection";
-import { IntervalIndex } from "../intervalIndex";
-import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+import { SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { IIntervalCollection, Side } from "../intervalCollection.js";
+import { IntervalIndex } from "../intervalIndex/index.js";
+import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals/index.js";
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>

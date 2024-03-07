@@ -56,9 +56,11 @@ export class LesscTask extends LeafTask {
 
 export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private parsed: boolean = false;
-	private readonly upLevel: number = 0;
-	private readonly copySrcArg: string = "";
+	private readonly up: number = 0;
+	private readonly copySrcArg: string[] = [];
 	private readonly ignore: string = "";
+	private readonly all: boolean = false;
+	private readonly follow: boolean = false;
 	private readonly flat: boolean = false;
 	private readonly copyDstArg: string = "";
 
@@ -68,13 +70,14 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		// TODO: something better
 		const args = this.command.split(" ");
 
+		const input: string[] = [];
 		for (let i = 1; i < args.length; i++) {
 			// Only handle -u arg
 			if (args[i] === "-u" || args[i] === "--up") {
 				if (i + 1 >= args.length) {
 					return;
 				}
-				this.upLevel = parseInt(args[i + 1]);
+				this.up = parseInt(args[i + 1]);
 				i++;
 				continue;
 			}
@@ -90,23 +93,49 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 				this.flat = true;
 				continue;
 			}
-			if (args[i] === "-V") {
+			if (args[i] === "-F") {
+				this.follow = true;
 				continue;
 			}
-			if (this.copySrcArg === "") {
-				this.copySrcArg = unquote(args[i]);
-			} else if (this.copyDstArg === "") {
-				this.copyDstArg = unquote(args[i]);
-			} else {
-				return;
+			if (args[i] === "-a") {
+				this.all = true;
+				continue;
 			}
+			if (args[i].startsWith("-") || args[i].startsWith("--")) {
+				// copyfiles ignores flags it doesn't know as well.
+				continue;
+			}
+
+			const unquoted = unquote(args[i]);
+			if (unquoted.includes("**") && unquoted === args[i]) {
+				// Shell expansion of glob star may be different than the glob library.
+				console.warn(
+					`${this.nameColored}: warning: copyfiles glob pattern '${args[i]}' should be quoted. May have different behavior in different shell and OS.`,
+				);
+			}
+			input.push(unquote(args[i]));
 		}
+
+		if (input.length < 2) {
+			// Not enough arguments
+			return;
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.copyDstArg = input.pop()!;
+		this.copySrcArg = input;
 
 		this.parsed = true;
 	}
 
 	private _srcFiles: string[] | undefined;
 	private _dstFiles: string[] | undefined;
+
+	protected get recheckLeafIsUpToDate(): boolean {
+		// The task knows all the input, so we can check if this task needs to execute
+		// even dependent tasks are out of date.
+		return true;
+	}
 
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
@@ -117,11 +146,16 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 			throw new Error("error parsing command line");
 		}
 		if (!this._srcFiles) {
-			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg);
-			this._srcFiles = await globFn(srcGlob, {
-				nodir: true,
-				ignore: this.ignore,
+			const srcFilesP = this.copySrcArg.map(async (srcArg) => {
+				const srcGlob = path.resolve(this.node.pkg.directory, srcArg);
+				return globFn(srcGlob, {
+					nodir: true,
+					dot: this.all,
+					follow: this.follow,
+					ignore: this.ignore,
+				});
 			});
+			this._srcFiles = (await Promise.all(srcFilesP)).flat();
 		}
 		return this._srcFiles;
 	}
@@ -133,23 +167,23 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		}
 		if (!this._dstFiles) {
 			const directory = toPosixPath(this.node.pkg.directory);
-			const dstPath = directory + "/" + this.copyDstArg;
+			const dstPath = path.resolve(directory, this.copyDstArg);
 			const srcFiles = await this.getInputFiles();
 			this._dstFiles = srcFiles.map((match) => {
 				if (this.flat) {
 					return path.join(dstPath, path.basename(match));
 				}
 				const relPath = path.relative(directory, match);
-				let currRelPath = relPath;
-				for (let i = 0; i < this.upLevel; i++) {
-					const index = currRelPath.indexOf(path.sep);
-					if (index === -1) {
-						break;
-					}
-					currRelPath = currRelPath.substring(index + 1);
+				if (this.up === 0) {
+					return path.join(dstPath, relPath);
 				}
 
-				return path.join(dstPath, currRelPath);
+				const paths = relPath.split(path.sep);
+				if (paths.length - 1 < this.up) {
+					throw new Error("Cannot go up that far");
+				}
+
+				return path.join(dstPath, ...paths.slice(this.up));
 			});
 		}
 
@@ -250,9 +284,7 @@ export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
 					const fullPath = path.join(this.node.pkg.directory, scan.base);
 					const files = await readdir(fullPath, { recursive: true });
 					inputFiles.push(
-						...files
-							.filter((file) => match(file))
-							.map((file) => path.join(fullPath, file)),
+						...files.filter((file) => match(file)).map((file) => path.join(fullPath, file)),
 					);
 				} else {
 					const fullPath = path.resolve(this.node.pkg.directory, file);
