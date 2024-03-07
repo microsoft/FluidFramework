@@ -14,7 +14,6 @@ import type { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -31,7 +30,6 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -53,7 +51,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IE
 // @alpha
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     // (undocumented)
-    (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
+    (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
 }

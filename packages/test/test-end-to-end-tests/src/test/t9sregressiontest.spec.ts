@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	createAndAttachContainer,
@@ -41,11 +41,11 @@ describeCompat("t9s issue regression test", "NoCompat", (getTestObjectProvider, 
 		assert(typeof url === "string");
 		console.log(url);
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+		const map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		if (!(container2 as any).connected) {
 			await new Promise((resolve) => container2.on("connected", resolve));
 		}

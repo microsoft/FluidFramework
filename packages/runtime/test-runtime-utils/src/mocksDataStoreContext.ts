@@ -45,6 +45,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
 	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
+	public readonly gcThrowOnTombstoneUsage = false;
+	public readonly gcTombstoneEnforcementAllowed = false;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.
@@ -120,6 +122,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn {
+		throw new Error("Method not implemented.");
+	}
+
+	public deleteChildSummarizerNode(id: string): void {
 		throw new Error("Method not implemented.");
 	}
 
