@@ -154,9 +154,6 @@
 		"broken": {
 			"InterfaceDeclaration_ContainerSchema": {
 				"backCompat": false
-			},
-			"TypeAliasDeclaration_InitialObjects": {
-				"backCompat": false
 			}
 		}
 	}

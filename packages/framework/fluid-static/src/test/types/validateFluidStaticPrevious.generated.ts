@@ -284,7 +284,6 @@ declare function get_current_TypeAliasDeclaration_InitialObjects():
 declare function use_old_TypeAliasDeclaration_InitialObjects(
     use: TypeOnly<old.InitialObjects<any>>): void;
 use_old_TypeAliasDeclaration_InitialObjects(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_InitialObjects());
 
 /*

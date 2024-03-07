@@ -29,13 +29,13 @@ export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
 	// 'ContainerSchema.initialObjects' and inferring the value type of each key.
 	//
-	// The '? TChannel : unknown' is required because infer can only be used in
+	// The '? TChannel : never' is required because infer can only be used in
 	// a conditional 'extends' expression.
 	[K in keyof T["initialObjects"]]: T["initialObjects"][K] extends LoadableObjectClass<
-		infer ObjectType
+		infer TChannel
 	>
-		? ObjectType
-		: unknown;
+		? TChannel
+		: never;
 };
 
 /**
