@@ -9,10 +9,7 @@ const MapWithExpiration = require("../../mapWithExpiration.js");
 describe("forEach thisArg", () => {
 	function testForEachCases(testName, testFn) {
 		it(testName, () => {
-			testFn(
-				[new Map(), new MapWithExpiration(10)], 
-				["THIS", undefined],
-			);
+			testFn([new Map(), new MapWithExpiration(10)], ["THIS", undefined]);
 		});
 	}
 
