@@ -424,6 +424,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 			const revertible = new RevertibleRevision(
 				() => {
+					const revertibleCommit = this._revertibleCommits.get(revision);
+					return revertibleCommit === undefined
+						? RevertibleStatus.Disposed
+						: RevertibleStatus.Valid;
+				},
+				() => {
 					this.revertRevertible(revision, data.kind);
 				},
 				() => {
@@ -677,21 +683,14 @@ export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void 
 }
 
 class RevertibleRevision implements Revertible {
-	private referenceCount = 1;
-
 	public constructor(
+		private readonly getStatus: () => RevertibleStatus,
 		private readonly onRevert: () => void,
 		private readonly onDispose: () => void,
 	) {}
 
 	public get status(): RevertibleStatus {
-		return this.referenceCount === 0 ? RevertibleStatus.Disposed : RevertibleStatus.Valid;
-	}
-
-	public acquire(): RevertibleRevision {
-		assert(this.status === RevertibleStatus.Valid, "cannot acquire a disposed revertible");
-		this.referenceCount += 1;
-		return this;
+		return this.getStatus();
 	}
 
 	public revert(): void {
@@ -700,17 +699,11 @@ class RevertibleRevision implements Revertible {
 	}
 
 	public release(): void {
-		assert(this.status === RevertibleStatus.Valid, "revertible has already been disposed");
-		this.referenceCount -= 1;
-
-		if (this.referenceCount === 0) {
-			this.onDispose();
-		}
+		this.dispose();
 	}
 
 	public dispose(): void {
 		assert(this.status === RevertibleStatus.Valid, "revertible has already been disposed");
-		this.referenceCount = 0;
 		this.onDispose();
 	}
 }
