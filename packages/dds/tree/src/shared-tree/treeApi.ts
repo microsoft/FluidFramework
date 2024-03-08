@@ -107,5 +107,3 @@ function runTransaction(checkout: TreeCheckout, transaction: () => void | "rollb
 		throw e;
 	}
 }
-
-// TODO: tests, and don't forget to test forking a checkoutflextreeview if you can
