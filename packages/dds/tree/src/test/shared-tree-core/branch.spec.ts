@@ -11,6 +11,7 @@ import {
 	SharedTreeBranchChange,
 } from "../../shared-tree-core/index.js";
 import {
+	CommitKind,
 	GraphCommit,
 	Revertible,
 	RevertibleStatus,
@@ -352,6 +353,32 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 	});
 
+	it("do not emit a commitApplied event for commits within transactions", () => {
+		// Create a branch and count the change events emitted
+		let commitEventCount = 0;
+		const branch = create();
+		const unsubscribe = branch.on("commitApplied", () => {
+			commitEventCount += 1;
+		});
+		// Start and immediately abort a transaction
+		branch.startTransaction();
+		change(branch);
+		branch.abortTransaction();
+		assert.equal(commitEventCount, 0);
+		unsubscribe();
+	});
+
+	it("commitApplied event includes metadata about the commit", () => {
+		// Create a branch and count the change events emitted
+		const branch = create();
+		const unsubscribe = branch.on("commitApplied", ({ isLocal, kind }) => {
+			assert.equal(isLocal, true);
+			assert.equal(kind, CommitKind.Default);
+		});
+		change(branch);
+		unsubscribe();
+	});
+
 	it("emit a fork event after forking", () => {
 		let fork: DefaultBranch | undefined;
 		const branch = create();
@@ -625,7 +652,7 @@ describe("Branches", () => {
 			unsubscribe();
 		});
 
-		it("only triggers a revertibleDisposed event for when a released revertible has no more references", () => {
+		it("only triggers a revertibleDisposed event for when a revertible is released", () => {
 			const branch = create();
 
 			const revertiblesCreated: Revertible[] = [];
@@ -718,6 +745,28 @@ describe("Branches", () => {
 			assert.throws(() => revertible.revert());
 
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
+			unsubscribe();
+		});
+
+		it("commitApplied events have the correct commit kinds", () => {
+			const branch = create();
+
+			const revertiblesCreated: Revertible[] = [];
+			const commitKinds: CommitKind[] = [];
+			const unsubscribe = branch.on("commitApplied", ({ kind }, getRevertible) => {
+				assert(getRevertible !== undefined, "commit should be revertible");
+				const revertible = getRevertible();
+				assert.equal(revertible.status, RevertibleStatus.Valid);
+				revertiblesCreated.push(revertible);
+				commitKinds.push(kind);
+			});
+
+			change(branch);
+			revertiblesCreated[0].revert();
+			revertiblesCreated[1].revert();
+
+			assert.deepEqual(commitKinds, [CommitKind.Default, CommitKind.Undo, CommitKind.Redo]);
+
 			unsubscribe();
 		});
 
