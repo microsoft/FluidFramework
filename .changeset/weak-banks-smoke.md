@@ -1,5 +1,5 @@
 ---
-"@fluidframework/mocha-test-setup": major
+"@fluidframework/mocha-test-setup": minor
 ---
 
 @fluidframework/mocha-test-setup moved to @fluid-internal/mocha-test-setup

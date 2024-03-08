@@ -1,8 +1,8 @@
 ---
-"@fluidframework/core-interfaces": major
+"@fluidframework/core-interfaces": minor
 ---
 
-Removed deprecated telemetry event types
+core-interfaces: Removed deprecated telemetry event types
 
 The deprecated `ITelemetryErrorEvent`, `ITelemetryGenericEvent`, and `ITelemetryPerformanceEvent` interfaces,
 which represented different kinds of telemetry events, were not intended for consumers of Fluid Framework and have thus
