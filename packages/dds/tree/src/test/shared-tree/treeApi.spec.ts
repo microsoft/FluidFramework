@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "node:assert";
-import { Tree } from "../../shared-tree/index.js";
+import { CheckoutFlexTreeView, Tree } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
-import { getView } from "../utils.js";
+import { createTestUndoRedoStacks, getView } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 class TestObject extends schema.object("TestObject", { content: schema.number }) {}
@@ -54,6 +54,36 @@ describe("treeApi", () => {
 			});
 			assert.equal(event, true);
 		});
+
+		it.skip("emits change events on rollback", () => {
+			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			let eventCount = 0;
+			view.events.on("afterBatch", () => (eventCount += 1));
+			Tree.runTransaction(view, (r) => {
+				r.content = 43;
+				return "rollback";
+			});
+			assert.equal(eventCount, 2);
+		});
+
+		it("undoes and redoes entire transaction", () => {
+			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const checkoutView = view.getViewOrError();
+			assert(checkoutView instanceof CheckoutFlexTreeView);
+			const { undoStack, redoStack } = createTestUndoRedoStacks(checkoutView.checkout.events);
+
+			Tree.runTransaction(view, (root) => {
+				root.content = 43;
+				root.content = 44;
+			});
+			assert.equal(view.root.content, 44);
+			assert.equal(undoStack.length, 1);
+			undoStack[0].revert();
+			assert.equal(view.root.content, 42);
+			assert.equal(redoStack.length, 1);
+			redoStack[0].revert();
+			assert.equal(view.root.content, 44);
+		});
 	});
 
 	describe("runTransaction invoked via a node", () => {
@@ -96,6 +126,36 @@ describe("treeApi", () => {
 				r.content = 43;
 			});
 			assert.equal(event, true);
+		});
+
+		it("emits change events on rollback", () => {
+			const { root } = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			let eventCount = 0;
+			Tree.on(root, "afterChange", () => (eventCount += 1));
+			Tree.runTransaction(root, (r) => {
+				r.content = 43;
+				return "rollback";
+			});
+			assert.equal(eventCount, 2);
+		});
+
+		it("undoes and redoes entire transaction", () => {
+			const view = getView(new TreeConfiguration(TestObject, () => ({ content: 42 })));
+			const checkoutView = view.getViewOrError();
+			assert(checkoutView instanceof CheckoutFlexTreeView);
+			const { undoStack, redoStack } = createTestUndoRedoStacks(checkoutView.checkout.events);
+
+			Tree.runTransaction(view.root, (r) => {
+				r.content = 43;
+				r.content = 44;
+			});
+			assert.equal(view.root.content, 44);
+			assert.equal(undoStack.length, 1);
+			undoStack[0].revert();
+			assert.equal(view.root.content, 42);
+			assert.equal(redoStack.length, 1);
+			redoStack[0].revert();
+			assert.equal(view.root.content, 44);
 		});
 
 		// TODO: When SchematizingSimpleTreeView supports forking, add test coverage to ensure that transactions work properly on forks
