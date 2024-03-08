@@ -139,7 +139,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^4.0.0
       '@fluidframework/gitresources': ^3.0.0
       '@fluidframework/protocol-base': ^3.0.0
-      '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/server-services-client': ^3.1.0-238631
       '@fluidframework/server-services-core': ^3.1.0-238631
       '@fluidframework/server-services-shared': ^3.1.0-238631
@@ -193,7 +193,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 3.0.0
       '@fluidframework/protocol-base': 3.0.0
-      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 3.1.0-238631
       '@fluidframework/server-services-core': 3.1.0-238631
       '@fluidframework/server-services-shared': 3.1.0-238631
@@ -718,7 +718,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.0.0
-      '@fluidframework/protocol-definitions': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0
       events: 3.3.0
     dev: false
 
@@ -727,18 +727,12 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.1.0-238631
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       events: 3.3.0
     dev: false
 
-  /@fluidframework/protocol-definitions/1.1.0:
-    resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-    dev: false
-
-  /@fluidframework/protocol-definitions/3.1.0:
-    resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
+  /@fluidframework/protocol-definitions/3.2.0:
+    resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
     dev: false
 
   /@fluidframework/protocol-definitions/3.2.0-237840:
@@ -751,7 +745,7 @@ packages:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.1.0-238631
       '@fluidframework/protocol-base': 3.1.0-238631
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       axios: 1.6.2_debug@4.3.4
       crc-32: 1.2.0
       debug: 4.3.4
@@ -769,7 +763,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.1.0-238631
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 3.1.0-238631
       '@fluidframework/server-services-telemetry': 3.1.0-238631
       '@types/nconf': 0.10.3
@@ -4965,7 +4959,7 @@ packages:
   /es-shim-unscopables/1.0.2:
     resolution: {integrity: sha512-J3yBRXCzDu4ULnQwxyToo/OjdMx6akgVC7K6few0a7F/0wLtmKKN7I73AH5T2836UuXRqN7Qg+IIUw/+YJksRw==}
     dependencies:
-      hasown: 2.0.0
+      hasown: 2.0.1
     dev: true
 
   /es-to-primitive/1.2.1:
@@ -5993,7 +5987,7 @@ packages:
       function-bind: 1.1.2
       has-proto: 1.0.1
       has-symbols: 1.0.3
-      hasown: 2.0.0
+      hasown: 2.0.1
     dev: true
 
   /get-package-type/0.1.0:
@@ -6375,13 +6369,6 @@ packages:
     dependencies:
       function-bind: 1.1.2
 
-  /hasown/2.0.0:
-    resolution: {integrity: sha512-vUptKVTpIJhcczKBbgnS+RtcuYMB8+oNzPK2/Hp3hanz8JmpATdmmgLgSaadVREkDm+e2giHwY3ZRkyjSIDDFA==}
-    engines: {node: '>= 0.4'}
-    dependencies:
-      function-bind: 1.1.2
-    dev: true
-
   /hasown/2.0.1:
     resolution: {integrity: sha512-1/th4MHjnwncwXsIW6QMzlvYL9kG5e/CpVvLRZe4XPa8TOUNbCELqmvhDmnkNsAjwaG4+I8gJJL0JBvTTLO9qA==}
     engines: {node: '>= 0.4'}
@@ -6700,7 +6687,7 @@ packages:
     engines: {node: '>= 0.4'}
     dependencies:
       es-errors: 1.3.0
-      hasown: 2.0.0
+      hasown: 2.0.1
       side-channel: 1.0.4
     dev: true
 
@@ -6831,7 +6818,7 @@ packages:
   /is-core-module/2.13.1:
     resolution: {integrity: sha512-hHrIjvZsftOsvKSn2TRYl63zvxsgE0K+0mYMoH6gD4omR5IWB2KynivBQczo3+wF1cCkjzvptnI9Q0sPU66ilw==}
     dependencies:
-      hasown: 2.0.0
+      hasown: 2.0.1
     dev: true
 
   /is-date-object/1.0.5:
