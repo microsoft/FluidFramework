@@ -23,11 +23,11 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 
 // @public
 // TODO: Confusing specific API with general looking name
-// TODO: Type manuliplication we don't really want to expose/stabilize.
+// TODO: Type manipulation we don't really want to expose/stabilize.
 export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Required ? T : undefined | T;
 
 // @public
-// TODO: Type manuliplication we don't really want to expose/stabilize.
+// TODO: Type manipulation we don't really want to expose/stabilize.
 export type ArrayToUnion<T extends readonly unknown[]> = T[number];
 
 // @public
@@ -73,8 +73,6 @@ export const ContainerErrorTypes: {
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @public
-// TODO: use of any is bad.
-// TODO: this being mutable seems bad.
 export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
     readonly initialObjects: LoadableObjectClassRecord;
@@ -124,7 +122,7 @@ export type Events<E> = {
 
 // @public
 // TODO: Confusing specific API with general looking name
-// TODO: Type manuliplication we don't really want to expose/stabilize.
+// TODO: Type manipulation we don't really want to expose/stabilize.
 export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public
@@ -149,7 +147,7 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 // TODO: Confusing specific API with general looking name
-// TODO: Type manuliplication we don't really want to expose/stabilize.
+// TODO: Type manipulation we don't really want to expose/stabilize.
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
 
 // @public
@@ -160,7 +158,7 @@ export interface IConnection {
 }
 
 // @public
-// THis makes all Errors critical? Seems questionable
+// This makes all Errors critical? Seems questionable
 export type ICriticalContainerError = IErrorBase;
 
 // @public
