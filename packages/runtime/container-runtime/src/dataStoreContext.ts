@@ -90,11 +90,34 @@ export function createAttributesBlob(pkg: readonly string[], isRootDataStore: bo
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
-interface ISnapshotDetails {
+/** @internal */
+export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
 	snapshot?: ISnapshotTree;
 	sequenceNumber?: number;
+}
+
+/**
+ * This is interface that every context should implement.
+ * This interface is used for context's parent - ChannelCollection.
+ * It should not be exposed to any other users of context.
+ * @internal
+ */
+export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
+	getAttachData(
+		includeGCData: boolean,
+		telemetryContext?: ITelemetryContext,
+	): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+	};
+
+	getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
+
+	realize(): Promise<IFluidDataStoreChannel>;
+
+	isRoot(): Promise<boolean>;
 }
 
 /** Properties necessary for creating a FluidDataStoreContext */
@@ -135,7 +158,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContext, IFluidParentContext, IDisposable
+	implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable
 {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);

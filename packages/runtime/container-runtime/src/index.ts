@@ -20,6 +20,7 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	RuntimeHeaderData,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
@@ -99,3 +100,5 @@ export {
 	IdCompressorMode,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export { ChannelCollection } from "./channelCollection.js";
+export { IFluidDataStoreContextInternal, ISnapshotDetails } from "./dataStoreContext.js";

@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AliasResult } from '@fluidframework/runtime-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
@@ -31,10 +32,12 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IFluidParentContext } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -50,6 +53,7 @@ import { ISummaryNack } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
@@ -65,6 +69,73 @@ export const AllowInactiveRequestHeaderKey = "allowInactive";
 
 // @alpha
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
+
+// @internal
+export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
+    constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (nodePath: string, reason: "Loaded" | "Changed", timestampMs?: number, packagePath?: readonly string[], request?: IRequest, headerData?: RuntimeHeaderData) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
+    // (undocumented)
+    get aliases(): ReadonlyMap<string, string>;
+    // (undocumented)
+    applyStashedOp(content: unknown): Promise<unknown>;
+    // (undocumented)
+    readonly attachOpFiredForDataStore: Set<string>;
+    // (undocumented)
+    readonly containerLoadStats: {
+        readonly containerLoadDataStoreCount: number;
+        readonly referencedDataStoreCount: number;
+    };
+    // (undocumented)
+    createDetachedDataStoreCore(pkg: Readonly<string[]>, isRoot: boolean, id?: string, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    _createFluidDataStoreContext(pkg: string[], id: string, props?: any, loadingGroupId?: string): IFluidDataStoreContextInternal;
+    deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[];
+    // (undocumented)
+    readonly dispose: () => void;
+    // (undocumented)
+    get disposed(): boolean;
+    // (undocumented)
+    readonly entryPoint: IFluidHandle<FluidObject>;
+    getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    // (undocumented)
+    getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal>;
+    getDataStoreIfAvailable(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal | undefined>;
+    getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCNodeType(nodePath: string): GCNodeType | undefined;
+    // (undocumented)
+    internalId(maybeAlias: string): string;
+    makeVisibleAndAttachGraph(): void;
+    // (undocumented)
+    readonly parentContext: IFluidParentContext;
+    // (undocumented)
+    get pendingAliases(): Map<string, Promise<AliasResult>>;
+    // (undocumented)
+    process(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown, addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void): void;
+    // (undocumented)
+    processAliasMessageCore(internalId: string, alias: string): boolean;
+    // (undocumented)
+    processSignal(messageArg: IInboundSignalMessage, local: boolean): void;
+    // (undocumented)
+    request(request: IRequest): Promise<IResponse>;
+    // (undocumented)
+    reSubmit(type: string, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollback(type: string, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): void;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    summarize(fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    updateStateBeforeGC(): Promise<void>;
+    updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
+    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
+    updateUsedRoutes(usedRoutes: readonly string[]): void;
+    // (undocumented)
+    waitIfPendingAlias(maybeAlias: string): Promise<AliasResult>;
+}
 
 // @internal (undocumented)
 export class ChannelCollectionFactory implements IFluidDataStoreFactory {
@@ -449,6 +520,21 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly override?: boolean;
 }
 
+// @internal
+export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
+    // (undocumented)
+    getAttachData(includeGCData: boolean, telemetryContext?: ITelemetryContext): {
+        attachSummary: ISummaryTreeWithStats;
+        type: string;
+    };
+    // (undocumented)
+    getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
+    // (undocumented)
+    isRoot(): Promise<boolean>;
+    // (undocumented)
+    realize(): Promise<IFluidDataStoreChannel>;
+}
+
 // @alpha
 export interface IGCMetadata {
     readonly gcFeature?: GCVersion;
@@ -543,6 +629,18 @@ export interface ISerializedElection {
     readonly electedClientId: string | undefined;
     readonly electedParentId: string | undefined;
     readonly electionSequenceNumber: number;
+}
+
+// @internal (undocumented)
+export interface ISnapshotDetails {
+    // (undocumented)
+    isRootDataStore: boolean;
+    // (undocumented)
+    pkg: readonly string[];
+    // (undocumented)
+    sequenceNumber?: number;
+    // (undocumented)
+    snapshot?: ISnapshotTree;
 }
 
 // @internal @deprecated (undocumented)
@@ -761,6 +859,18 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 // @internal
 export interface RecentlyAddedContainerRuntimeMessageDetails {
     compatDetails: IContainerRuntimeMessageCompatDetails;
+}
+
+// @internal
+export interface RuntimeHeaderData {
+    // (undocumented)
+    allowInactive?: boolean;
+    // (undocumented)
+    allowTombstone?: boolean;
+    // (undocumented)
+    viaHandle?: boolean;
+    // (undocumented)
+    wait?: boolean;
 }
 
 // @internal
