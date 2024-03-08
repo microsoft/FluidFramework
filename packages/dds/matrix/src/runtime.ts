@@ -10,7 +10,6 @@ import {
 	IChannelFactory,
 	type IChannel,
 } from "@fluidframework/datastore-definitions";
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { pkgVersion } from "./packageVersion.js";
 import { SharedMatrix, type ISharedMatrix } from "./matrix.js";
 
@@ -18,7 +17,7 @@ import { SharedMatrix, type ISharedMatrix } from "./matrix.js";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
  * @alpha
  */
-export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix & IFluidLoadable> {
+export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
 	public static readonly Attributes: IChannelAttributes = {

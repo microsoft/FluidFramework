@@ -13,7 +13,6 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMatrixConsumer } from '@tiny-calc/nano';
@@ -124,7 +123,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
 }
 
 // @alpha
-export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix & IFluidLoadable> {
+export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
