@@ -1,5 +1,5 @@
 ---
-"@fluid-tools/webpack-fluid-loader": major
+"@fluid-tools/webpack-fluid-loader": minor
 ---
 
 @fluid-tools/webpack-fluid-loader no longer published
