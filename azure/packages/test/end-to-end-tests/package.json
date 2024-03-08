@@ -54,6 +54,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",

@@ -2,10 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITokenProvider } from "@fluidframework/azure-client";
+import { ITokenProvider, type ScopeType } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
-export function createAzureTokenProvider(userId: string, userName: string): ITokenProvider {
+export function createAzureTokenProvider(
+	userId: string,
+	userName: string,
+	scopes?: ScopeType[],
+): ITokenProvider {
 	const key = process.env.azure__fluid__relay__service__key as string;
 	if (key) {
 		const userConfig = {

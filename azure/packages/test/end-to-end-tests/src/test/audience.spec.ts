@@ -4,20 +4,15 @@
  */
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient, ScopeType } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createAzureClient } from "./AzureClientFactory";
-import { waitForMember } from "./utils";
-
-const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
+import { waitForMember, configProvider } from "./utils";
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
@@ -160,5 +155,173 @@ describe("Fluid audience", () => {
 
 		members = servicesGet.audience.getMembers();
 		assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+	});
+
+	/**
+	 * Scenario: Find read-only partner member
+	 *
+	 * Expected behavior: upon resolving container, the read-only partner member should be able
+	 * to resolve original member, and the original member should be able to observe the read-only member.
+	 */
+	it("can find read-only partner member", async function () {
+		if (process.env.FLUID_CLIENT !== "azure") {
+			// Tinylicious does not support read-only mode
+			this.skip();
+		}
+		const { container, services } = await client.createContainer(schema);
+		const containerId = await container.attach();
+
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
+
+		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+		assert.strictEqual(
+			container.attachState,
+			AttachState.Attached,
+			"Container is not attached after attach is called",
+		);
+
+		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
+		const originalSelf = await waitForMember(services.audience, "test-user-id-1");
+		assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
+
+		const partnerClient = createAzureClient(
+			"test-user-id-2",
+			"test-user-name-2",
+			undefined,
+			undefined,
+			[ScopeType.DocRead],
+		);
+		const { container: container2, services: partnerServices } =
+			await partnerClient.getContainer(containerId, schema);
+
+		if (container2.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
+
+		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
+		const partnerSelf = await waitForMember(partnerServices.audience, "test-user-id-2");
+		assert.notStrictEqual(partnerSelf, undefined, "We should have partner at this point.");
+
+		const partnerMembers = partnerServices.audience.getMembers();
+		assert.strictEqual(partnerMembers.size, 2, "Partner should see two members at this point.");
+
+		const partnerSelfSeenByOriginal = await waitForMember(services.audience, "test-user-id-2");
+		const originalMembers = services.audience.getMembers();
+		assert.notStrictEqual(
+			partnerSelfSeenByOriginal,
+			undefined,
+			"Should see partner at this point.",
+		);
+		assert.strictEqual(
+			originalMembers.size,
+			2,
+			"Original should see two members at this point.",
+		);
+
+		assert.notStrictEqual(
+			partnerSelf?.userId,
+			originalSelf?.userId,
+			"Self and partner should have different IDs",
+		);
+		assert.strictEqual(
+			partnerSelf?.userId,
+			partnerSelfSeenByOriginal?.userId,
+			"Partner and partner-as-seen-by-original should have same IDs",
+		);
+	});
+
+	/**
+	 * Scenario: Read-only Partner should be able to observe changes in audience
+	 *
+	 * Expected behavior: upon 1 partner leaving, other read-only parther should observe
+	 * memberRemoved event and have correct partner count. Upon new read-only partner joining,
+	 * the original read-only partner should observe memberAdded event and have correct partner count.
+	 */
+	it("can observe member leaving and joining in read-only mode", async function () {
+		if (process.env.FLUID_CLIENT !== "azure") {
+			// Tinylicious does not support read-only mode
+			this.skip();
+		}
+		const { container } = await client.createContainer(schema);
+		const containerId = await container.attach();
+
+		if (container.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
+
+		const partnerClient = createAzureClient(
+			"test-user-id-2",
+			"test-user-name-2",
+			undefined,
+			undefined,
+			[ScopeType.DocRead],
+		);
+		const { services: partnerServices } = await partnerClient.getContainer(containerId, schema);
+
+		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
+		const partnerSelf = await waitForMember(partnerServices.audience, "test-user-id-2");
+		assert.notStrictEqual(partnerSelf, undefined, "We should have partner at this point.");
+
+		let members = partnerServices.audience.getMembers();
+		assert.strictEqual(members.size, 2, "We should have two members at this point.");
+
+		const partnerClientMemberRemoveP = new Promise<void>((resolve) => {
+			partnerServices.audience.on("memberRemoved", () => {
+				resolve();
+			});
+		});
+
+		container.disconnect();
+
+		await partnerClientMemberRemoveP;
+
+		members = partnerServices.audience.getMembers();
+		assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+
+		const partnerClientMemberAddP = new Promise<void>((resolve) => {
+			partnerServices.audience.on("memberAdded", () => {
+				resolve();
+			});
+		});
+
+		const partnerClient2 = createAzureClient(
+			"test-user-id-3",
+			"test-user-name-3",
+			undefined,
+			undefined,
+			[ScopeType.DocRead],
+		);
+		const { services: partnerServices2 } = await partnerClient2.getContainer(
+			containerId,
+			schema,
+		);
+
+		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
+		const partnerSelf2 = await waitForMember(partnerServices2.audience, "test-user-id-3");
+		assert.notStrictEqual(
+			partnerSelf2,
+			undefined,
+			"We should have new read-only partner at this point.",
+		);
+
+		await partnerClientMemberAddP;
+
+		members = partnerServices.audience.getMembers();
+		assert.strictEqual(members.size, 2, "We should have two members again at this point.");
+		assert.strict(
+			members.has("test-user-id-3"),
+			"Original read-only partner should see new read-only partner.",
+		);
 	});
 });

@@ -151,6 +151,7 @@ importers:
 
   azure/packages/test/end-to-end-tests:
     specifiers:
+      '@fluid-experimental/data-objects': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -189,6 +190,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@fluid-experimental/data-objects': link:../../../../experimental/framework/data-objects
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
