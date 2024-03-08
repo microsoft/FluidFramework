@@ -18,16 +18,18 @@ const pkg = JSON5.parse(fs.readFileSync(pkgPath, "utf8"));
 
 pkg.type = "module";
 const exports = pkg.exports;
-const publicExports = exports["."];
+const publicExports = exports["./public"];
 
-//if (publicExports !== undefined) {
-	if (publicExports.require !== undefined) {
-		pkg.main = publicExports.require.default;
-		pkg.types = publicExports.require.types;
-	} else {
-		pkg.main = publicExports.import.default;
-		pkg.types = publicExports.import.types;
-	}
+if (publicExports !== undefined) {
+	const publicTypes = (
+		publicExports.require !== undefined
+			? publicExports.require.types
+			: publicExports.import !== undefined
+			? packageExports.import.types
+			: packageExports.types
+	).replace(/\.\//g, "");
+
+	pkg.types = publicTypes;
 
 	delete pkg.module;
 
@@ -36,4 +38,4 @@ const publicExports = exports["."];
 	fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
 
 	format();
-//}
+}

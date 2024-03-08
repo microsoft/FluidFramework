@@ -59,6 +59,8 @@ function useEsmForCodeCoverage(pkgRoot) {
 				for (let i = 0; i < c8.exclude.length; i++) {
 					c8.exclude[i] = c8.exclude[i].replace(/\bdist\//, "lib/");
 				}
+			} else {
+				c8.exclude = ["src/test/**/*.*ts", "lib/test/**/*.*js"];
 			}
 		}
 
@@ -85,10 +87,118 @@ function includeEsmInPostPack(pkgRoot) {
 	return false;
 }
 
+function removeUnusedDeps(pkgRoot) {
+	const pkgPath = path.join(pkgRoot, "package.json");
+	const pkgText = fs.readFileSync(pkgPath, "utf8");
+	const pkg = JSON5.parse(pkgText);
+
+	let emit = false;
+	const scriptText = JSON.stringify(pkg.scripts);
+
+	const cmdlineDeps = [
+		{ re: /\bcopyfiles\b/, deps: ["copyfiles"] },
+		{ re: /\bcross-env\b/, deps: ["cross-env"] },
+		{ re: /\bapi-extractor\b/, deps: ["@microsoft/api-extractor"] },
+	];
+
+	for (const { re, deps } of cmdlineDeps) {
+		if (scriptText.match(re) === null) {
+			for (const dep of deps) {
+				delete pkg.devDependencies[dep];
+			}
+			emit = true;
+		}
+	}
+
+	const scriptDeps = [
+		{ name: "check:are-the-types-wrong", deps: ["@arethetypeswrong/cli"] },
+		{ name: "test:jest", deps: [
+			"@fluidframework/test-tools",
+			"@types/jest-environment-puppeteer",
+			"@types/jest",
+			"expect-puppeteer",
+			"puppeteer",
+			"jest-environment-puppeteer",
+			"jest",
+			"jest-junit",
+			"jest-puppeteer",
+			"ts-jest",
+		]}
+	];
+
+	for (const { name, deps } of scriptDeps) {
+		if (pkg.scripts[name] === undefined) {
+			for (const dep of deps) {
+				delete pkg.devDependencies[dep];
+			}
+			emit = true;
+		}
+	}
+
+	if (emit) {
+		fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 4));
+		return true;
+	}
+
+	return false;
+}
+
+function tryDelete(path) {
+	if (fs.existsSync(path)) {
+		fs.unlinkSync(path);
+	}
+}
+
+function removeUnusedTestInfra(pkgRoot) {
+	let emit = false;
+
+	const pkgPath = path.join(pkgRoot, "package.json");
+	const pkgText = fs.readFileSync(pkgPath, "utf8");
+	const pkg = JSON5.parse(pkgText);
+
+	const tsconfigPath = path.join(pkgRoot, "tsconfig.json");
+	const tsconfig = JSON5.parse(fs.readFileSync(tsconfigPath, "utf8"));
+	const compilerOptions = tsconfig.compilerOptions;
+
+	if (compilerOptions.types !== undefined && pkg.scripts["test:jest"] === undefined) {
+		tryDelete(path.join(pkgRoot, "jest.config.cjs"));
+		tryDelete(path.join(pkgRoot, "jest-puppeteer.config.cjs"));
+		const jestTypes = ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"];
+		compilerOptions.types = compilerOptions.types.filter((type) => !jestTypes.includes(type));
+		emit = true;
+	}
+
+	if (emit) fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 4));
+
+	return emit;
+}
+
+function removeUnusedApiExtractorInfra(pkgRoot) {
+	let emit = false;
+
+	const pkgPath = path.join(pkgRoot, "package.json");
+	const pkgText = fs.readFileSync(pkgPath, "utf8");
+	const pkg = JSON5.parse(pkgText);
+
+	const scriptText = JSON.stringify(pkg.scripts);
+	if (scriptText.match(/\bapi-extractor\b/) === null) {
+		tryDelete(path.join(pkgRoot, "api-extractor.json"));
+		tryDelete(path.join(pkgRoot, "api-extractor-cjs.json"));
+		tryDelete(path.join(pkgRoot, "api-extractor-esm.json"));
+		tryDelete(path.join(pkgRoot, "api-extractor-lint.json"));
+	}
+
+	return false;
+}
+
+
 const pkgRoot = process.cwd();
 let needsFormat = false;
 needsFormat |= patchMochaConfig(pkgRoot);
 needsFormat |= disableCjsTests(pkgRoot);
 needsFormat |= useEsmForCodeCoverage(pkgRoot);
 needsFormat |= includeEsmInPostPack(pkgRoot);
+needsFormat |= removeUnusedDeps(pkgRoot);
+needsFormat |= removeUnusedTestInfra(pkgRoot);
+needsFormat |= removeUnusedApiExtractorInfra(pkgRoot);
 if (needsFormat) format();

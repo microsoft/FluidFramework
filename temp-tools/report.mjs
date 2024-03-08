@@ -11,6 +11,16 @@ let trimCount = 0;
 
 const excludes = ["/tools/", "/server/", "/docs/", "/build-tools/", "/common/build/"].map((dir) => path.resolve(path.join(rootDir, dir)));
 
+function tryLoadTsConfig(pkgRoot) {
+	try {
+		const tsconfigPath = path.join(pkgRoot, "tsconfig.json");
+		const tsconfigText = fs.readFileSync(tsconfigPath, "utf8");
+		return JSON5.parse(tsconfigText);
+	} catch {
+		return undefined;
+	}
+}
+
 await forEachPackage((pkgRoot) => {
 	for (const exclude of excludes) {
 		if (pkgRoot.startsWith(exclude)) {
@@ -27,17 +37,30 @@ await forEachPackage((pkgRoot) => {
 	const pkg = JSON5.parse(pkgText);
 
 	const isEsm = pkg.type === "module";
-	
+
+	const tsconfig = tryLoadTsConfig(pkgRoot) ?? tryLoadTsConfig(path.join(pkgRoot, "src/test"));
+
 	const hasExports =
 		pkg.exports !== undefined &&
 		pkg.exports["."] !== undefined &&
 		pkg.exports["."].import !== undefined &&
 		pkg.exports["."].import.types !== undefined;
 
-	const isNode16  = isEsm && hasExports && pkgText.indexOf("tsc-multi") === -1;
-	const isTrimmed = isNode16 && pkg.exports["."].import.types.endsWith("-public.d.ts");
+	const noApi =
+		pkg.exports === undefined && pkg.main === undefined && pkg.types === undefined;
 
-	console.log(pkgRoot, isNode16, isTrimmed);
+	const isNode16 =
+		typeof tsconfig?.extends === "string" && tsconfig.extends.endsWith(".node16.json") && pkgText.indexOf("tsc-multi") === -1;
+
+	const isTrimmed =
+		noApi || (pkg.exports && pkg.exports["."] && (
+			pkg.exports["."]?.import?.types.endsWith("-public.d.ts") ||
+			pkg.exports["."]?.require?.types.endsWith("-public.d.ts")
+		));
+
+	if (isTrimmed) {
+		console.log(pkgRoot, noApi);
+	}
 
 	totalCount++;
 	if (isNode16) { node16Count++ };

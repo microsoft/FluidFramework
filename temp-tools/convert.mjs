@@ -146,9 +146,12 @@ if (pkg.scripts["test:mocha"]) {
 	pkg.scripts["test:mocha:esm"] = "mocha --recursive \"lib/test/**/*.spec.*js\" --exit";
 }
 
-pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
-delete pkg.devDependencies["tsc-multi"];
-pkg.devDependencies["copyfiles"] = "^2.4.1";
+let hasCjs = pkg.scripts["tsc"];
+if (hasCjs) {
+	pkg.scripts["tsc"] = `fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ${workspaceRoot}/common/build/build-common/src/cjs/package.json ./dist`;
+	delete pkg.devDependencies["tsc-multi"];
+	pkg.devDependencies["copyfiles"] = "^2.4.1";
+}
 
 // Update API extractor config if it exists
 const apiExtractorEsmPath = path.join(packageRoot, "api-extractor.json");
@@ -178,16 +181,18 @@ if (fs.existsSync(apiExtractorEsmPath)) {
 	`;
 	fs.writeFileSync(apiExtractorEsmPath, apiExtractorEsm);
 
-	const apiExtractorCjsPath = path.join(packageRoot, "api-extractor-cjs.json");
-	const apiExtractorCjs = `{
-		"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-		"extends": "${workspaceRoot}/common/build/build-common/api-extractor-base.cjs.primary.json",
-		// CJS is actually secondary; so, no report.
-		"apiReport": {
-			"enabled": false
-		}
-	}`;
-	fs.writeFileSync(apiExtractorCjsPath, apiExtractorCjs);
+	if (hasCjs) {
+		const apiExtractorCjsPath = path.join(packageRoot, "api-extractor-cjs.json");
+		const apiExtractorCjs = `{
+			"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+			"extends": "${workspaceRoot}/common/build/build-common/api-extractor-base.cjs.primary.json",
+			// CJS is actually secondary; so, no report.
+			"apiReport": {
+				"enabled": false
+			}
+		}`;
+		fs.writeFileSync(apiExtractorCjsPath, apiExtractorCjs);
+	}
 
 	const apiExtractorLintPath = path.join(packageRoot, "api-extractor-lint.json");
 	const apiExtractorLint = `{
@@ -244,16 +249,18 @@ if (!!true) {
 }
 
 // Create a tsconfig.cjs.json
-const tsconfigCjsPath = path.join(packageRoot, "tsconfig.cjs.json");
-const tsconfigCjs = `{
-	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"outDir": "./dist",
-	},
+if (hasCjs) {
+	const tsconfigCjsPath = path.join(packageRoot, "tsconfig.cjs.json");
+	const tsconfigCjs = `{
+		// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
+		"extends": "./tsconfig.json",
+		"compilerOptions": {
+			"outDir": "./dist",
+		},
+	}
+	`;
+	fs.writeFileSync(tsconfigCjsPath, tsconfigCjs);
 }
-`;
-fs.writeFileSync(tsconfigCjsPath, tsconfigCjs);
 
 // Create/overwrite test tsconfig files
 const testTsconfigPath = path.join(packageRoot, "src/test/tsconfig.json");
