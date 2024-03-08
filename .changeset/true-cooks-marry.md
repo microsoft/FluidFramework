@@ -1,5 +1,5 @@
 ---
-"@fluid-experimental/ink": major
+"@fluid-experimental/ink": minor
 ---
 
 @fluidframework/ink package demoted to @fluid-experimental/ink

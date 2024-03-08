@@ -16,6 +16,6 @@
 "@fluid-private/test-loader-utils": minor
 ---
 
-Deprecated `ISignalEnvelope` interface
+runtime-definitions: Moved ISignalEnvelope interface to core-interfaces
 
-Deprecated `ISignalEnvelope` interface and moved same to "@fluidframework/core-interfaces" package.
+The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
