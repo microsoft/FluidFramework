@@ -15,6 +15,10 @@
 "@fluidframework/tinylicious-client": minor
 ---
 
-Removes a number of deprecated error related enums, and replace them with new object-based based enumerations.
+Deprecated error-related enums have been removed
 
-The changes involve removing deprecated error related enums ContainerErrorType, DriverErrorType, OdspErrorType and RouterliciousErrorType and replacement to new object-based enumerations of ContainerErrorTypes, DriverErrorTypes, OdspErrorTypes and RouterliciousErrorTypes. Refer to release notes of version [Fluid Framework v2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0).
+Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+`DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+on the replacements.

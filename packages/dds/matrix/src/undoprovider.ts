@@ -15,7 +15,8 @@ import {
 	TrackingGroup,
 	ITrackingGroup,
 } from "@fluidframework/merge-tree";
-import { MatrixItem, SharedMatrix } from "./matrix.js";
+import { SharedMatrix } from "./matrix.js";
+import { MatrixItem } from "./ops.js";
 import { Handle, isHandleValid } from "./handletable.js";
 import { PermutationSegment, PermutationVector } from "./permutationvector.js";
 import { IUndoConsumer } from "./types.js";

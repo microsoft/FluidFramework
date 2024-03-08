@@ -36,7 +36,7 @@ import {
 	IValueOperation,
 	IValueType,
 	SequenceOptions,
-} from "./defaultMapInterfaces";
+} from "./defaultMapInterfaces.js";
 import {
 	CompressedSerializedInterval,
 	IIntervalHelpers,
@@ -53,7 +53,7 @@ import {
 	startReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	createInterval,
-} from "./intervals";
+} from "./intervals/index.js";
 import {
 	EndpointIndex,
 	IEndpointIndex,
@@ -62,7 +62,7 @@ import {
 	IntervalIndex,
 	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
-} from "./intervalIndex";
+} from "./intervalIndex/index.js";
 
 /**
  * Defines a position and side relative to a character in a sequence.

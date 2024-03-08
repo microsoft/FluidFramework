@@ -15,7 +15,11 @@
  *
  * @packageDocumentation
  */
-export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./defaultMapInterfaces";
+export {
+	IMapMessageLocalMetadata,
+	IValueOpEmitter,
+	SequenceOptions,
+} from "./defaultMapInterfaces.js";
 export {
 	IInterval,
 	Interval,
@@ -28,7 +32,7 @@ export {
 	IntervalStickiness,
 	IIntervalHelpers,
 	sequenceIntervalHelpers,
-} from "./intervals";
+} from "./intervals/index.js";
 export {
 	DeserializeCallback,
 	IIntervalCollectionEvent,
@@ -38,7 +42,7 @@ export {
 	Side,
 	InteriorSequencePlace,
 	SequencePlace,
-} from "./intervalCollection";
+} from "./intervalCollection.js";
 export {
 	IntervalIndex,
 	SequenceIntervalIndexes,
@@ -53,7 +57,7 @@ export {
 	createIdIntervalIndex,
 	IEndpointIndex,
 	createEndpointIndex,
-} from "./intervalIndex";
+} from "./intervalIndex/index.js";
 export {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -64,27 +68,27 @@ export {
 	IntervalRevertible,
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
-} from "./revertibles";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
+} from "./revertibles.js";
+export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence.js";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceMaintenanceEvent,
-} from "./sequenceDeltaEvent";
-export { SharedStringFactory } from "./sequenceFactory";
+} from "./sequenceDeltaEvent.js";
+export { SharedStringFactory } from "./sequenceFactory.js";
 export {
 	getTextAndMarkers,
 	ISharedString,
 	SharedString,
 	SharedStringSegment,
-} from "./sharedString";
+} from "./sharedString.js";
 export {
 	ISharedIntervalCollection,
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
-} from "./sharedIntervalCollection";
-export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence";
+} from "./sharedIntervalCollection.js";
+export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 
 export {
 	ISegment,
