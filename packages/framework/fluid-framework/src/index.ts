@@ -30,7 +30,6 @@ export type {
 	IServiceAudienceEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
-	LoadableObjectCtor,
 	MemberChangedListener,
 	Myself,
 	SharedObjectClass,

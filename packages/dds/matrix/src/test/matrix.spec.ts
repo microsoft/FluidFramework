@@ -17,7 +17,7 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory, type ISharedMatrix } from "../index.js";
 import type { PermutationVector } from "../permutationvector.js";
 import { fill, check, insertFragmented, extract, expectSize } from "./utils.js";
 import { TestConsumer } from "./testconsumer.js";
@@ -987,7 +987,7 @@ describe("Matrix1", () => {
 					return count;
 				}
 
-				function findTotalReferenceCount(matrix: SharedMatrix): {
+				function findTotalReferenceCount(matrix: ISharedMatrix): {
 					rows: number;
 					cols: number;
 				} {

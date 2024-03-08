@@ -35,12 +35,16 @@ export function isDataObjectClass<T extends IFluidLoadable>(
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
-export function isDataObjectClass(obj: unknown): obj is InternalDataObjectClass<IFluidLoadable>;
+export function isDataObjectClass(
+	obj: LoadableObjectClass,
+): obj is InternalDataObjectClass<IFluidLoadable>;
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
-export function isDataObjectClass(obj: unknown): obj is InternalDataObjectClass<IFluidLoadable> {
+export function isDataObjectClass(
+	obj: LoadableObjectClass,
+): obj is InternalDataObjectClass<IFluidLoadable> {
 	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>> | undefined;
 	return (
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
@@ -51,10 +55,9 @@ export function isDataObjectClass(obj: unknown): obj is InternalDataObjectClass<
 /**
  * Runtime check to determine if a class is a SharedObject type
  */
-export const isSharedObjectClass = (obj: unknown): obj is SharedObjectClass<IFluidLoadable> => {
-	const maybe = obj as Partial<SharedObjectClass<IFluidLoadable>> | undefined;
-	return maybe?.getFactory !== undefined;
-};
+export function isSharedObjectClass(obj: LoadableObjectClass): obj is SharedObjectClass {
+	return !isDataObjectClass(obj);
+}
 
 /**
  * The ContainerSchema consists of initialObjects and dynamicObjectTypes. These types can be
@@ -67,7 +70,7 @@ export const parseDataObjectsFromSharedObjects = (
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
 
-	const tryAddObject = (obj: unknown): void => {
+	const tryAddObject = (obj: LoadableObjectClass): void => {
 		if (isSharedObjectClass(obj)) {
 			sharedObjects.add(obj.getFactory());
 		} else if (isDataObjectClass(obj)) {

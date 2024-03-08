@@ -42,11 +42,11 @@ export function createServiceAudience<TMember extends IMember = IMember>(props: 
 }): IServiceAudience<TMember>;
 
 // @public
-export type DataObjectClass<T extends IFluidLoadable> = {
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     readonly factory: {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-} & LoadableObjectCtor<T>;
+} & (new (...args: any[]) => T);
 
 // @public
 export interface IConnection {
@@ -122,9 +122,6 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = Sha
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
-// @public
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
-
 // @internal
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
@@ -137,7 +134,7 @@ export type Myself<M extends IMember = IMember> = M & {
 };
 
 // @public
-export interface SharedObjectClass<T extends IFluidLoadable> {
+export interface SharedObjectClass<out T extends IFluidLoadable = IFluidLoadable> {
     readonly getFactory: () => IChannelFactory<T>;
 }
 

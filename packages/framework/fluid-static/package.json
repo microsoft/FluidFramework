@@ -154,6 +154,10 @@
 		"broken": {
 			"InterfaceDeclaration_ContainerSchema": {
 				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectCtor": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

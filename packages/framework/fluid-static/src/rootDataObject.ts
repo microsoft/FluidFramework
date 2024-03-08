@@ -128,9 +128,9 @@ class RootDataObject
 	 */
 	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
 		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject<T>(objectClass);
+			return this.createDataObject(objectClass);
 		} else if (isSharedObjectClass(objectClass)) {
-			return this.createSharedObject<T>(objectClass);
+			return this.createSharedObject(objectClass);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}

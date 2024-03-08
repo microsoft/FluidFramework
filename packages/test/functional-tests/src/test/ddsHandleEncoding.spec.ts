@@ -19,8 +19,8 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
 import { CellFactory } from "@fluidframework/cell";
-import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
-import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
+import { DirectoryFactory, MapFactory, type ISharedDirectory } from "@fluidframework/map";
+import { SharedMatrixFactory, type ISharedMatrix } from "@fluidframework/matrix";
 import { SharedTree, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
 import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
@@ -57,12 +57,6 @@ describe("DDS Handle Encoding", () => {
 		return handlesFound;
 	}
 
-	/** A "Mask" over IChannelFactory that specifies the return type of create */
-	interface IChannelFactoryWithCreatedType<T extends IChannel>
-		extends Omit<IChannelFactory, "create"> {
-		create: (...args: Parameters<IChannelFactory["create"]>) => T;
-	}
-
 	/** Each test case runs some code then declares the handles (if any) it expects to be included in the op payload */
 	interface ITestCase {
 		name: string;
@@ -72,7 +66,7 @@ describe("DDS Handle Encoding", () => {
 
 	/** This takes care of creating the DDS behind the scenes so the ITestCase's code is ready to invoke */
 	function createTestCase<T extends IChannel>(
-		factory: IChannelFactoryWithCreatedType<T>,
+		factory: IChannelFactory<T>,
 		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],
 		nameOverride?: string,
@@ -114,7 +108,7 @@ describe("DDS Handle Encoding", () => {
 		),
 		createTestCase(
 			new DirectoryFactory(),
-			(dds: IDirectory) => {
+			(dds: ISharedDirectory) => {
 				dds.set("whatever", handle);
 			},
 			[handle.absolutePath] /* expectedHandles */,
@@ -126,9 +120,9 @@ describe("DDS Handle Encoding", () => {
 			},
 			[handle.absolutePath] /* expectedHandles */,
 		),
-		createTestCase(
+		createTestCase<ISharedMatrix & IChannel>(
 			new SharedMatrixFactory(),
-			(dds: SharedMatrix) => {
+			(dds) => {
 				dds.insertRows(0, 1);
 				dds.insertCols(0, 1);
 
@@ -137,7 +131,7 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
-			SharedTree.getFactory() as any,
+			SharedTree.getFactory(),
 			(dds: ITree) => {
 				const builder = new SchemaFactory("test");
 				class Bar extends builder.object("bar", {

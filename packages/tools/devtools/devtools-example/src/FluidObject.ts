@@ -14,6 +14,7 @@ import {
 	SharedTreeFactory,
 	SchemaFactory,
 	TreeConfiguration,
+	SharedTree,
 } from "@fluidframework/tree";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
@@ -188,17 +189,7 @@ export class AppData extends DataObject {
 	 * The function below satisfies the requirements to populate the SharedTree within the application.
 	 */
 	private castSharedTreeType(): SharedObjectClass<ITree> {
-		/**
-		 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
-		 */
-		// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-		class SharedTree {
-			public static getFactory(): SharedTreeFactory {
-				return new SharedTreeFactory();
-			}
-		}
-
-		return SharedTree as unknown as SharedObjectClass<ITree>;
+		return SharedTree;
 	}
 
 	private generateSharedTree(runtime: IFluidDataStoreRuntime): ITree {

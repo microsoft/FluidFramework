@@ -28,7 +28,6 @@ export {
 	type IServiceAudienceEvents,
 	type LoadableObjectClass,
 	type LoadableObjectClassRecord,
-	type LoadableObjectCtor,
 	type LoadableObjectRecord,
 	type MemberChangedListener,
 	type Myself,

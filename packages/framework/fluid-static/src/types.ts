@@ -47,9 +47,10 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * @typeParam T - The class of the `DataObject`.
  * @public
  */
-export type DataObjectClass<T extends IFluidLoadable> = {
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
 	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
-} & LoadableObjectCtor<T>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+} & (new (...args: any[]) => T);
 
 /**
  * A factory that produces a factory that can create a DDSes (`SharedObject`s).
@@ -57,21 +58,12 @@ export type DataObjectClass<T extends IFluidLoadable> = {
  * @typeParam T - The class of the `SharedObject`.
  * @public
  */
-export interface SharedObjectClass<T extends IFluidLoadable> {
+export interface SharedObjectClass<out T extends IFluidLoadable = IFluidLoadable> {
 	/**
 	 * Gets the factory this factory is a wrapper for.
 	 */
 	readonly getFactory: () => IChannelFactory<T>;
 }
-
-/**
- * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
- *
- * @typeParam T - The class of the loadable object.
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 /**
  * Represents properties that can be attached to a container.
