@@ -1528,22 +1528,14 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
-					? makeModularChangeset(
-							undefined,
-							undefined,
-							undefined,
-							undefined,
-							change.builds,
-					  )
+					? makeModularChangeset(undefined, maxId, undefined, undefined, change.builds)
 					: makeModularChangeset(
 							this.buildChangeMap(change.field, change.fieldKind, change.change),
+							maxId,
 					  ),
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
-		if (maxId >= 0) {
-			composedChange.maxId = maxId;
-		}
 		return composedChange;
 	}
 
