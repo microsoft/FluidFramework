@@ -142,6 +142,9 @@ export function fieldDataToMapTrees(
 		}
 	}
 
+	// TODO: this should only return a single MapTree node.
+	// Special array handling should occur in `arrayToMapNode`.
+
 	if (isReadonlyArray(data)) {
 		const children = Array.from(data, (child) => {
 			// We do not support undefined sequence entries.
@@ -221,7 +224,7 @@ function mapValueWithFallbacks(
 function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTree {
 	const schema = getType(data, typeSet);
 	if (schema.kind !== NodeKind.Array) {
-		fail(`Unsupported schema for provided array data: "${schema.identifier}".`);
+		fail(`Provided array input is incompatible with schema "${schema.identifier}".`);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
@@ -238,7 +241,7 @@ function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTr
 	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
 
 	return {
-		type: brand(schema.identifier), // TODO: verify this
+		type: brand(schema.identifier),
 		fields,
 	};
 }
@@ -246,7 +249,7 @@ function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTr
 function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedTypes): MapTree {
 	const schema = getType(data, typeSet);
 	if (schema.kind !== NodeKind.Map) {
-		fail(`Unsupported schema for provided map data: "${schema.identifier}".`);
+		fail(`Provided map input is incompatible with schema "${schema.identifier}".`);
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
@@ -277,7 +280,7 @@ function objectToMapTree(
 ): MapTree {
 	const schema = getType(data, typeSet);
 	if (schema.kind !== NodeKind.Object) {
-		fail(`Unsupported schema for provided object input: "${schema.identifier}".`);
+		fail(`Provided object input is incompatible with schema "${schema.identifier}".`);
 	}
 
 	const fields = new Map<FieldKey, MapTree[]>();
@@ -423,7 +426,7 @@ function shallowCompatibilityTest(
 	}
 
 	if (typeNameSymbol in data) {
-		return data[typeNameSymbol] === schema.identifier; // TODO: verify this
+		return data[typeNameSymbol] === schema.identifier;
 	}
 
 	if (isReadonlyArray(data)) {
