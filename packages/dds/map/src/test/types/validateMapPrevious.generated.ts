@@ -648,26 +648,20 @@ use_old_ClassDeclaration_MapFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedDirectory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedDirectory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedDirectory():
     TypeOnly<old.SharedDirectory>;
-declare function use_current_ClassDeclaration_SharedDirectory(
+declare function use_current_RemovedClassDeclaration_SharedDirectory(
     use: TypeOnly<current.SharedDirectory>): void;
-use_current_ClassDeclaration_SharedDirectory(
+use_current_RemovedClassDeclaration_SharedDirectory(
     get_old_ClassDeclaration_SharedDirectory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedDirectory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedDirectory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedDirectory():
-    TypeOnly<current.SharedDirectory>;
-declare function use_old_ClassDeclaration_SharedDirectory(
-    use: TypeOnly<old.SharedDirectory>): void;
-use_old_ClassDeclaration_SharedDirectory(
-    get_current_ClassDeclaration_SharedDirectory());
 
 /*
 * Validate forward compat by using old type in place of current type

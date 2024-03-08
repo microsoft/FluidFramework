@@ -196,7 +196,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface IDirectoryEvents extends IEvent {
 	/**
 	 * Emitted when a key is set or deleted. As opposed to the
-	 * {@link SharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
+	 * {@link ISharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
 	 * contains the key.
 	 *
 	 * @remarks Listener parameters:

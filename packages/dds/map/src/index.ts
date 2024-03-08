@@ -29,7 +29,6 @@ export {
 	IDirectorySetOperation,
 	IDirectoryStorageOperation,
 	IDirectorySubDirectoryOperation,
-	SharedDirectory,
 } from "./directory.js";
 export {
 	IDirectory,
@@ -51,7 +50,8 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { MapFactory } from "./map.js";
-import { ISharedMap } from "./interfaces.js";
+import { ISharedMap, ISharedDirectory } from "./interfaces.js";
+import { DirectoryFactory } from "./directory.js";
 
 /**
  * {@inheritDoc ISharedMap}
@@ -98,3 +98,46 @@ export const SharedMap = {
  * This alias is for legacy compat from when the SharedMap class was exported as public.
  */
 export type SharedMap = ISharedMap;
+
+/**
+ * {@inheritDoc ISharedDirectory}
+ * @sealed
+ * @alpha
+ */
+export const SharedDirectory = {
+	/**
+	 * Create a new shared directory
+	 *
+	 * @param runtime - Data store runtime the new shared directory belongs to
+	 * @param id - Optional name of the shared directory
+	 * @returns Newly create shared directory (but not attached yet)
+	 *
+	 * @example
+	 * To create a `SharedDirectory`, call the static create method:
+	 *
+	 * ```typescript
+	 * const myDirectory = SharedDirectory.create(this.runtime, id);
+	 * ```
+	 */
+	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
+		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
+	},
+
+	/**
+	 * Get a factory for SharedDirectory to register with the data store.
+	 *
+	 * @returns A factory that creates and load SharedDirectory
+	 */
+	getFactory(): IChannelFactory<ISharedDirectory> {
+		return new DirectoryFactory();
+	},
+};
+
+/**
+ * {@inheritDoc ISharedDirectory}
+ * @alpha
+ * @deprecated Use ISharedDirectory instead.
+ * @privateRemarks
+ * This alias is for legacy compat from when the SharedDirectory class was exported as public.
+ */
+export type SharedDirectory = ISharedDirectory;

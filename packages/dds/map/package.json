@@ -178,6 +178,9 @@
 			},
 			"ClassDeclaration_SharedMap": {
 				"backCompat": false
+			},
+			"RemovedClassDeclaration_SharedDirectory": {
+				"backCompat": false
 			}
 		}
 	}

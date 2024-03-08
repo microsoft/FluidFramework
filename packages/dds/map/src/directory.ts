@@ -269,7 +269,7 @@ export interface IDirectoryNewStorageFormat {
 }
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedDirectory}.
  *
  * @sealed
  * @alpha
@@ -460,26 +460,6 @@ export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
 	implements ISharedDirectory
 {
-	/**
-	 * Create a new shared directory
-	 *
-	 * @param runtime - Data store runtime the new shared directory belongs to
-	 * @param id - Optional name of the shared directory
-	 * @returns Newly create shared directory (but not attached yet)
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
-	}
-
-	/**
-	 * Get a factory for SharedDirectory to register with the data store.
-	 *
-	 * @returns A factory that creates and load SharedDirectory
-	 */
-	public static getFactory(): IChannelFactory<ISharedDirectory> {
-		return new DirectoryFactory();
-	}
-
 	/**
 	 * String representation for the class.
 	 */

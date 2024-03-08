@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
-import { DirectoryFactory, SharedDirectory } from "../../index.js";
+import { DirectoryFactory, SharedDirectory } from "../../directory.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 
@@ -57,7 +57,7 @@ function generateTestScenarios(): TestScenario[] {
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "A" });
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	const factory = SharedDirectory.getFactory();
+	const factory = new DirectoryFactory();
 
 	/**
 	 * @remarks - This test suite isn't set up to be easily augmented when map's document format changes.

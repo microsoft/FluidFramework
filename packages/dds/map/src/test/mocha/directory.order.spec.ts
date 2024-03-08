@@ -413,7 +413,7 @@ describe("Directory Iteration Order", () => {
 			const runtimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			runtimeFactory.createContainerRuntime(dataStoreRuntime);
-			const factory = SharedDirectory.getFactory();
+			const factory = new DirectoryFactory();
 
 			const summaryContent =
 				'{"blobs":[],"content":{"ci":{"csn":0,"ccIds":[]},"subdirectories":{"detached1":{"ci":{"csn":0,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}},"detached2":{"ci":{"csn":0,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}},"detached3":{"ci":{"csn":-1,"ccIds":["97cd0b77-34b1-46a8-bbe2-5fbefb3e014b"]}}}}}';
