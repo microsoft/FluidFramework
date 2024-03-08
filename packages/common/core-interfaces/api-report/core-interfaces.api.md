@@ -323,7 +323,7 @@ export interface IGenericError extends IErrorBase {
     readonly errorType: typeof FluidErrorTypes.genericError;
 }
 
-// @internal
+// @internal @deprecated
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }

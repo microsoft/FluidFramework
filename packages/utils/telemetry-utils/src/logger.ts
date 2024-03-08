@@ -18,10 +18,10 @@ import {
 	mixinMonitoringContext,
 } from "./config.js";
 import {
-	isILoggingError,
 	extractLogSafeErrorProperties,
 	generateStack,
 	isTaggedTelemetryPropertyValue,
+	LoggingError,
 } from "./errorLogging.js";
 import {
 	ITelemetryEventExt,
@@ -131,7 +131,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 
 	/**
 	 * Take an unknown error object and add the appropriate info from it to the event. Message and stack will be copied
-	 * over from the error object, along with other telemetry properties if it's an ILoggingError.
+	 * over from the error object, along with other telemetry properties if it's a LoggingError.
 	 * @param event - Event being logged
 	 * @param error - Error to extract info from
 	 * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
@@ -150,7 +150,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 		event.error = message; // Note that the error message goes on the 'error' field
 		event.errorType = errorType;
 
-		if (isILoggingError(error)) {
+		if (LoggingError.isLoggingError(error)) {
 			// Add any other telemetry properties from the LoggingError
 			const telemetryProp = error.getTelemetryProperties();
 			for (const key of Object.keys(telemetryProp)) {

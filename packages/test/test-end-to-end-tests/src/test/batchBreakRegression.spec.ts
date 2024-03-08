@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
+import { isFluidError, LoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentMessage,
@@ -216,7 +216,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					await runAndValidateBatch(provider, proxyDsf, this.timeout());
 					assert.fail("expected error");
 				} catch (e) {
-					assert(isILoggingError(e), `${e}`);
+					assert(LoggingError.isLoggingError(e), `${e}`);
 					assert.equal(e.message, "OpBatchIncomplete", e);
 				}
 			},
@@ -259,7 +259,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 				await runAndValidateBatch(provider, proxyDsf, this.timeout());
 				assert.fail("expected error");
 			} catch (e) {
-				assert(isILoggingError(e), `${e}`);
+				assert(LoggingError.isLoggingError(e), `${e}`);
 				assert.equal(e.message, "OpBatchIncomplete", e);
 			}
 		});
@@ -336,7 +336,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					await runAndValidateBatch(provider, proxyDsf, this.timeout());
 					assert.fail("expected error");
 				} catch (e) {
-					assert(isILoggingError(e), `${e}`);
+					assert(LoggingError.isLoggingError(e), `${e}`);
 					assert(isFluidError(e));
 					assert.strictEqual(e.errorType, FluidErrorTypes.dataProcessingError);
 				}
@@ -418,7 +418,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 					});
 					assert.fail("expected error");
 				} catch (e) {
-					assert(isILoggingError(e), `${e}`);
+					assert(LoggingError.isLoggingError(e), `${e}`);
 					assert(isFluidError(e));
 					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 				}
