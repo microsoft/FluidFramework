@@ -33,7 +33,7 @@ export {
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
-export { toFlexConfig } from "./toFlexSchema.js";
+export { toFlexConfig } from "./toFlexConfig.js";
 export {
 	SchemaFactoryRecursive,
 	ObjectFromSchemaRecordUnsafe,

@@ -50,6 +50,7 @@ import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 import { getFlexSchema } from "./toFlexSchema.js";
+import { getClassSchema, getClassSchemaOrFail } from "./classSchemaCaching.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -110,18 +111,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 	}
 }
 
-/**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
- */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
-
-export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
-	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
-	}
-	return undefined;
-}
-
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
 	const cachedProxy = tryGetFlexNodeTarget(flexNode);
 	if (cachedProxy !== undefined) {
@@ -136,12 +125,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const classSchema = getClassSchema(schema);
-	if (classSchema === undefined) {
-		throw new Error("Couldn't find ClassSchema. TODO");
-		// Fallback to createNodeProxy if needed.
-		// TODO: maybe remove this fallback and error once migration to class based schema is done.
-		// output = createNodeProxy(flexNode, false);
-	} else if (typeof classSchema === "function") {
+	if (typeof classSchema === "function") {
 		// TODO: document this
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
 		return new simpleSchema(flexNode);
@@ -244,11 +228,7 @@ export function createObjectProxy(
 						| FlexTreeOptionalField<FlexAllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
-					const cursor = cursorFromNodeData(
-						content,
-						flexNode.context.schema,
-						fieldSchema.allowedTypeSet,
-					);
+					const cursor = cursorFromNodeData(content, schema);
 					modifyChildren(
 						flexNode,
 						() => {
@@ -371,17 +351,14 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(index, value);
-			const cursor = cursorFromFieldData(
-				content,
-				sequenceField.context.schema,
-				sequenceField.schema,
-			);
+			const cursor = cursorFromFieldData(content, getClassSchemaOrFail(sequenceNode.schema));
 
 			modifyChildren(
-				getFlexNode(this),
+				sequenceNode,
 				() => sequenceField.insertAt(index, cursor),
 				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
@@ -392,17 +369,14 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			this: TreeArrayNode,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(0, value);
-			const cursor = cursorFromFieldData(
-				content,
-				sequenceField.context.schema,
-				sequenceField.schema,
-			);
+			const cursor = cursorFromFieldData(content, getClassSchemaOrFail(sequenceNode.schema));
 
 			modifyChildren(
-				getFlexNode(this),
+				sequenceNode,
 				() => sequenceField.insertAtStart(cursor),
 				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
@@ -413,20 +387,17 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			this: TreeArrayNode,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(
 				this.length,
 				value,
 			);
-			const cursor = cursorFromFieldData(
-				content,
-				sequenceField.context.schema,
-				sequenceField.schema,
-			);
+			const cursor = cursorFromFieldData(content, getClassSchemaOrFail(sequenceNode.schema));
 
 			modifyChildren(
-				getFlexNode(this),
+				sequenceNode,
 				() => sequenceField.insertAtEnd(cursor),
 				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
@@ -768,11 +739,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
-			const cursor = cursorFromNodeData(
-				content,
-				node.context.schema,
-				node.schema.mapFields.allowedTypeSet,
-			);
+			const cursor = cursorFromNodeData(content, getClassSchemaOrFail(node.schema));
 			modifyChildren(
 				node,
 				(mapNode) => mapNode.set(key, cursor),

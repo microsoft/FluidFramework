@@ -15,10 +15,11 @@ import {
 } from "../feature-libraries/index.js";
 import { TreeNode } from "./types.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
+import { getOrCreateNodeProxy } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
+import { getClassSchema } from "./classSchemaCaching.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

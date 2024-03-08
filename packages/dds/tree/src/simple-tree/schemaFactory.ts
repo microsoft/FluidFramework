@@ -19,7 +19,6 @@ import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
-	getClassSchema,
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
@@ -49,6 +48,7 @@ import {
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
+import { getClassSchema } from "./classSchemaCaching.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -90,7 +90,7 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 const stringSchema = makeLeaf(leaf.string);
 const numberSchema = makeLeaf(leaf.number);
 const booleanSchema = makeLeaf(leaf.boolean);
-const nullSchema = makeLeaf(leaf.null);
+export const nullSchema = makeLeaf(leaf.null);
 const handleSchema = makeLeaf(leaf.handle);
 
 /**

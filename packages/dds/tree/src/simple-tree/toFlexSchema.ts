@@ -20,55 +20,16 @@ import {
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
-import { TreeContent } from "../shared-tree/index.js";
-import {
-	InsertableContent,
-	extractFactoryContent,
-	getClassSchema,
-	simpleSchemaSymbol,
-} from "./proxies.js";
-import { cursorFromNodeData } from "./toMapTree.js";
+import { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes.js";
-import { TreeConfiguration } from "./tree.js";
-
-/**
- * Returns a cursor (in nodes mode) for the root node.
- *
- * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
- */
-export function cursorFromUnhydratedRoot(
-	schema: FlexTreeSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
-): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
-	return (
-		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
-		fail("failed to decode tree")
-	);
-}
-
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
-	const schema = toFlexSchema(config.schema);
-	const unhydrated = config.initialTree();
-	const initialTree =
-		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
-	return {
-		schema,
-		initialTree,
-	};
-}
+import { getClassSchema, simpleSchemaSymbol } from "./classSchemaCaching.js";
 
 interface SchemaInfo {
 	toFlex: () => FlexTreeNodeSchema;
