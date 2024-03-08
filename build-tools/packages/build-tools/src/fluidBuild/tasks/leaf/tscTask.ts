@@ -18,7 +18,9 @@ interface ITsBuildInfo {
 	program: {
 		fileNames: string[];
 		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
+		affectedFilesPendingEmit?: any[];
 		semanticDiagnosticsPerFile?: any[];
+		changeFileSet?: number[];
 		options: any;
 	};
 	version: string;
@@ -108,9 +110,14 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
+		const program = tsBuildInfo.program;
 		// Check previous build errors
-		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
-		if (diag?.some((item) => Array.isArray(item))) {
+		if (
+			program.changeFileSet?.length ||
+			(!program.options.noEmit
+				? program.affectedFilesPendingEmit?.length
+				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
+		) {
 			this.traceTrigger("previous build error");
 			return false;
 		}
@@ -125,8 +132,8 @@ export class TscTask extends LeafTask {
 		);
 
 		// Check dependencies file hashes
-		const fileNames = tsBuildInfo.program.fileNames;
-		const fileInfos = tsBuildInfo.program.fileInfos;
+		const fileNames = program.fileNames;
+		const fileInfos = program.fileInfos;
 		for (let i = 0; i < fileInfos.length; i++) {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
