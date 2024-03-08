@@ -235,7 +235,6 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
 // @public
 export enum CommitKind {
     Default = 0,
-    Rebase = 3,
     Redo = 2,
     Undo = 1
 }

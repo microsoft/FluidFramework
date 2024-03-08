@@ -8,7 +8,7 @@
  *
  * @remarks
  * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
- * 
+ *
  * @public
  */
 export interface Revertible {
