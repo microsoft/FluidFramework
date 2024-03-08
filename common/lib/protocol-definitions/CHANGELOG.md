@@ -1,5 +1,30 @@
 # @fluidframework/protocol-definitions Changelog
 
+## [3.2.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.2.0)
+
+### Added new optional targetClientId property to ISequencedClient
+
+`ISequencedClient` has a new optional property called `targetClientId` which is the client ID of the singular client the
+signal is being (or has been) sent to.
+
+([#19555](https://github.com/microsoft/FluidFramework/issues/19555)) [af2d678db1](https://github.com/microsoft/FluidFramework/commits/af2d678db1216475a444bd35354c8284e6729973)
+
+### Added new optional omitted property to ISnapshotTree
+
+`ISnapshotTree` has a new optional property, `omitted`. This property can be used by the service to communicate that
+they omitted the blobs contents in the snapshot.
+
+([#19555](https://github.com/microsoft/FluidFramework/issues/19676)) [198235d46d](https://github.com/microsoft/FluidFramework/commits/af2d678db1216475a444bd35354c8284e6729973)
+
+### Added new optional property groupId to ISnapshotTree, ISummaryTree, and ITree
+
+`ISnapshotTree`, `ISummaryTree`, and `ITree` have a new optional property, `groupId`. This `groupId` will be used to
+fetch the missing parts of the snapsot from the service when they are required. When the server returns the snapshot to
+the client and some tree is missing in that snapshot, then this `groupId` could be used to request the missing contents
+from the service.
+
+([#19555](https://github.com/microsoft/FluidFramework/issues/19273)) [ef873e618e](https://github.com/microsoft/FluidFramework/commits/ef873e618e8e42ca32a6fe8180c25c63a1a166b7)
+
 ## [3.1.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.1.0)
 
 ### Deprecated properties on ISequencedDocumentMessage
