@@ -5,6 +5,7 @@
 
 import { RevisionTag } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+import { IRange } from "../../util/index.js";
 import { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
@@ -160,6 +161,15 @@ export interface Mark {
 export interface DetachedNodeId {
 	readonly major?: RevisionTag;
 	readonly minor: number;
+}
+
+/**
+ * A range of ids in a detached field.
+ * @internal
+ */
+export interface DetachedNodeRangeId {
+	readonly major?: RevisionTag;
+	readonly minor: IRange;
 }
 
 /**
