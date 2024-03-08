@@ -63,10 +63,6 @@ function getClientRoomId(clientId: string) {
 	return `client#${clientId}`;
 }
 
-function isISentSignalMessage(message: any): message is ISentSignalMessage {
-	return typeof message === "object" && "targetClientId" in message;
-}
-
 const getMessageMetadata = (documentId: string, tenantId: string) => ({
 	documentId,
 	tenantId,
@@ -1110,41 +1106,38 @@ export function configureWebSocketServices(
 						socket.emit("nack", "", [nackMessage]);
 						return;
 					}
-					contentBatches.forEach((contentBatch) => {
-						const contents = Array.isArray(contentBatch)
-							? contentBatch
-							: [contentBatch];
 
-						for (const content of contents) {
-							let signalMessage: ISignalMessage;
-							let roomId: string;
+					if (supportedFeaturesMap.get(clientId)?.[feature_submit_signals_v2]) {
+						for (const signal of contentBatches as ISentSignalMessage[]) {
+							const signalMessage: ISignalMessage = {
+								clientId,
+								content: signal.content,
+								targetClientId: signal.targetClientId,
+							};
 
-							// Check if the client supports v2/targeted signals
-							if (
-								supportedFeaturesMap.get(clientId)?.[feature_submit_signals_v2] &&
-								isISentSignalMessage(content)
-							) {
-								signalMessage = {
-									clientId,
-									content: content.content,
-									targetClientId: content.targetClientId,
-								};
-
-								roomId =
-									content.targetClientId !== undefined
-										? getClientRoomId(content.targetClientId)
-										: getRoomId(room);
-							} else {
-								signalMessage = {
-									clientId,
-									content,
-								};
-								roomId = getRoomId(room);
-							}
+							const roomId: string =
+								signal.targetClientId !== undefined
+									? getClientRoomId(signal.targetClientId)
+									: getRoomId(room);
 
 							socket.emitToRoom(roomId, "signal", signalMessage);
 						}
-					});
+					} else {
+						contentBatches.forEach((contentBatch) => {
+							const contents = Array.isArray(contentBatch)
+								? contentBatch
+								: [contentBatch];
+							for (const content of contents) {
+								const signalMessage: ISignalMessage = {
+									clientId,
+									content,
+								};
+								const roomId: string = getRoomId(room);
+
+								socket.emitToRoom(roomId, "signal", signalMessage);
+							}
+						});
+					}
 				}
 			},
 		);
