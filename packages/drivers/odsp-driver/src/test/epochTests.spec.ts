@@ -12,15 +12,15 @@ import {
 	IEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions";
+import { ThrottlingError, type NonRetryableError } from "@fluidframework/driver-utils";
+import { createChildLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import { stub } from "sinon";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+import * as odspUtilsModule from "../odspUtils.js";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
-import { createChildLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
-import { ThrottlingError, type NonRetryableError } from "@fluidframework/driver-utils";
-import { stub } from "sinon";
-import * as odspUtilsModule from "../odspUtils";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
