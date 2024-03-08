@@ -296,12 +296,9 @@ export {
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
 
-	// experimental @internal APIs:
-	adaptEnum,
-	enumFromStrings,
-	singletonSchema,
-	typedObjectValues,
+	// experimental @beta APIs:
 	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
 	ObjectFromSchemaRecordUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
@@ -314,6 +311,12 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+
+	// experimental @internal APIs:
+	adaptEnum,
+	enumFromStrings,
+	singletonSchema,
+	typedObjectValues,
 
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,

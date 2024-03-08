@@ -11,8 +11,11 @@ import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
-import { pkgName, pkgVersion } from "./packageVersion";
-import { ScenarioRunnerTelemetryEventNames, getAzureClientConnectionConfigFromEnv } from "./utils";
+import { pkgName, pkgVersion } from "./packageVersion.js";
+import {
+	ScenarioRunnerTelemetryEventNames,
+	getAzureClientConnectionConfigFromEnv,
+} from "./utils.js";
 
 export interface LoggerConfig {
 	scenarioName?: string;
