@@ -111,7 +111,8 @@
 		"@fluidframework/protocol-definitions": "^3.2.0-237840",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~"
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -158,6 +159,10 @@
 			"RemovedTypeAliasDeclaration_LoadableObjectCtor": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SharedObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

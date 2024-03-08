@@ -31,6 +31,5 @@ export {
 	type LoadableObjectRecord,
 	type MemberChangedListener,
 	type Myself,
-	type SharedObjectClass,
 	type IProvideRootDataObject,
 } from "./types.js";

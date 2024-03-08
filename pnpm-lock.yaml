@@ -8476,6 +8476,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
       '@microsoft/api-extractor': ^7.42.3
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
@@ -8503,6 +8504,7 @@ importers:
       '@fluidframework/request-handler': link:../request-handler
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base': link:../../dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup

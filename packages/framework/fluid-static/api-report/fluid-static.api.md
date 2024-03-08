@@ -6,7 +6,6 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -14,6 +13,7 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
 export type ContainerAttachProps<T = unknown> = T;
@@ -117,7 +117,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
@@ -132,10 +132,5 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     currentConnection: string;
 };
-
-// @public
-export interface SharedObjectClass<out T extends IFluidLoadable = IFluidLoadable> {
-    readonly getFactory: () => IChannelFactory<T>;
-}
 
 ```

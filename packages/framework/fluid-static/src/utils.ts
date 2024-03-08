@@ -9,12 +9,8 @@ import {
 	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-	type ContainerSchema,
-	type DataObjectClass,
-	type LoadableObjectClass,
-	type SharedObjectClass,
-} from "./types.js";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 
 /**
  * An internal type used by the internal type guard isDataObjectClass to cast a
@@ -55,7 +51,9 @@ export function isDataObjectClass(
 /**
  * Runtime check to determine if a class is a SharedObject type
  */
-export function isSharedObjectClass(obj: LoadableObjectClass): obj is SharedObjectClass {
+export function isSharedObjectKind(
+	obj: LoadableObjectClass,
+): obj is ISharedObjectKind<IFluidLoadable> {
 	return !isDataObjectClass(obj);
 }
 
@@ -71,7 +69,7 @@ export const parseDataObjectsFromSharedObjects = (
 	const sharedObjects = new Set<IChannelFactory>();
 
 	const tryAddObject = (obj: LoadableObjectClass): void => {
-		if (isSharedObjectClass(obj)) {
+		if (isSharedObjectKind(obj)) {
 			sharedObjects.add(obj.getFactory());
 		} else if (isDataObjectClass(obj)) {
 			registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);

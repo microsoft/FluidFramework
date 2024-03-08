@@ -269,7 +269,7 @@ export interface IChannelServices {
  *
  * @public
  */
-export interface IChannelFactory<out TChannel extends IFluidLoadable = IFluidLoadable> {
+export interface IChannelFactory<out TChannel = unknown> {
 	/**
 	 * String representing the type of the factory.
 	 */

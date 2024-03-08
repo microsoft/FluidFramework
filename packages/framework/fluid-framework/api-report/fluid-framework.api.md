@@ -6,16 +6,15 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -265,7 +264,7 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
@@ -337,23 +336,13 @@ export interface SchemaIncompatible {
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @deprecated
-export const SharedMap: {
-    getFactory(): IChannelFactory<ISharedMap>;
-    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
-};
+export const SharedMap: ISharedObjectKind<ISharedMap>;
 
 // @public @deprecated
 export type SharedMap = ISharedMap;
 
 // @public
-export interface SharedObjectClass<out T extends IFluidLoadable = IFluidLoadable> {
-    readonly getFactory: () => IChannelFactory<T>;
-}
-
-// @public
-export const SharedTree: {
-    getFactory(): IChannelFactory<ITree>;
-};
+export const SharedTree: ISharedObjectKind<ITree>;
 
 // @public
 export const Tree: TreeApi;

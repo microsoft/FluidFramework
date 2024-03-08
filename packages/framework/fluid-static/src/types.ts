@@ -8,7 +8,7 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type ISharedObjectKind } from "@fluidframework/shared-object-base";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -33,11 +33,11 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
  * There are some edge cases in TypeScript where the order of the members in a union matter.
  * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
  * In this case, its better to have the desired match and/or the simpler type first.
- * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
-	| SharedObjectClass<T>
+	| ISharedObjectKind<T>
 	| DataObjectClass<T>;
 
 /**
@@ -51,19 +51,6 @@ export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
 	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } & (new (...args: any[]) => T);
-
-/**
- * A factory that produces a factory that can create a DDSes (`SharedObject`s).
- *
- * @typeParam T - The class of the `SharedObject`.
- * @public
- */
-export interface SharedObjectClass<out T extends IFluidLoadable = IFluidLoadable> {
-	/**
-	 * Gets the factory this factory is a wrapper for.
-	 */
-	readonly getFactory: () => IChannelFactory<T>;
-}
 
 /**
  * Represents properties that can be attached to a container.

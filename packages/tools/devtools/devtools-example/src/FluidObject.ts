@@ -8,7 +8,6 @@ import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { type SharedObjectClass } from "@fluidframework/fluid-static";
 import {
 	type ITree,
 	SharedTreeFactory,
@@ -17,6 +16,7 @@ import {
 	SharedTree,
 } from "@fluidframework/tree";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -188,7 +188,7 @@ export class AppData extends DataObject {
 	 *
 	 * The function below satisfies the requirements to populate the SharedTree within the application.
 	 */
-	private castSharedTreeType(): SharedObjectClass<ITree> {
+	private castSharedTreeType(): ISharedObjectKind<ITree> {
 		return SharedTree;
 	}
 

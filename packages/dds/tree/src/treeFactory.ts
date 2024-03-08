@@ -9,6 +9,7 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
 import { ITree } from "./simple-tree/index.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -17,18 +18,17 @@ import { pkgVersion } from "./packageVersion.js";
  * A channel factory that creates an {@link ITree}.
  */
 export class TreeFactory implements IChannelFactory<ITree> {
-	public readonly type: string;
-	public readonly attributes: IChannelAttributes;
+	public static readonly type = "https://graph.microsoft.com/types/tree";
+	public static readonly attributes: IChannelAttributes = {
+		type: this.type,
+		snapshotFormatVersion: "0.0.0",
+		packageVersion: pkgVersion,
+	};
 
-	public constructor(private readonly options: SharedTreeOptions) {
-		this.type = "https://graph.microsoft.com/types/tree";
+	public readonly type = TreeFactory.type;
+	public readonly attributes: IChannelAttributes = TreeFactory.attributes;
 
-		this.attributes = {
-			type: this.type,
-			snapshotFormatVersion: "0.0.0",
-			packageVersion: pkgVersion,
-		};
-	}
+	public constructor(private readonly options: SharedTreeOptions) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -49,21 +49,19 @@ export class TreeFactory implements IChannelFactory<ITree> {
 }
 
 /**
- * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
+ * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- *
- * @remarks
- * This implements {@link @fluidframework/fluid-static#SharedObjectClass}.
  * @privateRemarks
  * Due to the dependency structure and the placement of that interface SharedObjectClass,
  * this interface implementation can not be recorded in the type here.
  * @public
  */
-export const SharedTree = {
-	/**
-	 * Gets the factory this factory is a wrapper for.
-	 */
+export const SharedTree: ISharedObjectKind<ITree> = {
 	getFactory(): IChannelFactory<ITree> {
 		return new TreeFactory({});
+	},
+
+	create(runtime: IFluidDataStoreRuntime, id?: string): ITree {
+		return runtime.createChannel(id, TreeFactory.type) as ITree;
 	},
 };
