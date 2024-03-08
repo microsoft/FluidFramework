@@ -114,7 +114,7 @@ export interface GraphCommit<TChange> {
  * @public
  */
 export enum CommitKind {
-	/** A commit that is the result of a change made by the user. */
+	/** A commit corresponding to a change that is not the result of an undo/redo. */
 	Default,
 	/** A commit that is the result of an undo. */
 	Undo,
