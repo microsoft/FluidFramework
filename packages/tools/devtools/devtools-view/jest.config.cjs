@@ -5,7 +5,7 @@
 
 module.exports = {
 	preset: "ts-jest",
-	roots: ["<rootDir>/src"],
+	roots: ["<rootDir>"],
 	reporters: [
 		"default",
 		[
@@ -19,8 +19,12 @@ module.exports = {
 	transform: {
 		"^.+\\.tsx?$": "ts-jest",
 	},
-	testRegex: "src/test/.*.test\\.tsx?$",
-	testPathIgnorePatterns: ["/node_modules/", "dist"],
+	moduleNameMapper: {
+		// Force module sinon to resolve with the CJS entry point, because Jest does not support package.json.exports. Somewhat similar issue: https://github.com/uuidjs/uuid/issues/451
+		"^react$": "<rootDir>/node_modules/react/lib/react.js",
+	},
+	testMatch: ["**/dist/test/?(*.)+(spec|test).*js"],
+	testPathIgnorePatterns: ["/node_modules/", "node_modules/(?!react/.*)"],
 	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
 	testEnvironment: "jsdom",
