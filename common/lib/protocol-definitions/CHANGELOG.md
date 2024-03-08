@@ -11,8 +11,8 @@ signal is being (or has been) sent to.
 
 ### Added new optional omitted property to ISnapshotTree
 
-`ISnapshotTree` has a new optional property, `omitted`. This property can be used by the service to communicate that
-they omitted the blobs contents in the snapshot.
+`ISnapshotTree` has a new optional property, `omitted`. This property will be used by the service to communicate that it
+omitted the blobs contents in the snapshot.
 
 ([#19555](https://github.com/microsoft/FluidFramework/issues/19676)) [198235d46d](https://github.com/microsoft/FluidFramework/commits/af2d678db1216475a444bd35354c8284e6729973)
 
@@ -20,7 +20,7 @@ they omitted the blobs contents in the snapshot.
 
 `ISnapshotTree`, `ISummaryTree`, and `ITree` have a new optional property, `groupId`. This `groupId` will be used to
 fetch the missing parts of the snapsot from the service when they are required. When the server returns the snapshot to
-the client and some tree is missing in that snapshot, then this `groupId` could be used to request the missing contents
+the client and some tree is missing in that snapshot, then this `groupId` will be used to request the missing contents
 from the service.
 
 ([#19555](https://github.com/microsoft/FluidFramework/issues/19273)) [ef873e618e](https://github.com/microsoft/FluidFramework/commits/ef873e618e8e42ca32a6fe8180c25c63a1a166b7)
