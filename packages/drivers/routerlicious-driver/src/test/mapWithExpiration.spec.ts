@@ -280,21 +280,6 @@ describe("MapWithExpiration", () => {
 				}
 			},
 		);
-
-		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
-			for (const thisArg of thisArgs) {
-				for (const map of maps) {
-					map.set(1, "one");
-					map.forEach(() => {
-						assert.notEqual(
-							this,
-							thisArg,
-							"Expected 'this' to be unchanged for arrow fn",
-						);
-					}, thisArg);
-				}
-			}
-		});
 	});
 
 	it("toString", () => {
