@@ -31,10 +31,10 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	IMapMessageLocalMetadata,
-	IValueFactory,
+	IIntervalCollectionFactory,
 	IValueOpEmitter,
-	IValueOperation,
-	IValueType,
+	IIntervalCollectionOperation,
+	IIntervalCollectionType,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import {
@@ -477,7 +477,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-class SequenceIntervalCollectionFactory implements IValueFactory<SequenceInterval> {
+class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory<SequenceInterval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -499,28 +499,30 @@ class SequenceIntervalCollectionFactory implements IValueFactory<SequenceInterva
 	}
 }
 
-export class SequenceIntervalCollectionValueType implements IValueType<SequenceInterval> {
+export class SequenceIntervalCollectionValueType
+	implements IIntervalCollectionType<SequenceInterval>
+{
 	public static Name = "sharedStringIntervalCollection";
 
 	public get name(): string {
 		return SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<SequenceInterval> {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<SequenceInterval>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<SequenceInterval> =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-class IntervalCollectionFactory implements IValueFactory<Interval> {
+class IntervalCollectionFactory implements IIntervalCollectionFactory<Interval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -539,30 +541,31 @@ class IntervalCollectionFactory implements IValueFactory<Interval> {
 	}
 }
 
-export class IntervalCollectionValueType implements IValueType<Interval> {
+export class IntervalCollectionValueType implements IIntervalCollectionType<Interval> {
 	public static Name = "sharedIntervalCollection";
 
 	public get name(): string {
 		return IntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<Interval> {
+	public get factory(): IIntervalCollectionFactory<Interval> {
 		return IntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<Interval>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<Interval>> {
 		return IntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<Interval> = new IntervalCollectionFactory();
+	private static readonly _factory: IIntervalCollectionFactory<Interval> =
+		new IntervalCollectionFactory();
 	private static readonly _ops = makeOpsMap<Interval>();
 }
 
 export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	IntervalOpType,
-	IValueOperation<T>
+	IIntervalCollectionOperation<T>
 > {
-	const rebase: IValueOperation<T>["rebase"] = (collection, op, localOpMetadata) => {
+	const rebase: IIntervalCollectionOperation<T>["rebase"] = (collection, op, localOpMetadata) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
 		if (rebasedValue === undefined) {
@@ -572,7 +575,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<IntervalOpType, IValueOperation<T>>([
+	return new Map<IntervalOpType, IIntervalCollectionOperation<T>>([
 		[
 			IntervalOpType.ADD,
 			{

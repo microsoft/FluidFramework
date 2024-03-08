@@ -94,7 +94,7 @@ export interface SequenceOptions {
  * A value factory is used to serialize/deserialize value types to a map
  * @alpha
  */
-export interface IValueFactory<T extends ISerializableInterval> {
+export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
 	/**
 	 * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
 	 * from remote.
@@ -121,7 +121,7 @@ export interface IValueFactory<T extends ISerializableInterval> {
  * Defines an operation that a value type is able to handle.
  * @alpha
  */
-export interface IValueOperation<T extends ISerializableInterval> {
+export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	/**
 	 * Performs the actual processing on the incoming operation.
 	 * @param value - The current value stored at the given key, which should be the value type
@@ -148,17 +148,20 @@ export interface IValueOperation<T extends ISerializableInterval> {
 	 */
 	rebase(
 		value: IntervalCollection<T>,
-		op: IValueTypeOperationValue,
+		op: IIntervalCollectionTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	):
-		| { rebasedOp: IValueTypeOperationValue; rebasedLocalOpMetadata: IMapMessageLocalMetadata }
+		| {
+				rebasedOp: IIntervalCollectionTypeOperationValue;
+				rebasedLocalOpMetadata: IMapMessageLocalMetadata;
+		  }
 		| undefined;
 }
 
 /**
  * Defines a value type that can be registered on a container type.
  */
-export interface IValueType<T extends ISerializableInterval> {
+export interface IIntervalCollectionType<T extends ISerializableInterval> {
 	/**
 	 * Name of the value type.
 	 */
@@ -167,12 +170,12 @@ export interface IValueType<T extends ISerializableInterval> {
 	/**
 	 * Factory method used to convert to/from a JSON form of the type.
 	 */
-	factory: IValueFactory<T>;
+	factory: IIntervalCollectionFactory<T>;
 
 	/**
 	 * Operations that can be applied to the value type.
 	 */
-	ops: Map<IntervalOpType, IValueOperation<T>>;
+	ops: Map<IntervalOpType, IIntervalCollectionOperation<T>>;
 }
 
 export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
@@ -193,7 +196,7 @@ export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
  * The DefaultMap implementation for sequence has been specialized to only support a single ValueType, which serializes
  * and deserializes via .store() and .load().
  */
-export interface ISerializableValue {
+export interface ISerializableIntervalCollection {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
@@ -205,7 +208,7 @@ export interface ISerializableValue {
 	value: any;
 }
 
-export interface ISerializedValue {
+export interface ISerializedIntervalCollection {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
@@ -226,7 +229,7 @@ export interface ISerializedValue {
  * it just describes an operation to be applied to an already-in-memory value.
  * @alpha
  */
-export interface IValueTypeOperationValue {
+export interface IIntervalCollectionTypeOperationValue {
 	/**
 	 * The name of the operation.
 	 */

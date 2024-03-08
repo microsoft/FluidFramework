@@ -8,17 +8,17 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { makeSerializable, ValueTypeLocalValue } from "./localValues.js";
+import { makeSerializable, IntervalCollectionTypeLocalValue } from "./IntervalCollectionValues.js";
 import {
-	ISerializableValue,
+	ISerializableIntervalCollection,
 	IValueChanged,
 	// eslint-disable-next-line import/no-deprecated
 	IValueOpEmitter,
-	IValueType,
+	IIntervalCollectionType,
 	ISharedDefaultMapEvents,
 	IMapMessageLocalMetadata,
 	SequenceOptions,
-	IValueTypeOperationValue,
+	IIntervalCollectionTypeOperationValue,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	SerializedIntervalDelta,
@@ -53,14 +53,14 @@ export interface IMapOperation {
 	/**
 	 * Value of the operation, specific to the value type.
 	 */
-	value: IValueTypeOperationValue;
+	value: IIntervalCollectionTypeOperationValue;
 }
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  * Directly used in JSON.stringify, direct result from JSON.parse
  */
 export interface IMapDataObjectSerializable {
-	[key: string]: ISerializableValue;
+	[key: string]: ISerializableIntervalCollection;
 }
 
 /**
@@ -70,7 +70,7 @@ export interface IMapDataObjectSerializable {
  * Creation of values is implicit on access (either via `get` or a remote op application referring to
  * a collection that wasn't previously known)
  */
-export class DefaultMap<T extends ISerializableInterval> {
+export class IntervalCollectionMap<T extends ISerializableInterval> {
 	/**
 	 * The number of key/value pairs stored in the map.
 	 */
@@ -116,7 +116,7 @@ export class DefaultMap<T extends ISerializableInterval> {
 	/**
 	 * The in-memory data the map is storing.
 	 */
-	private readonly data = new Map<string, ValueTypeLocalValue<T>>();
+	private readonly data = new Map<string, IntervalCollectionTypeLocalValue<T>>();
 
 	/**
 	 * Create a new default map.
@@ -133,7 +133,7 @@ export class DefaultMap<T extends ISerializableInterval> {
 			op: IMapOperation,
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => void,
-		private readonly type: IValueType<T>,
+		private readonly type: IIntervalCollectionType<T>,
 		private readonly options?: Partial<SequenceOptions>,
 		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
 	) {}
@@ -305,8 +305,8 @@ export class DefaultMap<T extends ISerializableInterval> {
 	 * @param key - The key being initialized
 	 * @param local - Whether the message originated from the local client
 	 */
-	private createCore(key: string, local: boolean): ValueTypeLocalValue<T> {
-		const localValue = new ValueTypeLocalValue(
+	private createCore(key: string, local: boolean): IntervalCollectionTypeLocalValue<T> {
+		const localValue = new IntervalCollectionTypeLocalValue(
 			this.type.factory.load(this.makeMapValueOpEmitter(key), undefined, this.options),
 			this.type,
 		);
@@ -327,7 +327,10 @@ export class DefaultMap<T extends ISerializableInterval> {
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
-	private makeLocal(key: string, serializable: ISerializableValue): ValueTypeLocalValue<T> {
+	private makeLocal(
+		key: string,
+		serializable: ISerializableIntervalCollection,
+	): IntervalCollectionTypeLocalValue<T> {
 		assert(
 			serializable.type !== ValueType[ValueType.Plain] &&
 				serializable.type !== ValueType[ValueType.Shared],
@@ -339,7 +342,7 @@ export class DefaultMap<T extends ISerializableInterval> {
 			serializable.value,
 			this.options,
 		);
-		return new ValueTypeLocalValue(localValue, this.type);
+		return new IntervalCollectionTypeLocalValue(localValue, this.type);
 	}
 
 	/**

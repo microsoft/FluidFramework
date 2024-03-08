@@ -50,7 +50,7 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./intervalCollectionMap.js";
+import { IntervalCollectionMap, IMapOperation } from "./intervalCollectionMap.js";
 import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
 import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
@@ -253,7 +253,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: DefaultMap<SequenceInterval>;
+	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
 	constructor(
 		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
@@ -303,7 +303,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
 		});
 
-		this.intervalCollections = new DefaultMap(
+		this.intervalCollections = new IntervalCollectionMap(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => {
