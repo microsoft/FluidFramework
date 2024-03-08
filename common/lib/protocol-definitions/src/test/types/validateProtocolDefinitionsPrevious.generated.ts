@@ -744,26 +744,26 @@ use_old_InterfaceDeclaration_IQuorumProposalsEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISentSignalMessage": {"forwardCompat": false}
+* "TypeAliasDeclaration_ISentSignalMessage": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISentSignalMessage():
+declare function get_old_TypeAliasDeclaration_ISentSignalMessage():
     TypeOnly<old.ISentSignalMessage>;
-declare function use_current_RemovedInterfaceDeclaration_ISentSignalMessage(
+declare function use_current_TypeAliasDeclaration_ISentSignalMessage(
     use: TypeOnly<current.ISentSignalMessage>);
-use_current_RemovedInterfaceDeclaration_ISentSignalMessage(
-    get_old_InterfaceDeclaration_ISentSignalMessage());
+use_current_TypeAliasDeclaration_ISentSignalMessage(
+    get_old_TypeAliasDeclaration_ISentSignalMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISentSignalMessage": {"backCompat": false}
+* "TypeAliasDeclaration_ISentSignalMessage": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ISentSignalMessage():
+declare function get_current_TypeAliasDeclaration_ISentSignalMessage():
     TypeOnly<current.ISentSignalMessage>;
-declare function use_old_InterfaceDeclaration_ISentSignalMessage(
+declare function use_old_TypeAliasDeclaration_ISentSignalMessage(
     use: TypeOnly<old.ISentSignalMessage>);
-use_old_InterfaceDeclaration_ISentSignalMessage(
-    get_current_RemovedInterfaceDeclaration_ISentSignalMessage());
+use_old_TypeAliasDeclaration_ISentSignalMessage(
+    get_current_TypeAliasDeclaration_ISentSignalMessage());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-definitions",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"description": "Fluid protocol definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -58,7 +58,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.1.0",
+		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@3.2.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
