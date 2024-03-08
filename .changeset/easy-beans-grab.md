@@ -3,7 +3,7 @@
 "@fluidframework/container-loader": minor
 ---
 
-IContainer.attach will be made retriable in the next release
+container-loader: Behavior change: IContainer.attach will be made retriable in the next release
 
 The `attach` function on IContainer has been modified such that the container stay open on non-fatal errors. On failure of attach the developer should inspect IContainer.closed to see if the container has been closed. If not closed, the developer can retry calling attach.
 
