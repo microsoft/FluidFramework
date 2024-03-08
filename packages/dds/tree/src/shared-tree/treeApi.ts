@@ -27,7 +27,6 @@ export interface TreeApi extends TreeNodeApi {
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - If any change in the transaction fails and must be discarded, then the entire transaction is discarded.
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
@@ -48,7 +47,6 @@ export interface TreeApi extends TreeNodeApi {
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
 	 * However, using a transaction has the following additional consequences:
 	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - If any change in the transaction fails and must be discarded, then the entire transaction is discarded.
 	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
 	 *
 	 * Local change events will be emitted for each change as the transaction is being applied.
