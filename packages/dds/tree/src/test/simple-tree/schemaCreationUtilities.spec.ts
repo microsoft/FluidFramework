@@ -32,7 +32,7 @@ describe("schemaCreationUtilities", () => {
 			Parent,
 			() =>
 				new Parent({
-					mode: new Mode.Bonus({}),
+					mode: new Mode.Bonus(),
 				}),
 		);
 
@@ -74,6 +74,36 @@ describe("schemaCreationUtilities", () => {
 		class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
 	});
 
+	it("adaptEnum example from docs", () => {
+		const schemaFactory = new SchemaFactory("com.myApp");
+		// An enum for use in the tree. Must have string keys.
+		enum Mode {
+			a = "A",
+			b = "B",
+		}
+		// Define the schema for each member of the enum using a nested scope to group them together.
+		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		// Defined the types of the nodes which correspond to this the schema.
+		type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+		// An example schema which has an enum as a child.
+		class Parent extends schemaFactory.object("Parent", {
+			// typedObjectValues extracts a list of all the fields of ModeNodes, which are the schema for each enum member.
+			// This means any member of the enum is allowed in this field.
+			mode: typedObjectValues(ModeNodes),
+		}) {}
+
+		// Example constructing a tree containing an enum node from an enum value.
+		// The syntax `new ModeNodes.a()` is also supported.
+		const config = new TreeConfiguration(Parent, () => ({
+			mode: ModeNodes(Mode.a),
+		}));
+
+		// Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
+		function getValue(node: ModeNodes): Mode {
+			return node.value;
+		}
+	});
+
 	it("adaptEnum example", () => {
 		const schemaFactory = new SchemaFactory("x");
 
@@ -106,7 +136,7 @@ describe("schemaCreationUtilities", () => {
 			Parent,
 			() =>
 				new Parent({
-					mode: new Mode.Bonus({}),
+					mode: new Mode.Bonus(),
 				}),
 		);
 
@@ -185,7 +215,7 @@ describe("schemaCreationUtilities", () => {
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
-		const y = new DayNodes.Today({});
+		const y = new DayNodes.Today();
 
 		const view = tree.schematize(
 			new TreeConfiguration(typedObjectValues(DayNodes), () => DayNodes(Day.Today)),

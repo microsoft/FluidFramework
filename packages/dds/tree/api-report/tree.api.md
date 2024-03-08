@@ -18,12 +18,12 @@ import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 
-// @internal
-export function adaptEnum<TScope extends string, const TEnum extends Record<string, string>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+// @beta
+export function adaptEnum<TScope extends string, const TEnum extends Record<string, string | number>>(factory: SchemaFactory<TScope>, members: TEnum): (<TValue extends TEnum[keyof TEnum]>(value: TValue) => TreeNode & {
     readonly value: TValue;
-}) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+}) & { readonly [Property in keyof TEnum]: TreeNodeSchemaClass<ScopedSchemaName<TScope, TEnum[Property]>, NodeKind.Object, TreeNode & {
         readonly value: TEnum[Property];
-    }, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+    }, never, true, unknown> & (new () => TreeNode & {
         readonly value: TEnum[Property];
     }); };
 
@@ -411,12 +411,12 @@ export type EmptyObject = {};
 // @internal
 export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
 
-// @internal
-export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+// @beta
+export function enumFromStrings<TScope extends string, const Members extends string>(factory: SchemaFactory<TScope>, members: Members[]): (<TValue extends Members>(value: TValue) => TreeNode & {
     readonly value: TValue;
-}) & Record<Members, TreeNodeSchemaClass<ScopedSchemaName<TScope, Members>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+}) & Record<Members, TreeNodeSchemaClass<ScopedSchemaName<TScope, Members>, NodeKind.Object, TreeNode & {
     readonly value: Members;
-}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+}, never, true, unknown> & (new () => TreeNode & {
     readonly value: Members;
 })>;
 
@@ -1662,10 +1662,10 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
     treeEncodeType?: TreeCompressionStrategy;
 }
 
-// @internal
-export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+// @beta
+export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, TreeNode & {
     readonly value: TName;
-}, object & InsertableObjectFromSchemaRecord<EmptyObject>, true, unknown> & (new () => object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {
+}, never, true, unknown> & (new () => TreeNode & {
     readonly value: TName;
 });
 
@@ -1995,7 +1995,7 @@ TFields extends {
 } : EmptyObject
 ][_InlineTrick];
 
-// @internal
+// @beta
 export function typedObjectValues<TKey extends string, TValues>(object: Record<TKey, TValues>): TValues[];
 
 // @internal

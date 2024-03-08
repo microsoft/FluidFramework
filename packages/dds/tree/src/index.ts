@@ -311,8 +311,6 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
-
-	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
