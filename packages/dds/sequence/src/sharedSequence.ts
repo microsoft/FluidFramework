@@ -10,7 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence } from "./sequence";
+import { SharedSegmentSequence } from "./sequence.js";
 
 const MaxRun = 128;
 

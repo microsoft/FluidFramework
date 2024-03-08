@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ChildRunner, ContainerFactorySchema } from "./interface";
-import { loggerP } from "./logger";
-import { DocCreatorRunner, DocCreatorRunConfig } from "./DocCreatorRunner";
-import { commanderParseIntArg, getCommander } from "./utils";
-import { DocLoaderRunConfig, DocLoaderRunner } from "./DocLoaderRunner";
-import { MapTrafficRunConfig, MapTrafficRunner } from "./MapTrafficRunner";
-import { NestedMapRunConfig, NestedMapRunner } from "./NestedMapRunner";
+import { ChildRunner, ContainerFactorySchema } from "./interface.js";
+import { loggerP } from "./logger.js";
+import { DocCreatorRunner, DocCreatorRunConfig } from "./DocCreatorRunner.js";
+import { commanderParseIntArg, getCommander } from "./utils.js";
+import { DocLoaderRunConfig, DocLoaderRunner } from "./DocLoaderRunner.js";
+import { MapTrafficRunConfig, MapTrafficRunner } from "./MapTrafficRunner.js";
+import { NestedMapRunConfig, NestedMapRunner } from "./NestedMapRunner.js";
 
 const scenarioRunnerName = process.argv[2];
 const scenarioRunners: Record<string, ChildRunner> = {

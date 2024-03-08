@@ -4,31 +4,31 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/container-definitions';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITree } from '@fluidframework/protocol-definitions';
+import type { AttachState } from '@fluidframework/container-definitions';
+import type { FluidObject } from '@fluidframework/core-interfaces';
+import type { IAudience } from '@fluidframework/container-definitions';
+import type { IClientDetails } from '@fluidframework/protocol-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IQuorumClients } from '@fluidframework/protocol-definitions';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResponse } from '@fluidframework/core-interfaces';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISignalMessage } from '@fluidframework/protocol-definitions';
+import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import type { ISummaryTree } from '@fluidframework/protocol-definitions';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
-import { SummaryTree } from '@fluidframework/protocol-definitions';
-import { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { SummaryTree } from '@fluidframework/protocol-definitions';
+import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
 
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
@@ -121,13 +121,20 @@ export interface IAttachMessage {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any, id?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    readonly disposed: boolean;
+    generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
     getQuorum(): IQuorumClients;
+    getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
+        snapshotTree: ISnapshotTree;
+        sequenceNumber: number;
+    }>;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
@@ -146,6 +153,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
+    // (undocumented)
+    (event: "dispose", listener: () => void): any;
 }
 
 // @alpha
@@ -171,18 +180,13 @@ export interface IExperimentalIncrementalSummaryContext {
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    // @deprecated
-    attachGraph(): void;
-    readonly attachState: AttachState;
     readonly entryPoint: IFluidHandle<FluidObject>;
     getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    // (undocumented)
-    readonly id: string;
     makeVisibleAndAttachGraph(): void;
-    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    processSignal(message: any, local: boolean): void;
+    process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown, addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void): void;
+    processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
@@ -190,60 +194,22 @@ export interface IFluidDataStoreChannel extends IDisposable {
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
-    // (undocumented)
-    readonly visibilityState: VisibilityState;
 }
 
 // @alpha
-export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, Partial<IProvideFluidDataStoreRegistry>, IProvideFluidHandleContext {
-    // @deprecated (undocumented)
-    addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, IFluidParentContext {
     addedGCOutboundRoute?(fromPath: string, toPath: string): void;
-    readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    // (undocumented)
-    readonly clientDetails: IClientDetails;
-    // (undocumented)
-    readonly clientId: string | undefined;
-    // (undocumented)
-    readonly connected: boolean;
-    // (undocumented)
-    readonly containerRuntime: IContainerRuntimeBase;
     // @deprecated (undocumented)
     readonly createProps?: any;
-    // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    ensureNoDataModelChanges<T>(callback: () => T): T;
-    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getAudience(): IAudience;
     // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
     // (undocumented)
-    getCreateChildSummarizerNodeFn(
-    id: string,
-    createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
-    getQuorum(): IQuorumClients;
-    // (undocumented)
     readonly id: string;
-    // (undocumented)
-    readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
-    readonly loadingGroupId?: string;
-    // (undocumented)
-    readonly logger: ITelemetryBaseLogger;
-    makeLocallyVisible(): void;
-    // (undocumented)
-    readonly options: Record<string | number, any>;
     readonly packagePath: readonly string[];
-    readonly scope: FluidObject;
     setChannelDirty(address: string): void;
-    // (undocumented)
-    readonly storage: IDocumentStorageService;
-    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
-    // (undocumented)
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @alpha (undocumented)
@@ -273,6 +239,56 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
     // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+}
+
+// @alpha
+export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
+    // @deprecated (undocumented)
+    addedGCOutboundReference?(srcHandle: {
+        absolutePath: string;
+    }, outboundHandle: {
+        absolutePath: string;
+    }): void;
+    readonly attachState: AttachState;
+    // (undocumented)
+    readonly clientDetails: IClientDetails;
+    // (undocumented)
+    readonly clientId: string | undefined;
+    // (undocumented)
+    readonly connected: boolean;
+    // (undocumented)
+    readonly containerRuntime: IContainerRuntimeBase;
+    // (undocumented)
+    deleteChildSummarizerNode?(id: string): void;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
+    readonly gcThrowOnTombstoneUsage: boolean;
+    // (undocumented)
+    readonly gcTombstoneEnforcementAllowed: boolean;
+    getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getAudience(): IAudience;
+    // (undocumented)
+    getCreateChildSummarizerNodeFn(
+    id: string,
+    createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
+    getQuorum(): IQuorumClients;
+    // (undocumented)
+    readonly idCompressor?: IIdCompressor;
+    readonly loadingGroupId?: string;
+    // (undocumented)
+    readonly logger: ITelemetryBaseLogger;
+    makeLocallyVisible(): void;
+    // (undocumented)
+    readonly options: Record<string | number, any>;
+    readonly scope: FluidObject;
+    // (undocumented)
+    readonly storage: IDocumentStorageService;
+    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
+    // (undocumented)
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
 // @public

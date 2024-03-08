@@ -45,11 +45,7 @@ function generateTestChangesets(
 			),
 		},
 		{
-			name: "with reserved detach on self",
-			change: Change.reserve("self", "self"),
-		},
-		{
-			name: "with reserved detach not on self",
+			name: "with reserved detach",
 			change: Change.reserve("self", { revision, localId }),
 		},
 	];

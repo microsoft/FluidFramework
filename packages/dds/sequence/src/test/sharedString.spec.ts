@@ -27,8 +27,8 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { getTextAndMarkers, SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { getTextAndMarkers, SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;

@@ -13,7 +13,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import {
 	ConfigTypes,
@@ -54,7 +54,7 @@ class TestDataObject extends DataObject {
 	}
 
 	private readonly mapKey = "map";
-	public map!: SharedMap;
+	public map!: ISharedMap;
 
 	private readonly sharedStringKey = "sharedString";
 	public sharedString!: SharedString;
@@ -68,7 +68,7 @@ class TestDataObject extends DataObject {
 	}
 
 	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+		const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
 

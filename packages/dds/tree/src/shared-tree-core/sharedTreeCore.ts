@@ -220,6 +220,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				newRevision,
 				this.detachedRevision,
 			);
+			this.editManager.advanceMinimumSequenceNumber(newRevision);
 		}
 
 		// Don't submit the op if it is not attached
