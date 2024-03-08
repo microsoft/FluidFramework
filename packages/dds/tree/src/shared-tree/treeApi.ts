@@ -5,13 +5,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { fail } from "../util/index.js";
 import { Context } from "../feature-libraries/index.js";
-import {
-	TreeNode,
-	SimpleTreeApi,
-	TreeView,
-	simpleTreeApi,
-	getFlexNode,
-} from "../simple-tree/index.js";
+import { TreeNode, TreeNodeApi, TreeView, treeNodeApi, getFlexNode } from "../simple-tree/index.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
@@ -20,7 +14,7 @@ import { contextToTreeView } from "./treeView.js";
  * Provides various functions for interacting with {@link TreeNode}s.
  * @public
  */
-export interface TreeApi extends SimpleTreeApi {
+export interface TreeApi extends TreeNodeApi {
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
 	 * @param node - The node that will be passed to `transaction`.
@@ -71,7 +65,7 @@ export interface TreeApi extends SimpleTreeApi {
  * @public
  */
 export const treeApi: TreeApi = {
-	...simpleTreeApi,
+	...treeNodeApi,
 	runTransaction<TNode extends TreeNode, TRoot>(
 		treeOrNode: TNode | TreeView<TRoot>,
 		transaction: ((node: TNode) => void | "rollback") | ((root: TRoot) => void | "rollback"),

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import {
 	NodeFromSchema,
 	SchemaFactory,
-	simpleTreeApi as Tree,
+	treeNodeApi as Tree,
 	TreeConfiguration,
 	TreeNode,
 } from "../../simple-tree/index.js";

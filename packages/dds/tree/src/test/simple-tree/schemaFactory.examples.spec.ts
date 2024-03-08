@@ -12,7 +12,7 @@ import {
 	ITree,
 	TreeConfiguration,
 	TreeView,
-	simpleTreeApi as Tree,
+	treeNodeApi as Tree,
 } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 

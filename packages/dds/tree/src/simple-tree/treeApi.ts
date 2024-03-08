@@ -29,7 +29,7 @@ import { getFlexSchema } from "./toFlexSchema.js";
  * https://github.com/microsoft/rushstack/issues/1958.
  * @public
  */
-export interface SimpleTreeApi {
+export interface TreeNodeApi {
 	/**
 	 * The schema information for this node.
 	 */
@@ -79,7 +79,7 @@ export interface SimpleTreeApi {
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
-export const simpleTreeApi: SimpleTreeApi = {
+export const treeNodeApi: TreeNodeApi = {
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
