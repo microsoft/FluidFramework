@@ -2,6 +2,9 @@
 
 ## [3.2.0](https://github.com/microsoft/FluidFramework/releases/tag/protocol-definitions_v3.2.0)
 
+This release includes new optional properties on several interfaces. Note that these new properties are not yet used by
+services or clients. They are intended for future opt-in features.
+
 ### Added new optional targetClientId property to ISequencedClient
 
 `ISequencedClient` has a new optional property called `targetClientId` which is the client ID of the singular client the
@@ -18,10 +21,9 @@ omitted the blobs contents in the snapshot.
 
 ### Added new optional property groupId to ISnapshotTree, ISummaryTree, and ITree
 
-`ISnapshotTree`, `ISummaryTree`, and `ITree` have a new optional property, `groupId`. This `groupId` will be used to
-fetch the missing parts of the snapsot from the service when they are required. When the server returns the snapshot to
-the client and some tree is missing in that snapshot, then this `groupId` will be used to request the missing contents
-from the service.
+`ISnapshotTree`, `ISummaryTree`, and `ITree` have a new optional property, `groupId`.
+
+For more information, see the [Data Virtualization for Datastores documentation](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md#data-virtualization-for-datastores-work-in-progress).
 
 ([#19555](https://github.com/microsoft/FluidFramework/issues/19273)) [ef873e618e](https://github.com/microsoft/FluidFramework/commits/ef873e618e8e42ca32a6fe8180c25c63a1a166b7)
 
