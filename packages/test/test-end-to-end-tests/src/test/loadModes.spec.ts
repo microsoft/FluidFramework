@@ -21,14 +21,14 @@ import {
 	ITestFluidObject,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis) => {
 	const { SharedCounter } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
