@@ -1,5 +1,8 @@
 ---
-"@fluidframework/aqueduct": major
+"@fluidframework/aqueduct": minor
 ---
 
-The return type of `PureDataObjectFactory.instantiateDataStore` is changing from `FluidDataStoreRuntime` to `IFluidDataStoreChannel`.
+aqueduct: PureDataObjectFactory.instantiateDataStore now returns IFluidDataStoreChannel
+
+The return type of `PureDataObjectFactory.instantiateDataStore` was changed from `FluidDataStoreRuntime` to
+`IFluidDataStoreChannel`.
