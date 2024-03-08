@@ -23,7 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
@@ -338,7 +338,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
 		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
-		const map1 = await do1.getSharedObject<SharedMap>(mapId);
+		const map1 = await do1.getSharedObject<ISharedMap>(mapId);
 
 		const headers: IRequestHeader = {
 			[LoaderHeader.cache]: false,
@@ -353,7 +353,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
 		loaded.connect();
 		loaded.forceReadonly?.(true);
-		const map2 = await do2.getSharedObject<SharedMap>(mapId);
+		const map2 = await do2.getSharedObject<ISharedMap>(mapId);
 		map2.set("key1", "1");
 		map2.set("key2", "2");
 		await provider.ensureSynchronized();

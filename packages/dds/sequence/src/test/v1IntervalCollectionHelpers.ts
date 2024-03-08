@@ -10,19 +10,19 @@ import {
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { Client } from "@fluidframework/merge-tree";
-import { DefaultMap } from "../defaultMap";
+import { DefaultMap } from "../defaultMap.js";
 import {
 	IValueFactory,
 	IValueOpEmitter,
 	IValueType,
 	IValueOperation,
-} from "../defaultMapInterfaces";
+} from "../defaultMapInterfaces.js";
 import {
 	IntervalCollection,
 	ISerializedIntervalCollectionV2,
 	makeOpsMap,
 	LocalIntervalCollection,
-} from "../intervalCollection";
+} from "../intervalCollection.js";
 import {
 	ISerializableInterval,
 	ISerializedInterval,
@@ -30,9 +30,9 @@ import {
 	IIntervalHelpers,
 	createSequenceInterval,
 	IntervalOpType,
-} from "../intervals";
-import { pkgVersion } from "../packageVersion";
-import { SharedString } from "../sharedString";
+} from "../intervals/index.js";
+import { pkgVersion } from "../packageVersion.js";
+import { SharedString } from "../sharedString.js";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
 	client: Client;

@@ -26,11 +26,11 @@ import {
 	IOdspSummaryTree,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
-import { EpochTracker, FetchType } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { runWithRetry } from "./retryUtils";
+} from "./contracts.js";
+import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
+import { EpochTracker, FetchType } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { runWithRetry } from "./retryUtils.js";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs

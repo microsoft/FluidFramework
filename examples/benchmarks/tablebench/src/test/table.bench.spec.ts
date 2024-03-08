@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeFromSchema, SharedTree } from "@fluidframework/tree";
+import { NodeFromSchema, SharedTree, type ISharedTree } from "@fluidframework/tree";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions";
@@ -69,7 +69,7 @@ describe("Table", () => {
 			title: `SharedTree`,
 			before: () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as SharedTree;
+				const tree = channel as ISharedTree;
 
 				const view = tree.schematize({
 					schema: Table,
@@ -101,7 +101,7 @@ describe("Table", () => {
 
 	describe(`@Size of ${numRows} rows`, () => {
 		describe("attachment summary size", () => {
-			let tree: SharedTree;
+			let tree: ISharedTree;
 			let matrix: SharedMatrix;
 
 			/**
@@ -185,7 +185,7 @@ describe("Table", () => {
 
 			it("SharedTree", () => {
 				const { channel, processAllMessages } = create(SharedTree.getFactory());
-				tree = channel as SharedTree;
+				tree = channel as ISharedTree;
 
 				tree.schematize({
 					schema: Table,

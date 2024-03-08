@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as path from "path";
+import * as fs from "fs";
 import * as ts from "typescript";
 import { sha256 } from "./hash";
 
@@ -146,9 +147,7 @@ function createGetCanonicalFileName(tsLib: typeof ts) {
 	return tsLib.sys.useCaseSensitiveFileNames
 		? (x: string) => x
 		: (x: string) =>
-				fileNameLowerCaseRegExp.test(x)
-					? x.replace(fileNameLowerCaseRegExp, toLowerCase)
-					: x;
+				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
 function createGetSourceFileVersion(tsLib: typeof ts) {
@@ -207,6 +206,9 @@ function createTscUtil(tsLib: typeof ts) {
 			const project = parsedCommand?.options.project;
 			if (project !== undefined) {
 				tsConfigFullPath = path.resolve(directory, project);
+				if (fs.existsSync(tsConfigFullPath) && fs.statSync(tsConfigFullPath).isDirectory()) {
+					tsConfigFullPath = path.join(tsConfigFullPath, "tsconfig.json");
+				}
 			} else {
 				const foundConfigFile = tsLib.findConfigFile(
 					directory,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { OdspFluidDataStoreLocator } from "./contractsPublic";
+import { OdspFluidDataStoreLocator } from "./contractsPublic.js";
 
 /*
  * Per https://github.com/microsoft/FluidFramework/issues/1556, isolating createOdspUrl() in its own file.

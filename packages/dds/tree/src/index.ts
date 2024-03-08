@@ -296,6 +296,22 @@ export {
 	TreeNodeSchemaNonClass,
 	SchemaIncompatible,
 
+	// experimental @beta APIs:
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
+
 	// experimental @internal APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -305,6 +321,7 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
+	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
 export { SharedTree, TreeFactory } from "./treeFactory.js";
 

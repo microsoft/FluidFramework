@@ -154,7 +154,7 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	// V1 of the registry -----------------------------------------
