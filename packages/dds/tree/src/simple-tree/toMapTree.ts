@@ -158,7 +158,7 @@ function valueToMapTree(
 
 	return {
 		value: mappedValue,
-		type: brand(schema.identifier), // TODO: verify this
+		type: brand(schema.identifier),
 		fields: new Map(),
 	};
 }
@@ -260,14 +260,13 @@ function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedType
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
 			const mappedField = fieldDataToMapTrees(value, childFieldSchema);
-			// TODO: verify this
 			if (mappedField !== undefined) {
 				fields.set(brand(key), [mappedField]);
 			}
 		}
 	}
 	return {
-		type: brand(schema.identifier), // TODO: verify this
+		type: brand(schema.identifier),
 		fields,
 	};
 }
@@ -297,7 +296,6 @@ function objectToMapTree(
 
 			// TODO: use stableName when provided
 
-			// TODO: verify this
 			if (mappedChildTree !== undefined) {
 				fields.set(key, [mappedChildTree]);
 			}
@@ -305,7 +303,7 @@ function objectToMapTree(
 	}
 
 	return {
-		type: brand(schema.identifier), // TODO: verify this
+		type: brand(schema.identifier),
 		fields,
 	};
 }
