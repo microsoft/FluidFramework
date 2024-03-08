@@ -47,7 +47,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	/**
 	 * The sequence number that this instance is at.
-	 * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
+	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
@@ -220,6 +220,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				newRevision,
 				this.detachedRevision,
 			);
+			this.editManager.advanceMinimumSequenceNumber(newRevision);
 		}
 
 		// Don't submit the op if it is not attached
@@ -236,7 +237,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				schema: this.schemaAndPolicy ?? undefined,
 			},
 		);
-		this.submitLocalMessage(this.serializer.encode(message, this.handle));
+		this.submitLocalMessage(message);
 	}
 
 	protected processCore(
@@ -244,9 +245,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(contents, {});
+		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
+
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),

@@ -9,6 +9,7 @@ import {
 	ISummaryTree,
 	SummaryType,
 	ISnapshotTree,
+	type SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
@@ -25,11 +26,11 @@ import {
 	IOdspSummaryTree,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
-import { EpochTracker, FetchType } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { runWithRetry } from "./retryUtils";
+} from "./contracts.js";
+import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
+import { EpochTracker, FetchType } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { runWithRetry } from "./retryUtils.js";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
@@ -59,7 +60,7 @@ export function convertCreateNewSummaryTreeToTreeAndBlobs(
 function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	summary: ISummaryTree,
 	blobs: Map<string, ArrayBuffer>,
-) {
+): ISnapshotTree {
 	const treeNode: ISnapshotTree = {
 		blobs: {},
 		trees: {},
@@ -93,14 +94,19 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 				throw new Error(`No ${summaryObject.type} should be present for detached summary!`);
 			}
 			default: {
-				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
+				unreachableCase(
+					summaryObject,
+					`Unknown tree type ${(summaryObject as SummaryObject).type}`,
+				);
 			}
 		}
 	}
 	return treeNode;
 }
 
-export function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
+export function convertSummaryIntoContainerSnapshot(
+	createNewSummary: ISummaryTree,
+): IOdspSummaryPayload {
 	if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 		throw new Error("App and protocol summary required for create new path!!");
 	}
@@ -275,7 +281,7 @@ export async function createNewFluidContainerCore<T>(args: {
 				validateResponseCallback?.(fetchResponse.content);
 
 				event.end({
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					attempts: options.refresh ? 2 : 1,
 					...fetchResponse.propsToLog,
 				});

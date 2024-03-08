@@ -93,6 +93,11 @@ export interface Root<TTree = ProtoNode> {
 	 * then the destruction should be listed under ID B.
 	 */
 	readonly destroy?: readonly DetachedNodeDestruction[];
+	/**
+	 * Refreshers for detached nodes that may need to be recreated.
+	 * The ordering has no significance.
+	 */
+	readonly refreshers?: readonly DetachedNodeBuild<TTree>[];
 }
 
 /**

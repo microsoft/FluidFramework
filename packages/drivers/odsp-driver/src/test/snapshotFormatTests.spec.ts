@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
-import { convertToCompactSnapshot } from "../compactSnapshotWriter";
+import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 
 const snapshotTree: ISnapshotTree = {
 	id: "SnapshotId",

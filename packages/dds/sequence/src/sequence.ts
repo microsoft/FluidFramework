@@ -45,23 +45,21 @@ import {
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
-	makeHandlesSerializable,
-	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./defaultMap";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
-import { SequenceInterval } from "./intervals";
+import { DefaultMap, IMapOperation } from "./defaultMap.js";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces.js";
+import { SequenceInterval } from "./intervals/index.js";
 import {
 	IIntervalCollection,
 	IntervalCollection,
 	SequenceIntervalCollectionValueType,
-} from "./intervalCollection";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection";
+} from "./intervalCollection.js";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -299,7 +297,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
 			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
-			if (opArgs.stashed !== true && event.isLocal) {
+			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
 			this.emit("sequenceDelta", event, this);
@@ -429,6 +427,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of `ReferenceType`. To handle this case specifically, one may wish
+	 * to look at the segment returned by `ReferencePosition.getSegment`.
 	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this.client.localReferencePositionToPosition(lref);
@@ -473,7 +476,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 
 		this.inFlightRefSeqs.push(this.currentRefSeq);
-		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
+
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
 		);
@@ -482,9 +485,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		// local ops until loading is complete, and then
 		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
-			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
+			this.loadedDeferredOutgoingOps.push(metadata ? [message, metadata] : (message as any));
 		} else {
-			this.submitLocalMessage(translated, metadata);
+			this.submitLocalMessage(message, metadata);
 		}
 	}
 
@@ -792,14 +795,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: any): unknown {
-		this.inFlightRefSeqs.push(this.currentRefSeq);
-		const parsedContent = parseHandles(content, this.serializer);
-		const metadata =
-			this.intervalCollections.tryGetStashedOpLocalMetadata(parsedContent) ??
-			this.client.applyStashedOp(parsedContent);
-		assert(!!metadata, 0x87d /* Metadata is undefined */);
-		return metadata;
+	protected applyStashedOp(content: any): void {
+		if (!this.intervalCollections.tryApplyStashedOp(content)) {
+			this.client.applyStashedOp(content);
+		}
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -824,9 +823,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
-		const message = parseHandles(rawMessage, this.serializer);
-
+	/**
+	 *
+	 * @param message - Message with decoded and hydrated handles
+	 */
+	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {
 			ops.push(...SharedSegmentSequence.createOpsFromDelta(event));

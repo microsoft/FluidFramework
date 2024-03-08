@@ -672,23 +672,11 @@ use_old_ClassDeclaration_SharedDirectory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedMap": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedMap": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedMap():
-    TypeOnly<old.SharedMap>;
-declare function use_current_ClassDeclaration_SharedMap(
-    use: TypeOnly<current.SharedMap>): void;
-use_current_ClassDeclaration_SharedMap(
-    get_old_ClassDeclaration_SharedMap());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedMap": {"backCompat": false}
+* "RemovedClassDeclaration_SharedMap": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedMap():
-    TypeOnly<current.SharedMap>;
-declare function use_old_ClassDeclaration_SharedMap(
-    use: TypeOnly<old.SharedMap>): void;
-use_old_ClassDeclaration_SharedMap(
-    get_current_ClassDeclaration_SharedMap());

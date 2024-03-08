@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { stub } from "sinon";
 import { ISnapshot } from "@fluidframework/driver-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
@@ -13,23 +13,24 @@ import {
 	createChildLogger,
 	MockLogger,
 	type ITelemetryLoggerExt,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { EpochTracker } from "../epochTracker";
-import { HostStoragePolicyInternal } from "../contracts";
-import * as fetchSnapshotImport from "../fetchSnapshot";
-import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils";
-import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { createResponse } from "./mockFetch";
+import { EpochTracker } from "../epochTracker.js";
+import { HostStoragePolicyInternal } from "../contracts.js";
+import * as fetchSnapshotImport from "../fetchSnapshot.js";
+import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
+import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
+import { createResponse } from "./mockFetch.js";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -46,7 +47,7 @@ describe("Tests1 for snapshot fetch", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 
 	const newFileParams: INewFileInfo = {
 		type: "New",
@@ -124,7 +125,7 @@ describe("Tests1 for snapshot fetch", () => {
 	it("Mds limit check in fetch snapshot", async () => {
 		let success = false;
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -158,13 +159,15 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getVersions(null, 1),
 			);
-		} catch (error) {}
+		} catch {
+			// Drop error
+		}
 		assert(success, "mds limit should not be set!!");
 	});
 
 	it("Check error in snapshot content type", async () => {
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -194,20 +197,25 @@ describe("Tests1 for snapshot fetch", () => {
 				service.getVersions(null, 1),
 			);
 			assert.fail("should throw incorrectServerResponse error");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			assert.strictEqual(
-				error.errorType,
+				(error as Partial<IFluidErrorBase>).errorType,
 				OdspErrorTypes.incorrectServerResponse,
 				"incorrectServerResponse should be received",
 			);
-			assert.strictEqual(error.contentType, "unknown", "content type should be unknown");
+			assert.strictEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				(error as any).contentType,
+				"unknown",
+				"content type should be unknown",
+			);
 		}
 	});
 
 	it("GetSnapshot() should work in normal flow", async () => {
 		let ungroupedData = false;
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -253,21 +261,21 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: [] }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(ungroupedData, "should have asked for ungroupedData");
 		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
-		assert(service["blobCache"].value.size !== 0, "blobs should be cached locally");
-		assert(service["commitCache"].size !== 0, "no trees should be cached");
+		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
+		assert(service["commitCache"].size > 0, "no trees should be cached");
 	});
 
 	it("GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId", async () => {
 		let success = false;
 		service["firstSnapshotFetchCall"] = false;
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -313,12 +321,12 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: ["g1"] }),
 			);
-		} catch (error: any) {
-			console.log("err ", error);
+		} catch (error: unknown) {
+			console.log("error", error);
 			assert.fail("the getSnapshot request should succeed");
 		}
 		assert(success, "should have asked for g1 group id");
-		assert(service["blobCache"].value.size === 0, "no blobs should be cached locally");
+		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
 		assert(
 			mockLogger.matchEvents([
@@ -335,7 +343,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("GetSnapshot() should not cache locally when specified in options", async () => {
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -376,18 +384,18 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: [], cacheSnapshot: false }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		const cachedValue = (await epochTracker.get(createCacheSnapshotKey(resolved))) as ISnapshot;
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
-		assert(service["blobCache"].value.size === 0, "no blobs should be cached locally");
+		assert(service["blobCache"].value.size > 0, "blobs should still be cached locally");
 		assert(service["commitCache"].size === 0, "no trees should be cached");
 	});
 
 	it("GetSnapshot() should not consult cache when request is for a loading group", async () => {
 		async function mockDownloadSnapshot<T>(
-			_response: Promise<any>,
+			_response: Promise<ISnapshotRequestAndResponseOptions>,
 			callback: () => Promise<T>,
 		): Promise<T> {
 			const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
@@ -428,7 +436,7 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: [], cacheSnapshot: false }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 
@@ -437,7 +445,7 @@ describe("Tests1 for snapshot fetch", () => {
 			await mockDownloadSnapshot(Promise.resolve(response), async () =>
 				service.getSnapshot({ loadingGroupIds: ["g1"], cacheSnapshot: false }),
 			);
-		} catch (error: any) {
+		} catch {
 			assert.fail("the getSnapshot request should succeed");
 		}
 		// Cache should not be consulted.

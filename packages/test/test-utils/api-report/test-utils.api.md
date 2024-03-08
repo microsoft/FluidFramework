@@ -48,7 +48,7 @@ import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
@@ -79,6 +79,12 @@ export function createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidE
 
 // @internal
 export function createSummarizer(provider: ITestObjectProvider, container: IContainer, config?: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
+// @internal (undocumented)
+export function createSummarizerCore(container: IContainer, loader: IHostLoader, summaryVersion?: string): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -123,12 +129,12 @@ export const defaultTimeoutDurationMs = 250;
 export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
-    registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
+    registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
         expectedNotFound: ({
             index: number;
-            event: ITelemetryGenericEvent | undefined;
+            event: ITelemetryGenericEventExt | undefined;
         } | undefined)[];
         unexpectedErrors: ITelemetryBaseEvent[];
     };
@@ -204,7 +210,9 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 
 // @internal (undocumented)
 export interface ITestObjectProvider {
+    attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
     defaultCodeDetails: IFluidCodeDetails;
@@ -315,7 +323,9 @@ export class TestObjectProvider implements ITestObjectProvider {
     constructor(LoaderConstructor: typeof Loader,
     driver: ITestDriver,
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     get defaultCodeDetails(): IFluidCodeDetails;
@@ -339,7 +349,9 @@ export class TestObjectProvider implements ITestObjectProvider {
 // @internal
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
     constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    attachDetachedContainer(container: IContainer): Promise<void>;
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
     get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     get defaultCodeDetails(): IFluidCodeDetails;
@@ -387,13 +399,13 @@ export interface TimeoutWithValue<T = void> {
 // @internal
 export function waitForContainerConnection(container: IContainer, failOnContainerClose?: boolean, timeoutOptions?: TimeoutWithError): Promise<void>;
 
-// @internal
+// @internal @deprecated (undocumented)
 export function wrapDocumentService(innerDocService: IDocumentService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentService;
 
-// @internal
+// @internal @deprecated (undocumented)
 export function wrapDocumentServiceFactory(innerDocServiceFactory: IDocumentServiceFactory, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentServiceFactory;
 
-// @internal
+// @internal @deprecated (undocumented)
 export function wrapDocumentStorageService(innerDocStorageService: IDocumentStorageService, uploadSummaryCb: (summaryTree: ISummaryTree, context: ISummaryContext) => ISummaryContext): IDocumentStorageService;
 
 // (No @packageDocumentation comment for this package)

@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IOdspResolvedUrl,
@@ -20,19 +20,19 @@ import {
 	HostStoragePolicyInternal,
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
-} from "../contracts";
-import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache";
-import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils";
-import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
+} from "../contracts.js";
+import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache.js";
+import { createCacheSnapshotKey, INewFileInfo } from "../odspUtils.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
+import { mockFetchSingle, notFound, createResponse } from "./mockFetch.js";
 
-const createUtLocalCache = () => new LocalPersistentCache();
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
 describe("Tests for prefetching snapshot", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -217,7 +217,7 @@ describe("Tests for prefetching snapshot", () => {
 
 		it("prefetching snapshot should result in snapshot source as network if both cache and prefetch throws", async () => {
 			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
+			localCache.get = async (): Promise<void> => {
 				throw new Error("testing");
 			};
 
@@ -302,9 +302,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(method === "cache" || method === "network", "Source should be cache or network");
 		});
 
@@ -345,9 +345,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(
 				method === "cache" || method === "prefetched",
 				"Source should be cache or prefetched",
@@ -356,7 +356,7 @@ describe("Tests for prefetching snapshot", () => {
 
 		it("prefetching snapshot should result in epoch error if different from what is already present", async () => {
 			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
+			localCache.get = async (): Promise<void> => {
 				throw new Error("testing");
 			};
 			// Set epoch first
@@ -695,7 +695,7 @@ describe("Tests for prefetching snapshot", () => {
 
 		it("prefetching snapshot should result in snapshot source as network if both cache and prefetch throws", async () => {
 			// overwriting get() to make cache fetch throw
-			localCache.get = async () => {
+			localCache.get = async (): Promise<void> => {
 				throw new Error("testing");
 			};
 
@@ -788,9 +788,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(method === "cache" || method === "network", "Source should be cache or network");
 		});
 
@@ -836,9 +836,9 @@ describe("Tests for prefetching snapshot", () => {
 					.length === 1,
 				"1 Obtain snapshot event should be there",
 			);
-			const method = mockLogger.events.filter((event) =>
+			const method = mockLogger.events.find((event) =>
 				event.eventName.includes("ObtainSnapshot_end"),
-			)[0].method as string;
+			)?.method;
 			assert(
 				method === "cache" || method === "prefetched",
 				"Source should be cache or prefetched",

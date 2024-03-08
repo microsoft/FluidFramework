@@ -23,7 +23,7 @@ import {
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
-} from "../../revertibles";
+} from "../../revertibles.js";
 import {
 	FuzzTestState,
 	RevertOperation,
@@ -34,8 +34,8 @@ import {
 	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
-import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
+} from "./fuzzUtils.js";
+import { makeOperationGenerator } from "./intervalCollection.fuzz.spec.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 

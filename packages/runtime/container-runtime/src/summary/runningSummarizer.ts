@@ -15,9 +15,9 @@ import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/core-util
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryConfiguration } from "../containerRuntime";
-import { opSize } from "../opProperties";
-import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
+import { ISummaryConfiguration } from "../containerRuntime.js";
+import { opSize } from "../opProperties.js";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
 	IEnqueueSummarizeOptions,
 	ISummarizeOptions,
@@ -36,14 +36,14 @@ import {
 	IRefreshSummaryAckOptions,
 	ISummarizerEvents,
 	ISummarizeEventProps,
-} from "./summarizerTypes";
-import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
+} from "./summarizerTypes.js";
+import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
 	raceTimer,
 	SummarizeReason,
 	SummarizeResultBuilder,
 	SummaryGenerator,
-} from "./summaryGenerator";
+} from "./summaryGenerator.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 

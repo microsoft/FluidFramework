@@ -10,7 +10,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { SharedJson1, Json1Factory } from "..";
+import { SharedJson1, Json1Factory } from "../index.js";
 
 const createLocalOT = (id: string) => {
 	const factory = SharedJson1.getFactory();

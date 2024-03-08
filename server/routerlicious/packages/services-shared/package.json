@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-shared",
-	"version": "3.1.0",
+	"version": "5.0.0",
 	"description": "Fluid server shared services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,10 +78,10 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.28.0",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/server-services-shared-previous": "npm:@fluidframework/server-services-shared@2.0.0",
 		"@types/body-parser": "^1.19.2",
 		"@types/debug": "^4.1.5",
@@ -94,7 +94,7 @@
 		"axios": "^1.6.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.27.0",
+		"eslint": "~8.55.0",
 		"express": "^4.17.3",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",

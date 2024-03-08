@@ -12,7 +12,8 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISerializableValue, IValueChanged } from "../../interfaces";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -20,9 +21,9 @@ import {
 	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
 	MapLocalOpMetadata,
-} from "../../internalInterfaces";
-import { MapFactory, AttributableMap } from "../../map";
-import { IMapOperation } from "../../mapKernel";
+} from "../../internalInterfaces.js";
+import { MapFactory, AttributableMap } from "../../map.js";
+import { IMapOperation } from "../../mapKernel.js";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): TestMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -390,7 +391,7 @@ describe("Map", () => {
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
-				dataStoreRuntime1.local = false;
+				dataStoreRuntime1.setAttachState(AttachState.Attached);
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {

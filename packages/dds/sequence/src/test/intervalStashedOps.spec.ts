@@ -11,11 +11,12 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { IntervalType } from "@fluidframework/sequence-previous";
-import { IntervalOpType, SequenceInterval } from "../intervals";
-import { IIntervalCollection } from "../intervalCollection";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IMapValueTypeOperation } from "../defaultMap";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { IMapValueTypeOperation } from "../defaultMap.js";
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -61,7 +62,7 @@ describe("Interval Stashed Ops on client ", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -105,7 +106,7 @@ describe("Interval Stashed Ops on client ", () => {
 				},
 			};
 
-			const metadata = sharedString["applyStashedOp"](opArgs);
+			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [
 				{ start: 0, end: 5 },
 				{ start: 5, end: 10 },

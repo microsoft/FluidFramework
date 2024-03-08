@@ -27,13 +27,13 @@ import {
 	type LoadableObjectClassRecord,
 	type LoadableObjectRecord,
 	type SharedObjectClass,
-} from "./types";
+} from "./types.js";
 import {
 	type InternalDataObjectClass,
 	isDataObjectClass,
 	isSharedObjectClass,
 	parseDataObjectsFromSharedObjects,
-} from "./utils";
+} from "./utils.js";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -231,7 +231,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				// resolution progress is tracked by the Feature 465 work item in AzDO
 				flushMode: FlushMode.Immediate,
 				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: true,
+				enableRuntimeIdCompressor: "on",
 			},
 			provideEntryPoint,
 		});

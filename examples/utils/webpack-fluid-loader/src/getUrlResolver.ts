@@ -6,10 +6,11 @@
 import { LocalResolver } from "@fluidframework/local-driver";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { assert } from "@fluidframework/core-utils";
-import { ITinyliciousRouteOptions, RouteOptions } from "./loader";
-import { OdspUrlResolver } from "./odspUrlResolver";
+import { ITinyliciousRouteOptions, RouteOptions } from "./loader.js";
+import { OdspUrlResolver } from "./odspUrlResolver.js";
 
 const dockerUrls = {
+	deltaStreamUrl: "http://localhost:3002",
 	hostUrl: "http://localhost:3000",
 	ordererUrl: "http://localhost:3003",
 	storageUrl: "http://localhost:3001",
@@ -21,6 +22,7 @@ export const tinyliciousUrls = (options: ITinyliciousRouteOptions) => {
 	const port = options.tinyliciousPort ?? defaultTinyliciousPort;
 
 	return {
+		deltaStreamUrl: `http://localhost:${port}`,
 		hostUrl: `http://localhost:${port}`,
 		ordererUrl: `http://localhost:${port}`,
 		storageUrl: `http://localhost:${port}`,
@@ -37,6 +39,7 @@ export function getUrlResolver(
 				dockerUrls.hostUrl,
 				dockerUrls.ordererUrl,
 				dockerUrls.storageUrl,
+				dockerUrls.deltaStreamUrl,
 				options.tenantId,
 				options.bearerSecret ?? "",
 			);
@@ -52,6 +55,7 @@ export function getUrlResolver(
 					"",
 					options.discoveryEndpoint,
 					"https://dummy-historian",
+					"", // deltaStreamUrl
 					options.tenantId,
 					options.bearerSecret ?? "",
 				);
@@ -62,6 +66,7 @@ export function getUrlResolver(
 				fluidHost,
 				fluidHost.replace("www", "alfred"),
 				fluidHost.replace("www", "historian"),
+				fluidHost.replace("www", "nexus"),
 				options.tenantId,
 				options.bearerSecret ?? "",
 			);
@@ -71,6 +76,7 @@ export function getUrlResolver(
 				urls.hostUrl,
 				urls.ordererUrl,
 				urls.storageUrl,
+				urls.deltaStreamUrl,
 				"tinylicious",
 				options.bearerSecret ?? "",
 			);

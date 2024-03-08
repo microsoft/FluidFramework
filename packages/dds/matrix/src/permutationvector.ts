@@ -26,10 +26,10 @@ import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { HandleTable, Handle, isHandleValid } from "./handletable";
-import { deserializeBlob } from "./serialization";
-import { HandleCache } from "./handlecache";
-import { VectorUndoProvider } from "./undoprovider";
+import { HandleTable, Handle, isHandleValid } from "./handletable.js";
+import { deserializeBlob } from "./serialization.js";
+import { HandleCache } from "./handlecache.js";
+import { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	segments = "segments",
@@ -191,7 +191,10 @@ export class PermutationVector extends Client {
 		return handle;
 	}
 
-	public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+	public adjustPosition(
+		pos: number,
+		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
+	) {
 		const { segment, offset } = this.getContainingSegment(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,

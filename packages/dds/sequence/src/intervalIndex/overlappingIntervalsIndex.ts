@@ -11,11 +11,11 @@ import {
 	ISerializableInterval,
 	sequenceIntervalHelpers,
 	SequenceInterval,
-} from "../intervals";
-import { IntervalNode, IntervalTree } from "../intervalTree";
-import { SharedString } from "../sharedString";
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
-import { IntervalIndex } from "./intervalIndex";
+} from "../intervals/index.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
+import { SharedString } from "../sharedString.js";
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @alpha
@@ -147,7 +147,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		if (
 			startPos === undefined ||
 			endPos === undefined ||
-			endPos < startPos ||
+			(typeof startPos === "number" && typeof endPos === "number" && endPos < startPos) ||
+			(startPos === "end" && endPos !== "end") ||
+			(startPos !== "start" && endPos === "start") ||
 			this.intervalTree.intervals.isEmpty()
 		) {
 			return [];

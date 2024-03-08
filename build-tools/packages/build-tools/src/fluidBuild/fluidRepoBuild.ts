@@ -4,7 +4,7 @@
  */
 import * as path from "path";
 import chalk from "chalk";
-import { FluidRepo } from "../common/fluidRepo";
+import { FluidRepo, IFluidBuildConfig } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
@@ -32,8 +32,17 @@ export interface IPackageMatchedOptions {
 }
 
 export class FluidRepoBuild extends FluidRepo {
-	constructor(resolvedRoot: string) {
-		super(resolvedRoot);
+	public static create(resolvedRoot: string) {
+		// Default to just resolveRoot if no config is found
+		const packageManifest = getFluidBuildConfig(resolvedRoot) ?? {
+			repoPackages: {
+				root: "",
+			},
+		};
+		return new FluidRepoBuild(resolvedRoot, packageManifest);
+	}
+	private constructor(resolvedRoot: string, packageManifest: IFluidBuildConfig) {
+		super(resolvedRoot, packageManifest);
 	}
 
 	public async clean() {
@@ -170,9 +179,7 @@ export class FluidRepoBuild extends FluidRepo {
 		for (const releaseGroup of this.releaseGroups.values()) {
 			if (isSameFileOrDir(releaseGroup.repoPath, pkgDir)) {
 				log(
-					`Release group ${chalk.cyanBright(
-						releaseGroup.kind,
-					)} matched (directory: ${dir})`,
+					`Release group ${chalk.cyanBright(releaseGroup.kind)} matched (directory: ${dir})`,
 				);
 				this.setMatchedReleaseGroup(releaseGroup);
 				return;
