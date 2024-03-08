@@ -26,7 +26,7 @@ module.exports = (env) => {
 						},
 						{
 							loader: require.resolve("svgo-loader"),
-							options: require("./svgo.plugins.js"),
+							options: require("./svgo.plugins.cjs"),
 						},
 					],
 				},

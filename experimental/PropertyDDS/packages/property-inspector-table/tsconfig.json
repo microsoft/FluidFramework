@@ -4,6 +4,8 @@
 		"resolveJsonModule": true,
 		"typeRoots": ["../node_modules/@types"],
 		"outDir": "./lib",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
 	},
 	"exclude": ["dist", "node_modules"],
 	"include": ["src/**/*", "assets/**/*", "custom.d.ts"],
