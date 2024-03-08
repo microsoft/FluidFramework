@@ -1,5 +1,5 @@
 ---
-"@fluid-experimental/react-inputs": major
+"@fluid-experimental/react-inputs": minor
 ---
 
 @fluid-experimental/react-inputs removed
