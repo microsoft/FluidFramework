@@ -903,6 +903,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		});
 
 		const interval = collection.add({ start: 2, end: 4 });
+		const id = interval.getIntervalId();
 
 		sharedString.removeRange(0, 6);
 
@@ -914,15 +915,17 @@ describe("Undo/redo for string remove containing intervals", () => {
 		assert.equal(revertibles.length, 1, "revertibles.length is not 1");
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
+		const updatedInterval = collection.getIntervalById(id);
+		assert(updatedInterval !== undefined, "updatedInterval is undefined");
 		assert.equal(sharedString.getText(), "hello world");
 		assertSequenceIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
 		assert.equal(
-			interval.start.getOffset(),
+			updatedInterval.start.getOffset(),
 			2,
 			`after remove start.getOffset() is ${interval.start.getOffset()}`,
 		);
 		assert.equal(
-			interval.end.getOffset(),
+			updatedInterval.end.getOffset(),
 			4,
 			`after remove start.getOffset() is ${interval.end.getOffset()}`,
 		);
