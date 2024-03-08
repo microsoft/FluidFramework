@@ -680,7 +680,9 @@ export class ScribeLambda implements IPartitionLambda {
 	}
 
 	private async writeCheckpoint(checkpoint: IScribe) {
-		const inserts = this.pendingCheckpointMessages.toArray().filter(pcm=>pcm.operation.sequenceNumber > this.lastCheckpointInsertedNumber);
+		const inserts = this.pendingCheckpointMessages
+			.toArray()
+			.filter((pcm) => pcm.operation.sequenceNumber > this.lastCheckpointInsertedNumber);
 		await this.checkpointManager.write(
 			checkpoint,
 			this.protocolHead,
@@ -694,13 +696,16 @@ export class ScribeLambda implements IPartitionLambda {
 			// 1. For client summary, we can cap these pending ops to the last protocol head
 			// 2. For service summary, given the logtail is appended and protocol head not advance, we should still keep these
 			//    pending ops to reduce db/alfred call to fetch ops, but should cap to a maxtlogtail limit to avoid memory leak.;
-			this.lastCheckpointInsertedNumber = inserts[inserts.length - 1].operation.sequenceNumber;
-			const cappedNumber = Math.max(this.protocolHead, this.lastCheckpointInsertedNumber - this.maxLogtailLength);
+			this.lastCheckpointInsertedNumber =
+				inserts[inserts.length - 1].operation.sequenceNumber;
+			const cappedNumber = Math.max(
+				this.protocolHead,
+				this.lastCheckpointInsertedNumber - this.maxLogtailLength,
+			);
 			while (
 				this.pendingCheckpointMessages.length > 0 &&
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingCheckpointMessages.peekFront()!.operation.sequenceNumber <=
-				cappedNumber
+				this.pendingCheckpointMessages.peekFront()!.operation.sequenceNumber <= cappedNumber
 			) {
 				this.pendingCheckpointMessages.removeFront();
 			}
