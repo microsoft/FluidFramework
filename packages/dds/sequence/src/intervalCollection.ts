@@ -36,7 +36,7 @@ import {
 	IValueOperation,
 	IValueType,
 	SequenceOptions,
-} from "./defaultMapInterfaces.js";
+} from "./intervalCollectionMapInterfaces.js";
 import {
 	CompressedSerializedInterval,
 	IIntervalHelpers,

@@ -10,7 +10,7 @@ import {
 	ISerializedValue,
 	IValueOperation,
 	IValueType,
-} from "./defaultMapInterfaces.js";
+} from "./intervalCollectionMapInterfaces.js";
 import { IntervalOpType, type ISerializableInterval } from "./intervals/index.js";
 import type { IntervalCollection } from "./intervalCollection.js";
 

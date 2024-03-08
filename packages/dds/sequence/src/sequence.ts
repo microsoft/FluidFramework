@@ -50,8 +50,8 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./defaultMap.js";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces.js";
+import { DefaultMap, IMapOperation } from "./intervalCollectionMap.js";
+import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
 import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";

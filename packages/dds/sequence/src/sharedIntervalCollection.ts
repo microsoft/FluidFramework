@@ -20,9 +20,9 @@ import {
 } from "@fluidframework/shared-object-base";
 import { Interval, ISerializableInterval } from "./intervals/index.js";
 import { IIntervalCollection, IntervalCollectionValueType } from "./intervalCollection.js";
-import { DefaultMap, IMapOperation } from "./defaultMap.js";
+import { DefaultMap, IMapOperation } from "./intervalCollectionMap.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IMapMessageLocalMetadata } from "./defaultMapInterfaces.js";
+import { IMapMessageLocalMetadata } from "./intervalCollectionMapInterfaces.js";
 
 const snapshotFileName = "header";
 

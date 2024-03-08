@@ -10,13 +10,13 @@ import {
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { Client } from "@fluidframework/merge-tree";
-import { DefaultMap } from "../defaultMap.js";
+import { DefaultMap } from "../intervalCollectionMap.js";
 import {
 	IValueFactory,
 	IValueOpEmitter,
 	IValueType,
 	IValueOperation,
-} from "../defaultMapInterfaces.js";
+} from "../intervalCollectionMapInterfaces.js";
 import {
 	IntervalCollection,
 	ISerializedIntervalCollectionV2,

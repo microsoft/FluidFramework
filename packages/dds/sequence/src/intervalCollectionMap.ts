@@ -19,7 +19,7 @@ import {
 	IMapMessageLocalMetadata,
 	SequenceOptions,
 	IValueTypeOperationValue,
-} from "./defaultMapInterfaces.js";
+} from "./intervalCollectionMapInterfaces.js";
 import {
 	SerializedIntervalDelta,
 	IntervalDeltaOpType,
