@@ -89,15 +89,18 @@ export const treeApi: TreeApi = {
 
 function runTransaction(checkout: TreeCheckout, transaction: () => void | "rollback"): void {
 	checkout.transaction.start();
+	let result: void | "rollback";
 	try {
-		if (transaction() === "rollback") {
-			checkout.transaction.abort();
-		} else {
-			checkout.transaction.commit();
-		}
+		result = transaction();
 	} catch (e) {
 		// If the transaction has an unhandled error, abort and rollback the transaction but continue to propagate the error.
 		checkout.transaction.abort();
 		throw e;
+	}
+
+	if (result === "rollback") {
+		checkout.transaction.abort();
+	} else {
+		checkout.transaction.commit();
 	}
 }
