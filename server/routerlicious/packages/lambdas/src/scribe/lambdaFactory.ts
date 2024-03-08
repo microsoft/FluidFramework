@@ -327,6 +327,7 @@ export class ScribeLambdaFactory
 			this.kafkaCheckpointOnReprocessingOp,
 			document.isEphemeralContainer ?? false,
 			this.checkpointService.getLocalCheckpointEnabled(),
+			this.maxLogtailLength,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {
