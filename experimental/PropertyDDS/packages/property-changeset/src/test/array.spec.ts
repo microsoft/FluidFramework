@@ -7,10 +7,10 @@
  * @fileoverview Tests for the array changeset operations
  */
 
-import isEmpty from "lodash/isEmpty";
-import isNumber from "lodash/isNumber";
+import isEmpty from "lodash/isEmpty.js";
+import isNumber from "lodash/isNumber.js";
 import { copy as cloneDeep } from "fastest-json-copy";
-import range from "lodash/range";
+import range from "lodash/range.js";
 
 import { expect, assert } from "chai";
 import { ChangeSet, SerializedChangeSet } from "../changeset.js";
@@ -673,14 +673,14 @@ describe("Array Operations", function () {
 							"array<Float64>",
 						);
 
-						let initialInserts = [];
-						let finalInserts = [];
-						if (additionalInserts === " with insert at the beginning") {
-							initialInserts = [[0, generateNamedEntities(2, undefined, "number")]];
-						}
-						if (additionalInserts === " with insert at the end") {
-							finalInserts = [[10, generateNamedEntities(2, undefined, "number")]];
-						}
+						const initialInserts =
+							additionalInserts === " with insert at the beginning"
+								? [[0, generateNamedEntities(2, undefined, "number")]]
+								: [];
+						const finalInserts =
+							additionalInserts === " with insert at the end"
+								? [[10, generateNamedEntities(2, undefined, "number")]]
+								: [];
 						const ops = [
 							createArrayCS(
 								{
@@ -932,7 +932,7 @@ describe("Array Operations", function () {
 				for (const removeInsertA of [true, false]) {
 					for (const removeInsertB of [true, false]) {
 						for (const removeInsideInsertB of ["adjacent", "separate", false]) {
-							const insertNames = [];
+							const insertNames: string[] = [];
 							if (startInsertA) {
 								insertNames.push("at start of A");
 							}
@@ -956,8 +956,14 @@ describe("Array Operations", function () {
 									? "no inserts"
 									: `inserts ${insertNames.join(", ")}`;
 							it(title, () => {
-								const insertsA = [];
-								const insertsB = [];
+								const insertsA: (
+									| [number, ReturnType<typeof generateNamedEntities>]
+									| never
+								)[] = [];
+								const insertsB: (
+									| [number, ReturnType<typeof generateNamedEntities>]
+									| never
+								)[] = [];
 								let offset = 0;
 								if (startInsertA) {
 									insertsA.push([0, generateNamedEntities(1)]);

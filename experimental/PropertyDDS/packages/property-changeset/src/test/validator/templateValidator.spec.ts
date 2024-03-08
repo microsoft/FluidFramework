@@ -10,12 +10,14 @@
  */
 
 import { expect } from "chai";
+
+import { constants } from "@fluid-experimental/property-common";
+import semver from "semver";
 import { SchemaValidator } from "../schemaValidator.js";
 import { TemplateValidator } from "../../templateValidator.js";
 
 (function () {
-	let MSG = require("@fluid-experimental/property-common").constants.MSG;
-	let semver = require("semver");
+	const MSG = constants.MSG;
 
 	const performValidation = function (
 		async,

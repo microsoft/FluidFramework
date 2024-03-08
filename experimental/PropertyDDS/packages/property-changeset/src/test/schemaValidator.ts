@@ -18,7 +18,7 @@ export class SchemaValidator {
 	inheritsFrom(
 		in_templateTypeid: any,
 		in_baseTypeid: string | number,
-		in_options: { includeSelf?: any },
+		in_options?: { includeSelf?: any },
 	) {
 		in_options = in_options || {};
 
@@ -44,8 +44,8 @@ export class SchemaValidator {
 	}
 
 	async inheritsFromAsync(child, ancestor) {
-		return new Promise(function (resolve, reject) {
-			setTimeout(function () {
+		return new Promise((resolve, reject) => {
+			setTimeout(() => {
 				try {
 					resolve(this.inheritsFrom(child, ancestor));
 				} catch (error) {
@@ -57,8 +57,8 @@ export class SchemaValidator {
 	}
 
 	hasSchemaAsync = async (typeid) =>
-		new Promise(function (resolve, reject) {
-			setTimeout(function () {
+		new Promise((resolve, reject) => {
+			setTimeout(() => {
 				resolve(this.schemaMap[typeid] !== undefined);
 			}, 5);
 		});

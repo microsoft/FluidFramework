@@ -13,9 +13,6 @@
 
 /* eslint-disable jsdoc/check-line-alignment */
 
-import Ajv from "ajv";
-import ajvKeywords from "ajv-keywords";
-
 import each from "lodash/each.js";
 import isEqual from "lodash/isEqual.js";
 import every from "lodash/every.js";
@@ -34,21 +31,13 @@ import { gt, diff, major, valid, compare } from "semver";
 import traverse from "traverse";
 import { queue } from "async";
 
-// @ts-ignore
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
+import { ajvFactory } from "./ajvFactory.cjs";
 import { TemplateSchema } from "./templateSchema.js";
 import { TypeIdHelper } from "./helpers/typeidHelper.js";
 import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
 
 const { MSG } = constants;
-
-const ajvFactory = new Ajv({
-	allErrors: true,
-	verbose: true,
-});
-
-ajvKeywords(ajvFactory, "prohibited");
-ajvKeywords(ajvFactory, "typeof");
 
 const _syntaxValidator = ajvFactory.compile(TemplateSchema);
 
@@ -830,6 +819,7 @@ const _processValidationResults = function (in_template: PropertySchema) {
 			switch (error.keyword) {
 				case "pattern":
 					if (error.instancePath === ".typeid") {
+						// eslint-disable-next-line @typescript-eslint/no-base-to-string
 						error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data} does not match that pattern`;
 					} else if ("pattern" && regexTypeId.test(error.instancePath)) {
 						error.message =
@@ -839,6 +829,7 @@ const _processValidationResults = function (in_template: PropertySchema) {
 								  `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
 								  `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
 								  `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
+								  // eslint-disable-next-line @typescript-eslint/no-base-to-string
 								  `RelationshipProperty). '${error.data}' is not valid`;
 					}
 					break;
@@ -846,10 +837,12 @@ const _processValidationResults = function (in_template: PropertySchema) {
 				case "enum":
 					error.message = regexTypeId.test(error.instancePath)
 						? ""
-						: `${error.instancePath} should match one of the following: ${error.schema}`;
+						: // eslint-disable-next-line @typescript-eslint/no-base-to-string
+						  `${error.instancePath} should match one of the following: ${error.schema}`;
 					break;
 
 				case "type":
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					error.message = `${error.instancePath} should be a ${error.schema}`;
 					break;
 
