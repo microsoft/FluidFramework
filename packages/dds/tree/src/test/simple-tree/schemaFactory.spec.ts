@@ -83,7 +83,7 @@ import { hydrate } from "./utils.js";
 	}
 }
 
-describe("schemaFactory", () => {
+describe.only("schemaFactory", () => {
 	it("leaf", () => {
 		const schema = new SchemaFactory("com.example");
 

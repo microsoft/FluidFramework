@@ -47,7 +47,12 @@ import {
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
+import {
+	cursorFromFieldData,
+	cursorFromNodeData,
+	normalizeFieldSchema,
+	type NormalizedFieldSchema,
+} from "./toMapTree.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { getClassSchema, getClassSchemaOrFail } from "./classSchemaCaching.js";
@@ -208,17 +213,17 @@ export function createObjectProxy(
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
 
 			const flexKey = getFlexObjectKey(key as FieldKey, schema);
-			const fieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
+			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(flexKey);
 
 			// TODO: document this
-			if (fieldSchema === undefined) {
+			if (flexFieldSchema === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
 			}
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
 			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 			assert(typeof key === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, flexKey, fieldSchema);
+			const field = getBoxedField(flexNode, flexKey, flexFieldSchema);
 
 			switch (field.schema.kind) {
 				case FieldKinds.required:
@@ -228,7 +233,9 @@ export function createObjectProxy(
 						| FlexTreeOptionalField<FlexAllowedTypes>;
 
 					const { content, hydrateProxies } = extractFactoryContent(value);
-					const cursor = cursorFromNodeData(content, schema);
+
+					const classFieldSchema = getObjectFieldSchema(key, schema);
+					const cursor = cursorFromNodeData(content, classFieldSchema.allowedTypes);
 					modifyChildren(
 						flexNode,
 						() => {
@@ -281,6 +288,22 @@ export function createObjectProxy(
 		},
 	}) as TreeNode;
 	return proxy;
+}
+
+/**
+ * TODO
+ * @param simpleKey - TODO
+ * @param classSchema - TODO
+ */
+function getObjectFieldSchema(
+	simpleKey: string,
+	classSchema: TreeNodeSchema,
+): NormalizedFieldSchema {
+	const fields = classSchema.info as Record<string, ImplicitFieldSchema>;
+	if (fields[simpleKey] === undefined) {
+		fail(`Field key '${simpleKey}' not found in schema.`);
+	}
+	return normalizeFieldSchema(fields[simpleKey]);
 }
 
 /**

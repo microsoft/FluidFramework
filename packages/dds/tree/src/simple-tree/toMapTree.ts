@@ -130,7 +130,7 @@ export function nodeDataToMapTree(data: InsertableContent, nodeSchema: AllowedTy
  */
 export function fieldDataToMapTrees(
 	data: InsertableTreeField,
-	fieldSchema: FieldAttributes,
+	fieldSchema: NormalizedFieldSchema,
 ): MapTree | undefined {
 	if (data === undefined) {
 		if (fieldSchema.kind === FieldKind.Required) {
@@ -206,7 +206,7 @@ function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTr
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
-	const childFieldSchema: FieldAttributes = {
+	const childFieldSchema: NormalizedFieldSchema = {
 		kind: FieldKind.Required,
 		allowedTypes: allowedChildTypes,
 	};
@@ -248,7 +248,7 @@ function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedType
 	}
 
 	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
-	const childFieldSchema: FieldAttributes = {
+	const childFieldSchema: NormalizedFieldSchema = {
 		kind: FieldKind.Required,
 		allowedTypes: allowedChildTypes,
 	};
@@ -310,7 +310,7 @@ function objectToMapTree(
 	};
 }
 
-function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldAttributes {
+function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): NormalizedFieldSchema {
 	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 	if (fields[key] === undefined) {
@@ -379,7 +379,7 @@ function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
 	return isReadonlyArray(types) ? types : [types];
 }
 
-interface FieldAttributes {
+export interface NormalizedFieldSchema {
 	kind: FieldKind;
 	allowedTypes: AllowedTypes;
 }
@@ -387,7 +387,7 @@ interface FieldAttributes {
 /**
  * TODO
  */
-function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldAttributes {
+export function normalizeFieldSchema(schema: ImplicitFieldSchema): NormalizedFieldSchema {
 	let kind: FieldKind;
 	let allowedTypes: ImplicitAllowedTypes;
 	if (schema instanceof FieldSchema) {
