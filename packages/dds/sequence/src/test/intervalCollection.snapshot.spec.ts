@@ -11,11 +11,11 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+import { SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
