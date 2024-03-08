@@ -1,7 +1,8 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"extends": "../../../common/build/build-common/tsconfig.base.json",
 	"compilerOptions": {
-		"target": "es6",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
 		"outDir": "./lib",
 		"types": [
 			"jest",
