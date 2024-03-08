@@ -76,7 +76,7 @@ export function cursorFromFieldData(
 	fieldSchema: ImplicitFieldSchema,
 ): CursorWithNode<MapTree> {
 	const mappedContent = fieldDataToMapTrees(data, normalizeFieldSchema(fieldSchema));
-	return cursorForMapTreeField(mappedContent);
+	return cursorForMapTreeField(mappedContent === undefined ? [] : [mappedContent]);
 }
 
 /**
@@ -123,46 +123,24 @@ export function nodeDataToMapTree(data: InsertableContent, nodeSchema: AllowedTy
 }
 
 /**
- * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s.
+ * Transforms an input {@link TreeField} tree to a {@link MapTree}, unless the s.
  * @param data - The input tree to be converted.
- * If the input is a sequence containing 1 or more `undefined` values, those values will be mapped as `null` if supported.
- * Otherwise, an error will be thrown.
  * @param allowedTypes - TODO
  * @param optionalField - TODO
  */
 export function fieldDataToMapTrees(
 	data: InsertableTreeField,
 	fieldSchema: FieldAttributes,
-): MapTree[] {
+): MapTree | undefined {
 	if (data === undefined) {
 		if (fieldSchema.kind === FieldKind.Required) {
 			fail("`undefined` provided for a required field.");
 		} else {
-			return [];
+			return undefined;
 		}
 	}
 
-	// TODO: this should only return a single MapTree node.
-	// Special array handling should occur in `arrayToMapNode`.
-
-	if (isReadonlyArray(data)) {
-		const children = Array.from(data, (child) => {
-			// We do not support undefined sequence entries.
-			// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
-			let childWithFallback = child;
-			if (child === undefined) {
-				if (fieldSchema.allowedTypes.includes(nullSchema)) {
-					childWithFallback = null;
-				} else {
-					throw new TypeError(`Received unsupported array entry value: ${child}.`);
-				}
-			}
-			return nodeDataToMapTree(childWithFallback, fieldSchema.allowedTypes);
-		});
-		return children;
-	} else {
-		return [nodeDataToMapTree(data, fieldSchema.allowedTypes)];
-	}
+	return nodeDataToMapTree(data, fieldSchema.allowedTypes);
 }
 
 function valueToMapTree(
@@ -233,7 +211,24 @@ function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTr
 		allowedTypes: allowedChildTypes,
 	};
 
-	const mappedChildren = fieldDataToMapTrees(data, childFieldSchema);
+	const mappedChildren: MapTree[] = [];
+	for (const child of data) {
+		// We do not support undefined sequence entries.
+		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
+		let childWithFallback = child;
+		if (child === undefined) {
+			if (childFieldSchema.allowedTypes.includes(nullSchema)) {
+				childWithFallback = null;
+			} else {
+				throw new TypeError(`Received unsupported array entry value: ${child}.`);
+			}
+		}
+		const mappedChild = fieldDataToMapTrees(childWithFallback, childFieldSchema);
+		if (mappedChild !== undefined) {
+			mappedChildren.push(mappedChild);
+		}
+	}
+
 	const fieldsEntries: [FieldKey, MapTree[]][] =
 		mappedChildren.length === 0 ? [] : [[EmptyKey, mappedChildren]];
 
@@ -265,7 +260,10 @@ function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedType
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
 			const mappedField = fieldDataToMapTrees(value, childFieldSchema);
-			fields.set(brand(key), mappedField);
+			// TODO: verify this
+			if (mappedField !== undefined) {
+				fields.set(brand(key), [mappedField]);
+			}
 		}
 	}
 	return {
@@ -299,7 +297,10 @@ function objectToMapTree(
 
 			// TODO: use stableName when provided
 
-			fields.set(key, mappedChildTree);
+			// TODO: verify this
+			if (mappedChildTree !== undefined) {
+				fields.set(key, [mappedChildTree]);
+			}
 		}
 	}
 
