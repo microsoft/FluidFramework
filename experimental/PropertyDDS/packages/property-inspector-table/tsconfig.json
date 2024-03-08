@@ -8,5 +8,5 @@
 		"moduleResolution": "Bundler",
 	},
 	"exclude": ["dist", "node_modules"],
-	"include": ["src/**/*", "assets/**/*", "custom.d.ts"],
+	"include": ["src/**/*", "assets/**/*", "custom.d.ts", "test/**/*"],
 }
