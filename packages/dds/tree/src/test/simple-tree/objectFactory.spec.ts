@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { extractFactoryContent } from "../../simple-tree/proxies.js";
 import {
 	SchemaFactory,
-	Tree,
+	simpleTreeApi as Tree,
 	InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";

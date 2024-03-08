@@ -253,6 +253,8 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	Tree,
+	TreeApi,
 } from "./shared-tree/index.js";
 
 export {
@@ -268,8 +270,7 @@ export {
 	TreeViewEvents,
 	SchemaFactory,
 	type ScopedSchemaName,
-	Tree,
-	TreeApi,
+	SimpleTreeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
