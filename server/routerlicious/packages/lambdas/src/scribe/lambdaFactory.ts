@@ -89,6 +89,7 @@ export class ScribeLambdaFactory
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly maxLogtailLength: number,
+		private readonly maxPendingCheckpointMessagesLength: number,
 	) {
 		super();
 	}
@@ -327,7 +328,7 @@ export class ScribeLambdaFactory
 			this.kafkaCheckpointOnReprocessingOp,
 			document.isEphemeralContainer ?? false,
 			this.checkpointService.getLocalCheckpointEnabled(),
-			this.maxLogtailLength,
+			this.maxPendingCheckpointMessagesLength,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

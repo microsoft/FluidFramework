@@ -116,7 +116,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly isEphemeralContainer: boolean,
 		private readonly localCheckpointEnabled: boolean,
-		private readonly maxLogtailLength: number,
+		private readonly maxPendingCheckpointMessagesLength: number,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -700,7 +700,7 @@ export class ScribeLambda implements IPartitionLambda {
 				inserts[inserts.length - 1].operation.sequenceNumber;
 			const cappedNumber = Math.max(
 				this.protocolHead,
-				this.lastCheckpointInsertedNumber - this.maxLogtailLength,
+				this.lastCheckpointInsertedNumber - this.maxPendingCheckpointMessagesLength,
 			);
 			while (
 				this.pendingCheckpointMessages.length > 0 &&
