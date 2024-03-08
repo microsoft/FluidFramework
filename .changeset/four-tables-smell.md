@@ -7,6 +7,6 @@
 "@fluidframework/odsp-driver": minor
 ---
 
-Deprecate `ISnapshotContents`
+driver-definitions: Deprecate `ISnapshotContents`
 
 `ISnapshotContents` is deprecated. It has been replaced with `ISnapshot`.

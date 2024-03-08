@@ -3,56 +3,55 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	AttributionInfo,
 	AttributionKey,
 	DetachedAttributionKey,
 	LocalAttributionKey,
 	OpAttributionKey,
-} from "./attribution";
-export {
+} from "./attribution.js";
+export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
-	FlushMode,
-	FlushModeExperimental,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
+	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreContextEvents,
-	VisibilityState,
-} from "./dataStoreContext";
-export { IFluidDataStoreFactory, IProvideFluidDataStoreFactory } from "./dataStoreFactory";
-export {
+} from "./dataStoreContext.js";
+export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
+export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+export { IFluidDataStoreFactory } from "./dataStoreFactory.js";
+export type {
 	FluidDataStoreRegistryEntry,
-	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
-} from "./dataStoreRegistry";
+} from "./dataStoreRegistry.js";
+export { IFluidDataStoreRegistry } from "./dataStoreRegistry.js";
+export type {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollectionDefinitions.js";
 export {
 	gcBlobPrefix,
 	gcDataBlobKey,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
-} from "./garbageCollectionDefinitions";
-export {
+} from "./garbageCollectionDefinitions.js";
+export type {
 	IAttachMessage,
 	IEnvelope,
 	IInboundSignalMessage,
 	InboundAttachMessage,
 	ISignalEnvelope,
-} from "./protocol";
-export {
-	blobCountPropertyName,
-	channelsTreeName,
+} from "./protocol.js";
+export type {
 	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
 	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
@@ -64,5 +63,10 @@ export {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
+} from "./summary.js";
+export {
+	blobCountPropertyName,
+	channelsTreeName,
+	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
-} from "./summary";
+} from "./summary.js";

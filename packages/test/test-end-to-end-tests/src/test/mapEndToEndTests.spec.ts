@@ -589,10 +589,9 @@ describeCompat(
 
 		it("addChannel should add the channel successfully to the runtime", async () => {
 			// Create a new map in local (detached) state.
-			const newSharedMap1 = new SharedMap(
-				"newSharedMapId",
+			const newSharedMap1 = SharedMap.getFactory().create(
 				dataObject1.runtime,
-				SharedMap.getFactory().attributes,
+				"newSharedMapId",
 			);
 
 			// Set a value while in local state.
@@ -615,10 +614,9 @@ describeCompat(
 
 		it("should create error when channel created with different runtime is added to different runtime", async () => {
 			// Create a new map in local (detached) state.
-			const newSharedMap1 = new SharedMap(
-				"newSharedMapId",
+			const newSharedMap1 = SharedMap.getFactory().create(
 				dataObject1.runtime,
-				SharedMap.getFactory().attributes,
+				"newSharedMapId",
 			);
 
 			// Set a value while in local state.

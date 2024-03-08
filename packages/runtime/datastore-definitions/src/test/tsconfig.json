@@ -1,18 +1,15 @@
 {
-	"extends": [
-		"../../../../../common/build/build-common/tsconfig.base.json",
-		"../../../../../common/build/build-common/tsconfig.esm-only.json",
-	],
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": [],
+		"noEmit": true,
+	},
 	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
 		},
 	],
-	"compilerOptions": {
-		"rootDir": "./",
-		"outDir": "../../dist/test",
-		"types": [],
-		"noEmit": true,
-	},
 }

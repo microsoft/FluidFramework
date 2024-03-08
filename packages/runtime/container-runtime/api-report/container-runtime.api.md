@@ -4,13 +4,12 @@
 
 ```ts
 
-import { assertIsStableId } from '@fluidframework/id-compressor';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
-import { generateStableId } from '@fluidframework/id-compressor';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
@@ -25,7 +24,10 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
@@ -41,7 +43,7 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
-import { isStableId } from '@fluidframework/id-compressor';
+import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
@@ -52,6 +54,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
+import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal
@@ -63,7 +66,18 @@ export const AllowInactiveRequestHeaderKey = "allowInactive";
 // @alpha
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
-export { assertIsStableId }
+// @internal (undocumented)
+export class ChannelCollectionFactory implements IFluidDataStoreFactory {
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, provideEntryPoint: (runtime: IFluidDataStoreChannel) => Promise<FluidObject>);
+    // (undocumented)
+    get IFluidDataStoreFactory(): this;
+    // (undocumented)
+    IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+    // (undocumented)
+    instantiateDataStore(context: IFluidDataStoreContext, _existing: boolean): Promise<IFluidDataStoreChannel>;
+    // (undocumented)
+    readonly type = "ChannelCollectionChannel";
+}
 
 // @internal
 export type CompatModeBehavior =
@@ -98,7 +112,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, idCompressor: (IIdCompressor & IIdCompressorCore) | undefined, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, idCompressorMode: IdCompressorMode, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: {
@@ -119,17 +133,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         runSweep?: boolean;
         fullGC?: boolean;
     }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
+    protected compressorLoadInitiated: boolean;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
-    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+    get containerRuntime(): this;
+    // (undocumented)
+    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
-    // (undocumented)
-    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
+    // (undocumented)
+    deleteChildSummarizerNode(id: string): void;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
     // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: readonly string[]): string[];
@@ -147,11 +164,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get flushMode(): FlushMode;
     get gcThrowOnTombstoneUsage(): boolean;
     get gcTombstoneEnforcementAllowed(): boolean;
+    generateDocumentUniqueId(): string | (number & {
+        readonly SessionUnique: "cea55054-6b82-4cbf-ad19-1fa645ea3b3e";
+    } & {
+        readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
+    });
     // (undocumented)
     readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     // (undocumented)
     getAudience(): IAudience;
+    // (undocumented)
+    getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>) => ISummarizerNodeWithGC;
     getCurrentReferenceTimestampMs(): number | undefined;
     getEntryPoint(): Promise<FluidObject>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
@@ -165,8 +189,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
-    // (undocumented)
-    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+    get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
@@ -184,6 +207,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     }): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
+    // (undocumented)
+    makeLocallyVisible(): void;
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
@@ -204,10 +229,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get storage(): IDocumentStorageService;
     // (undocumented)
-    submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
-    submitDataStoreSignal(address: string, type: string, content: any, targetClientId?: string): void;
+    submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
@@ -283,8 +305,6 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 // @alpha (undocumented)
 export type GCVersion = number;
-
-export { generateStableId }
 
 // @alpha
 export interface IAckedSummary {
@@ -390,7 +410,7 @@ export interface IContainerRuntimeMessageCompatDetails {
 // @alpha (undocumented)
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly disableIsolatedChannels?: true;
-    readonly idCompressorEnabled?: boolean;
+    readonly idCompressorMode?: IdCompressorMode;
     readonly message: ISummaryMetadataMessage | undefined;
     // (undocumented)
     readonly summaryFormatVersion: 1;
@@ -404,7 +424,7 @@ export interface IContainerRuntimeOptions {
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableGroupedBatching?: boolean;
     readonly enableOpReentryCheck?: boolean;
-    readonly enableRuntimeIdCompressor?: boolean;
+    readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -419,6 +439,9 @@ export interface ICreateContainerMetadata {
     createContainerRuntimeVersion?: string;
     createContainerTimestamp?: number;
 }
+
+// @alpha
+export type IdCompressorMode = "on" | "delayed" | "off";
 
 // @alpha
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
@@ -524,8 +547,6 @@ export interface ISerializedElection {
 
 // @internal @deprecated (undocumented)
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
-
-export { isStableId }
 
 // @alpha
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {

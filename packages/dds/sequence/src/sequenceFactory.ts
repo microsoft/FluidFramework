@@ -10,8 +10,8 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { pkgVersion } from "./packageVersion";
-import { SharedString, SharedStringSegment } from "./sharedString";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
  * @alpha

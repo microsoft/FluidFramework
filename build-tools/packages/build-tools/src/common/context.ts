@@ -6,7 +6,7 @@ import { PackageName } from "@rushstack/node-core-library";
 
 import { commonOptions } from "../common/commonOptions";
 import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
-import { getFluidBuildConfig } from "../common/fluidUtils";
+import { loadFluidBuildConfig } from "../common/fluidUtils";
 import { isMonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getVersionFromTag } from "../common/tags";
@@ -34,11 +34,11 @@ export class Context {
 		this.timer = new Timer(commonOptions.timer);
 
 		// Load the package
-		this.repo = new FluidRepo(this.gitRepo.resolvedRoot);
+		this.repo = FluidRepo.create(this.gitRepo.resolvedRoot);
 		this.timer.time("Package scan completed");
 
 		this.fullPackageMap = this.repo.createPackageMap();
-		this.rootFluidBuildConfig = getFluidBuildConfig(this.repo.resolvedRoot);
+		this.rootFluidBuildConfig = loadFluidBuildConfig(this.repo.resolvedRoot);
 	}
 
 	/**

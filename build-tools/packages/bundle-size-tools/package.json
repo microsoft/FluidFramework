@@ -25,16 +25,19 @@
 		"build:compile": "concurrently npm:tsc npm:build:copy",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome && npm run check:prettier",
+		"check:prettier": "prettier --check . --cache",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome && npm run format:prettier",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache",
+		"lint": "npm run eslint",
+		"lint:fix": "npm run eslint:fix",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"tsc": "tsc"
 	},
@@ -56,7 +59,7 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
+		"prettier": "~3.2.4",
 		"rimraf": "^4.4.1"
 	}
 }

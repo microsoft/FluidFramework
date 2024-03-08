@@ -226,7 +226,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 		// Get dataObject
 		const containerRuntime = defaultDataObject._context.containerRuntime as any;
-		const dataStoreContext = containerRuntime.dataStores.contexts.get(id);
+		const dataStoreContext = containerRuntime.channelCollection.contexts.get(id);
 		const dataStoreRuntime: IFluidDataStoreChannel = await dataStoreContext.realize();
 		return (await dataStoreRuntime.entryPoint?.get()) as ITestDataObject;
 	};
@@ -1119,10 +1119,11 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 						};
 					}
 				).runtime.garbageCollector;
+				const id = defaultDataObject._runtime.id;
 				garbageCollector_toBeCorrupted.baseGCDetailsP =
 					garbageCollector_toBeCorrupted.baseGCDetailsP.then((baseGCDetails) => {
 						// baseGCDetails outbound routes for this DDS currently include dataStoreA and dataStoreX. Remove those.
-						baseGCDetails.gcData!.gcNodes["/default/root"] = ["/default"];
+						baseGCDetails.gcData!.gcNodes[`/${id}/root`] = [`/${id}`];
 						return baseGCDetails;
 					});
 
