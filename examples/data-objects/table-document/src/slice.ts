@@ -12,9 +12,6 @@ import { ConfigKey } from "./configKey.js";
 import { TableDocument } from "./document.js";
 import { ITable, TableDocumentItem } from "./table.js";
 
-/**
- * @internal
- */
 export interface ITableSliceConfig {
 	docId: string;
 	name: string;
