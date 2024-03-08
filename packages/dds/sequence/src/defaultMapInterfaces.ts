@@ -11,7 +11,9 @@ import {
 	IntervalOpType,
 	SerializedIntervalDelta,
 	IntervalDeltaOpType,
+	type ISerializableInterval,
 } from "./intervals/index.js";
+import type { IntervalCollection } from "./intervalCollection.js";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -92,7 +94,7 @@ export interface SequenceOptions {
  * A value factory is used to serialize/deserialize value types to a map
  * @alpha
  */
-export interface IValueFactory<T> {
+export interface IValueFactory<T extends ISerializableInterval> {
 	/**
 	 * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
 	 * from remote.
@@ -100,7 +102,11 @@ export interface IValueFactory<T> {
 	 * @param raw - Initialization parameters as defined by the value type
 	 * @returns The new value type
 	 */
-	load(emitter: IValueOpEmitter, raw: any, options?: Partial<SequenceOptions>): T;
+	load(
+		emitter: IValueOpEmitter,
+		raw: any,
+		options?: Partial<SequenceOptions>,
+	): IntervalCollection<T>;
 
 	/**
 	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
@@ -108,14 +114,14 @@ export interface IValueFactory<T> {
 	 * @param value - The value type to serialize
 	 * @returns The JSONable form of the value type
 	 */
-	store(value: T): any;
+	store(value: IntervalCollection<T>): any;
 }
 
 /**
  * Defines an operation that a value type is able to handle.
  * @alpha
  */
-export interface IValueOperation<T> {
+export interface IValueOperation<T extends ISerializableInterval> {
 	/**
 	 * Performs the actual processing on the incoming operation.
 	 * @param value - The current value stored at the given key, which should be the value type
@@ -125,7 +131,7 @@ export interface IValueOperation<T> {
 	 * @param localOpMetadata - any local metadata submitted by `IValueOpEmitter.emit`.
 	 */
 	process(
-		value: T,
+		value: IntervalCollection<T>,
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
@@ -141,7 +147,7 @@ export interface IValueOperation<T> {
 	 * @returns A rebased version of the op and any local metadata that should be submitted with it.
 	 */
 	rebase(
-		value: T,
+		value: IntervalCollection<T>,
 		op: IValueTypeOperationValue,
 		localOpMetadata: IMapMessageLocalMetadata,
 	):
@@ -152,7 +158,7 @@ export interface IValueOperation<T> {
 /**
  * Defines a value type that can be registered on a container type.
  */
-export interface IValueType<T> {
+export interface IValueType<T extends ISerializableInterval> {
 	/**
 	 * Name of the value type.
 	 */

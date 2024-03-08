@@ -11,12 +11,13 @@ import {
 	IValueOperation,
 	IValueType,
 } from "./defaultMapInterfaces.js";
-import { IntervalOpType } from "./intervals/index.js";
+import { IntervalOpType, type ISerializableInterval } from "./intervals/index.js";
+import type { IntervalCollection } from "./intervalCollection.js";
 
 /**
  * A local value to be stored in a container type DDS.
  */
-export interface ILocalValue<T = any> {
+export interface ILocalValue<T extends ISerializableInterval> {
 	/**
 	 * Type indicator of the value stored within.
 	 */
@@ -25,7 +26,7 @@ export interface ILocalValue<T = any> {
 	/**
 	 * The in-memory value stored within.
 	 */
-	readonly value: T;
+	readonly value: IntervalCollection<T>;
 
 	/**
 	 * Retrieve the serialized form of the value stored within.
@@ -36,8 +37,8 @@ export interface ILocalValue<T = any> {
 	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
 }
 
-export function makeSerializable(
-	localValue: ILocalValue,
+export function makeSerializable<T extends ISerializableInterval>(
+	localValue: ILocalValue<T>,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): ISerializableValue {
@@ -53,14 +54,14 @@ export function makeSerializable(
  *
  * @alpha
  */
-export class ValueTypeLocalValue<T> implements ILocalValue<T> {
+export class ValueTypeLocalValue<T extends ISerializableInterval> implements ILocalValue<T> {
 	/**
 	 * Create a new ValueTypeLocalValue.
 	 * @param value - The instance of the value type stored within
 	 * @param valueType - The type object of the value type stored within
 	 */
 	constructor(
-		public readonly value: T,
+		public readonly value: IntervalCollection<T>,
 		private readonly valueType: IValueType<T>,
 	) {}
 

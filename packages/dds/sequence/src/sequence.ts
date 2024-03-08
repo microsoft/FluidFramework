@@ -53,11 +53,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { DefaultMap, IMapOperation } from "./defaultMap.js";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
-import {
-	IIntervalCollection,
-	IntervalCollection,
-	SequenceIntervalCollectionValueType,
-} from "./intervalCollection.js";
+import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
@@ -257,7 +253,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
+	private readonly intervalCollections: DefaultMap<SequenceInterval>;
 	constructor(
 		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,

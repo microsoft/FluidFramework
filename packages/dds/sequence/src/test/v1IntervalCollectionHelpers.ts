@@ -47,9 +47,7 @@ export class V1IntervalCollection<
 	casted = this as unknown as IntervalCollectionInternals<SequenceInterval>;
 }
 
-class V1SequenceIntervalCollectionFactory
-	implements IValueFactory<V1IntervalCollection<SequenceInterval>>
-{
+class V1SequenceIntervalCollectionFactory implements IValueFactory<SequenceInterval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -69,31 +67,29 @@ class V1SequenceIntervalCollectionFactory
 	}
 }
 
-export class V1SequenceIntervalCollectionValueType
-	implements IValueType<V1IntervalCollection<SequenceInterval>>
-{
+export class V1SequenceIntervalCollectionValueType implements IValueType<SequenceInterval> {
 	public static Name = "sharedStringIntervalCollection";
 
 	public get name(): string {
 		return V1SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<V1IntervalCollection<SequenceInterval>> {
+	public get factory(): IValueFactory<SequenceInterval> {
 		return V1SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<V1IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IValueOperation<SequenceInterval>> {
 		return V1SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<V1IntervalCollection<SequenceInterval>> =
+	private static readonly _factory: IValueFactory<SequenceInterval> =
 		new V1SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
 interface SharedStringInternals {
-	intervalCollections: DefaultMap<V1IntervalCollection<SequenceInterval>>;
+	intervalCollections: DefaultMap<SequenceInterval>;
 }
 
 export class SharedStringWithV1IntervalCollection extends SharedString {

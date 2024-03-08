@@ -477,9 +477,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-class SequenceIntervalCollectionFactory
-	implements IValueFactory<IntervalCollection<SequenceInterval>>
-{
+class SequenceIntervalCollectionFactory implements IValueFactory<SequenceInterval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -501,30 +499,28 @@ class SequenceIntervalCollectionFactory
 	}
 }
 
-export class SequenceIntervalCollectionValueType
-	implements IValueType<IntervalCollection<SequenceInterval>>
-{
+export class SequenceIntervalCollectionValueType implements IValueType<SequenceInterval> {
 	public static Name = "sharedStringIntervalCollection";
 
 	public get name(): string {
 		return SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<SequenceInterval>> {
+	public get factory(): IValueFactory<SequenceInterval> {
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IValueOperation<SequenceInterval>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
+	private static readonly _factory: IValueFactory<SequenceInterval> =
 		new SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Interval>> {
+class IntervalCollectionFactory implements IValueFactory<Interval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -543,35 +539,30 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 	}
 }
 
-export class IntervalCollectionValueType implements IValueType<IntervalCollection<Interval>> {
+export class IntervalCollectionValueType implements IValueType<Interval> {
 	public static Name = "sharedIntervalCollection";
 
 	public get name(): string {
 		return IntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<Interval>> {
+	public get factory(): IValueFactory<Interval> {
 		return IntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<Interval>>> {
+	public get ops(): Map<IntervalOpType, IValueOperation<Interval>> {
 		return IntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
-		new IntervalCollectionFactory();
+	private static readonly _factory: IValueFactory<Interval> = new IntervalCollectionFactory();
 	private static readonly _ops = makeOpsMap<Interval>();
 }
 
 export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	IntervalOpType,
-	IValueOperation<IntervalCollection<T>>
+	IValueOperation<T>
 > {
-	const rebase: IValueOperation<IntervalCollection<T>>["rebase"] = (
-		collection,
-		op,
-		localOpMetadata,
-	) => {
+	const rebase: IValueOperation<T>["rebase"] = (collection, op, localOpMetadata) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
 		if (rebasedValue === undefined) {
@@ -581,7 +572,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
+	return new Map<IntervalOpType, IValueOperation<T>>([
 		[
 			IntervalOpType.ADD,
 			{
