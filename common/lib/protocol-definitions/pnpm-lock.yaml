@@ -17,7 +17,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': ^4.0.0
-      '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@2.0.0
+      '@fluidframework/protocol-definitions-previous': npm:@fluidframework/protocol-definitions@3.1.0
       '@microsoft/api-extractor': ^7.42.3
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
@@ -33,7 +33,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.1
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/2.0.0
+      '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/3.1.0
       '@microsoft/api-extractor': 7.42.3
       concurrently: 6.5.1
       copyfiles: 2.4.1
@@ -337,10 +337,6 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/common-definitions/0.20.1:
-    resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
-    dev: true
-
   /@fluidframework/eslint-config-fluid/4.0.0_bpztyfltmpuv6lhsgzfwtmxhte:
     resolution: {integrity: sha512-mLE+1uocMaMACF51EPhnGgLi2okbKRAPE53RzC3Jd2CfqqIGk2sk8yrsvw7KVfeBp8w0Mf646ZM17yAbNTErDg==}
     dependencies:
@@ -369,10 +365,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/protocol-definitions/2.0.0:
-    resolution: {integrity: sha512-4t6JzyGoO+QR95X+NHQ2EQH7ZmxLICA3xIyAYO4x/XJsom4QFzrxiAVt2Vu1iBEv7CGNO9O2WHBOuFBRkJznLQ==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
+  /@fluidframework/protocol-definitions/3.1.0:
+    resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
     dev: true
 
   /@gar/promisify/1.1.3:

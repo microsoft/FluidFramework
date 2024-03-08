@@ -744,6 +744,30 @@ use_old_InterfaceDeclaration_IQuorumProposalsEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_ISentSignalMessage": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISentSignalMessage():
+    TypeOnly<old.ISentSignalMessage>;
+declare function use_current_RemovedInterfaceDeclaration_ISentSignalMessage(
+    use: TypeOnly<current.ISentSignalMessage>);
+use_current_RemovedInterfaceDeclaration_ISentSignalMessage(
+    get_old_InterfaceDeclaration_ISentSignalMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedInterfaceDeclaration_ISentSignalMessage": {"backCompat": false}
+*/
+declare function get_current_RemovedInterfaceDeclaration_ISentSignalMessage():
+    TypeOnly<current.ISentSignalMessage>;
+declare function use_old_InterfaceDeclaration_ISentSignalMessage(
+    use: TypeOnly<old.ISentSignalMessage>);
+use_old_InterfaceDeclaration_ISentSignalMessage(
+    get_current_RemovedInterfaceDeclaration_ISentSignalMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISequencedClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISequencedClient():
@@ -812,6 +836,30 @@ declare function use_old_InterfaceDeclaration_ISequencedDocumentMessage(
     use: TypeOnly<old.ISequencedDocumentMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentMessage(
     get_current_InterfaceDeclaration_ISequencedDocumentMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ISequencedDocumentMessageExperimental": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ISequencedDocumentMessageExperimental():
+    TypeOnly<old.ISequencedDocumentMessageExperimental>;
+declare function use_current_TypeAliasDeclaration_ISequencedDocumentMessageExperimental(
+    use: TypeOnly<current.ISequencedDocumentMessageExperimental>);
+use_current_TypeAliasDeclaration_ISequencedDocumentMessageExperimental(
+    get_old_TypeAliasDeclaration_ISequencedDocumentMessageExperimental());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ISequencedDocumentMessageExperimental": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ISequencedDocumentMessageExperimental():
+    TypeOnly<current.ISequencedDocumentMessageExperimental>;
+declare function use_old_TypeAliasDeclaration_ISequencedDocumentMessageExperimental(
+    use: TypeOnly<old.ISequencedDocumentMessageExperimental>);
+use_old_TypeAliasDeclaration_ISequencedDocumentMessageExperimental(
+    get_current_TypeAliasDeclaration_ISequencedDocumentMessageExperimental());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -932,6 +980,30 @@ declare function use_old_InterfaceDeclaration_ISignalMessage(
     use: TypeOnly<old.ISignalMessage>);
 use_old_InterfaceDeclaration_ISignalMessage(
     get_current_InterfaceDeclaration_ISignalMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISignalMessageBase": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISignalMessageBase():
+    TypeOnly<old.ISignalMessageBase>;
+declare function use_current_InterfaceDeclaration_ISignalMessageBase(
+    use: TypeOnly<current.ISignalMessageBase>);
+use_current_InterfaceDeclaration_ISignalMessageBase(
+    get_old_InterfaceDeclaration_ISignalMessageBase());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISignalMessageBase": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISignalMessageBase():
+    TypeOnly<current.ISignalMessageBase>;
+declare function use_old_InterfaceDeclaration_ISignalMessageBase(
+    use: TypeOnly<old.ISignalMessageBase>);
+use_old_InterfaceDeclaration_ISignalMessageBase(
+    get_current_InterfaceDeclaration_ISignalMessageBase());
 
 /*
 * Validate forward compat by using old type in place of current type
