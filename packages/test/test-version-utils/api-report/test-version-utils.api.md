@@ -79,7 +79,10 @@ export const DataRuntimeApi: {
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
-        SharedDirectory: typeof map.SharedDirectory;
+        SharedDirectory: {
+            create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedDirectory;
+            getFactory(): IChannelFactory<map.ISharedDirectory>;
+        };
         SharedMap: {
             getFactory(): IChannelFactory<map.ISharedMap>;
             create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedMap;
