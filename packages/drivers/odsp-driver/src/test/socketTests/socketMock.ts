@@ -9,8 +9,8 @@ import { IEvent } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";
-import { pkgVersion as driverVersion } from "../../packageVersion";
-import { IOdspSocketError } from "../../contracts";
+import { pkgVersion as driverVersion } from "../../packageVersion.js";
+import { IOdspSocketError } from "../../contracts.js";
 
 export interface SocketMockEvents extends IEvent {
 	(event: "disconnect", listener: (reason?: IAnyDriverError, details?: unknown) => void): void;

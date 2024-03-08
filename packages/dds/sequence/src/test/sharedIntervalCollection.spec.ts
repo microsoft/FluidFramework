@@ -15,10 +15,10 @@ import { Client } from "@fluidframework/merge-tree";
 import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
-} from "../sharedIntervalCollection";
-import { IIntervalCollection } from "../intervalCollection";
-import { Interval, intervalHelpers } from "../intervals";
-import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex";
+} from "../sharedIntervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { Interval, intervalHelpers } from "../intervals/index.js";
+import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,

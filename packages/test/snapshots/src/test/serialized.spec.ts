@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-utils";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { SharedMap, SharedDirectory, type ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -58,7 +58,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
@@ -100,7 +100,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
