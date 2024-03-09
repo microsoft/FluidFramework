@@ -5,7 +5,7 @@
 import assert from "assert";
 import child_process from "child_process";
 
-const childArgs: string[] = ["./dist/orchestratorRunner.js", "--config", "v1", "--profile", "mini"];
+const childArgs: string[] = ["./lib/orchestratorRunner.js", "--config", "v1", "--profile", "mini"];
 
 describe("stress test", () => {
 	it("Should return 0", async () => {

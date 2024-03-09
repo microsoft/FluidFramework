@@ -36,7 +36,7 @@ export class MapTrafficRunner extends ScenarioRunner<
 	MapTrafficRunConfig,
 	void
 > {
-	protected runnerClientFilePath: string = "./dist/mapTrafficRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/mapTrafficRunnerClient.js";
 
 	public static async execRun(runConfig: MapTrafficRunConfig): Promise<void> {
 		let schema;

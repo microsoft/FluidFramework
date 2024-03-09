@@ -34,7 +34,7 @@ export class DocLoaderRunner extends ScenarioRunner<
 	void,
 	IFluidContainer
 > {
-	protected runnerClientFilePath: string = "./dist/docLoaderRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/docLoaderRunnerClient.js";
 
 	constructor(scenarioConfig: DocLoaderRunnerConfig) {
 		super({

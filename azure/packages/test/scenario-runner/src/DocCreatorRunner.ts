@@ -31,7 +31,7 @@ export class DocCreatorRunner extends ScenarioRunner<
 	DocCreatorRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/docCreatorRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/docCreatorRunnerClient.js";
 
 	constructor(scenarioConfig: DocCreatorRunnerConfig) {
 		super({
