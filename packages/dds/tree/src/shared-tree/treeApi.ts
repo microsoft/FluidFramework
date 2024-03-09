@@ -75,7 +75,7 @@ export const treeApi: TreeApi = {
 			const node = treeOrNode as TNode;
 			const t = transaction as (node: TNode) => void | "rollback";
 			const context = getFlexNode(node).context;
-			assert(context instanceof Context, "Unsupported context");
+			assert(context instanceof Context, 0x901 /* Unsupported context */);
 			const treeView =
 				contextToTreeView.get(context) ??
 				fail("Expected view to be registered for context");
