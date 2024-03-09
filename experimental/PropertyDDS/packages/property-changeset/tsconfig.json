@@ -4,7 +4,7 @@
 	"compilerOptions": {
 		"strict": false,
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "./lib",
 	},
 	"include": ["src/**/*"],
 }
