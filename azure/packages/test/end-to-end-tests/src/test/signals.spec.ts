@@ -220,7 +220,7 @@ describe("Fluid Signals", () => {
 			createSignalListenerPromise(
 				signaler,
 				signalName,
-				signalPayload1,
+				signalPayload2,
 				"Write client listening for its own signal",
 			),
 		];
