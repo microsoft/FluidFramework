@@ -142,6 +142,10 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	dispose(): void;
 }
 
+interface DisposableRevertible extends Revertible {
+	dispose: () => void;
+}
+
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
@@ -150,7 +154,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	public readonly editor: TEditor;
 	// set of revertibles maintained for automatic disposal
-	private readonly revertibles = new Set<RevertibleRevision>();
+	private readonly revertibles = new Set<DisposableRevertible>();
 	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	/**
@@ -422,20 +426,30 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				"cannot get the revertible more than once",
 			);
 
-			const revertible = new RevertibleRevision(
-				() => {
-					const revertibleCommit = this._revertibleCommits.get(revision);
+			const revertibleCommits = this._revertibleCommits;
+			const revertible: DisposableRevertible = {
+				get status(): RevertibleStatus {
+					const revertibleCommit = revertibleCommits.get(revision);
 					return revertibleCommit === undefined
 						? RevertibleStatus.Disposed
 						: RevertibleStatus.Valid;
 				},
-				() => {
+				revert: () => {
+					assert(
+						revertible.status === RevertibleStatus.Valid,
+						"a disposed revertible cannot be reverted",
+					);
 					this.revertRevertible(revision, data.kind);
 				},
-				() => {
+				release: () => revertible.dispose(),
+				dispose: () => {
+					assert(
+						revertible.status === RevertibleStatus.Valid,
+						"a disposed revertible cannot be reverted",
+					);
 					this.disposeRevertible(revertible, revision);
 				},
-			);
+			};
 
 			this._revertibleCommits.set(revision, commit);
 			this.revertibles.add(revertible);
@@ -450,7 +464,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 	}
 
-	private disposeRevertible(revertible: RevertibleRevision, revision: RevisionTag): void {
+	private disposeRevertible(revertible: DisposableRevertible, revision: RevisionTag): void {
 		// TODO: delete the repair data from the forest
 		this._revertibleCommits.delete(revision);
 		this.revertibles.delete(revertible);
@@ -680,30 +694,4 @@ export function onForkTransitive<T extends ISubscribable<{ fork: (t: T) => void 
 		}),
 	);
 	return () => offs.forEach((off) => off());
-}
-
-class RevertibleRevision implements Revertible {
-	public constructor(
-		private readonly getStatus: () => RevertibleStatus,
-		private readonly onRevert: () => void,
-		private readonly onDispose: () => void,
-	) {}
-
-	public get status(): RevertibleStatus {
-		return this.getStatus();
-	}
-
-	public revert(): void {
-		assert(this.status === RevertibleStatus.Valid, "a disposed revertible cannot be reverted");
-		this.onRevert();
-	}
-
-	public release(): void {
-		this.dispose();
-	}
-
-	public dispose(): void {
-		assert(this.status === RevertibleStatus.Valid, "revertible has already been disposed");
-		this.onDispose();
-	}
 }
