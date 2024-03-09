@@ -89,6 +89,15 @@ export interface IFluidDataStoreRuntime
 	createChannel(id: string | undefined, type: string): IChannel;
 
 	/**
+	 * This api allows adding channel to data store after it was created.
+	 * The channel type should be present in the registry, otherwise the runtime would reject
+	 * the channel. The runtime used to create the channel object should be same to which
+	 * it is added.
+	 * @param channel - channel which needs to be added to the runtime.
+	 */
+	addChannel(channel: IChannel): void;
+
+	/**
 	 * Bind the channel with the data store runtime. If the runtime
 	 * is attached then we attach the channel to make it live.
 	 */
