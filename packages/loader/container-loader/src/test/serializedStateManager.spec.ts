@@ -195,7 +195,8 @@ describe("serializedStateManager", () => {
 					new MockRuntime(),
 					resolvedUrl,
 				),
-			(error: Error) => errorFn(error, "no base data"),
+				// TODO: this should be refactored to not use the asserting code's tagged value.
+			(error: Error) => errorFn(error, "0x8e5"),
 			"container can get local state with no base snapshot",
 		);
 	});
