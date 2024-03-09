@@ -1,5 +1,5 @@
 ---
-"@fluid-experimental/react-inputs": minor
+"@@fluid-example/example-utils": minor
 ---
 
 @fluid-experimental/react-inputs removed
