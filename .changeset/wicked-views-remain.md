@@ -1,5 +1,5 @@
 ---
-"@fluidframework/data-object-base": minor
+"@fluid-experimental/data-object-base": minor
 ---
 
 data-object-base: LazyLoadedDataObject and LazyLoadedDataObjectFactory deprecated
