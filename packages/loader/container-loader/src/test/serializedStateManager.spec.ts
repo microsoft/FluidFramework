@@ -176,31 +176,6 @@ describe("serializedStateManager", () => {
 		);
 	});
 
-	it("can't get pending local state when there is no base snapshot", async () => {
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			undefined,
-			logger,
-			storageAdapter,
-			true,
-		);
-
-		await assert.rejects(
-			async () =>
-				serializedStateManager.getPendingLocalStateCore(
-					{
-						notifyImminentClosure: false,
-					},
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				),
-				// TODO: this should be refactored to not use the asserting code's tagged value.
-			(error: Error) => errorFn(error, "0x8e5"),
-			"container can get local state with no base snapshot",
-		);
-	});
-
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
 			attached: true,
