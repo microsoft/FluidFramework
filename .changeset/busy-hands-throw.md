@@ -1,5 +1,5 @@
 ---
-"@fluidframework/view-interfaces": minor
+"@fluid-example/example-utils": minor
 ---
 
 @fluidframework/view-interfaces package removed
