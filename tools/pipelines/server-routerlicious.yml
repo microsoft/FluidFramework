@@ -59,7 +59,7 @@ trigger:
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/templates/1ES/build-docker-service.yml
+    - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -87,7 +87,7 @@ pr:
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
-    - tools/pipelines/templates/1ES/build-docker-service.yml
+    - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -112,7 +112,7 @@ variables:
   - group: container-registry-info
 
 extends:
-  template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
+  template: /tools/pipelines/templates/build-docker-service.yml@self
   parameters:
     testBuild: ${{ variables.testBuild }}
     shouldPushDockerImage: ${{ variables.pushImage }}

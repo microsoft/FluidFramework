@@ -4,477 +4,555 @@
 # build-docker-service template to build services docker container
 
 parameters:
-- name: buildDirectory
-  type: string
+  - name: buildDirectory
+    type: string
 
-- name: containerName
-  type: string
+  - name: containerName
+    type: string
 
-- name: pack
-  type: boolean
-  default: false
+  - name: pack
+    type: boolean
+    default: false
 
-- name: lint
-  type: boolean
-  default: false
+  - name: lint
+    type: boolean
+    default: false
 
-- name: test
-  type: string
-  default:
+  - name: test
+    type: string
+    default:
 
-- name: docs
-  type: boolean
-  default: false
+  - name: docs
+    type: boolean
+    default: false
 
-- name: containerBaseDir
-  type: string
-  default: /home/node/server
+  - name: containerBaseDir
+    type: string
+    default: /home/node/server
 
-- name: buildNumberInPatch
-  type: string
-  default: true
+  - name: buildNumberInPatch
+    type: string
+    default: true
 
-- name: setVersion
-  type: boolean
-  default: true
+  - name: setVersion
+    type: boolean
+    default: true
 
-- name: releaseImage
-  type: boolean
-  default: false
+  - name: releaseKind
+    type: string
+    default: docker
 
-- name: publishOverride
-  type: string
-  default: default
+  - name: tagName
+    type: string
+    default:
 
-- name: releaseBuildOverride
-  type: string
-  default: none
+  - name: isReleaseGroup
+    type: boolean
+    default: false
 
-- name: releaseKind
-  type: string
-  default: docker
+  - name: pool
+    type: string
+    default: Small-1ES
 
-- name: tagName
-  type: string
-  default:
+  - name: buildToolsVersionToInstall
+    type: string
+    default: repo
 
-- name: isReleaseGroup
-  type: boolean
-  default: false
+  - name: packageManager
+    type: string
+    default: npm
 
-- name: pool
-  type: string
-  default: Small
+  - name: packageManagerInstallCommand
+    type: string
+    default: 'npm ci --unsafe-perm'
 
-- name: buildToolsVersionToInstall
-  type: string
-  default: repo
+  # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+  # group
+  - name: interdependencyRange
+    type: string
+    default: "^"
 
-- name: packageManager
-  type: string
-  default: npm
+  # A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+  # in a pipeline stage separate from the build stage.
+  - name: checks
+    type: object
+    default: []
 
-- name: packageManagerInstallCommand
-  type: string
-  default: 'npm ci --unsafe-perm'
+  # Any additional build arguments to pass to the docker build command.
+  - name: additionalBuildArguments
+    type: string
+    default: ""
 
-# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
-# group
-- name: interdependencyRange
-  type: string
-  default: "^"
+  # If the build is running for a test branch
+  - name: testBuild
+    type: boolean
+    default: false
 
-# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
-# in a pipeline stage separate from the build stage.
-- name: checks
-  type: object
-  default: []
+  # Whether the docker image should be pushed to our internal Azure Container Registry
+  - name: shouldPushDockerImage
+    type: boolean
+    default: false
 
-# Any additional build arguments to pass to the docker build command.
-- name: additionalBuildArguments
-  type: string
-  default: ""
+  # Whether the docker image should be released officially
+  - name: shouldReleaseDockerImage
+    type: boolean
+    default: false
+
+  # Whether npm packages should be published
+  - name: shouldPublishNpmPackages
+    type: boolean
+    default: false
 
 trigger: none
 
-variables:
-- template: include-vars.yml
+resources:
+  repositories:
+  - repository: m365Pipelines
+    type: git
+    name: 1ESPipelineTemplates/M365GPT
+    ref: refs/tags/release
+extends:
+  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
-    releaseImage: ${{ parameters.releaseImage }}
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-- group: container-registry-info
-- ${{ if eq(variables.testBuild, true) }}:
-  - name: buildContainerName
-    value: test/${{ parameters.containerName }}
-- ${{ if eq(variables.testBuild, false) }}:
-  - name: buildContainerName
-    value: build/${{ parameters.containerName }}
-- name: baseContainerTag
-  value: base:$(containerTagSuffix)
-- ${{ if eq(variables.pushImage, false) }}:
-  - name: containerRegistry
-    value:
-  - name: containerTag
-    value: $(buildContainerName):$(containerTagSuffix)
-- ${{ if eq(variables.pushImage, true) }}:
-  - name: containerRegistry
-    value: $[variables.containerRegistryConnection]
-  - name: containerTag
-    value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
-  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-    - name: latestContainerTagSuffix
-      value: latest
-    - name: latestContainerTag
-      value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
-  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
-    - name: latestContainerTagSuffix
-      value: next
-    - name: latestContainerTag
-      value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
-# tag the git repo when we published the docker image if the releaseKind is docker,
-# otherwise tag with the publishing the packages (where the releaseKind is both or npm)
-- ${{ if ne(parameters.releaseKind, 'docker') }}:
-  - name: tagNameOnReleaseImage
-    value:
-- ${{ if eq(parameters.releaseKind, 'docker') }}:
-  - name: tagNameOnReleaseImage
-    value: ${{ parameters.tagName }}
-
-stages:
-- ${{ if ne(convertToJson(parameters.checks), '[]') }}:
-  - template: include-policy-check.yml
-    parameters:
-      buildDirectory: ${{ parameters.buildDirectory }}
-      checks: ${{ parameters.checks }}
-
-- stage: build
-  displayName: Build Stage
-  dependsOn: [] # this stage doesn't depend on preceding stage
-  jobs:
-  - job: build
-    displayName: Build Container - ${{ parameters.containerName }}
-    pool: ${{ parameters.pool }}
-    variables:
-      buildBase: ${{ or(ne(parameters.test, ''), or(eq(parameters.pack, true), or(eq(parameters.lint, true), eq(parameters.docs, true)))) }}
-      testCoverage: ${{ and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
-      releaseBuildVar: $[variables.releaseBuild]
-      containerTagSuffix: $(SetVersion.version)
-    steps:
-    # Setup
-    - checkout: self
-      clean: true
-      lfs: false
-      submodules: false
-
-    - task: Bash@3
-      displayName: Parameters
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          # Show all task group conditions
-
-          echo "
-          Pipeline Variables:
-            releaseBuild=$(releaseBuildVar)
-
-          Override Parameters:
-            publishOverride=${{ parameters.publishOverride }}
-            releaseBuildOverride=${{ parameters.releaseBuildOverride }}
-
-          Tasks Parameters:
-            Lint=${{ parameters.lint }}
-            Test=${{ parameters.test }}
-
-          Computed variables:
-            shouldPublish=${{ variables.shouldPublish }}
-            componentDetection=${{ variables.componentDetection }}
-            publish=${{ variables.publish }}
-            canRelease=${{ variables.canRelease }}
-            interdependencyRange='${{ parameters.interdependencyRange }}'
-
-            pushImage=${{ variables.pushImage }}
-            releaseImage=${{ variables.releaseImage }}
-            release=$(release)"
-
-          if [[ "$(release)" == "release" ]]; then
-            if [[ "${{ variables.canRelease }}" == "False" ]]; then
-              echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
-              exit -1;
-            fi
-
-            if [ -f "lerna.json" ]; then
-              grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
-            else
-              grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
-            fi
-
-            if [[ $? == 0 ]]; then
-              echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
-              exit -1;
-            fi
-          fi
-
-          if [[ "$(release)" == "prerelease" ]]; then
-            if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
-              echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
-              exit -1;
-            fi
-          fi
-
-          if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-            if [[ "${{ variables.pushImage }}" != "True" ]]; then
-              echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
-              exit -1;
-            fi
-
-            if [[ "${{ variables.releaseImage }}" != "True" ]]; then
-              echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
-              exit -1;
-            fi
-          fi
-
-    # for npm ci in component detection and set version
-    - template: include-use-node-version.yml
-
-    # Component detection
-    - ${{ if eq(variables.componentDetection, true) }}:
-      - template: include-generate-notice-steps.yml
+    pool:
+      name: ${{ parameters.pool }}
+      os: linux
+    sdl:
+      arrow:
+        # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+        # Currently we want to use different names for internal and public builds for Arrow Service Connection
+        ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+          serviceConnection: Arrow_FluidFramework_internal
+        ${{ else }}:
+          serviceConnection: Arrow_FluidFramework_public
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    customBuildTags:
+      - ES365AIMigrationTooling
+    stages:
+    - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+      - template: /tools/pipelines/templates/1ES/include-policy-check.yml@self
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
-          requireNotice: ${{ eq(variables.releaseImage, true) }}
+          checks: ${{ parameters.checks }}
+    - stage: build
+      displayName: Build Stage
+      dependsOn: [] # this stage doesn't depend on preceding stage
+      variables:
+        - ${{ if eq(parameters.testBuild, true) }}:
+          - name: buildContainerName
+            value: test/${{ parameters.containerName }}
+        - ${{ else }}:
+          - name: buildContainerName
+            value: build/${{ parameters.containerName }}
+        - name: containerTagSuffix
+          value: $[ format('0.0.{0}', variables['Build.BuildNumber']) ]
+        - name: baseContainerTag
+          value: base:$(containerTagSuffix)
+        - ${{ if eq(parameters.shouldPushDockerImage, false) }}:
+          - name: containerTag
+            value: $(buildContainerName):$(containerTagSuffix)
+        - ${{ else }}:
+          - name: containerTag
+            value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
+          - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+            - name: latestContainerTag
+              value: $(containerRegistryUrl)/$(buildContainerName):latest
+          - ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
+            - name: latestContainerTag
+              value: $(containerRegistryUrl)/$(buildContainerName):next
+          - ${{ else }}:
+            # In this case we just want latestContainerTag defined so it gets replaced by ADO and Bash tasks don't
+            # complain about "command 'latestContainerTag' not found".
+            - name: latestContainerTag
+              value: ''
+        # tag the git repo when we published the docker image if the releaseKind is docker,
+        # otherwise tag with the publishing the packages (where the releaseKind is both or npm)
+        - ${{ if ne(parameters.releaseKind, 'docker') }}:
+          - name: tagNameOnReleaseImage
+            value:
+        - ${{ if eq(parameters.releaseKind, 'docker') }}:
+          - name: tagNameOnReleaseImage
+            value: ${{ parameters.tagName }}
+      jobs:
+      - job: build
+        displayName: Build Container - ${{ parameters.containerName }}
+        variables:
+          releaseBuildVar: $[variables.releaseBuild]
+          hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
+          hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
+          hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
+          # The SKIPAUTOMATICIMAGESCAN field disables Component Governance Scanning for the Microsoft 1ES pipeline template.
+          # As of now, the underlying technology used by the 1ES pipeline template for scanning docker
+          # containers is maintained by Syft and it takes over 1.5 hours to complete scanning which is why we disabled it.
+          # We'll need to keep this disabled until 1ES finds a solution for faster image scanning.
+          SKIPAUTOMATICIMAGESCAN: true
+        steps:
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: false
+          submodules: false
 
-    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-      - template: include-install-pnpm.yml
-        parameters:
-          buildDirectory: ${{ parameters.buildDirectory }}
-
-    # Set version
-    - ${{ if eq(parameters.setVersion, true) }}:
-      - task: Bash@3
-        displayName: Install dependencies
-        inputs:
-          targetType: 'inline'
-          workingDirectory: ${{ parameters.buildDirectory }}
-          script: |
-            ${{ parameters.packageManagerInstallCommand }}
-
-      - template: include-set-package-version.yml
-        parameters:
-          buildDirectory: ${{ parameters.buildDirectory }}
-          buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-          buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-          interdependencyRange: ${{ parameters.interdependencyRange }}
-          tagName: ${{ parameters.tagName }}
-    - ${{ if eq(parameters.setVersion, false) }}:
-      - task: Bash@3
-        name: SetVersion
-        displayName: Set Package version
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "0.0.$(Build.BuildNumber)"
-            echo "##vso[task.setvariable variable=version;isOutput=true]0.0.$(Build.BuildNumber)"
-
-    - ${{ if eq(variables.buildBase, true) }}:
-      # Build - Base
-      - task: Docker@2
-        displayName: Docker Build - base
-        inputs:
-          repository: base
-          command: build
-          dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
-          buildContext: ${{ parameters.buildDirectory }}
-          arguments: --target base ${{ parameters.additionalBuildArguments }}
-          tags: |
-            $(containerTagSuffix)
-
-      # Pack
-      - ${{ if eq(parameters.pack, true) }}:
-        # Need to create folders outside the docker container; if it creates them, the permissions will be wrong and
-        # we won't be able to write to them from outside the container when generating the lists of packages below.
         - task: Bash@3
-          displayName: Create folder for pack artifact
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir -p $(Build.ArtifactStagingDirectory)/pack
-
-        - task: Docker@0
-          displayName: Pack
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run -v $(Build.ArtifactStagingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm -rc exec mv `npm pack` /usr/src/pack'
-
-        # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
-        # inside the Docker container is proving problematic.
-        # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
-        - task: Bash@3
-          displayName: Generate package lists
-          env:
-            RELEASE_GROUP: ${{ parameters.tagName }}
-            STAGING_PATH: $(Build.ArtifactStagingDirectory)
+          displayName: Parameters
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
-              flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+              # Show all task group conditions
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
 
-        - task: PublishPipelineArtifact@1
-          displayName: Publish Artifact - pack
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/pack'
-            artifactName: pack
-            publishLocation: 'pipeline'
+              Tasks Parameters:
+                docs=${{ parameters.docs }}
+                lint=${{ parameters.lint }}
+                pack=${{ parameters.pack }}
+                test=${{ parameters.test }}
 
-      # Lint
-      - ${{ if eq(parameters.lint, true) }}:
-        - task: Docker@0
-          displayName: npm run lint
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run -t $(baseContainerTag) npm run lint'
+              Other parameters:
+                additionalBuildArguments=${{ parameters.additionalBuildArguments }}
+                buildNumberInPatch=${{ parameters.buildNumberInPatch }}
+                buildToolsVersionToInstall=${{ parameters.buildToolsVersionToInstall }}
+                containerBaseDir=${{ parameters.containerBaseDir }}
+                interdependencyRange='${{ parameters.interdependencyRange }}'
+                isReleaseGroup=${{ parameters.isReleaseGroup }}
+                packageManager=${{ parameters.packageManager }}
+                packageManagerInstallCommand=${{ parameters.packageManagerInstallCommand }}
+                releaseKind=${{ parameters.releaseKind }}
+                setVersion=${{ parameters.setVersion }}
+                shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
+                shouldPushDockerImage=${{ parameters.shouldPushDockerImage }}
+                shouldReleaseDockerImage=${{ parameters.shouldReleaseDockerImage }}
+                tagName=${{ parameters.tagName }}
+                testBuild=${{ parameters.testBuild }}
 
-      # Test
-      - ${{ if ne(parameters.test, '') }}:
-        # Test - No coverage
-        - ${{ if ne(variables.testCoverage, true) }}:
-          - task: Docker@0
-            displayName: npm run ${{ parameters.test }}
+              Runtime variables:
+                baseContainerTag=$(baseContainerTag)
+                buildContainerName=$(buildContainerName)
+                canRelease=$(canRelease)
+                containerRegistryConnection=$(containerRegistryConnection)
+                containerRegistryUrl=$(containerRegistryUrl)
+                containerTag=$(containerTag)
+                containerTagSuffix=$(containerTagSuffix)
+                release=$(release)
+                shouldPublish=$(shouldPublish)
+              "
+
+              if [[ "$(release)" == "release" ]]; then
+                if [[ "$(canRelease)" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+
+                if [ -f "lerna.json" ]; then
+                  grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
+                else
+                  grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
+                fi
+
+                if [[ $? == 0 ]]; then
+                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" == "prerelease" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                  echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
+                if [[ "${{ parameters.shouldPushDockerImage }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)' is set but image is not pushed. Either the branch doesn't default to push image or it is skipped."
+                  exit -1;
+                fi
+
+                if [[ "$(releaseImage)" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
+                  exit -1;
+                fi
+              fi
+
+        # for npm ci in component detection and set version
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+        # Component detection
+        - ${{ if eq(parameters.shouldPublishNpmPackages, true) }}:
+          - template: /tools/pipelines/templates/include-generate-notice-steps.yml@self
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              requireNotice: ${{ parameters.shouldReleaseDockerImage }}
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+
+        # Set version
+        - ${{ if eq(parameters.setVersion, true) }}:
+          - task: Bash@3
+            displayName: Install dependencies
             inputs:
-              action: 'Run a Docker command'
-              customCommand: 'run --user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ${{ parameters.test }}'
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                ${{ parameters.packageManagerInstallCommand }}
 
-        # Test - With coverage
-        - ${{ if eq(variables.testCoverage, true) }}:
-          - task: Docker@0
-            displayName: npm run ci:test:coverage
+          - template: /tools/pipelines/templates/include-set-package-version.yml@self
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              interdependencyRange: ${{ parameters.interdependencyRange }}
+              tagName: ${{ parameters.tagName }}
+        - ${{ if eq(parameters.setVersion, false) }}:
+          - task: Bash@3
+            name: SetVersion
+            displayName: Set Package version
             inputs:
-              action: 'Run a Docker command'
-              customCommand: 'run --user root -v $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc:${{ parameters.containerBaseDir }}/nyc -t $(baseContainerTag) npm run ci:test:coverage'
+              targetType: 'inline'
+              script: |
+                echo "$(containerTagSuffix)"
+                echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
 
-          - task: PublishCodeCoverageResults@1
-            displayName: Publish Code Coverage
+        # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
+        # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
+        # which aren't available at compile-time, for expression-syntax conditionals that are evaluated at compile-time.
+        - ${{ if ne(parameters.tagName, 'gitssh') }}:
+          # Build base image where we can run pack/lint/test/docs tasks
+          - task: 1ES.BuildContainerImage@1
             inputs:
-              codeCoverageTool: Cobertura
-              summaryFileLocation: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
-              reportDirectory: '$(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
-              failIfCoverageEmpty: true
-            condition: succeededOrFailed()
+              dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
+              context: ${{ parameters.buildDirectory }}
+              image: $(baseContainerTag)
+              buildArguments: --target base ${{ parameters.additionalBuildArguments }}
+              useBuildKit: true
+              enableNetwork: true
+              enableCache: true
 
-        # Test - Upload results
-        - task: PublishTestResults@2
-          displayName: Publish Test Results
+          # Pack
+          - ${{ if eq(parameters.pack, true) }}:
+            # Need to create folders that we will mount as volumes on the container (so it can place output we then publish
+            # as artifacts) before we run it. If the container creates them the permissions will be wrong and we won't
+            # be able to write to them from outside the container when generating the lists of packages below, or 1es tasks
+            # like credential scanning will not have enough permissions to do their job.
+            - task: Bash@3
+              displayName: Create folders for artifacts from container
+              inputs:
+                targetType: 'inline'
+                script: |
+                  mkdir -p $(hostPathToPackArtifact)
+                  mkdir -p $(hostPathToTestResultsArtifact)
+
+            - task: Docker@1
+              displayName: Pack
+              inputs:
+                command: run
+                runInBackground: false
+                imageName: $(baseContainerTag)
+                containerCommand: pnpm -rc exec mv `npm pack` /usr/src/pack
+                volumes:
+                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+
+            # Generating package lists manually because using scripts/pack-packages.sh (like build-npm-package.yml does)
+            # inside the Docker container is proving problematic.
+            # See https://github.com/microsoft/FluidFramework/pull/18445 for details.
+            - task: Bash@3
+              displayName: Generate package lists
+              env:
+                RELEASE_GROUP: ${{ parameters.tagName }}
+                STAGING_PATH: $(Build.ArtifactStagingDirectory)
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed public > $STAGING_PATH/pack/packagePublishOrder-public.txt
+                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-build > $STAGING_PATH/pack/packagePublishOrder-internal-build.txt
+                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-dev > $STAGING_PATH/pack/packagePublishOrder-internal-dev.txt
+                  flub list --no-private --releaseGroup $RELEASE_GROUP --tarball --feed internal-test > $STAGING_PATH/pack/packagePublishOrder-internal-test.txt
+
+          # At this point we want to publish the artifact with npm-packed packages, but as part of 1ES migration that's
+          # now part of templateContext.outputs below.
+
+          # Lint
+          - ${{ if eq(parameters.lint, true) }}:
+            - task: Docker@1
+              displayName: npm run lint
+              inputs:
+                command: run
+                runInBackground: false
+                imageName: $(baseContainerTag)
+                containerCommand: npm run lint
+                volumes:
+                  $(hostPathToPackArtifact)/scoped:/usr/src/pack
+
+          # Test
+          - ${{ if ne(parameters.test, '') }}:
+
+            # Test - With coverage
+            - ${{ if and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}:
+              - task: Docker@1
+                displayName: npm run ci:test:coverage
+                inputs:
+                  command: run
+                  runInBackground: false
+                  imageName: $(baseContainerTag)
+                  containerCommand: npm run ci:test:coverage
+                  volumes:
+                    $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
+
+              - task: PublishCodeCoverageResults@1
+                displayName: Publish Code Coverage
+                inputs:
+                  codeCoverageTool: Cobertura
+                  summaryFileLocation: '$(hostPathToTestResultsArtifact)/**/report/cobertura-coverage.xml'
+                  reportDirectory: '$(hostPathToTestResultsArtifact)/**/report'
+                  failIfCoverageEmpty: true
+                condition: succeededOrFailed()
+            # Test - No coverage
+            - ${{ else }}:
+              - task: Docker@1
+                displayName: npm run ${{ parameters.test }}
+                inputs:
+                  command: run
+                  runInBackground: false
+                  imageName: $(baseContainerTag)
+                  containerCommand: npm run ${{ parameters.test }}
+                  volumes:
+                    $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
+
+            # Test - Upload Results
+            - task: PublishTestResults@2
+              displayName: Publish Test Results
+              inputs:
+                testResultsFormat: 'JUnit'
+                testResultsFiles: '**/*junit-report.xml'
+                searchFolder: $(hostPathToTestResultsArtifact)
+                mergeTestResults: true
+              condition: succeededOrFailed()
+
+            # The auto-injected CredScan task is running into Access denied issues on some files here and fails the pipeline.
+            # Making sure they're readable by everyone.
+            - task: Bash@3
+              displayName: Update permissions on test results files
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(hostPathToTestResultsArtifact)
+                script: |
+                  sudo chmod -R +r .
+
+          # Docs
+          - ${{ if eq(parameters.docs, true) }}:
+            - task: Docker@1
+              displayName: npm run ci:build:docs
+              inputs:
+                command: run
+                runInBackground: false
+                imageName: $(baseContainerTag)
+                containerCommand: npm run ci:build:docs
+                volumes:
+                  $(hostPathToApiExtractorArtifact):/usr/src/server/_api-extractor-temp
+                arguments: '--user root'
+
+          # At this point we want to publish the artifact with docs, but as part of 1ES migration that's now part of
+          # templateContext.outputs below.
+
+
+        # Build final image
+        - task: 1ES.BuildContainerImage@1
           inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: '**/*junit-report.xml'
-            searchFolder: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
-            mergeTestResults: true
-          condition: succeededOrFailed()
+            dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
+            context: ${{ parameters.buildDirectory }}
+            image: $(containerTag)
+            buildArguments: ${{ parameters.additionalBuildArguments }}
+            useBuildKit: true
+            enableNetwork: true
+            enableCache: true
 
-      # Docs
-      - ${{ if eq(parameters.docs, true) }}:
-        - task: Docker@0
-          displayName: npm run ci:build:docs
-          inputs:
-            action: 'Run a Docker command'
-            customCommand: 'run --user root -v $(Build.ArtifactStagingDirectory)/_api-extractor-temp:/usr/src/server/_api-extractor-temp -t $(baseContainerTag) npm run ci:build:docs'
+        # TODO: move the image pushes to templateContext.outputs?
+        # Push
+        - ${{ if eq(parameters.shouldPushDockerImage, true) }}:
+          # Ugly workaround for the fact that 1ES.PushContainerImage deletes the local image after pushing it,
+          # so we can't have two sequential pushes of the same local image with different remote tags and thus we
+          # need to first run some logic to combine the potential remote tags we want to push into a single string.
+          - task: Bash@3
+            displayName: Generate final list of image tags to push
+            name: ComputeFinalTagList
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                # containerTag should always be pushed
+                FINAL_TAG_LIST=$(containerTag)
 
-        - task: PublishPipelineArtifact@1
-          displayName: 'Docs: Publish Artifact'
-          inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)/_api-extractor-temp'
-            artifactName: _api-extractor-temp
-            publishLocation: 'pipeline'
+                # If latestContainerTag is not empty, it needs to be pushed as well
+                if [ ! -z "$(latestContainerTag)" ] ; then
+                  FINAL_TAG_LIST=${FINAL_TAG_LIST},$(latestContainerTag)
+                fi
 
-    # Build
-    - task: Docker@2
-      displayName: Docker Build - ${{ variables.buildContainerName }}
-      inputs:
-        containerRegistry: $(containerRegistry)
-        repository: ${{ variables.buildContainerName }}
-        command: build
-        dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
-        buildContext: ${{ parameters.buildDirectory }}
-        arguments: ${{ parameters.additionalBuildArguments }}
-        tags: |
-          $(containerTagSuffix)
-          ${{ variables.latestContainerTagSuffix }}
+                echo "Tags to push: $FINAL_TAG_LIST";
+                echo "##vso[task.setvariable variable=FinalTagList;isOutput=true]$FINAL_TAG_LIST"
 
-    # Push
-    - ${{ if eq(variables.pushImage, true) }}:
-      - task: Docker@2
-        displayName: Docker Push
-        inputs:
+          - task: 1ES.PushContainerImage@1
+            displayName: Push docker image(s)
+            inputs:
+              localImage: $(containerTag)
+              remoteImage: $(ComputeFinalTagList.FinalTagList)
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+          - task: Bash@3
+            displayName: Prune pnpm store
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                pnpm store prune
+
+        templateContext:
+          ${{ if eq(parameters.shouldPushDockerImage, true) }}:
+            authenticatedContainerRegistries:
+            # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
+            # specified as a runtime variable (variables from variable groups apparently are never available "statically"
+            # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+            - serviceConnection: $(containerRegistryConnection)
+          outputParentDirectory: $(Build.ArtifactStagingDirectory)
+          outputs:
+          - ${{ if eq(parameters.pack, true) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - pack'
+              targetPath: '$(hostPathToPackArtifact)'
+              artifactName: pack
+              publishLocation: 'pipeline'
+          - ${{ if eq(parameters.docs, true) }}:
+            - output: pipelineArtifact
+              displayName: 'Docs: Publish Artifact'
+              targetPath: '$(hostPathToApiExtractorArtifact)'
+              artifactName: _api-extractor-temp
+              publishLocation: 'pipeline'
+              sbomEnabled: false
+
+    # Publish stage
+    - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
+      - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
+        parameters:
+          tagName: ${{ parameters.tagName }}
+          isReleaseGroup: ${{ parameters.isReleaseGroup }}
+
+    - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
+      - template: /tools/pipelines/templates/1ES/include-publish-docker-service.yml@self
+        parameters:
           containerRegistry: $(containerRegistryConnection)
-          repository: ${{ variables.buildContainerName }}
-          command: push
-          tags: |
-            $(containerTagSuffix)
-            ${{ variables.latestContainerTagSuffix }}
-
-    # Cleanup
-    - task: Docker@0
-      displayName: Docker Cleanup - Container prune
-      inputs:
-        action: Run a Docker command
-        customCommand: container prune -f
-      continueOnError: true
-      condition: succeededOrFailed()
-
-    - task: Docker@0
-      displayName: Docker Cleanup - ${{ variables.buildContainerName }}
-      inputs:
-        action: Run a Docker command
-        customCommand: rmi $(containerTag)
-      continueOnError: true
-      condition: succeededOrFailed()
-
-    - ${{ if eq(variables.buildBase, true) }}:
-      - task: Docker@0
-        displayName: Docker Cleanup - base
-        inputs:
-          action: Run a Docker command
-          customCommand: rmi $(baseContainerTag)
-        continueOnError: true
-        condition: succeededOrFailed()
-
-    - ${{ if ne(variables.latestContainerTag, '') }}:
-      - task: Docker@0
-        displayName: Docker Cleanup - ${{ variables.latestContainerTag }}
-        inputs:
-          action: Run a Docker command
-          customCommand: rmi ${{ variables.latestContainerTag }}
-        continueOnError: true
-        condition: succeededOrFailed()
-
-    - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-      # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
-      - task: Bash@3
-        displayName: Prune pnpm store
-        inputs:
-          targetType: 'inline'
-          workingDirectory: ${{ parameters.buildDirectory }}
-          script: |
-            pnpm store prune
-
-# Publish stage
-- ${{ if and(eq(variables.publish, true), ne(parameters.releaseKind, 'docker')) }}:
-  - template: include-publish-npm-package.yml
-    parameters:
-      tagName: ${{ parameters.tagName }}
-      isReleaseGroup: ${{ parameters.isReleaseGroup }}
-
-- ${{ if eq(variables.releaseImage, true) }}:
-  - template: include-publish-docker-service.yml
-    parameters:
-      containerRegistry: $(containerRegistry)
-      containerTag: $(containerTag)
-      containerRegistryUrl: $(containerRegistryUrl)
-      containerName: ${{ parameters.containerName }}
-      tagName: ${{ variables.tagNameOnReleaseImage }}
+          containerTag: $(containerTag)
+          containerRegistryUrl: $(containerRegistryUrl)
+          containerName: ${{ parameters.containerName }}
+          tagName: $(tagNameOnReleaseImage)
