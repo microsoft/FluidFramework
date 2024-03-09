@@ -14,7 +14,7 @@ that can break the core runtime if used improperly. For example, generation of b
 chunking can be broken. Data loss/corruption may occur in these scenarios in which `IDeltaManger.inbound.pause()` or
 `IDeltaManager.inbound.resume()` get called.
 
-## Alternatives
+### Alternatives
 
 -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
 -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect
