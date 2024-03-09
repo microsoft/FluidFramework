@@ -462,7 +462,10 @@ function rebaseMark<TNodeChange>(
 	const rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const movedNodeChanges = getMovedChangesFromBaseMark(moveEffects, baseMark, baseRevision);
 	if (movedNodeChanges !== undefined) {
-		assert(rebasedMark.changes === undefined, "Unexpected collision of new node changes");
+		assert(
+			rebasedMark.changes === undefined,
+			0x8dc /* Unexpected collision of new node changes */,
+		);
 		rebasedMark.changes = movedNodeChanges;
 	}
 

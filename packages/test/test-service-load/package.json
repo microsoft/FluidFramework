@@ -90,7 +90,7 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
@@ -101,7 +101,7 @@
 		"commander": "^5.1.0",
 		"ps-node": "^0.1.6",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-240326"
+		"tinylicious": "^4.0.0"
 	},
 	"devDependencies": {
 		"@fluid-internal/mocha-test-setup": "workspace:~",

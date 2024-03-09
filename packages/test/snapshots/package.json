@@ -72,11 +72,11 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/replay-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^3.1.0-240326",
+		"@fluidframework/server-local-server": "^4.0.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^10.2.0"
 	},

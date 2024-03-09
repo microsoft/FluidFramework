@@ -116,7 +116,7 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"uuid": "^9.0.0"
 	},

@@ -43,7 +43,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"fluid-framework": "workspace:~",
