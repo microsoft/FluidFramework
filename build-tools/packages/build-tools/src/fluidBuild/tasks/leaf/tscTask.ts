@@ -114,7 +114,7 @@ export class TscTask extends LeafTask {
 		// Check previous build errors
 		if (
 			program.changeFileSet?.length ||
-			(!program.options.noEmit
+			(!config.options.noEmit
 				? program.affectedFilesPendingEmit?.length
 				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
 		) {
