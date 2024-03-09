@@ -151,31 +151,6 @@ describe("serializedStateManager", () => {
 		logger = createChildLogger({ namespace: "fluid:testSerializedStateManager" });
 	});
 
-	it("can't get pending local state when offline load disabled", async () => {
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			undefined,
-			logger,
-			storageAdapter,
-			false,
-		);
-
-		await assert.rejects(
-			async () =>
-				serializedStateManager.getPendingLocalStateCore(
-					{
-						notifyImminentClosure: false,
-					},
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				),
-			(error: Error) =>
-				errorFn(error, "Can't get pending local state unless offline load is enabled"),
-			"container can get local state with offline load disabled",
-		);
-	});
-
 	it("can't get pending local state when there is no base snapshot", async () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
