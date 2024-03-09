@@ -22,12 +22,7 @@ import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import { TreeContent } from "../shared-tree/index.js";
-import {
-	InsertableContent,
-	extractFactoryContent,
-	getClassSchema,
-	simpleSchemaSymbol,
-} from "./proxies.js";
+import { InsertableContent, extractFactoryContent } from "./proxies.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import {
 	FieldKind,
@@ -39,6 +34,7 @@ import {
 	TreeNodeSchema,
 } from "./schemaTypes.js";
 import { TreeConfiguration } from "./tree.js";
+import { getClassSchema, simpleSchemaSymbol } from "./types.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.

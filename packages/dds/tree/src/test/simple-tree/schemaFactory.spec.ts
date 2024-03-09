@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { Tree, TreeConfiguration, TreeNode, TreeView } from "../../simple-tree/index.js";
 import {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
@@ -101,8 +101,38 @@ describe("schemaFactory", () => {
 	it("instanceof", () => {
 		const schema = new SchemaFactory("com.example");
 
-		const config = new TreeConfiguration(schema.number, () => 5);
+		class A extends schema.object("A", {}) {}
+		class B extends schema.object("B", {}) {}
+		const C = schema.object("C", {});
+		const StructuralArray = schema.array(A);
+		const NominalArray = schema.array("D", A);
 
+		const a = new A({});
+		assert(a instanceof A);
+		assert(a instanceof TreeNode);
+		assert(!(a instanceof B));
+
+		const c = new C({});
+		assert(c instanceof C);
+		assert(c instanceof TreeNode);
+		assert(!(c instanceof B));
+
+		const n = new NominalArray([]);
+		assert(n instanceof NominalArray);
+		assert(n instanceof TreeNode);
+		assert(!(n instanceof B));
+
+		// Structurally typed and/or POJO mode types:
+		const s = hydrate(StructuralArray, []);
+		// This works correctly, but is currently rejected by the type system. This is fine as Tree.is can be used instead.
+		assert(s instanceof (StructuralArray as any));
+		// This case is expressible without type errors, so it is important that it works.
+		assert(s instanceof TreeNode);
+		assert(!(s instanceof B));
+	});
+
+	it("instanceof structural", () => {
+		const schema = new SchemaFactory("com.example");
 		const factory = new TreeFactory({});
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

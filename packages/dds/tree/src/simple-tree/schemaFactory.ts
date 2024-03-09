@@ -22,7 +22,6 @@ import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
 	createNodeProxy,
 	createRawNodeProxy,
-	getClassSchema,
 	getSequenceField,
 	arrayNodePrototypeProperties,
 	mapStaticDispatchMap,
@@ -49,7 +48,7 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import { TreeNode, getClassSchema } from "./types.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 
 /**

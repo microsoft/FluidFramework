@@ -42,7 +42,7 @@ import {
 	TreeMapNode,
 } from "./schemaTypes.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
-import { Unhydrated, TreeNode } from "./types.js";
+import { Unhydrated, TreeNode, getClassSchema } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
@@ -104,18 +104,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		default:
 			fail("invalid field kind");
 	}
-}
-
-/**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
- */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
-
-export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
-	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
-	}
-	return undefined;
 }
 
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {

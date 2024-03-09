@@ -7,8 +7,10 @@ import {
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
 } from "../feature-libraries/index.js";
-import { type, WithType } from "./schemaTypes.js";
+import { tryGetFlexNode } from "./flexNode.js";
+import { NodeFromSchema, TreeNodeSchemaClass, WithType, type } from "./schemaTypes.js";
 import { IterableTreeArrayContent } from "./treeArrayNode.js";
 
 /**
@@ -23,14 +25,27 @@ import { IterableTreeArrayContent } from "./treeArrayNode.js";
 export type Unhydrated<T> = T;
 
 /**
+ * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
+ */
+export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
+
+export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
+	if (simpleSchemaSymbol in schema) {
+		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
+	}
+	return undefined;
+}
+
+/**
+ * A non-{@link NodeKind.Leaf|leaf} SharedTree node. Includes objects, lists, and maps.
  * A non-leaf SharedTree node. Includes objects, arrays, and maps.
  *
  * @remarks
  * Base type which all nodes implement.
  *
  * This can be used as a type to indicate/document values which should be tree nodes.
- * Runtime use of this class object (for example when used with `instanceof` or subclassed), is not supported:
- * it may be replaced with an interface or union in the future.
+ * Runtime use of this class object (for example when subclassed), is not supported except for use with `instanceof`:
+ * it may be replaced with an interface or union in the future (with `instanceof TreeNode` replaced with a free function).
  * @privateRemarks
  * Future changes may replace this with a branded interface if the runtime oddities related to this are not cleaned up.
  *
@@ -73,6 +88,64 @@ export abstract class TreeNode implements WithType {
 	 * Subclasses provide more specific strings for this to get strong typing of otherwise type compatible nodes.
 	 */
 	public abstract get [type](): string;
+
+	/**
+	 * Provides `instancof` support for all tree nodes.
+	 * See also {@link TreeApi.is}.
+	 * @remarks
+	 * Returns false for leaf values.
+	 *
+	 * This requires that the subclasses of TreeNode are all actually node types:
+	 * to avoid breaking this, do not extend TreeNode other than via class based schema.
+	 * @privateRemarks
+	 * This overrides `instancof` for all subclasses of TreeNode to use a schema based approach.
+	 * TypeScript 5.3 will impact how this does type narrowing, but it should continue to work correctly with that.
+	 *
+	 * If desired this functionality could be removed, and replaced by the existing Tree.is and exporting `isTreeNode`.
+	 * Removing this however (such that attempts to use it no longer compile, instead of just working incorrectly) is problematic.
+	 * Either TypeScript 5.3 must be required so that the compile type narrowing using instance of can be disabled for these types (ex: narrow to unknown, or require narrowed type to be `never`),
+	 * or TreeNode must stop being a class.
+	 * Making TreeNode into an interface is possible, but it prevents future improvements to make it more nominally typed (see the disabled `readonly #brand!: unknown;` field).
+	 */
+	public static [Symbol.hasInstance]<
+		TSchema extends typeof TreeNode & (abstract new (...args: any[]) => TreeNode),
+	>(this: TSchema, value: unknown): value is InstanceType<TSchema>;
+
+	/**
+	 * Provides `instancof` support for all class based schema.
+	 */
+	public static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(
+		this: TSchema,
+		value: unknown,
+	): value is NodeFromSchema<TSchema>;
+
+	public static [Symbol.hasInstance]<TSchema extends typeof TreeNode & TreeNodeSchemaClass>(
+		this: TSchema,
+		value: unknown,
+	): value is NodeFromSchema<TSchema> {
+		const flexNode = tryGetFlexNode(value);
+		if (flexNode === undefined) {
+			return false;
+		}
+
+		const flexSchema = flexNode.schema;
+		let schema: object | null | undefined = getClassSchema(flexSchema);
+
+		if (schema === undefined) {
+			// TODO: One legacy schema builder test ("objectRecursive") mixes simple tree APIs with objects with no class schema (made using flex schema only).
+			// For now we return false for this cases instead of failing to allow that test to function.
+			// fail("missing class schema for node");
+			return false;
+		}
+
+		while (schema !== null) {
+			if (this === schema) {
+				return true;
+			}
+			schema = Reflect.getPrototypeOf(schema);
+		}
+		return false;
+	}
 }
 
 /**
