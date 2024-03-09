@@ -6,8 +6,9 @@
  * Basic implementation of part of the PropertyFactory needed to run test on validation.
  */
 
-import { TemplateValidator } from "../templateValidator.js";
+import { TemplateValidator, type PropertySchema } from "../templateValidator.js";
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
+import type { SchemaValidationResult } from "../validationResultBuilder.js";
 
 export class SchemaValidator {
 	schemaMap: Record<string, any>;
@@ -16,7 +17,7 @@ export class SchemaValidator {
 	}
 
 	inheritsFrom(
-		in_templateTypeid: any,
+		in_templateTypeid: string,
 		in_baseTypeid: string | number,
 		in_options?: { includeSelf?: any },
 	) {
@@ -43,7 +44,7 @@ export class SchemaValidator {
 		this.schemaMap[schema.typeid] = schema;
 	}
 
-	async inheritsFromAsync(child, ancestor) {
+	async inheritsFromAsync(child, ancestor): Promise<boolean> {
 		return new Promise((resolve, reject) => {
 			setTimeout(() => {
 				try {
@@ -63,7 +64,7 @@ export class SchemaValidator {
 			}, 5);
 		});
 
-	getAllParentsForTemplate(in_typeid, out_parents, in_includeBaseProperty) {
+	getAllParentsForTemplate(in_typeid: string, out_parents, in_includeBaseProperty) {
 		if (TypeIdHelper.isPrimitiveType(in_typeid)) {
 			// Everything inherits from BaseProperty.
 			if (in_includeBaseProperty) {
@@ -100,15 +101,36 @@ export class SchemaValidator {
 		}
 	}
 
-	validate(in_schema, in_previousSchema?, in_async?, in_skipSemver?, in_allowDraft?): any {
+	validate(
+		in_schema: PropertySchema,
+		in_previousSchema: PropertySchema,
+		in_async: true,
+		in_skipSemver?: boolean,
+		in_allowDraft?: boolean,
+	): Promise<SchemaValidationResult>;
+	validate(
+		in_schema: PropertySchema,
+		in_previousSchema?: PropertySchema,
+		in_async?: false,
+		in_skipSemver?: boolean,
+		in_allowDraft?: boolean,
+	): SchemaValidationResult;
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	validate(
+		in_schema: PropertySchema,
+		in_previousSchema?: PropertySchema,
+		in_async?: boolean,
+		in_skipSemver?: boolean,
+		in_allowDraft?: boolean,
+	) {
 		in_skipSemver = in_skipSemver || false;
 
 		if (in_async) {
 			let options = {
 				inheritsFromAsync: this.inheritsFromAsync as any,
 				hasSchemaAsync: this.hasSchemaAsync as any,
-				skipSemver: in_skipSemver as boolean,
-				allowDraft: in_allowDraft as boolean,
+				skipSemver: in_skipSemver,
+				allowDraft: in_allowDraft,
 			};
 			let templateValidator = new TemplateValidator(options);
 

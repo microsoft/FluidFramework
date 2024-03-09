@@ -5,6 +5,11 @@
 
 /* eslint no-unused-expressions: 0 */
 
+// Lint disable to avoid needing to place `async` on many test functions
+// as validity of testing is in general questionable and trying to avoid
+// changes.
+/* eslint-disable @typescript-eslint/promise-function-async */
+
 /**
  * @fileoverview In this file, we will test template validation.
  */
@@ -15,26 +20,38 @@ import { constants } from "@fluid-experimental/property-common";
 import semver from "semver";
 import { SchemaValidator } from "../schemaValidator.js";
 import { TemplateValidator } from "../../templateValidator.js";
+import type { SchemaValidationResult } from "../../validationResultBuilder.js";
 
 (function () {
 	const MSG = constants.MSG;
 
 	const performValidation = function (
-		async,
+		async: boolean,
 		template,
 		templatePrevious,
 		skipSemver,
 		asyncErrorMessage?,
-	) {
+	): Promise<SchemaValidationResult> {
 		let schemaValidator = new SchemaValidator();
 
+		// @ts-expect-error - per the catch and no throw below
 		return async
 			? schemaValidator
 					.validate(template, templatePrevious, async, skipSemver)
 					.catch((error) => {
 						expect(error.message).to.have.string(asyncErrorMessage);
+						// This really should re-throw the error. As it stands this
+						// catch returns `undefined` which is not SchemaValidationResult.
+						// Throwing will cause "fail: previous template: invalid semver"
+						// test case to fail with uncaught error.
+						// This also has impact on the malformed validate function below.
+						// throw error;
 					})
-			: new Promise((resolve) => {
+			: // A better pattern is simply Promise.resolve(...). However without all callers
+			  // properly specifying they are `async` (lint disabled for file), they may fail.
+			  // In particular see test case
+			  //   "should fail if map with context key type typeid is not constant"
+			  new Promise((resolve) => {
 					resolve(
 						schemaValidator.validate(template, templatePrevious, async, skipSemver),
 					);
@@ -43,7 +60,7 @@ import { TemplateValidator } from "../../templateValidator.js";
 
 	// Performs both synchronous and asynchronous validation
 	let validate = function (
-		expectations,
+		expectations: (result: SchemaValidationResult) => SchemaValidationResult,
 		template?,
 		templatePrevious?,
 		skipSemver?,
@@ -52,6 +69,14 @@ import { TemplateValidator } from "../../templateValidator.js";
 		return performValidation(false, template, templatePrevious, skipSemver)
 			.then(expectations)
 			.then(
+				// This patten is invalid. The `then` parameter is expected to be callable.
+				// Instead performValidation is called and its result is is called. Or at least
+				// should be. As set up the following .then is executed (apparently) on the
+				// results of the prior performValidation. This could be address with this prefix:
+				//   async () =>
+				// However doing so causes tests to fail. Testing coming through here appears
+				// invalid.
+				// @ts-expect-error
 				performValidation(true, template, templatePrevious, skipSemver, asyncErrorMessage),
 			)
 			.then(expectations);
