@@ -1,5 +1,5 @@
 ---
-"@fluid-tools/fluidapp-odsp-urlresolver": minor
+"@fluidframework/odsp-urlresolver": minor
 ---
 
 Remove deprecated package @fluid-tools/fluidapp-odsp-urlresolver
