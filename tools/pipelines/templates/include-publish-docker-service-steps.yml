@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-1ES
 
 - name: containerRegistry
   type: string
@@ -39,43 +39,45 @@ jobs:
     containerTagSuffix: $(version)
   strategy:
     runOnce:
-        deploy:
-            steps:
-            - download: none
-            - task: Docker@2
-              displayName: Login to ACR
-              inputs:
-                command: login
-                containerRegistry: ${{ parameters.containerRegistry }}
+      deploy:
+        steps:
+        - download: none
 
-            - task: Docker@0
-              displayName: Pull image
-              inputs:
-                action: 'Run a Docker command'
-                customCommand: 'pull ${{ parameters.containerTag }}'
+        - task: Bash@3
+          displayName: Pull image
+          inputs:
+            targetType: 'inline'
+            script: |
+              'docker pull ${{ parameters.containerTag }}'
 
-            - task: Docker@0
-              displayName: Tag image
-              inputs:
-                action: 'Run a Docker command'
-                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
+        - task: Docker@1
+          displayName: Tag image as '$(containerTagSuffix)'
+          inputs:
+            command: 'tag'
+            arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
 
-            - task: Docker@0
-              displayName: Tag image
-              inputs:
-                action: 'Run a Docker command'
-                customCommand: 'tag ${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
+        - task: Docker@1
+          displayName: Tag 1mage as 'latest'
+          inputs:
+            command: 'tag'
+            arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
 
-            - task: Docker@2
-              displayName: Docker Push
-              inputs:
-                containerRegistry: ${{ parameters.containerRegistry }}
-                repository: ${{ parameters.containerName }}
-                command: push
-                tags: |
-                  $(containerTagSuffix)
-                  latest
+        - task: 1ES.PushContainerImage@1
+          displayName: Docker Push
+          inputs:
+            image: $(containerTag)
+            remoteImage: >
+              ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest,
+              ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)
 
-            - template: include-git-tag-steps.yml
-              parameters:
-                tagName: ${{ parameters.tagName }}
+        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+          parameters:
+            tagName: ${{ parameters.tagName }}
+  # templateContext is available because our templates were migrated to extend 1ES templates for pipelines, so
+  # the stage defined in this file ends up being passed to a 1ES template which provides this functionality.
+  templateContext:
+    authenticatedContainerRegistries:
+    # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
+    # specified as a runtime variable (variables from variable groups apparently are never available "statically"
+    # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+    - serviceConnection: $(containerRegistryConnection)

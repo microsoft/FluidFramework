@@ -549,7 +549,7 @@ extends:
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
     - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
-      - template: /tools/pipelines/templates/1ES/include-publish-docker-service.yml@self
+      - template: /tools/pipelines/templates/include-publish-docker-service.yml@self
         parameters:
           containerRegistry: $(containerRegistryConnection)
           containerTag: $(containerTag)
