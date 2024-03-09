@@ -1,5 +1,15 @@
 # @fluidframework/shared-object-base
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   fluid-framework: SharedObject classes are no longer exported as public ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    `SharedObject` and `SharedObjectCore` are intended for authoring DDSes, and thus are only intended for use within the Fluid Framework client packages.
+    They is no longer publicly exported: any users should fine their own solution or be upstreamed.
+    `SharedObject` and `SharedObjectCore` are available for now as `@alpha` to make this migration less disrupting for any existing users.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes
