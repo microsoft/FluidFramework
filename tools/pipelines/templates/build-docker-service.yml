@@ -136,7 +136,7 @@ extends:
       - ES365AIMigrationTooling
     stages:
     - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
-      - template: /tools/pipelines/templates/1ES/include-policy-check.yml@self
+      - template: /tools/pipelines/templates/include-policy-check.yml@self
         parameters:
           buildDirectory: ${{ parameters.buildDirectory }}
           checks: ${{ parameters.checks }}
@@ -543,7 +543,7 @@ extends:
 
     # Publish stage
     - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
-      - template: /tools/pipelines/templates/1ES/include-publish-npm-package.yml@self
+      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}

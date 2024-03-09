@@ -9,7 +9,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-1ES
 
 - name: isReleaseGroup
   type: boolean
@@ -25,7 +25,7 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: include-publish-npm-package-deployment.yml
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
       feedUrl: $(ado-feeds-test) # Comes from the ado-feeds variable group
       feedKind: internal-test
@@ -42,7 +42,7 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: include-publish-npm-package-deployment.yml
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
       feedUrl: $(ado-feeds-build) # Comes from the ado-feeds variable group
       feedKind: internal-build
@@ -61,7 +61,7 @@ stages:
     variables:
     - group: ado-feeds
     jobs:
-    - template: include-publish-npm-package-deployment.yml
+    - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
       parameters:
         feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
         feedKind: internal-dev
@@ -76,7 +76,7 @@ stages:
   variables:
   - group: ado-feeds
   jobs:
-  - template: include-publish-npm-package-deployment.yml
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
       feedUrl: https://registry.npmjs.org
       feedKind: public
