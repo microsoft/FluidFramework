@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// To address the failure of one of the tests against ESM module, it was relocated to the test/commonjs folder. AB#7431
+
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { MapWithExpiration } from "../mapWithExpiration.js";

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-const assert = require("assert");
-const MapWithExpiration = require("../../mapWithExpiration.js");
+// This test runs against CJS modules, as the behavior of 'this' differs between CJS and ESM modules.
+// Therefore, the test is moved here and excluded from testing with ESM modules. AB#7431
+import { strict as assert } from "assert";
+import { MapWithExpiration } from "../../mapWithExpiration.js";
 
 describe("forEach thisArg", () => {
 	function testForEachCases(testName, testFn) {
