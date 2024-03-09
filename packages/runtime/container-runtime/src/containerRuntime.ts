@@ -1023,7 +1023,10 @@ export class ContainerRuntime
 		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
 		// to reason over such things as session ID space.
 		if (this.idCompressorMode === "on") {
-			assert(this._idCompressor !== undefined, "compressor should have been loaded");
+			assert(
+				this._idCompressor !== undefined,
+				0x8ea /* compressor should have been loaded */,
+			);
 			return this._idCompressor;
 		}
 	}
@@ -1791,7 +1794,7 @@ export class ContainerRuntime
 	}
 
 	public makeLocallyVisible() {
-		assert(false, "should not be called");
+		assert(false, 0x8eb /* should not be called */);
 	}
 
 	/**
@@ -1803,7 +1806,7 @@ export class ContainerRuntime
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
-			assert(this.pendingIdCompressorOps.length === 0, "no pending ops");
+			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 			this._idCompressor = await this.createIdCompressor();
 		}
 
@@ -1848,7 +1851,10 @@ export class ContainerRuntime
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }> {
 		const sortedLoadingGroupIds = loadingGroupIds.sort();
-		assert(this.storage.getSnapshot !== undefined, "getSnapshot api should be defined if used");
+		assert(
+			this.storage.getSnapshot !== undefined,
+			0x8ed /* getSnapshot api should be defined if used */,
+		);
 		let loadedFromCache = true;
 		// Lookup up in the cache, if not present then make the network call as multiple datastores could
 		// be in same loading group. So, once we have fetched the snapshot for that loading group on
@@ -1858,7 +1864,7 @@ export class ContainerRuntime
 			async () => {
 				assert(
 					this.storage.getSnapshot !== undefined,
-					"getSnapshot api should be defined if used",
+					0x8ee /* getSnapshot api should be defined if used */,
 				);
 				loadedFromCache = false;
 				return this.storage.getSnapshot({
@@ -1883,9 +1889,9 @@ export class ContainerRuntime
 			pathParts,
 			hasIsolatedChannels,
 		);
-		assert(snapshotTreeForPath !== undefined, "no snapshotTree for the path");
+		assert(snapshotTreeForPath !== undefined, 0x8ef /* no snapshotTree for the path */);
 		const snapshotSeqNumber = snapshot.sequenceNumber;
-		assert(snapshotSeqNumber !== undefined, "snapshotSeqNumber should be present");
+		assert(snapshotSeqNumber !== undefined, 0x8f0 /* snapshotSeqNumber should be present */);
 
 		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
 		// Snapshots should only move forward. If we observe an older snapshot than the one we loaded from, then likely
@@ -2201,7 +2207,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
-				assert(this.idCompressorMode !== "off", "ID compressor should be in use");
+				assert(this.idCompressorMode !== "off", 0x8f1 /* ID compressor should be in use */);
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -3898,7 +3904,10 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
+		assert(
+			!this.isSummarizerClient,
+			0x8f2 /* Summarizer never reconnects so should never resubmit */,
+		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:

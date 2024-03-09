@@ -217,7 +217,7 @@ export abstract class FluidDataStoreContext
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		assert(
 			this.channel !== undefined,
-			"This should be called after the channel is created, when the registry is populated",
+			0x8f3 /* This should be called after the channel is created, when the registry is populated */,
 		);
 		return this.registry;
 	}
@@ -804,7 +804,7 @@ export abstract class FluidDataStoreContext
 
 			this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
 		} else {
-			assert(this.pending?.length === 0, "no pending ops");
+			assert(this.pending?.length === 0, 0x8f4 /* no pending ops */);
 
 			// Execute data store's entry point to make sure that for a local (aka detached from container) data store, the
 			// entryPoint initialization function is called before the data store gets attached and potentially connected to
@@ -1016,7 +1016,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		if (this.snapshotFetchRequired) {
 			assert(
 				this.loadingGroupId !== undefined,
-				"groupId should be present to fetch snapshot",
+				0x8f5 /* groupId should be present to fetch snapshot */,
 			);
 			const snapshot = await this.runtime.getSnapshotForLoadingGroupId(
 				[this.loadingGroupId],
@@ -1066,7 +1066,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 			}
 		}
 
-		assert(this.pkg !== undefined, "The datastore context package should be defined");
+		assert(this.pkg !== undefined, 0x8f6 /* The datastore context package should be defined */);
 		return {
 			pkg: this.pkg,
 			isRootDataStore,
@@ -1292,7 +1292,7 @@ export class LocalDetachedFluidDataStoreContext
 
 				assert(
 					!(await this.isRoot()),
-					"there are no more createRootDataStore() kind of APIs!",
+					0x8f7 /* there are no more createRootDataStore() kind of APIs! */,
 				);
 
 				return dataStoreChannel;
