@@ -379,6 +379,8 @@ export class LocalOrderer implements IOrderer {
 			checkpointService,
 		);
 
+		const maxPendingCheckpointMessagesLength = 2000;
+
 		return new ScribeLambda(
 			context,
 			this.tenantId,
@@ -399,6 +401,7 @@ export class LocalOrderer implements IOrderer {
 			true,
 			this.details.value.isEphemeralContainer,
 			checkpointService.getLocalCheckpointEnabled(),
+			maxPendingCheckpointMessagesLength,
 		);
 	}
 

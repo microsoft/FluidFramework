@@ -92,7 +92,7 @@ export class CollaborativeInput extends React.Component<
 				className={this.props.className}
 				style={this.props.style}
 				readOnly={this.props.readOnly ?? false}
-				spellCheck={this.props.spellCheck ? this.props.spellCheck : true}
+				spellCheck={this.props.spellCheck ?? true}
 				ref={this.inputElementRef}
 				disabled={this.props.disabled}
 				onBeforeInput={this.updateSelection}
@@ -111,12 +111,12 @@ export class CollaborativeInput extends React.Component<
 		}
 	}
 
-	private handleInput(ev: React.FormEvent<HTMLInputElement>) {
+	private readonly handleInput = (ev: React.FormEvent<HTMLInputElement>) => {
 		// We need to set the value here to keep the input responsive to the user
 		const newText = ev.currentTarget.value;
 
 		// Get the new caret position and use that to get the text that was inserted
-		const newPosition = ev.currentTarget.selectionStart ? ev.currentTarget.selectionStart : 0;
+		const newPosition = ev.currentTarget.selectionStart ?? 0;
 		const isTextInserted = newPosition - this.state.selectionStart > 0;
 		if (isTextInserted) {
 			const insertedText = newText.substring(this.state.selectionStart, newPosition);
@@ -134,24 +134,20 @@ export class CollaborativeInput extends React.Component<
 			this.props.sharedString.removeText(newPosition, this.state.selectionEnd);
 		}
 		this.props.onInput?.(this.props.sharedString);
-	}
+	};
 
 	/**
 	 * Update the current caret selection.
 	 * We need to do this before we do any handleInput action or we will have lost our
 	 * cursor position and not be able to accurately update the shared string.
 	 */
-	private updateSelection() {
+	private readonly updateSelection = () => {
 		if (!this.inputElementRef.current) {
 			return;
 		}
 
-		const selectionEnd = this.inputElementRef.current.selectionEnd
-			? this.inputElementRef.current.selectionEnd
-			: 0;
-		const selectionStart = this.inputElementRef.current.selectionStart
-			? this.inputElementRef.current.selectionStart
-			: 0;
+		const selectionEnd = this.inputElementRef.current.selectionEnd ?? 0;
+		const selectionStart = this.inputElementRef.current.selectionStart ?? 0;
 		this.setState({ selectionEnd, selectionStart });
-	}
+	};
 }
