@@ -5125,6 +5125,7 @@ importers:
       ajv: ^8.12.0
       async: ^3.2.2
       chai: ^4.2.0
+      chai-as-promised: 7.1.1
       cross-env: ^7.0.3
       http-status: 1.3.2
       http-status-codes: 1.3.0
@@ -5141,6 +5142,7 @@ importers:
       rimraf: ^4.4.0
       semver: ^7.5.3
       sinon: ^17.0.1
+      sinon-chai: 3.7.0
       traverse: 0.6.6
     dependencies:
       '@fluid-experimental/property-changeset': link:../property-changeset
@@ -5160,6 +5162,7 @@ importers:
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@types/sinon': 17.0.3
       chai: 4.3.10
+      chai-as-promised: 7.1.1_chai@4.3.10
       cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -5169,6 +5172,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
+      sinon-chai: 3.7.0_chai@4.3.10+sinon@17.0.1
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
     specifiers:
@@ -16584,7 +16588,6 @@ packages:
 
   /@fluidframework/protocol-definitions/3.2.0:
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
-    dev: true
 
   /@fluidframework/protocol-definitions/3.2.0-237840:
     resolution: {integrity: sha512-NlAZT7WjESOzQYiFRIXiWi58ISlubc69zrC2bObHuDE/hMdIEA0mVnJS8x8A/WHaikNEjZ1cyryJsRscSjg5WA==}
@@ -16848,7 +16851,7 @@ packages:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.1.0-240326
       '@fluidframework/protocol-base': 3.1.0-240326
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas-driver': 3.1.0-240326
       '@fluidframework/server-services-client': 3.1.0-240326
       '@fluidframework/server-services-core': 3.1.0-240326
@@ -16877,7 +16880,7 @@ packages:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.1.0-240326
       '@fluidframework/protocol-base': 3.1.0-240326
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas-driver': 3.1.0-240326
       '@fluidframework/server-services-client': 3.1.0-240326
       '@fluidframework/server-services-core': 3.1.0-240326
@@ -16974,7 +16977,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-base': 3.1.0-240326
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas': 3.1.0-240326_debug@4.3.4
       '@fluidframework/server-services-client': 3.1.0-240326
       '@fluidframework/server-services-core': 3.1.0-240326
@@ -17074,7 +17077,7 @@ packages:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 3.1.0-240326
       '@fluidframework/protocol-base': 3.1.0-240326
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 3.1.0-240326
       '@fluidframework/server-services-core': 3.1.0-240326
       '@fluidframework/server-services-telemetry': 3.1.0-240326
@@ -17122,7 +17125,7 @@ packages:
   /@fluidframework/server-services-utils/3.1.0-240326:
     resolution: {integrity: sha512-wum5dlG9Ai87ugz71SABraWiHzPbvgnTks6kTtj6/Zw8mg72exbkyhMY5O82VZI8BrmDWfGWlwqmplGUbCrXHQ==}
     dependencies:
-      '@fluidframework/protocol-definitions': 3.2.0-237840
+      '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 3.1.0-240326
       '@fluidframework/server-services-core': 3.1.0-240326
       '@fluidframework/server-services-telemetry': 3.1.0-240326
@@ -25070,6 +25073,15 @@ packages:
 
   /ccount/1.1.0:
     resolution: {integrity: sha512-vlNK021QdI7PNeiUh/lKkC/mNHHfV0m/Ad5JoI0TYtlBnJAslM/JIkm/tGC88bkLIwO6OQ5uV6ztS6kVAtCDlg==}
+    dev: true
+
+  /chai-as-promised/7.1.1_chai@4.3.10:
+    resolution: {integrity: sha512-azL6xMoi+uxu6z4rhWQ1jbdUhOMhis2PvscD/xjLqNMkv3BPPp2JyyuTHOrf9BOosGpNQ11v6BKv/g57RXbiaA==}
+    peerDependencies:
+      chai: '>= 2.1.2 < 5'
+    dependencies:
+      chai: 4.3.10
+      check-error: 1.0.3
     dev: true
 
   /chai/4.3.10:
@@ -39819,6 +39831,16 @@ packages:
       codemirror-spell-checker: 1.1.2
       marked: 4.3.0
     dev: false
+
+  /sinon-chai/3.7.0_chai@4.3.10+sinon@17.0.1:
+    resolution: {integrity: sha512-mf5NURdUaSdnatJx3uhoBOrY9dtL19fiOtAdT1Azxg3+lNJFiuN0uzaU3xX1LeAfL17kHQhTAJgpsfhbMJMY2g==}
+    peerDependencies:
+      chai: ^4.0.0
+      sinon: '>=4.0.0'
+    dependencies:
+      chai: 4.3.10
+      sinon: 17.0.1
+    dev: true
 
   /sinon-chrome/3.0.1:
     resolution: {integrity: sha512-NTEFhyuiWEMnRmIqldUiA2DhKn2EqnZxyEk5Ez5rBXj+Nl54aJ0MEmF4wjltrxecxd8zlNLxyE0HyLabev9JsQ==}
