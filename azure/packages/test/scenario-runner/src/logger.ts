@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 import crypto from "crypto";
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
 
 import { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { getMainEntryPointForPackage } from "@fluid-private/test-version-utils";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import {
@@ -133,8 +135,10 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	const loggerPkgPath = process.env.FLUID_TEST_LOGGER_PKG_PATH;
+	if (loggerPkgPath) {
+		const entryPoint = getMainEntryPointForPackage(loggerPkgPath);
+		await import(path.join(loggerPkgPath, entryPoint));
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new ScenarioRunnerLogger(logger);

@@ -227,6 +227,7 @@ importers:
   azure/packages/test/scenario-runner:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
+      '@fluid-private/test-version-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -269,6 +270,7 @@ importers:
       uuid: ^9.0.0
     dependencies:
       '@fluid-internal/client-utils': link:../../../../packages/common/client-utils
+      '@fluid-private/test-version-utils': link:../../../../packages/test/test-version-utils
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions

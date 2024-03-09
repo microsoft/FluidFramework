@@ -239,6 +239,9 @@ export function getDriverApi(baseVersion: string, requested?: number | string, a
 // @internal
 export function getLoaderApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof LoaderApi;
 
+// @internal
+export const getMainEntryPointForPackage: (pkgPath: string) => Promise<string>;
+
 // @internal (undocumented)
 export function getVersionedTestObjectProvider(baseVersion: string, loaderVersion?: number | string, driverConfig?: {
     type?: TestDriverTypes;

@@ -289,18 +289,21 @@ export function checkInstalled(requested: string) {
 }
 
 /**
+ * Analyzes the package.json file for the given package and returns the main entry point.
+ * It considers that the package.json file might already be using the 'exports' field.
+ *
+ * @remarks
+ * This function is useful when the caller needs to import a package dynamically and has the path to it,
+ * but needs to figure out which specific file within the package to point at in order to import it.
+ *
  * @internal
  */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
-	const pkgPath = path.join(modulePath, "node_modules", pkg);
-	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
-	// some of Node's module loading logic here.
-	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+export const getMainEntryPointForPackage = (pkgPath: string): string => {
 	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
 		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
 	);
 	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
-	let primaryExport: string;
+	let mainEntryPoint: string;
 	if (pkgJson.exports !== undefined) {
 		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
 		// if this assert fails.
@@ -309,31 +312,48 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		for (const key of Object.keys(pkgJson.exports)) {
 			if (!key.startsWith(".")) {
 				throw new Error(
-					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+					"Conditional exports are not supported. Legacy module loading logic needs to be updated.",
 				);
 			}
 		}
 		if (typeof pkgJson.exports === "string") {
-			primaryExport = pkgJson.exports;
+			mainEntryPoint = pkgJson.exports;
 		} else {
 			const exp = pkgJson.exports["."];
-			primaryExport =
+			mainEntryPoint =
 				typeof exp === "string"
 					? exp
 					: exp.require !== undefined
 					? exp.require.default
 					: exp.default;
-			if (primaryExport === undefined) {
-				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
+			if (mainEntryPoint === undefined) {
+				throw new Error(
+					`Package at '${pkgPath}' defined subpath exports but no '.' entry.`,
+				);
 			}
 		}
 	} else {
 		if (pkgJson.main === undefined) {
-			throw new Error(`No main or exports in package.json for ${pkg}`);
+			throw new Error(
+				`No 'main' or 'exports' fields in package.json for package at '${pkgPath}'`,
+			);
 		}
-		primaryExport = pkgJson.main;
+		mainEntryPoint = pkgJson.main;
 	}
-	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
+	return mainEntryPoint;
+};
+
+/**
+ * @internal
+ */
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
+	const pkgPath = path.join(modulePath, "node_modules", pkg);
+	const primaryExport = getMainEntryPointForPackage(pkgPath);
+	const importPath = pathToFileURL(path.join(pkgPath, primaryExport)).href;
+	return import(importPath);
 };
 
 /**

@@ -63,3 +63,4 @@ export {
 	SkippedTestWithDriverType,
 	SkippedErrorExpectingTestWithDriverType,
 } from "./itSkipsOnFailure.js";
+export { getMainEntryPointForPackage } from "./versionUtils.js";
