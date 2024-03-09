@@ -39,6 +39,7 @@ import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -2195,10 +2196,7 @@ describe("Runtime", () => {
 						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 					},
 					(err: IFluidErrorBase) => {
-						assert(
-							err.message === "groupId should be present to fetch snapshot",
-							"groupId not specified when the snapshot was omitted",
-						);
+						validateAssertionError(err, "groupId should be present to fetch snapshot");
 						return true;
 					},
 				);
