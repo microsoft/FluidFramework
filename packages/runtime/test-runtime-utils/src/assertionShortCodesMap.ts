@@ -1501,5 +1501,6 @@ export const shortCodeMap = {
 	"0x8fd": "Local Channel should be loaded before being attached",
 	"0x8fe": "Ghost session already in progress.",
 	"0x8ff": "GC data should be a utf-8-encoded blob",
-	"0x900": "invalid input"
+	"0x900": "invalid input",
+	"0x901": "Unsupported context"
 };
