@@ -16,6 +16,6 @@
 "@fluid-private/test-loader-utils": minor
 ---
 
-Added `containerMetadata` prop on IContainer interface
+container-definitions: Added containerMetadata prop on IContainer interface
 
 Added `containerMetadata` prop on IContainer interface.

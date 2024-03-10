@@ -131,6 +131,12 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private _srcFiles: string[] | undefined;
 	private _dstFiles: string[] | undefined;
 
+	protected get recheckLeafIsUpToDate(): boolean {
+		// The task knows all the input, so we can check if this task needs to execute
+		// even dependent tasks are out of date.
+		return true;
+	}
+
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}

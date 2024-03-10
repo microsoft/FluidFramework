@@ -18,15 +18,15 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { Interval, ISerializableInterval } from "./intervals";
+import { Interval, ISerializableInterval } from "./intervals/index.js";
 import {
 	IntervalCollection,
 	IIntervalCollection,
 	IntervalCollectionValueType,
-} from "./intervalCollection";
-import { DefaultMap, IMapOperation } from "./defaultMap";
-import { pkgVersion } from "./packageVersion";
-import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
+} from "./intervalCollection.js";
+import { DefaultMap, IMapOperation } from "./defaultMap.js";
+import { pkgVersion } from "./packageVersion.js";
+import { IMapMessageLocalMetadata } from "./defaultMapInterfaces.js";
 
 const snapshotFileName = "header";
 

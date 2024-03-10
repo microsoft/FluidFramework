@@ -2,7 +2,7 @@
 "@fluidframework/runtime-definitions": minor
 ---
 
-ITelemetryContext: Functions `get` and `serialize` are now deprecated
+runtime-definitions: ITelemetryContext: Functions `get` and `serialize` are now deprecated
 
 ITelemetryContext is to be used only for instrumentation, not for attempting to read the values already set by other code.
 This is important because this _public_ interface may soon use FF's _should-be internal_ logging instrumentation types,

@@ -206,6 +206,13 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					isEmpty: false,
 					dst: detached,
 				};
+			} else if (encoded.d !== undefined) {
+				const detachId = registerIdCodec.decode(encoded.d, context);
+				assert(detachId !== "self", "Invalid detach ID");
+				decoded.valueReplace = {
+					isEmpty: true,
+					dst: detachId,
+				};
 			}
 			return decoded;
 		},

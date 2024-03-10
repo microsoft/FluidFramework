@@ -47,6 +47,7 @@ import {
 	createSampledLogger,
 	IEventSampler,
 	type ITelemetryGenericEventExt,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,
@@ -91,6 +92,7 @@ import type {
 	IIdCompressor,
 	IIdCompressorCore,
 	SerializedIdCompressorWithOngoingSession,
+	IdCreationRange,
 } from "@fluidframework/id-compressor";
 import {
 	addBlobToSummary,
@@ -157,6 +159,7 @@ import {
 	IBaseSummarizeResult,
 	ISummarizer,
 	rootHasIsolatedChannels,
+	IdCompressorMode,
 } from "./summary/index.js";
 import { formExponentialFn, Throttler } from "./throttler.js";
 import {
@@ -438,7 +441,7 @@ export interface IContainerRuntimeOptions {
 	 * Enable the IdCompressor in the runtime.
 	 * @experimental Not ready for use.
 	 */
-	readonly enableRuntimeIdCompressor?: boolean;
+	readonly enableRuntimeIdCompressor?: IdCompressorMode;
 
 	/**
 	 * If enabled, the runtime will block all attempts to send an op inside the
@@ -529,6 +532,7 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+
 	/**
 	 * Time at which session expiry timer started.
 	 */
@@ -757,6 +761,8 @@ export class ContainerRuntime
 			},
 		});
 
+		const mc = loggerToMonitoringContext(logger);
+
 		const {
 			summaryOptions = {},
 			gcOptions = {},
@@ -764,7 +770,7 @@ export class ContainerRuntime
 			flushMode = defaultFlushMode,
 			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor = false,
+			enableRuntimeIdCompressor = "off",
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
@@ -833,10 +839,37 @@ export class ContainerRuntime
 			}
 		}
 
-		const idCompressorEnabled =
-			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
-		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
-		if (idCompressorEnabled) {
+		// Enabling the IdCompressor is a one-way operation and we only want to
+		// allow new containers to turn it on
+		let idCompressorMode: IdCompressorMode;
+		if (existing) {
+			// This setting has to be sticky for correctness:
+			// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
+			//    how to process compressor ops
+			// 2) if it's ON, then all sessions should load compressor right away
+			// 3) Same logic applies for "delayed" mode
+			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
+			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
+			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
+			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
+			idCompressorMode = metadata?.idCompressorMode ?? "off";
+		} else {
+			// FG overwrite
+			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
+			switch (enabled) {
+				case true:
+					idCompressorMode = "on";
+					break;
+				case false:
+					idCompressorMode = "off";
+					break;
+				default:
+					idCompressorMode = enableRuntimeIdCompressor;
+					break;
+			}
+		}
+
+		const createIdCompressorFn = async () => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
 				"@fluidframework/id-compressor"
 			);
@@ -856,21 +889,22 @@ export class ContainerRuntime
 
 			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(
+				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
 					compressorLogger,
 				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(
+				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
 					compressorLogger,
 				);
 			} else {
-				idCompressor = createIdCompressor(compressorLogger);
+				return createIdCompressor(compressorLogger);
 			}
-		}
+		};
 
 		const runtime = new containerRuntimeCtor(
 			context,
@@ -896,7 +930,8 @@ export class ContainerRuntime
 			existing,
 			blobManagerSnapshot,
 			context.storage,
-			idCompressor,
+			createIdCompressorFn,
+			idCompressorMode,
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
@@ -967,7 +1002,44 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+
+	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
+	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
+	private pendingIdCompressorOps: IdCreationRange[] = [];
+
+	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
+	// (such ops will be marked by Loader layer as savedOp === true)
+	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
+	// In such case we have to process all ops, including those marked with saveOp === true.
+	private readonly skipSavedCompressorOps: boolean;
+
+	/**
+	 * See IContainerRuntimeBase.idCompressor() for details.
+	 */
+	public get idCompressor() {
+		// Expose ID Compressor only if it's On from the start.
+		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
+		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
+		// to reason over such things as session ID space.
+		if (this.idCompressorMode === "on") {
+			assert(this._idCompressor !== undefined, "compressor should have been loaded");
+			return this._idCompressor;
+		}
+	}
+
+	/**
+	 * True if we have ID compressor loading in-flight (async operation). Useful only for
+	 * this.idCompressorMode === "delayed" mode
+	 */
+	protected compressorLoadInitiated = false;
+
+	/**
+	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
+	 */
+	public generateDocumentUniqueId() {
+		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.handleContext;
@@ -1150,11 +1222,6 @@ export class ContainerRuntime
 	private readonly telemetryDocumentId: string;
 
 	/**
-	 * If true, the runtime has access to an IdCompressor
-	 */
-	private readonly idCompressorEnabled: boolean;
-
-	/**
 	 * Whether this client is the summarizer client itself (type is summarizerClientType)
 	 */
 	private readonly isSummarizerClient: boolean;
@@ -1186,7 +1253,8 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
+		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		private readonly idCompressorMode: IdCompressorMode,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
@@ -1273,20 +1341,12 @@ export class ContainerRuntime
 			// summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
 			// the count is reset to 0.
 			loadSummaryNumber = metadata?.summaryNumber ?? 0;
-
-			// Enabling the IdCompressor is a one-way operation and we only want to
-			// allow new containers to turn it on
-			this.idCompressorEnabled = metadata?.idCompressorEnabled ?? false;
 		} else {
 			this.createContainerMetadata = {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			};
 			loadSummaryNumber = 0;
-
-			this.idCompressorEnabled =
-				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-				idCompressor !== undefined;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
@@ -1356,10 +1416,6 @@ export class ContainerRuntime
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-
-		if (this.idCompressorEnabled) {
-			this.idCompressor = idCompressor;
-		}
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
@@ -1683,13 +1739,14 @@ export class ContainerRuntime
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
+			idCompressorModeMetadata: metadata?.idCompressorMode,
+			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				disableCompression,
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				idCompressorEnabled: this.idCompressorEnabled,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -1709,6 +1766,10 @@ export class ContainerRuntime
 			}
 			return provideEntryPoint(this);
 		});
+
+		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
+		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
+		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
 	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
@@ -1737,6 +1798,15 @@ export class ContainerRuntime
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
 	private async initializeBaseState(): Promise<void> {
+		if (
+			this.idCompressorMode === "on" ||
+			(this.idCompressorMode === "delayed" && this.connected)
+		) {
+			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
+			assert(this.pendingIdCompressorOps.length === 0, "no pending ops");
+			this._idCompressor = await this.createIdCompressor();
+		}
+
 		await this.garbageCollector.initializeBaseState();
 	}
 
@@ -1988,7 +2058,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressorEnabled ? true : undefined,
+			idCompressorMode: this.idCompressorMode,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2001,12 +2071,8 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this.idCompressorEnabled) {
-			assert(
-				this.idCompressor !== undefined,
-				0x67a /* IdCompressor should be defined if enabled */,
-			);
-			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
+		if (this._idCompressor) {
+			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
@@ -2135,10 +2201,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
-				assert(
-					this.idCompressor !== undefined,
-					0x67b /* IdCompressor should be defined if enabled */,
-				);
+				assert(this.idCompressorMode !== "off", "ID compressor should be in use");
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -2176,6 +2239,20 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && this.idCompressorMode === "delayed" && !this.compressorLoadInitiated) {
+			this.compressorLoadInitiated = true;
+			this.createIdCompressor()
+				.then((compressor) => {
+					this._idCompressor = compressor;
+					for (const range of this.pendingIdCompressorOps) {
+						this._idCompressor.finalizeCreationRange(range);
+					}
+					this.pendingIdCompressorOps = [];
+				})
+				.catch((error) => {
+					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+				});
+		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -2384,17 +2461,23 @@ export class ContainerRuntime
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
-				assert(
-					this.idCompressor !== undefined,
-					0x67c /* IdCompressor should be defined if enabled */,
-				);
-
 				// Don't re-finalize the range if we're processing a "savedOp" in
 				// stashed ops flow. The compressor is stashed with these ops already processed.
+				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
+				// thus we need to process all the ops.
 				if (
-					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
+					!(
+						this.skipSavedCompressorOps &&
+						(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp ===
+							true
+					)
 				) {
-					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+					const range = messageWithContext.message.contents;
+					if (this._idCompressor === undefined) {
+						this.pendingIdCompressorOps.push(range);
+					} else {
+						this._idCompressor.finalizeCreationRange(range);
+					}
 				}
 				break;
 			case ContainerMessageType.GC:
@@ -2596,6 +2679,12 @@ export class ContainerRuntime
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
+		// Back-comapatibility:
+		// There are old files that were created without using data store aliasing feature, but
+		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,
+		// and internalID provided by user. The expectation is that such files behave as new files, where
+		// same data store instances created using aliasing feature.
+		// Please also see note on name collisions in DataStores.createDataStoreId()
 		await this.channelCollection.waitIfPendingAlias(alias);
 		const internalId = this.internalId(alias);
 		const context = await this.channelCollection.getDataStoreIfAvailable(internalId, {
@@ -2621,43 +2710,25 @@ export class ContainerRuntime
 		return channel.entryPoint;
 	}
 
-	public createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached {
-		if (rootDataStoreId.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-		}
-		return this.channelCollection.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
-	}
-
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.channelCollection.createDetachedDataStoreCore(
-			pkg,
-			false,
-			undefined,
-			loadingGroupId,
-		);
+		return this.channelCollection.createDetachedDataStoreCore(pkg, loadingGroupId);
 	}
 
 	public async createDataStore(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
-		const id = uuid();
+		const context = this.channelCollection._createFluidDataStoreContext(
+			Array.isArray(pkg) ? pkg : [pkg],
+			undefined, // props
+			loadingGroupId,
+		);
 		return channelToDataStore(
-			await this.channelCollection
-				._createFluidDataStoreContext(
-					Array.isArray(pkg) ? pkg : [pkg],
-					id,
-					undefined,
-					loadingGroupId,
-				)
-				.realize(),
-			id,
+			await context.realize(),
+			context.id,
 			this.channelCollection,
 			this.mc.logger,
 		);
@@ -2667,15 +2738,16 @@ export class ContainerRuntime
 	 * @deprecated 0.16 Issue #1537, #3631
 	 */
 	public async _createDataStoreWithProps(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		props?: any,
-		id = uuid(),
 	): Promise<IDataStore> {
+		const context = this.channelCollection._createFluidDataStoreContext(
+			Array.isArray(pkg) ? pkg : [pkg],
+			props,
+		);
 		return channelToDataStore(
-			await this.channelCollection
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-				.realize(),
-			id,
+			await context.realize(),
+			context.id,
 			this.channelCollection,
 			this.mc.logger,
 		);
@@ -2814,9 +2886,9 @@ export class ContainerRuntime
 		}
 
 		// We can finalize any allocated IDs since we're the only client
-		const idRange = this.idCompressor?.takeNextCreationRange();
+		const idRange = this._idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
-			this.idCompressor?.finalizeCreationRange(idRange);
+			this._idCompressor?.finalizeCreationRange(idRange);
 		}
 
 		const summarizeResult = this.channelCollection.getAttachSummary(telemetryContext);
@@ -3589,12 +3661,8 @@ export class ContainerRuntime
 	}
 
 	private submitIdAllocationOpIfNeeded(): void {
-		if (this.idCompressorEnabled) {
-			assert(
-				this.idCompressor !== undefined,
-				0x67d /* IdCompressor should be defined if enabled */,
-			);
-			const idRange = this.idCompressor.takeNextCreationRange();
+		if (this._idCompressor) {
+			const idRange = this._idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
@@ -4046,7 +4114,7 @@ export class ContainerRuntime
 				return; // no pending state to save
 			}
 
-			const pendingIdCompressorState = this.idCompressor?.serialize(true);
+			const pendingIdCompressorState = this._idCompressor?.serialize(true);
 
 			return {
 				pending,

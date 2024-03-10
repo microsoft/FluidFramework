@@ -595,8 +595,8 @@ There are plans to make attribution policies more flexible, for example tracking
     -   [smde](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/smde)
 
 -   Plain Text Editor Implementations
-    -   [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeTextArea.tsx)
-    -   [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
+    -   [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/example-utils/src/reactInputs/CollaborativeTextArea.tsx)
+    -   [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/utils/example-utils/src/reactInputs/CollaborativeInput.tsx)
 
 <!-- This line ends the content that is copied to the string.md README -->
 
