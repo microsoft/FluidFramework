@@ -16,6 +16,7 @@ export {
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
 export { DEFAULT_CHANGESET_PATH, loadChangesets } from "./changesets";
+export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
@@ -40,3 +41,4 @@ export {
 	ReportKind,
 	toReportKind,
 } from "./release";
+export { LayerGraph } from "./layerGraph";

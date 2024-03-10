@@ -7,7 +7,7 @@ import chalk from "chalk";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
@@ -25,6 +25,8 @@ import {
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
+	// eslint-disable-next-line import/no-deprecated
+	MonoRepoKind,
 } from "../../library";
 import { ReleaseGroup } from "../../releaseGroups";
 // eslint-disable-next-line import/no-internal-modules
@@ -136,6 +138,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
+		// eslint-disable-next-line import/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({
