@@ -394,7 +394,7 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	it("SharedTree", async () => {
+	it.only("SharedTree", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
