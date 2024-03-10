@@ -173,7 +173,8 @@
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_IDataObjectProps": {
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

@@ -486,30 +486,6 @@ use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidDataStoreContextEvents": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IFluidDataStoreContextEvents():
-    TypeOnly<old.IFluidDataStoreContextEvents>;
-declare function use_current_InterfaceDeclaration_IFluidDataStoreContextEvents(
-    use: TypeOnly<current.IFluidDataStoreContextEvents>): void;
-use_current_InterfaceDeclaration_IFluidDataStoreContextEvents(
-    get_old_InterfaceDeclaration_IFluidDataStoreContextEvents());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidDataStoreContextEvents": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IFluidDataStoreContextEvents():
-    TypeOnly<current.IFluidDataStoreContextEvents>;
-declare function use_old_InterfaceDeclaration_IFluidDataStoreContextEvents(
-    use: TypeOnly<old.IFluidDataStoreContextEvents>): void;
-use_old_InterfaceDeclaration_IFluidDataStoreContextEvents(
-    get_current_InterfaceDeclaration_IFluidDataStoreContextEvents());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_IFluidDataStoreFactory": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidDataStoreFactory():

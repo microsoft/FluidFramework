@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	IDisposable,
 	FluidObject,
@@ -17,6 +18,7 @@ import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { IEvent } from "@fluidframework/common-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -35,7 +37,6 @@ import {
 	IFluidParentContext,
 	IContainerRuntimeBase,
 	IFluidDataStoreContextDetached,
-	IFluidDataStoreContextEvents,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -130,8 +131,15 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 	readonly snapshotTree: ISnapshotTree | undefined;
 }
 
+// back-compat: To be removed in the future.
+/** @internal */
+export interface IFluidDataStoreContextEvents extends IEvent {
+	(event: "attaching" | "attached", listener: () => void);
+}
+
 /**
  * Represents the context for the store. This context is passed to the store runtime.
+ * @internal
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
@@ -373,6 +381,33 @@ export abstract class FluidDataStoreContext
 		}
 
 		this._tombstoned = tombstone;
+	}
+
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+		switch (attachState) {
+			case AttachState.Attaching:
+				assert(
+					this.attachState === AttachState.Detached,
+					0x14d /* "Should move from detached to attaching" */,
+				);
+				this._attachState = AttachState.Attaching;
+				this.channel?.setAttachState?.(attachState);
+				// back-compat! To be removed in the future
+				// this.emit("attaching");
+				break;
+			case AttachState.Attached:
+				assert(
+					this.attachState === AttachState.Attaching,
+					0x14e /* "Should move from attaching to attached" */,
+				);
+				this._attachState = AttachState.Attached;
+				this.channel?.setAttachState?.(attachState);
+				// back-compat! To be removed in the future
+				// this.emit("attached");
+				break;
+			default:
+				unreachableCase(attachState, "unreached");
+		}
 	}
 
 	private rejectDeferredRealize(
@@ -1116,24 +1151,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			this.setInMemoryRoot();
 		}
 		this.createProps = props.createProps;
-		this.attachListeners();
-	}
-
-	private attachListeners(): void {
-		this.once("attaching", () => {
-			assert(
-				this.attachState === AttachState.Detached,
-				0x14d /* "Should move from detached to attaching" */,
-			);
-			this._attachState = AttachState.Attaching;
-		});
-		this.once("attached", () => {
-			assert(
-				this.attachState === AttachState.Attaching,
-				0x14e /* "Should move from attaching to attached" */,
-			);
-			this._attachState = AttachState.Attached;
-		});
 	}
 
 	/**

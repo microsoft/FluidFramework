@@ -415,7 +415,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				this.pendingAttach.has(attachMessage.id),
 				0x15e /* "Local object does not have matching attach message id" */,
 			);
-			this.contexts.get(attachMessage.id)?.emit("attached");
+			this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
 			this.pendingAttach.delete(attachMessage.id);
 			return;
 		}
@@ -558,7 +558,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
-			localContext.emit("attaching");
+			localContext.setAttachState(AttachState.Attaching);
 			const message = this.generateAttachMessage(localContext);
 
 			this.pendingAttach.set(id, message);
@@ -955,11 +955,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		const eventName = attachState === AttachState.Attaching ? "attaching" : "attached";
 		for (const [, context] of this.contexts) {
 			// Fire only for bounded stores.
 			if (!this.contexts.isNotBound(context.id)) {
-				context.emit(eventName);
+				context.setAttachState(attachState);
 			}
 		}
 	}
