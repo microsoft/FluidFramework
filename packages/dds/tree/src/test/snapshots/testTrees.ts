@@ -78,20 +78,15 @@ function generateCompleteTree(
 	nodesPerField: number,
 	options: SharedTreeOptions,
 ): ISharedTree {
-	const tree = treeTestFactory({
-		runtime: new MockFluidDataStoreRuntime({
-			clientId: "test-client",
-			id: "test",
-			idCompressor: createSnapshotCompressor(),
-		}),
-		options,
-	});
+	const provider = new TestTreeProviderLite(1, new SharedTreeFactory(options), true);
+	const tree = provider.trees[0];
 	const view = schematizeFlexTree(tree, {
 		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		schema: testSchema,
 		initialTree: [],
 	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
+	provider.processMessages();
 	return tree;
 }
 
@@ -163,9 +158,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
-				const provider = new TestTreeProviderLite(2, factory);
+				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0].checkout;
-				const tree2 = provider.trees[1].checkout;
 
 				// NOTE: we're using the old tree editing APIs here as the new
 				// flex-tree API doesn't support cross-field moves at the
@@ -228,7 +222,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
-				const provider = new TestTreeProviderLite(2, factory);
+				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig);
 				provider.processMessages();
 				const tree2 = schematizeFlexTree(
@@ -279,7 +273,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				): ITreeCursorSynchronous =>
 					cursorForTypedTreeData({ schema: docSchema }, schema, data);
 
-				const provider = new TestTreeProviderLite(2, factory);
+				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree = schematizeFlexTree(provider.trees[0], config);
 				const view = tree.checkout;
 				view.editor.optionalField(rootField).set(makeCursor(testNode, {}), true);
@@ -319,7 +313,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			name: "competing-removes",
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
-					const provider = new TestTreeProviderLite(4, factory);
+					const provider = new TestTreeProviderLite(4, factory, true);
 					const config: InitializeAndSchematizeConfiguration = {
 						schema: jsonSequenceRootSchema,
 						initialTree: [0, 1, 2, 3],
@@ -342,20 +336,14 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const baseTree = treeTestFactory({
-					runtime: new MockFluidDataStoreRuntime({
-						clientId: "test-client",
-						id: "test",
-						idCompressor: createSnapshotCompressor(),
-					}),
-					options: factoryOptions,
-				});
-
+				const provider = new TestTreeProviderLite(1, factory, true);
+				const baseTree = provider.trees[0];
 				const tree1 = schematizeFlexTree(baseTree, {
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: jsonSequenceRootSchema,
 					initialTree: [],
 				}).checkout;
+				provider.processMessages();
 
 				const tree2 = tree1.fork();
 				insert(tree1, 0, "y");
@@ -367,6 +355,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
+				provider.processMessages();
 				await takeSnapshot(baseTree, `tree2-${testEncodeType}`);
 
 				const expected = ["x", "y", "a", "b", "c"];
@@ -379,6 +368,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
+				provider.processMessages();
 				await takeSnapshot(baseTree, `tree3-${testEncodeType}`);
 			},
 		},
@@ -397,6 +387,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "has-handle",
 			runScenario: async (takeSnapshot) => {
+				const provider = new TestTreeProviderLite(1, factory, true);
+
 				const innerBuilder = new SchemaBuilder({
 					scope: "has-handle",
 					libraries: [leaf.library],
@@ -408,15 +400,10 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					schema: docSchema,
 					initialTree: undefined,
 				};
-				const tree = treeTestFactory({
-					runtime: new MockFluidDataStoreRuntime({
-						clientId: "test-client",
-						id: "test",
-						idCompressor: createSnapshotCompressor(),
-					}),
-					options: factoryOptions,
-				});
+
+				const tree = provider.trees[0];
 				const view = schematizeFlexTree(tree, config).checkout;
+				provider.processMessages();
 
 				const field = view.editor.optionalField({
 					parent: undefined,
@@ -427,12 +414,16 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					true,
 				);
 
+				provider.processMessages();
+
 				await takeSnapshot(tree, `final-${testEncodeType}`);
 			},
 		},
 		{
 			name: "nested-sequence-change",
 			runScenario: async (takeSnapshot) => {
+				const provider = new TestTreeProviderLite(1, factory, true);
+
 				const innerBuilder = new SchemaBuilder({
 					scope: "has-sequence-map",
 				});
@@ -448,17 +439,10 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					initialTree: [],
 				};
 
-				const tree = treeTestFactory({
-					id: `test-${testEncodeType}`,
-					runtime: new MockFluidDataStoreRuntime({
-						clientId: "test-client",
-						id: "test",
-						idCompressor: createSnapshotCompressor(),
-					}),
-					options: factoryOptions,
-				});
-
+				const tree = provider.trees[0];
 				const view = schematizeFlexTree(tree, config).checkout;
+				provider.processMessages();
+
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.
@@ -480,6 +464,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					})
 					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
+
+				provider.processMessages();
 				await takeSnapshot(tree, `final-${testEncodeType}`);
 			},
 		},
@@ -490,6 +476,28 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					generateCompleteTree([], 0, 0, factoryOptions),
 					`final-${testEncodeType}`,
 				);
+			},
+		},
+		{
+			name: "attachment-tree",
+			runScenario: async (takeSnapshot) => {
+				// This test makes changes only while detached to test EditManager's optimization of omitting
+				// changes outside the collab window (which is all changes when detached).
+				const baseTree = treeTestFactory({
+					runtime: new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor: createSnapshotCompressor(),
+					}),
+					options: factoryOptions,
+				});
+				const tree1 = schematizeFlexTree(baseTree, {
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+					schema: jsonSequenceRootSchema,
+					initialTree: [],
+				}).checkout;
+				insert(tree1, 0, "y");
+				await takeSnapshot(baseTree, `${testEncodeType}`);
 			},
 		},
 	];

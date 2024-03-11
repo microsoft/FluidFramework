@@ -262,10 +262,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			return undefined;
 		}
 		const insertOp = createInsertSegmentOp(pos, segment);
-		if (this.applyInsertOp({ op: insertOp })) {
-			return insertOp;
-		}
-		return undefined;
+		this.applyInsertOp({ op: insertOp });
+		return insertOp;
 	}
 
 	/**
@@ -283,13 +281,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 
 		if (pos === DetachedReferencePosition) {
-			return undefined;
+			throw new UsageError("Cannot insert at detached local reference.");
 		}
-		const op = createInsertSegmentOp(pos, segment);
-
-		if (this.applyInsertOp({ op })) {
-			return op;
-		}
+		return this.insertSegmentLocal(pos, segment);
 	}
 
 	public walkSegments<TClientData>(
@@ -533,7 +527,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 * @returns True if the insert was applied. False if it could not be.
 	 */
-	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.INSERT,
 			0x02f /* "Unexpected op type on range insert!" */,
@@ -542,14 +536,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		let segments: ISegment[] | undefined;
-		if (op.seg) {
-			segments = [this.specToSegment(op.seg)];
-		}
-
-		if (!segments || segments.length === 0) {
-			return false;
-		}
+		const segments = [this.specToSegment(op.seg)];
 
 		this._mergeTree.insertSegments(
 			range.start,
@@ -559,8 +546,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.sequenceNumber,
 			opArgs,
 		);
-
-		return true;
 	}
 
 	/**

@@ -10,10 +10,10 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { TextSegment } from "@fluidframework/merge-tree";
-import { SharedString } from "../sharedString";
-import { SequenceInterval } from "../intervals";
-import { IIntervalCollection } from "../intervalCollection";
-import { assertEquivalentSharedStrings } from "./intervalTestUtils";
+import { SharedString } from "../sharedString.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { assertEquivalentSharedStrings } from "./intervalTestUtils.js";
 
 describe("IntervalCollection detached", () => {
 	const factory = SharedString.getFactory();

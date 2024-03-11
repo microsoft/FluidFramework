@@ -14,6 +14,10 @@ import type { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
+<<<<<<< HEAD
+=======
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+>>>>>>> main
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import type { IRequest } from '@fluidframework/core-interfaces';

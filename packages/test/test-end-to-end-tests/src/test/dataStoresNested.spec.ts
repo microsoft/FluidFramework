@@ -156,8 +156,10 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 			[testObjectFactory.type],
 			"test",
 		);
+		const url = `/${datastoreContext.id}`;
 		(await datastoreContext.realize()).makeVisibleAndAttachGraph();
-		const testObject1 = (await dataStores1.request({ url: "/test" })).value as TestFluidObject;
+		const testObject1 = (await dataStores1.request({ url })).value as TestFluidObject;
+
 		testObject1.root.set("testKey", 100);
 
 		await waitForSummary();
@@ -165,7 +167,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 		await provider.ensureSynchronized();
 
-		const testObject2 = (await dataStores2.request({ url: "/test" })).value as TestFluidObject;
+		const testObject2 = (await dataStores2.request({ url })).value as TestFluidObject;
 		const value = testObject2.root.get("testKey");
 		assert.strictEqual(value, 100, "Expecting the same value");
 	});
