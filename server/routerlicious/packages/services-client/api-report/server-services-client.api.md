@@ -379,6 +379,7 @@ export interface INetworkErrorDetails {
     message?: string;
     retryAfter?: number;
     retryAfterMs?: number;
+    source?: string;
 }
 
 // @internal
@@ -566,7 +567,8 @@ export class NetworkError extends Error {
     message: string,
     canRetry?: boolean,
     isFatal?: boolean,
-    retryAfterMs?: number);
+    retryAfterMs?: number,
+    source?: string);
     // @public
     readonly canRetry?: boolean;
     // @public
@@ -577,6 +579,8 @@ export class NetworkError extends Error {
     readonly retryAfter: number;
     // @public
     readonly retryAfterMs?: number;
+    // @public
+    readonly source?: string;
     toJSON(): INetworkErrorDetails & {
         code: number;
     };

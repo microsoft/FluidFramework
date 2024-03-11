@@ -5,8 +5,8 @@
 import { strict as assert } from "node:assert";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { OpStreamAttributor } from "../attributor";
-import { makeMockAudience } from "./utils";
+import { OpStreamAttributor } from "../attributor.js";
+import { makeMockAudience } from "./utils.js";
 
 const clientIds = ["A", "B", "C"];
 const defaultAudience = makeMockAudience(clientIds);

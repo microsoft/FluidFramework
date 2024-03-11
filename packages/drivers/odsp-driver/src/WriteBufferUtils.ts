@@ -13,7 +13,7 @@ import {
 	MarkerCodesEnd,
 	MarkerCodesStart,
 	NodeCore,
-} from "./zipItDataRepresentationUtils";
+} from "./zipItDataRepresentationUtils.js";
 
 /**
  * Buffer class, used to sequentially writ data.

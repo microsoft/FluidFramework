@@ -30,15 +30,15 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUrlResolver } from "./getUrlResolver";
-import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
-import { OdspPersistentCache } from "./odspPersistantCache";
-import { OdspUrlResolver } from "./odspUrlResolver";
+import { getUrlResolver } from "./getUrlResolver.js";
+import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory.js";
+import { OdspPersistentCache } from "./odspPersistantCache.js";
+import { OdspUrlResolver } from "./odspUrlResolver.js";
 import {
 	extractPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
 	WebCodeLoader,
-} from "./webCodeLoader";
+} from "./webCodeLoader/index.js";
 
 export interface IDevServerUser extends IUser {
 	name: string;

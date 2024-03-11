@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * An error emitted by the Fluid Framework.
@@ -66,7 +67,7 @@ export interface IFluidErrorBase extends Error {
 	/**
 	 * Add telemetry properties to this error which will be logged with the error
 	 */
-	addTelemetryProperties: (props: ITelemetryBaseProperties) => void;
+	addTelemetryProperties: (props: ITelemetryPropertiesExt) => void;
 }
 
 const hasTelemetryPropFunctions = (x: unknown): boolean =>

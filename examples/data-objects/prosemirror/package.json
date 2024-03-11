@@ -11,14 +11,22 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
 	"main": "lib/index.js",
-	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
-		"build:esnext": "tsc",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
@@ -54,7 +62,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"events": "^3.1.0",
 		"orderedmap": "^2.1.0",
 		"prosemirror-example-setup": "^1.2.1",
 		"prosemirror-history": "^1.3.0",
