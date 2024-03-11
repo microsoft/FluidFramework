@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.36.0",
+	"version": "0.35.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
