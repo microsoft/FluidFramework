@@ -176,6 +176,10 @@
 			},
 			"InterfaceDeclaration_IContainerRuntimeBase": {
 				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidDataStoreContextEvents": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
