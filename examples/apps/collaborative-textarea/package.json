@@ -37,7 +37,6 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",

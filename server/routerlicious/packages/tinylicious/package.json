@@ -1,6 +1,6 @@
 {
 	"name": "tinylicious",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"description": "Tiny, test implementation of the routerlicious reference service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,7 +39,7 @@
 		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",

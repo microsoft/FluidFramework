@@ -58,7 +58,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
