@@ -956,8 +956,14 @@ describe("Array Operations", function () {
 									? "no inserts"
 									: `inserts ${insertNames.join(", ")}`;
 							it(title, () => {
-								const insertsA: [number, ReturnType<typeof generateNamedEntities>][] = [];
-								const insertsB: [number, ReturnType<typeof generateNamedEntities>][] = [];
+								const insertsA: [
+									number,
+									ReturnType<typeof generateNamedEntities>,
+								][] = [];
+								const insertsB: [
+									number,
+									ReturnType<typeof generateNamedEntities>,
+								][] = [];
 								let offset = 0;
 								if (startInsertA) {
 									insertsA.push([0, generateNamedEntities(1)]);
