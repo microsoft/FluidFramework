@@ -22,37 +22,14 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/react-inputs-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/react-inputs-public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
 		}
 	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
+		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
@@ -89,18 +66,6 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
 	},
 	"typeValidation": {
 		"disabled": true,
