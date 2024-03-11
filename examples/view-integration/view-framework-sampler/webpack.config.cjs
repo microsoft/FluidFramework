@@ -47,7 +47,13 @@ module.exports = (env) => {
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",
 				}),
-				// new CleanWebpackPlugin(),
+				new webpack.DefinePlugin({
+					// These are not required by recommended by the Vue docs.
+					// See https://vuejs.org/api/compile-time-flags.html#webpack
+					__VUE_OPTIONS_API__: "true",
+					__VUE_PROD_DEVTOOLS__: "false",
+					__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: "false",
+				}),
 			],
 			resolve: {
 				extensionAlias: {
@@ -55,7 +61,7 @@ module.exports = (env) => {
 				},
 				extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 				alias: {
-					vue$: "vue/dist/vue.esm.js",
+					vue$: "vue/dist/vue.esm-bundler.js",
 				},
 			},
 		},
