@@ -48,7 +48,7 @@ module.exports = (env) => {
 					template: "./src/index.html",
 				}),
 				new webpack.DefinePlugin({
-					// These are not required by recommended by the Vue docs.
+					// These are not required, but the Vue docs recommend setting them.
 					// See https://vuejs.org/api/compile-time-flags.html#webpack
 					__VUE_OPTIONS_API__: "true",
 					__VUE_PROD_DEVTOOLS__: "false",
