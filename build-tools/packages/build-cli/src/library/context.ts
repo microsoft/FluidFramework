@@ -164,7 +164,6 @@ export class Context {
 	 *
 	 * @returns A version string.
 	 *
-	 * @deprecated ??
 	 */
 	public getVersion(key: string): string {
 		let ver = "";
@@ -219,7 +218,6 @@ export class Context {
 	 *
 	 * @internal
 	 *
-	 * @deprecated ??
 	 */
 	public async getAllVersions(
 		releaseGroupOrPackage: string,
