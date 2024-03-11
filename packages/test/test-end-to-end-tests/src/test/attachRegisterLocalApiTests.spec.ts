@@ -26,13 +26,16 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 
 function onAttachChange(
 	context: IFluidDataStoreContext,
-	callback: (AttachState.Attaching | AttachState.Attached) => void,
+	stateToNotify: AttachState.Attaching | AttachState.Attached,
+	callback: () => void,
 ) {
 	const oldApi = (context as any).setAttachState.bind(context);
 
 	(context as any).setAttachState = (arg) => {
 		oldApi(arg);
-		callback(arg);
+		if (arg === stateToNotify) {
+			callback();
+		}
 	};
 }
 
