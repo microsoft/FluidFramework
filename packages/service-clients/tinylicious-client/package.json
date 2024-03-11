@@ -87,7 +87,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -113,7 +113,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-240326",
+		"tinylicious": "^4.0.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {

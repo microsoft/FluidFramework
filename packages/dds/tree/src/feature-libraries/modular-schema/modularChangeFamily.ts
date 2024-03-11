@@ -247,7 +247,10 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
 				const context = crossFieldTable.fieldToContext.get(fieldChange);
-				assert(context !== undefined, "Should have context for every invalidated field");
+				assert(
+					context !== undefined,
+					0x8cc /* Should have context for every invalidated field */,
+				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
 				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
@@ -1053,7 +1056,7 @@ export function updateRefreshers(
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, "detached node should exist");
+		assert(node !== undefined, 0x8cd /* detached node should exist */);
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
