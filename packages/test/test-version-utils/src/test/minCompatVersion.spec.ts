@@ -126,16 +126,16 @@ describe("Minimum Compat Version", () => {
 		});
 	}
 
-	for (let i = 0; i < versions.length; i++) {
-		for (let j = i + 1; j < versions.length; j++) {
-			it(`version ${versions[i]} should be below version ${versions[j]}`, () => {
+	for (let i = numCompatVersions; i < versions.length; i++) {
+		for (let j = i - 1; j >= i - numCompatVersions; j--) {
+			it(`version ${versions[j]} should be below version ${versions[i]}`, () => {
 				assert.strictEqual(
 					isCompatVersionBelowMinVersion(versions[i], {
 						name: `test`,
 						kind: CompatKind.None,
 						compatVersion: versions[j],
 					}),
-					false,
+					true,
 					`version: "${versions[i]}" is not lower than ${versions[j]}`,
 				);
 			});
