@@ -10,21 +10,83 @@ import { pkgVersion } from "../packageVersion.js";
 import { getRequestedVersion } from "../versionUtils.js";
 import { testBaseVersion } from "../baseVersion.js";
 
-function transformVersion(version: string): string {
-	const regex = /(\d+)\.(\d+)\.(\d+)-dev-(\w+)\.(\d+)\.(\d+)\.(\d+)\.\d+/;
-	const matches = version.match(regex);
+/**
+ * Transforms a dev version into its internal version. If dev patterns are not found,
+ * it returns the input without any changes.
+ * Examples:
+ * a.b.c-dev-rc.x.y.z.nnnnnn returns: a.b.c-rc.x.y.z
+ * a.b.c-dev.x.y.z.nnnnnn returns: a.b.c-internal.x.y.z
+ */
+function transformDevVersion(version: string): string {
+	let regex = /(\d+)\.(\d+)\.(\d+)-dev-(\w+)\.(\d+)\.(\d+)\.(\d+)\.\d+/;
+	let matches = version.match(regex);
 
 	if (matches) {
 		const [, major, minor, patch, label, num1, num2, num3] = matches;
 		return `${major}.${minor}.${patch}-${label}.${num1}.${num2}.${num3}`;
 	} else {
+		regex = /(\d+)\.(\d+)\.(\d+)-dev\.(\d+)\.(\d+)\.(\d+)\.\d+/;
+		matches = version.match(regex);
+		if (matches) {
+			const [, major, minor, patch, num1, num2, num3] = matches;
+			return `${major}.${minor}.${patch}-internal.${num1}.${num2}.${num3}`;
+		}
 		return version;
 	}
 }
 
 describe("Minimum Compat Version", () => {
-	const minTestVersion = transformVersion(pkgVersion);
+	const minTestVersion = transformDevVersion(pkgVersion);
 	const numCompatVersions = 9;
+	const versions = [
+		"1.3.7",
+		"2.0.0-internal.1.0.0",
+		"2.0.0-internal.1.1.0",
+		"2.0.0-internal.1.2.0",
+		"2.0.0-internal.1.4.0",
+		"2.0.0-internal.2.0.0",
+		"2.0.0-internal.2.1.0",
+		"2.0.0-internal.2.2.0",
+		"2.0.0-internal.2.3.0",
+		"2.0.0-internal.2.4.0",
+		"2.0.0-internal.3.0.0",
+		"2.0.0-internal.3.1.0",
+		"2.0.0-internal.3.2.0",
+		"2.0.0-internal.3.3.0",
+		"2.0.0-internal.3.4.0",
+		"2.0.0-internal.4.0.0",
+		"2.0.0-internal.4.1.0",
+		"2.0.0-internal.4.2.0",
+		"2.0.0-internal.4.3.0",
+		"2.0.0-internal.4.4.0",
+		"2.0.0-internal.5.0.0",
+		"2.0.0-internal.5.1.0",
+		"2.0.0-internal.5.2.0",
+		"2.0.0-internal.5.3.0",
+		"2.0.0-internal.5.4.0",
+		"2.0.0-internal.6.0.0",
+		"2.0.0-internal.6.1.0",
+		"2.0.0-internal.6.2.0",
+		"2.0.0-internal.6.3.0",
+		"2.0.0-internal.6.4.0",
+		"2.0.0-internal.7.0.0",
+		"2.0.0-internal.7.1.0",
+		"2.0.0-internal.7.2.0",
+		"2.0.0-internal.7.3.0",
+		"2.0.0-internal.7.4.0",
+		"2.0.0-internal.8.0.0",
+		"2.0.0-rc.1.0.0",
+		"2.0.0-rc.2.0.0",
+		"2.0.0-rc.3.0.0",
+	];
+
+	it("dev transform version", () => {
+		assert.strictEqual(transformDevVersion("2.0.0-internal.3.0.0"), "2.0.0-internal.3.0.0");
+		assert.strictEqual(transformDevVersion("2.0.0-dev-rc.3.0.0.223149"), "2.0.0-rc.3.0.0");
+		assert.strictEqual(transformDevVersion("2.0.0-rc.3.0.0"), "2.0.0-rc.3.0.0");
+		assert.strictEqual(transformDevVersion("2.0.0-dev.6.4.0.192049"), "2.0.0-internal.6.4.0");
+	});
+
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
 		assert.throws(
@@ -45,7 +107,9 @@ describe("Minimum Compat Version", () => {
 		);
 	});
 
-	for (let i = 1; i < numCompatVersions; i++) {
+	// N-1 check will fail while releasing a new version during bump version PR since pkgVersion will be one version ahead of latest release.
+	// In order to avoid conflicts every time we bump, we removed N-1 test.
+	for (let i = 2; i < numCompatVersions; i++) {
 		it(`compatVersion N-${i} < ${minTestVersion}`, () => {
 			assert.strictEqual(
 				isCompatVersionBelowMinVersion(minTestVersion, {
@@ -60,6 +124,22 @@ describe("Minimum Compat Version", () => {
 				)}"  is not lower than min version: ${minTestVersion}`,
 			);
 		});
+	}
+
+	for (let i = 0; i < versions.length; i++) {
+		for (let j = i + 1; j < versions.length; j++) {
+			it(`version ${versions[i]} should be below version ${versions[j]}`, () => {
+				assert.strictEqual(
+					isCompatVersionBelowMinVersion(versions[i], {
+						name: `test`,
+						kind: CompatKind.None,
+						compatVersion: versions[j],
+					}),
+					false,
+					`version: "${versions[i]}" is not lower than ${versions[j]}`,
+				);
+			});
+		}
 	}
 
 	it("cross compat. filters out if loadVersion is lower than minVersion", () => {
