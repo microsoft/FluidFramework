@@ -144,6 +144,8 @@ export class TestDocumentStorage implements IDocumentStorage {
 			lastSummarySequenceNumber: 0,
 			validParentSummaries: undefined,
 			isCorrupt: false,
+			protocolHead: undefined,
+			checkpointTimestamp: Date.now(),
 		};
 
 		const collection = await this.databaseManager.getDocumentCollection();
