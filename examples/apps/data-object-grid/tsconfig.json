@@ -1,6 +1,8 @@
 {
 	"extends": "../../../common/build/build-common/tsconfig.base.json",
 	"compilerOptions": {
+		// ESNext/Bundler works better than Node16/Node16 for this example because of the <Collapsible> React control
+		// and it is intended to be used via a bundler anyway
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"outDir": "./lib",
