@@ -1958,6 +1958,7 @@ declare function get_old_InterfaceDeclaration_IScribe():
 declare function use_current_InterfaceDeclaration_IScribe(
     use: TypeOnly<current.IScribe>): void;
 use_current_InterfaceDeclaration_IScribe(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IScribe());
 
 /*
