@@ -1193,7 +1193,7 @@ export class Container
 
 		const pendingRuntimeState =
 			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
-		assert(!isPromiseLike(pendingRuntimeState), "should not be a promise");
+		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,

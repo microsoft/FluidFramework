@@ -82,7 +82,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			this.checkout,
 			this.flexConfig,
 		);
-		assert(result, "Schema upgrade should always work if canUpgrade is set.");
+		assert(result, 0x8bf /* Schema upgrade should always work if canUpgrade is set. */);
 	}
 
 	/**
@@ -93,7 +93,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		if (this.disposed) {
 			throw new UsageError("Accessed a disposed TreeView.");
 		}
-		assert(this.view !== undefined, "unexpected getViewOrError");
+		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
 	}
 
@@ -123,7 +123,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 					this.checkout,
 					this.viewSchema,
 					() => {
-						assert(cleanupCheckOutEvents !== undefined, "missing cleanup");
+						assert(cleanupCheckOutEvents !== undefined, 0x8c1 /* missing cleanup */);
 						cleanupCheckOutEvents();
 						this.view = undefined;
 						if (!this.disposed) {
@@ -232,14 +232,14 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 	nodeKeyFieldKey: FieldKey,
 ): CheckoutFlexTreeView<TRoot> {
 	const slots = checkout.forest.anchors.slots;
-	assert(!slots.has(ViewSlot), "Cannot create second view from checkout");
+	assert(!slots.has(ViewSlot), 0x8c2 /* Cannot create second view from checkout */);
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
 		assert(
 			compatibility.write === Compatibility.Compatible &&
 				compatibility.read === Compatibility.Compatible,
-			"requireSchema invoked with incompatible schema",
+			0x8c3 /* requireSchema invoked with incompatible schema */,
 		);
 	}
 
@@ -250,11 +250,11 @@ export function requireSchema<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey,
 		() => {
 			const deleted = slots.delete(ViewSlot);
-			assert(deleted, "unexpected dispose");
+			assert(deleted, 0x8c4 /* unexpected dispose */);
 			onDispose();
 		},
 	);
-	assert(!slots.has(ViewSlot), "Cannot create second view from checkout");
+	assert(!slots.has(ViewSlot), 0x8c5 /* Cannot create second view from checkout */);
 	slots.set(ViewSlot, view);
 
 	const unregister = checkout.storedSchema.on("afterSchemaChange", () => {
