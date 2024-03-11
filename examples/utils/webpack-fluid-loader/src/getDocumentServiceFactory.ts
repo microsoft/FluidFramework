@@ -17,7 +17,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
 
-import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader";
+import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader.js";
 
 export const deltaConnectionServer = LocalDeltaConnectionServer.create(
 	new LocalSessionStorageDbFactory(),

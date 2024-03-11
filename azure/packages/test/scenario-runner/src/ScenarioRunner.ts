@@ -13,8 +13,8 @@ import {
 	IScenarioConfig,
 	IScenarioRunConfig,
 	RunnerStatus,
-} from "./interface";
-import { convertConfigToScriptParams, createChildProcess } from "./utils";
+} from "./interface.js";
+import { convertConfigToScriptParams, createChildProcess } from "./utils.js";
 
 export abstract class ScenarioRunner<
 		ScenarioConfig extends IScenarioConfig,

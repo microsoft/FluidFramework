@@ -621,7 +621,7 @@ export class ComposeQueue<T> {
 		);
 
 		if (movedChanges !== undefined) {
-			assert(newMark.changes === undefined, "Unexpected node changeset collision");
+			assert(newMark.changes === undefined, 0x8da /* Unexpected node changeset collision */);
 			newMark = withNodeChange(newMark, movedChanges as T);
 		}
 
@@ -636,7 +636,7 @@ export class ComposeQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			"Cannot peek length unless both mark queues are non-empty",
+			0x8db /* Cannot peek length unless both mark queues are non-empty */,
 		);
 
 		return Math.min(newMark.count, baseMark.count);

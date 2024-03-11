@@ -10,14 +10,14 @@ import { v4 as uuid } from "uuid";
 
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 
-import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
-import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
-import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
-import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
-import { NestedMapRunner, NestedMapRunnerConfig } from "./NestedMapRunner";
-import { IRunner } from "./interface";
-import { getLogger } from "./logger";
-import { getScenarioRunnerTelemetryEventMap } from "./utils";
+import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner.js";
+import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner.js";
+import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner.js";
+import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner.js";
+import { NestedMapRunner, NestedMapRunnerConfig } from "./NestedMapRunner.js";
+import { IRunner } from "./interface.js";
+import { getLogger } from "./logger.js";
+import { getScenarioRunnerTelemetryEventMap } from "./utils.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap();
 
