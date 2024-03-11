@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Context, Package } from "@fluidframework/build-tools";
+import { Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import readPkgUp from "read-pkg-up";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
@@ -13,7 +13,7 @@ import type { SetRequired } from "type-fest";
 
 import { CommandLogger } from "../logging";
 import { ReleaseGroup } from "../releaseGroups";
-
+import { Context } from "./context";
 /**
  * Default options passed to the git client.
  */
