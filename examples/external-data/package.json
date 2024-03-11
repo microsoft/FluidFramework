@@ -11,13 +11,26 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src tests",
 		"eslint:fix": "eslint --format stylish src tests --fix",
@@ -44,7 +57,7 @@
 		"test:jest": "jest --detectOpenHandles --runInBand --no-cache",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"test:verbose": "npm run test:jest:verbose",
-		"tsc": "tsc",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -80,6 +93,7 @@
 		"valid-url": "^1.0.9"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
@@ -96,6 +110,7 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/valid-url": "^1.0.3",
 		"clean-webpack-plugin": "^4.0.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
