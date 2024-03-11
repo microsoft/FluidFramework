@@ -79,7 +79,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	public applyStashedOp(contents: unknown): void {
 		assert(
 			!this.shouldDropOp(contents as IOpContents),
-			"SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally."
+			0x8ab /* SharedTreeShim should not be able to apply v1 ops as they shouldn't have been created locally. */
 		);
 		this.handler.applyStashedOp(contents);
 	}
