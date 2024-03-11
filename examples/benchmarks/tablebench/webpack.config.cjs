@@ -26,6 +26,9 @@ module.exports = (env) => {
 			app: "./src/app.ts",
 		},
 		resolve: {
+			extensionAlias: {
+				".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
+			},
 			extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 			fallback: {
 				// stochastic-test-utils uses fs and path for logging ops generated for fuzz testing.
