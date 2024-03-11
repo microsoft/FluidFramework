@@ -8861,6 +8861,7 @@ importers:
       '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/double-ended-queue': ^2.1.0
       '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
@@ -8901,15 +8902,16 @@ importers:
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
-      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/container-runtime-previous': /@fluidframework/container-runtime/2.0.0-internal.8.0.0
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-runtime-utils': link:../test-runtime-utils
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/double-ended-queue': 2.1.7
       '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
@@ -9102,6 +9104,7 @@ importers:
       '@microsoft/api-extractor': ^7.42.3
       '@tylerbu/sorted-btree-es6': ^1.8.0
       '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
       copyfiles: ^2.4.1
@@ -9127,13 +9130,14 @@ importers:
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/benchmark': 0.48.0
-      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/id-compressor-previous': /@fluidframework/id-compressor/2.0.0-internal.8.0.0
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
