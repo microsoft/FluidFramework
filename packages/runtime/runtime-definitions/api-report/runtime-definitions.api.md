@@ -163,9 +163,8 @@ export interface IDataStore {
 
 // @alpha (undocumented)
 export interface IDataStoreCollection {
-    createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
-    createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 }
 
@@ -248,7 +247,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @alpha
-export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry>, IDataStoreCollection {
+export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: {
         absolutePath: string;

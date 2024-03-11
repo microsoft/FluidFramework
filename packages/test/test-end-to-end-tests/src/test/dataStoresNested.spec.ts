@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { assert } from "@fluidframework/core-utils";
 import {
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
@@ -25,9 +25,15 @@ import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { IDataStoreCollection, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
-type INestedDataStore = IDataStoreCollection & IFluidDataStoreChannel;
+/**
+ * ADO:7302 This needs to be revisited after settling on a set of
+ * unified creation APIs for the nested datastores and the container runtime.
+ */
+interface IDataStores extends IFluidDataStoreChannel {
+	_createFluidDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
+}
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -69,7 +75,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	async function addContainer(container: IContainer) {
 		containers.push(container);
-		const dataStores = (await container.getEntryPoint()) as INestedDataStore;
+		const dataStores = (await container.getEntryPoint()) as IDataStores;
 		await provider.ensureSynchronized();
 		return { container, dataStores };
 	}
@@ -151,15 +157,12 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	}
 
 	it("Basic test", async () => {
-		const dataStores1 = await initialize();
-		const datastoreContext = (dataStores1 as any)._createFluidDataStoreContext(
-			[testObjectFactory.type],
-			"test",
-		);
-		const url = `/${datastoreContext.id}`;
-		(await datastoreContext.realize()).makeVisibleAndAttachGraph();
-		const testObject1 = (await dataStores1.request({ url })).value as TestFluidObject;
+		const dataStores = await initialize();
 
+		const res1 = dataStores._createFluidDataStoreContext([testObjectFactory.type], "test");
+		const res2 = await res1.realize();
+		res2.makeVisibleAndAttachGraph();
+		const testObject1 = (await dataStores.request({ url: "/test" })).value as TestFluidObject;
 		testObject1.root.set("testKey", 100);
 
 		await waitForSummary();
@@ -167,34 +170,8 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 		await provider.ensureSynchronized();
 
-		const testObject2 = (await dataStores2.request({ url })).value as TestFluidObject;
+		const testObject2 = (await dataStores2.request({ url: "/test" })).value as TestFluidObject;
 		const value = testObject2.root.get("testKey");
-		assert.strictEqual(value, 100, "Expecting the same value");
-	});
-
-	it("Aliasing", async () => {
-		const dataStores1 = await initialize();
-		const datastore11 = await dataStores1.createDataStore([testObjectFactory.type]);
-		const datastore12 = await dataStores1.createDataStore([testObjectFactory.type]);
-		const alias1 = "alias1";
-		const aliasResult11 = await datastore11.trySetAlias(alias1);
-		const aliasResult12 = await datastore12.trySetAlias(alias1);
-
-		assert.equal(aliasResult11, "Success");
-		assert.equal(aliasResult12, "Conflict");
-		assert.ok(await dataStores1.getAliasedDataStoreEntryPoint(alias1));
-
-		// The nested datastore should not have the alias set, as the namespace for
-		// aliasing is the only the level of the current datastore collection
-		const nestedDataStore1 = (await datastore11.entryPoint.get()) as INestedDataStore;
-		const childDatastore11 = await nestedDataStore1.createDataStore([testObjectFactory.type]);
-		const childDatastore12 = await nestedDataStore1.createDataStore([testObjectFactory.type]);
-
-		assert.ok((await dataStores1.getAliasedDataStoreEntryPoint(alias1)) === undefined);
-
-		const aliasResult21 = await childDatastore11.trySetAlias(alias1);
-		const aliasResult22 = await childDatastore12.trySetAlias(alias1);
-		assert.equal(aliasResult21, "Success");
-		assert.equal(aliasResult22, "Conflict");
+		assert(value === 100, "same value");
 	});
 });

@@ -171,6 +171,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     });
     // (undocumented)
     readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
+    // (undocumented)
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     // (undocumented)
     getAudience(): IAudience;

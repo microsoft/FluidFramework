@@ -33,6 +33,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	IFluidDataStoreRegistry,
 	type IDataStore,
+	type IDataStoreCollection,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -48,6 +49,7 @@ import {
 	RequestParser,
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils";
+import { v4 as uuid } from "uuid";
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
@@ -233,7 +235,9 @@ export function wrapContextForInnerChannel(
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
  */
-export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
+export class ChannelCollection
+	implements IFluidDataStoreChannel, IDataStoreCollection, IDisposable
+{
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 	// 0.24 back-compat attachingBeforeSummary
@@ -604,7 +608,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return id;
 	}
 
-	public createDetachedDataStoreCore(
+	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
@@ -635,32 +639,14 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return context;
 	}
 
-	public createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached {
-		if (rootDataStoreId.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-		}
-		return this.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
-	}
-
-	public createDetachedDataStore(
-		pkg: Readonly<string[]>,
-		loadingGroupId?: string,
-	): IFluidDataStoreContextDetached {
-		return this.createDetachedDataStoreCore(pkg, false, undefined, loadingGroupId);
-	}
-
 	public async createDataStore(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
 		const id = uuid();
 		return channelToDataStore(
 			await this._createFluidDataStoreContext(
 				Array.isArray(pkg) ? pkg : [pkg],
-				id,
 				undefined,
 				loadingGroupId,
 			).realize(),
@@ -668,6 +654,40 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this,
 			this.mc.logger,
 		);
+	}
+
+	public async getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined> {
+		// Back-comapatibility:
+		// There are old files that were created without using data store aliasing feature, but
+		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,
+		// and internalID provided by user. The expectation is that such files behave as new files, where
+		// same data store instances created using aliasing feature.
+		// Please also see note on name collisions in DataStores.createDataStoreId()
+		await this.waitIfPendingAlias(alias);
+		const internalId = this.internalId(alias);
+		const context = await this.getDataStoreIfAvailable(internalId, {
+			wait: false,
+		});
+		// If the data store is not available or not an alias, return undefined.
+		if (context === undefined || !(await context.isRoot())) {
+			return undefined;
+		}
+
+		const channel = await context.realize();
+		if (channel.entryPoint === undefined) {
+			throw new UsageError(
+				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
+			);
+		}
+		this.gcNodeUpdated(
+			`/${internalId}`,
+			"Loaded",
+			undefined /* timestampMs */,
+			context.packagePath,
+		);
+		return channel.entryPoint;
 	}
 
 	/**

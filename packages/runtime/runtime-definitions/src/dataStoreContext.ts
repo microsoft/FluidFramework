@@ -376,7 +376,7 @@ export interface IDataStoreCollection {
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -389,17 +389,6 @@ export interface IDataStoreCollection {
 	createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
-	): IFluidDataStoreContextDetached;
-
-	/**
-	 * Creates detached data store context. Data store initialization is considered complete
-	 * only after context.attachRuntime() is called.
-	 * @param pkg - package path
-	 * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
-	 */
-	createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
 	): IFluidDataStoreContextDetached;
 
 	/**
@@ -421,8 +410,7 @@ export interface IDataStoreCollection {
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
-		Partial<IProvideFluidDataStoreRegistry>,
-		IDataStoreCollection {
+		Partial<IProvideFluidDataStoreRegistry> {
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;

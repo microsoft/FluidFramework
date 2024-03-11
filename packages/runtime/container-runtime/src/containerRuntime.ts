@@ -2046,10 +2046,6 @@ export class ContainerRuntime
 	}
 	private readonly entryPoint: LazyPromise<FluidObject>;
 
-	private internalId(maybeAlias: string): string {
-		return this.channelCollection.internalId(maybeAlias);
-	}
-
 	/** Adds the container's metadata to the given summary tree. */
 	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
 		const metadata: IContainerRuntimeMetadata = {
@@ -2676,51 +2672,10 @@ export class ContainerRuntime
 		return result;
 	}
 
-	/**
-	 * Returns the aliased data store's entryPoint, given the alias.
-	 * @param alias - The alias for the data store.
-	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
-	 * Returns undefined if no data store has been assigned the given alias.
-	 */
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
-		// Back-comapatibility:
-		// There are old files that were created without using data store aliasing feature, but
-		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,
-		// and internalID provided by user. The expectation is that such files behave as new files, where
-		// same data store instances created using aliasing feature.
-		// Please also see note on name collisions in DataStores.createDataStoreId()
-		await this.channelCollection.waitIfPendingAlias(alias);
-		const internalId = this.internalId(alias);
-		const context = await this.channelCollection.getDataStoreIfAvailable(internalId, {
-			wait: false,
-		});
-		// If the data store is not available or not an alias, return undefined.
-		if (context === undefined || !(await context.isRoot())) {
-			return undefined;
-		}
-
-		const channel = await context.realize();
-		if (channel.entryPoint === undefined) {
-			throw new UsageError(
-				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
-			);
-		}
-		this.garbageCollector.nodeUpdated(
-			`/${internalId}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			context.packagePath,
-		);
-		return channel.entryPoint;
-	}
-
-	public createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached {
-		return this.channelCollection.createDetachedRootDataStore(pkg, rootDataStoreId);
+		return this.channelCollection.getAliasedDataStoreEntryPoint(alias);
 	}
 
 	public createDetachedDataStore(
