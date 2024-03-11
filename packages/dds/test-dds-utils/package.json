@@ -102,10 +102,11 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"mocha": "^10.2.0"

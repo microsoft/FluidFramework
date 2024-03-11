@@ -184,7 +184,7 @@ export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 ): { tree: ISnapshotTree; blobs: ISerializableBlobContents } => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
-		"Protocol and App summary trees should be present",
+		0x8e6 /* Protocol and App summary trees should be present */,
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
 	const appSummaryTree = detachedContainerSnapshot.tree[".app"];

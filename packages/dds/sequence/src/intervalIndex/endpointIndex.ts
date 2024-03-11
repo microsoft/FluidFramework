@@ -11,9 +11,9 @@ import {
 	IntervalType,
 	SequenceInterval,
 	sequenceIntervalHelpers,
-} from "../intervals";
-import { SharedString } from "../sharedString";
-import { IntervalIndex } from "./intervalIndex";
+} from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal

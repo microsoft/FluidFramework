@@ -62,6 +62,9 @@ export function createResponseError(status: number, value: string, request: IReq
     [key: string]: any;
 }): IResponse;
 
+// @internal
+export function encodeCompactIdToString(idArg: number | string, prefix?: string): string;
+
 // @internal (undocumented)
 export function exceptionToResponse(err: any): IResponse;
 

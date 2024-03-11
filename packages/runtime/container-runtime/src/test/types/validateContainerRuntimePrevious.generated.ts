@@ -681,6 +681,7 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -693,6 +694,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<old.IContainerRuntimeOptions>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeOptions(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*

@@ -6,26 +6,16 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -80,8 +70,8 @@ export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof Cont
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
-    initialObjects: LoadableObjectClassRecord;
+    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
+    readonly initialObjects: LoadableObjectClassRecord;
 }
 
 // @public
@@ -275,10 +265,10 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
@@ -322,16 +312,16 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> {
     constructor(scope: TScope);
-    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
-    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true>;
+    array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T>;
+    array<const Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, true, T>;
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>;
     // @deprecated
     fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<FluidObject & IFluidLoadable>, IFluidHandle<FluidObject & IFluidLoadable>>;
-    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true>;
-    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true>;
-    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, unknown>;
-    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, ImplicitlyConstructable, unknown>;
+    map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
+    map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, true, T>;
+    namedArray_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Array, TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>, Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>, ImplicitlyConstructable, T>;
+    namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, ImplicitlyConstructable, T>;
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
@@ -350,73 +340,31 @@ export interface SchemaIncompatible {
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @deprecated
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected applyStashedOp(content: unknown): void;
-    clear(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
-    delete(key: string): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
-    has(key: string): boolean;
-    keys(): IterableIterator<string>;
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    protected onDisconnect(): void;
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    set(key: string, value: unknown): this;
-    get size(): number;
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
+export const SharedMap: {
+    getFactory(): IChannelFactory<ISharedMap>;
+    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
+};
+
+// @public @deprecated
+export type SharedMap = ISharedMap;
+
+// @public
+export interface SharedObjectClass<T extends IFluidLoadable> {
+    readonly getFactory: () => IChannelFactory<T>;
 }
 
 // @public
-export type SharedObjectClass<T extends IFluidLoadable> = {
-    readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
-
-// @public
-export class SharedTree implements ITree {
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    connect(services: IChannelServices): void;
-    // (undocumented)
-    getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
-    // (undocumented)
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
-    // (undocumented)
-    get handle(): IFluidHandle;
-    // (undocumented)
-    get id(): string;
-    // (undocumented)
-    get IFluidLoadable(): IFluidLoadable;
-    // (undocumented)
-    isAttached(): boolean;
-    // (undocumented)
-    schematize<TRoot extends ImplicitFieldSchema>(config: TreeConfiguration<TRoot>): TreeView<TreeFieldFromImplicitField<TRoot>>;
-    // (undocumented)
-    summarize(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined): Promise<ISummaryTreeWithStats>;
-}
+export const SharedTree: {
+    getFactory(): IChannelFactory<ITree>;
+};
 
 // @public
 export const Tree: TreeApi;
 
 // @public
-export interface TreeApi {
-    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
-    key(node: TreeNode): string | number;
-    on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
-    parent(node: TreeNode): TreeNode | undefined;
-    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
-    readonly status: (node: TreeNode) => TreeStatus;
+export interface TreeApi extends TreeNodeApi {
+    runTransaction<TNode extends TreeNode>(node: TNode, transaction: (node: TNode) => void | "rollback"): void;
+    runTransaction<TRoot>(tree: TreeView<TRoot>, transaction: (root: TRoot) => void | "rollback"): void;
 }
 
 // @public
@@ -476,6 +424,16 @@ export abstract class TreeNode implements WithType {
 }
 
 // @public
+export interface TreeNodeApi {
+    is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
+    key(node: TreeNode): string | number;
+    on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
+    parent(node: TreeNode): TreeNode | undefined;
+    schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    readonly status: (node: TreeNode) => TreeStatus;
+}
+
+// @public
 export interface TreeNodeEvents {
     afterChange(): void;
 }
@@ -484,7 +442,7 @@ export interface TreeNodeEvents {
 export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
 // @public
-export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
+export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode = unknown, TBuild = never, ImplicitlyConstructable extends boolean = boolean, Info = unknown> = TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info> | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
 
 // @public
 export interface TreeNodeSchemaClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
@@ -503,7 +461,7 @@ export interface TreeNodeSchemaCore<out Name extends string, out Kind extends No
 }
 
 // @public
-export interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+export interface TreeNodeSchemaNonClass<out Name extends string = string, out Kind extends NodeKind = NodeKind, out TNode = unknown, in TInsertable = never, out ImplicitlyConstructable extends boolean = boolean, out Info = unknown> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
     // (undocumented)
     create(data: TInsertable): TNode;
 }

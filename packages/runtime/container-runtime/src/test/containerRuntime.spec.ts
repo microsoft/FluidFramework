@@ -39,6 +39,7 @@ import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -175,7 +176,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -1364,34 +1365,6 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("User input validations", () => {
-			let containerRuntime: ContainerRuntime;
-
-			before(async () => {
-				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					requestHandler: undefined,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-				});
-			});
-
-			it("cannot create detached root data store with slashes in id", async () => {
-				const invalidId = "beforeSlash/afterSlash";
-				const codeBlock = () => {
-					containerRuntime.createDetachedRootDataStore([""], invalidId);
-				};
-				assert.throws(
-					codeBlock,
-					(e: IErrorBase) =>
-						e.errorType === ContainerErrorTypes.usageError &&
-						e.message === `Id cannot contain slashes: '${invalidId}'`,
-				);
-			});
-		});
-
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
@@ -1594,7 +1567,7 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
-				enableRuntimeIdCompressor: false,
+				enableRuntimeIdCompressor: "off",
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 			};
@@ -1614,9 +1587,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({
-							idCompressorEnabled: false,
-						}),
+						idCompressorMode: defaultRuntimeOptions.enableRuntimeIdCompressor,
 					},
 				]);
 			});
@@ -1642,11 +1613,11 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
+						idCompressorMode: "on",
 						featureGates: JSON.stringify({
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
-							idCompressorEnabled: true,
 						}),
 						groupedBatchingEnabled: false,
 					},
@@ -1912,7 +1883,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -1944,7 +1915,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -1986,7 +1957,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2213,7 +2184,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2225,10 +2196,7 @@ describe("Runtime", () => {
 						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 					},
 					(err: IFluidErrorBase) => {
-						assert(
-							err.message === "groupId should be present to fetch snapshot",
-							"groupId not specified when the snapshot was omitted",
-						);
+						validateAssertionError(err, "groupId should be present to fetch snapshot");
 						return true;
 					},
 				);
@@ -2264,7 +2232,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2315,7 +2283,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2374,7 +2342,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
@@ -2417,7 +2385,7 @@ describe("Runtime", () => {
 					existing: true,
 					runtimeOptions: {
 						flushMode: FlushMode.TurnBased,
-						enableRuntimeIdCompressor: true,
+						enableRuntimeIdCompressor: "on",
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
