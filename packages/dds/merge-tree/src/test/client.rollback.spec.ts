@@ -512,11 +512,11 @@ describe("client.rollback", () => {
 	});
 	it("Should function properly after rollback with external ops", () => {
 		const remoteClient = new TestClient();
-		remoteClient.insertTextLocal(0, client.getText());
 		remoteClient.startOrUpdateCollaboration("remoteUser");
 		const clients = [client, remoteClient];
 		let seq = 0;
 		const logger = new TestClientLogger(clients);
+		logger.validate();
 
 		let msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(0, "12345"), ++seq);
 		clients.forEach((c) => c.applyMsg(msg));

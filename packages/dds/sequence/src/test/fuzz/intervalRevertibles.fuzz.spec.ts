@@ -34,8 +34,8 @@ import {
 	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
+	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
-import { makeOperationGenerator } from "./intervalCollection.fuzz.spec.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -120,7 +120,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam, true);
+	const baseGenerator = makeIntervalOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
