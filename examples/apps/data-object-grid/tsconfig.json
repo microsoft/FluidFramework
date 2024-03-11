@@ -1,10 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
-		"module": "esnext",
-		"target": "es6",
-		"outDir": "lib",
-		"jsx": "react",
+		// ESNext/Bundler works better than Node16/Node16 for this example because of the <Collapsible> React control
+		// and it is intended to be used via a bundler anyway
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"outDir": "./lib",
 		"types": [
 			"jest",
 			"puppeteer",
