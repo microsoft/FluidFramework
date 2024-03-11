@@ -1,10 +1,7 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	// Use Bundler over Node16 as there are no tests run under Node.js.
+	"extends": "../../../common/build/build-common/tsconfig.bundler.json",
 	"compilerOptions": {
-		// ESNext/Bundler works better than Node16/Node16 for this example because of the <Collapsible> React control
-		// and it is intended to be used via a bundler anyway
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
 		"outDir": "./lib",
 		"types": [
 			"jest",

@@ -112,7 +112,6 @@ export interface IFluidDataStoreContextProps {
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly pkg: Readonly<string[]> | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
-	readonly isRootDataStore: boolean | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
@@ -1112,9 +1111,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;
-		if (props.isRootDataStore === true) {
-			this.setInMemoryRoot();
-		}
 		this.createProps = props.createProps;
 		this.attachListeners();
 	}
