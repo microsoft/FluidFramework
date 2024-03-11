@@ -2678,6 +2678,7 @@ importers:
 
   examples/data-objects/table-document:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-version-utils': workspace:~
@@ -2695,11 +2696,11 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-utils': workspace:~
-      '@microsoft/api-extractor': ^7.42.3
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.55.0
@@ -2722,6 +2723,7 @@ importers:
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       debug: 4.3.4
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/test-version-utils': link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -2730,11 +2732,11 @@ importers:
       '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
