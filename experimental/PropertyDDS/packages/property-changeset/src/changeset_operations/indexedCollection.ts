@@ -7,19 +7,19 @@
  */
 
 import { copy as cloneDeep } from "fastest-json-copy";
-import isEmpty from "lodash/isEmpty";
-import isEqual from "lodash/isEqual";
-import isObject from "lodash/isObject";
-import without from "lodash/without";
-import includes from "lodash/includes";
+import isEmpty from "lodash/isEmpty.js";
+import isEqual from "lodash/isEqual.js";
+import isObject from "lodash/isObject.js";
+import without from "lodash/without.js";
+import includes from "lodash/includes.js";
 
 // @ts-ignore
 import { constants, joinPaths } from "@fluid-experimental/property-common";
-import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset";
-import { TypeIdHelper } from "../helpers/typeidHelper";
-import { PathHelper } from "../pathHelper";
-import { ConflictType } from "./changesetConflictTypes";
-import { isEmptyChangeSet } from "./isEmptyChangeset";
+import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset.js";
+import { TypeIdHelper } from "../helpers/typeidHelper.js";
+import { PathHelper } from "../pathHelper.js";
+import { ConflictType } from "./changesetConflictTypes.js";
+import { isEmptyChangeSet } from "./isEmptyChangeset.js";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
