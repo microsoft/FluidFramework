@@ -4,16 +4,85 @@
  */
 import { PackageName } from "@rushstack/node-core-library";
 
-import { commonOptions } from "../common/commonOptions";
-import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
-import { loadFluidBuildConfig } from "../common/fluidUtils";
-import { isMonoRepoKind } from "../common/monoRepo";
-import { Package } from "../common/npmPackage";
-import { getVersionFromTag } from "../common/tags";
-import { Timer } from "../common/timer";
-import { GitRepo } from "./gitRepo";
-import { fatal } from "./utils";
-import { VersionBag } from "./versionBag";
+import {
+	FluidRepo,
+	GitRepo,
+	IFluidBuildConfig,
+	Package,
+	loadFluidBuildConfig,
+} from "@fluidframework/build-tools";
+
+import { ReleaseVersion } from "@fluid-tools/version-tools";
+import * as semver from "semver";
+
+/**
+ * Represents a release version and its release date, if applicable.
+ *
+ * @internal
+ */
+export interface VersionDetails {
+	/**
+	 * The version of the release.
+	 */
+	version: ReleaseVersion;
+
+	/**
+	 * The date the version was released, if applicable.
+	 */
+	date?: Date;
+}
+
+/**
+ * Parses the version from a git tag.
+ *
+ * @param tag - The tag.
+ * @returns The version string, or undefined if one could not be found.
+ *
+ * TODO: Need up reconcile slightly different version in version-tools/src/schemes.ts
+ */
+function getVersionFromTag(tag: string): string | undefined {
+	// This is sufficient, but there is a possibility that this will fail if we add a tag that includes "_v" in its
+	// name.
+	const tagSplit = tag.split("_v");
+	if (tagSplit.length !== 2) {
+		return undefined;
+	}
+
+	const ver = semver.parse(tagSplit[1]);
+	if (ver === null) {
+		return undefined;
+	}
+
+	return ver.version;
+}
+
+/**
+ * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
+ * in the fluid-build section of the root package.json.
+ * @deprecated should switch to ReleaseGroup.  Currently the only difference is "azure" not in ReleaseGroup.
+ */
+export enum MonoRepoKind {
+	Client = "client",
+	Server = "server",
+	Azure = "azure",
+	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
+}
+
+/**
+ * A type guard used to determine if a string is a MonoRepoKind.
+ * @deprecated should switch to isReleaseGroup
+ */
+export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
+	if (str === undefined) {
+		return false;
+	}
+
+	const list = Object.values<string>(MonoRepoKind);
+	const isMonoRepoValue = list.includes(str);
+	return isMonoRepoValue;
+}
 
 /**
  * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.
@@ -22,8 +91,6 @@ export class Context {
 	public readonly repo: FluidRepo;
 	public readonly fullPackageMap: Map<string, Package>;
 	public readonly rootFluidBuildConfig: IFluidBuildConfig;
-
-	private readonly timer: Timer;
 	private readonly newBranches: string[] = [];
 
 	constructor(
@@ -31,22 +98,20 @@ export class Context {
 		public readonly originRemotePartialUrl: string,
 		public readonly originalBranchName: string,
 	) {
-		this.timer = new Timer(commonOptions.timer);
-
 		// Load the package
 		this.repo = FluidRepo.create(this.gitRepo.resolvedRoot);
-		this.timer.time("Package scan completed");
-
 		this.fullPackageMap = this.repo.createPackageMap();
 		this.rootFluidBuildConfig = loadFluidBuildConfig(this.repo.resolvedRoot);
 	}
 
 	/**
-	 * @deprecated
+	 * Create a branch with name. throw an error if the branch already exist.
+	 * @deprecated ??
 	 */
-	public async createBranch(branchName: string) {
+	public async createBranch(branchName: string): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (await this.gitRepo.getShaForBranch(branchName)) {
-			fatal(`${branchName} already exists. Failed to create.`);
+			throw new Error(`${branchName} already exists. Failed to create.`);
 		}
 		await this.gitRepo.createBranch(branchName);
 		this.newBranches.push(branchName);
@@ -70,17 +135,15 @@ export class Context {
 	 * @returns An array of packages that do not belong to the release group.
 	 */
 	public packagesNotInReleaseGroup(releaseGroup: string | Package): Package[] {
-		let packages: Package[];
-		if (releaseGroup instanceof Package) {
-			packages = this.packages.filter((p) => p.name !== releaseGroup.name);
-		} else {
-			packages = this.packages.filter((pkg) => pkg.monoRepo?.kind !== releaseGroup);
-		}
-
+		const packages =
+			releaseGroup instanceof Package
+				? this.packages.filter((p) => p.name !== releaseGroup.name)
+				: this.packages.filter((pkg) => pkg.monoRepo?.kind !== releaseGroup);
 		return packages;
 	}
 
 	/**
+	 * Get all the packages not associated with a release group
 	 * @returns An array of packages in the repo that are not associated with a release group.
 	 */
 	public get independentPackages(): Package[] {
@@ -89,6 +152,7 @@ export class Context {
 	}
 
 	/**
+	 * Get all the packages.
 	 * @returns An array of all packages in the repo.
 	 */
 	public get packages(): Package[] {
@@ -96,36 +160,31 @@ export class Context {
 	}
 
 	/**
-	 * Gets the version for a package or release group. If a versionBag was provided, it will be searched for the
-	 * package. Otherwise, the value is assumed to be a release group, so the context is searched.
+	 * Gets the version for a package or release group.
 	 *
 	 * @returns A version string.
 	 *
-	 * @deprecated
 	 */
-	public getVersion(key: string, versionBag?: VersionBag): string {
+	public getVersion(key: string): string {
 		let ver = "";
-		if (versionBag !== undefined && !versionBag.isEmpty()) {
-			ver = versionBag.get(key);
-		} else {
-			if (isMonoRepoKind(key)) {
-				const rgRepo = this.repo.releaseGroups.get(key);
-				if (rgRepo === undefined) {
-					throw new Error(`Release group not found: ${key}`);
-				}
-				ver = rgRepo.version;
-			} else {
-				const pkg = this.fullPackageMap.get(key);
-				if (pkg === undefined) {
-					throw new Error(`Package not in context: ${key}`);
-				}
-				ver = pkg.version;
+
+		if (isMonoRepoKind(key)) {
+			const rgRepo = this.repo.releaseGroups.get(key);
+			if (rgRepo === undefined) {
+				throw new Error(`Release group not found: ${key}`);
 			}
+			ver = rgRepo.version;
+		} else {
+			const pkg = this.fullPackageMap.get(key);
+			if (pkg === undefined) {
+				throw new Error(`Package not in context: ${key}`);
+			}
+			ver = pkg.version;
 		}
 		return ver;
 	}
 
-	private _tags: Map<string, string[]> = new Map();
+	private readonly _tags: Map<string, string[]> = new Map();
 
 	/**
 	 * Returns an array of all the git tags associated with a release group.
@@ -148,29 +207,7 @@ export class Context {
 		return tagList;
 	}
 
-	private _loaded = false;
-
-	/**
-	 * Loads release data for all packages and release groups in the repo into memory.
-	 */
-	public async loadReleases(): Promise<void> {
-		if (this._loaded) {
-			return;
-		}
-
-		const releasePromises: Promise<VersionDetails[] | undefined>[] = [];
-		for (const [kind] of this.repo.releaseGroups) {
-			releasePromises.push(this.getAllVersions(kind));
-		}
-		for (const p of this.independentPackages) {
-			releasePromises.push(this.getAllVersions(p.name));
-		}
-
-		await Promise.all(releasePromises);
-		this._loaded = true;
-	}
-
-	private _versions: Map<string, VersionDetails[]> = new Map();
+	private readonly _versions: Map<string, VersionDetails[]> = new Map();
 
 	/**
 	 * Gets all the versions for a release group or independent package. This function only considers the tags in the
@@ -181,7 +218,6 @@ export class Context {
 	 *
 	 * @internal
 	 *
-	 * @deprecated
 	 */
 	public async getAllVersions(
 		releaseGroupOrPackage: string,

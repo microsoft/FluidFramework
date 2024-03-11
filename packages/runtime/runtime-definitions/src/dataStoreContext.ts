@@ -508,6 +508,12 @@ export interface IFluidParentContext
 		srcHandle: { absolutePath: string },
 		outboundHandle: { absolutePath: string },
 	): void;
+
+	/**
+	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
+	 * @param address - The address of the channel that is dirty.
+	 */
+	setChannelDirty(address: string): void;
 }
 
 /**
@@ -538,12 +544,6 @@ export interface IFluidDataStoreContext
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
-
-	/**
-	 * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
-	 * @param address - The address of the channel that is dirty.
-	 */
-	setChannelDirty(address: string): void;
 
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.

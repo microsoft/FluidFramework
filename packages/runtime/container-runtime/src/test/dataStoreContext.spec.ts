@@ -144,7 +144,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: true,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -163,7 +162,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: true,
 				});
 
 				try {
@@ -205,7 +203,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: true,
 				});
 
 				await localDataStoreContext.realize();
@@ -229,7 +226,7 @@ describe("Data Store Context Tests", () => {
 				const dataStoreAttributes: WriteFluidDataStoreAttributes = {
 					pkg: JSON.stringify(["TestDataStore1"]),
 					summaryFormatVersion: 2,
-					isRootDataStore: true,
+					isRootDataStore: false,
 				};
 
 				assert.strictEqual(
@@ -261,7 +258,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				await localDataStoreContext.realize().catch((error) => {
@@ -295,7 +291,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				await localDataStoreContext.realize();
@@ -339,23 +334,6 @@ describe("Data Store Context Tests", () => {
 				assert.strictEqual(type, "SubComp", "Attach message type does not match.");
 			});
 
-			it("can correctly initialize root context", async () => {
-				localDataStoreContext = new LocalFluidDataStoreContext({
-					id: dataStoreId,
-					pkg: ["TestDataStore1"],
-					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
-					storage,
-					scope,
-					createSummarizerNodeFn,
-					makeLocallyVisibleFn,
-					snapshotTree: undefined,
-					isRootDataStore: true,
-				});
-
-				const isRootNode = await localDataStoreContext.isRoot();
-				assert.strictEqual(isRootNode, true, "The data store should be root.");
-			});
-
 			it("can correctly initialize non-root context", async () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -366,7 +344,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				const isRootNode = await localDataStoreContext.isRoot();
@@ -399,7 +376,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				const expectedEvents = [
@@ -432,7 +408,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 				await localDataStoreContext.realize();
 
@@ -472,7 +447,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 				await localDataStoreContext.realize();
 
@@ -508,7 +482,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: true,
 				});
 
 				const gcData = await localDataStoreContext.getGCData();
@@ -529,7 +502,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				// Get the summarizer node for this data store which tracks its referenced state.
@@ -567,7 +539,6 @@ describe("Data Store Context Tests", () => {
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
-					isRootDataStore: false,
 				});
 
 				localDataStoreContext.setTombstone(true);
@@ -1133,7 +1104,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: true,
 						channelToDataStoreFn,
 					});
 
@@ -1157,7 +1127,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: false,
 						channelToDataStoreFn,
 					});
 
@@ -1194,7 +1163,6 @@ describe("Data Store Context Tests", () => {
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
-						isRootDataStore: false,
 						channelToDataStoreFn,
 					});
 

@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import { Constellation } from "..";
+import react_collapsible from "react-collapsible";
 
-describe("Constellation", function () {
-	it("Runs this test", function () {});
-});
+export { react_collapsible as Collapsible };

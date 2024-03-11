@@ -4,7 +4,7 @@
  */
 import chai, { assert, expect } from "chai";
 
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import assertArrays from "chai-arrays";
 
 import {
@@ -14,6 +14,7 @@ import {
 	PackageSelectionCriteria,
 	selectAndFilterPackages,
 } from "../src/filter";
+import { Context } from "../src/library";
 import path from "path";
 
 chai.use(assertArrays);
