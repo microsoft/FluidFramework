@@ -162,9 +162,9 @@
 		},
 		"socketIo": {
 			"perMessageDeflate": false,
-			"gradualDisconnectEnabled": true,
-			"gradualDisconnectDrainTimeMs": 30000,
-			"gradualDisconnectDrainIntervalMs": 1000
+			"gracefulShutdownEnabled": true,
+			"gracefulShutdownDrainTimeMs": 30000,
+			"gracefulShutdownDrainIntervalMs": 1000
 		},
 		"jwtTokenCache": {
 			"enable": true

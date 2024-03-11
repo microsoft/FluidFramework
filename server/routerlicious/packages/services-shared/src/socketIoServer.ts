@@ -11,7 +11,11 @@ import {
 	getRedisClusterRetryStrategy,
 	getRedisClient,
 } from "@fluidframework/server-services-utils";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
 import { clone } from "lodash";
 import * as Redis from "ioredis";
 import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
@@ -128,19 +132,27 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
-		if (this.socketIoConfig?.gradualDisconnectEnabled) {
-			// Gradual disconnection
-			const drainTime = this.socketIoConfig?.gradualDisconnectDrainTimeMs ?? 30000;
-			const drainInterval = this.socketIoConfig?.gradualDisconnectDrainIntervalMs ?? 1000;
+		const sleep = async (timeMs: number) =>
+			new Promise((resolve) => setTimeout(resolve, timeMs));
+
+		if (this.socketIoConfig?.gracefulShutdownEnabled) {
+			// Gradual disconnection of websocket connections
+			const drainTime = this.socketIoConfig?.gracefulShutdownDrainTimeMs ?? 30000;
+			const drainInterval = this.socketIoConfig?.gracefulShutdownDrainIntervalMs ?? 1000;
 			if (drainTime > 0 && drainInterval > 0) {
 				// we are assuming no new connections appear once we start. any leftover connections will be closed when close is called
 				const connections = await this.io.fetchSockets();
 				const connectionCount = connections.length;
-				Lumberjack.info("Gradual disconnection started", {
+				const telemetryProperties = {
 					drainTime,
 					drainInterval,
 					connectionCount,
-				});
+				};
+				Lumberjack.info("Graceful disconnection started", telemetryProperties);
+				const metricForTimeTaken = Lumberjack.newLumberMetric(
+					LumberEventName.GracefulShutdown,
+					telemetryProperties,
+				);
 				// total number of drains to run
 				const totalDrains = Math.ceil(drainTime / drainInterval);
 				// number of connections to disconnect per drain
@@ -157,16 +169,24 @@ class SocketIoServer implements core.IWebSocketServer {
 								done = true;
 								break;
 							}
-							connection.disconnect(true);
+							try {
+								connection.disconnect(true);
+							} catch (e) {
+								Lumberjack.error("Graceful disconnect exception", undefined, e);
+							}
 							n++;
 						}
 						if (done) {
 							break;
 						}
-						Lumberjack.info("Gradual disconnection started", { disconnectedSoFar: n });
-						await this.sleep(drainInterval);
+						Lumberjack.info("Graceful disconnect batch processed", {
+							disconnectedSoFar: n,
+							connectionCount,
+						});
+						await sleep(drainInterval);
 					}
 				}
+				metricForTimeTaken.success("Graceful shutdown finished");
 			}
 		}
 
@@ -176,12 +196,6 @@ class SocketIoServer implements core.IWebSocketServer {
 		const subClosedP = util.promisify(((callback) => this.sub.quit(callback)) as any)();
 		const ioClosedP = util.promisify(((callback) => this.io.close(callback)) as any)();
 		await Promise.all([pubClosedP, subClosedP, ioClosedP]);
-	}
-
-	private async sleep<T = void>(milliseconds: number, resolveValue?: T) {
-		return new Promise<T | undefined>((resolve) => {
-			setTimeout(() => resolve(resolveValue), milliseconds);
-		});
 	}
 }
 
