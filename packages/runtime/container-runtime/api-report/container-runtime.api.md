@@ -26,11 +26,11 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IEvent as IEvent_2 } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContextEvents } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -515,8 +515,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     rollback(type: string, contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly scope: FluidObject;
-    // (undocumented)
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setChannelDirty(address: string): void;
     setConnectionState(connected: boolean, clientId?: string): void;
     // @deprecated (undocumented)
@@ -800,6 +798,8 @@ export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDat
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
     // @deprecated (undocumented)
     readonly createProps?: any;
+    // (undocumented)
+    readonly isRootDataStore: boolean | undefined;
     // (undocumented)
     readonly makeLocallyVisibleFn: () => void;
     // (undocumented)

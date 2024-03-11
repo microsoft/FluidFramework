@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -141,6 +141,7 @@ export interface IFluidDataStoreContextProps {
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly pkg: Readonly<string[]> | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
+    readonly isRootDataStore: boolean | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
@@ -166,6 +167,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 
 /**
  * Represents the context for the store. This context is passed to the store runtime.
+ * @internal
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
