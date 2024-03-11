@@ -87,6 +87,7 @@ export class CheckoutFlexTreeView<
 			nodeKeyManager,
 			nodeKeyFieldKey,
 		);
+		contextToTreeView.set(this.context, this);
 		this.flexTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
 
@@ -105,3 +106,9 @@ export class CheckoutFlexTreeView<
 		);
 	}
 }
+
+/**
+ * Maps the context of every {@link CheckoutFlexTreeView} to the view.
+ * In practice, this allows the view or checkout to be obtained from a flex node by first getting the context from the flex node and then using this map.
+ */
+export const contextToTreeView = new WeakMap<Context, CheckoutFlexTreeView<any>>();

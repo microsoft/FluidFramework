@@ -15,16 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/azure-service-utils-public.d.ts",
 				"default": "./lib/index.js"
 			},
@@ -33,27 +23,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/azure-service-utils-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/azure-service-utils-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/azure-service-utils-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/azure-service-utils-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./fruit": {
 			"import": {
 				"types": "./lib/azure-service-utils-alpha.d.ts",
 				"default": "./lib/index.js"
@@ -74,8 +44,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "./dist/index.js",
+	"types": "./dist/azure-service-utils-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -105,7 +75,7 @@
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
 	},
@@ -116,7 +86,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/uuid": "^9.0.2",
 		"copyfiles": "^2.4.1",

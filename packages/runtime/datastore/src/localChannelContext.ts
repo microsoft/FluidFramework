@@ -152,7 +152,10 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	 * to be joined with the same from the DataStore's other channels
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
-		assert(this._channel !== undefined, "Local Channel should be loaded before being attached");
+		assert(
+			this._channel !== undefined,
+			0x8fd /* Local Channel should be loaded before being attached */,
+		);
 
 		// We need the GC Data to detect references added in this attach op
 		return this._channel.getGCData(/* fullGC: */ true);

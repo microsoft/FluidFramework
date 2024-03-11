@@ -291,7 +291,8 @@ export class EditManager<
 	}
 
 	/**
-	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
+	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window,
+	 * if they are not retained by revertibles or local branches.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
 	 *
 	 * @remarks If there are more than one commit with the same sequence number we assume this refers to the last commit in the batch.
@@ -438,7 +439,18 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => {
+		let oldestCommitInCollabWindow = this.getClosestTrunkCommit(this.minimumSequenceNumber)[1];
+		assert(
+			oldestCommitInCollabWindow.parent !== undefined ||
+				oldestCommitInCollabWindow === this.trunkBase,
+			0x8c7 /* Expected oldest commit in collab window to have a parent or be the trunk base */,
+		);
+
+		// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
+		oldestCommitInCollabWindow =
+			oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+
+		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map((c) => {
 			const metadata =
 				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 			const commit: SequencedCommit<TChangeset> = {
@@ -453,7 +465,7 @@ export class EditManager<
 			return commit;
 		});
 
-		const branches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
+		const peerLocalBranches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
 				const ancestor =
@@ -477,7 +489,7 @@ export class EditManager<
 			}),
 		);
 
-		return { trunk, branches };
+		return { trunk, peerLocalBranches };
 	}
 
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
@@ -513,7 +525,7 @@ export class EditManager<
 
 		this.localBranch.setHead(this.trunk.getHead());
 
-		for (const [sessionId, branch] of data.branches) {
+		for (const [sessionId, branch] of data.peerLocalBranches) {
 			const commit =
 				trunkRevisionCache.get(branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
@@ -720,7 +732,7 @@ export class EditManager<
  */
 export interface SummaryData<TChangeset> {
 	readonly trunk: readonly SequencedCommit<TChangeset>[];
-	readonly branches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
+	readonly peerLocalBranches: ReadonlyMap<SessionId, SummarySessionBranch<TChangeset>>;
 }
 
 /**

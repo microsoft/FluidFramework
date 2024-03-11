@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
 	FlexTreeNode,
@@ -306,11 +307,13 @@ export class SchemaFactory<
 						0x83b /* building node with wrong schema */,
 					);
 				}
-				// TODO: make this a better user facing error, and explain how to copy explicitly.
-				assert(
-					!isTreeNode(input),
-					0x83c /* Existing nodes cannot be used as new content to insert. They must either be moved or explicitly copied */,
-				);
+
+				if (isTreeNode(input)) {
+					// TODO: update this once we have better support for deep-copying and move operations.
+					throw new UsageError(
+						"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
+					);
+				}
 			}
 
 			public get [type](): ScopedSchemaName<TScope, Name> {
@@ -373,10 +376,7 @@ export class SchemaFactory<
 		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			object &
-				TreeNode &
-				ObjectFromSchemaRecord<T> &
-				WithType<ScopedSchemaName<TScope, Name>>,
+			TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
 			T
@@ -409,11 +409,12 @@ export class SchemaFactory<
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
 	): TreeNodeSchema<
-		`${TScope}.Map<${string}>`,
+		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<`${TScope}.Map<${string}>`>,
-		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		true,
+		T
 	>;
 
 	/**
@@ -433,19 +434,21 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		true,
+		T
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
-		`${TScope}.${string}` | `${string}`,
+		string,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -461,11 +464,12 @@ export class SchemaFactory<
 						true,
 					) as TreeNodeSchema,
 			) as TreeNodeSchemaClass<
-				`${TScope}.${string}`,
+				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
-				ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				true
+				Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+				true,
+				T
 			>;
 		}
 		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -487,13 +491,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable
-	> {
+	) {
 		class schema extends this.nodeSchema(
 			name,
 			NodeKind.Map,
@@ -501,7 +499,7 @@ export class SchemaFactory<
 			implicitlyConstructable,
 		) {
 			public constructor(
-				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				input: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 			) {
 				super(input);
 
@@ -524,12 +522,13 @@ export class SchemaFactory<
 		// Setup map functionality
 		Object.defineProperties(schema.prototype, mapStaticDispatchMap);
 
-		return schema as unknown as TreeNodeSchemaClass<
+		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable
+			Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 
@@ -569,11 +568,12 @@ export class SchemaFactory<
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
 	): TreeNodeSchema<
-		`${TScope}.Array<${string}>`,
+		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<`${TScope}.Array<${string}>`>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	/**
@@ -596,18 +596,20 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	public array<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
-		`${TScope}.${string}` | `${string}`,
+		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -615,11 +617,12 @@ export class SchemaFactory<
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedArray_internal(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
-				`${TScope}.${string}`,
+				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				true
+				true,
+				T
 			>;
 		}
 		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -687,9 +690,10 @@ export class SchemaFactory<
 		return schema as unknown as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
+			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 
@@ -727,6 +731,7 @@ export class SchemaFactory<
 	 * 	recursive: [recursiveReference],
 	 * }) {}
 	 * ```
+	 * @deprecated Use special `recursive` versions of builders instead of relying on this.
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }

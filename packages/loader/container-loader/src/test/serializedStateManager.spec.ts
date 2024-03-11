@@ -176,30 +176,6 @@ describe("serializedStateManager", () => {
 		);
 	});
 
-	it("can't get pending local state when there is no base snapshot", async () => {
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			undefined,
-			logger,
-			storageAdapter,
-			true,
-		);
-
-		await assert.rejects(
-			async () =>
-				serializedStateManager.getPendingLocalStateCore(
-					{
-						notifyImminentClosure: false,
-					},
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				),
-			(error: Error) => errorFn(error, "no base data"),
-			"container can get local state with no base snapshot",
-		);
-	});
-
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
 			attached: true,
@@ -242,7 +218,7 @@ describe("serializedStateManager", () => {
 		// equivalent to attach
 		serializedStateManager.setSnapshot({ tree: { trees: {}, blobs: {} }, blobs: {} });
 		for (let num = 0; num < 10; ++num) {
-			serializedStateManager.addSavedOp(generateSavedOp());
+			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
 		await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },

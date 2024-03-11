@@ -22,7 +22,8 @@ const test_tags = [
 ];
 
 describe("generate:buildVersion", () => {
-	test.timeout(10000)
+	test
+		.timeout(10000)
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -41,7 +42,8 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("version=0.4.0-12345");
 		});
 
-	test.timeout(10000)
+	test
+		.timeout(10000)
 		.env({
 			VERSION_BUILDNUMBER: "88802",
 		})
@@ -61,7 +63,8 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("version=0.4.0-88802");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"generate:buildVersion",
 			"--build",
@@ -81,9 +84,10 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("version=0.4.12345");
 		});
 
-	test.env({
-		VERSION_PATCH: "true",
-	})
+	test
+		.env({
+			VERSION_PATCH: "true",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -102,7 +106,8 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("version=0.4.12345");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"generate:buildVersion",
 			"--build",
@@ -121,7 +126,8 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=true");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"generate:buildVersion",
 			"--build",
@@ -140,9 +146,10 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_RELEASE: "release",
-	})
+	test
+		.env({
+			VERSION_RELEASE: "release",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -160,9 +167,10 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=true");
 		});
 
-	test.env({
-		VERSION_TAGNAME: "build-tools",
-	})
+	test
+		.env({
+			VERSION_TAGNAME: "build-tools",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -180,7 +188,8 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=true");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"generate:buildVersion",
 			"--build",
@@ -196,17 +205,15 @@ describe("generate:buildVersion", () => {
 			"--tags",
 			...test_tags,
 		])
-		.it(
-			"isLatest=false when including internal versions when determining what's latest",
-			(ctx) => {
-				expect(ctx.stdout).to.contain("version=1.2.4");
-				expect(ctx.stdout).to.contain("isLatest=false");
-			},
-		);
+		.it("isLatest=false when including internal versions when determining what's latest", (ctx) => {
+			expect(ctx.stdout).to.contain("version=1.2.4");
+			expect(ctx.stdout).to.contain("isLatest=false");
+		});
 
-	test.env({
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
-	})
+	test
+		.env({
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "True",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -226,7 +233,8 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.stdout()
+	test
+		.stdout()
 		.command([
 			"generate:buildVersion",
 			"--build",
@@ -247,9 +255,10 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		TEST_BUILD: "true",
-	})
+	test
+		.env({
+			TEST_BUILD: "true",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -269,14 +278,15 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "tinylicious",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "release",
-		VERSION_PATCH: "true",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "tinylicious",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_PATCH: "true",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -305,13 +315,14 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=true");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "100339",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "100339",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -351,13 +362,14 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "212045",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -373,13 +385,14 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "212045",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "true",
-		VERSION_RELEASE: "prerelease",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -395,13 +408,14 @@ describe("generate:buildVersion", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "212045",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "release",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "212045",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		})
 		.stdout()
 		.command([
 			"generate:buildVersion",
@@ -417,15 +431,16 @@ describe("generate:buildVersion", () => {
 });
 
 describe("generate:buildVersion for alpha/beta", () => {
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "alpha",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "alpha",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, types: alpha", (ctx) => {
@@ -433,15 +448,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "beta",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "beta",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, types: beta", (ctx) => {
@@ -449,15 +465,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "none",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "none",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, types: none", (ctx) => {
@@ -465,15 +482,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "public",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "public",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, types: public", (ctx) => {
@@ -481,15 +499,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "untrimmed",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "untrimmed",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, types: untrimmed", (ctx) => {
@@ -497,45 +516,48 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "release",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "untrimmed",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "untrimmed",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: release, types: untrimmed", (ctx) => {
 			expect(ctx.stdout).to.contain("version=0.4.0");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "release",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "public",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "release",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "public",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: release, types: public", (ctx) => {
 			expect(ctx.stdout).to.contain("version=0.4.0");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "true",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "alpha",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "alpha",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: alpha", (ctx) => {
@@ -543,15 +565,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "true",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "beta",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "beta",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: beta", (ctx) => {
@@ -559,15 +582,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "true",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "none",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "none",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: none", (ctx) => {
@@ -575,15 +599,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "true",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "public",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "public",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: public", (ctx) => {
@@ -591,15 +616,16 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "true",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "untrimmed",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "true",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "untrimmed",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
 		.it("tagName: client, release: prerelease, test-build: true, types: untrimmed", (ctx) => {
@@ -607,60 +633,64 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "alpha",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "alpha",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
 		.it("tagName: client, release: prerelease, test-build: false, types: alpha", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879-alpha-types");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "beta",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "beta",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
 		.it("tagName: client, release: prerelease, test-build: false, types: beta", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879-beta-types");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "public",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "public",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
 		.it("tagName: client, release: prerelease, test-build: false, types: public", (ctx) => {
 			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879");
 		});
 
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "prerelease",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "untrimmed",
-	})
+	test
+		.env({
+			VERSION_BUILDNUMBER: "88879",
+			VERSION_TAGNAME: "client",
+			TEST_BUILD: "false",
+			VERSION_RELEASE: "prerelease",
+			VERSION_PATCH: "False",
+			VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+			PACKAGE_TYPES_FIELD: "untrimmed",
+		})
 		.stdout()
 		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
 		.it("tagName: client, release: prerelease, test-build: false, types: untrimmed", (ctx) => {

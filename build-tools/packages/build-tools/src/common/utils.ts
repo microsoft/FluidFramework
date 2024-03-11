@@ -8,6 +8,7 @@ import * as glob from "glob";
 import isEqual from "lodash.isequal";
 import * as path from "path";
 import * as util from "util";
+import { pathToFileURL } from "node:url";
 
 export function getExecutableFromCommand(command: string) {
 	let toReturn: string;
@@ -247,4 +248,13 @@ export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) 
 		return undefined;
 	}
 	return result.stdout;
+}
+
+export async function loadModule(modulePath: string, moduleType?: string) {
+	const ext = path.extname(modulePath);
+	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");
+	if (esm) {
+		return await import(pathToFileURL(modulePath).toString());
+	}
+	return require(modulePath);
 }
