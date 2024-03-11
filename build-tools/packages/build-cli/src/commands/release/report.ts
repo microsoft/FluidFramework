@@ -12,7 +12,20 @@ import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
-import { Context, VersionDetails } from "@fluidframework/build-tools";
+import {
+	VersionDetails,
+	Context,
+	PackageVersionMap,
+	ReleaseReport,
+	ReportKind,
+	filterVersionsOlderThan,
+	getDisplayDate,
+	getDisplayDateRelative,
+	getFluidDependencies,
+	getRanges,
+	sortVersions,
+	toReportKind,
+} from "../../library";
 
 import {
 	ReleaseVersion,
@@ -25,18 +38,6 @@ import {
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import {
-	PackageVersionMap,
-	ReleaseReport,
-	ReportKind,
-	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
-	getFluidDependencies,
-	getRanges,
-	sortVersions,
-	toReportKind,
-} from "../../library";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 

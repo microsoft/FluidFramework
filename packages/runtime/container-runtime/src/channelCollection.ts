@@ -182,6 +182,9 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		deleteChildSummarizerNode: (...args) => {
 			return context.deleteChildSummarizerNode?.(...args);
 		},
+		setChannelDirty: (address: string) => {
+			return context.setChannelDirty(address);
+		},
 	};
 }
 
@@ -338,7 +341,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					}),
 					makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(key),
 					snapshotTree,
-					isRootDataStore: undefined,
 				});
 			}
 			this.contexts.addBoundOrRemoted(dataStoreContext);
@@ -619,7 +621,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
-			isRootDataStore: false,
 			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel) =>
 				channelToDataStore(
@@ -650,7 +651,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
-			isRootDataStore: false,
 			createProps: props,
 			loadingGroupId,
 		});

@@ -16,7 +16,7 @@ import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SharedString } from "../sharedString.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { IMapValueTypeOperation } from "../defaultMap.js";
+import type { IMapOperation } from "../intervalCollectionMap.js";
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -97,7 +97,7 @@ describe("Interval Stashed Ops on client ", () => {
 				sequenceNumber: sharedString.getCurrentSeq(),
 				intervalType: 2,
 			};
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
@@ -113,7 +113,7 @@ describe("Interval Stashed Ops on client ", () => {
 			]);
 		});
 		it("for delete interval", () => {
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
@@ -130,7 +130,7 @@ describe("Interval Stashed Ops on client ", () => {
 			assert.equal(collection.getIntervalById(intervalId), undefined);
 		});
 		it("for change interval", () => {
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
@@ -150,7 +150,7 @@ describe("Interval Stashed Ops on client ", () => {
 		it("for interval property change", () => {
 			const interval = collection.getIntervalById(intervalId);
 			assert(interval !== undefined);
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
