@@ -801,8 +801,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
     // @deprecated (undocumented)
     readonly createProps?: any;
     // (undocumented)
-    readonly isRootDataStore: boolean | undefined;
-    // (undocumented)
     readonly makeLocallyVisibleFn: () => void;
     // (undocumented)
     readonly pkg: Readonly<string[]> | undefined;
