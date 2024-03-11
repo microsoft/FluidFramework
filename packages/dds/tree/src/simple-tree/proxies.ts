@@ -378,7 +378,9 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(index, value);
-			const cursor = cursorFromFieldData(content, getClassSchemaOrFail(sequenceNode.schema));
+
+			const classSchema = getClassSchemaOrFail(sequenceNode.schema);
+			const cursor = cursorFromFieldData(content, classSchema);
 
 			modifyChildren(
 				sequenceNode,
@@ -396,7 +398,9 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(0, value);
-			const cursor = cursorFromFieldData(content, getClassSchemaOrFail(sequenceNode.schema));
+
+			const classSchema = getClassSchemaOrFail(sequenceNode.schema);
+			const cursor = cursorFromFieldData(content, classSchema);
 
 			modifyChildren(
 				sequenceNode,

@@ -173,13 +173,13 @@ describe("SharedTreeObject", () => {
 	});
 });
 
-describe("SharedTreeList", () => {
+describe.only("SharedTreeList", () => {
 	describe("inserting nodes created by factory", () => {
 		const _ = new SchemaFactory("test");
 		const obj = _.object("Obj", { id: _.string });
 		const schema = _.array(obj);
 
-		it("insertAtStart()", () => {
+		it.only("insertAtStart()", () => {
 			const root = hydrate(schema, [{ id: "B" }]);
 			assert.deepEqual(root, [{ id: "B" }]);
 			const newItem = new obj({ id: "A" });

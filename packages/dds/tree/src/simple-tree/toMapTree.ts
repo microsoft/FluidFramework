@@ -30,6 +30,7 @@ import {
 	NodeKind,
 	type AllowedTypes,
 	type ImplicitFieldSchema,
+	type FieldProps,
 } from "./schemaTypes.js";
 import { nullSchema } from "./schemaFactory.js";
 import { cachedFlexSchemaFromClassSchema } from "./toFlexSchema.js";
@@ -55,27 +56,24 @@ import { cachedFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-): CursorWithNode<MapTree> | undefined {
-	if (data === undefined) {
-		return undefined;
-	}
-
+): CursorWithNode<MapTree> {
 	const mappedContent = nodeDataToMapTree(data, normalizeAllowedTypes(allowedTypes));
 	return cursorForMapTreeNode(mappedContent);
 }
 
 type InsertableTreeField = InsertableContent | undefined;
 
+// TODO: this path has an off-by-one issue in terms of layering.
+// Need  to investigate and understand the expected form of output here + unit tests for the field entrypoint.
 /**
  * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
- * @param globalSchema - Schema for the whole tree for interperting `Any`.
  */
 export function cursorFromFieldData(
-	data: InsertableTreeField,
-	fieldSchema: ImplicitFieldSchema,
+	data: InsertableContent,
+	schema: TreeNodeSchema,
 ): CursorWithNode<MapTree> {
-	const mappedContent = fieldDataToMapTrees(data, normalizeFieldSchema(fieldSchema));
+	const mappedContent = nodeDataToMapTree(data, [schema]);
 	return cursorForMapTreeField(mappedContent === undefined ? [] : [mappedContent]);
 }
 
@@ -294,10 +292,10 @@ function objectToMapTree(
 			const fieldSchema = getObjectFieldSchema(schema, key);
 			const mappedChildTree = fieldDataToMapTrees(fieldValue, fieldSchema);
 
-			// TODO: use stableName when provided
-
 			if (mappedChildTree !== undefined) {
-				fields.set(key, [mappedChildTree]);
+				// If a stable name was provided, we will use it as the key in the output.
+				const stableName: FieldKey = brand(fieldSchema.props?.stableName ?? key);
+				fields.set(stableName, [mappedChildTree]);
 			}
 		}
 	}
@@ -380,25 +378,23 @@ function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
 export interface NormalizedFieldSchema {
 	kind: FieldKind;
 	allowedTypes: AllowedTypes;
+	props?: FieldProps;
 }
 
 /**
  * TODO
  */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): NormalizedFieldSchema {
-	let kind: FieldKind;
-	let allowedTypes: ImplicitAllowedTypes;
-	if (schema instanceof FieldSchema) {
-		kind = schema.kind;
-		allowedTypes = schema.allowedTypes;
-	} else {
-		kind = FieldKind.Required;
-		allowedTypes = schema;
-	}
-	return {
-		kind,
-		allowedTypes: normalizeAllowedTypes(allowedTypes),
-	};
+	return schema instanceof FieldSchema
+		? {
+				kind: schema.kind,
+				allowedTypes: normalizeAllowedTypes(schema.allowedTypes),
+				props: schema.props,
+		  }
+		: {
+				kind: FieldKind.Required,
+				allowedTypes: normalizeAllowedTypes(schema),
+		  };
 }
 
 /**
