@@ -203,7 +203,7 @@ export function enumFromStrings<TScope extends string, const Members extends str
 	return out;
 }
 
-// TODO: This generates an invalid d.ts file if due to a bug https://github.com/microsoft/TypeScript/issues/56718 which is fixed in TypeScript 5.4.
+// TODO: This generates an invalid d.ts file if exported due to a bug https://github.com/microsoft/TypeScript/issues/56718 which is fixed in TypeScript 5.4.
 // TODO: replace enumFromStrings above with this simpler implementation when we require at least TypeScript 5.4 to use this package.
 function _enumFromStrings2<TScope extends string, const Members extends readonly string[]>(
 	factory: SchemaFactory<TScope>,
