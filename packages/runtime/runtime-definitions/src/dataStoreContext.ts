@@ -408,7 +408,8 @@ export interface IDataStoreCollection {
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
-		Partial<IProvideFluidDataStoreRegistry> {
+		Partial<IProvideFluidDataStoreRegistry>,
+		IDataStoreCollection {
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;

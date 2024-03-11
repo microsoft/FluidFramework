@@ -21,7 +21,6 @@ import {
 	type FlushMode,
 	type IContainerRuntimeBase,
 	type IContainerRuntimeBaseEvents,
-	type IDataStoreCollection,
 	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
 
@@ -55,8 +54,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
-		IContainerRuntimeBaseWithCombinedEvents,
-		IDataStoreCollection {
+		IContainerRuntimeBaseWithCombinedEvents {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;

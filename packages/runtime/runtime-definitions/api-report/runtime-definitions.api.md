@@ -247,7 +247,7 @@ export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry 
 }
 
 // @alpha
-export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry> {
+export interface IFluidParentContext extends IProvideFluidHandleContext, Partial<IProvideFluidDataStoreRegistry>, IDataStoreCollection {
     // @deprecated (undocumented)
     addedGCOutboundReference?(srcHandle: {
         absolutePath: string;

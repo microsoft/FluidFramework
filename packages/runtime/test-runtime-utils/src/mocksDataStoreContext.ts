@@ -21,6 +21,8 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
+	IDataStore,
+	IFluidDataStoreContextDetached,
 } from "@fluidframework/runtime-definitions";
 import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import { v4 as uuid } from "uuid";
@@ -67,6 +69,43 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		}),
 		private readonly interactive: boolean = true,
 	) {}
+	addedGCOutboundRoute?(fromPath: string, toPath: string): void {
+		throw new Error("Method not implemented.");
+	}
+	loadingGroupId?: string | undefined;
+	addedGCOutboundReference?(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	): void {
+		throw new Error("Method not implemented.");
+	}
+
+	async createDataStore(
+		pkg: string | string[],
+		loadingGroupId?: string | undefined,
+	): Promise<IDataStore> {
+		throw new Error("Method not implemented.");
+	}
+
+	createDetachedDataStore(
+		pkg: readonly string[],
+		loadingGroupId?: string | undefined,
+	): IFluidDataStoreContextDetached {
+		throw new Error("Method not implemented.");
+	}
+
+	createDetachedRootDataStore(
+		pkg: readonly string[],
+		rootDataStoreId: string,
+	): IFluidDataStoreContextDetached {
+		throw new Error("Method not implemented.");
+	}
+
+	async getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined> {
+		throw new Error("Method not implemented.");
+	}
 
 	on(event: string | symbol, listener: (...args: any[]) => void): this {
 		switch (event) {

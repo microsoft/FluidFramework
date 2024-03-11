@@ -135,7 +135,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContext, IFluidParentContext, IDisposable
+	implements IFluidDataStoreContext, IDisposable
 {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
