@@ -122,7 +122,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;
