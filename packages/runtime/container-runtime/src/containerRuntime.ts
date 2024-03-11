@@ -537,6 +537,17 @@ export interface IPendingRuntimeState {
 	 * Time at which session expiry timer started.
 	 */
 	sessionExpiryTimerStarted?: number | undefined;
+	/**
+	 * The snapshots of virtualized dataStores that were downloaded
+	 */
+	downloadedSnapshotTrees?: IDownloadedSnapshotTrees;
+}
+
+/**
+ *
+ */
+export interface IDownloadedSnapshotTrees {
+	[path: string]: ISnapshotTree;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -1509,7 +1520,11 @@ export class ContainerRuntime
 		};
 
 		this.channelCollection = new ChannelCollection(
-			getSummaryForDatastores(baseSnapshot, metadata),
+			getSummaryForDatastores(
+				baseSnapshot,
+				metadata,
+				pendingRuntimeState?.downloadedSnapshotTrees,
+			),
 			parentContext,
 			this.mc.logger,
 			(
@@ -1666,6 +1681,10 @@ export class ContainerRuntime
 			);
 
 			if (this.isSummarizerClient) {
+				assert(
+					pendingRuntimeState === undefined,
+					"Summarizer client cannot have pending state",
+				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -4118,6 +4137,7 @@ export class ContainerRuntime
 		const getSyncState = (
 			pendingAttachmentBlobs?: IPendingBlobs,
 		): IPendingRuntimeState | undefined => {
+			const downloadedSnapshotTrees = this.channelCollection.getDownloadedSnapshotTrees();
 			const pending = this.pendingStateManager.getLocalState();
 			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
 				return; // no pending state to save
@@ -4130,6 +4150,7 @@ export class ContainerRuntime
 				pendingIdCompressorState,
 				pendingAttachmentBlobs,
 				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+				downloadedSnapshotTrees,
 			};
 		};
 		const perfEvent = {
