@@ -18,9 +18,10 @@ import * as assert from "assert";
 import {
 	TaskDefinitions,
 	TaskDefinitionsOnDisk,
-	TaskConfig,
+	TaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
+	getDefaultTaskDefinition,
 } from "../common/fluidTaskDefinitions";
 import registerDebug from "debug";
 
@@ -69,7 +70,11 @@ class BuildContext {
 }
 
 export class BuildPackage {
-	private tasks = new Map<string, Task>();
+	private readonly tasks = new Map<string, Task>();
+
+	// track a script task without the lifecycle (pre/post) tasks
+	private readonly scriptTasks = new Map<string, Task>();
+
 	public readonly dependentPackages = new Array<BuildPackage>();
 	public level: number = -1;
 	private buildP?: Promise<BuildResult>;
@@ -116,29 +121,35 @@ export class BuildPackage {
 		return tasks.length !== 0;
 	}
 
-	private getTaskDefinition(taskName: string): TaskConfig | undefined {
-		let taskDefinition = this._taskDefinitions[taskName];
-		if (taskDefinition === undefined && this.pkg.isReleaseGroupRoot) {
-			const isReleaseGroupRootScriptEnabled =
-				this.pkg.packageJson.fluidBuild?.tasks !== undefined;
-			const script = this.pkg.getScript(taskName);
-			if (
-				// Only enable release group root script if it is explicitly defined, for places that don't use it yet
-				!isReleaseGroupRootScriptEnabled ||
-				// if there is no script or the script starts with "fluid-build", then use the default
-				script === undefined ||
-				script.startsWith("fluid-build ")
-			) {
-				// default for release group root is to depend on the task of all packages in the release group
-				taskDefinition = {
-					dependsOn: [`^${taskName}`],
-					script: false,
-					before: [],
-					after: [],
-				};
-			}
+	private getTaskDefinition(taskName: string): TaskDefinition | undefined {
+		const taskDefinition = this._taskDefinitions[taskName];
+		if (taskDefinition !== undefined) {
+			return taskDefinition;
 		}
-		return taskDefinition;
+		if (!this.pkg.isReleaseGroupRoot) {
+			return this.pkg.getScript(taskName) !== undefined
+				? getDefaultTaskDefinition(taskName)
+				: undefined;
+		}
+		const isReleaseGroupRootScriptEnabled =
+			this.pkg.packageJson.fluidBuild?.tasks !== undefined;
+		const script = this.pkg.getScript(taskName);
+		if (
+			// Only enable release group root script if it is explicitly defined, for places that don't use it yet
+			!isReleaseGroupRootScriptEnabled ||
+			// if there is no script or the script starts with "fluid-build", then use the default
+			script === undefined ||
+			script.startsWith("fluid-build ")
+		) {
+			// default for release group root is to depend on the task of all packages in the release group
+			return {
+				dependsOn: [`^${taskName}`],
+				script: false,
+				before: [],
+				after: [],
+			};
+		}
+		return undefined;
 	}
 
 	private createTask(taskName: string, pendingInitDep: Task[]) {
@@ -154,13 +165,53 @@ export class BuildPackage {
 	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
 		const command = this.pkg.getScript(taskName);
 		if (command !== undefined && !command.startsWith("fluid-build ")) {
-			const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
-			pendingInitDep.push(task);
+			// Find the script task (without the lifecycle task)
+			let scriptTask = this.scriptTasks.get(taskName);
+			if (scriptTask === undefined) {
+				scriptTask = TaskFactory.Create(this, command, pendingInitDep, taskName);
+				pendingInitDep.push(scriptTask);
+				this.scriptTasks.set(taskName, scriptTask);
+			}
+
+			// Create the script task with lifecycle task.
+			// This will be tracked in the 'tasks' map, and other task that depends on this
+			// script task will depend on this instance instead of the standalone script task without the lifecycle.
+			const task = TaskFactory.CreateTaskWithLifeCycle(
+				this,
+				scriptTask,
+				this.ensureScriptTask(`pre${taskName}`, pendingInitDep),
+				this.ensureScriptTask(`post${taskName}`, pendingInitDep),
+			);
+			if (task !== scriptTask) {
+				// We are doing duplicate work initializeDependentTasks as both the lifecycle task
+				// and script task will have the task name and dependency
+				pendingInitDep.push(task);
+			}
 			return task;
 		}
 		return undefined;
 	}
 
+	private ensureScriptTask(taskName: string, pendingInitDep: Task[]) {
+		const scriptTask = this.scriptTasks.get(taskName);
+		if (scriptTask !== undefined) {
+			return scriptTask;
+		}
+		const command = this.pkg.getScript(taskName);
+		if (command === undefined) {
+			return undefined;
+		}
+		const config = this.getTaskDefinition(taskName);
+		if (config?.script === false) {
+			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
+		}
+
+		const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
+		pendingInitDep.push(task);
+		return task;
+	}
+
+	// Create or return and existing task with a name.  If it is a script, it will also create an return the pre/post script task if it exists
 	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
 		const existing = this.tasks.get(taskName);
 		if (existing) {
@@ -168,7 +219,7 @@ export class BuildPackage {
 		}
 
 		if (pendingInitDep === undefined) {
-			// when pendingInitDep is undefined, it means we don't expect to instantiate the reference task
+			// when pendingInitDep is undefined, it is a weak dependency, so don't instantiate the referenced task
 			return undefined;
 		}
 
@@ -206,13 +257,10 @@ export class BuildPackage {
 		traceTaskDepTask(
 			`Expanding dependsOn: ${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`,
 		);
-		const matchedTasks = this.getMatchedTasks(taskConfig.dependsOn, pendingInitDep);
-		matchedTasks.forEach((matchedTask) => {
-			traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
-		});
-		return matchedTasks;
+		return this.getMatchedTasks(taskConfig.dependsOn, pendingInitDep);
 	}
 
+	// Create or get the task with names in the `deps` array
 	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
@@ -221,12 +269,20 @@ export class BuildPackage {
 			let found = pendingInitDep === undefined;
 			// should have be replaced already.
 			assert.notStrictEqual(dep, "...");
+			assert.notStrictEqual(dep, "*");
 			if (dep.startsWith("^")) {
 				found = true; // Don't worry if we can't find any
+				const taskName = dep.substring(1);
+
 				for (const depPackage of this.dependentPackages) {
-					const depTask = depPackage.getTask(dep.substring(1), pendingInitDep);
-					if (depTask !== undefined) {
-						matchedTasks.push(depTask);
+					if (taskName === "*") {
+						assert.strictEqual(pendingInitDep, undefined);
+						matchedTasks.push(...depPackage.tasks.values());
+					} else {
+						const depTask = depPackage.getTask(taskName, pendingInitDep);
+						if (depTask !== undefined) {
+							matchedTasks.push(depTask);
+						}
 					}
 				}
 			} else if (dep.includes("#")) {
@@ -256,69 +312,85 @@ export class BuildPackage {
 	}
 
 	public finalizeDependentTasks() {
-		// Set up the dependencies for "before"
-		this.tasks.forEach((task) => {
-			if (task.taskName === undefined) {
-				return;
+		// Set up the dependencies for "before" and "after"
+
+		// Get the beforeStar and afterStar tasks name on demand
+		let beforeStarTaskNames: string[] | undefined;
+		const getBeforeStarTaskNames = () => {
+			if (beforeStarTaskNames !== undefined) {
+				return beforeStarTaskNames;
 			}
-			const taskConfig = this.getTaskDefinition(task.taskName);
+			// avoid circular dependency. ignore mutual before "*" */
+			beforeStarTaskNames = Array.from(this.tasks.keys()).filter(
+				(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
+			);
+			return beforeStarTaskNames;
+		};
+
+		let afterStarTaskNames: string[] | undefined;
+		const getAfterStarTaskNames = () => {
+			if (afterStarTaskNames !== undefined) {
+				return afterStarTaskNames;
+			}
+			// avoid circular dependency. ignore mutual after "*" */
+			afterStarTaskNames = Array.from(this.tasks.keys()).filter(
+				(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
+			);
+			return afterStarTaskNames;
+		};
+
+		// Expand the star entry to all scheduled tasks
+		const expandStar = (deps: string[], getTaskNames: () => string[]) => {
+			const newDeps = deps.filter((dep) => dep !== "*");
+			if (newDeps.length === deps.length) {
+				return newDeps;
+			}
+			return newDeps.concat(getTaskNames());
+		};
+		const finalizeTask = (task: Task) => {
+			assert.notStrictEqual(task.taskName, undefined);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const taskConfig = this.getTaskDefinition(task.taskName!);
 			if (taskConfig === undefined) {
 				return;
 			}
 
-			// Expand the star entry to all scheduled tasks
-			const expandStar = (
-				deps: string[],
-				additionalFilter: (depTaskName: string) => boolean,
-			) => {
-				const newDeps = deps.filter((dep) => dep !== "*");
-				if (newDeps.length === deps.length) {
-					return newDeps;
-				}
-				const taskNames = Array.from(this.tasks.keys());
-				// avoid circular dependency
-				const filteredTaskNames = taskNames.filter(
-					(depTaskName) => depTaskName !== task.taskName && additionalFilter(depTaskName),
-				);
-				return newDeps.concat(filteredTaskNames);
-			};
-
 			if (taskConfig.before.length !== 0) {
 				// We don't want parent packages to inject dependencies to the child packages,
 				// so ^ and # are not supported for 'before'
-				const before = expandStar(
-					taskConfig.before,
-					/* ignore mutual before "*" */
-					(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
-				);
+				const before = expandStar(taskConfig.before, getBeforeStarTaskNames);
 				traceTaskDepTask(
-					`Expanding before: ${task.nameColored} -> ${JSON.stringify(before)}`,
+					`Expanding ${taskConfig.isDefault ? "default " : ""}before: ${JSON.stringify(
+						before,
+					)} -> ${task.nameColored}`,
 				);
 				const matchedTasks = this.getMatchedTasks(before);
+				const dependentTask = [task];
 				for (const matchedTask of matchedTasks) {
-					traceTaskDepTask(`${matchedTask.nameColored} -> ${task.nameColored}`);
-					// initializeDependentTask should have been called on all the task already
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					matchedTask.dependentTasks!.push(task);
+					matchedTask.addDependentTasks(dependentTask, taskConfig.isDefault);
 				}
 			}
 
 			if (taskConfig.after.length !== 0) {
-				const after = expandStar(
-					taskConfig.after,
-					/* ignore mutual after "*" */
-					(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
-				);
+				const after = expandStar(taskConfig.after, getAfterStarTaskNames);
 				traceTaskDepTask(
-					`Expanding after: ${task.nameColored} -> ${JSON.stringify(after)}`,
+					`Expanding ${taskConfig.isDefault ? "default " : ""}after: ${
+						task.nameColored
+					} -> ${JSON.stringify(after)}`,
 				);
-				const matchedTasks = this.getMatchedTasks(taskConfig.after);
-				matchedTasks.forEach((matchedTask) => {
-					traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
-				});
-				// initializeDependentTask should have been called on all the task already
+				const matchedTasks = this.getMatchedTasks(after);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				task.dependentTasks!.push(...matchedTasks);
+				task.addDependentTasks(matchedTasks, taskConfig.isDefault);
+			}
+		};
+
+		this.tasks.forEach(finalizeTask);
+		this.scriptTasks.forEach((task: Task, name: string) => {
+			// Process named script task that hasn't been processed yet.
+			if (this.tasks.get(name) !== task) {
+				finalizeTask(task);
 			}
 		});
 	}
@@ -446,7 +518,8 @@ export class BuildGraph {
 	}
 
 	public async build(timer?: Timer): Promise<BuildResult> {
-		// TODO: This function can only be called once
+		// This function must only be called once here at the beginning of the build.
+		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
@@ -584,9 +657,7 @@ export class BuildGraph {
 						version.startsWith("workspace:") || semver.satisfies(dep.version, version);
 					if (satisfied) {
 						if (depFilter(dep)) {
-							traceGraph(
-								`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`,
-							);
+							traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
 							node.dependentPackages.push(
 								this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
 							);
@@ -656,21 +727,21 @@ export class BuildGraph {
 
 		traceGraph("package task initialized");
 
-		// All the task has been created, initialize the dependent tasks
+		// All the transitive task has been created, finalize "soft" dependent edges and before/after tasks
 		this.buildPackages.forEach((node) => {
 			node.finalizeDependentTasks();
 		});
 
 		traceGraph("dependent task initialized");
 
-		// All the task has been created, initialize the dependent tasks
+		// All the tasks and dependency has been initialized, now initialize the leaf graph (which is used in build)
 		this.buildPackages.forEach((node) => {
 			node.initializeDependentLeafTasks();
 		});
 
 		traceGraph("dependent leaf task initialized");
 
-		// All the task has been created, initialize the dependent tasks
+		// Leaf graph is completed. Compute the weight
 		this.buildPackages.forEach((node) => {
 			node.initializeWeight();
 		});

@@ -22,13 +22,13 @@ import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { CellFactory } from "./cellFactory";
+import { CellFactory } from "./cellFactory.js";
 import {
 	type ISharedCell,
 	type ISharedCellEvents,
 	type ICellLocalOpMetadata,
 	type ICellOptions,
-} from "./interfaces";
+} from "./interfaces.js";
 
 /**
  * Description of a cell delta operation
@@ -51,7 +51,6 @@ interface ICellValue {
 	value: unknown;
 	/**
 	 * The attribution key contained in the `Cell`.
-	 * @alpha
 	 */
 	attribution?: AttributionKey;
 }

@@ -22,8 +22,8 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { IFluidSerializer } from "../serializer";
-import { SharedObject } from "../sharedObject";
+import { IFluidSerializer } from "../serializer.js";
+import { SharedObject } from "../sharedObject.js";
 
 type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | []
 	? T

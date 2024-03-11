@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/numeric-separators-style */
-
-// False positive: this is an import from the `events` package, not from Node.
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
-
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {

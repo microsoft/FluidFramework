@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RateLimiter } from "../rateLimiter";
+import { RateLimiter } from "../rateLimiter.js";
 
 describe("Rate Limiter", () => {
 	let limiter: RateLimiter;

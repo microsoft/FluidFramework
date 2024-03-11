@@ -53,7 +53,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"codemirror": "^5.48.4",
-		"events": "^3.1.0",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

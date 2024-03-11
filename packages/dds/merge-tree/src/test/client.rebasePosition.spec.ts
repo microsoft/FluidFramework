@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IMergeTreeOp } from "../ops";
-import { TestClient } from "./testClient";
+import { IMergeTreeOp } from "../ops.js";
+import { TestClient } from "./testClient.js";
 
 describe("client.rebasePosition", () => {
 	const localUserLongId = "localUser";
