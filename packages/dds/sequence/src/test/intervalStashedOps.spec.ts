@@ -12,11 +12,11 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { IntervalType } from "@fluidframework/sequence-previous";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IntervalOpType, SequenceInterval } from "../intervals";
-import { IIntervalCollection } from "../intervalCollection";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IMapValueTypeOperation } from "../defaultMap";
+import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { IMapValueTypeOperation } from "../defaultMap.js";
 
 const assertIntervals = (
 	sharedString: SharedString,

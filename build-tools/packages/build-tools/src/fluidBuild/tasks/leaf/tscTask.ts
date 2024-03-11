@@ -18,7 +18,9 @@ interface ITsBuildInfo {
 	program: {
 		fileNames: string[];
 		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
+		affectedFilesPendingEmit?: any[];
 		semanticDiagnosticsPerFile?: any[];
+		changeFileSet?: number[];
 		options: any;
 	};
 	version: string;
@@ -45,9 +47,57 @@ export class TscTask extends LeafTask {
 		const config = this.readTsConfig();
 		return config?.options.incremental;
 	}
+
 	protected async checkLeafIsUpToDate() {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			return this.checkReferencesIsUpToDate(
+				parsedCommandLine.fileNames.length === 0 ? ["."] : parsedCommandLine.fileNames,
+				new Set(),
+			);
+		}
+		// Check is Up to date without project references
+		return this.checkTscIsUpToDate();
+	}
+
+	private async checkReferencesIsUpToDate(checkDir: string[], checkedProjects: Set<string>) {
+		for (const dir of checkDir) {
+			if (checkedProjects.has(dir)) {
+				continue;
+			}
+			checkedProjects.add(dir);
+			const tempTscTask = new TscTask(this.node, `tsc -p ${dir}`, undefined, true);
+			if (!(await tempTscTask.checkTscIsUpToDate(checkedProjects))) {
+				this.traceTrigger(`project reference ${dir} is not up to date`);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private async checkTscIsUpToDate(checkedProjects?: Set<string>) {
+		const config = this.readTsConfig();
+		if (!config) {
+			this.traceTrigger("unable to read ts config");
+			return false;
+		}
+
+		// Only check project reference if we are in build mode
+		if (checkedProjects && config.projectReferences) {
+			const referencePaths = config.projectReferences.map((p) => p.path);
+			if (!(await this.checkReferencesIsUpToDate(referencePaths, checkedProjects))) {
+				return false;
+			}
+		}
+
+		if (config.fileNames.length === 0) {
+			// No file to build, no need to check the the build info.
+			return true;
+		}
+
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
+			this.traceTrigger("no tsBuildInfo file path");
 			return false;
 		}
 
@@ -60,15 +110,15 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
+		const program = tsBuildInfo.program;
 		// Check previous build errors
-		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
-		if (diag?.some((item) => Array.isArray(item))) {
+		if (
+			program.changeFileSet?.length ||
+			(!program.options.noEmit
+				? program.affectedFilesPendingEmit?.length
+				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
+		) {
 			this.traceTrigger("previous build error");
-			return false;
-		}
-
-		const config = this.readTsConfig();
-		if (!config) {
 			return false;
 		}
 
@@ -82,8 +132,8 @@ export class TscTask extends LeafTask {
 		);
 
 		// Check dependencies file hashes
-		const fileNames = tsBuildInfo.program.fileNames;
-		const fileInfos = tsBuildInfo.program.fileInfos;
+		const fileNames = program.fileNames;
+		const fileInfos = program.fileInfos;
 		for (let i = 0; i < fileInfos.length; i++) {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
@@ -183,9 +233,7 @@ export class TscTask extends LeafTask {
 		);
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			this.traceTrigger(
-				`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`,
-			);
+			this.traceTrigger(`ts option changed ${configFileFullPath}`);
 			this.traceTrigger("Config:");
 			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
 			this.traceTrigger("BuildInfo:");
@@ -305,7 +353,11 @@ export class TscTask extends LeafTask {
 		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
 	}
 
-	private remapOutFile(options: tsTypes.ParsedCommandLine, directory: string, fileName: string) {
+	private remapOutFile(
+		options: tsTypes.ParsedCommandLine,
+		directory: string,
+		fileName: string,
+	) {
 		if (options.options.outDir) {
 			if (options.options.rootDir) {
 				const relative = path.relative(options.options.rootDir, directory);
@@ -346,9 +398,7 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(
-						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
-					);
+					const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
 					if (
 						tsBuildInfo.program &&
 						tsBuildInfo.program.fileNames &&
@@ -370,37 +420,8 @@ export class TscTask extends LeafTask {
 	}
 
 	protected async markExecDone() {
+		// force reload
 		this._tsBuildInfo = undefined;
-
-		const config = this.readTsConfig();
-		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
-		const configFileFullPath = this.configFileFullPath;
-
-		// If there are no input, tsc doesn't update the build info file.  Do it manually so we use it for
-		// incremental build
-		if (tsBuildInfoFileFullPath && configFileFullPath && config?.fileNames.length === 0) {
-			const tscUtils = this.getTscUtils();
-			// Patch relative path based on the file directory where the config comes from
-			const options = tscUtils.filterIncrementalOptions(
-				tscUtils.convertOptionPaths(
-					config.options,
-					path.dirname(tsBuildInfoFileFullPath),
-					path.relative,
-				),
-			);
-			const dir = path.dirname(tsBuildInfoFileFullPath);
-			if (!existsSync(dir)) {
-				await fs.promises.mkdir(dir, { recursive: true });
-			}
-			await fs.promises.writeFile(
-				tsBuildInfoFileFullPath,
-				JSON.stringify({
-					program: { fileNames: [], fileInfos: [], options },
-					version: tscUtils.tsLib.version,
-				}),
-				"utf8",
-			);
-		}
 	}
 
 	protected get useWorker() {
@@ -548,12 +569,9 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 			const project = tscMultiConfig.projects[0];
 			const projectExt = path.extname(project);
 			const target = tscMultiConfig.targets[0];
-			const relTsBuildInfoPath = `${project.substring(
-				0,
-				project.length - projectExt.length,
-			)}${target.extName ?? ""}${configKeyForPackageOverrides(
-				target.packageOverrides,
-			)}.tsbuildinfo`;
+			const relTsBuildInfoPath = `${project.substring(0, project.length - projectExt.length)}${
+				target.extName ?? ""
+			}${configKeyForPackageOverrides(target.packageOverrides)}.tsbuildinfo`;
 			const tsbuildinfoPath = this.getPackageFileFullPath(relTsBuildInfoPath);
 			if (!existsSync(tsbuildinfoPath)) {
 				// No tsbuildinfo file, so we need to build

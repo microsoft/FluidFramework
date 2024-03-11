@@ -16,11 +16,12 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles";
-import { SharedStringFactory } from "../../sequenceFactory";
-import { SharedString } from "../../sharedString";
-import { Side } from "../../intervalCollection";
-import { assertEquivalentSharedStrings } from "../intervalTestUtils";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles.js";
+import { SharedStringFactory } from "../../sequenceFactory.js";
+import { SharedString } from "../../sharedString.js";
+import { Side } from "../../intervalCollection.js";
+import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
+import { _dirname } from "../dirname.cjs";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -406,7 +407,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 		clientAddProbability: 0.1,
 	},
 	defaultTestCount: 100,
-	saveFailures: { directory: path.join(__dirname, "../../../src/test/fuzz/results") },
+	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
 	parseOperations: (serialized: string) => {
 		const operations: Operation[] = JSON.parse(serialized);
 		// Replace this value with some other interval ID and uncomment to filter replay of the test

@@ -10,8 +10,8 @@ import {
 	ISerializedValue,
 	IValueOperation,
 	IValueType,
-} from "./defaultMapInterfaces";
-import { IntervalOpType } from "./intervals";
+} from "./defaultMapInterfaces.js";
+import { IntervalOpType } from "./intervals/index.js";
 
 /**
  * A local value to be stored in a container type DDS.

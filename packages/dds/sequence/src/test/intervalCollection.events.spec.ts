@@ -12,10 +12,10 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection } from "../intervalCollection";
-import { SequenceInterval } from "../intervals";
+import { SharedString } from "../sharedString.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { SequenceInterval } from "../intervals/index.js";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };

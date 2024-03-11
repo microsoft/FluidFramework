@@ -39,7 +39,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-experimental/react-inputs": "workspace:~",
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/app-insights-logger": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",

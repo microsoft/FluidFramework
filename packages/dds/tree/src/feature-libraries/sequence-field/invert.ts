@@ -50,6 +50,7 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
 	invertChild: NodeChangeInverter<TNodeChange>,
+	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
