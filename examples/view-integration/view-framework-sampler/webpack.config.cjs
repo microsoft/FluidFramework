@@ -17,12 +17,6 @@ module.exports = (env) => {
 			entry: {
 				app: "./src/app.ts",
 			},
-			resolve: {
-				extensionAlias: {
-					".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
-				},
-				extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
-			},
 			module: {
 				rules: [
 					{
