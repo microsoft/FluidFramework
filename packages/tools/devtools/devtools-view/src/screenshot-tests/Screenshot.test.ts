@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import Path from "node:path";
-// import { type RPCs } from "@previewjs/api";
 import { expect } from "chai";
 import chalk from "chalk";
 import { run } from "mocha";
