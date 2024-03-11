@@ -99,15 +99,15 @@ export async function npmCheckUpdates(
 		releaseGroup === undefined // run on the whole repo
 			? [...context.repo.releaseGroups.keys()]
 			: isReleaseGroup(releaseGroup) // run on just this release group
-			? [releaseGroup]
-			: undefined;
+			  ? [releaseGroup]
+			  : undefined;
 
 	const packagesToCheck =
 		releaseGroup === undefined // run on the whole repo
 			? [...context.independentPackages] // include all independent packages
 			: isReleaseGroup(releaseGroup)
-			? [] // run on a release group so no independent packages should be included
-			: [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
+			  ? [] // run on a release group so no independent packages should be included
+			  : [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
 
 	if (releaseGroupsToCheck !== undefined) {
 		for (const group of releaseGroupsToCheck) {
@@ -524,7 +524,11 @@ export async function setVersion(
 			stdio: "inherit",
 			shell: true,
 		};
-		cmds.push([`npm`, ["version", translatedVersion.version, "--allow-same-version"], options]);
+		cmds.push([
+			`npm`,
+			["version", translatedVersion.version, "--allow-same-version"],
+			options,
+		]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
 			cmds.push([`npm`, ["run", "build:genver"], options]);
 		}
@@ -767,7 +771,9 @@ export async function npmCheckUpdatesHomegrown(
 	 * A map of packages that should be updated, and their latest version.
 	 */
 	const dependencyVersionMap = await findDepUpdates(depsToUpdate, prerelease, log);
-	log?.verbose(`Dependencies to update:\n${JSON.stringify(dependencyVersionMap, undefined, 2)}`);
+	log?.verbose(
+		`Dependencies to update:\n${JSON.stringify(dependencyVersionMap, undefined, 2)}`,
+	);
 
 	log?.info(`Determining packages to update...`);
 	const selectionCriteria: PackageSelectionCriteria =

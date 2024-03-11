@@ -182,7 +182,7 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -202,7 +202,7 @@
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.8.0.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^9.1.1",
 		"@types/sinon": "^17.0.3",
@@ -239,6 +239,22 @@
 				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ISubmitSummaryOptions": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeOptions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_assertIsStableId": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_generateStableId": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_isStableId": {
+				"backCompat": false,
 				"forwardCompat": false
 			}
 		}

@@ -33,6 +33,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 	IFluidDataStoreChannel,
+	IFluidParentContext,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -47,6 +48,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
 
+import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
@@ -63,7 +65,6 @@ import {
 	summarizerClientType,
 } from "../summary/index.js";
 import { channelToDataStore } from "../dataStore.js";
-import { DataStores } from "../dataStores.js";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
@@ -81,7 +82,7 @@ describe("Data Store Context Tests", () => {
 		function createContainerRuntime(
 			logger: ITelemetryBaseLogger = createChildLogger(),
 			clientDetails = {},
-			submitDataStoreOp = (id: string, contents: any, localOpMetadata: unknown) => {},
+			submitMessage = (type: string, contents: any, localOpMetadata: unknown) => {},
 		): ContainerRuntime {
 			const factory: IFluidDataStoreFactory = {
 				type: "store-type",
@@ -103,7 +104,7 @@ describe("Data Store Context Tests", () => {
 				on: (event, listener) => {},
 				logger,
 				clientDetails,
-				submitDataStoreOp,
+				submitMessage,
 			} as ContainerRuntime;
 		}
 
@@ -137,7 +138,7 @@ describe("Data Store Context Tests", () => {
 					new LocalFluidDataStoreContext({
 						id: invalidId,
 						pkg: ["TestDataStore1"],
-						runtime: containerRuntime,
+						parentContext: wrapContextForInnerChannel(invalidId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -156,7 +157,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: fullPackageName, // This will cause an error when calling `realizeCore`
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -198,7 +199,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -254,7 +255,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -288,7 +289,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -342,7 +343,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -359,7 +360,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -392,7 +393,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -425,7 +426,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -465,7 +466,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: packageName,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -501,7 +502,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestDataStore1"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -522,7 +523,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -560,7 +561,7 @@ describe("Data Store Context Tests", () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
 					pkg: ["TestComp", "SubComp"],
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage,
 					scope,
 					createSummarizerNodeFn,
@@ -667,7 +668,7 @@ describe("Data Store Context Tests", () => {
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
 						snapshotTree,
-						runtime: containerRuntime,
+						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
 							attachBlobs,
@@ -716,7 +717,7 @@ describe("Data Store Context Tests", () => {
 					new RemoteFluidDataStoreContext({
 						id: invalidId,
 						pkg: ["TestDataStore1"],
-						runtime: containerRuntime,
+						parentContext: wrapContextForInnerChannel(invalidId, containerRuntime),
 						storage: storage as IDocumentStorageService,
 						scope,
 						createSummarizerNodeFn,
@@ -795,7 +796,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -847,7 +848,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -899,7 +900,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -953,7 +954,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -1028,7 +1029,7 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					runtime: containerRuntime,
+					parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
 						attachBlobs,
@@ -1054,16 +1055,10 @@ describe("Data Store Context Tests", () => {
 		let scope: FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
-		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel, id: string) =>
-			channelToDataStore(
-				fluidDataStore,
-				id,
-				containerRuntime,
-				dataStores,
-				containerRuntime.logger,
-			);
+		const channelToDataStoreFn = (fluidDataStore: IFluidDataStoreChannel) =>
+			channelToDataStore(fluidDataStore, "id", channelCollection, containerRuntime.logger);
 		let containerRuntime: ContainerRuntime;
-		let dataStores: DataStores;
+		let channelCollection: ChannelCollection;
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
@@ -1120,7 +1115,9 @@ describe("Data Store Context Tests", () => {
 			} as ContainerRuntime;
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			dataStores = {} as DataStores;
+			channelCollection = {
+				parentContext: containerRuntime as IFluidParentContext,
+			} as ChannelCollection;
 		});
 
 		describe("Initialization", () => {
@@ -1130,7 +1127,7 @@ describe("Data Store Context Tests", () => {
 					new LocalDetachedFluidDataStoreContext({
 						id: invalidId,
 						pkg: [factory.type],
-						runtime: containerRuntime,
+						parentContext: wrapContextForInnerChannel(invalidId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1154,7 +1151,7 @@ describe("Data Store Context Tests", () => {
 					localDataStoreContext = new LocalDetachedFluidDataStoreContext({
 						id: dataStoreId,
 						pkg: ["some-datastore-type-not-present-in-registry"],
-						runtime: containerRuntime,
+						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,
@@ -1191,7 +1188,7 @@ describe("Data Store Context Tests", () => {
 					localDataStoreContext = new LocalDetachedFluidDataStoreContext({
 						id: dataStoreId,
 						pkg: [factory.type],
-						runtime: containerRuntime,
+						parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 						storage,
 						scope,
 						createSummarizerNodeFn,

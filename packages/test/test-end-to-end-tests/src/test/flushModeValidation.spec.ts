@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
 	ITestFluidObject,
@@ -34,7 +34,7 @@ describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis
 
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
-	let dataObject1map1: SharedMap;
+	let dataObject1map1: ISharedMap;
 
 	before(function () {
 		provider = getTestObjectProvider();
@@ -49,7 +49,7 @@ describeCompat("Flush mode validation", "NoCompat", (getTestObjectProvider, apis
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(configCopy);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
+		dataObject1map1 = await dataObject1.getSharedObject<ISharedMap>(map1Id);
 		// Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
 		dataObject1map1.set("key", "value");
 		await waitForContainerConnection(container1);

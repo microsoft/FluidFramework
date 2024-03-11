@@ -5,7 +5,7 @@
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { MapFactory, AttributableMap } from "../../map";
+import { MapFactory, AttributableMap } from "../../map.js";
 
 function createLocalMap(id: string): AttributableMap {
 	const map: AttributableMap = new AttributableMap(

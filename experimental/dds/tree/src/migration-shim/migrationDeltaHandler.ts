@@ -125,7 +125,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 		assert(
 			!this.shouldDropOp(opContents),
-			"MigrationShim should not be able to apply v1 ops as they shouldn't have been created locally."
+			0x8aa /* MigrationShim should not be able to apply v1 ops as they shouldn't have been created locally. */
 		);
 		this.treeDeltaHandler.applyStashedOp(contents);
 	}

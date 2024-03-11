@@ -104,7 +104,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				groupIds,
 				false,
 			);
-			assert(hasFoundTree, "No tree found for the given groupIds");
+			assert(hasFoundTree, 0x8dd /* No tree found for the given groupIds */);
 		} else {
 			await this.stripTreeOfLoadingGroupIds(snapshotTree);
 		}
@@ -114,7 +114,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 		const metadataString = IsoBuffer.from(blobContents.get(".metadata")).toString("utf-8");
 		const metadata = JSON.parse(metadataString);
-		const sequenceNumber: number = metadata.message.sequenceNumber;
+		const sequenceNumber: number = metadata.message?.sequenceNumber ?? 0;
 		return {
 			snapshotTree,
 			blobContents,
@@ -163,7 +163,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		loadingGroupIds: Set<string>,
 		ancestorGroupIdInLoadingGroup: boolean,
 	): Promise<boolean> {
-		assert(loadingGroupIds.size > 0, "loadingGroupIds should not be empty");
+		assert(loadingGroupIds.size > 0, 0x8de /* loadingGroupIds should not be empty */);
 		const groupId = await this.readGroupId(tree);
 
 		// Strip the tree if it has a groupId and it is not in the loadingGroupIds

@@ -126,7 +126,8 @@ import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { requireSchema } from "../shared-tree/schematizingTreeView.js";
+import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
+import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
 
 // Testing utilities
 
@@ -271,7 +272,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
-					enableRuntimeIdCompressor: true,
+					enableRuntimeIdCompressor: "on",
 				},
 			);
 
@@ -1169,5 +1170,24 @@ export function treeTestFactory(
 		options.attributes ?? new SharedTreeFactory().attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
 		options.telemetryContextPrefix ?? "SharedTree",
+	);
+}
+
+/**
+ * Given the TreeConfiguration, returns a view.
+ *
+ * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
+ * This should allow realistic (app like testing) of all the simple-tree APIs.
+ */
+export function getView<TSchema extends ImplicitFieldSchema>(
+	config: TreeConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createMockNodeKeyManager(),
+		brand(defaultNodeKeyFieldKey),
 	);
 }

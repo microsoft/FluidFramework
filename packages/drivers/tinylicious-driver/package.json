@@ -81,7 +81,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
@@ -94,7 +94,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",

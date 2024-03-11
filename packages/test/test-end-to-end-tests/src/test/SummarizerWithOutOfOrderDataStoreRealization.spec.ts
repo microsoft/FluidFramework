@@ -10,7 +10,7 @@ import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import type { SharedMatrix } from "@fluidframework/matrix";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestObjectProvider,
 	waitForContainerConnection,
@@ -83,7 +83,7 @@ describeCompat(
 				return this.context;
 			}
 			private readonly mapKey = "SharedMap";
-			public map!: SharedMap;
+			public map!: ISharedMap;
 
 			protected async initializingFirstTime() {
 				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
@@ -91,7 +91,7 @@ describeCompat(
 			}
 
 			protected async hasInitialized() {
-				const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+				const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 				assert(mapHandle !== undefined, "SharedMap not found");
 				this.map = await mapHandle.get();
 			}
