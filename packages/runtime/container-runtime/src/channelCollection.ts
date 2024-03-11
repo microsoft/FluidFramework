@@ -69,6 +69,7 @@ import {
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
 	IFluidDataStoreContextInternal,
+	ILocalDetachedFluidDataStoreContextProps,
 } from "./dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
@@ -238,7 +239,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	// 0.24 back-compat attachingBeforeSummary
 	public readonly attachOpFiredForDataStore = new Set<string>();
 
-	private readonly mc: MonitoringContext;
+	protected readonly mc: MonitoringContext;
 
 	private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
@@ -262,10 +263,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		Promise<AliasResult>
 	>();
 
-	private readonly contexts: DataStoreContexts;
+	protected readonly contexts: DataStoreContexts;
 
 	constructor(
-		private readonly baseSnapshot: ISnapshotTree | undefined,
+		protected readonly baseSnapshot: ISnapshotTree | undefined,
 		public readonly parentContext: IFluidParentContext,
 		baseLogger: ITelemetryBaseLogger,
 		private readonly gcNodeUpdated: (
@@ -366,7 +367,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	/** For sampling. Only log once per container */
 	private shouldSendAttachLog = true;
 
-	private wrapContextForInnerChannel(id: string): IFluidParentContext {
+	protected wrapContextForInnerChannel(id: string): IFluidParentContext {
 		return wrapContextForInnerChannel(id, this.parentContext);
 	}
 
@@ -556,14 +557,17 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
 			localContext.emit("attaching");
-			const message = this.generateAttachMessage(localContext);
-
-			this.pendingAttach.set(id, message);
-			this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
-			this.attachOpFiredForDataStore.add(id);
+			this.submitAttachChannelOp(localContext);
 		}
 
 		this.contexts.bind(id);
+	}
+
+	protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext) {
+		const message = this.generateAttachMessage(localContext);
+		this.pendingAttach.set(localContext.id, message);
+		this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
+		this.attachOpFiredForDataStore.add(localContext.id);
 	}
 
 	/**
@@ -599,13 +603,41 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return id;
 	}
 
-	public createDetachedDataStoreCore(
+	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		const id = this.createDataStoreId();
+		return this.createContext(
+			this.createDataStoreId(),
+			pkg,
+			LocalDetachedFluidDataStoreContext,
+			undefined, // props
+			loadingGroupId,
+		);
+	}
 
-		const context = new LocalDetachedFluidDataStoreContext({
+	public createDataStoreContext(
+		pkg: Readonly<string[]>,
+		props?: any,
+		loadingGroupId?: string,
+	): IFluidDataStoreContextInternal {
+		return this.createContext(
+			this.createDataStoreId(),
+			pkg,
+			LocalFluidDataStoreContext,
+			props,
+			loadingGroupId,
+		);
+	}
+
+	protected createContext<T extends LocalFluidDataStoreContext>(
+		id: string,
+		pkg: Readonly<string[]>,
+		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
+		createProps?: any,
+		loadingGroupId?: string,
+	) {
+		const context = new contextCtor({
 			id,
 			pkg,
 			parentContext: this.wrapContextForInnerChannel(id),
@@ -617,6 +649,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
 			isRootDataStore: false,
+			createProps,
 			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel) =>
 				channelToDataStore(
@@ -626,31 +659,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					createChildLogger({ logger: this.parentContext.logger }),
 				),
 		});
-		this.contexts.addUnbound(context);
-		return context;
-	}
 
-	public _createFluidDataStoreContext(
-		pkg: Readonly<string[]>,
-		props?: any,
-		loadingGroupId?: string,
-	) {
-		const id = this.createDataStoreId();
-		const context = new LocalFluidDataStoreContext({
-			id,
-			pkg,
-			parentContext: this.wrapContextForInnerChannel(id),
-			storage: this.parentContext.storage,
-			scope: this.parentContext.scope,
-			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
-				type: CreateSummarizerNodeSource.Local,
-			}),
-			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
-			snapshotTree: undefined,
-			isRootDataStore: false,
-			createProps: props,
-			loadingGroupId,
-		});
 		this.contexts.addUnbound(context);
 		return context;
 	}
@@ -666,10 +675,14 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			case ContainerMessageType.Alias:
 				this.parentContext.submitMessage(type, content, localOpMetadata);
 				return;
+			case ContainerMessageType.FluidDataStoreOp:
+				return this.reSubmitChannelOp(type, content, localOpMetadata);
 			default:
+				assert(false, "unknown op type");
 		}
+	}
 
-		assert(type === ContainerMessageType.FluidDataStoreOp, 0x8e7 /* type */);
+	protected reSubmitChannelOp(type: string, content: any, localOpMetadata: unknown) {
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -713,10 +726,14 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				return this.applyStashedAttachOp(opContents.contents);
 			case ContainerMessageType.Alias:
 				return;
+			case ContainerMessageType.FluidDataStoreOp:
+				return this.applyStashedChannelChannelOp(opContents.contents);
 			default:
+				assert(false, "unknon type of op");
 		}
+	}
 
-		const envelope = opContents.contents as IEnvelope;
+	protected async applyStashedChannelChannelOp(envelope: IEnvelope) {
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case the data store that stashed the op is deleted.
@@ -746,32 +763,48 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			case ContainerMessageType.Alias:
 				this.processAliasMessage(message, localMessageMetadata, local);
 				return;
-			case ContainerMessageType.FluidDataStoreOp:
+			case ContainerMessageType.FluidDataStoreOp: {
+				const envelope = message.contents as IEnvelope;
+				const innerContents = envelope.contents as FluidDataStoreMessage;
+				const transformed = {
+					...message,
+					type: innerContents.type,
+					contents: innerContents.content,
+				};
+
+				this.processChannelOp(envelope.address, transformed, local, localMessageMetadata);
+
+				// By default, we use the new behavior of detecting outbound routes here.
+				// If this setting is true, then DataStoreContext would be notifying GC instead.
+				if (
+					this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true &&
+					addedOutboundReference !== undefined
+				) {
+					// Notify GC of any outbound references that were added by this op.
+					detectOutboundReferences(
+						envelope.address,
+						transformed.contents,
+						addedOutboundReference,
+					);
+				}
 				break;
+			}
 			default:
 				assert(false, 0x8e9 /* unreached */);
 		}
+	}
 
-		const envelope = message.contents as IEnvelope;
-		const innerContents = envelope.contents as FluidDataStoreMessage;
-		const transformed = {
-			...message,
-			type: innerContents.type,
-			contents: innerContents.content,
-		};
-
-		const context = this.contexts.get(envelope.address);
+	protected processChannelOp(
+		address: string,
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localMessageMetadata: unknown,
+	) {
+		const context = this.contexts.get(address);
 
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case a deleted data store accidentally submitted an op.
-		if (
-			this.checkAndLogIfDeleted(
-				envelope.address,
-				context,
-				"Changed",
-				"processFluidDataStoreOp",
-			)
-		) {
+		if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
 			return;
 		}
 
@@ -787,27 +820,17 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						type: message.type,
 						contentType: typeof message.contents,
 					}),
-					...tagCodeArtifacts({ address: envelope.address }),
+					...tagCodeArtifacts({ address }),
 				},
 			);
 		}
 
-		context.process(transformed, local, localMessageMetadata);
-
-		// By default, we use the new behavior of detecting outbound routes here.
-		// If this setting is true, then DataStoreContext would be notifying GC instead.
-		if (
-			this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) !== true &&
-			addedOutboundReference !== undefined
-		) {
-			// Notify GC of any outbound references that were added by this op.
-			detectOutboundReferences(envelope, addedOutboundReference);
-		}
+		context.process(message, local, localMessageMetadata);
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
 		this.gcNodeUpdated(
-			`/${envelope.address}`,
+			`/${address}`,
 			"Changed",
 			message.timestamp,
 			context.isLoaded ? context.packagePath : undefined,
@@ -1372,7 +1395,8 @@ export function getSummaryForDatastores(
  * @internal
  */
 export function detectOutboundReferences(
-	envelope: IEnvelope,
+	address: string,
+	contents: unknown,
 	addedOutboundReference: (fromNodePath: string, toNodePath: string) => void,
 ): void {
 	// These will be built up as we traverse the envelope contents
@@ -1399,16 +1423,18 @@ export function detectOutboundReferences(
 		}
 	}
 
-	recursivelyFindHandles(envelope.contents);
+	recursivelyFindHandles(contents);
 
 	// GC node paths are all absolute paths, hence the "" prefix.
 	// e.g. this will yield "/dataStoreId/ddsId"
-	const fromPath = ["", envelope.address, ddsAddress].join("/");
+	const fromPath = ["", address, ddsAddress].join("/");
 	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
 }
 
 /** @internal */
-export class ChannelCollectionFactory implements IFluidDataStoreFactory {
+export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection>
+	implements IFluidDataStoreFactory
+{
 	public readonly type = "ChannelCollectionChannel";
 
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry;
@@ -1419,6 +1445,7 @@ export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 		private readonly provideEntryPoint: (
 			runtime: IFluidDataStoreChannel,
 		) => Promise<FluidObject>,
+		private readonly ctor: (...args: ConstructorParameters<typeof ChannelCollection>) => T,
 	) {
 		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
 	}
@@ -1431,7 +1458,7 @@ export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		_existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
-		const runtime = new ChannelCollection(
+		const runtime = this.ctor(
 			context.baseSnapshot,
 			context, // parentContext
 			context.logger,

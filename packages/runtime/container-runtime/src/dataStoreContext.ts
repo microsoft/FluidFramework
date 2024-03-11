@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -120,7 +120,10 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 	isRoot(): Promise<boolean>;
 }
 
-/** Properties necessary for creating a FluidDataStoreContext */
+/**
+ * Properties necessary for creating a FluidDataStoreContext
+ * @internal
+ */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
 	readonly parentContext: IFluidParentContext;
@@ -131,11 +134,13 @@ export interface IFluidDataStoreContextProps {
 	readonly loadingGroupId?: string;
 }
 
-/** Properties necessary for creating a local FluidDataStoreContext */
+/**
+ * Properties necessary for creating a local FluidDataStoreContext
+ * @internal
+ */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly pkg: Readonly<string[]> | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
-	readonly isRootDataStore: boolean | undefined;
 	readonly makeLocallyVisibleFn: () => void;
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
@@ -143,12 +148,18 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	readonly createProps?: any;
 }
 
-/** Properties necessary for creating a local FluidDataStoreContext */
+/**
+ * Properties necessary for creating a local FluidDataStoreContext
+ * @internal
+ */
 export interface ILocalDetachedFluidDataStoreContextProps extends ILocalFluidDataStoreContextProps {
 	readonly channelToDataStoreFn: (channel: IFluidDataStoreChannel) => IDataStore;
 }
 
-/** Properties necessary for creating a remote FluidDataStoreContext */
+/**
+ * Properties necessary for creating a remote FluidDataStoreContext
+ * @internal
+ */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshotTree: ISnapshotTree | undefined;
 }
@@ -231,17 +242,13 @@ export abstract class FluidDataStoreContext
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
-	private deleted: boolean = false;
+	protected deleted: boolean = false;
 
 	public get attachState(): AttachState {
 		return this._attachState;
 	}
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
-		assert(
-			this.channel !== undefined,
-			0x8f3 /* This should be called after the channel is created, when the registry is populated */,
-		);
 		return this.registry;
 	}
 
@@ -801,48 +808,35 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
-	protected async bindRuntime(channel: IFluidDataStoreChannel, existing: boolean) {
-		if (this.channel) {
-			throw new Error("Runtime already bound");
-		}
+	protected processPendingOps(channel: IFluidDataStoreChannel) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const pending = this.pending!;
 
-		assert(
-			!this.detachedRuntimeCreation,
-			0x148 /* "Detached runtime creation on runtime bind" */,
-		);
-		assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
-
-		if (existing) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const pending = this.pending!;
-
-			// Apply all pending ops
-			for (const op of pending) {
-				// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
-				const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
-				if (op.sequenceNumber > seqNumber) {
-					channel.process(op, false, undefined /* localOpMetadata */);
-				}
+		// Apply all pending ops
+		for (const op of pending) {
+			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
+			const seqNumber = this.baseSnapshotSequenceNumber ?? -1;
+			if (op.sequenceNumber > seqNumber) {
+				channel.process(op, false, undefined /* localOpMetadata */);
 			}
 
 			this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
-		} else {
-			assert(this.pending?.length === 0, 0x8f4 /* no pending ops */);
-
-			// Execute data store's entry point to make sure that for a local (aka detached from container) data store, the
-			// entryPoint initialization function is called before the data store gets attached and potentially connected to
-			// the delta stream, so it gets a chance to do things while the data store is still "purely local".
-			// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
-			// of data store factories tends to construct the data object (at least kick off an async method that returns
-			// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
-			// before the data store is attached.
-			await channel.entryPoint.get();
 		}
 		this.pending = undefined;
 
+		this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
+	}
+
+	protected completeBindingRuntime(channel: IFluidDataStoreChannel) {
 		// And now mark the runtime active
 		this.loaded = true;
 		this.channel = channel;
+
+		// Channel does not know when it's "live" (as in - starts to receive events in the system)
+		// It may read current state of the system when channel was created, but it was not getting any updates
+		// through creation process and could have missed events. So update it on current state.
+		// Once this.loaded is set (above), it will stat receiving events.
+		channel.setConnectionState(this.connected, this.clientId);
 
 		// Freeze the package path to ensure that someone doesn't modify it when it is
 		// returned in packagePath().
@@ -856,6 +850,32 @@ export abstract class FluidDataStoreContext
 		 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
 		 */
 		this.updateChannelUsedRoutes();
+	}
+
+	protected async bindRuntime(channel: IFluidDataStoreChannel, existing: boolean) {
+		if (this.channel) {
+			throw new Error("Runtime already bound");
+		}
+
+		assert(
+			!this.detachedRuntimeCreation,
+			0x148 /* "Detached runtime creation on runtime bind" */,
+		);
+		assert(this.pkg !== undefined, 0x14a /* "Undefined package path" */);
+
+		if (!existing) {
+			// Execute data store's entry point to make sure that for a local (aka detached from container) data store, the
+			// entryPoint initialization function is called before the data store gets attached and potentially connected to
+			// the delta stream, so it gets a chance to do things while the data store is still "purely local".
+			// This preserves the behavior from before we introduced entryPoints, where the instantiateDataStore method
+			// of data store factories tends to construct the data object (at least kick off an async method that returns
+			// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
+			// before the data store is attached.
+			await channel.entryPoint.get();
+		}
+
+		this.processPendingOps(channel);
+		this.completeBindingRuntime(channel);
 	}
 
 	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {
@@ -1015,6 +1035,7 @@ export abstract class FluidDataStoreContext
 	}
 }
 
+/** @internal */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean;
@@ -1115,6 +1136,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
 /**
  * Base class for detached & attached context classes
+ * @internal
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	private readonly snapshotTree: ISnapshotTree | undefined;
@@ -1126,7 +1148,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(
 			props,
-			props.snapshotTree !== undefined ? true : false /* existing */,
+			props.snapshotTree !== undefined /* existing */,
 			true /* isLocalDataStore */,
 			props.makeLocallyVisibleFn,
 		);
@@ -1271,6 +1293,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
  * Various workflows (snapshot creation, requests) result in .realize() being called
  * on context, resulting in instantiation and attachment of runtime.
  * Runtime is created using data store factory that is associated with this context.
+ * @internal
  */
 export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
 	constructor(props: ILocalFluidDataStoreContextProps) {
