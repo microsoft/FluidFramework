@@ -832,6 +832,11 @@ export abstract class FluidDataStoreContext
 		 * have their used routes updated to determine if its needs to summarize again and to add it to the summary.
 		 */
 		this.updateChannelUsedRoutes();
+
+		if (!existing) {
+			// Test immediate attachment of data store.
+			channel.makeVisibleAndAttachGraph();
+		}
 	}
 
 	public async getAbsoluteUrl(relativeUrl: string): Promise<string | undefined> {

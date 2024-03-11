@@ -440,8 +440,6 @@ export class FluidDataStoreRuntime
 		}
 
 		this.createChannelContext(channel);
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 	}
 
 	public createChannel(idArg: string | undefined, type: string): IChannel {
@@ -481,8 +479,6 @@ export class FluidDataStoreRuntime
 
 		const channel = factory.create(this, id);
 		this.createChannelContext(channel);
-		// Channels (DDS) should not be created in summarizer client.
-		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 		return channel;
 	}
 
@@ -501,6 +497,35 @@ export class FluidDataStoreRuntime
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 		this.contexts.set(channel.id, context);
+
+		// Channels (DDS) should not be created in summarizer client.
+		this.identifyLocalChangeInSummarizer(
+			"DDSCreatedInSummarizer",
+			channel.id,
+			channel.attributes.type,
+		);
+
+		// Immediately make it visible.
+		// Why: we want to get rid of complicated management of detached states, bindings, attachGraph() workflows.
+		// That's a lot of complicated code, attempts to make fixes or changes in it caused (in the past) serious bugs.
+		// The complexity of it and mental overhead of developers needing to understand all these states is too high,
+		// well beyond any gains we receive.
+		//
+		// This will result in more cases where DDS or data store gets representation in storage where it would not in the past,
+		// creating garbage (if app did not had intention to attach it or exit/crashed before it had a chance to do so).
+		// GC is the right answer to solve such problems.
+		//
+		// Some consideration on correctness:
+		// 1. Attached data store:
+		//   - clients should not create named DDSs, as that would result in collision of two clients do the same.
+		//   - creation of unnamed DDS is fine - it becomes visible when its handle is put into existing DDS.
+		//     Client has a chance to initialize DDS before it becomes visible.
+		// 2. Detached data store:
+		//   - DDS would get attached before data store is attached: no change.
+		//   - DDS is unnamed: no change (see #1)
+		//   - Named DDS is created in detached data store, and is not being attached by user by the time data store is visible in the graph (through aliasing or handle)
+		//     That's the only case where this change would change visibility of DDS (and could cause trouble).
+		this.bindChannel(channel);
 	}
 
 	/**
@@ -509,10 +534,14 @@ export class FluidDataStoreRuntime
 	 * @param channel - channel to be registered.
 	 */
 	public bindChannel(channel: IChannel): void {
-		assert(
-			this.notBoundedChannelContextSet.has(channel.id),
-			0x17b /* "Channel to be bound should be in not bounded set" */,
-		);
+		assert(this.contexts.has(channel.id), "channel exists");
+
+		if (!this.notBoundedChannelContextSet.has(channel.id)) {
+			// user may call SharedObject.bindToContext() - it should be noop with recent changes
+			// in createChannelContext() where we always bindChannel() on creation of channel.
+			return;
+		}
+
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.
 		if (this.isAttached) {
@@ -567,6 +596,8 @@ export class FluidDataStoreRuntime
 	 * This function is called when a handle to this data store is added to a visible DDS.
 	 */
 	public attachGraph() {
+		// Eventually we can remove this call as not required, as data store context will attach data store after creation / initialization
+		// But due to back-compat (and mixing old container runtime - new data store runtime), we have to keep it here for a while
 		this.makeVisibleAndAttachGraph();
 	}
 

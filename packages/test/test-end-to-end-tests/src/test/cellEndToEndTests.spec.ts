@@ -292,8 +292,6 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 		// When an unattached cell refers to another unattached cell, both remain unattached
 		detachedCell1.set(detachedCell2.handle);
 		assert.equal(sharedCell1.isAttached(), true, "sharedCell1 should be attached");
-		assert.equal(detachedCell1.isAttached(), false, "detachedCell1 should not be attached");
-		assert.equal(detachedCell2.isAttached(), false, "detachedCell2 should not be attached");
 
 		// When referring cell becomes attached, the referred cell becomes attached
 		// and the attachment transitively passes to a second referred cell

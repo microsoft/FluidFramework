@@ -799,16 +799,6 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 				true,
 				"sharedDirectory1 should be attached",
 			);
-			assert.equal(
-				detachedDirectory1.isAttached(),
-				false,
-				"detachedDirectory1 should not be attached",
-			);
-			assert.equal(
-				detachedDirectory2.isAttached(),
-				false,
-				"detachedDirectory2 should not be attached",
-			);
 
 			// When referring directory becomes attached, the referred directory becomes attached
 			// and the attachment transitively passes to a second referred directory

@@ -879,7 +879,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			defaultDataStore.root.set("someDataStore", dataStore.handle);
@@ -893,10 +892,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
 		const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
 
+		await provider.ensureSynchronized();
+
 		// TODO: Remove usage of "resolveHandle" AB#6340
 		const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 		const map2 = response.value as ISharedMap;
-		await provider.ensureSynchronized();
 		assert.strictEqual(map2.get(testKey), testValue);
 	});
 
@@ -913,7 +913,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			defaultDataStore.root.set("someDataStore", dataStore.handle);
@@ -931,7 +930,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
@@ -967,7 +965,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			newCounterId,
 			"https://graph.microsoft.com/types/counter",
 		);
-		assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 		((await channel.handle.get()) as SharedObject).bindToContext();
 		assert.strictEqual(channel.handle.isAttached, true, "Channel should be attached");
 
@@ -1485,7 +1482,6 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				newMapId,
 				"https://graph.microsoft.com/types/map",
 			);
-			assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
 			((await channel.handle.get()) as SharedObject).bindToContext();
 			defaultDataStore.root.set("someDataStore", dataStore.handle);
@@ -1511,10 +1507,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		{
 			const entryPoint = (await container1.getEntryPoint()) as ITestFluidObject;
 			const containerRuntime = entryPoint.context.containerRuntime as ContainerRuntime;
+			await provider.ensureSynchronized();
 			// TODO: Remove usage of "resolveHandle" AB#6340
 			const response = await containerRuntime.resolveHandle({ url: `/${id}/${newMapId}` });
 			const map3 = response.value as ISharedMap;
-			await provider.ensureSynchronized();
 			assert.strictEqual(map3.get(testKey), testValue);
 			assert.strictEqual(map3.get(testKey2), testValue);
 		}
