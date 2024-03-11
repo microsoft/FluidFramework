@@ -83,7 +83,7 @@ export class SerializedStateManager {
 				blobs: this.pendingLocalState.snapshotBlobs,
 			};
 		} else {
-			assert(snapshotTree !== undefined, "Snapshot should exist");
+			assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
@@ -197,7 +197,7 @@ export class SerializedStateManager {
 						"Can't get pending local state unless offline load is enabled",
 					);
 				}
-				assert(this.snapshot !== undefined, "no base data");
+				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					attached: true,

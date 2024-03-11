@@ -709,7 +709,10 @@ class RevertibleRevision implements Revertible {
 			this.referenceCount = 0;
 			this.onDispose(this);
 		} else {
-			assert(validateStatus === false, "Cannot dispose already disposed revertible");
+			assert(
+				validateStatus === false,
+				0x8c6 /* Cannot dispose already disposed revertible */,
+			);
 		}
 	}
 }

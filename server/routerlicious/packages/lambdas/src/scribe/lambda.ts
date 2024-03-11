@@ -617,6 +617,8 @@ export class ScribeLambda implements IPartitionLambda {
 			sequenceNumber: this.sequenceNumber,
 			validParentSummaries: this.validParentSummaries,
 			isCorrupt: this.isDocumentCorrupt,
+			protocolHead: this.protocolHead,
+			checkpointTimestamp: Date.now(),
 		};
 		return checkpoint;
 	}
