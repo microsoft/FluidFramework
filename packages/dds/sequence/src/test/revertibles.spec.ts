@@ -18,12 +18,12 @@ import {
 	appendSharedStringDeltaToRevertibles,
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
-} from "../revertibles";
-import { SharedString } from "../sharedString";
-import { IIntervalCollection, Side } from "../intervalCollection";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+} from "../revertibles.js";
+import { SharedString } from "../sharedString.js";
+import { IIntervalCollection, Side } from "../intervalCollection.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 describe("Sequence.Revertibles with Local Edits", () => {
 	let sharedString: SharedString;

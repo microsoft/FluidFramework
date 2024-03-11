@@ -5,6 +5,7 @@
 ```ts
 
 import { DriverError } from '@fluidframework/driver-definitions';
+import { FiveDaysMs } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 
@@ -199,6 +200,9 @@ export interface ISocketStorageDiscovery {
 
 // @internal
 export const isTokenFromCache: (tokenResponse: string | TokenResponse | null) => boolean | undefined;
+
+// @internal
+export const maximumCacheDurationMs: FiveDaysMs;
 
 // @alpha (undocumented)
 export type OdspError = IOdspError | (DriverError & IOdspErrorAugmentations);

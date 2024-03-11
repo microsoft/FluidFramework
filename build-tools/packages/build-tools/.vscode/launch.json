@@ -8,7 +8,7 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",
-			"program": "${workspaceFolder}\\dist\\fluidBuild\\fluidBuild.js",
+			"program": "${workspaceFolder}/dist/fluidBuild/fluidBuild.js",
 			"outFiles": ["${workspaceFolder}/**/*.js"],
 		},
 		{

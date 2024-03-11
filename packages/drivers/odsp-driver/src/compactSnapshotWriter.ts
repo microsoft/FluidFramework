@@ -11,15 +11,15 @@ import {
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions";
-import { snapshotMinReadVersion } from "./compactSnapshotParser";
-import { TreeBuilderSerializer } from "./WriteBufferUtils";
+import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
+import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import {
 	addBoolProperty,
 	addNumberProperty,
 	addStringProperty,
 	addDictionaryStringProperty,
 	NodeCore,
-} from "./zipItDataRepresentationUtils";
+} from "./zipItDataRepresentationUtils.js";
 
 /**
  * Writes header section of the snapshot.
