@@ -64,6 +64,10 @@ describe("expose joinSessionInfo Tests", () => {
 		}
 	}
 
+	afterEach(() => {
+		socket?.close();
+	});
+
 	it("Response missing in join session cache", async () => {
 		const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
 		assert(info === undefined, "no cached response");
@@ -95,19 +99,17 @@ describe("expose joinSessionInfo Tests", () => {
 	});
 
 	it("Error of type connect_document_error should clear joinSession info from cache", async () => {
-		// joinSession stub will be internally invoked by connectToDeltaStream below.
-		// when invoked, this step should save the joinSession response in the cache
+		// joinSession stub will be internally invoked by connectToDeltaStream below so mocking it here.
 		const joinSessionStub = addJoinSessionStub();
 
 		// Setup for mocking socket a error when connectToDeltaStream gets executed below
-		const logger = new MockLogger().toTelemetryLogger();
-		const locator = { driveId, itemId, siteUrl, dataStorePath: "/" };
-		const request = createOdspUrl(locator);
 		const resolver = new OdspDriverUrlResolver();
-		const odspResolvedUrl = await resolver.resolve({ url: request });
+		const odspResolvedUrl = await resolver.resolve({
+			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
+		});
 		const service = await odspDocumentServiceFactory.createDocumentService(
 			odspResolvedUrl,
-			logger,
+			new MockLogger().toTelemetryLogger(),
 		);
 		const errorToThrow = createOdspNetworkError("TestError", 429);
 		socket = new ClientSocketMock({
@@ -121,6 +123,16 @@ describe("expose joinSessionInfo Tests", () => {
 			scopes: [],
 		};
 
+		// Save a mock joinSession response in nonPersistenCache to test with later.
+		const cacheKey = getJoinSessionCacheKey(odspResolvedUrl);
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.add(
+			getJoinSessionCacheKey(odspResolvedUrl),
+			async () => {
+				return { entryTime: Date.now(), joinSessionResponse };
+			},
+		);
+
 		try {
 			await mockSocket(socket as unknown as Socket, async () =>
 				service.connectToDeltaStream(client),
@@ -132,30 +144,32 @@ describe("expose joinSessionInfo Tests", () => {
 				"'connect_document_error' is not a socket error. 'isSocketError' should be false",
 			);
 
-			const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
+			const info =
+				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
 			assert(
 				info === undefined,
 				"joinSession cache should get cleared when 'connect_document_error' occurs",
 			);
 		} finally {
+			// reset nonPersistenCache changes from the test
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(cacheKey);
 			joinSessionStub.restore();
 		}
 	});
 
 	it("Socket errors should not result in clearing of joinSession info from cache", async () => {
-		// joinSession stub will be internally invoked by connectToDeltaStream below.
-		// when invoked, this step should save the joinSession response in the cache
+		// joinSession stub will be internally invoked by connectToDeltaStream below so mocking it here.
 		const joinSessionStub = addJoinSessionStub();
 
 		// Setup for mocking socket a error when connectToDeltaStream gets executed below
-		const logger = new MockLogger().toTelemetryLogger();
-		const locator = { driveId, itemId, siteUrl, dataStorePath: "/" };
-		const request = createOdspUrl(locator);
 		const resolver = new OdspDriverUrlResolver();
-		const odspResolvedUrl = await resolver.resolve({ url: request });
+		const odspResolvedUrl = await resolver.resolve({
+			url: createOdspUrl({ driveId, itemId, siteUrl, dataStorePath: "/" }),
+		});
 		const service = await odspDocumentServiceFactory.createDocumentService(
 			odspResolvedUrl,
-			logger,
+			new MockLogger().toTelemetryLogger(),
 		);
 		const errorToThrow = createOdspNetworkError("TestSocketError", 401);
 		socket = new ClientSocketMock({
@@ -169,6 +183,16 @@ describe("expose joinSessionInfo Tests", () => {
 			scopes: [],
 		};
 
+		// Save a mock joinSession response in nonPersistenCache to test with later.
+		const cacheKey = getJoinSessionCacheKey(odspResolvedUrl);
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.add(
+			cacheKey,
+			async () => {
+				return { entryTime: Date.now(), joinSessionResponse };
+			},
+		);
+
 		try {
 			await mockSocket(socket as unknown as Socket, async () =>
 				service.connectToDeltaStream(client),
@@ -180,17 +204,17 @@ describe("expose joinSessionInfo Tests", () => {
 				"'connect_error' is a socket error. 'isSocketError' should be true",
 			);
 
-			const info = await odspDocumentServiceFactory.getRelayServiceSessionInfo(resolvedUrl);
+			const info =
+				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
 			assert(
 				info === joinSessionResponse,
 				"joinSession cache should not get cleared when 'connect_error' occurs",
 			);
 		} finally {
+			// reset nonPersistenCache changes from the test
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(cacheKey);
 			joinSessionStub.restore();
 		}
-	});
-
-	afterEach(async () => {
-		socket?.close();
 	});
 });
