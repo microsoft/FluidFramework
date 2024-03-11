@@ -26,12 +26,15 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 
 function onAttachChange(
 	context: IFluidDataStoreContext,
-	eventName: "attaching" | "attached",
+	state: AttachState.Attaching | AttachState.Attached,
 	callback: () => void,
 ) {
-	// relying on back-compat behaviors that are not documented.
-	// Need to redo in the future.
-	(context as any).once(eventName, () => callback);
+	const oldApi = (context as any).setAttachState.bind(context);
+
+	(context as any).setAttachState = (arg) => {
+		oldApi(arg);
+		callback();
+	};
 }
 
 // REVIEW: enable compat testing?
@@ -730,7 +733,7 @@ describeCompat(
 			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			let dataStoreContextAttachState = AttachState.Detached;
 			let dataStoreRuntimeAttachState = AttachState.Detached;
-			onAttachChange(defaultDataStore.context, "attaching", () => {
+			onAttachChange(defaultDataStore.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStoreContextAttachState,
 					AttachState.Detached,
@@ -744,7 +747,7 @@ describeCompat(
 				dataStoreContextAttachState = AttachState.Attaching;
 			});
 
-			onAttachChange(defaultDataStore.context, "attached", () => {
+			onAttachChange(defaultDataStore.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStoreContextAttachState,
 					AttachState.Attaching,
@@ -813,7 +816,7 @@ describeCompat(
 			);
 
 			let dataStore1AttachState = AttachState.Detached;
-			onAttachChange(dataStore1.context, "attaching", () => {
+			onAttachChange(dataStore1.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Detached,
@@ -827,7 +830,7 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attaching;
 			});
 
-			onAttachChange(dataStore1.context, "attached", () => {
+			onAttachChange(dataStore1.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Attaching,
@@ -841,11 +844,11 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attached;
 			});
 
-			onAttachChange(dataStore2.context, "attaching", () => {
+			onAttachChange(dataStore2.context, AttachState.Attaching, () => {
 				assert.fail("Attaching event should not be fired for unreferenced context");
 			});
 
-			onAttachChange(dataStore2.context, "attached", () => {
+			onAttachChange(dataStore2.context, AttachState.Attached, () => {
 				assert.fail("Attached event should not be fired for unreferenced context");
 			});
 			await container.attach(request);
@@ -879,7 +882,7 @@ describeCompat(
 
 			let dataStore1AttachState = AttachState.Detached;
 			let dataStore2AttachState = AttachState.Detached;
-			onAttachChange(dataStore1.context, "attaching", () => {
+			onAttachChange(dataStore1.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Detached,
@@ -893,7 +896,7 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attaching;
 			});
 
-			onAttachChange(dataStore1.context, "attached", () => {
+			onAttachChange(dataStore1.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Attaching,
@@ -907,7 +910,7 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attached;
 			});
 
-			onAttachChange(dataStore2.context, "attaching", () => {
+			onAttachChange(dataStore2.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore2AttachState,
 					AttachState.Detached,
@@ -921,7 +924,7 @@ describeCompat(
 				dataStore2AttachState = AttachState.Attaching;
 			});
 
-			onAttachChange(dataStore2.context, "attached", () => {
+			onAttachChange(dataStore2.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStore2AttachState,
 					AttachState.Attaching,
