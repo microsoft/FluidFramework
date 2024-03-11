@@ -365,7 +365,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	request(request: IRequest): Promise<IResponse>;
 
-	setAttachState?(attachState: AttachState.Attaching | AttachState.Attached): void;
+	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 /**
