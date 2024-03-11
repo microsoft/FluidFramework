@@ -24,6 +24,13 @@ import {
 import type { ISharedMap } from "@fluidframework/map";
 import { describeCompat } from "@fluid-private/test-version-utils";
 
+/*
+Context no longer provides observability point to when context changes its attach states
+Instead context notifies attached channel only.
+Tests here want to know inner details of context, thus this workaround to achive old behavior by reaching out
+into guts of the context implementation.
+If this stops working in the future, I'd advice to get rid of tests that need to know inner details of context
+*/
 function onAttachChange(
 	context: IFluidDataStoreContext,
 	stateToNotify: AttachState.Attaching | AttachState.Attached,

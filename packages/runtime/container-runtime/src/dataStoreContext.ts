@@ -1152,6 +1152,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					this.channel.setAttachState(attachState);
 				} else if (this.channel) {
 					// back-compat! To be removed in the future
+					// Added in "2.0.0-rc.2.0.0" timeframe.
 					this.emit("attaching");
 				}
 				break;
@@ -1173,6 +1174,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 						this.channel.setAttachState(attachState);
 					} else if (this.channel) {
 						// back-compat! To be removed in the future
+						// Added in "2.0.0-rc.2.0.0" timeframe.
 						this.emit("attached");
 					}
 				}

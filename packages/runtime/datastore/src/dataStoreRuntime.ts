@@ -1140,11 +1140,13 @@ export class FluidDataStoreRuntime
 		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
 
 		// back-compat, to be removed in the future.
+		// Added in "2.0.0-rc.2.0.0" timeframe.
 		(this.dataStoreContext as any).once?.("attaching", () => {
 			this.setAttachState(AttachState.Attaching);
 		});
 
 		// back-compat, to be removed in the future.
+		// Added in "2.0.0-rc.2.0.0" timeframe.
 		(this.dataStoreContext as any).once?.("attached", () => {
 			this.setAttachState(AttachState.Attached);
 		});
