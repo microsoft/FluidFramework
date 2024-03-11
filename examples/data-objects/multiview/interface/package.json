@@ -12,6 +12,14 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
@@ -42,9 +50,7 @@
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"eslint": "~8.55.0",
-		"expect-puppeteer": "^9.0.2",
 		"prettier": "~3.0.3",
-		"puppeteer": "^22.2.0",
 		"rimraf": "^4.4.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",

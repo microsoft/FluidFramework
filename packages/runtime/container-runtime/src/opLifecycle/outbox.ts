@@ -184,7 +184,7 @@ export class Outbox {
 	public submit(message: BatchMessage) {
 		assert(
 			message.type !== ContainerMessageType.IdAllocation,
-			"Allocation message submitted to mainBatch.",
+			0x8f8 /* Allocation message submitted to mainBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 
@@ -194,7 +194,7 @@ export class Outbox {
 	public submitAttach(message: BatchMessage) {
 		assert(
 			message.type === ContainerMessageType.Attach,
-			"Non attach message submitted to attachFlowBatch.",
+			0x8f9 /* Non attach message submitted to attachFlowBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 
@@ -229,7 +229,7 @@ export class Outbox {
 	public submitBlobAttach(message: BatchMessage) {
 		assert(
 			message.type === ContainerMessageType.BlobAttach,
-			"Non blobAttach message submitted to blobAttachBatch.",
+			0x8fa /* Non blobAttach message submitted to blobAttachBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 
@@ -251,7 +251,7 @@ export class Outbox {
 	public submitIdAllocation(message: BatchMessage) {
 		assert(
 			message.type === ContainerMessageType.IdAllocation,
-			"Non allocation message submitted to idAllocationBatch.",
+			0x8fb /* Non allocation message submitted to idAllocationBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 

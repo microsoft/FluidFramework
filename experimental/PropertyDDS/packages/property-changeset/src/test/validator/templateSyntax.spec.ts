@@ -7,48 +7,68 @@
  */
 
 import { expect } from "chai";
-import { SchemaValidator } from "../schemaValidator";
+import { SchemaValidator } from "../schemaValidator.js";
+// Good or bad none of the templateSchema in these imports actually conform to
+// PropertySchema type. Perhaps the type is inaccurate. Common incompatibilities
+// are missing properties of `context` and `values`.
+import {
+	badBothPropertiesAndTypeid,
+	badNestedProperties,
+	badPrimitiveTypeid,
+	badVersionedTypeid,
+	goodColorPalette,
+	goodDraftAsVersion,
+	goodPointId,
+	goodReferenceAndRegular,
+	goodReservedTypes,
+	goodUIBorder,
+} from "../schemas/index.js";
+import type { PropertySchema } from "../../templateValidator.js";
 
 (function () {
 	describe("Simple Template Validation", function () {
 		const schemaValidator = new SchemaValidator();
 
 		it("should validate a simple file", function () {
-			const testFile1 = require("../schemas/goodPointId");
-
-			const result = schemaValidator.validate(testFile1);
+			const result = schemaValidator.validate(
+				goodPointId.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.errors.length).to.equal(0);
 			expect(result.unresolvedTypes.length).to.be.greaterThan(0);
 		});
 
 		it("should fail a file with a bad versioned typeid in it", function () {
-			const testFile2 = require("../schemas/badVersionedTypeid");
-			const result = schemaValidator.validate(testFile2);
+			const result = schemaValidator.validate(
+				badVersionedTypeid.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(false);
 			expect(result.errors.length).to.equal(1);
 		});
 
 		it("should fail a file with a bad primitive typeid in it", function () {
-			const testFile2 = require("../schemas/badPrimitiveTypeid");
-			const result = schemaValidator.validate(testFile2);
+			const result = schemaValidator.validate(
+				badPrimitiveTypeid.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(false);
 			expect(result.errors.length).to.be.greaterThan(0);
 		});
 
-		it("should fail when both properties and typeid/id are specified", function () {
-			const testFile3 = require("../schemas/badBothPropertiesAndTypeid");
-			const result = schemaValidator.validate(testFile3);
+		it("should fail when both properties and typeid/id are specified", async function () {
+			const result = schemaValidator.validate(
+				badBothPropertiesAndTypeid.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(false);
 			expect(result.errors.length).to.be.greaterThan(0);
 		});
 
 		it("Should permit declaration of enums inline", function () {
-			const testFile4 = require("../schemas/goodUIBorder");
-			const result = schemaValidator.validate(testFile4);
+			const result = schemaValidator.validate(
+				goodUIBorder.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(true);
 			expect(result.errors.length).to.equal(0);
@@ -56,8 +76,9 @@ import { SchemaValidator } from "../schemaValidator";
 		});
 
 		it("Should support both kinds of reference types", function () {
-			const testFile5 = require("../schemas/goodColorPalette");
-			const result = schemaValidator.validate(testFile5);
+			const result = schemaValidator.validate(
+				goodColorPalette.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(true);
 			expect(result.errors.length).to.equal(0);
@@ -65,8 +86,9 @@ import { SchemaValidator } from "../schemaValidator";
 		});
 
 		it("Should find errors down in nested types", function () {
-			const testFile6 = require("../schemas/badNestedProperties");
-			const result = schemaValidator.validate(testFile6);
+			const result = schemaValidator.validate(
+				badNestedProperties.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(false);
 			expect(result.errors.length).to.be.greaterThan(0);
@@ -74,8 +96,9 @@ import { SchemaValidator } from "../schemaValidator";
 		});
 
 		it("Should extract typeids from references", function () {
-			const testFile7 = require("../schemas/goodReferenceAndRegular");
-			const result = schemaValidator.validate(testFile7);
+			const result = schemaValidator.validate(
+				goodReferenceAndRegular.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(true);
 			expect(result.errors.length).to.equal(0);
@@ -83,17 +106,24 @@ import { SchemaValidator } from "../schemaValidator";
 		});
 
 		it("should validate a typeid with reserved type Ids", function () {
-			const testFile8 = require("../schemas/goodReservedTypes");
-			const result = schemaValidator.validate(testFile8);
+			const result = schemaValidator.validate(
+				goodReservedTypes.templateSchema as unknown as PropertySchema,
+			);
 
 			expect(result.isValid).to.equal(true);
 			expect(result.errors.length).to.equal(0);
 			expect(result.unresolvedTypes.length).to.be.greaterThan(0);
 		});
 
-		it("should validate a typeid with draft as version", function () {
-			const testFile9 = require("../schemas/goodDraftAsVersion");
-			const result = schemaValidator.validate(testFile9, testFile9, false, true, true);
+		it("should validate a typeid with draft as version", async function () {
+			const testFile9 = goodDraftAsVersion.templateSchema;
+			const result = schemaValidator.validate(
+				testFile9 as PropertySchema,
+				testFile9 as PropertySchema,
+				false,
+				true,
+				true,
+			);
 
 			expect(result.isValid).to.equal(true);
 			expect(result.errors.length).to.equal(0);
@@ -101,8 +131,14 @@ import { SchemaValidator } from "../schemaValidator";
 		});
 
 		it("should validate a typeid with draft as version", function () {
-			const testFile9 = require("../schemas/goodDraftAsVersion");
-			const result = schemaValidator.validate(testFile9, testFile9, false, true, false);
+			const testFile9 = goodDraftAsVersion.templateSchema;
+			const result = schemaValidator.validate(
+				testFile9 as PropertySchema,
+				testFile9 as PropertySchema,
+				false,
+				true,
+				false,
+			);
 
 			expect(result.isValid).to.equal(false);
 			expect(result.errors.length).to.equal(1);

@@ -467,7 +467,7 @@ export class FluidDataStoreRuntime
 					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
 				id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 			}
-			assert(!id.includes("/"), "slash");
+			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
 
 		this.verifyNotClosed();

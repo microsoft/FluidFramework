@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	createMockNodeKeyManager,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
-} from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
 	ImplicitFieldSchema,
 	TreeConfiguration,
@@ -18,8 +13,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getProxyForField } from "../../simple-tree/proxies.js";
-import { brand } from "../../util/index.js";
-import { checkoutWithContent, flexTreeWithContent } from "../utils.js";
+import { flexTreeWithContent } from "../utils.js";
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
@@ -34,25 +28,6 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 	const flexConfig = toFlexConfig(config);
 	const tree = flexTreeWithContent(flexConfig);
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
-}
-
-/**
- * Given the TreeConfiguration, returns a view.
- *
- * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
- * This should allow realistic (app like testing) of all the simple-tree APIs.
- */
-export function getView<TSchema extends ImplicitFieldSchema>(
-	config: TreeConfiguration<TSchema>,
-): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config);
-	const checkout = checkoutWithContent(flexConfig);
-	return new SchematizingSimpleTreeView<TSchema>(
-		checkout,
-		config,
-		createMockNodeKeyManager(),
-		brand(defaultNodeKeyFieldKey),
-	);
 }
 
 /**
