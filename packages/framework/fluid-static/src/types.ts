@@ -52,15 +52,17 @@ export type DataObjectClass<T extends IFluidLoadable> = {
 } & LoadableObjectCtor<T>;
 
 /**
- * A class that has a factory that can create a DDSes (`SharedObject`s) and a
- * constructor that will return the type of the `DataObject`.
+ * A factory that produces a factory that can create a DDSes (`SharedObject`s).
  *
  * @typeParam T - The class of the `SharedObject`.
  * @public
  */
-export type SharedObjectClass<T extends IFluidLoadable> = {
-	readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
+export interface SharedObjectClass<T extends IFluidLoadable> {
+	/**
+	 * Gets the factory this factory is a wrapper for.
+	 */
+	readonly getFactory: () => IChannelFactory<T>;
+}
 
 /**
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
@@ -105,7 +107,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectClassRecord;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -117,7 +119,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	dynamicObjectTypes?: LoadableObjectClass[];
+	readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
 }
 
 /**

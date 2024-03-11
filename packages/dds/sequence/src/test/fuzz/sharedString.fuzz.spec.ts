@@ -18,7 +18,7 @@ import {
 	SharedStringOperationGenerationConfig,
 	baseModel,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
+} from "./fuzzUtils.js";
 
 type ClientOpState = FuzzTestState;
 export function makeSharedStringOperationGenerator(

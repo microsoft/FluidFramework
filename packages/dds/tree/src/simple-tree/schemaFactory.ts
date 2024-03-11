@@ -413,7 +413,8 @@ export class SchemaFactory<
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true
+		true,
+		T
 	>;
 
 	/**
@@ -434,7 +435,8 @@ export class SchemaFactory<
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true
+		true,
+		T
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
@@ -445,7 +447,8 @@ export class SchemaFactory<
 		NodeKind.Map,
 		TreeMapNode<T>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -465,7 +468,8 @@ export class SchemaFactory<
 				NodeKind.Map,
 				TreeMapNode<T>,
 				Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-				true
+				true,
+				T
 			>;
 		}
 		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -523,7 +527,8 @@ export class SchemaFactory<
 			NodeKind.Map,
 			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-			ImplicitlyConstructable
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 
@@ -567,7 +572,8 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	/**
@@ -590,7 +596,8 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	public array<const T extends ImplicitAllowedTypes>(
@@ -601,7 +608,8 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -613,7 +621,8 @@ export class SchemaFactory<
 				NodeKind.Array,
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				true
+				true,
+				T
 			>;
 		}
 		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -683,7 +692,8 @@ export class SchemaFactory<
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 

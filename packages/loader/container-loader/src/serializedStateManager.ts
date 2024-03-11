@@ -27,7 +27,7 @@ import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerS
 import { IPendingContainerState } from "./container.js";
 
 export class SerializedStateManager {
-	private readonly savedOps: ISequencedDocumentMessage[] = [];
+	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot:
 		| {
 				tree: ISnapshotTree;
@@ -55,9 +55,9 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
-	public addSavedOp(message: ISequencedDocumentMessage) {
+	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.savedOps.push(message);
+			this.processedOps.push(message);
 		}
 	}
 
@@ -83,7 +83,7 @@ export class SerializedStateManager {
 				blobs: this.pendingLocalState.snapshotBlobs,
 			};
 		} else {
-			assert(snapshotTree !== undefined, "Snapshot should exist");
+			assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
@@ -106,19 +106,24 @@ export class SerializedStateManager {
 				(await this.storageAdapter.getSnapshot?.({
 					versionId: specifiedVersion,
 				})) ?? undefined;
-			const version: IVersion = {
-				id: snapshot?.snapshotTree.id ?? "",
-				treeId: snapshot?.snapshotTree.id ?? "",
-			};
+			const version: IVersion | undefined =
+				snapshot?.snapshotTree.id === undefined
+					? undefined
+					: {
+							id: snapshot.snapshotTree.id,
+							treeId: snapshot.snapshotTree.id,
+					  };
 
 			if (snapshot === undefined && specifiedVersion !== undefined) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "getSnapshotTreeFailed",
-					id: version.id,
+					id: specifiedVersion,
 				});
-			} else if (snapshot !== undefined && version === undefined) {
+				// Not sure if this should be here actually
+			} else if (snapshot !== undefined && version?.id === undefined) {
 				this.mc.logger.sendErrorEvent({
-					eventName: "getSnapshotFetchedTreeWithoutVersion",
+					eventName: "getSnapshotFetchedTreeWithoutVersionId",
+					hasVersion: version !== undefined, // if hasVersion is true, this means that the contract with the service was broken.
 				});
 			}
 			return { snapshot, version };
@@ -147,6 +152,11 @@ export class SerializedStateManager {
 
 		if (snapshot === undefined && version !== undefined) {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+		} else if (snapshot !== undefined && version?.id === undefined) {
+			this.mc.logger.sendErrorEvent({
+				eventName: "getSnapshotFetchedTreeWithoutVersionId",
+				hasVersion: version !== undefined, // if hasVersion is true, this means that the contract with the service was broken.
+			});
 		}
 		return { snapshot, version };
 	}
@@ -178,7 +188,7 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				savedOpsSize: this.savedOps.length,
+				processedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
@@ -187,14 +197,14 @@ export class SerializedStateManager {
 						"Can't get pending local state unless offline load is enabled",
 					);
 				}
-				assert(this.snapshot !== undefined, "no base data");
+				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.tree,
 					snapshotBlobs: this.snapshot.blobs,
-					savedOps: this.savedOps,
+					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
 					clientId: pendingRuntimeState !== undefined ? clientId : undefined,
