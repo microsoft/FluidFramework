@@ -211,6 +211,9 @@ export function transformTsdocHtmlTag(
 	node: DocHtmlStartTag | DocHtmlEndTag,
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
+	// TODO: this really isn't right. Mapping this forward as plain text assumes that any output format can support embedded HTML.
+	// That is valid for HTML and Markdown, but not necessarily for other formats.
+	// Instead, we should map embedded HTML content forward in an encapsulated format, and let the renderer decide how to handle it.
 	return new PlainTextNode(node.emitAsHtml(), /* escaped: */ true);
 }
 
@@ -314,18 +317,22 @@ function createParagraph(
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
 		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+			const plainTextNode = transformedChildren[0] as PlainTextNode;
 			transformedChildren[0] = new PlainTextNode(
-				(transformedChildren[0] as PlainTextNode).value.trimStart(),
+				plainTextNode.value.trimStart(),
+				plainTextNode.escaped,
 			);
 		}
 		if (
 			transformedChildren[transformedChildren.length - 1].type ===
 			DocumentationNodeType.PlainText
 		) {
+			const plainTextNode = transformedChildren[
+				transformedChildren.length - 1
+			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
-				(
-					transformedChildren[transformedChildren.length - 1] as PlainTextNode
-				).value.trimEnd(),
+				plainTextNode.value.trimEnd(),
+				plainTextNode.escaped,
 			);
 		}
 	}
@@ -353,6 +360,10 @@ function transformChildren(
 	children: readonly DocNode[],
 	options: TsdocNodeTransformOptions,
 ): DocumentationNode[] {
+	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
+	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
+	// and map the subsequence to an "html" node.
+
 	// Transform child items into Documentation domain
 	const transformedChildren = children.map((child) => _transformTsdocNode(child, options));
 
