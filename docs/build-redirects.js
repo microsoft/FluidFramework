@@ -22,7 +22,7 @@ const {
 	params: { currentVersion, ltsVersion },
 } = require("./data/versions.json");
 
-const buildRedirects = async () => {
+try {
 	const content = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -52,18 +52,13 @@ module.exports = async (context, { headers }) => {
 `;
 	const versionPath = path.resolve(dirname, "api", "fallback", "index.js");
 	await fs.writeFile(versionPath, content);
-};
+} catch (error) {
+	console.error(
+		chalk.red("Could not download API doc model artifacts due to one or more errors:"),
+	);
+	console.error(error);
+	process.exit(1);
+}
 
-buildRedirects().then(
-	() => {
-		console.log(chalk.green("API doc model artifacts downloaded!"));
-		process.exit(0);
-	},
-	(error) => {
-		console.error(
-			chalk.red("Could not download API doc model artifacts due to one or more errors:"),
-		);
-		console.error(error);
-		process.exit(1);
-	},
-);
+console.log(chalk.green("API doc model artifacts downloaded!"));
+process.exit(0);
