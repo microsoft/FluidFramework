@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DocumentationParentNodeBase } from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { type TableCellNode, type TableHeaderCellNode } from "./TableCellNode";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { type TableCellNode, type TableHeaderCellNode } from "./TableCellNode.js";
 
 /**
  * Kind of Table Row.
