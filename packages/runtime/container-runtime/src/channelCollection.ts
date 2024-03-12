@@ -49,7 +49,6 @@ import {
 	RequestParser,
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
@@ -675,16 +674,12 @@ export class ChannelCollection
 		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
-		return channelToDataStore(
-			await this.createDataStoreContext(
-				Array.isArray(pkg) ? pkg : [pkg],
-				undefined,
-				loadingGroupId,
-			).realize(),
-			uuid(),
-			this,
-			this.mc.logger,
+		const context = this.createDataStoreContext(
+			Array.isArray(pkg) ? pkg : [pkg],
+			undefined,
+			loadingGroupId,
 		);
+		return channelToDataStore(await context.realize(), context.id, this, this.mc.logger);
 	}
 
 	public async getAliasedDataStoreEntryPoint(
