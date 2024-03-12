@@ -115,7 +115,10 @@ class DataStore implements IDataStore {
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
 		if (this.parentContext.attachState === AttachState.Detached) {
-			const localResult = this.channelCollection.processAliasMessageCore(message);
+			const localResult = this.channelCollection.processAliasMessageCore(
+				this.internalId,
+				alias,
+			);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
 			this.aliasState = AliasState.Aliased;
