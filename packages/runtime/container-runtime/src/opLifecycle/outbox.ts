@@ -120,7 +120,7 @@ export class Outbox {
 	}
 
 	public get messageCount(): number {
-		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length + this.idAllocationBatch.length;
 	}
 
 	public get isEmpty(): boolean {
