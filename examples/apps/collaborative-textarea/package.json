@@ -11,13 +11,19 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
 	"main": "lib/index.js",
-	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",

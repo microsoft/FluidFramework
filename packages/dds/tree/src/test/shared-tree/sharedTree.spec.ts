@@ -77,9 +77,8 @@ import {
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
 	Revertible,
-	RevertibleKind,
-	RevertibleResult,
 	JsonableTree,
+	CommitKind,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { EditManager } from "../../shared-tree-core/index.js";
@@ -1141,11 +1140,10 @@ describe("SharedTree", () => {
 			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
 				const unsubscribe = peer.view.checkout.events.on(
-					"newRevertible",
-					(revertible: Revertible) => {
-						if (revertible.kind !== RevertibleKind.Undo) {
-							revertible.retain();
-							undos.push(revertible);
+					"commitApplied",
+					({ kind }, getRevertible) => {
+						if (kind !== CommitKind.Undo && getRevertible !== undefined) {
+							undos.push(getRevertible());
 						}
 					},
 				);
@@ -1231,19 +1229,19 @@ describe("SharedTree", () => {
 
 					resubmitter.setConnected(false);
 
-					assert.equal(s2.revert(), RevertibleResult.Success);
-					assert.equal(s1.revert(), RevertibleResult.Success);
+					s2.revert();
+					s1.revert();
 					submitter.assertOuterListEquals([]);
 					submitter.assertInnerListEquals(["a", "r"]);
 
 					provider.processMessages();
 
 					if (scenario === "restore and edit") {
-						assert.equal(rRemove.revert(), RevertibleResult.Success);
-						assert.equal(rEdit.revert(), RevertibleResult.Success);
+						rRemove.revert();
+						rEdit.revert();
 					} else {
-						assert.equal(rEdit.revert(), RevertibleResult.Success);
-						assert.equal(rRemove.revert(), RevertibleResult.Success);
+						rEdit.revert();
+						rRemove.revert();
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
@@ -1274,18 +1272,18 @@ describe("SharedTree", () => {
 					resubmitter.setConnected(false);
 
 					if (scenario === "restore and edit") {
-						assert.equal(sRemove.revert(), RevertibleResult.Success);
-						assert.equal(sEdit.revert(), RevertibleResult.Success);
+						sRemove.revert();
+						sEdit.revert();
 					} else {
-						assert.equal(sEdit.revert(), RevertibleResult.Success);
-						assert.equal(sRemove.revert(), RevertibleResult.Success);
+						sEdit.revert();
+						sRemove.revert();
 					}
 					submitter.assertOuterListEquals([["a", "r1", "r2"]]);
 
 					provider.processMessages();
 
-					assert.equal(r2.revert(), RevertibleResult.Success);
-					assert.equal(r1.revert(), RevertibleResult.Success);
+					r2.revert();
+					r1.revert();
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
@@ -1320,7 +1318,7 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals([]);
 				resubmitter.assertInnerListEquals(["a", "f"]);
 
-				assert.equal(rRemove.revert(), RevertibleResult.Success);
+				rRemove.revert();
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
 				resubmitter.setConnected(true);

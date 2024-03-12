@@ -203,7 +203,7 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @internal
 export interface CheckoutEvents {
     afterBatch(): void;
-    newRevertible(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
     revertibleDisposed(revertible: Revertible): void;
 }
 
@@ -227,6 +227,19 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
 } & (TValueSchema extends ValueSchema ? {
     [valueSymbol]: TreeValue<TValueSchema>;
 } : EmptyObject)> & TTypedFields : TValueSchema extends ValueSchema ? TreeValue<TValueSchema> : undefined;
+
+// @public
+export enum CommitKind {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @public
+export interface CommitMetadata {
+    isLocal: boolean;
+    kind: CommitKind;
+}
 
 // @internal
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
@@ -1432,33 +1445,14 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @internal
+// @public
 export interface Revertible {
-    discard(): RevertibleResult;
-    readonly kind: RevertibleKind;
-    readonly origin: {
-        readonly isLocal: boolean;
-    };
-    retain(): RevertibleResult;
-    revert(): RevertibleResult;
+    release(): void;
+    revert(): void;
     readonly status: RevertibleStatus;
 }
 
-// @internal
-export enum RevertibleKind {
-    Default = 0,
-    Rebase = 3,
-    Redo = 2,
-    Undo = 1
-}
-
-// @internal
-export enum RevertibleResult {
-    Failure = 1,
-    Success = 0
-}
-
-// @internal
+// @public
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
@@ -1981,6 +1975,8 @@ export interface TreeView<in out TRoot> extends IDisposable {
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
     rootChanged(): void;
 }
 
