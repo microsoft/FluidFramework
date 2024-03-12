@@ -25,3 +25,8 @@ export type {
 	PolicyConfig,
 	PreviousVersionStyle,
 } from "./common/fluidRepo";
+export type {
+	TaskConfigOnDisk,
+	TaskConfig,
+	TaskDependencies,
+} from "./common/fluidTaskDefinitions";

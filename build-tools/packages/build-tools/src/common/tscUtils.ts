@@ -194,7 +194,9 @@ function createTscUtil(tsLib: typeof ts) {
 				console.warn("Warning: '&&' is not supported in tsc command.");
 			}
 
-			const parsedCommand = tsLib.parseCommandLine(args.slice(1));
+			const parsedCommand = tsLib.parseCommandLine(
+				args[0] === "tsc-multi" ? [] : args.slice(1),
+			);
 			if (parsedCommand.errors.length) {
 				return undefined;
 			}

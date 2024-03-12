@@ -6,6 +6,11 @@ overrides:
   qs: ^6.11.0
   sharp: ^0.33.2
 
+patchedDependencies:
+  jssm@5.89.2:
+    hash: cwubri23blu7pyccbfqib7pisu
+    path: patches/jssm@5.89.2.patch
+
 importers:
 
   .:
@@ -112,6 +117,7 @@ importers:
       gray-matter: ^4.0.3
       human-id: ^4.0.0
       inquirer: ^8.2.5
+      json5: ^2.2.3
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
@@ -126,6 +132,7 @@ importers:
       prettier: ~3.2.4
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
       semver-utils: ^1.1.4
@@ -164,7 +171,8 @@ importers:
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
-      jssm: 5.89.2
+      json5: 2.2.3
+      jssm: 5.89.2_cwubri23blu7pyccbfqib7pisu
       latest-version: 5.1.0
       minimatch: 7.4.6
       node-fetch: 2.6.9
@@ -173,6 +181,7 @@ importers:
       prettier: 3.2.5
       prompts: 2.4.2
       read-pkg-up: 7.0.1
+      replace-in-file: 6.3.5
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
@@ -951,7 +960,7 @@ packages:
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
-      jssm: 5.89.2
+      jssm: 5.89.2_cwubri23blu7pyccbfqib7pisu
       jssm-viz-cli: 5.89.2
       latest-version: 5.1.0
       minimatch: 7.4.6
@@ -7240,20 +7249,21 @@ packages:
     dependencies:
       better_git_changelog: 1.6.2
       eslint: 8.55.0
-      jssm: 5.89.2
+      jssm: 5.89.2_cwubri23blu7pyccbfqib7pisu
       reduce-to-639-1: 1.1.0
       text_audit: 0.9.3
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /jssm/5.89.2:
+  /jssm/5.89.2_cwubri23blu7pyccbfqib7pisu:
     resolution: {integrity: sha512-I70+UdH7KZs542loBlsh1xKDsT5Lx5RZWf6hKmujzgvSJj9DRymEe46HUCTd6+hzouIebuNwQo5I2ftMzfrhnQ==}
     engines: {node: '>=10.0.0'}
     dependencies:
       better_git_changelog: 1.6.2
       circular_buffer_js: 1.10.0
       reduce-to-639-1: 1.1.0
+    patched: true
 
   /jsx-ast-utils/3.3.3:
     resolution: {integrity: sha512-fYQHZTZ8jSfmWZ0iyzfwiU4WDX4HpHbMCZ3gPlWYiCl3BoeOTsqKBqnTVfH2rYT7eP5c3sVbeSPHnnJOaTrWiw==}
@@ -9451,7 +9461,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       glob: 7.2.3
-      yargs: 17.7.1
+      yargs: 17.7.2
 
   /require-directory/2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -11207,6 +11217,7 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: true
 
   /yargs/17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
@@ -11219,7 +11230,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: true
 
   /yarn/1.22.19:
     resolution: {integrity: sha512-/0V5q0WbslqnwP91tirOvldvYISzaqhClxzyUKXYxs07yUILIs5jx/k6CFe8bvKSkds5w+eiOqta39Wk3WxdcQ==}
