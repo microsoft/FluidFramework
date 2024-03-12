@@ -8,7 +8,6 @@ import readPkgUp from "read-pkg-up";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 
 // type-fest seems to trigger this lint rule, which seems to be a false positive.
-// eslint-disable-next-line node/no-missing-import
 import type { SetRequired } from "type-fest";
 
 import { CommandLogger } from "../logging";
@@ -38,8 +37,6 @@ export class Repository {
 
 	/**
 	 * A git client for the repository that can be used to call git directly.
-	 *
-	 * @internal
 	 */
 	public get gitClient(): SimpleGit {
 		return this.git;
