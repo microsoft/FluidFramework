@@ -11,9 +11,21 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "lib/index.js",
 	"type": "module",
-	"types": "lib/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/api-markdown-documenter-public.d.ts",
+				"default": "./lib/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/api-markdown-documenter-beta.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"build": "concurrently npm:build:compile npm:lint && npm run build:readme && npm run build:docs",
