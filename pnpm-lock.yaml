@@ -2429,7 +2429,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
