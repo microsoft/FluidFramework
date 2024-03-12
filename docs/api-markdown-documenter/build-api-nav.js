@@ -71,7 +71,7 @@ const saveToFile = async (filename, version, data) => {
 		fs.mkdirSync(path.join(dirname, "..", "data", version), { recursive: true });
 	}
 	fs.writeFile(
-		path.join(dirname, "..", "data", `${version}/${filename}`),
+		path.join(dirname, "..", "data", version, filename),
 		JSON.stringify(data, null, 2),
 		"utf8",
 	);
