@@ -1083,16 +1083,44 @@ export class FluidDataStoreRuntime
 		switch (type) {
 			case DataStoreMessageType.Attach: {
 				const attachMessage = content.content as IAttachMessage;
-				// local means this node will throw if summarized; this is fine because only interactive clients will have stashed ops
-				const summarizerNodeParams: CreateChildSummarizerNodeParam = {
-					type: CreateSummarizerNodeSource.Local,
-				};
-				const context = this.createRemoteChannelContext(
-					attachMessage,
-					summarizerNodeParams,
-				);
-				this.pendingAttach.add(attachMessage.id);
-				this.contexts.set(attachMessage.id, context);
+
+				if (this.dataStoreContext.attachState === AttachState.Detached) {
+					const flatBlobs = new Map<string, ArrayBufferLike>();
+					const snapshotTree = buildSnapshotTree(
+						attachMessage.snapshot.entries,
+						flatBlobs,
+					);
+
+					const channelContext = new RehydratedLocalChannelContext(
+						attachMessage.id,
+						this.sharedObjectRegistry,
+						this,
+						this.dataStoreContext,
+						this.dataStoreContext.storage,
+						this.logger,
+						(c, localOpMetadata) =>
+							this.submitChannelOp(attachMessage.id, c, localOpMetadata),
+						(address: string) => this.setChannelDirty(address),
+						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+							this.addedGCOutboundReference(srcHandle, outboundHandle),
+						snapshotTree,
+						flatBlobs,
+					);
+					await channelContext.getChannel();
+					this.localChannelContextQueue.set(attachMessage.id, channelContext);
+					this.contexts.set(attachMessage.id, channelContext);
+				} else {
+					// local means this node will throw if summarized; this is fine because only interactive clients will have stashed ops
+					const summarizerNodeParams: CreateChildSummarizerNodeParam = {
+						type: CreateSummarizerNodeSource.Local,
+					};
+					const context = this.createRemoteChannelContext(
+						attachMessage,
+						summarizerNodeParams,
+					);
+					this.pendingAttach.add(attachMessage.id);
+					this.contexts.set(attachMessage.id, context);
+				}
 				return;
 			}
 			case DataStoreMessageType.ChannelOp: {

@@ -746,9 +746,36 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	private async applyStashedAttachOp(message: IAttachMessage) {
-		this.pendingAttach.set(message.id, message);
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
+		if (this.parentContext.attachState === AttachState.Detached) {
+			const { id, snapshot } = message;
+
+			const flatAttachBlobs = new Map<string, ArrayBufferLike>();
+			const snapshotTree = buildSnapshotTree(snapshot.entries, flatAttachBlobs);
+			const storage = new StorageServiceWithAttachBlobs(
+				this.parentContext.storage,
+				flatAttachBlobs,
+			);
+
+			const dataStoreContext = new LocalFluidDataStoreContext({
+				id,
+				pkg: undefined,
+				parentContext: this.wrapContextForInnerChannel(id),
+				storage,
+				scope: this.parentContext.scope,
+				createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
+					type: CreateSummarizerNodeSource.FromSummary,
+				}),
+				makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
+				snapshotTree,
+				isRootDataStore: undefined,
+			});
+			await dataStoreContext.realize().then(async (e) => e.entryPoint.get());
+			this.contexts.addBoundOrRemoted(dataStoreContext);
+		} else {
+			this.pendingAttach.set(message.id, message);
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
+		}
 	}
 
 	public process(
