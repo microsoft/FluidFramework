@@ -18,7 +18,6 @@ import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
-import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
@@ -29,7 +28,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -332,14 +330,6 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 // @alpha (undocumented)
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     constructor(id?: string, existing?: boolean, logger?: ITelemetryLoggerExt, interactive?: boolean);
-    // (undocumented)
-    addedGCOutboundReference?(srcHandle: {
-        absolutePath: string;
-    }, outboundHandle: {
-        absolutePath: string;
-    }): void;
-    // (undocumented)
-    addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     attachState: AttachState;
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
@@ -351,12 +341,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     connected: boolean;
     // (undocumented)
     containerRuntime: IContainerRuntimeBase;
-    // (undocumented)
-    createDataStore(pkg: string | string[], loadingGroupId?: string | undefined): Promise<IDataStore>;
-    // (undocumented)
-    createDetachedDataStore(pkg: readonly string[], loadingGroupId?: string | undefined): IFluidDataStoreContextDetached;
-    // (undocumented)
-    createDetachedRootDataStore(pkg: readonly string[], rootDataStoreId: string): IFluidDataStoreContextDetached;
     // @deprecated (undocumented)
     createProps?: any;
     // (undocumented)
@@ -373,8 +357,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     readonly gcTombstoneEnforcementAllowed = false;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    // (undocumented)
-    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     // (undocumented)
     getAudience(): IAudience;
     // (undocumented)
@@ -393,8 +375,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
     isLocalDataStore: boolean;
-    // (undocumented)
-    loadingGroupId?: string | undefined;
     // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)

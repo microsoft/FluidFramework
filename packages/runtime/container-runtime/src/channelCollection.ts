@@ -32,8 +32,8 @@ import {
 	IFluidDataStoreContext,
 	NamedFluidDataStoreRegistryEntries,
 	IFluidDataStoreRegistry,
-	type IDataStore,
-	type IDataStoreCollection,
+	IDataStore,
+	IDataStoreCollection,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
