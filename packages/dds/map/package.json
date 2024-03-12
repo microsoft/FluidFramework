@@ -89,7 +89,7 @@
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:snapshots:regen": "npm run test:mocha -- --snapshot",
+		"test:snapshots:regen": "npm run test:mocha:esm -- --snapshot",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -121,7 +121,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
@@ -138,10 +138,10 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/map-previous": "npm:@fluidframework/map@2.0.0-internal.8.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/path-browserify": "^1.0.0",
@@ -171,6 +171,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_SharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedMap": {
+				"backCompat": false
+			}
+		}
 	}
 }

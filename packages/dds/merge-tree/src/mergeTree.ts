@@ -118,6 +118,10 @@ function isRemovedAndAckedOrMovedAndAcked(segment: ISegment): boolean {
 	return isRemovedAndAcked(segment) || isMovedAndAcked(segment);
 }
 
+function isRemovedOrMoved(segment: ISegment): boolean {
+	return isRemoved(segment) || isMoved(segment);
+}
+
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undefined {
 	if (!node.isLeaf()) {
 		return node.cachedLength;
@@ -1065,8 +1069,14 @@ export class MergeTree {
 			return this.getPosition(refPos, refSeq, clientId);
 		}
 		if (refTypeIncludesFlag(refPos, ReferenceType.Transient) || seg.localRefs?.has(refPos)) {
-			const offset = isRemoved(seg) || isMoved(seg) ? 0 : refPos.getOffset();
-			return offset + this.getPosition(seg, refSeq, clientId);
+			const offset = isRemovedOrMoved(seg) ? 0 : refPos.getOffset();
+			const pos = this.getPosition(seg, refSeq, clientId);
+
+			if (isRemovedOrMoved(seg) && refPos.slidingPreference === SlidingPreference.BACKWARD) {
+				return pos === 0 ? 0 : pos - 1;
+			}
+
+			return offset + pos;
 		}
 		return DetachedReferencePosition;
 	}
@@ -1321,10 +1331,16 @@ export class MergeTree {
 
 		// opArgs == undefined => loading snapshot or test code
 		if (opArgs !== undefined) {
-			this.mergeTreeDeltaCallback?.(opArgs, {
-				operation: MergeTreeDeltaType.INSERT,
-				deltaSegments: segments.map((segment) => ({ segment })),
-			});
+			const deltaSegments = segments
+				.filter((segment) => !toMoveInfo(segment))
+				.map((segment) => ({ segment }));
+
+			if (deltaSegments.length > 0) {
+				this.mergeTreeDeltaCallback?.(opArgs, {
+					operation: MergeTreeDeltaType.INSERT,
+					deltaSegments,
+				});
+			}
 		}
 
 		if (
@@ -1885,9 +1901,6 @@ export class MergeTree {
 		}
 	}
 
-	/**
-	 * @alpha
-	 */
 	public obliterateRange(
 		start: number,
 		end: number,
@@ -1953,7 +1966,9 @@ export class MergeTree {
 				segment.localMovedSeq = localSeq;
 				segment.movedSeqs = [seq];
 
-				movedSegments.push({ segment });
+				if (!toRemovalInfo(segment)) {
+					movedSegments.push({ segment });
+				}
 			}
 
 			// Save segment so can assign moved sequence number when acked by server
@@ -2063,7 +2078,9 @@ export class MergeTree {
 				segment.removedSeq = seq;
 				segment.localRemovedSeq = localSeq;
 
-				removedSegments.push({ segment });
+				if (!toMoveInfo(segment)) {
+					removedSegments.push({ segment });
+				}
 			}
 
 			// Save segment so we can assign removed sequence number when acked by server

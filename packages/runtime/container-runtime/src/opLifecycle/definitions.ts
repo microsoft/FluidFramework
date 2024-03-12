@@ -5,8 +5,8 @@
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { CompressionAlgorithms } from "../containerRuntime";
-import { ContainerMessageType } from "../messageTypes";
+import { CompressionAlgorithms } from "../containerRuntime.js";
+import { ContainerMessageType } from "../messageTypes.js";
 
 /**
  * Batch message type used internally by the runtime

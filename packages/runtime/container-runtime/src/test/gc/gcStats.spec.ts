@@ -25,9 +25,9 @@ import {
 	stableGCVersion,
 	IGCStats,
 	defaultSweepGracePeriodMs,
-} from "../../gc";
-import { ContainerRuntimeGCMessage } from "../../messageTypes";
-import { pkgVersion } from "../../packageVersion";
+} from "../../gc/index.js";
+import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { pkgVersion } from "../../packageVersion.js";
 
 describe("Garbage Collection Stats", () => {
 	// Nodes in the reference graph.
@@ -79,7 +79,6 @@ describe("Garbage Collection Stats", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes,
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,

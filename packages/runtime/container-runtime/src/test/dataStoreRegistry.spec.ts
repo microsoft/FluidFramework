@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
-import { FluidDataStoreRegistry } from "../dataStoreRegistry";
+import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
 describe("Data Store Registry Creation Tests", () => {
 	// Define two entries with the same name

@@ -103,19 +103,6 @@ const childComposer = (
 	return nodeChangeFromValueChange(valueChange);
 };
 
-const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
-	const valueChange = valueChangeFromNodeChange(nodeChange);
-	const taggedChange = makeAnonChange(valueChange);
-	const inverse = valueHandler.rebaser.invert(
-		taggedChange,
-		unexpectedDelegate,
-		idAllocatorFromMaxId(),
-		crossFieldManager,
-		defaultRevisionMetadataFromChanges([taggedChange]),
-	);
-	return nodeChangeFromValueChange(inverse);
-};
-
 const childRebaser = (
 	nodeChangeA: NodeChangeset | undefined,
 	nodeChangeB: NodeChangeset | undefined,
@@ -363,7 +350,16 @@ describe("GenericField", () => {
 		const taggedChange = makeAnonChange(forward);
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
-			childInverter,
+			(nodeChange: NodeChangeset): NodeChangeset => {
+				if (nodeChange === nodeChange0To1) {
+					return nodeChange1To0;
+				}
+				if (nodeChange === nodeChange1To2) {
+					return nodeChange2To1;
+				}
+				assert.fail("Unexpected child change");
+			},
+			true,
 			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),

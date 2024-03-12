@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ChangeSet, SerializedChangeSet } from "./changeset";
-import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
-import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper";
-import { PathHelper } from "./pathHelper";
-import { rebaseToRemoteChanges } from "./rebase";
-import { TemplateSchema } from "./templateSchema";
-import { TemplateValidator } from "./templateValidator";
-import { Utils } from "./utils";
+import { ChangeSet, SerializedChangeSet } from "./changeset.js";
+import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator.js";
+import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper.js";
+import { PathHelper } from "./pathHelper.js";
+import { rebaseToRemoteChanges } from "./rebase.js";
+import { TemplateSchema } from "./templateSchema.js";
+import { TemplateValidator } from "./templateValidator.js";
+import { Utils } from "./utils.js";
 
 /**
  * @internal

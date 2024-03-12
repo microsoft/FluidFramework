@@ -5,7 +5,20 @@
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
+// eslint-disable-next-line import/no-deprecated
+import { MonoRepoKind } from "./library";
+
+/**
+ * An iterator that returns only the Enum values of MonoRepoKind.
+ * @deprecated should switch to ReleaseGroup.  Currently the only difference is "azure" not in ReleaseGroup.
+ */
+// eslint-disable-next-line import/no-deprecated
+function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
+	// eslint-disable-next-line import/no-deprecated
+	for (const [, flag] of Object.entries(MonoRepoKind)) {
+		yield flag;
+	}
+}
 
 import {
 	isVersionBumpType,

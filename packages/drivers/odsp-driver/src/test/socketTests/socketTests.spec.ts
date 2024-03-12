@@ -12,12 +12,12 @@ import { ITelemetryLoggerExt, MockLogger, isFluidError } from "@fluidframework/t
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { Socket } from "socket.io-client";
-import { EpochTracker } from "../../epochTracker";
-import { LocalPersistentCache } from "../../odspCache";
-import { getHashedDocumentId } from "../../odspPublicUtils";
-import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection";
-import * as socketModule from "../../socketModule";
-import { ClientSocketMock } from "./socketMock";
+import { EpochTracker } from "../../epochTracker.js";
+import { LocalPersistentCache } from "../../odspCache.js";
+import { getHashedDocumentId } from "../../odspPublicUtils.js";
+import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
+import * as socketModule from "../../socketModule.js";
+import { ClientSocketMock } from "./socketMock.js";
 
 describe("OdspDocumentDeltaConnection tests", () => {
 	let tenantId = "tenantId";

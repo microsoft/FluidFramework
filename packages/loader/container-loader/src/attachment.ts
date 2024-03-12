@@ -193,7 +193,10 @@ export const runRetriableAttachProcess = async (
 		);
 	}
 
-	assert(currentData.state === AttachState.Attaching, "must be attaching by this point");
+	assert(
+		currentData.state === AttachState.Attaching,
+		0x8e2 /* must be attaching by this point */,
+	);
 
 	if (currentData.blobs === "done") {
 		// done means outstanding blobs were uploaded.

@@ -39,7 +39,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
-import { IBlobMetadata } from "./metadata";
+import { IBlobMetadata } from "./metadata.js";
 
 /**
  * This class represents blob (long string)
@@ -724,14 +724,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 		}
 		return gcData;
-	}
-
-	/**
-	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
-	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]): void {
-		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
 	/**

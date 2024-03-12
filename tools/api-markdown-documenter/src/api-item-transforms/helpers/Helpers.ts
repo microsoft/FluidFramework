@@ -26,7 +26,7 @@ import {
 	type DocSection,
 } from "@microsoft/tsdoc";
 
-import { type Heading } from "../../Heading";
+import { type Heading } from "../../Heading.js";
 import {
 	type DocumentationNode,
 	DocumentationNodeType,
@@ -42,8 +42,8 @@ import {
 	SingleLineSpanNode,
 	SpanNode,
 	UnorderedListNode,
-} from "../../documentation-domain";
-import { type Logger } from "../../Logging";
+} from "../../documentation-domain/index.js";
+import { type Logger } from "../../Logging.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -53,17 +53,17 @@ import {
 	getDeprecatedBlock,
 	getExampleBlocks,
 	getReturnsBlock,
-} from "../../utilities";
+} from "../../utilities/index.js";
 import {
 	doesItemKindRequireOwnDocument,
 	doesItemRequireOwnDocument,
 	getAncestralHierarchy,
 	getLinkForApiItem,
-} from "../ApiItemTransformUtilities";
-import { transformTsdocSection } from "../TsdocNodeTransforms";
-import { getTsdocNodeTransformationOptions } from "../Utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers";
+} from "../ApiItemTransformUtilities.js";
+import { transformTsdocSection } from "../TsdocNodeTransforms.js";
+import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createParametersSummaryTable, createTypeParametersSummaryTable } from "./TableHelpers.js";
 
 /**
  * Generates a section for an API signature.

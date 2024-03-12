@@ -33,8 +33,8 @@ import {
 	SummaryGeneratorTelemetry,
 	SubmitSummaryFailureData,
 	IRefreshSummaryAckOptions,
-} from "./summarizerTypes";
-import { IClientSummaryWatcher } from "./summaryCollection";
+} from "./summarizerTypes.js";
+import { IClientSummaryWatcher } from "./summaryCollection.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }

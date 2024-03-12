@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["mocha"],
+		"types": ["mocha", "node"],
 
 		// The package exports utilities for test code from the test folder, so we need to build types for test files, which we typically
 		// don't do.

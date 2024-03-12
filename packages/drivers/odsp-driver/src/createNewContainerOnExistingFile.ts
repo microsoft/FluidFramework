@@ -12,18 +12,18 @@ import {
 	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
-import { IWriteSummaryResponse } from "./contracts";
-import { createCacheSnapshotKey, getOrigin, IExistingFileInfo } from "./odspUtils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { IWriteSummaryResponse } from "./contracts.js";
+import { createCacheSnapshotKey, getOrigin, IExistingFileInfo } from "./odspUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { EpochTracker } from "./epochTracker.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
-} from "./createNewUtils";
-import { ClpCompliantAppHeader } from "./contractsPublic";
+} from "./createNewUtils.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 
 /**
  * Creates a new Fluid container on an existing file.

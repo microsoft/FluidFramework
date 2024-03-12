@@ -48,6 +48,11 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 	 * child contents, etc.
 	 */
 	readonly singleLine: boolean;
+
+	/**
+	 * True if and only if the node contains no content.
+	 */
+	readonly isEmpty: boolean;
 }
 
 /**
@@ -189,6 +194,18 @@ export abstract class DocumentationParentNodeBase<
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		for (const child of this.children) {
+			if (!child.isEmpty) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	protected constructor(children: TDocumentationNode[]) {
 		this.children = children;
 	}
@@ -233,6 +250,11 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown>
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
 	public abstract get singleLine(): boolean;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public abstract get isEmpty(): boolean;
 
 	protected constructor(value: TValue) {
 		this.value = value;
