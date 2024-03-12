@@ -9,7 +9,7 @@ import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 
 // eslint-disable-next-line import/no-unassigned-import
-import "./style.css";
+import "./style.css" assert { type: "css" };
 
 interface IStarViewProps {
 	model: ICoordinate;
