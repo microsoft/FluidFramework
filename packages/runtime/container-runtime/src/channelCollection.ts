@@ -1165,27 +1165,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
-	 * This is called to update objects whose routes are unused. The unused objects are deleted.
-	 * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		for (const route of unusedRoutes) {
-			const pathParts = route.split("/");
-			// Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
-			// store based on its DDS being unused.
-			if (pathParts.length > 2) {
-				continue;
-			}
-			const dataStoreId = pathParts[1];
-			assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
-			// Delete the contexts of unused data stores.
-			this.contexts.delete(dataStoreId);
-			// Delete the summarizer node of the unused data stores.
-			this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
-		}
-	}
-
-	/**
 	 * Delete data stores and its objects that are sweep ready.
 	 * @param sweepReadyDataStoreRoutes - The routes of data stores and its objects that are sweep ready and should
 	 * be deleted.
