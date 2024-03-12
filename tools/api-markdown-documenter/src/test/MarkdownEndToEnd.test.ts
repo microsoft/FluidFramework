@@ -3,29 +3,35 @@
  * Licensed under the MIT License.
  */
 import * as Path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { ApiItemKind, ApiModel, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { type Suite } from "mocha";
 
-import { renderApiModelAsMarkdown } from "../RenderMarkdown";
-import { type ApiItemTransformationConfiguration, transformApiModel } from "../api-item-transforms";
-import { type DocumentNode } from "../documentation-domain";
-import { type MarkdownRenderConfiguration } from "../renderers";
-import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities";
+import { renderApiModelAsMarkdown } from "../RenderMarkdown.js";
+import {
+	type ApiItemTransformationConfiguration,
+	transformApiModel,
+} from "../api-item-transforms/index.js";
+import { type DocumentNode } from "../documentation-domain/index.js";
+import { type MarkdownRenderConfiguration } from "../renderers/index.js";
+import { compareDocumentationSuiteSnapshot } from "./SnapshotTestUtilities.js";
+
+const dirname = Path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTemporaryDirectoryPath = Path.resolve(__dirname, "test_temp", "markdown");
+const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp", "markdown");
 
 /**
  * Snapshot directory to which generated test data will be copied.
  * Relative to dist/test
  */
 const snapshotsDirectoryPath = Path.resolve(
-	__dirname,
+	dirname,
 	"..",
 	"..",
 	"src",
@@ -35,7 +41,7 @@ const snapshotsDirectoryPath = Path.resolve(
 );
 
 // Relative to dist/test
-const testDataDirectoryPath = Path.resolve(__dirname, "..", "..", "src", "test", "test-data");
+const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 const testModelFilePaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.json")];
 
 /**

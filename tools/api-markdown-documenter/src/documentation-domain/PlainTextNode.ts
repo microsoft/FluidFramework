@@ -5,8 +5,8 @@
 import {
 	DocumentationLiteralNodeBase,
 	type SingleLineDocumentationNode,
-} from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Plain text.
