@@ -191,8 +191,6 @@ export class Context {
 	 *
 	 * @param releaseGroupOrPackage - The release group or independent package to get tags for.
 	 * @returns An array of all all the tags for the release group or package.
-	 *
-	 * @internal
 	 */
 	public async getTagsForReleaseGroup(releaseGroupOrPackage: string): Promise<string[]> {
 		const prefix = isMonoRepoKind(releaseGroupOrPackage)
@@ -215,9 +213,6 @@ export class Context {
 	 *
 	 * @param releaseGroupOrPackage - The release group or independent package to get versions for.
 	 * @returns An array of {@link ReleaseDetails} containing the version and date for each version.
-	 *
-	 * @internal
-	 *
 	 */
 	public async getAllVersions(
 		releaseGroupOrPackage: string,

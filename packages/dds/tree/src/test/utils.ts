@@ -95,7 +95,6 @@ import {
 	announceDelta,
 	FieldKey,
 	Revertible,
-	RevertibleKind,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
@@ -107,6 +106,8 @@ import {
 	RevisionTagCodec,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
+	CommitMetadata,
+	CommitKind,
 } from "../core/index.js";
 import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
@@ -1054,8 +1055,8 @@ export function rootFromDeltaFieldMap(
 
 export function createTestUndoRedoStacks(
 	events: ISubscribable<{
-		newRevertible(type: Revertible): void;
-		revertibleDisposed(revertible: Revertible): void;
+		commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+		revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
 	}>,
 ): {
 	undoStack: Revertible[];
@@ -1065,25 +1066,25 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
-		revertible.retain();
-		if (revertible.kind === RevertibleKind.Undo) {
-			redoStack.push(revertible);
-		} else {
-			undoStack.push(revertible);
+	const unsubscribeFromNew = events.on("commitApplied", ({ kind }, getRevertible) => {
+		if (getRevertible !== undefined) {
+			const revertible = getRevertible();
+			if (kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				undoStack.push(revertible);
+			}
 		}
 	});
 
 	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
-		if (revertible.kind === RevertibleKind.Undo) {
-			const index = redoStack.indexOf(revertible);
-			if (index !== -1) {
-				redoStack.splice(index, 1);
-			}
+		const redoIndex = redoStack.indexOf(revertible);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
 		} else {
-			const index = undoStack.indexOf(revertible);
-			if (index !== -1) {
-				undoStack.splice(index, 1);
+			const undoIndex = undoStack.indexOf(revertible);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
 			}
 		}
 	});
@@ -1092,10 +1093,10 @@ export function createTestUndoRedoStacks(
 		unsubscribeFromNew();
 		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 		for (const revertible of redoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };

@@ -419,7 +419,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				this.pendingAttach.has(attachMessage.id),
 				0x15e /* "Local object does not have matching attach message id" */,
 			);
-			this.contexts.get(attachMessage.id)?.emit("attached");
+			this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
 			this.pendingAttach.delete(attachMessage.id);
 			return;
 		}
@@ -558,7 +558,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		 * If the container is detached, this data store will be part of the summary that makes the container attached.
 		 */
 		if (this.parentContext.attachState !== AttachState.Detached) {
-			localContext.emit("attaching");
+			localContext.setAttachState(AttachState.Attaching);
 			this.submitAttachChannelOp(localContext);
 		}
 
@@ -976,11 +976,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
-		const eventName = attachState === AttachState.Attaching ? "attaching" : "attached";
 		for (const [, context] of this.contexts) {
 			// Fire only for bounded stores.
 			if (!this.contexts.isNotBound(context.id)) {
-				context.emit(eventName);
+				context.setAttachState(attachState);
 			}
 		}
 	}
@@ -1162,27 +1161,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Update the used routes in each data store. Used routes is empty for unused data stores.
 		for (const [contextId, context] of this.contexts) {
 			context.updateUsedRoutes(usedDataStoreRoutes.get(contextId) ?? []);
-		}
-	}
-
-	/**
-	 * This is called to update objects whose routes are unused. The unused objects are deleted.
-	 * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		for (const route of unusedRoutes) {
-			const pathParts = route.split("/");
-			// Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
-			// store based on its DDS being unused.
-			if (pathParts.length > 2) {
-				continue;
-			}
-			const dataStoreId = pathParts[1];
-			assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
-			// Delete the contexts of unused data stores.
-			this.contexts.delete(dataStoreId);
-			// Delete the summarizer node of the unused data stores.
-			this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
 		}
 	}
 
