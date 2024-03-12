@@ -298,7 +298,7 @@ export function checkInstalled(requested: string) {
  *
  * @internal
  */
-export const getMainEntryPointForPackage = (pkgPath: string): string => {
+export function getMainEntryPointForPackage(pkgPath: string): string {
 	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
 		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
 	);
@@ -341,7 +341,7 @@ export const getMainEntryPointForPackage = (pkgPath: string): string => {
 		mainEntryPoint = pkgJson.main;
 	}
 	return mainEntryPoint;
-};
+}
 
 /**
  * @internal

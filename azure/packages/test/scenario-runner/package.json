@@ -19,7 +19,7 @@
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
