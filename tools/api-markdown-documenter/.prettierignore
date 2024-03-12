@@ -2,6 +2,7 @@
 package-lock.json
 
 # Build output
+dist/*
 lib/*
 
 # Test output
