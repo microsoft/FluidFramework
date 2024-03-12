@@ -1706,9 +1706,6 @@ export class Container
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
 			}
-			this.serializedStateManager.refreshAttributes(
-				this.service?.policies?.supportGetSnapshotApi,
-			);
 			pendingLocalState.savedOps = [];
 		}
 

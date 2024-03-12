@@ -216,7 +216,7 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		assert.strictEqual(string2.getText(), "hello world how");
 	});
 
-	it("validates pending and saved ops with snapshot with load snapshot", async function () {
+	it("validates pending and saved ops with load snapshot", async function () {
 		// to not use an empty base snapshot for container2
 		string1.insertText(0, "hello ");
 		await waitForSummary();
@@ -340,7 +340,6 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		assert.strictEqual(string1.getText(), "ab");
 		assertPendingStateSequence(pendingOps.parsed);
 		assert.ok(pendingOps);
-		assertPendingStateSequence(pendingOps.parsed);
 		const attributes = getAttributesFromPendingState(pendingOps.parsed);
 
 		// ops and summaries being generated after getting pending state
@@ -385,7 +384,7 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		assert.strictEqual(string3.getText(), "abcdef");
 	});
 
-	it.skip("can load offline", async function () {
+	it("can load offline", async function () {
 		const pendingOps = await getPendingState(
 			provider,
 			async (s) => {},
@@ -416,13 +415,15 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		const pendingState2 = await container2.container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingState2);
 		const attributes2 = getAttributesFromPendingState(JSON.parse(pendingState2));
+		// the base snapshot was refreshed. sequenceNumber would be the same in case we haven't
+		assert(attributes.sequenceNumber < attributes2.sequenceNumber);
 		const container3: IContainerExperimental = await loader.resolve({ url }, pendingState2);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
 		assert.strictEqual(string3.getText(), " a c b");
 	});
 
-	it.skip("fail fetchSnapshot", async () => {
+	it("fail fetchSnapshot", async () => {
 		let failSnapshot = false;
 		(provider as any)._documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
 			provider.documentServiceFactory,
@@ -443,17 +444,74 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 		const pendingState = await getPendingState(
 			provider,
 			async (s) => {
-				s.insertText(s.getLength(), "i");
+				s.insertText(s.getLength(), "a");
 			},
 			async (s) => {
-				s.insertText(s.getLength(), "i");
+				s.insertText(s.getLength(), "b");
 			},
 		);
+		const attributes = getAttributesFromPendingState(pendingState.parsed);
 		failSnapshot = true;
 		const container2: IContainerExperimental = await wrapLoader.resolve(
 			{ url },
 			pendingState.pendingState,
 		);
 		await waitForContainerConnection(container2);
+		const pendingState2 = await container2.closeAndGetPendingLocalState?.();
+		assert.ok(pendingState2);
+		const attributes2 = getAttributesFromPendingState(JSON.parse(pendingState2));
+		// the base snapshot was not refreshed due to fetch failure but pending state was applied.
+		assert(attributes.sequenceNumber === attributes2.sequenceNumber);
+		const container3: IContainerExperimental = await loader.resolve({ url }, pendingState2);
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
+		assert.strictEqual(string3.getText(), "ab");
+	});
+
+	it("eventually fetch completes", async () => {
+		let failSnapshot = false;
+		(provider as any)._documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToStorage: {
+						getSnapshotTree: (dss) => async () => {
+							if (failSnapshot) {
+								throw new Error("fake error");
+							}
+							return dss.getSnapshotTree();
+						},
+					},
+				},
+			},
+		);
+		const wrapLoader = provider.makeTestLoader(testContainerConfig);
+		const pendingState = await getPendingState(
+			provider,
+			async (s) => {
+				s.insertText(s.getLength(), "a");
+			},
+			async (s) => {
+				s.insertText(s.getLength(), "b");
+			},
+		);
+		const attributes = getAttributesFromPendingState(pendingState.parsed);
+		failSnapshot = true;
+		const container2: IContainerExperimental = await wrapLoader.resolve(
+			{ url },
+			pendingState.pendingState,
+		);
+		await waitForContainerConnection(container2);
+		failSnapshot = false;
+		await provider.ensureSynchronized();
+		const pendingState2 = await container2.closeAndGetPendingLocalState?.();
+		assert.ok(pendingState2);
+		const attributes2 = getAttributesFromPendingState(JSON.parse(pendingState2));
+		// the base snapshot was not refreshed due to fetch failure but pending state was applied.
+		assert(attributes.sequenceNumber === attributes2.sequenceNumber);
+		const container3: IContainerExperimental = await loader.resolve({ url }, pendingState2);
+		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
+		assert.strictEqual(string3.getText(), "ab");
 	});
 });

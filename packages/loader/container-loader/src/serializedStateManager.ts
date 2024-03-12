@@ -37,6 +37,8 @@ export class SerializedStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
+	// private readonly promiseCache: PromiseCache<string, { snapshot?: ISnapshot | ISnapshotTree; version?: IVersion } > = new PromiseCache();;
+	// private readonly retryDelay = 1000; // Initial delay in milliseconds for the first retry.
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -76,27 +78,36 @@ export class SerializedStateManager {
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean | undefined,
 	) {
-		const { snapshot, version } =
-			this.pendingLocalState === undefined
-				? await this.fetchSnapshotCore(specifiedVersion, supportGetSnapshotApi)
-				: { snapshot: this.pendingLocalState.baseSnapshot, version: undefined };
-		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-			? snapshot.snapshotTree
-			: snapshot;
-		if (this.pendingLocalState) {
-			this.snapshot = {
-				tree: this.pendingLocalState.baseSnapshot,
-				blobs: this.pendingLocalState.snapshotBlobs,
-			};
-		} else {
+		if (this.pendingLocalState === undefined) {
+			const { snapshot, version } = await this.fetchSnapshotCore(
+				specifiedVersion,
+				supportGetSnapshotApi,
+			);
+			const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+				? snapshot.snapshotTree
+				: snapshot;
 			assert(snapshotTree !== undefined, "Snapshot should exist");
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 				this.snapshot = { tree: snapshotTree, blobs };
 			}
+			return { snapshotTree, version };
+		} else {
+			const { snapshot, version } = {
+				snapshot: this.pendingLocalState.baseSnapshot,
+				version: undefined,
+			};
+			const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+				? snapshot.snapshotTree
+				: snapshot;
+			this.snapshot = {
+				tree: this.pendingLocalState.baseSnapshot,
+				blobs: this.pendingLocalState.snapshotBlobs,
+			};
+			this.refreshAttributes(supportGetSnapshotApi);
+			return { snapshotTree, version };
 		}
-		return { snapshotTree, version };
 	}
 
 	private async fetchSnapshotCore(
@@ -172,6 +183,7 @@ export class SerializedStateManager {
 					this.processedOps[this.processedOps.length - 1].sequenceNumber;
 
 				if (snapshotSN < firstSavedOpSN - 1) {
+					console.log("ERROR RRRRRRRRRRRRRR <");
 					throw new Error("Fetched snapshot is not latest available");
 				} else if (snapshotSN < firstSavedOpSN) {
 					// snapshotSN === firstSavedOpSN - 1:
@@ -181,14 +193,13 @@ export class SerializedStateManager {
 					return;
 				} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
 					// Snapshot is between the first and last saved operation.
+					console.log("SNAPSHOT REFRESHHHHHHHHHHHHHHH");
 					this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
 					this.snapshot = { tree: snapshotTree, blobs };
 				} else if (snapshotSN > lastSavedOpSN) {
 					// Snapshot is newer than the newest processed op.
 					// We need to wait and catch up with the operations to reach the snapshot's state.
-					throw new Error(
-						"Snapshot is newer than the newest saved operation. Synchronization might be needed.",
-					);
+					console.log("Snapshot didn't refresh RRRRRRRRRR");
 				} else {
 					assert(!true, "Impossible case");
 				}

@@ -199,6 +199,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				},
 			},
 		);
+		// eslint-disable-next-line @typescript-eslint/no-shadow
 		const loader = testObjectProvider.createLoader(
 			[
 				[
