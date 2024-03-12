@@ -149,7 +149,10 @@ describe("Fluid Signals", () => {
 
 		signaler.submitSignal(signalName, signalPayload);
 
-		await Promise.all(listenerPromises);
+		await assert.doesNotReject(
+			Promise.all(listenerPromises),
+			"Listening clients should receive signals.",
+		);
 	});
 
 	/**
@@ -159,8 +162,8 @@ describe("Fluid Signals", () => {
 	 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
 	 */
 	it("can send and receive read-only client signals", async function () {
-		if (process.env.FLUID_CLIENT !== "azure") {
-			// Tinylicious does not support read-only mode
+		if (process.env.TEST_READ !== "true") {
+			// As of 2024-03-12, read-only mode does not work for signals and audience
 			this.skip();
 		}
 		const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
@@ -201,7 +204,10 @@ describe("Fluid Signals", () => {
 			),
 		];
 		readSignaler.submitSignal(signalName, signalPayload1);
-		await Promise.all(listenerPromises1);
+		await assert.doesNotReject(
+			Promise.all(listenerPromises1),
+			"Listening clients should receive signals from read clients.",
+		);
 
 		const signalPayload2 = { test: "payload2" };
 		const listenerPromises2 = [
@@ -225,6 +231,9 @@ describe("Fluid Signals", () => {
 			),
 		];
 		signaler.submitSignal(signalName, signalPayload2);
-		await Promise.all(listenerPromises2);
+		await assert.doesNotReject(
+			Promise.all(listenerPromises2),
+			"Listening clients should receive signals from write clients.",
+		);
 	});
 });

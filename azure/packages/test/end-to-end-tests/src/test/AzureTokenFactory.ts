@@ -16,7 +16,7 @@ export function createAzureTokenProvider(
 			id: userId,
 			name: userName,
 		};
-		return new InsecureTokenProvider(key, userConfig);
+		return new InsecureTokenProvider(key, userConfig, scopes);
 	} else {
 		throw new Error("Cannot create token provider.");
 	}
