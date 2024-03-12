@@ -89,6 +89,21 @@ export interface IFluidDataStoreRuntime
 	createChannel(id: string | undefined, type: string): IChannel;
 
 	/**
+	 * This api allows adding channel to data store after it was created.
+	 * This allows callers to cusmomize channel instance. For example, channel implementation
+	 * could have various modes of operations. As long as such configuration is provided at creation
+	 * and stored in summaries (such that all users of such channel instance behave the same), this
+	 * could be useful technique to have customized solutions without introducing a number of data structures
+	 * that all have same implementation.
+	 * This is also useful for scenarios like SharedTree DDS, where schema is provided at creation and stored in a summary.
+	 * The channel type should be present in the registry, otherwise the runtime would reject
+	 * the channel. The runtime used to create the channel object should be same to which
+	 * it is added.
+	 * @param channel - channel which needs to be added to the runtime.
+	 */
+	addChannel(channel: IChannel): void;
+
+	/**
 	 * Bind the channel with the data store runtime. If the runtime
 	 * is attached then we attach the channel to make it live.
 	 */

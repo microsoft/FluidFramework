@@ -340,6 +340,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
+
+	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 /**
@@ -354,16 +356,6 @@ export type CreateChildSummarizerNodeFn = (
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
-/**
- * @alpha
- */
-export interface IFluidDataStoreContextEvents extends IEvent {
-	(event: "attaching" | "attached", listener: () => void);
-}
-
-/**
- * @alpha
- */
 export interface IDataStoreCollection {
 	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
@@ -536,9 +528,7 @@ export interface IFluidParentContext
  * get information and call functionality to the container.
  * @alpha
  */
-export interface IFluidDataStoreContext
-	extends IEventProvider<IFluidDataStoreContextEvents>,
-		IFluidParentContext {
+export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
 	/**
 	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads

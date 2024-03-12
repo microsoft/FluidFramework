@@ -479,6 +479,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
@@ -2704,7 +2705,7 @@ export class ContainerRuntime
 		pkg: Readonly<string | string[]>,
 		props?: any,
 	): Promise<IDataStore> {
-		const context = this.channelCollection._createFluidDataStoreContext(
+		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
 			props,
 		);

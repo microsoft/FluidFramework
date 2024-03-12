@@ -20,6 +20,7 @@ import {
 	ISummarizer,
 	SummaryCollection,
 	ChannelCollectionFactory,
+	ChannelCollection,
 } from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -32,7 +33,7 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
  * unified creation APIs for the nested datastores and the container runtime.
  */
 interface IDataStores extends IFluidDataStoreChannel {
-	_createFluidDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
+	createDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
 }
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
@@ -65,6 +66,8 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	const dataStoreFactory = new ChannelCollectionFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
 		async (runtime: IFluidDataStoreChannel) => runtime,
+		(...args: ConstructorParameters<typeof ChannelCollection>) =>
+			new ChannelCollection(...args),
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -159,7 +162,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	it("Basic test", async () => {
 		const dataStores = await initialize();
 
-		const context = dataStores._createFluidDataStoreContext([testObjectFactory.type]);
+		const context = dataStores.createDataStoreContext([testObjectFactory.type]);
 		const url = `/${context.id}`;
 		const channel = await context.realize();
 		channel.makeVisibleAndAttachGraph();
