@@ -28,7 +28,7 @@ const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp", "markdown"
 
 /**
  * Snapshot directory to which generated test data will be copied.
- * Relative to dist/test
+ * Relative to lib/test
  */
 const snapshotsDirectoryPath = Path.resolve(
 	dirname,
@@ -40,7 +40,7 @@ const snapshotsDirectoryPath = Path.resolve(
 	"markdown",
 );
 
-// Relative to dist/test
+// Relative to lib/test
 const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
 const testModelFilePaths = [Path.resolve(testDataDirectoryPath, "simple-suite-test.json")];
 
