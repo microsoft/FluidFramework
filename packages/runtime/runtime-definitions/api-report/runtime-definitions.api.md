@@ -211,7 +211,6 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly id: string;
     readonly isLocalDataStore: boolean;
     readonly packagePath: readonly string[];
-    setChannelDirty(address: string): void;
 }
 
 // @alpha (undocumented)
@@ -279,6 +278,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
+    setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
