@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	IDisposable,
 	FluidObject,
@@ -14,7 +13,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -166,6 +165,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 }
 
 // back-compat: To be removed in the future.
+// Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
 /** @internal */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
@@ -829,8 +829,6 @@ export abstract class FluidDataStoreContext
 			if (op.sequenceNumber > seqNumber) {
 				channel.process(op, false, undefined /* localOpMetadata */);
 			}
-
-			this.thresholdOpsCounter.send("ProcessPendingOps", pending.length);
 		}
 		this.pending = undefined;
 
