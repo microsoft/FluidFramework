@@ -15,7 +15,6 @@ describe("End to end tests", () => {
 	 * @param expectedValue - The value we expect the value of the text area to be.
 	 */
 	async function getTextFormValue(expectedValue: string): Promise<string> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return retryWithEventualValue(
 			/* callback: */ async () =>
 				page.evaluate(() => {

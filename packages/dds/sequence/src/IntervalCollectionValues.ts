@@ -6,17 +6,18 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, serializeHandles } from "@fluidframework/shared-object-base";
 import {
-	ISerializableValue,
-	ISerializedValue,
-	IValueOperation,
-	IValueType,
-} from "./defaultMapInterfaces.js";
-import { IntervalOpType } from "./intervals/index.js";
+	ISerializableIntervalCollection,
+	ISerializedIntervalCollection,
+	IIntervalCollectionOperation,
+	IIntervalCollectionType,
+} from "./intervalCollectionMapInterfaces.js";
+import { IntervalOpType, type ISerializableInterval } from "./intervals/index.js";
+import type { IntervalCollection } from "./intervalCollection.js";
 
 /**
  * A local value to be stored in a container type DDS.
  */
-export interface ILocalValue<T = any> {
+export interface ILocalIntervalCollection<T extends ISerializableInterval> {
 	/**
 	 * Type indicator of the value stored within.
 	 */
@@ -25,7 +26,7 @@ export interface ILocalValue<T = any> {
 	/**
 	 * The in-memory value stored within.
 	 */
-	readonly value: T;
+	readonly value: IntervalCollection<T>;
 
 	/**
 	 * Retrieve the serialized form of the value stored within.
@@ -33,14 +34,14 @@ export interface ILocalValue<T = any> {
 	 * @param bind - Container type's handle
 	 * @returns The serialized form of the contained value
 	 */
-	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedIntervalCollection;
 }
 
-export function makeSerializable(
-	localValue: ILocalValue,
+export function makeSerializable<T extends ISerializableInterval>(
+	localValue: ILocalIntervalCollection<T>,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-): ISerializableValue {
+): ISerializableIntervalCollection {
 	const value = localValue.makeSerialized(serializer, bind);
 	return {
 		type: value.type,
@@ -53,15 +54,17 @@ export function makeSerializable(
  *
  * @alpha
  */
-export class ValueTypeLocalValue<T> implements ILocalValue<T> {
+export class IntervalCollectionTypeLocalValue<T extends ISerializableInterval>
+	implements ILocalIntervalCollection<T>
+{
 	/**
 	 * Create a new ValueTypeLocalValue.
 	 * @param value - The instance of the value type stored within
 	 * @param valueType - The type object of the value type stored within
 	 */
 	constructor(
-		public readonly value: T,
-		private readonly valueType: IValueType<T>,
+		public readonly value: IntervalCollection<T>,
+		private readonly valueType: IIntervalCollectionType<T>,
 	) {}
 
 	/**
@@ -74,7 +77,10 @@ export class ValueTypeLocalValue<T> implements ILocalValue<T> {
 	/**
 	 * {@inheritDoc ILocalValue.makeSerialized}
 	 */
-	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue {
+	public makeSerialized(
+		serializer: IFluidSerializer,
+		bind: IFluidHandle,
+	): ISerializedIntervalCollection {
 		const storedValueType = this.valueType.factory.store(this.value);
 		const value = serializeHandles(storedValueType, serializer, bind);
 
@@ -89,7 +95,7 @@ export class ValueTypeLocalValue<T> implements ILocalValue<T> {
 	 * @param opName - The name of the operation that needs processing
 	 * @returns The object which can process the given op
 	 */
-	public getOpHandler(opName: IntervalOpType): IValueOperation<T> {
+	public getOpHandler(opName: IntervalOpType): IIntervalCollectionOperation<T> {
 		const handler = this.valueType.ops.get(opName);
 		if (!handler) {
 			throw new Error("Unknown type message");

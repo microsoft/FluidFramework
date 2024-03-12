@@ -19,7 +19,7 @@ export {
 	IMapMessageLocalMetadata,
 	IValueOpEmitter,
 	SequenceOptions,
-} from "./defaultMapInterfaces.js";
+} from "./intervalCollectionMapInterfaces.js";
 export {
 	IInterval,
 	Interval,

@@ -7,7 +7,7 @@
  * @fileoverview In this file, we will test the functions exported by datastructres/collection.js
  */
 
-import _ from "lodash";
+import * as _ from "lodash";
 import { expect } from "chai";
 import { Collection } from "../../index";
 
