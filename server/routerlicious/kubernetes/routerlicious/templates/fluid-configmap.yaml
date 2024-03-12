@@ -83,6 +83,9 @@ data:
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
+        "webhooks": {
+            "url": "{{ .Values.webhooks.url }}"
+        },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
             "checkpointsTTLInSeconds": {{ .Values.checkpoints.checkpointsTTLInSeconds }},

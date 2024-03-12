@@ -21,6 +21,7 @@ export { StorageNameRetriever } from "./storageNameRetriever";
 export { Tenant, TenantManager } from "./tenant";
 export { Throttler } from "./throttler";
 export { ThrottlerHelper } from "./throttlerHelper";
+export { WebhookManager } from "./webhookManager";
 export {
 	BasicWebServerFactory,
 	NodeClusterWebServerFactory,

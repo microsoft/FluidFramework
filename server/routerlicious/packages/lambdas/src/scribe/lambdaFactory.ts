@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
@@ -26,6 +25,7 @@ import {
 	LambdaName,
 	MongoManager,
 	runWithRetry,
+	type IWebhookManager,
 } from "@fluidframework/server-services-core";
 import {
 	IDocumentSystemMessage,
@@ -92,6 +92,7 @@ export class ScribeLambdaFactory
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly maxLogtailLength: number,
 		private readonly maxPendingCheckpointMessagesLength: number,
+		private readonly webhookManager?: IWebhookManager,
 	) {
 		super();
 	}
@@ -331,6 +332,7 @@ export class ScribeLambdaFactory
 			document.isEphemeralContainer ?? false,
 			this.checkpointService.getLocalCheckpointEnabled(),
 			this.maxPendingCheckpointMessagesLength,
+			this.webhookManager,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

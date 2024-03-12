@@ -30,6 +30,9 @@ import {
 	IQueuedMessage,
 	IPartitionLambda,
 	LambdaCloseType,
+	IWebhookManager,
+	SummaryWebhookEvents,
+	CollabSessionWebhookEvents,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
@@ -117,6 +120,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly isEphemeralContainer: boolean,
 		private readonly localCheckpointEnabled: boolean,
 		private readonly maxPendingCheckpointMessagesLength: number,
+		private readonly webhookManager?: IWebhookManager,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -285,6 +289,15 @@ export class ScribeLambda implements IPartitionLambda {
 												tenantId: this.tenantId,
 											},
 										});
+										this.webhookManager?.handleEvent(
+											SummaryWebhookEvents.NEW_SUMMARY_CREATED,
+											{
+												eventName: SummaryWebhookEvents.NEW_SUMMARY_CREATED,
+												tenantId: this.tenantId,
+												documentId: this.documentId,
+												summaryResult,
+											},
+										);
 										Lumberjack.info(
 											summaryResult,
 											getLumberBaseProperties(this.documentId, this.tenantId),
@@ -351,6 +364,14 @@ export class ScribeLambda implements IPartitionLambda {
 
 					this.documentCheckpointManager.setNoActiveClients(true);
 					this.globalCheckpointOnly = true;
+
+					// Session end - noActiveClients
+					this.webhookManager?.handleEvent(CollabSessionWebhookEvents.SESSION_END, {
+						eventName: CollabSessionWebhookEvents.SESSION_END,
+						documentId: this.documentId,
+						tenantId: this.tenantId,
+					});
+
 					const enableServiceSummaryForTenant =
 						this.disableTransientTenantFiltering ||
 						!this.transientTenants.has(this.tenantId);
@@ -457,6 +478,12 @@ export class ScribeLambda implements IPartitionLambda {
 			}
 			this.prepareCheckpoint(message, CheckpointReason.NoClients);
 			this.documentCheckpointManager.setNoActiveClients(false);
+			// Session start - active client joins the session
+			this.webhookManager?.handleEvent(CollabSessionWebhookEvents.SESSION_START, {
+				eventName: CollabSessionWebhookEvents.SESSION_START,
+				documentId: this.documentId,
+				tenantId: this.tenantId,
+			});
 		} else {
 			const checkpointReason = this.getCheckpointReason();
 			if (checkpointReason !== undefined) {
@@ -562,17 +589,48 @@ export class ScribeLambda implements IPartitionLambda {
 				) {
 					const clonedMessage = _.cloneDeep(message);
 					clonedMessage.contents = JSON.parse(clonedMessage.contents as string);
+					let clientId;
+					if (message.type === MessageType.ClientJoin) {
+						const systemJoinMessage = message as ISequencedDocumentSystemMessage;
+						clientId = JSON.parse(systemJoinMessage.data) as string;
+						Lumberjack.info(
+							`Adding client to quorum: ${clientId}`,
+							getLumberBaseProperties(this.documentId, this.tenantId),
+						);
+					}
+					this.protocolHandler.processMessage(message, false);
+					this.webhookManager?.handleEvent(
+						CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
+						{
+							eventName: CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
+							documentId: this.documentId,
+							tenantId: this.tenantId,
+							clientId,
+							sessionActiveClientCount: this.protocolHandler.quorum.getMembers().size,
+						},
+					);
 					this.protocolHandler.processMessage(clonedMessage, false);
 				} else {
+					let clientId;
 					if (message.type === MessageType.ClientLeave) {
 						const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
-						const clientId = JSON.parse(systemLeaveMessage.data) as string;
+						clientId = JSON.parse(systemLeaveMessage.data) as string;
 						Lumberjack.info(
 							`Removing client from quorum: ${clientId}`,
 							getLumberBaseProperties(this.documentId, this.tenantId),
 						);
 					}
 					this.protocolHandler.processMessage(message, false);
+					this.webhookManager?.handleEvent(
+						CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE,
+						{
+							eventName: CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE,
+							documentId: this.documentId,
+							tenantId: this.tenantId,
+							clientId,
+							sessionActiveClientCount: this.protocolHandler.quorum.getMembers().size,
+						},
+					);
 				}
 			} catch (error) {
 				// We should mark the document as corrupt here

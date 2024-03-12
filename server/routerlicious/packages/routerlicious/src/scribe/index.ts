@@ -12,6 +12,7 @@ import {
 	TenantManager,
 } from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import * as services from "@fluidframework/server-services";
 import {
 	DefaultServiceConfiguration,
 	ICheckpointHeuristicsServerConfiguration,
@@ -154,6 +155,20 @@ export async function scribeCreate(
 		localCheckpointEnabled,
 	);
 
+	const webhookManager = new services.WebhookManager();
+	const webhookUrl = config.get("webhooks:url");
+	webhookManager.subscribe(webhookUrl, core.SummaryWebhookEvents.NEW_SUMMARY_CREATED);
+	webhookManager.subscribe(webhookUrl, core.CollabSessionWebhookEvents.SESSION_CLIENT_JOIN);
+	webhookManager.subscribe(webhookUrl, core.CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE);
+	webhookManager.subscribe(webhookUrl, core.CollabSessionWebhookEvents.SESSION_END);
+	webhookManager.subscribe(webhookUrl, core.CollabSessionWebhookEvents.SESSION_START);
+
+	console.log(
+		`SUBSCRIPTION INFORMATION: ${webhookUrl}, Count: ${
+			webhookManager.getAllSubscriptions().size
+		}`,
+	);
+
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		documentRepository,
@@ -172,6 +187,7 @@ export async function scribeCreate(
 		kafkaCheckpointOnReprocessingOp,
 		maxLogtailLength,
 		maxPendingCheckpointMessagesLength,
+		webhookManager,
 	);
 }
 

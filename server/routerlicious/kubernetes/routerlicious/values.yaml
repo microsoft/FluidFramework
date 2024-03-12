@@ -64,6 +64,9 @@ storage:
   enableWholeSummaryUpload: false
   storageUrl: storage_url
 
+webhooks:
+  url: webhooks_url
+
 checkpoints:
   localCheckpointEnabled: false
   checkpointsTTLInSeconds: -1
