@@ -25,12 +25,12 @@ export class LocalServerTestDriver implements ITestDriver {
 		return this._server;
 	}
 
-	constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
+	constructor(private readonly api: LocalDriverApiType = LocalDriverApi, maxOps = 200) {
 		this._server = api.LocalDeltaConnectionServer.create(undefined, {
 			deli: {
 				summaryNackMessages: {
 					enable: true,
-					maxOps: 200,
+					maxOps,
 					nackContent: {
 						retryAfter: 0,
 					},
