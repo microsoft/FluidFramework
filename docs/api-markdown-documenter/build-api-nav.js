@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ApiItemKind, ApiItemUtilities } from "@fluid-tools/api-markdown-documenter";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import fs from "fs-extra";
-import path from "path";
+
+import { ApiItemKind, ApiItemUtilities } from "@fluid-tools/api-markdown-documenter";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Processes documents and generates data required for the nav bar.
@@ -63,11 +67,11 @@ export async function buildNavBar(documents, version) {
 }
 
 const saveToFile = async (filename, version, data) => {
-	if (!fs.existsSync(path.join(__dirname, "..", "data", version))) {
-		fs.mkdirSync(path.join(__dirname, "..", "data", version), { recursive: true });
+	if (!fs.existsSync(path.join(dirname, "..", "data", version))) {
+		fs.mkdirSync(path.join(dirname, "..", "data", version), { recursive: true });
 	}
 	fs.writeFile(
-		path.join(__dirname, "..", "data", `${version}/${filename}`),
+		path.join(dirname, "..", "data", `${version}/${filename}`),
 		JSON.stringify(data, null, 2),
 		"utf8",
 	);
