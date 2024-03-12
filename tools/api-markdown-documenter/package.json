@@ -14,16 +14,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/api-markdown-documenter-public.d.ts",
-				"default": "./lib/index.js"
-			}
+			"import": "./lib/api-markdown-documenter-public.d.ts",
+			"types": "./lib/index.js"
 		},
 		"./beta": {
-			"import": {
-				"types": "./lib/api-markdown-documenter-beta.d.ts",
-				"default": "./lib/index.js"
-			}
+			"import": "./lib/index.js",
+			"types": "./lib/api-markdown-documenter-beta.d.ts"
 		}
 	},
 	"scripts": {
