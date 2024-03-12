@@ -32,6 +32,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common/tsconfig.node16.json # Required since this package references it by file path in its tsconfig
     - common/build/eslint-config-fluid # Required since api-markdown-documenter takes a `file:` dependency on this package
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
@@ -56,6 +57,7 @@ pr:
   paths:
     include:
     - .prettierignore
+    - common/build/build-common/tsconfig.node16.json # Required since this package references it by file path in its tsconfig
     - common/build/eslint-config-fluid # Required since api-markdown-documenter takes a `file:` dependency on this package
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml

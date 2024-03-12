@@ -11,8 +11,9 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "lib/index.js",
+	"type": "module",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"build": "concurrently npm:build:compile npm:lint && npm run build:readme && npm run build:docs",
@@ -23,7 +24,7 @@
 		"build:tsc": "npm run tsc",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
-		"clean": "rimraf --glob _api-extractor-temp nyc dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp nyc lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run prettier:fix",
@@ -37,7 +38,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test:mocha",
-		"test:mocha": "mocha \"dist/**/test/**/*.test.js\" --reporter-option maxDiffSize=100000",
+		"test:mocha": "mocha \"lib/**/test/**/*.test.js\" --reporter-option maxDiffSize=100000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:verbose": "npm run test:mocha:verbose",
 		"tsc": "tsc"
@@ -47,12 +48,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/**/test/**/*.*ts",
-			"dist/**/test/**/*.*js"
+			"lib/**/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
