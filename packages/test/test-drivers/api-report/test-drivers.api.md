@@ -76,7 +76,7 @@ export type LocalDriverApiType = typeof LocalDriverApi;
 
 // @internal (undocumented)
 export class LocalServerTestDriver implements ITestDriver {
-    constructor(api?: LocalDriverApiType, maxOps?: number);
+    constructor(api?: LocalDriverApiType, maxOpsBeforeSummary?: number);
     // (undocumented)
     createContainerUrl(testId: string): Promise<string>;
     // (undocumented)
