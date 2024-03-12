@@ -7,9 +7,6 @@
  * This script builds FF.com's redirects
  */
 
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,7 +17,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const {
 	params: { currentVersion, ltsVersion },
-} = require("./data/versions.json");
+} = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
 
 try {
 	const content = `/*!

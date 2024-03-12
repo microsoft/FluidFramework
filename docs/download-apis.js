@@ -8,9 +8,6 @@
  * Saves each model under `_doc-models/<version>`.
  */
 
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,11 +15,12 @@ import chalk from "chalk";
 import download from "download";
 import fs from "fs-extra";
 
-const versions = require("./data/versions.json");
-
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const docVersions = versions.params.previousVersions.concat(versions.params.currentVersion);
+const {
+	params: { currentVersion, previousVersions },
+} = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
+const docVersions = previousVersions.concat(currentVersion);
 
 try {
 	await Promise.all(
@@ -34,9 +32,7 @@ try {
 			// results in the docs using the api-extractor output instead of the downloaded v1 content. With the added !renderMultiversion
 			// condition, it'll correctly use _api-extractor-temp-v1
 			const versionPostfix =
-				version === versions.params.currentVersion && docVersions.length > 1
-					? ""
-					: `-${version}`;
+				version === currentVersion && docVersions.length > 1 ? "" : `-${version}`;
 			const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${versionPostfix}.tar.gz`;
 
 			const destination = path.resolve(dirname, "_doc-models", version);

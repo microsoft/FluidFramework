@@ -8,20 +8,20 @@
  * in data/versions.json.
  */
 
-import { createRequire } from "node:module";
-const require = createRequire(import.meta.url);
-
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import chalk from "chalk";
+import fs from "fs-extra";
 import { renderApiDocumentation } from "./render-api-documentation.js";
-
-const versions = require("../data/versions.json");
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const docVersions = versions.params.previousVersions.concat(versions.params.currentVersion);
+const {
+	params: { currentVersion, previousVersions },
+} = await fs.readJSON(path.resolve(dirname, "..", "data", "versions.json"));
+
+const docVersions = previousVersions.concat(currentVersion);
 
 try {
 	await Promise.all(
