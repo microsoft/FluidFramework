@@ -8,25 +8,25 @@
  * in data/versions.json.
  */
 
-const chalk = require("chalk");
-const path = require("path");
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import chalk from "chalk";
+import { renderApiDocumentation } from "./render-api-documentation.js";
+
 const versions = require("../data/versions.json");
-const { renderApiDocumentation } = require("./render-api-documentation");
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const docVersions = versions.params.previousVersions.concat(versions.params.currentVersion);
 
 Promise.all(
 	docVersions.map(async (version) => {
-		const apiReportsDirectoryPath = path.resolve(__dirname, "..", "_doc-models", version);
-
-		const apiDocsDirectoryPath = path.resolve(
-			__dirname,
-			"..",
-			"content",
-			"docs",
-			"api",
-			version,
-		);
+		const apiReportsDirectoryPath = path.resolve(dirname, "..", "_doc-models", version);
+		const apiDocsDirectoryPath = path.resolve(dirname, "..", "content", "docs", "api", version);
 
 		// Note: the leading slash in the URI root is important.
 		// It tells Hugo to enterpret the links as relative to the site root, rather than

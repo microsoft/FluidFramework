@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-const { ApiItemKind, ApiItemUtilities } = require("@fluid-tools/api-markdown-documenter");
+import { ApiItemKind, ApiItemUtilities } from "@fluid-tools/api-markdown-documenter";
 
-const fs = require("fs-extra");
-const path = require("path");
+import fs from "fs-extra";
+import path from "path";
 
 /**
  * Processes documents and generates data required for the nav bar.
  * @param {Array<Object>} documents - List of {@link @fluid-tools/api-markdown-documenter#Document}s with associated API items.
  * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
  */
-async function buildNavBar(documents, version) {
+export async function buildNavBar(documents, version) {
 	const navKinds = new Set([
 		ApiItemKind.Class,
 		ApiItemKind.Interface,
@@ -80,7 +80,3 @@ const invertMap = (obj) =>
 		}
 		return { ...acc, [value]: key };
 	}, {});
-
-module.exports = {
-	buildNavBar,
-};

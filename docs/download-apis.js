@@ -8,11 +8,19 @@
  * Saves each model under `_doc-models/<version>`.
  */
 
-const chalk = require("chalk");
-const download = require("download");
-const fs = require("fs-extra");
-const path = require("path");
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import chalk from "chalk";
+import download from "download";
+import fs from "fs-extra";
+
 const versions = require("./data/versions.json");
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const docVersions = versions.params.previousVersions.concat(versions.params.currentVersion);
 
@@ -30,7 +38,7 @@ Promise.all(
 				: `-${version}`;
 		const url = `https://fluidframework.blob.core.windows.net/api-extractor-json/latest${versionPostfix}.tar.gz`;
 
-		const destination = path.resolve(__dirname, "_doc-models", version);
+		const destination = path.resolve(dirname, "_doc-models", version);
 
 		// Delete any existing contents in the directory before downloading artifact
 		await fs.ensureDir(destination);

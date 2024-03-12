@@ -7,9 +7,17 @@
  * This script builds FF.com's redirects
  */
 
-const chalk = require("chalk");
-const fs = require("fs-extra");
-const path = require("path");
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import chalk from "chalk";
+import fs from "fs-extra";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const {
 	params: { currentVersion, ltsVersion },
 } = require("./data/versions.json");
@@ -42,7 +50,7 @@ module.exports = async (context, { headers }) => {
 	};
 };
 `;
-	const versionPath = path.resolve(__dirname, "api", "fallback", "index.js");
+	const versionPath = path.resolve(dirname, "api", "fallback", "index.js");
 	await fs.writeFile(versionPath, content);
 };
 
