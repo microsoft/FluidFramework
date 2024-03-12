@@ -16,6 +16,7 @@ class CustomDocumentationNode extends DocumentationLiteralNodeBase<string> {
 	public static readonly type = "Custom Node";
 	public readonly type = CustomDocumentationNode.type;
 	public readonly singleLine: boolean = false;
+	public readonly isEmpty: boolean = false;
 	public constructor(value: string) {
 		super(value);
 	}

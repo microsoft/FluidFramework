@@ -40,6 +40,13 @@ export class PlainTextNode
 	public readonly singleLine = true;
 
 	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		return this.value.length === 0;
+	}
+
+	/**
 	 * Whether or not the text content has already been escaped.
 	 */
 	public readonly escaped: boolean;
