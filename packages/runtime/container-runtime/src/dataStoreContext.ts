@@ -167,7 +167,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 
 // back-compat: To be removed in the future.
 /** @internal */
-interface IFluidDataStoreContextEvents extends IEvent {
+export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
