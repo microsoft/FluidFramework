@@ -16,6 +16,7 @@ import {
 	type DocParagraph,
 	type DocPlainText,
 	type DocSection,
+	type DocInlineTag,
 } from "@microsoft/tsdoc";
 
 import { type Link } from "../Link";
@@ -30,6 +31,7 @@ import {
 	PlainTextNode,
 	type SingleLineDocumentationNode,
 	SingleLineSpanNode,
+	SpanNode,
 } from "../documentation-domain";
 import { type ConfigurationBase } from "../ConfigurationBase";
 import { getTsdocNodeTransformationOptions } from "./Utilities";
@@ -113,6 +115,15 @@ export function _transformTsdocNode(
 		}
 		case DocNodeKind.HtmlEndTag: {
 			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
+		}
+		case DocNodeKind.InheritDocTag: {
+			options.logger?.error(
+				`Encountered inheritDoc tag. This is not expected. Such tags should have already undergone content replacement.`,
+			);
+			return undefined;
+		}
+		case DocNodeKind.InlineTag: {
+			return transformTsdocInlineTag(node as DocInlineTag);
 		}
 		case DocNodeKind.LinkTag: {
 			return transformTsdocLinkTag(node as DocLinkTag, options);
@@ -214,7 +225,7 @@ export function transformTsdocFencedCode(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
+ * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link SingleLineDocumentationNode}.
  */
 export function transformTsdocLinkTag(
 	input: DocLinkTag,
@@ -244,6 +255,35 @@ export function transformTsdocLinkTag(
 	throw new Error(
 		`DocLinkTag contained neither a URL destination nor a code destination, which is not expected.`,
 	);
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocInlineTag} to a {@link SpanNode} (or `undefined` if the input is a `{@label}` tag).
+ *
+ * @remarks
+ * Custom inline tags are not something the system can do anything with inherently.
+ * In the future, we may be able to add extensibility points for transforming custom inline tags.
+ * But for now, we will simply emit them as italicized plain text in the output.
+ *
+ * Notes:
+ *
+ * * `{@link}` tags are handled separately via {@link transformTsdocLinkTag}.
+ *
+ * * `{@inheritDoc}` tags are resolved when loading the API model via simple content replacement.
+ * We do not expect to see them at this stage.
+ *
+ * * `{@label}` tags aren't really intended to appear in output; they're used as extra metadata
+ * for use in `{@link}` and `{@inheritDoc}` tags, so we will simply ignore them here. I.e. we
+ * will return `undefined`.
+ */
+export function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
+	if (node.tagName === "@label") {
+		return undefined;
+	}
+
+	// For all other inline tags, there isn't really anything we can do with them except emit them
+	// as is. However, to help differentiate them in the output, we will italicize them.
+	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, { italic: true });
 }
 
 /**
@@ -290,7 +330,7 @@ function createParagraph(
 		}
 	}
 
-	// To reduce unecessary hierarchy, if the only child of this paragraph is a single paragraph,
+	// To reduce unnecessary hierarchy, if the only child of this paragraph is a single paragraph,
 	// return it, rather than wrapping it.
 	if (
 		transformedChildren.length === 1 &&
@@ -318,7 +358,7 @@ function transformChildren(
 
 	// Filter out `undefined` values resulting from transformation errors.
 	let filteredChildren = transformedChildren.filter(
-		(child) => child !== undefined,
+		(child) => child !== undefined && !child.isEmpty,
 	) as DocumentationNode[];
 
 	// Collapse groups of adjacent line breaks to reduce unnecessary clutter in the output.
