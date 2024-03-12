@@ -63,7 +63,6 @@ export async function bumpReleaseGroup(
 	releaseGroupOrPackage: MonoRepo | Package,
 	bumpType: VersionChangeType,
 	scheme?: VersionScheme,
-	// eslint-disable-next-line default-param-last
 	interdependencyRange: InterdependencyRange = DEFAULT_INTERDEPENDENCY_RANGE,
 	log?: Logger,
 ): Promise<void> {
