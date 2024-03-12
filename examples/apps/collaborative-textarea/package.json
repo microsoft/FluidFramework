@@ -14,10 +14,8 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
 		}
 	},
 	"main": "lib/index.js",
