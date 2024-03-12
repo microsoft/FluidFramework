@@ -43,5 +43,10 @@ export class LineBreakNode implements MultiLineDocumentationNode {
 	 */
 	public readonly singleLine = false;
 
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public readonly isEmpty = false;
+
 	public constructor() {}
 }

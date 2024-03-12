@@ -161,7 +161,6 @@ describe("Garbage Collection Tests", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes,
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,

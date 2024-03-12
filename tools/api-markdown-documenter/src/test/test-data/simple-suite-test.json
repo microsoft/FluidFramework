@@ -175,7 +175,7 @@
 				{
 					"kind": "Class",
 					"canonicalReference": "simple-suite-test!TestAbstractClass:class",
-					"docComment": "/**\n * A test abstract class.\n *\n * @public\n */\n",
+					"docComment": "/**\n * A test abstract class.\n *\n * {@label test-class}\n *\n * @public\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",
@@ -191,7 +191,7 @@
 						{
 							"kind": "Constructor",
 							"canonicalReference": "simple-suite-test!TestAbstractClass:constructor(1)",
-							"docComment": "/**\n * This is a constructor.\n */\n",
+							"docComment": "/**\n * This is a {@customTag constructor}.\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",

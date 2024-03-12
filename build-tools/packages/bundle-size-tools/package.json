@@ -51,7 +51,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/msgpack-lite": "^0.1.8",
 		"@types/node": "^18.18.6",

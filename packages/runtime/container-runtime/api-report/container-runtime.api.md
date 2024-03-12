@@ -156,7 +156,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     summarize(fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
-    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     waitIfPendingAlias(maybeAlias: string): Promise<AliasResult>;
@@ -246,8 +245,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     deleteChildSummarizerNode(id: string): void;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
-    // @deprecated (undocumented)
-    deleteUnusedNodes(unusedRoutes: readonly string[]): string[];
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
@@ -345,7 +342,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
-    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
