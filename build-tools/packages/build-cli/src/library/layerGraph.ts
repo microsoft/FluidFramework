@@ -6,7 +6,7 @@ import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";
 import { readJsonSync } from "fs-extra";
-import { Package, Packages } from "../common/npmPackage";
+import { Package } from "@fluidframework/build-tools";
 
 import registerDebug from "debug";
 const traceLayerCheck = registerDebug("layer-check");
@@ -32,17 +32,18 @@ interface ILayerInfoFile {
 }
 
 class BaseNode {
+	// eslint-disable-next-line no-useless-constructor
 	constructor(public readonly name: string) {}
 
-	public get dotName() {
+	public get dotName(): string {
 		return this.name.replace(/-/g, "_").toLowerCase();
 	}
 }
 
 class LayerNode extends BaseNode {
 	public packages = new Set<PackageNode>();
-	private allowedDependentPackageNodes = new Set<PackageNode>();
-	private allowedDependentLayerNodes: LayerNode[] = [];
+	private readonly allowedDependentPackageNodes = new Set<PackageNode>();
+	private readonly allowedDependentLayerNodes: LayerNode[] = [];
 
 	constructor(
 		name: string,
@@ -52,19 +53,19 @@ class LayerNode extends BaseNode {
 		super(name);
 	}
 
-	public get doDot() {
+	public get doDot(): boolean {
 		if (this.layerInfo.dot !== undefined) {
 			return this.layerInfo.dot;
 		}
 		return !this.isDev && this.groupNode.doDot;
 	}
 
-	private get dotSameRank() {
+	private get dotSameRank(): boolean {
 		// default to false
 		return this.layerInfo.dotSameRank ?? false;
 	}
 
-	public get isDev() {
+	public get isDev(): boolean {
 		// default to false
 		return this.layerInfo.dev ?? false;
 	}
@@ -72,25 +73,25 @@ class LayerNode extends BaseNode {
 	/**
 	 * Record that the given package is part of this layer
 	 */
-	public addPackage(packageNode: PackageNode) {
+	public addPackage(packageNode: PackageNode): void {
 		this.packages.add(packageNode);
 	}
 
 	/**
 	 * Record that packages in this layer are allowed to depend on the given package
 	 */
-	public addAllowedDependentPackageNode(dep: PackageNode) {
+	public addAllowedDependentPackageNode(dep: PackageNode): void {
 		this.allowedDependentPackageNodes.add(dep);
 	}
 
 	/**
 	 * Record that packages in this layer are allowed to depend on packages in the given layer
 	 */
-	public addAllowedDependentLayerNode(dep: LayerNode) {
+	public addAllowedDependentLayerNode(dep: LayerNode): void {
 		this.allowedDependentLayerNodes.push(dep);
 	}
 
-	public generateDotSubgraph() {
+	public generateDotSubgraph(): string {
 		if (!this.doDot) {
 			return "";
 		}
@@ -112,7 +113,7 @@ class LayerNode extends BaseNode {
 	/**
 	 * Verify that this layer is allowed to depend on the given PackageNode
 	 */
-	public verifyDependent(dep: PackageNode) {
+	public verifyDependent(dep: PackageNode): boolean {
 		if (this.packages.has(dep)) {
 			traceLayerCheck(`Found: ${dep.name} in ${this.name}`);
 			return true;
@@ -132,8 +133,13 @@ class LayerNode extends BaseNode {
 	}
 }
 
-/** Used for traversing the layer dependency graph */
-type LayerDependencyNode = { node: LayerNode; orderedChildren: LayerNode[] };
+/**
+ * Used for traversing the layer dependency graph
+ */
+interface LayerDependencyNode {
+	node: LayerNode;
+	orderedChildren: LayerNode[];
+}
 
 class GroupNode extends BaseNode {
 	public layerNodes: LayerNode[] = [];
@@ -145,28 +151,28 @@ class GroupNode extends BaseNode {
 		super(name);
 	}
 
-	public get doDot() {
+	public get doDot(): boolean {
 		// default to true
 		return this.groupInfo.dot ?? true;
 	}
 
-	private get dotSameRank() {
+	private get dotSameRank(): boolean {
 		// default to false
 		return this.groupInfo.dotSameRank ?? false;
 	}
 
-	private get dotGroup() {
+	private get dotGroup(): boolean {
 		// default to true
 		return this.groupInfo.dotGroup ?? true;
 	}
 
-	public createLayerNode(name: string, layerInfo: ILayerInfo) {
+	public createLayerNode(name: string, layerInfo: ILayerInfo): LayerNode {
 		const layerNode = new LayerNode(name, layerInfo, this);
 		this.layerNodes.push(layerNode);
 		return layerNode;
 	}
 
-	public generateDotSubgraph() {
+	public generateDotSubgraph(): string {
 		const sameRank = this.dotSameRank ? '\n    rank="same"' : "";
 		const subGraphs = this.layerNodes
 			.map((layerNode) => layerNode.generateDotSubgraph())
@@ -196,27 +202,27 @@ class PackageNode extends BaseNode {
 		super(name);
 	}
 
-	public get layerName() {
+	public get layerName(): string {
 		return this.layerNode.name;
 	}
 
-	public get isDev() {
+	public get isDev(): boolean {
 		return this.layerNode.isDev;
 	}
 
-	public get doDot() {
+	public get doDot(): boolean {
 		return this.layerNode.doDot;
 	}
 
-	public verifyDependent(dep: PackageNode) {
+	public verifyDependent(dep: PackageNode): boolean {
 		return this.layerNode.verifyDependent(dep);
 	}
 
-	public get dotName() {
+	public get dotName(): string {
 		return this.name.replace(/@fluidframework\//i, "").replace(/@fluid-internal\//i, "");
 	}
 
-	public get pkg() {
+	public get pkg(): Package {
 		if (!this._pkg) {
 			throw new Error(`ERROR: Package missing from PackageNode ${this.name}`);
 		}
@@ -230,7 +236,7 @@ class PackageNode extends BaseNode {
 		this._pkg = pkg;
 	}
 
-	public initializedDependencies(packageNodeMap: Map<string, PackageNode>) {
+	public initializedDependencies(packageNodeMap: Map<string, PackageNode>): void {
 		for (const dep of this.pkg.dependencies) {
 			const depPackageNode = packageNodeMap.get(dep);
 			if (depPackageNode) {
@@ -240,19 +246,24 @@ class PackageNode extends BaseNode {
 		}
 	}
 
-	/** Packages this package is directly dependent upon */
+	/**
+	 * Packages this package is directly dependent upon
+	 */
 	public get childDependencies(): Readonly<PackageNode[]> {
 		return this._childDependencies;
 	}
 
-	/** Packages this package is indirectly dependent upon */
+	/**
+	 * Packages this package is indirectly dependent upon
+	 */
 	public get indirectDependencies(): Set<PackageNode> {
 		if (this._indirectDependencies === undefined) {
 			// NOTE: recursive isn't great, but the graph should be small enough
+			// eslint-disable-next-line unicorn/no-array-reduce
 			this._indirectDependencies = this._childDependencies.reduce<Set<PackageNode>>(
 				(accum, childPackage) => {
-					childPackage.childDependencies.forEach((pkg) => accum.add(pkg));
-					childPackage.indirectDependencies.forEach((pkg) => accum.add(pkg));
+					for (const pkg of childPackage.childDependencies) accum.add(pkg);
+					for (const pkg of childPackage.indirectDependencies) accum.add(pkg);
 					return accum;
 				},
 				new Set<PackageNode>(),
@@ -263,6 +274,7 @@ class PackageNode extends BaseNode {
 
 	public get level(): number {
 		if (this._level === undefined) {
+			// eslint-disable-next-line unicorn/no-array-reduce
 			this._level = this._childDependencies.reduce<number>((accum, childPackage) => {
 				return Math.max(accum, childPackage.level + 1);
 			}, 0);
@@ -272,14 +284,16 @@ class PackageNode extends BaseNode {
 }
 
 export class LayerGraph {
-	private groupNodes: GroupNode[] = [];
-	private layerNodeMap = new Map<string, LayerNode>();
-	private packageNodeMap = new Map<string, PackageNode>();
-	/** List of all layers ordered such that all dependencies for a given layer appear earlier in the list */
-	private orderedLayers: LayerDependencyNode[] = [];
+	private readonly groupNodes: GroupNode[] = [];
+	private readonly layerNodeMap = new Map<string, LayerNode>();
+	private readonly packageNodeMap = new Map<string, PackageNode>();
+	/**
+	 * List of all layers ordered such that all dependencies for a given layer appear earlier in the list
+	 */
+	private readonly orderedLayers: LayerDependencyNode[] = [];
 	private dirMapping: { [key: string]: LayerNode } = {};
 
-	private createPackageNode(name: string, layer: LayerNode) {
+	private createPackageNode(name: string, layer: LayerNode): PackageNode {
 		if (this.packageNodeMap.get(name)) {
 			throw new Error(`ERROR: Duplicate package layer entry ${name}`);
 		}
@@ -289,7 +303,7 @@ export class LayerGraph {
 		return packageNode;
 	}
 
-	private constructor(root: string, layerInfo: ILayerInfoFile, packages: Packages) {
+	private constructor(root: string, layerInfo: ILayerInfoFile, packages: Package[]) {
 		this.initializeLayers(root, layerInfo);
 		this.initializePackages(packages);
 
@@ -297,10 +311,10 @@ export class LayerGraph {
 		this.traverseLayerDependencyGraph();
 	}
 
-	private initializeLayers(root: string, layerInfo: ILayerInfoFile) {
+	private initializeLayers(root: string, layerInfoFile: ILayerInfoFile): void {
 		// First pass get the layer nodes
-		for (const groupName of Object.keys(layerInfo)) {
-			const groupInfo = layerInfo[groupName];
+		for (const groupName of Object.keys(layerInfoFile)) {
+			const groupInfo = layerInfoFile[groupName];
 			const groupNode = new GroupNode(groupName, groupInfo);
 			this.groupNodes.push(groupNode);
 
@@ -310,12 +324,11 @@ export class LayerGraph {
 				this.layerNodeMap.set(layerName, layerNode);
 
 				if (layerInfo.dirs) {
-					layerInfo.dirs.forEach(
-						(dir) => (this.dirMapping[path.resolve(root, dir)] = layerNode),
-					);
+					for (const dir of layerInfo.dirs)
+						this.dirMapping[path.resolve(root, dir)] = layerNode;
 				}
 				if (layerInfo.packages) {
-					layerInfo.packages.forEach((pkg) => this.createPackageNode(pkg, layerNode));
+					for (const pkg of layerInfo.packages) this.createPackageNode(pkg, layerNode);
 				}
 
 				if (layerInfo.dev && layerInfo.deps) {
@@ -338,6 +351,7 @@ export class LayerGraph {
 						layerNode.addAllowedDependentLayerNode(depLayer);
 					} else {
 						const depPackage = this.packageNodeMap.get(depName);
+						// eslint-disable-next-line max-depth
 						if (depPackage === undefined) {
 							throw new Error(
 								`Missing package entry for dependency ${depName} in ${layerNode.name}`,
@@ -350,14 +364,14 @@ export class LayerGraph {
 		}
 	}
 
-	private initializePackages(packages: Packages) {
+	private initializePackages(packages: Package[]): void {
 		this.initializePackageMatching(packages);
 		this.initializeDependencies();
 	}
 
-	private initializePackageMatching(packages: Packages) {
+	private initializePackageMatching(packages: Package[]): void {
 		// Match the packages to the node if it is not explicitly specified
-		for (const pkg of packages.packages) {
+		for (const pkg of packages) {
 			const packageNode = this.packageNodeMap.get(pkg.name);
 			if (packageNode) {
 				packageNode.pkg = pkg;
@@ -368,8 +382,8 @@ export class LayerGraph {
 				if (pkg.directory.startsWith(dir)) {
 					const layerNode = this.dirMapping[dir];
 					traceLayerCheck(`${pkg.nameColored}: matched with ${layerNode.name} (${dir})`);
-					const packageNode = this.createPackageNode(pkg.name, layerNode);
-					packageNode.pkg = pkg;
+					const newPackageNode = this.createPackageNode(pkg.name, layerNode);
+					newPackageNode.pkg = pkg;
 					matched = true;
 					break;
 				}
@@ -382,13 +396,15 @@ export class LayerGraph {
 		}
 	}
 
-	private initializeDependencies() {
+	private initializeDependencies(): void {
 		for (const packageNode of this.packageNodeMap.values()) {
 			packageNode.initializedDependencies(this.packageNodeMap);
 		}
 	}
 
-	private forEachDependencies(exec: (src: PackageNode, dest: PackageNode) => boolean) {
+	private forEachDependencies(
+		exec: (src: PackageNode, dest: PackageNode) => boolean,
+	): boolean {
 		let success = true;
 		// Go thru the packages and check for dependency violation
 		for (const packageNode of this.packageNodeMap.values()) {
@@ -400,7 +416,8 @@ export class LayerGraph {
 		}
 		return success;
 	}
-	public verify() {
+
+	public verify(): boolean {
 		return this.forEachDependencies((packageNode, depPackageNode) => {
 			if (packageNode.isDev) {
 				// Don't check dependency on test packages
@@ -427,13 +444,13 @@ export class LayerGraph {
 		});
 	}
 
-	public generateDotGraph() {
+	public generateDotGraph(): string {
 		const dotEdges: string[] = [];
 		this.forEachDependencies((packageNode, depPackageNode) => {
 			if (packageNode.doDot && !packageNode.indirectDependencies.has(depPackageNode)) {
 				const suffix = packageNode.indirectDependencies.has(depPackageNode)
 					? " [constraint=false color=lightgrey]"
-					: packageNode.layerNode != depPackageNode.layerNode &&
+					: packageNode.layerNode !== depPackageNode.layerNode &&
 						  packageNode.level - depPackageNode.level > 3
 					  ? " [constraint=false]"
 					  : "";
@@ -449,7 +466,7 @@ export class LayerGraph {
 		return dotGraph;
 	}
 
-	private padArraysToSameLength(a: string[], b: string[], val: string) {
+	private padArraysToSameLength(a: string[], b: string[], val: string): void {
 		while (a.length !== b.length) {
 			if (a.length < b.length) {
 				a.push(val);
@@ -463,14 +480,14 @@ export class LayerGraph {
 	 * Walk the layers in order such that a layer's dependencies are visited before that layer.
 	 * In doing so, we can also validate that the layer dependency graph has no cycles.
 	 */
-	private traverseLayerDependencyGraph() {
+	private traverseLayerDependencyGraph(): void {
 		// Walk all packages, grouping by layers and which layers contain dependencies of that layer
 		const layers: (LayerDependencyNode & { childrenToVisit: LayerNode[] })[] = [];
 		for (const groupNode of this.groupNodes) {
 			for (const layerNode of groupNode.layerNodes) {
 				const childLayers: Set<LayerNode> = new Set();
-				for (const packageNode of [...layerNode.packages]) {
-					packageNode.childDependencies.forEach((p) => childLayers.add(p.layerNode));
+				for (const packageNode of layerNode.packages) {
+					for (const p of packageNode.childDependencies) childLayers.add(p.layerNode);
 				}
 				layers.push({
 					node: layerNode,
@@ -492,7 +509,7 @@ export class LayerGraph {
 			this.orderedLayers.push(childDepNode);
 
 			// Update all dependent layers. After this at least one layer will have no more children to visit.
-			layers.forEach((l) => {
+			for (const l of layers) {
 				const foundIdx = l.childrenToVisit.findIndex(
 					(child) => child.name === childDepNode.node.name,
 				);
@@ -501,7 +518,7 @@ export class LayerGraph {
 					const [childNode] = l.childrenToVisit.splice(foundIdx, 1);
 					l.orderedChildren.push(childNode);
 				}
-			});
+			}
 		}
 
 		// When we exit the loop above, layers will be empty... unless the layer dependency graph has cycles.
@@ -526,17 +543,18 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 	/**
 	 * Generate a markdown-formated list of layers listing their packages and dependencies
 	 */
-	public generatePackageLayersMarkdown(repoRoot: string) {
+	public generatePackageLayersMarkdown(repoRoot: string): string {
 		const lines: string[] = [];
 		let packageCount: number = 0;
 		for (const layerDepNode of this.orderedLayers) {
 			const layerNode = layerDepNode.node;
 			lines.push(`### ${layerNode.name}${newline}`);
 			const packagesInCell: string[] = [];
-			for (const packageNode of [...layerNode.packages]) {
+			for (const packageNode of layerNode.packages) {
 				++packageCount;
-				const dirRelativePath =
-					"/" + path.relative(repoRoot, packageNode.pkg.directory).replace(/\\/g, "/");
+				const dirRelativePath = `/${path
+					.relative(repoRoot, packageNode.pkg.directory)
+					.replace(/\\/g, "/")}`;
 				const ifPrivate = packageNode.pkg.isPublished ? "" : " (private)";
 				packagesInCell.push(`- [${packageNode.name}](${dirRelativePath})${ifPrivate}`);
 			}
@@ -547,8 +565,8 @@ But some packages in layer A depend on packages in layer B, and likewise some in
 			}
 
 			this.padArraysToSameLength(packagesInCell, layersInCell, "&nbsp;");
-			lines.push(`| Packages | Layer Dependencies |`);
-			lines.push(`| --- | --- |`);
+			lines.push(`| Packages | Layer Dependencies |`, `| --- | --- |`);
+			// eslint-disable-next-line unicorn/no-array-push-push
 			lines.push(
 				`| ${packagesInCell.join("</br>")} | ${layersInCell.join("</br>")} |${newline}`,
 			);
@@ -571,9 +589,10 @@ ${lines.join(newline)}
 		return packagesMdContents;
 	}
 
-	public static load(root: string, packages: Packages, info?: string): LayerGraph {
+	public static load(root: string, packages: Package[], info?: string): LayerGraph {
+		// eslint-disable-next-line unicorn/prefer-module
 		const layerInfoFile = info ?? path.join(__dirname, "..", "..", "data", "layerInfo.json");
-		const layerData: ILayerInfoFile = readJsonSync(layerInfoFile);
+		const layerData = readJsonSync(layerInfoFile) as ILayerInfoFile;
 		return new LayerGraph(root, layerData, packages);
 	}
 }
