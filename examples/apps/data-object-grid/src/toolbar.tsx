@@ -4,9 +4,9 @@
  */
 
 import React from "react";
-import Collapsible from "react-collapsible";
 import { Button } from "@fluentui/react-components";
 import { ChevronUpFilled, ChevronDownFilled, TargetEditFilled } from "@fluentui/react-icons";
+import { Collapsible } from "./collapsible.cjs";
 import { IDataObjectGridItemEntry } from "./dataObjectRegistry.js";
 import "./toolbar.css";
 import { iconMap } from "./icons.js";

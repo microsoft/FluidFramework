@@ -6,28 +6,28 @@
  * @fileoverview Serialized representation of the changes in a repository
  */
 
-import isObject from "lodash/isObject";
-import isString from "lodash/isString";
+import isObject from "lodash/isObject.js";
+import isString from "lodash/isString.js";
 import { copy as cloneDeep } from "fastest-json-copy";
-import isEmpty from "lodash/isEmpty";
-import extend from "lodash/extend";
-import each from "lodash/each";
+import isEmpty from "lodash/isEmpty.js";
+import extend from "lodash/extend.js";
+import each from "lodash/each.js";
 
 // @ts-ignore
 import { ConsoleUtils, joinPaths, constants } from "@fluid-experimental/property-common";
 
-import { TypeIdHelper } from "./helpers/typeidHelper";
-import { ChangeSetArrayFunctions } from "./changeset_operations/array";
+import { TypeIdHelper } from "./helpers/typeidHelper.js";
+import { ChangeSetArrayFunctions } from "./changeset_operations/array.js";
 
-import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
-import { ConflictType } from "./changeset_operations/changesetConflictTypes";
+import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator.js";
+import { ConflictType } from "./changeset_operations/changesetConflictTypes.js";
 // Add the indexed collection functions into the prototype of the ChangeSet
-import { ChangeSetIndexedCollectionFunctions } from "./changeset_operations/indexedCollection";
-import { isEmptyChangeSet } from "./changeset_operations/isEmptyChangeset";
-import { isReservedKeyword } from "./isReservedKeyword";
-import { Utils } from "./utils";
-import { TemplateValidator } from "./templateValidator";
-import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes";
+import { ChangeSetIndexedCollectionFunctions } from "./changeset_operations/indexedCollection.js";
+import { isEmptyChangeSet } from "./changeset_operations/isEmptyChangeset.js";
+import { isReservedKeyword } from "./isReservedKeyword.js";
+import { Utils } from "./utils.js";
+import { TemplateValidator } from "./templateValidator.js";
+import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes.js";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
