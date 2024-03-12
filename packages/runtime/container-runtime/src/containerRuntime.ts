@@ -2678,12 +2678,18 @@ export class ContainerRuntime
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.getAliasedDataStoreEntryPoint}
+	 */
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
 		return this.channelCollection.getAliasedDataStoreEntryPoint(alias);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.createDetachedDataStore}
+	 */
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
@@ -2691,6 +2697,9 @@ export class ContainerRuntime
 		return this.channelCollection.createDetachedDataStore(pkg, loadingGroupId);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.createDataStore}
+	 */
 	public async createDataStore(
 		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,

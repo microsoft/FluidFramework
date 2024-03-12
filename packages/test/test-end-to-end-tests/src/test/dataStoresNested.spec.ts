@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { strict as assert } from "assert";
 import {
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
@@ -27,14 +27,6 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-
-/**
- * ADO:7302 This needs to be revisited after settling on a set of
- * unified creation APIs for the nested datastores and the container runtime.
- */
-interface IDataStores extends IFluidDataStoreChannel {
-	createDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
-}
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -78,9 +70,9 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	async function addContainer(container: IContainer) {
 		containers.push(container);
-		const dataStores = (await container.getEntryPoint()) as IDataStores;
+		const channelCollection = (await container.getEntryPoint()) as ChannelCollection;
 		await provider.ensureSynchronized();
-		return { container, dataStores };
+		return { container, channelCollection };
 	}
 
 	const createContainer = async () => {
@@ -144,7 +136,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	 * @returns collab space
 	 */
 	async function initialize() {
-		const { container, dataStores } = await createContainer();
+		const { container, channelCollection } = await createContainer();
 
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(container.deltaManager, createChildLogger());
@@ -156,26 +148,25 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 		// Have a second container that follows passively the first one
 		await addContainerInstance();
 		await provider.ensureSynchronized();
-		return dataStores;
+		return channelCollection;
 	}
 
 	it("Basic test", async () => {
-		const dataStores = await initialize();
+		const channelCollection1 = await initialize();
 
-		const context = dataStores.createDataStoreContext([testObjectFactory.type]);
+		const context = channelCollection1.createDataStoreContext([testObjectFactory.type]);
 		const url = `/${context.id}`;
 		const channel = await context.realize();
 		channel.makeVisibleAndAttachGraph();
-		const testObject1 = (await dataStores.request({ url })).value as TestFluidObject;
+		const testObject1 = (await channelCollection1.request({ url })).value as TestFluidObject;
 		testObject1.root.set("testKey", 100);
 
 		await waitForSummary();
-		const dataStores2 = (await addContainerInstance()).dataStores;
+		const channelCollection2 = (await addContainerInstance()).channelCollection;
 
 		await provider.ensureSynchronized();
 
-		const testObject2 = (await dataStores2.request({ url })).value as TestFluidObject;
-		const value = testObject2.root.get("testKey");
-		assert(value === 100, "same value");
+		const testObject2 = (await channelCollection2.request({ url })).value as TestFluidObject;
+		assert.strictEqual(testObject2.root.get("testKey"), 100, "same value");
 	});
 });

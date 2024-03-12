@@ -99,12 +99,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDataStoreColl
     protected readonly contexts: DataStoreContexts;
     // (undocumented)
     protected createContext<T extends LocalFluidDataStoreContext>(id: string, pkg: Readonly<string[]>, contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T, createProps?: any, loadingGroupId?: string): T;
-    // (undocumented)
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // (undocumented)
     createDataStoreContext(pkg: Readonly<string[]>, props?: any, loadingGroupId?: string): IFluidDataStoreContextInternal;
     protected createDataStoreId(): string;
-    // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[];
     // (undocumented)
@@ -113,7 +111,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDataStoreColl
     get disposed(): boolean;
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
-    // (undocumented)
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
@@ -239,11 +236,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get connected(): boolean;
     // (undocumented)
     get containerRuntime(): this;
-    // (undocumented)
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any): Promise<IDataStore>;
-    // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     // (undocumented)
@@ -272,7 +267,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     });
     // (undocumented)
     readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
-    // (undocumented)
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     // (undocumented)
     getAudience(): IAudience;

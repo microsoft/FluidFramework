@@ -610,6 +610,9 @@ export class ChannelCollection
 		return id;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.createDetachedDataStore}
+	 */
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
@@ -670,6 +673,9 @@ export class ChannelCollection
 		return context;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.createDataStore}
+	 */
 	public async createDataStore(
 		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
@@ -682,6 +688,9 @@ export class ChannelCollection
 		return channelToDataStore(await context.realize(), context.id, this, this.mc.logger);
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.getAliasedDataStoreEntryPoint}
+	 */
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
