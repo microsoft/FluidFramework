@@ -53,11 +53,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     static getFactory(): IChannelFactory;
     // (undocumented)
     protected initializeLocalCore(): void;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onConnect(): void;
-    // (undocumented)
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     queued(taskId: string): boolean;

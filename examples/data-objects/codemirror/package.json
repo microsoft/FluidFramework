@@ -11,14 +11,22 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			}
+		}
+	},
 	"main": "lib/index.js",
-	"module": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
-		"build:esnext": "tsc",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
@@ -53,14 +61,13 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"codemirror": "^5.48.4",
-		"events": "^3.1.0",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/codemirror": "5.60.7",
 		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",

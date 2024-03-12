@@ -7,7 +7,7 @@
 //       to unblock testing of SharedMatrix undo while we decide on the correct layering
 //       for undo.
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { IRevertible } from "../types.js";
 
 enum UndoRedoMode {

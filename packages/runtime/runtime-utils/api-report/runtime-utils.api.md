@@ -62,6 +62,9 @@ export function createResponseError(status: number, value: string, request: IReq
     [key: string]: any;
 }): IResponse;
 
+// @internal
+export function encodeCompactIdToString(idArg: number | string, prefix?: string): string;
+
 // @internal (undocumented)
 export function exceptionToResponse(err: any): IResponse;
 
@@ -191,13 +194,9 @@ export class SummaryTreeBuilder implements ISummaryTreeWithStats {
 
 // @internal (undocumented)
 export class TelemetryContext implements ITelemetryContext {
-    // (undocumented)
     get(prefix: string, property: string): TelemetryBaseEventPropertyType;
-    // (undocumented)
     serialize(): string;
-    // (undocumented)
     set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
-    // (undocumented)
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 

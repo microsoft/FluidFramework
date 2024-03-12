@@ -31,12 +31,12 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	IMapMessageLocalMetadata,
-	IValueFactory,
+	IIntervalCollectionFactory,
 	IValueOpEmitter,
-	IValueOperation,
-	IValueType,
+	IIntervalCollectionOperation,
+	IIntervalCollectionType,
 	SequenceOptions,
-} from "./defaultMapInterfaces";
+} from "./intervalCollectionMapInterfaces.js";
 import {
 	CompressedSerializedInterval,
 	IIntervalHelpers,
@@ -53,7 +53,7 @@ import {
 	startReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	createInterval,
-} from "./intervals";
+} from "./intervals/index.js";
 import {
 	EndpointIndex,
 	IEndpointIndex,
@@ -62,7 +62,7 @@ import {
 	IntervalIndex,
 	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
-} from "./intervalIndex";
+} from "./intervalIndex/index.js";
 
 /**
  * Defines a position and side relative to a character in a sequence.
@@ -477,9 +477,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-class SequenceIntervalCollectionFactory
-	implements IValueFactory<IntervalCollection<SequenceInterval>>
-{
+class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory<SequenceInterval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -502,7 +500,7 @@ class SequenceIntervalCollectionFactory
 }
 
 export class SequenceIntervalCollectionValueType
-	implements IValueType<IntervalCollection<SequenceInterval>>
+	implements IIntervalCollectionType<SequenceInterval>
 {
 	public static Name = "sharedStringIntervalCollection";
 
@@ -510,21 +508,21 @@ export class SequenceIntervalCollectionValueType
 		return SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<SequenceInterval>> {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Interval>> {
+class IntervalCollectionFactory implements IIntervalCollectionFactory<Interval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -543,35 +541,31 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 	}
 }
 
-export class IntervalCollectionValueType implements IValueType<IntervalCollection<Interval>> {
+export class IntervalCollectionValueType implements IIntervalCollectionType<Interval> {
 	public static Name = "sharedIntervalCollection";
 
 	public get name(): string {
 		return IntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<Interval>> {
+	public get factory(): IIntervalCollectionFactory<Interval> {
 		return IntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<Interval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<Interval>> {
 		return IntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
+	private static readonly _factory: IIntervalCollectionFactory<Interval> =
 		new IntervalCollectionFactory();
 	private static readonly _ops = makeOpsMap<Interval>();
 }
 
 export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	IntervalOpType,
-	IValueOperation<IntervalCollection<T>>
+	IIntervalCollectionOperation<T>
 > {
-	const rebase: IValueOperation<IntervalCollection<T>>["rebase"] = (
-		collection,
-		op,
-		localOpMetadata,
-	) => {
+	const rebase: IIntervalCollectionOperation<T>["rebase"] = (collection, op, localOpMetadata) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
 		if (rebasedValue === undefined) {
@@ -581,7 +575,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
+	return new Map<IntervalOpType, IIntervalCollectionOperation<T>>([
 		[
 			IntervalOpType.ADD,
 			{
@@ -996,7 +990,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return !!this.localCollection;
 	}
 
-	/** @internal */
 	constructor(
 		private readonly helpers: IIntervalHelpers<TInterval>,
 		private readonly requiresClient: boolean,
@@ -1115,7 +1108,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return rebased;
 	}
 
-	/** @internal */
 	public attachGraph(client: Client, label: string) {
 		if (this.attached) {
 			throw new LoggingError("Only supports one Sequence attach");
@@ -1506,7 +1498,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return entries && entries.length !== 0;
 	}
 
-	/** @internal */
 	public ackChange(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
@@ -1611,7 +1602,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	 * deleted as a result of rebasing. This can occur if the interval applies
 	 * to a range that no longer exists, and the interval was unable to slide.
 	 *
-	 * @internal
 	 */
 	public rebaseLocalInterval(
 		opName: string,
@@ -1803,7 +1793,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
-	/** @internal */
 	public ackAdd(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
@@ -1849,7 +1838,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return interval;
 	}
 
-	/** @internal */
 	public ackDelete(
 		serializedInterval: ISerializedInterval,
 		local: boolean,
@@ -1873,9 +1861,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
-	/**
-	 * @internal
-	 */
 	public serializeInternal(): ISerializedIntervalCollectionV2 {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");

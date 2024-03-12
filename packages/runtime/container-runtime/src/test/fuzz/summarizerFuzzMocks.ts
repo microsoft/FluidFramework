@@ -24,7 +24,7 @@ import {
 	type IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { type ISummaryConfiguration } from "../..";
+import { type ISummaryConfiguration } from "../../index.js";
 import {
 	IConnectableRuntime,
 	Summarizer,
@@ -41,8 +41,8 @@ import {
 	type IRefreshSummaryAckOptions,
 	RunWhileConnectedCoordinator,
 	type IGeneratedSummaryStats,
-} from "../../summary";
-import type { IThrottler } from "../../throttler";
+} from "../../summary/index.js";
+import type { IThrottler } from "../../throttler.js";
 
 export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRuntimeFactoryForReconnection {
 	override createContainerRuntime(

@@ -24,7 +24,8 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MatrixItem, SharedMatrix } from "../matrix.js";
+import { SharedMatrix } from "../matrix.js";
+import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
 import { _dirname } from "./dirname.cjs";
 
@@ -209,8 +210,13 @@ describe("Matrix fuzz tests", function () {
 	 * This makes some seeds rather slow (since that cost is paid 3 times per recycled row/col per client).
 	 * Despite this accounting for 95% of test runtime when profiled, this codepath doesn't appear to be a bottleneck
 	 * in profiled production scenarios investigated at the time of writing.
+	 *
+	 * This timeout is set to 30s to avoid flakiness on CI, but it's worth noting the vast majority of these test cases
+	 * do not go anywhere near this.
+	 * We've previously skipped the long seeds, but that tended to lead to more code churn when adding features to the
+	 * underlying harness (which affects which seeds are the slow ones).
 	 */
-	this.timeout(5000);
+	this.timeout(30_000);
 	const model: Omit<DDSFuzzModel<TypedMatrixFactory, Operation>, "workloadName"> = {
 		factory: new TypedMatrixFactory(),
 		generatorFactory: () => takeAsync(50, makeGenerator()),
@@ -242,8 +248,6 @@ describe("Matrix fuzz tests", function () {
 	createDDSFuzzSuite(nameModel("default"), {
 		...baseOptions,
 		reconnectProbability: 0,
-		// Seeds are slow but otherwise pass, see comment on timeout above.
-		skip: [68],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -256,8 +260,6 @@ describe("Matrix fuzz tests", function () {
 			clientAddProbability: 0,
 		},
 		reconnectProbability: 0.1,
-		// Seeds needing investigation, tracked by AB#7088.
-		skip: [20, 42, 90],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -269,8 +271,6 @@ describe("Matrix fuzz tests", function () {
 			flushMode: FlushMode.TurnBased,
 			enableGroupedBatching: true,
 		},
-		// Seed 7 is slow but otherwise passes, see comment on timeout above.
-		skip: [7],
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});
@@ -281,9 +281,7 @@ describe("Matrix fuzz tests", function () {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
 			stashableClientProbability: 0.5,
-		}, // Uncomment to replay a particular seed.
-		// Seeds 7 and 23 are slow but otherwise pass, see comment on timeout above.
-		skip: [7, 23],
+		},
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 	});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
@@ -14,27 +14,30 @@ import {
 	IResponse,
 	FluidObject,
 } from "@fluidframework/core-interfaces";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import {
+import type { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type {
 	IClientDetails,
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
-import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
-import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
-import { IInboundSignalMessage } from "./protocol";
-import {
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import type {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollectionDefinitions.js";
+import type { IInboundSignalMessage } from "./protocol.js";
+import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	SummarizeInternalFn,
-} from "./summary";
+} from "./summary.js";
 
 /**
  * Runtime flush mode handling
@@ -118,6 +121,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+	(event: "dispose", listener: () => void);
 }
 
 /**
@@ -165,6 +169,7 @@ export interface IDataStore {
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
+	readonly disposed: boolean;
 
 	/**
 	 * Invokes the given callback and guarantees that all operations generated within the callback will be ordered
@@ -186,7 +191,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * @deprecated 0.16 Issue #1537, #3631
 	 */
 	_createDataStoreWithProps(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		props?: any,
 		id?: string,
 	): Promise<IDataStore>;
@@ -202,7 +207,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(pkg: string | string[], loadingGroupId?: string): Promise<IDataStore>;
+	createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -235,6 +240,30 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Returns the current audience.
 	 */
 	getAudience(): IAudience;
+
+	/**
+	 * Generates a new ID that is guaranteed to be unique across all sessions for this container.
+	 * It could be in compact form (non-negative integer, oppotunistic), but it could also be UUID string.
+	 * UUIDs generated will have low entropy in groups and will compress well.
+	 * It can be leveraged anywhere in container where container unique IDs are required, i.e. any place
+	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
+	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
+	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
+	 *
+	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
+	 */
+	generateDocumentUniqueId(): number | string;
+
+	/**
+	 * Api to fetch the snapshot from the service for a loadingGroupIds.
+	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
+	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
+	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 */
+	getSnapshotForLoadingGroupId(
+		loadingGroupIds: string[],
+		pathParts: string[],
+	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
 }
 
 /**
@@ -245,21 +274,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
-	readonly id: string;
-
-	/**
-	 * Indicates the attachment state of the channel to a host service.
-	 */
-	readonly attachState: AttachState;
-
-	readonly visibilityState: VisibilityState;
-
-	/**
-	 * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
-	 * @deprecated This will be removed in favor of {@link IFluidDataStoreChannel.makeVisibleAndAttachGraph}.
-	 */
-	attachGraph(): void;
-
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
 	 * bound handles that represent its dependencies in the container's graph.
@@ -279,12 +293,17 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	/**
 	 * Processes the op.
 	 */
-	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+	process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+		addedOutboundReference?: (fromNodePath: string, toNodePath: string) => void,
+	): void;
 
 	/**
 	 * Processes the signal.
 	 */
-	processSignal(message: any, local: boolean): void;
+	processSignal(message: IInboundSignalMessage, local: boolean): void;
 
 	/**
 	 * Generates a summary for the channel.
@@ -345,6 +364,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
+
+	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 /**
@@ -360,42 +381,21 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 /**
+ * Represents the context for the data store like objects. It is used by the data store runtime to
+ * get information and call functionality to its parent.
+ *
+ * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
+ *
  * @alpha
  */
-export interface IFluidDataStoreContextEvents extends IEvent {
-	(event: "attaching" | "attached", listener: () => void);
-}
-
-/**
- * Represents the context for the data store. It is used by the data store runtime to
- * get information and call functionality to the container.
- * @alpha
- */
-export interface IFluidDataStoreContext
-	extends IEventProvider<IFluidDataStoreContextEvents>,
-		Partial<IProvideFluidDataStoreRegistry>,
-		IProvideFluidHandleContext {
-	readonly id: string;
-	/**
-	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
-	 * from a snapshot, all the data stores are treated as local data stores because at that stage the container
-	 * still doesn't exists in storage and so the data store couldn't have been created by any other client.
-	 * Value of this never changes even after the data store is attached.
-	 * As implementer of data store runtime, you can use this property to check that this data store belongs to this
-	 * client and hence implement any scenario based on that.
-	 */
-	readonly isLocalDataStore: boolean;
-	/**
-	 * The package path of the data store as per the package factory.
-	 */
-	readonly packagePath: readonly string[];
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface IFluidParentContext
+	extends IProvideFluidHandleContext,
+		Partial<IProvideFluidDataStoreRegistry> {
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IDocumentStorageService;
-	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
@@ -412,14 +412,12 @@ export interface IFluidDataStoreContext
 	readonly containerRuntime: IContainerRuntimeBase;
 
 	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	readonly createProps?: any;
-
-	/**
 	 * Ambient services provided with the context
 	 */
 	readonly scope: FluidObject;
+
+	readonly gcThrowOnTombstoneUsage: boolean;
+	readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
 	 * Returns the current quorum.
@@ -466,12 +464,6 @@ export interface IFluidDataStoreContext
 	makeLocallyVisible(): void;
 
 	/**
-	 * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
-	 * @param address - The address of the channel that is dirty.
-	 */
-	setChannelDirty(address: string): void;
-
-	/**
 	 * Get an absolute url to the container based on the provided relativeUrl.
 	 * Returns undefined if the container or data store isn't attached to storage.
 	 * @param relativeUrl - A relative request within the container
@@ -492,15 +484,9 @@ export interface IFluidDataStoreContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	deleteChildSummarizerNode?(id: string): void;
 
-	/**
-	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
-	 *
-	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
-	 * and its children with the GC details from the previous summary.
-	 */
-	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
@@ -513,7 +499,52 @@ export interface IFluidDataStoreContext
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+	addedGCOutboundReference?(
+		srcHandle: { absolutePath: string },
+		outboundHandle: { absolutePath: string },
+	): void;
+
+	/**
+	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
+	 * @param address - The address of the channel that is dirty.
+	 */
+	setChannelDirty(address: string): void;
+}
+
+/**
+ * Represents the context for the data store. It is used by the data store runtime to
+ * get information and call functionality to the container.
+ * @alpha
+ */
+export interface IFluidDataStoreContext extends IFluidParentContext {
+	readonly id: string;
+	/**
+	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
+	 * from a snapshot, all the data stores are treated as local data stores because at that stage the container
+	 * still doesn't exists in storage and so the data store couldn't have been created by any other client.
+	 * Value of this never changes even after the data store is attached.
+	 * As implementer of data store runtime, you can use this property to check that this data store belongs to this
+	 * client and hence implement any scenario based on that.
+	 */
+	readonly isLocalDataStore: boolean;
+	/**
+	 * The package path of the data store as per the package factory.
+	 */
+	readonly packagePath: readonly string[];
+	readonly baseSnapshot: ISnapshotTree | undefined;
+
+	/**
+	 * @deprecated 0.16 Issue #1635, #3631
+	 */
+	readonly createProps?: any;
+
+	/**
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
+	 *
+	 * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
+	 * and its children with the GC details from the previous summary.
+	 */
+	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
 	/**
 	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)

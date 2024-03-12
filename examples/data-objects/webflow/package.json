@@ -13,15 +13,13 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"main": "dist/index.js",
-	"module": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/",
-		"build:esnext": "tsc",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"dev": "npm run build:esnext -- --watch",
 		"eslint": "eslint --format stylish src",
@@ -41,9 +39,9 @@
 		"start:tinylicious": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs \"dist/test/**/*.spec.js\"",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -53,7 +51,7 @@
 		"exclude": [
 			"**/*.d.*ts",
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"extension": [
@@ -64,7 +62,7 @@
 		],
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"require": [
@@ -83,7 +81,6 @@
 		"@fluidframework/sequence": "workspace:~",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
-		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
 	},
@@ -93,7 +90,7 @@
 		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/debug": "^4.1.5",
@@ -137,18 +134,6 @@
 				],
 				"library": "main"
 			}
-		}
-	},
-	"fluidBuild": {
-		"tasks": {
-			"eslint": [
-				"build:esnext",
-				"build:test"
-			],
-			"build:test": [
-				"...",
-				"build:esnext"
-			]
 		}
 	},
 	"typeValidation": {

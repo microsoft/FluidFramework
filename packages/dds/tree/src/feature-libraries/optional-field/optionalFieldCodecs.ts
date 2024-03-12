@@ -4,12 +4,13 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
+import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
-import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
-import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
+import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
 export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
@@ -83,15 +84,38 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 	return {
 		encode: (change: OptionalChangeset<TChildChange>, context: ChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
-			if (change.moves.length > 0) {
-				encoded.m = [];
-				for (const [src, dst, type] of change.moves) {
+			encoded.m = [];
+
+			if (change.valueReplace !== undefined) {
+				if (change.valueReplace.src !== undefined) {
 					encoded.m.push([
-						registerIdCodec.encode(src, context),
-						registerIdCodec.encode(dst, context),
-						type === "nodeTargeting",
+						registerIdCodec.encode(change.valueReplace.src, context),
+						registerIdCodec.encode("self", context),
+						true,
 					]);
 				}
+
+				if (change.valueReplace.isEmpty) {
+					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context);
+				} else {
+					encoded.m.push([
+						registerIdCodec.encode("self", context),
+						registerIdCodec.encode(change.valueReplace.dst, context),
+						false,
+					]);
+				}
+			}
+
+			for (const [src, dst] of change.moves) {
+				encoded.m.push([
+					registerIdCodec.encode(src, context),
+					registerIdCodec.encode(dst, context),
+					true,
+				]);
+			}
+
+			if (encoded.m.length === 0) {
+				delete encoded.m;
 			}
 
 			if (change.childChanges.length > 0) {
@@ -104,24 +128,34 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 				}
 			}
 
-			if (change.reservedDetachId !== undefined) {
-				encoded.d = registerIdCodec.encode(change.reservedDetachId, context);
-			}
-
 			return encoded;
 		},
 
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>, context: ChangeEncodingContext) => {
-			const moves: OptionalChangeset["moves"] =
-				encoded.m?.map(
-					([src, dst, type]) =>
-						[
-							registerIdCodec.decode(src, context),
-							registerIdCodec.decode(dst, context),
-							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
-						] as const,
-				) ?? [];
-			const decoded: OptionalChangeset<TChildChange> = {
+			// The register that the node in the optional field is moved to upon detach
+			let detached: RegisterId | undefined;
+			// The register that the node is moved from to upon attaching that node in the optional field
+			let attached: RegisterId | undefined;
+			const moves: Move[] = [];
+			if (encoded.m !== undefined) {
+				for (const [encodedSrc, encodedDst] of encoded.m) {
+					const src = registerIdCodec.decode(encodedSrc, context);
+					const dst = registerIdCodec.decode(encodedDst, context);
+					if (src === "self" || dst === "self") {
+						if (src === "self") {
+							assert(detached === undefined, 0x8d0 /* Multiple detached nodes */);
+							detached = dst;
+						}
+						if (dst === "self") {
+							assert(attached === undefined, 0x8d1 /* Multiple attached nodes */);
+							attached = src;
+						}
+					} else {
+						moves.push([src, dst]);
+					}
+				}
+			}
+			const decoded: Mutable<OptionalChangeset<TChildChange>> = {
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
@@ -130,8 +164,55 @@ function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					]) ?? [],
 			};
 
-			if (encoded.d !== undefined) {
-				decoded.reservedDetachId = registerIdCodec.decode(encoded.d, context);
+			if (detached !== undefined && attached !== undefined) {
+				if (detached === "self" || attached === "self") {
+					assert(
+						encoded.d !== undefined,
+						0x8d2 /* Invalid change: pin must have a reserved detach ID */,
+					);
+					const reserved = registerIdCodec.decode(encoded.d, context);
+					assert(reserved !== "self", 0x8d3 /* Invalid reserved detach ID */);
+					decoded.valueReplace = { isEmpty: false, dst: reserved, src: "self" };
+				} else {
+					assert(
+						encoded.d === undefined,
+						0x8d4 /* Invalid change: unexpected reserved detach ID on a change that detaches a node from the field */,
+					);
+					decoded.valueReplace = {
+						isEmpty: false,
+						dst: detached,
+						src: attached,
+					};
+				}
+			} else if (attached !== undefined) {
+				assert(
+					encoded.d !== undefined,
+					0x8d5 /* Invalid change: attach must have a reserved detach ID */,
+				);
+				const reserved = registerIdCodec.decode(encoded.d, context);
+				assert(reserved !== "self", 0x8d6 /* Invalid reserved detach ID */);
+				decoded.valueReplace = {
+					isEmpty: true,
+					dst: reserved,
+					src: attached,
+				};
+			} else if (detached !== undefined) {
+				assert(
+					encoded.d === undefined,
+					0x8d7 /* Invalid change: unexpected reserved detach ID on a change that detaches a node from the field */,
+				);
+				assert(detached !== "self", 0x8d8 /* Invalid detach ID */);
+				decoded.valueReplace = {
+					isEmpty: false,
+					dst: detached,
+				};
+			} else if (encoded.d !== undefined) {
+				const detachId = registerIdCodec.decode(encoded.d, context);
+				assert(detachId !== "self", 0x8d9 /* Invalid detach ID */);
+				decoded.valueReplace = {
+					isEmpty: true,
+					dst: detachId,
+				};
 			}
 			return decoded;
 		},

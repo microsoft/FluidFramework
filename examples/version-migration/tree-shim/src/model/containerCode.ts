@@ -20,7 +20,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	public constructor() {
 		super(
 			new Map([InventoryListFactory.registryEntry]), // registryEntries
-			{ enableRuntimeIdCompressor: true },
+			{ enableRuntimeIdCompressor: "on" },
 		);
 	}
 

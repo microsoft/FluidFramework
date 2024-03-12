@@ -8,9 +8,9 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions";
-import { ConsensusRegisterCollection } from "./consensusRegisterCollection";
-import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { ConsensusRegisterCollection } from "./consensusRegisterCollection.js";
+import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue.

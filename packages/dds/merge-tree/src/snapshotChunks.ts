@@ -8,10 +8,10 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PropertySet } from "./properties";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { IJSONSegment } from "./ops";
-import { SerializedAttributionCollection } from "./attributionCollection";
+import { PropertySet } from "./properties.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { IJSONSegment } from "./ops.js";
+import { SerializedAttributionCollection } from "./attributionCollection.js";
 
 export interface VersionedMergeTreeChunk {
 	version: undefined | "1";

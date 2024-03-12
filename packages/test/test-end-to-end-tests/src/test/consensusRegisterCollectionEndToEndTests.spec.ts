@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ISharedMap, SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import type { IConsensusRegisterCollection } from "@fluidframework/register-collection";
 import {
 	ITestObjectProvider,
@@ -45,17 +45,17 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-		sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+		sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		sharedMap2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
 		const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-		sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+		sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 	});
 
 	it("Basic functionality", async () => {
@@ -303,7 +303,7 @@ describeCompat(
 		it("grouped batching doesn't hit 0x071", async () => {
 			const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
 			const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-			const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+			const sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			const collection = ConsensusRegisterCollection.create(dataObject.runtime);
 

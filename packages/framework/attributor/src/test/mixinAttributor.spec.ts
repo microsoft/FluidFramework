@@ -24,11 +24,11 @@ import {
 	enableOnNewFileKey,
 	type IProvideRuntimeAttributor,
 	mixinAttributor,
-} from "../mixinAttributor";
-import { Attributor } from "../attributor";
-import { makeLZ4Encoder } from "../lz4Encoder";
-import { AttributorSerializer, chain, deltaEncoder } from "../encoders";
-import { makeMockAudience } from "./utils";
+} from "../mixinAttributor.js";
+import { Attributor } from "../attributor.js";
+import { makeLZ4Encoder } from "../lz4Encoder.js";
+import { AttributorSerializer, chain, deltaEncoder } from "../encoders.js";
+import { makeMockAudience } from "./utils.js";
 
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];

@@ -15,8 +15,8 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { AzureClient } from "../AzureClient";
-import { type AzureLocalConnectionConfig } from "../interfaces";
+import { AzureClient } from "../AzureClient.js";
+import { type AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(scopes?: ScopeType[]): AzureClient {
 	const connectionProperties: AzureLocalConnectionConfig = {
