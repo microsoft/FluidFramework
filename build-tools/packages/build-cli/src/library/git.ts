@@ -6,8 +6,6 @@ import { Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import readPkgUp from "read-pkg-up";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
-
-// type-fest seems to trigger this lint rule, which seems to be a false positive.
 import type { SetRequired } from "type-fest";
 
 import { CommandLogger } from "../logging";
