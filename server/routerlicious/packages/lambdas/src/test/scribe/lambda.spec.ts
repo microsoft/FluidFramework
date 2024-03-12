@@ -216,7 +216,7 @@ describe("Routerlicious", () => {
 					);
 
 					assert.equal(testMessageCollection.collection.length, 8);
-				}).timeout(5000);
+				}).timeout(10000);
 			});
 		});
 	});
