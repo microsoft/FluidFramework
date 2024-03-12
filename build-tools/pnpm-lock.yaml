@@ -67,7 +67,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': workspace:~
       '@fluidframework/bundle-size-tools': workspace:~
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.42.3
       '@oclif/core': ^3.9.0
       '@oclif/plugin-autocomplete': ^2.3.10
@@ -185,7 +185,7 @@ importers:
     devDependencies:
       '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/async': 3.2.20
       '@types/chai': 4.3.5
       '@types/chai-arrays': 2.0.0
@@ -224,7 +224,7 @@ importers:
       '@fluid-tools/version-tools': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/bundle-size-tools': workspace:~
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@manypkg/get-packages': ^2.2.0
       '@octokit/core': ^4.2.4
       '@rushstack/node-core-library': ^3.59.5
@@ -297,7 +297,7 @@ importers:
       yaml: 2.3.1
     devDependencies:
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/async': 3.2.20
       '@types/fs-extra': 8.1.2
       '@types/glob': 7.2.0
@@ -317,7 +317,7 @@ importers:
   packages/bundle-size-tools:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/msgpack-lite': ^0.1.8
       '@types/node': ^18.18.6
@@ -342,7 +342,7 @@ importers:
       webpack: 5.88.1
     devDependencies:
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.42.3_@types+node@18.18.6
       '@types/msgpack-lite': 0.1.8
       '@types/node': 18.18.6
@@ -356,7 +356,7 @@ importers:
   packages/readme-command:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@oclif/core': ^3.9.0
       '@oclif/plugin-help': ^6.0.4
       '@oclif/plugin-plugins': ^3.9.4
@@ -387,7 +387,7 @@ importers:
       semver: 7.5.4
     devDependencies:
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@oclif/test': 2.3.33_6aghfyf5eabo7u6nxooxqsbtpq
       '@types/chai': 4.3.5
       '@types/chai-arrays': 2.0.0
@@ -410,7 +410,7 @@ importers:
     specifiers:
       '@fluid-private/readme-command': workspace:~
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.42.3
       '@oclif/core': ^3.9.0
       '@oclif/plugin-autocomplete': ^2.3.10
@@ -456,7 +456,7 @@ importers:
     devDependencies:
       '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.42.3_@types+node@18.18.6
       '@oclif/test': 2.3.33_6aghfyf5eabo7u6nxooxqsbtpq
       '@types/chai': 4.3.5
@@ -911,6 +911,18 @@ packages:
     resolution: {integrity: sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
+  /@fluid-internal/eslint-plugin-fluid/0.1.1_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-7CNeAjn81BPvq/BKc1nQo/6HUZXg4KUAglFuCX6HFCnpGPrDLdm7cdkrGyA1tExB1EGnCAPFzVNbSqSYcwJnag==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@typescript-eslint/parser': 6.9.0_bpztyfltmpuv6lhsgzfwtmxhte
+      ts-morph: 20.0.0
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
+    dev: true
+
   /@fluid-tools/build-cli/0.29.0_bpztyfltmpuv6lhsgzfwtmxhte:
     resolution: {integrity: sha512-gQyW8SfBtP9bdn+6KzaCCVv5Qo0K2gYaIuULSe8VGYWJLtv65ftPnIyZw9T8GZPhXhhmKHDPsCQrGH7Tr1Pucw==}
     engines: {node: '>=14.17.0'}
@@ -1064,9 +1076,10 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/eslint-config-fluid/4.0.0_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {integrity: sha512-mLE+1uocMaMACF51EPhnGgLi2okbKRAPE53RzC3Jd2CfqqIGk2sk8yrsvw7KVfeBp8w0Mf646ZM17yAbNTErDg==}
+  /@fluidframework/eslint-config-fluid/5.1.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-PJEe6Otz3bJScEUg20oaPnzj3L9cM3L10vNz0o6AooskqLLUcV7BMUTucOSFhad20CffWXMIY7XarvRSTWVDDw==}
     dependencies:
+      '@fluid-internal/eslint-plugin-fluid': 0.1.1_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
@@ -2436,6 +2449,15 @@ packages:
       minimatch: 5.1.6
       mkdirp: 1.0.4
       path-browserify: 1.0.1
+
+  /@ts-morph/common/0.21.0:
+    resolution: {integrity: sha512-ES110Mmne5Vi4ypUKrtVQfXFDtCsDXiUiGxF6ILVlE90dDD4fdpC1LSjydl/ml7xJWKSDZwUYD2zkOePMSrPBA==}
+    dependencies:
+      fast-glob: 3.3.1
+      minimatch: 7.4.6
+      mkdirp: 2.1.6
+      path-browserify: 1.0.1
+    dev: true
 
   /@tsconfig/node10/1.0.9:
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}
@@ -4017,6 +4039,10 @@ packages:
 
   /code-block-writer/11.0.3:
     resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
+
+  /code-block-writer/12.0.0:
+    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
+    dev: true
 
   /color-convert/1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
@@ -7944,6 +7970,12 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  /mkdirp/2.1.6:
+    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: true
+
   /mocha-json-output-reporter/2.1.0_mocha@10.2.0+moment@2.29.4:
     resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
     peerDependencies:
@@ -10400,6 +10432,13 @@ packages:
     dependencies:
       '@ts-morph/common': 0.18.1
       code-block-writer: 11.0.3
+
+  /ts-morph/20.0.0:
+    resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
+    dependencies:
+      '@ts-morph/common': 0.21.0
+      code-block-writer: 12.0.0
+    dev: true
 
   /ts-node/10.9.1_6aghfyf5eabo7u6nxooxqsbtpq:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
