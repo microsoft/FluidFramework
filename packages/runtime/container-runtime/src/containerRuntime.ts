@@ -2816,6 +2816,7 @@ export class ContainerRuntime
 				}
 				break;
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.GC: {
 				return false;
 			}
