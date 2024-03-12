@@ -9,7 +9,7 @@ import {
 	TransformedEvent,
 	IEventTransformer,
 	IEventProvider,
-} from "@fluidframework/common-definitions";
+} from "@fluidframework/core-interfaces";
 
 /**
  * The event emitter polyfill and the node event emitter have different event types:
