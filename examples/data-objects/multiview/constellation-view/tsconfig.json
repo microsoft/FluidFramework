@@ -2,6 +2,7 @@
 	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
 		"outDir": "./lib",
+		"rootDir": "./src",
 		"types": ["react", "react-dom"],
 	},
 	"include": ["src/**/*"],
