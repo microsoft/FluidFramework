@@ -117,7 +117,7 @@ export function _transformTsdocNode(
 			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
 		}
 		case DocNodeKind.InheritDocTag: {
-			options.logger?.verbose(
+			options.logger?.error(
 				`Encountered inheritDoc tag. This is not expected. Such tags should have already undergone content replacement.`,
 			);
 			return undefined;
@@ -263,7 +263,7 @@ export function transformTsdocLinkTag(
  * @remarks
  * Custom inline tags are not something the system can do anything with inherently.
  * In the future, we may be able to add extensibility points for transforming custom inline tags.
- * But for now, we will simply emit them as plain text in the output.
+ * But for now, we will simply emit them as italicized plain text in the output.
  *
  * Notes:
  *
