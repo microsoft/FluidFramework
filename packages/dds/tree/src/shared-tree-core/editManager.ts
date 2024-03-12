@@ -443,7 +443,7 @@ export class EditManager<
 		assert(
 			oldestCommitInCollabWindow.parent !== undefined ||
 				oldestCommitInCollabWindow === this.trunkBase,
-			"Expected oldest commit in collab window to have a parent or be the trunk base",
+			0x8c7 /* Expected oldest commit in collab window to have a parent or be the trunk base */,
 		);
 
 		// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists

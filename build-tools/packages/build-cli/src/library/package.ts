@@ -2,14 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	Context,
-	Logger,
-	MonoRepo,
-	Package,
-	VersionDetails,
-	updatePackageJsonFile,
-} from "@fluidframework/build-tools";
+import { Logger, MonoRepo, Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import {
 	InterdependencyRange,
 	ReleaseVersion,
@@ -44,6 +37,7 @@ import {
 	selectAndFilterPackages,
 } from "../filter";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
+import { Context, VersionDetails } from "./context";
 
 /**
  * An object that maps package names to version strings or range strings.
