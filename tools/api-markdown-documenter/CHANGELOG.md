@@ -2,6 +2,7 @@
 
 ## 0.14.0
 
+-   Updated the package to emit ESM only.
 -   Fixed a bug where [inline tags](https://tsdoc.org/pages/spec/tag_kinds/#inline-tags) (other than `{@link}` and `{@inheritDoc}`, which are handled specially by API-Extractor) were not handled and resulted in errors being logged to the console.
     Such tags are now handled in the following way:
     -   [{@label}](https://tsdoc.org/pages/tags/label/) tags are simply omitted from the output (they are intended as metadata, not documentation content).
@@ -9,6 +10,8 @@
 
 ### ⚠ BREAKING CHANGES
 
+-   The package now outputs ESM only.
+    Consumers will have to migrate accordingly.
 -   `DocumentationNode` now has a required `isEmpty` property.
     Implementations will need to provide this.
 
