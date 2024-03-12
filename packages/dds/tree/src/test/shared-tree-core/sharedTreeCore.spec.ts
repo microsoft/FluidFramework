@@ -167,11 +167,6 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("newRevertible", (revertible) => {
-			revertible.discard();
-		});
-
 		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
 		assert.equal(getTrunkLength(tree), 1);
@@ -217,11 +212,6 @@ describe("SharedTreeCore", () => {
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
-		});
-
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("newRevertible", (revertible) => {
-			revertible.discard();
 		});
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.

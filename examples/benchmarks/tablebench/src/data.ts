@@ -5,7 +5,7 @@
 
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { InsertableTypedNode } from "@fluidframework/tree";
-import { Row } from "./tree";
+import { Row } from "./tree/index.js";
 
 export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {
 	const [itemType, unitPrice, unitCost] = random.pick([
