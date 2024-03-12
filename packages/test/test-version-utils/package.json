@@ -14,22 +14,11 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
 		},
-		"./public": {
-			"import": {
-				"types": "./lib/test-version-utils-public.d.ts",
-				"default": "./lib/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			}
+		"./mocharc-common": {
+			"require": "./mocharc-common.cjs"
 		}
 	},
 	"main": "lib/index.js",
@@ -64,12 +53,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
