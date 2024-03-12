@@ -1571,7 +1571,7 @@ export class ContainerRuntime
 				close: this.closeFn,
 				connected: () => this.connected,
 				reSubmit: (message: IPendingBatchMessage) => {
-					this.reSubmit.bind(this);
+					this.reSubmit(message);
 					this.flush();
 				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
