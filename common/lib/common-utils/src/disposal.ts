@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from"@fluidframework/core-interfaces";
+import { IDisposable } from "@fluidframework/common-definitions";
 
 /**
  * Returns a wrapper around the provided function, which will only invoke the inner function if the provided
