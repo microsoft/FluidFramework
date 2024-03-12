@@ -3052,24 +3052,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This is called to update objects whose routes are unused.
-	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-		this.channelCollection.updateUnusedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * @deprecated Replaced by deleteSweepReadyNodes.
-	 */
-	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
-		throw new Error("deleteUnusedRoutes should not be called");
-	}
-
-	/**
 	 * After GC has run and identified nodes that are sweep ready, this is called to delete the sweep ready nodes.
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 * @returns The routes of nodes that were deleted.
