@@ -9,7 +9,7 @@ import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 
-describe.only("obliterate delta callback", () => {
+describe("obliterate delta callback", () => {
 	useStrictPartialLengthChecks();
 
 	let length: number;
