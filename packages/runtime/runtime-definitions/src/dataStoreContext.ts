@@ -356,6 +356,11 @@ export type CreateChildSummarizerNodeFn = (
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
+/**
+ * To be implemented by classes which are able to create datastores and fetch them via their alias
+ *
+ * @alpha
+ */
 export interface IDataStoreCollection {
 	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
