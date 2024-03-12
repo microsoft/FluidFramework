@@ -68,9 +68,7 @@ export async function npmCheckUpdates(
 	depsToUpdate: ReleasePackage[] | RegExp[],
 	releaseGroupFilter: ReleaseGroup | undefined,
 	depUpdateType: DependencyUpdateType,
-	// eslint-disable-next-line default-param-last
 	prerelease = false,
-	// eslint-disable-next-line default-param-last
 	writeChanges = false,
 	log?: Logger,
 ): Promise<{
@@ -480,7 +478,6 @@ export async function setVersion(
 	context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
 	version: semver.SemVer,
-	// eslint-disable-next-line default-param-last
 	interdependencyRange: InterdependencyRange = "^",
 	log?: Logger,
 ): Promise<void> {
@@ -745,9 +742,7 @@ export async function npmCheckUpdatesHomegrown(
 	releaseGroup: ReleaseGroup | ReleasePackage | undefined,
 	depsToUpdate: ReleasePackage[],
 	releaseGroupFilter: ReleaseGroup | undefined,
-	// eslint-disable-next-line default-param-last
 	prerelease = false,
-	// eslint-disable-next-line default-param-last
 	writeChanges = true,
 	log?: Logger,
 ): Promise<{
