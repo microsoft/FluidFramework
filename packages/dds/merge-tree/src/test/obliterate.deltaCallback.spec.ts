@@ -38,88 +38,99 @@ describe("obliterate delta callback", () => {
 		};
 	});
 
-	it("works", () => {
-		const helper = new ReconnectTestHelper();
+	describe("is invoked", () => {
+		it("on local obliterate", () => {
+			const helper = new ReconnectTestHelper();
 
-		let count = 0;
+			let count = 0;
 
-		helper.clients.A.on("delta", (opArgs, deltaArgs) => {
-			if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
-				count += 1;
-			}
+			helper.clients.A.on("delta", (opArgs, deltaArgs) => {
+				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+					count += 1;
+				}
+			});
+
+			helper.insertText("A", 0, "a");
+			assert.equal(count, 0);
+			helper.obliterateRange("A", 0, 1);
+			assert.equal(count, 1);
+			helper.processAllOps();
+			assert.equal(count, 1);
+			assert.equal(helper.clients.A.getText(), "");
+
+			helper.logger.validate();
 		});
 
-		// local
-		helper.insertText("A", 0, "a");
-		assert.equal(count, 0);
-		helper.obliterateRange("A", 0, 1);
-		assert.equal(count, 1);
-		helper.processAllOps();
-		assert.equal(count, 1);
-		assert.equal(helper.clients.A.getText(), "");
+		it("on remote obliterate", () => {
+			const helper = new ReconnectTestHelper();
 
-		// remote
-		helper.insertText("B", 0, "a");
-		assert.equal(count, 1);
-		helper.obliterateRange("B", 0, 1);
-		assert.equal(count, 1);
-		helper.processAllOps();
-		assert.equal(count, 2);
-		assert.equal(helper.clients.A.getText(), "");
+			let count = 0;
 
-		helper.logger.validate();
+			helper.clients.A.on("delta", (opArgs, deltaArgs) => {
+				if (opArgs.op.type === MergeTreeDeltaType.OBLITERATE) {
+					count += 1;
+				}
+			});
+
+			helper.insertText("B", 0, "a");
+			assert.equal(count, 1);
+			helper.obliterateRange("B", 0, 1);
+			assert.equal(count, 1);
+			helper.processAllOps();
+			assert.equal(count, 2);
+			assert.equal(helper.clients.A.getText(), "");
+
+			helper.logger.validate();
+		});
 	});
 
-	it("overlapping obliterate+remove", () => {
+	describe("overlapping obliterate and remove", () => {
+		const text = "abcdef";
+
+		it("remove first", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.clients.A.on("delta", cb);
+
+			helper.insertText("A", 0, text);
+			helper.processAllOps();
+			assert.equal(length, text.length);
+			helper.removeRange("B", 0, text.length);
+			helper.obliterateRange("C", 0, text.length);
+			helper.processAllOps();
+			assert.equal(length, 0);
+
+			helper.logger.validate();
+
+			helper.clients.A.off("delta", cb);
+		});
+
+		it("obliterate first", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.clients.A.on("delta", cb);
+
+			helper.insertText("B", 0, text);
+			helper.processAllOps();
+			assert.equal(length, text.length);
+			helper.obliterateRange("C", 0, text.length);
+			helper.removeRange("B", 0, text.length);
+			helper.processAllOps();
+			assert.equal(length, 0);
+
+			helper.logger.validate();
+
+			helper.clients.A.off("delta", cb);
+		});
+	});
+
+	it("overlapping obliterate and obliterate", () => {
 		const helper = new ReconnectTestHelper();
 
 		helper.clients.A.on("delta", cb);
 
 		const text = "abcdef";
 
-		// obliterate first
-		helper.insertText("B", 0, text);
-		helper.processAllOps();
-		assert.equal(length, text.length);
-		helper.obliterateRange("C", 0, text.length);
-		helper.removeRange("B", 0, text.length);
-		helper.processAllOps();
-		assert.equal(length, 0);
-
-		helper.logger.validate();
-
-		helper.clients.A.off("delta", cb);
-	});
-
-	it("overlapping remove+obliterate", () => {
-		const helper = new ReconnectTestHelper();
-
-		helper.clients.A.on("delta", cb);
-
-		const text = "abcdef";
-
-		// remove first
-		helper.insertText("A", 0, text);
-		helper.processAllOps();
-		assert.equal(length, text.length);
-		helper.removeRange("B", 0, text.length);
-		helper.obliterateRange("C", 0, text.length);
-		helper.processAllOps();
-		assert.equal(length, 0);
-
-		helper.logger.validate();
-
-		helper.clients.A.off("delta", cb);
-	});
-
-	it("overlapping obliterate+obliterate", () => {
-		const helper = new ReconnectTestHelper();
-
-		helper.clients.A.on("delta", cb);
-
-		const text = "abcdef";
-
-		// obliterate first
 		helper.insertText("B", 0, text);
 		helper.processAllOps();
 		assert.equal(length, text.length);
@@ -133,33 +144,43 @@ describe("obliterate delta callback", () => {
 		helper.clients.A.off("delta", cb);
 	});
 
-	it("insert into obliterated range", () => {
-		const helper = new ReconnectTestHelper();
-
-		helper.clients.A.on("delta", cb);
-
+	describe("insert into obliterated range", () => {
 		const text = "abcdef";
 
-		// insert first
-		helper.insertText("B", 0, text);
-		helper.processAllOps();
-		assert.equal(length, text.length);
-		helper.insertText("B", 3, text);
-		helper.obliterateRange("C", 0, text.length);
-		helper.processAllOps();
-		assert.equal(length, 0);
+		it("insert first", () => {
+			const helper = new ReconnectTestHelper();
 
-		// obliterate first
-		helper.insertText("B", 0, text);
-		helper.processAllOps();
-		assert.equal(length, text.length);
-		helper.obliterateRange("C", 0, text.length);
-		helper.insertText("B", 3, text);
-		helper.processAllOps();
-		assert.equal(length, 0);
+			helper.clients.A.on("delta", cb);
 
-		helper.logger.validate();
+			helper.insertText("B", 0, text);
+			helper.processAllOps();
+			assert.equal(length, text.length);
+			helper.insertText("B", 3, text);
+			helper.obliterateRange("C", 0, text.length);
+			helper.processAllOps();
+			assert.equal(length, 0);
 
-		helper.clients.A.off("delta", cb);
+			helper.logger.validate();
+
+			helper.clients.A.off("delta", cb);
+		});
+
+		it("obliterate first", () => {
+			const helper = new ReconnectTestHelper();
+
+			helper.clients.A.on("delta", cb);
+
+			helper.insertText("B", 0, text);
+			helper.processAllOps();
+			assert.equal(length, text.length);
+			helper.obliterateRange("C", 0, text.length);
+			helper.insertText("B", 3, text);
+			helper.processAllOps();
+			assert.equal(length, 0);
+
+			helper.logger.validate();
+
+			helper.clients.A.off("delta", cb);
+		});
 	});
 });
