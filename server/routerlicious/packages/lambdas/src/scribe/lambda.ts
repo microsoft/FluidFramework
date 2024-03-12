@@ -598,7 +598,7 @@ export class ScribeLambda implements IPartitionLambda {
 							getLumberBaseProperties(this.documentId, this.tenantId),
 						);
 					}
-					this.protocolHandler.processMessage(message, false);
+					this.protocolHandler.processMessage(clonedMessage, false);
 					this.webhookManager?.handleEvent(
 						CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
 						{
@@ -609,7 +609,6 @@ export class ScribeLambda implements IPartitionLambda {
 							sessionActiveClientCount: this.protocolHandler.quorum.getMembers().size,
 						},
 					);
-					this.protocolHandler.processMessage(clonedMessage, false);
 				} else {
 					let clientId;
 					if (message.type === MessageType.ClientLeave) {
