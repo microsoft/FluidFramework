@@ -318,6 +318,5 @@ export abstract class TreeView {
 }
 
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (side + index) as PlaceIndex;
 }
