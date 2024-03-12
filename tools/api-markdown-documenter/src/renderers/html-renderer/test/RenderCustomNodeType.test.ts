@@ -4,10 +4,10 @@
  */
 import { expect } from "chai";
 
-import { DocumentationLiteralNodeBase } from "../../../documentation-domain";
-import { type DocumentWriter } from "../../DocumentWriter";
-import { type RenderContext } from "../RenderContext";
-import { testRender } from "./Utilities";
+import { DocumentationLiteralNodeBase } from "../../../documentation-domain/index.js";
+import { type DocumentWriter } from "../../DocumentWriter.js";
+import { type RenderContext } from "../RenderContext.js";
+import { testRender } from "./Utilities.js";
 
 /**
  * Mock custom {@link DocumentationNode} for use in the tests below.

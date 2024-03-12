@@ -4,9 +4,9 @@
  */
 import type { Parent as UnistParent } from "unist";
 
-import { type ApiItem } from "..";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { type SectionNode } from "./SectionNode";
+import { type ApiItem } from "../index.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { type SectionNode } from "./SectionNode.js";
 
 /**
  * {@link DocumentNode} construction properties.

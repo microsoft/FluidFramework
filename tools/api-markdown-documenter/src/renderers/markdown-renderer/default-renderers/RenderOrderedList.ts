@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { OrderedListNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode } from "../Render";
-import type { RenderContext } from "../RenderContext";
-import { renderNodeWithHtmlSyntax } from "../Utilities";
+import type { OrderedListNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import { renderNode } from "../Render.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderNodeWithHtmlSyntax } from "../Utilities.js";
 
 /**
  * Renders a {@link OrderedListNode} as Markdown.

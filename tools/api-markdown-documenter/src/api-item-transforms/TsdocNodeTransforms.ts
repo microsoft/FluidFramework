@@ -19,7 +19,7 @@ import {
 	type DocInlineTag,
 } from "@microsoft/tsdoc";
 
-import { type Link } from "../Link";
+import { type Link } from "../Link.js";
 import {
 	CodeSpanNode,
 	type DocumentationNode,
@@ -32,10 +32,10 @@ import {
 	type SingleLineDocumentationNode,
 	SingleLineSpanNode,
 	SpanNode,
-} from "../documentation-domain";
-import { type ConfigurationBase } from "../ConfigurationBase";
-import { getTsdocNodeTransformationOptions } from "./Utilities";
-import { type ApiItemTransformationConfiguration } from "./configuration";
+} from "../documentation-domain/index.js";
+import { type ConfigurationBase } from "../ConfigurationBase.js";
+import { getTsdocNodeTransformationOptions } from "./Utilities.js";
+import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
