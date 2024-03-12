@@ -727,14 +727,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
-	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]): void {
-		this.deleteBlobsFromRedirectTable(unusedRoutes);
-	}
-
-	/**
 	 * Delete attachment blobs that are sweep ready.
 	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
 	 * be based off of local ids.
