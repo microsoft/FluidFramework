@@ -2966,7 +2966,6 @@ importers:
 
   examples/external-data:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-example/example-utils': workspace:~
       '@fluid-internal/client-utils': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -3069,7 +3068,6 @@ importers:
       style-loader: 1.3.0_webpack@5.89.0
       valid-url: 1.0.9
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
