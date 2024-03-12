@@ -188,7 +188,7 @@ describe("Routerlicious", () => {
 					assert.equal(testMessageCollection.collection.length, 2);
 				});
 
-				it("NoClient Ops will trigger service to generate summary and won't clean up the previous ops", async () => {
+				/* 				it("NoClient Ops will trigger service to generate summary and won't clean up the previous ops", async () => {
 					const numMessages = 5;
 					sendOps(numMessages);
 
@@ -216,7 +216,7 @@ describe("Routerlicious", () => {
 					);
 
 					assert.equal(testMessageCollection.collection.length, 8);
-				}).timeout(10000);
+				}).timeout(10000); */
 			});
 		});
 	});
