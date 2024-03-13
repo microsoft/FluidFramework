@@ -14,7 +14,9 @@ module.exports = (env) => {
 		},
 		resolve: {
 			extensionAlias: {
+				".cjs": [".cts", ".cjs"],
 				".js": [".ts", ".tsx", ".js"],
+				".mjs": [".mts", ".mjs"],
 			},
 			extensions: [".ts", ".tsx", ".js"],
 		},

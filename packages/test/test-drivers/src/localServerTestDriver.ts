@@ -25,12 +25,21 @@ export class LocalServerTestDriver implements ITestDriver {
 		return this._server;
 	}
 
-	constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
+	/**
+	 * LocalServerTestDriver constructor
+	 * @param api - driver API
+	 * @param maxOpsBeforeSummary - tells how many ops service allows to be sequenced before requiring a summary.
+	 * If a test submits more ops, connection will disconnec with nack and error message "Submit a summary before inserting additional operations"
+	 */
+	constructor(
+		private readonly api: LocalDriverApiType = LocalDriverApi,
+		maxOpsBeforeSummary = 200,
+	) {
 		this._server = api.LocalDeltaConnectionServer.create(undefined, {
 			deli: {
 				summaryNackMessages: {
 					enable: true,
-					maxOps: 200,
+					maxOps: maxOpsBeforeSummary,
 					nackContent: {
 						retryAfter: 0,
 					},
