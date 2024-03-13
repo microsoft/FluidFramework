@@ -10,41 +10,12 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"type": "commonjs",
-	"exports": {
-		".": {
-			"default": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"types": "./dist/azure-local-service-alpha.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./beta": {
-			"types": "./dist/azure-local-service-beta.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./internal": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
-		},
-		"./public": {
-			"types": "./dist/azure-local-service-public.d.ts",
-			"default": "./dist/index.js"
-		}
-	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"bin": "dist/index.js",
+	"type": "module",
+	"bin": "lib/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
-		"ci:build:docs": "api-extractor run",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -53,22 +24,19 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"start": "pm2 start -n azure-local-service dist/index.js",
-		"start:debug": "node --inspect=0.0.0.0:9229 dist/index.js",
+		"start": "pm2 start -n azure-local-service lib/index.js",
+		"start:debug": "node --inspect=0.0.0.0:9229 lib/index.js",
 		"stop": "pm2 stop azure-local-service",
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"tsc": "tsc"
+		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"dependencies": {
-		"tinylicious": "^3.1.0-240326"
+		"tinylicious": "^4.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
-		"@microsoft/api-extractor": "^7.39.1",
-		"eslint": "~8.50.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"pm2": "^5.3.1",
 		"prettier": "~3.0.3",

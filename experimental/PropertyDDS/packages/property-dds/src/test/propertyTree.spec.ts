@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import _ from "lodash";
+import * as _ from "lodash";
 
 import { expect } from "chai";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -278,7 +278,7 @@ describe("PropertyDDS summarizer", () => {
 
 describe("PropertyTree", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const propertyDdsId = "PropertyTree";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",

@@ -6,10 +6,10 @@ import { strict as assert } from "node:assert";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
-import { createOdspUrl } from "../createOdspUrl";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
+import { createOdspUrl } from "../createOdspUrl.js";
 
 describe("Odsp Driver Resolver", () => {
 	const siteUrl = "https://localhost";
@@ -70,7 +70,7 @@ describe("Odsp Driver Resolver", () => {
 			type: "fluid",
 			odspResolvedUrl: true,
 			id: "odspCreateNew",
-			url: "fluid-odsp://https://localhost?driveId=driveId&path=path&version=null",
+			url: "https://https://localhost?driveId=driveId&path=path&version=null",
 			siteUrl: "https://localhost",
 			hashedDocumentId: "",
 			driveId: "driveId",
@@ -283,7 +283,7 @@ describe("Odsp Driver Resolver", () => {
 		);
 
 		const expectedResolvedUrl =
-			`fluid-odsp://${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}` +
+			`https://${siteUrl}?driveId=${driveId}&path=${testFilePath}&itemId=${itemId}` +
 			`&version=null`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
@@ -316,8 +316,7 @@ describe("Odsp Driver Resolver", () => {
 		);
 
 		const expectedResolvedUrl =
-			`fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` +
-			`${testFilePath}`;
+			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
@@ -349,8 +348,7 @@ describe("Odsp Driver Resolver", () => {
 		);
 
 		const expectedResolvedUrl =
-			`fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` +
-			`${testFilePath}`;
+			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
@@ -382,8 +380,7 @@ describe("Odsp Driver Resolver", () => {
 		);
 
 		const expectedResolvedUrl =
-			`fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` +
-			`${testFilePath}`;
+			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
@@ -393,7 +390,7 @@ describe("Odsp Driver Resolver", () => {
 
 		assert.strictEqual(
 			resolvedUrl.url,
-			"fluid-odsp://placeholder/placeholder/AV5r7rhbMqs3T5cL8TUpqk6FpWldev0qKsKlnjkC5mg%3D/",
+			"https://placeholder/placeholder/AV5r7rhbMqs3T5cL8TUpqk6FpWldev0qKsKlnjkC5mg%3D/",
 		);
 	});
 
@@ -427,8 +424,7 @@ describe("Odsp Driver Resolver", () => {
 		assert.strictEqual(resolvedUrl.fileVersion, fileVersion, "FileVersion should be equal");
 
 		const expectedResolvedUrl =
-			`fluid-odsp://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` +
-			`${testFilePath}`;
+			`https://placeholder/placeholder/${resolvedUrl.hashedDocumentId}/` + `${testFilePath}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 });

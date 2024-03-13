@@ -12,8 +12,8 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { ContainerRuntime } from "./containerRuntime";
-import { DataStores } from "./dataStores";
+import { ChannelCollection } from "./channelCollection.js";
+import { ContainerMessageType } from "./messageTypes.js";
 
 /**
  * Interface for an op to be used for assigning an
@@ -44,10 +44,9 @@ export const isDataStoreAliasMessage = (
 export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
-	runtime: ContainerRuntime,
-	datastores: DataStores,
+	channelCollection: ChannelCollection,
 	logger: ITelemetryLoggerExt,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
 	Aliased = "Aliased",
@@ -113,11 +112,13 @@ class DataStore implements IDataStore {
 			internalId: this.internalId,
 			alias,
 		};
-
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
-		if (this.runtime.attachState === AttachState.Detached) {
-			const localResult = this.datastores.processAliasMessageCore(message);
+		if (this.parentContext.attachState === AttachState.Detached) {
+			const localResult = this.channelCollection.processAliasMessageCore(
+				this.internalId,
+				alias,
+			);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
 			this.aliasState = AliasState.Aliased;
@@ -125,7 +126,7 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.runtime.submitDataStoreAliasOp(message, resolve);
+			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(
@@ -170,11 +171,11 @@ class DataStore implements IDataStore {
 	constructor(
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
-		private readonly runtime: ContainerRuntime,
-		private readonly datastores: DataStores,
+		private readonly channelCollection: ChannelCollection,
 		private readonly logger: ITelemetryLoggerExt,
+		private readonly parentContext = channelCollection.parentContext,
 	) {
-		this.pendingAliases = datastores.pendingAliases;
+		this.pendingAliases = channelCollection.pendingAliases;
 	}
 
 	private async ackBasedPromise<T>(
@@ -190,15 +191,15 @@ class DataStore implements IDataStore {
 					new Error("ContainerRuntime disposed while this ack-based Promise was pending"),
 				);
 
-			if (this.runtime.disposed) {
+			if (this.parentContext.containerRuntime.disposed) {
 				rejectBecauseDispose();
 				return;
 			}
 
-			this.runtime.on("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.on("dispose", rejectBecauseDispose);
 			executor(resolve, reject);
 		}).finally(() => {
-			this.runtime.off("dispose", rejectBecauseDispose);
+			this.parentContext.containerRuntime.off("dispose", rejectBecauseDispose);
 		});
 	}
 }

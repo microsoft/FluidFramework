@@ -53,7 +53,7 @@ export function revert(
 	changes: readonly ChangeInternal[],
 	before: RevisionView,
 	logger?: ITelemetryLoggerExt,
-	emit?: (event: string | symbol, ...args: any[]) => void
+	emit?: (event: string, ...args: any[]) => void
 ): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 

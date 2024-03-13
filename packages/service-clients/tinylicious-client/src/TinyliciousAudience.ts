@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { type TinyliciousMember, type TinyliciousUser } from "./interfaces";
+import { type TinyliciousMember, type TinyliciousUser } from "./interfaces.js";
 
 /**
  * Creates a {@link TinyliciousMember} for the provided client.

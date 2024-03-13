@@ -190,6 +190,7 @@ describe("defaultFieldKinds", () => {
 			const inverted = fieldHandler.rebaser.invert(
 				taggedChange,
 				childInverter,
+				true,
 				idAllocatorFromMaxId(),
 				failCrossFieldManager,
 				defaultRevisionMetadataFromChanges([taggedChange]),

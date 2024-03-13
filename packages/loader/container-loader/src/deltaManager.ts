@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import {
 	IThrottlingWarning,
 	IEventProvider,
-	ITelemetryProperties,
+	ITelemetryBaseProperties,
 	type ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import {
@@ -49,9 +49,9 @@ import {
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { ThrottlingWarning } from "./error";
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { ThrottlingWarning } from "./error.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -361,7 +361,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
 	}
 
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,

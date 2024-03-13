@@ -6,7 +6,7 @@
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
-import type { SharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -51,8 +51,8 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	let remoteContainer: IContainer;
 	let localDataObject: ITestFluidObject;
 	let remoteDataObject: ITestFluidObject;
-	let localMap: SharedMap;
-	let remoteMap: SharedMap;
+	let localMap: ISharedMap;
+	let remoteMap: ISharedMap;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
 		return {
@@ -72,12 +72,12 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
 		localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
-		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
+		localMap = await localDataObject.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
 		remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
-		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
+		remoteMap = await remoteDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await waitForContainerConnection(localContainer, true);
 		await waitForContainerConnection(remoteContainer, true);
@@ -91,13 +91,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		crypto.randomBytes(sizeInBytes / 2).toString("hex");
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
-	const setMapKeys = (map: SharedMap, count: number, item: string): void => {
+	const setMapKeys = (map: ISharedMap, count: number, item: string): void => {
 		for (let i = 0; i < count; i++) {
 			map.set(`key${i}`, item);
 		}
 	};
 
-	const assertMapValues = (map: SharedMap, count: number, expected: string): void => {
+	const assertMapValues = (map: ISharedMap, count: number, expected: string): void => {
 		for (let i = 0; i < count; i++) {
 			const value = map.get(`key${i}`);
 			assert.strictEqual(value, expected, `Wrong value for key${i}`);

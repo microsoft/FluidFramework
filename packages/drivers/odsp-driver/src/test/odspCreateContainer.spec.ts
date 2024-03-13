@@ -9,13 +9,13 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { getOdspResolvedUrl } from "../odspUtils";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { LocalPersistentCache } from "../odspCache";
-import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest";
-import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { getOdspResolvedUrl } from "../odspUtils.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
+import { mockFetchOk, mockFetchMultiple, okResponse } from "./mockFetch.js";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";
@@ -102,7 +102,7 @@ describe("Odsp Create Container Test", () => {
 		assert.strictEqual(finalResolverUrl.siteUrl, siteUrl, "SiteUrl should match");
 		assert.strictEqual(finalResolverUrl.hashedDocumentId, docID, "DocId should match");
 
-		const url = `fluid-odsp://placeholder/placeholder/${docID}/`;
+		const url = `https://placeholder/placeholder/${docID}/`;
 		const snapshotUrl = `${siteUrl}/_api/v2.1/drives/${driveId}/items/${itemId}/opStream/snapshots`;
 		assert.strictEqual(finalResolverUrl.url, url, "Url should match");
 		assert.strictEqual(

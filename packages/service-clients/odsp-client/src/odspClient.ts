@@ -38,9 +38,9 @@ import {
 	OdspContainerServices,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-} from "./interfaces";
-import { createOdspAudienceMember } from "./odspAudience";
-import { type IOdspTokenProvider } from "./token";
+} from "./interfaces.js";
+import { createOdspAudienceMember } from "./odspAudience.js";
+import { type IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
@@ -82,8 +82,10 @@ export class OdspClient {
 		this.urlResolver = new OdspDriverUrlResolver();
 	}
 
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -100,14 +102,14 @@ export class OdspClient {
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	public async getContainer(
+	public async getContainer<T extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -124,7 +126,7 @@ export class OdspClient {
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {

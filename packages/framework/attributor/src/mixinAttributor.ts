@@ -32,9 +32,9 @@ import {
 	PerformanceEvent,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor";
-import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders";
-import { makeLZ4Encoder } from "./lz4Encoder";
+import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
+import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders.js";
+import { makeLZ4Encoder } from "./lz4Encoder.js";
 
 // Summary tree keys
 const attributorTreeName = ".attributor";

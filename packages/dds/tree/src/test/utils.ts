@@ -32,8 +32,9 @@ import {
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-// eslint-disable-next-line import/no-internal-modules
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/dist/test";
+
+// eslint-disable-next-line import/no-internal-modules -- test import
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ISharedTree,
@@ -46,6 +47,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	SharedTreeContentSnapshot,
 	CheckoutFlexTreeView,
+	TreeCheckout,
 } from "../shared-tree/index.js";
 import {
 	buildForest,
@@ -65,6 +67,8 @@ import {
 	cursorForMapTreeNode,
 	SchemaBuilderBase,
 	FieldKinds,
+	ViewSchema,
+	defaultSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
 	moveToDetachedField,
@@ -91,7 +95,6 @@ import {
 	announceDelta,
 	FieldKey,
 	Revertible,
-	RevertibleKind,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
@@ -103,6 +106,8 @@ import {
 	RevisionTagCodec,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
+	CommitMetadata,
+	CommitKind,
 } from "../core/index.js";
 import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
@@ -117,6 +122,13 @@ import {
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { ensureSchema } from "../shared-tree/schematizeTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
+import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
 
 // Testing utilities
 
@@ -261,7 +273,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
-					enableRuntimeIdCompressor: true,
+					enableRuntimeIdCompressor: "on",
 				},
 			);
 
@@ -536,13 +548,13 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<ISharedTree> {
+	): Promise<SharedTree> {
 		const tree = (await super.load(runtime, id, services, channelAttributes)) as SharedTree;
 		this.onLoad?.(tree);
 		return tree;
 	}
 
-	public override create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
+	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
 		const tree = super.create(runtime, id) as SharedTree;
 		this.onCreate(tree);
 		return tree;
@@ -653,7 +665,7 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): ITreeCheckout {
+): TreeCheckout {
 	return flexTreeViewWithContent(content, args).checkout;
 }
 
@@ -739,13 +751,13 @@ export const numberSequenceRootSchema = new SchemaBuilderBase(FieldKinds.sequenc
 
 export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
+	allowedSchemaModifications: AllowedUpdateType.Initialize,
 	initialTree: [],
 } satisfies InitializeAndSchematizeConfiguration;
 
 export const emptyStringSequenceConfig = {
 	schema: stringSequenceRootSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
+	allowedSchemaModifications: AllowedUpdateType.Initialize,
 	initialTree: [],
 } satisfies InitializeAndSchematizeConfiguration;
 
@@ -1043,8 +1055,8 @@ export function rootFromDeltaFieldMap(
 
 export function createTestUndoRedoStacks(
 	events: ISubscribable<{
-		newRevertible(type: Revertible): void;
-		revertibleDisposed(revertible: Revertible): void;
+		commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+		revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
 	}>,
 ): {
 	undoStack: Revertible[];
@@ -1054,25 +1066,25 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
-		revertible.retain();
-		if (revertible.kind === RevertibleKind.Undo) {
-			redoStack.push(revertible);
-		} else {
-			undoStack.push(revertible);
+	const unsubscribeFromNew = events.on("commitApplied", ({ kind }, getRevertible) => {
+		if (getRevertible !== undefined) {
+			const revertible = getRevertible();
+			if (kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				undoStack.push(revertible);
+			}
 		}
 	});
 
 	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
-		if (revertible.kind === RevertibleKind.Undo) {
-			const index = redoStack.indexOf(revertible);
-			if (index !== -1) {
-				redoStack.splice(index, 1);
-			}
+		const redoIndex = redoStack.indexOf(revertible);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
 		} else {
-			const index = undoStack.indexOf(revertible);
-			if (index !== -1) {
-				undoStack.splice(index, 1);
+			const undoIndex = undoStack.indexOf(revertible);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
 			}
 		}
 	});
@@ -1081,10 +1093,10 @@ export function createTestUndoRedoStacks(
 		unsubscribeFromNew();
 		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 		for (const revertible of redoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1098,3 +1110,85 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
+
+/**
+ * Like {@link ITree.schematize}, but uses the flex-tree schema system and exposes the tree as a flex-tree.
+ */
+export function schematizeFlexTree<TRoot extends FlexFieldSchema>(
+	tree: SharedTree,
+	config: InitializeAndSchematizeConfiguration<TRoot>,
+	onDispose?: () => void,
+	nodeKeyManager?: NodeKeyManager,
+	nodeKeyFieldKey?: FieldKey,
+): CheckoutFlexTreeView<TRoot> {
+	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, config.schema);
+	if (!ensureSchema(viewSchema, config.allowedSchemaModifications, tree.checkout, config)) {
+		assert.fail("Schematize failed");
+	}
+
+	return requireSchema(
+		tree.checkout,
+		viewSchema,
+		onDispose ?? (() => {}),
+		nodeKeyManager ?? createMockNodeKeyManager(),
+		nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
+	);
+}
+
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+// Note: trees which simulate attach scenarios using the mocks should finalize ids created
+// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
+// finalization when messages are processed.
+const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+
+/**
+ * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
+ *
+ * See TestTreeProvider, TestTreeProviderLite and SharedTreeFactory for other ways to build trees.
+ *
+ * If what is needed is a view, see options to create one without making a SharedTree instance.
+ */
+export function treeTestFactory(
+	options: {
+		id?: string;
+		runtime?: IFluidDataStoreRuntime;
+		attributes?: IChannelAttributes;
+		options?: SharedTreeOptions;
+		telemetryContextPrefix?: string;
+	} = {},
+): SharedTree {
+	return new SharedTree(
+		options.id ?? "tree",
+		options.runtime ??
+			new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(testSessionId),
+				clientId: "test-client",
+				id: "test",
+			}),
+		options.attributes ?? new SharedTreeFactory().attributes,
+		options.options ?? { jsonValidator: typeboxValidator },
+		options.telemetryContextPrefix ?? "SharedTree",
+	);
+}
+
+/**
+ * Given the TreeConfiguration, returns a view.
+ *
+ * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
+ * This should allow realistic (app like testing) of all the simple-tree APIs.
+ */
+export function getView<TSchema extends ImplicitFieldSchema>(
+	config: TreeConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createMockNodeKeyManager(),
+		brand(defaultNodeKeyFieldKey),
+	);
+}

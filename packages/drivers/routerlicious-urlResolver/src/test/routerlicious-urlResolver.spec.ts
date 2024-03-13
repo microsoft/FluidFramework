@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { Provider } from "nconf";
-import { RouterliciousUrlResolver } from "../urlResolver";
+import { Provider } from "../nconf.cjs";
+import { RouterliciousUrlResolver } from "../urlResolver.js";
 
 describe("Routerlicious Url Resolver", () => {
 	const token = "dummy";
@@ -39,7 +39,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			"fluid://wu2.prague.office-int.com/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146",
+			"https://wu2.prague.office-int.com/fluid/thinkable-list?chaincode=@fluid-example/shared-text@0.11.14146",
 			"FluidUrl does not match",
 		);
 	});
@@ -71,7 +71,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			resolved.url,
-			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"FluidUrl does not match",
 		);
 	});
@@ -119,7 +119,7 @@ describe("Routerlicious Url Resolver", () => {
 		assert.equal(endpoints.ordererUrl, "http://localhost:3003", "Improperly Formed OrdererUrl");
 		assert.equal(
 			url,
-			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"Improperly formed FluidURL",
 		);
 	});
@@ -166,7 +166,7 @@ describe("Routerlicious Url Resolver", () => {
 		assert.equal(endpoints.ordererUrl, "http://alfred:3000", "Improperly Formed OrdererUrl");
 		assert.equal(
 			url,
-			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"Improperly formed FluidURL",
 		);
 	});
@@ -216,7 +216,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			url,
-			"fluid://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"https://localhost:3003/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"Improperly formed FluidURL",
 		);
 	});
@@ -267,7 +267,7 @@ describe("Routerlicious Url Resolver", () => {
 		);
 		assert.equal(
 			url,
-			"fluid://alfred.wu2-ppe.prague.office-int.com/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
+			"https://alfred.wu2-ppe.prague.office-int.com/fluid/damp-competition?chaincode=@fluid-example/shared-text@^0.11.0",
 			"FluidUrl does not match",
 		);
 	});

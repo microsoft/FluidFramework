@@ -16,6 +16,7 @@ import {
 	checkoutWithContent,
 	validateTreeContent,
 	numberSequenceRootSchema,
+	schematizeFlexTree,
 	stringSequenceRootSchema,
 } from "../utils.js";
 import {
@@ -385,9 +386,9 @@ describe("sharedTreeView", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree2 = schematizeFlexTree(provider.trees[1], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -405,7 +406,7 @@ describe("sharedTreeView", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -591,9 +592,6 @@ describe("sharedTreeView", () => {
 		provider.processMessages();
 		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
 
-		// Simulate the presence of a host application that retains the revertibles in multiple ways
-		const checkout1RevertiblesReadonly = createTestUndoRedoStacks(checkout1.events);
-
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
@@ -625,8 +623,6 @@ describe("sharedTreeView", () => {
 		// The undo stack is not empty because it contains the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 0);
-		assert.equal(checkout1RevertiblesReadonly.undoStack.length, 1);
-		assert.equal(checkout1RevertiblesReadonly.redoStack.length, 0);
 		assert.deepEqual(checkout1.getRemovedRoots(), []);
 
 		provider.processMessages();
@@ -787,12 +783,12 @@ function itView(
 	};
 	const config = {
 		...content,
-		allowedSchemaModifications: AllowedUpdateType.None,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematizeInternal(config).checkout);
+		fn(schematizeFlexTree(provider.trees[0], config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -801,7 +797,7 @@ function itView(
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematizeInternal(config).checkout.fork());
+		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {

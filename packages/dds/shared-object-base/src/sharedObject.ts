@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -33,15 +33,15 @@ import {
 	totalBlobSizePropertyName,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { FluidSerializer, IFluidSerializer } from "./serializer";
-import { SharedObjectHandle } from "./handle";
-import { SummarySerializer } from "./summarySerializer";
-import { ISharedObject, ISharedObjectEvents } from "./types";
-import { makeHandlesSerializable, parseHandles } from "./utils";
+import { FluidSerializer, IFluidSerializer } from "./serializer.js";
+import { SharedObjectHandle } from "./handle.js";
+import { SummarySerializer } from "./summarySerializer.js";
+import { ISharedObject, ISharedObjectEvents } from "./types.js";
+import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Base class from which all shared objects derive.
- * @public
+ * @alpha
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
@@ -144,7 +144,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
-			new Map<string, ITelemetryProperties>([
+			new Map<string, ITelemetryBaseProperties>([
 				["local", { localOp: true }],
 				["remote", { localOp: false }],
 			]),
@@ -612,7 +612,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
- * @public
+ * @alpha
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,

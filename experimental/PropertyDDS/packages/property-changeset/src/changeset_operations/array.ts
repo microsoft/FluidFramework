@@ -6,14 +6,14 @@
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
 import { copy as cloneDeep } from "fastest-json-copy";
-import isNumber from "lodash/isNumber";
-import isString from "lodash/isString";
-import isEqual from "lodash/isEqual";
+import isNumber from "lodash/isNumber.js";
+import isString from "lodash/isString.js";
+import isEqual from "lodash/isEqual.js";
 
 // @ts-ignore
 import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
-import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset";
-import { TypeIdHelper } from "../helpers/typeidHelper";
+import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset.js";
+import { TypeIdHelper } from "../helpers/typeidHelper.js";
 import {
 	ArrayChangeSetIterator,
 	arrayInsertList,
@@ -25,8 +25,8 @@ import {
 	NoneNOPOperation,
 	NOPOperation,
 	RemoveOperation,
-} from "./arrayChangesetIterator";
-import { ConflictType } from "./changesetConflictTypes";
+} from "./arrayChangesetIterator.js";
+import { ConflictType } from "./changesetConflictTypes.js";
 
 const { MSG } = constants;
 const { isPrimitiveType } = TypeIdHelper;
@@ -390,7 +390,7 @@ const _copyOperation = function (
  * overlapping range or
  * (partial) A or B
  */
-// eslint-disable-next-line complexity
+
 const splitOverlapping = function (
 	io_rangeA: OperationRangeInsert | OperationRangeRemove,
 	io_rangeB: OperationRangeInsert | OperationRangeRemove,

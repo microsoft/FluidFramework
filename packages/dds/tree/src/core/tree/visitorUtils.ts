@@ -61,7 +61,7 @@ export function combineVisitors(
 	{
 		const set = new Set(visitors);
 		for (const item of announcedVisitors) {
-			assert(set.has(item), "AnnouncedVisitor would not get traversed");
+			assert(set.has(item), 0x8c8 /* AnnouncedVisitor would not get traversed */);
 		}
 	}
 	return {

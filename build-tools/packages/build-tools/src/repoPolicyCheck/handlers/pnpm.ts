@@ -4,7 +4,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig } from "../../common/fluidUtils";
 
 import { PackageJson } from "../../common/npmPackage";
 import { Handler, readFile } from "../common";
@@ -18,7 +18,7 @@ export const handlers: Handler[] = [
 		handler: async (file, root) => {
 			const dirname = path.dirname(file);
 			const packageJsonFile = path.join(dirname, "package.json");
-			const manifest = getFluidBuildConfig(root);
+			const manifest = loadFluidBuildConfig(root);
 
 			let json: PackageJson;
 			try {

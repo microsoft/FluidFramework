@@ -47,11 +47,11 @@ import {
 	GCVersion,
 	runSessionExpiryKey,
 	disableDatastoreSweepKey,
-} from "../../gc";
-import { ContainerRuntimeGCMessage } from "../../messageTypes";
-import { IContainerRuntimeMetadata } from "../../summary";
-import { pkgVersion } from "../../packageVersion";
-import { createTestConfigProvider } from "./gcUnitTestHelpers";
+} from "../../gc/index.js";
+import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { IContainerRuntimeMetadata } from "../../summary/index.js";
+import { pkgVersion } from "../../packageVersion.js";
+import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -120,7 +120,6 @@ describe("Garbage Collection configurations", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes: (sweepReadyRoutes: string[]): string[] => {
 				return [];
 			},

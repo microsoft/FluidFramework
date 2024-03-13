@@ -12,19 +12,19 @@ import {
 import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
-import { ContainerMessageType } from "../messageTypes";
+import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
+import { ContainerMessageType } from "../messageTypes.js";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	sequenceNumbersMatch,
-} from "./batchManager";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
-import { OpCompressor } from "./opCompressor";
-import { OpGroupingManager } from "./opGroupingManager";
-import { OpSplitter } from "./opSplitter";
+} from "./batchManager.js";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import { OpCompressor } from "./opCompressor.js";
+import { OpGroupingManager } from "./opGroupingManager.js";
+import { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -120,7 +120,12 @@ export class Outbox {
 	}
 
 	public get messageCount(): number {
-		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+		return (
+			this.attachFlowBatch.length +
+			this.mainBatch.length +
+			this.blobAttachBatch.length +
+			this.idAllocationBatch.length
+		);
 	}
 
 	public get isEmpty(): boolean {
@@ -184,7 +189,7 @@ export class Outbox {
 	public submit(message: BatchMessage) {
 		assert(
 			message.type !== ContainerMessageType.IdAllocation,
-			"Allocation message submitted to mainBatch.",
+			0x8f8 /* Allocation message submitted to mainBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 
@@ -194,7 +199,7 @@ export class Outbox {
 	public submitAttach(message: BatchMessage) {
 		assert(
 			message.type === ContainerMessageType.Attach,
-			"Non attach message submitted to attachFlowBatch.",
+			0x8f9 /* Non attach message submitted to attachFlowBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 
@@ -229,7 +234,7 @@ export class Outbox {
 	public submitBlobAttach(message: BatchMessage) {
 		assert(
 			message.type === ContainerMessageType.BlobAttach,
-			"Non blobAttach message submitted to blobAttachBatch.",
+			0x8fa /* Non blobAttach message submitted to blobAttachBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 
@@ -251,7 +256,7 @@ export class Outbox {
 	public submitIdAllocation(message: BatchMessage) {
 		assert(
 			message.type === ContainerMessageType.IdAllocation,
-			"Non allocation message submitted to idAllocationBatch.",
+			0x8fb /* Non allocation message submitted to idAllocationBatch. */,
 		);
 		this.maybeFlushPartialBatch();
 

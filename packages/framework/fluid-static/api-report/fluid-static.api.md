@@ -20,8 +20,8 @@ export type ContainerAttachProps<T = unknown> = T;
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
-    initialObjects: LoadableObjectClassRecord;
+    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
+    readonly initialObjects: LoadableObjectClassRecord;
 }
 
 // @internal
@@ -117,10 +117,10 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @public
 export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
@@ -137,8 +137,8 @@ export type Myself<M extends IMember = IMember> = M & {
 };
 
 // @public
-export type SharedObjectClass<T extends IFluidLoadable> = {
-    readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
+export interface SharedObjectClass<T extends IFluidLoadable> {
+    readonly getFactory: () => IChannelFactory<T>;
+}
 
 ```

@@ -7,11 +7,10 @@ import * as path from "path";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
-	ReleaseVersion,
 	VersionBumpType,
 } from "@fluid-tools/version-tools";
 
-import { getFluidBuildConfig } from "./fluidUtils";
+import { loadFluidBuildConfig } from "./fluidUtils";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
@@ -307,20 +306,29 @@ export interface IFluidRepoPackage {
 	defaultInterdependencyRange: InterdependencyRange;
 }
 
-export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
+export type IFluidRepoPackageEntry =
+	| string
+	| IFluidRepoPackage
+	| (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
-	private readonly monoRepos = new Map<string, MonoRepo>();
+	private readonly _releaseGroups = new Map<string, MonoRepo>();
 
 	public get releaseGroups() {
-		return this.monoRepos;
+		return this._releaseGroups;
 	}
 
 	public readonly packages: Packages;
 
-	constructor(public readonly resolvedRoot: string) {
-		const packageManifest = getFluidBuildConfig(resolvedRoot);
+	public static create(resolvedRoot: string) {
+		const packageManifest = loadFluidBuildConfig(resolvedRoot);
+		return new FluidRepo(resolvedRoot, packageManifest);
+	}
 
+	protected constructor(
+		public readonly resolvedRoot: string,
+		packageManifest: IFluidBuildConfig,
+	) {
 		// Expand to full IFluidRepoPackage and full path
 		const normalizeEntry = (
 			item: IFluidRepoPackageEntry,
@@ -408,21 +416,4 @@ export class FluidRepo {
 		// Replace \ in result with / in case OS is Windows.
 		return path.relative(this.resolvedRoot, p).replace(/\\/g, "/");
 	}
-}
-
-/**
- * Represents a release version and its release date, if applicable.
- *
- * @internal
- */
-export interface VersionDetails {
-	/**
-	 * The version of the release.
-	 */
-	version: ReleaseVersion;
-
-	/**
-	 * The date the version was released, if applicable.
-	 */
-	date?: Date;
 }

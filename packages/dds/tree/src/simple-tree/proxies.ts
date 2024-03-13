@@ -48,6 +48,24 @@ import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 
 /**
+ * Detects if the given 'candidate' is a TreeNode.
+ *
+ * @remarks
+ * Supports both Hydrated and {@link Unhydrated} TreeNodes, both of which return true.
+ *
+ * Because the common usage is to check if a value being inserted/set is a TreeNode,
+ * this function permits calling with primitives as well as objects.
+ *
+ * Primitives will always return false (as they are copies of data, not references to nodes).
+ *
+ * @param candidate - Value which may be a TreeNode
+ * @returns true if the given 'candidate' is a hydrated TreeNode.
+ */
+export function isTreeNode(candidate: unknown): candidate is TreeNode | Unhydrated<TreeNode> {
+	return tryGetFlexNode(candidate) !== undefined;
+}
+
+/**
  * Retrieve the associated proxy for the given field.
  * */
 export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
@@ -904,10 +922,7 @@ export function extractFactoryContent(
 		content = input as FactoryContent;
 	}
 
-	assert(
-		!(content instanceof TreeNode),
-		0x844 /* Unhydrated insertion content should have FlexNode */,
-	);
+	assert(!isTreeNode(content), 0x844 /* Unhydrated insertion content should have FlexNode */);
 
 	let type: NodeKind;
 	let extractedContent: ExtractedFactoryContent;
@@ -928,7 +943,7 @@ export function extractFactoryContent(
 		type = NodeKind.Leaf;
 	}
 
-	if (input instanceof TreeNode) {
+	if (isTreeNode(input)) {
 		const kindFromSchema = getNodeKind(input);
 		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);
 	}

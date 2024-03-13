@@ -104,6 +104,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
+		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
