@@ -10328,6 +10328,7 @@ importers:
       '@types/node': ^18.19.0
       c8: ^8.0.1
       commander: ^5.1.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -10374,6 +10375,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
