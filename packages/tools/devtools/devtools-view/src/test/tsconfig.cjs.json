@@ -3,8 +3,6 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/test",
-		// "allowJs": true,
-		// "module": "Node16",
 	},
 	"references": [
 		{
