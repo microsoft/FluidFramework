@@ -38,8 +38,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"doc": "cross-var appfw-typedoc $npm_package_name",
@@ -56,7 +55,7 @@
 		"test": "npm run test:jest",
 		"pretest:coverage": "rimraf --glob coverage/",
 		"test:coverage": "c8 npm test",
-		"test:jest": "jest --passWithNoTests",
+		"test:jest": "jest",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {

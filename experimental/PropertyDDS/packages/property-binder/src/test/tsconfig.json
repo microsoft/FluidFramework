@@ -1,14 +1,16 @@
 {
 	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "./",
-		"outDir": "../../lib/test",
+		"outDir": "../../dist/test",
 		"types": ["node"],
+		"allowJs": true,
+		"experimentalDecorators": true,
 	},
-	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.cjs.json",
 		},
 	],
 }
