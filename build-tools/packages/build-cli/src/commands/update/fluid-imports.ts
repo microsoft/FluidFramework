@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 import { readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
-import { Project } from "ts-morph";
+import { Project, type ImportDeclaration } from "ts-morph";
 import { BaseCommand } from "../../base";
 
 // These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
@@ -93,7 +93,9 @@ async function updateImports(
 	for (const sourceFile of sourceFiles) {
 		log?.verbose(`Source file: ${sourceFile.getBaseName()}`);
 
-		// Get all of the import declarations. This is basically every `import foo from bar` statement in the file.
+		/**
+		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
+		 */
 		const imports = sourceFile.getImportDeclarations();
 
 		/**
