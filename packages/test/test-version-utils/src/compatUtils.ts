@@ -32,6 +32,7 @@ import {
 	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
 	CompressionAlgorithms,
+	ICompressionRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { pkgVersion } from "./packageVersion.js";
 import {
@@ -77,27 +78,37 @@ function filterRuntimeOptionsForVersion(
 	// implementation of services
 	options.loadSequenceNumberVerification = "close";
 
+	const compressorDisabled: ICompressionRuntimeOptions = {
+		minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+		compressionAlgorithm: CompressionAlgorithms.lz4,
+	};
+
+	// These is the "maximum" config.
+	const {
+		compressionOptions = {
+			minimumBatchSizeInBytes: 200,
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		},
+		chunkSizeInBytes = 200,
+		enableRuntimeIdCompressor = "on",
+		enableGroupedBatching = true,
+	} = options;
+
 	if (version === "1.3.7") {
 		options.compressionOptions = undefined;
 		options.enableGroupedBatching = false;
 		options.enableRuntimeIdCompressor = "off";
 		options.maxBatchSizeInBytes = undefined;
-		options.chunkSizeInBytes = undefined;
-	} else if (version.includes("2.0.0-rc")) {
-		const {
-			compressionOptions = {
-				minimumBatchSizeInBytes: 200,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			chunkSizeInBytes = 200,
-			enableRuntimeIdCompressor = "on",
-			enableGroupedBatching = true,
-		} = options;
-
-		// Note about comments below:
-		// 1) save-version tests refers to all configs going through getVersionedTestObjectProviderFromApis(),
-		//    i.e. all kinds other than CompatKind.CrossVersion, E2E tests, and describeInstallVersions() tests.
-		// 2) cross-version tests refer to all configs going thorugh getCompatVersionedTestObjectProviderFromApis(), i.e. CompatKind.CrossVersion
+		options.chunkSizeInBytes = Number.POSITIVE_INFINITY; // disabled
+	} else if (version.includes("2.0.0-rc.1.0.4")) {
+		options = {
+			...options,
+			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
+			enableRuntimeIdCompressor,
+			enableGroupedBatching,
+		};
+	} else if (version.includes("2.0.0-rc.2.")) {
 		options = {
 			...options,
 			compressionOptions,
@@ -106,6 +117,7 @@ function filterRuntimeOptionsForVersion(
 			enableGroupedBatching,
 		};
 	}
+
 	return options;
 }
 
