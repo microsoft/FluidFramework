@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 import { readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
-import { Project, type ImportDeclaration } from "ts-morph";
+import { Project } from "ts-morph";
 import { BaseCommand } from "../../base";
 
 // These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
@@ -188,14 +188,10 @@ async function updateImports(
 			log?.info(`Organized imports in: ${sourceFile.getBaseName()}`);
 			sourceFile.organizeImports();
 		}
-
-		if (sourceFileChanged) {
-			await sourceFile.save();
-		}
 	}
 
 	// Don't save the project since we're saving source files one at a time instead
-	// await project.save();
+	await project.save();
 }
 
 // This raw data comes from this ripgrep one-liner:
@@ -228,6 +224,7 @@ function ensureLevel(entry: MemberData, level: keyof MemberData): string[] {
 
 async function loadData(dataFile: string): Promise<MapData> {
 	// Load the raw data file
+	// eslint-disable-next-line unicorn/no-await-expression-member
 	const rawData: string = (await readFile(dataFile)).toString();
 	const apiLevelDataRaw: Record<string, MemberDataRaw[]> = JSON5.parse(rawData);
 
