@@ -29,7 +29,6 @@ importers:
       cz-customizable: ^7.0.0
       eslint: ~8.55.0
       inquirer: ^8.2.5
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       run-script-os: ^1.1.6
       syncpack: ^9.8.6
@@ -54,7 +53,6 @@ importers:
       cz-customizable: 7.0.0
       eslint: 8.55.0
       inquirer: 8.2.5
-      prettier: 3.2.5
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -257,7 +255,6 @@ importers:
       lodash.isequal: ^4.5.0
       mocha: ^10.2.0
       picomatch: ^2.3.1
-      prettier: ~3.2.4
       replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
@@ -312,7 +309,6 @@ importers:
       concurrently: 8.2.1
       eslint: 8.55.0
       mocha: 10.2.0
-      prettier: 3.2.5
 
   packages/bundle-size-tools:
     specifiers:
@@ -329,7 +325,6 @@ importers:
       jszip: ^3.10.1
       msgpack-lite: ^0.1.26
       pako: ^2.1.0
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       typescript: ~5.1.6
       webpack: ^5.88.1
@@ -350,7 +345,6 @@ importers:
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.55.0
-      prettier: 3.2.5
       rimraf: 4.4.1
 
   packages/readme-command:
@@ -373,7 +367,6 @@ importers:
       eslint-config-oclif-typescript: ^3.0.8
       eslint-config-prettier: ~9.0.0
       oclif: ^4.0.3
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       semver: ^7.5.4
       ts-node: ^10.9.1
@@ -400,7 +393,6 @@ importers:
       eslint-config-oclif: 5.0.0_eslint@8.55.0
       eslint-config-oclif-typescript: 3.0.8_bpztyfltmpuv6lhsgzfwtmxhte
       eslint-config-prettier: 9.0.0_eslint@8.55.0
-      prettier: 3.2.5
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -436,7 +428,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.29.4
       oclif: ^4.0.3
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       semver: ^7.5.4
       table: ^6.8.1
@@ -475,7 +466,6 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       oclif: 4.0.3_ta3rswuxkuwpr666lgto7lkv44
-      prettier: 3.2.5
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -9043,6 +9033,7 @@ packages:
     resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
     engines: {node: '>=14'}
     hasBin: true
+    dev: false
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
