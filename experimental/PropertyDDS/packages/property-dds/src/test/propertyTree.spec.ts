@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as _ from "lodash";
+import lodash from "lodash";
+const { isEmpty, last } = lodash;
 
 import { expect } from "chai";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
@@ -500,9 +501,8 @@ function executePerPropertyTreeType(
 				await opProcessingController.ensureSynchronized();
 				expect(sharedPropertyTree2.remoteChanges.length).to.equal(1);
 				expect(
-					_.isEmpty(
-						_.last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)
-							?.changeSet,
+					isEmpty(
+						last((sharedPropertyTree2 as SharedPropertyTree).remoteChanges)?.changeSet,
 					),
 				).to.equal(true);
 			});
