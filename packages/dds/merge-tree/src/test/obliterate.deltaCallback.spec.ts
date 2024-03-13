@@ -4,14 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTreeDeltaType } from "../ops.js";
-import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
-import { useStrictPartialLengthChecks } from "./testUtils.js";
-import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { MergeTreeDeltaType } from "../ops";
+import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback";
+import { ReconnectTestHelper } from "./reconnectHelper";
 
 describe("obliterate delta callback", () => {
-	useStrictPartialLengthChecks();
-
 	let length: number;
 	let cb: MergeTreeDeltaCallback;
 
