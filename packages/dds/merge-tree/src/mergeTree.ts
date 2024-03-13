@@ -1338,10 +1338,16 @@ export class MergeTree {
 
 		// opArgs == undefined => loading snapshot or test code
 		if (opArgs !== undefined) {
-			this.mergeTreeDeltaCallback?.(opArgs, {
-				operation: MergeTreeDeltaType.INSERT,
-				deltaSegments: segments.map((segment) => ({ segment })),
-			});
+			const deltaSegments = segments
+				.filter((segment) => !toMoveInfo(segment))
+				.map((segment) => ({ segment }));
+
+			if (deltaSegments.length > 0) {
+				this.mergeTreeDeltaCallback?.(opArgs, {
+					operation: MergeTreeDeltaType.INSERT,
+					deltaSegments,
+				});
+			}
 		}
 
 		if (
@@ -1970,7 +1976,9 @@ export class MergeTree {
 				segment.localMovedSeq = localSeq;
 				segment.movedSeqs = [seq];
 
-				movedSegments.push({ segment });
+				if (!toRemovalInfo(segment)) {
+					movedSegments.push({ segment });
+				}
 			}
 
 			// Save segment so can assign moved sequence number when acked by server
@@ -2080,7 +2088,9 @@ export class MergeTree {
 				segment.removedSeq = seq;
 				segment.localRemovedSeq = localSeq;
 
-				removedSegments.push({ segment });
+				if (!toMoveInfo(segment)) {
+					removedSegments.push({ segment });
+				}
 			}
 
 			// Save segment so we can assign removed sequence number when acked by server
