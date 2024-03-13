@@ -6,7 +6,7 @@
 import { NumericOptions, TUnsafe, Type } from "@sinclair/typebox";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { Covariant, isAny } from "./typeCheck.js";
-import { Assume } from "./utils.js";
+import { Assume } from "./typeUtils.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -97,11 +97,6 @@ export abstract class ErasedType<out Name extends string> {
 
 /**
  * Helper for {@link Brand}.
- * This is split out into its own as that's the only way to:
- * - have doc comments for the member.
- * - make the member protected (so you don't accidentally try and read it).
- * - get nominal typing (so types produced without using this class can never be assignable to it).
- * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
  * See `InternalTypes.MakeNominal` for some more details.
  *
@@ -112,6 +107,12 @@ export abstract class ErasedType<out Name extends string> {
  * This is covariant over ValueType.
  * This is suitable for when ValueType is immutable (like string or number),
  * which is the common use-case for branding.
+ *
+ * @privateRemarks
+ * This is split out into its own type as that's the only way to:
+ *
+ * - make the member protected (so you can't accidentally try and access it).
+ * - get nominal typing (so types produced without using this class can never be assignable to it).
  *
  * @sealed
  * @internal
@@ -147,39 +148,6 @@ export abstract class BrandedType<out ValueType, Name extends string> {
 }
 
 /**
- * Converts a Branded type into an "opaque" handle.
- * This prevents the value from being used directly, but does not fully type erase it
- * (and this its not really fully opaque):
- * The type can be recovered using {@link extractFromOpaque},
- * however if we assume only code that produces these "opaque" handles does that conversion,
- * they can function like opaque handles.
- *
- * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
- * uses the type name instead of expanding it:
- * ```typescript
- * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
- * ```
- * @internal
- */
-export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
-	infer ValueType,
-	infer Name
->
-	? BrandedType<ValueType, Name>
-	: never;
-
-/**
- * See {@link extractFromOpaque}.
- * @internal
- */
-export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
-	TOpaque extends BrandedType<infer ValueType, infer Name>
-		? isAny<ValueType> extends true
-			? unknown
-			: Brand<ValueType, Name>
-		: never;
-
-/**
  * Implementation detail of type branding. Should not be used directly outside this file,
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
@@ -202,19 +170,6 @@ export type NameFromBranded<T extends BrandedType<any, string>> = T extends Bran
 >
 	? Name
 	: never;
-
-/**
- * Converts a {@link Opaque} handle to the underlying branded type.
- *
- * It is assumed that only code that produces these "opaque" handles does this conversion,
- * allowing these handles to be considered opaque.
- * @internal
- */
-export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
-	value: TOpaque,
-): ExtractFromOpaque<TOpaque> {
-	return value as ExtractFromOpaque<TOpaque>;
-}
 
 /**
  * Converts a {@link Erased} handle to the underlying branded type.
@@ -240,18 +195,6 @@ export function brand<T extends Brand<any, string>>(
 	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
 ): T {
 	return value as T;
-}
-
-/**
- * Adds a type {@link Brand} to a value, returning it as a {@link Opaque} handle.
- *
- * Only do this when specifically allowed by the requirements of the type being converted to.
- * @internal
- */
-export function brandOpaque<T extends BrandedType<any, string>>(
-	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
-): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
-	return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 }
 
 /**
