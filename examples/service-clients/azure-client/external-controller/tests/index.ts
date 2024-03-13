@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { SharedMap } from "fluid-framework";
+import { SharedMap, type ISharedMap } from "fluid-framework";
 
 import {
 	IContainer,
@@ -110,8 +110,8 @@ export const containerConfig = {
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
 	// We now get the first SharedMap from the container
-	const sharedMap1 = container.initialObjects.map1 as SharedMap;
-	const sharedMap2 = container.initialObjects.map2 as SharedMap;
+	const sharedMap1 = container.initialObjects.map1 as ISharedMap;
+	const sharedMap2 = container.initialObjects.map2 as ISharedMap;
 	await Promise.all([
 		DiceRollerController.initializeModel(sharedMap1),
 		DiceRollerController.initializeModel(sharedMap2),
@@ -142,8 +142,8 @@ export async function createContainerAndRenderInElement(
 		await attach?.();
 	}
 
-	const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
-	const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
+	const sharedMap1 = fluidContainer.initialObjects.map1 as ISharedMap;
+	const sharedMap2 = fluidContainer.initialObjects.map2 as ISharedMap;
 	const diceRollerController = new DiceRollerController(sharedMap1);
 	const diceRollerController2 = new DiceRollerController(sharedMap2);
 

@@ -76,13 +76,13 @@
 		"prettier": "~3.0.3",
 		"sinon": "^17.0.1",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-240326",
+		"tinylicious": "^4.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",

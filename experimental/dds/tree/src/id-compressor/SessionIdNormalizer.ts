@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-
 import { assert } from '@fluidframework/core-utils';
 import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from '../Common.js';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';

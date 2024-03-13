@@ -19,9 +19,9 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces";
-import { IMapDataObjectSerializable, IMapOperation, AttributableMapKernel } from "./mapKernel";
-import { pkgVersion } from "./packageVersion";
+import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
+import { IMapDataObjectSerializable, IMapOperation, AttributableMapKernel } from "./mapKernel.js";
+import { pkgVersion } from "./packageVersion.js";
 
 interface IMapSerializationFormat {
 	blobs?: string[];

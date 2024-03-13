@@ -1,5 +1,13 @@
 # @fluidframework/counter
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   counter: SharedCounter.create now returns ISharedCounter ([#19961](https://github.com/microsoft/FluidFramework/issues/19961)) [e2317bdbd2](https://github.com/microsoft/FluidFramework/commits/e2317bdbd29c40c7888bba2ed657a40a8dd6f45b)
+
+    `SharedCounter.create` now returns `ISharedCounter` instead of `SharedCounter`.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

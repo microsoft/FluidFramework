@@ -44,12 +44,12 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 const dummyContext = { originatorId: "dummySessionID" as SessionId };
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { trunk: [], branches: new Map() }, dummyContext],
+		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],
 		[
 			"single commit",
 			{
 				trunk: trunkCommits.slice(0, 1),
-				branches: new Map(),
+				peerLocalBranches: new Map(),
 			},
 			dummyContext,
 		],
@@ -57,7 +57,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"multiple commits",
 			{
 				trunk: trunkCommits,
-				branches: new Map(),
+				peerLocalBranches: new Map(),
 			},
 			dummyContext,
 		],
@@ -65,7 +65,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"empty branch",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"3",
 						{
@@ -81,7 +81,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"non-empty branch",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"4",
 						{
@@ -103,7 +103,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"multiple branches",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"3",
 						{

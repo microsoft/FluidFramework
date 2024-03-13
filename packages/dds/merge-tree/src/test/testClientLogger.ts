@@ -60,10 +60,12 @@ export function createClientsAtInitialState<
 	...clientIds: TClientName[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {
 	const setup = (c: TestClient) => {
-		c.insertTextLocal(0, opts.initialState);
-		while (c.getText().includes("-")) {
-			const index = c.getText().indexOf("-");
-			c.removeRangeLocal(index, index + 1);
+		if (opts.initialState.length > 0) {
+			c.insertTextLocal(0, opts.initialState);
+			while (c.getText().includes("-")) {
+				const index = c.getText().indexOf("-");
+				c.removeRangeLocal(index, index + 1);
+			}
 		}
 	};
 	const all: TestClient[] = [];

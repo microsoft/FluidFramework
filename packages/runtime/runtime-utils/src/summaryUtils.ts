@@ -393,7 +393,7 @@ export function processAttachMessageGCData(
 
 	assert(
 		gcDataEntry.type === TreeEntry.Blob && gcDataEntry.value.encoding === "utf-8",
-		"GC data should be a utf-8-encoded blob",
+		0x8ff /* GC data should be a utf-8-encoded blob */,
 	);
 
 	const gcData = JSON.parse(gcDataEntry.value.contents) as IGarbageCollectionData;

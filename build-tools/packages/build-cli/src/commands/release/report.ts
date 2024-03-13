@@ -12,7 +12,20 @@ import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
-import { Context, VersionDetails } from "@fluidframework/build-tools";
+import {
+	VersionDetails,
+	Context,
+	PackageVersionMap,
+	ReleaseReport,
+	ReportKind,
+	filterVersionsOlderThan,
+	getDisplayDate,
+	getDisplayDateRelative,
+	getFluidDependencies,
+	getRanges,
+	sortVersions,
+	toReportKind,
+} from "../../library";
 
 import {
 	ReleaseVersion,
@@ -25,18 +38,6 @@ import {
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import {
-	PackageVersionMap,
-	ReleaseReport,
-	ReportKind,
-	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
-	getFluidDependencies,
-	getRanges,
-	sortVersions,
-	toReportKind,
-} from "../../library";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 
@@ -76,7 +77,9 @@ const DEFAULT_MIN_VERSION = "0.0.0";
  * A base class for release reporting commands. It contains some shared properties and methods and are used by
  * subclasses, which implement the individual command logic.
  */
-export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends BaseCommand<T> {
+export abstract class ReleaseReportBaseCommand<
+	T extends typeof Command,
+> extends BaseCommand<T> {
 	protected releaseData: PackageReleaseData | undefined;
 
 	/**
@@ -102,8 +105,8 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 		return date === undefined
 			? false
 			: this.numberBusinessDaysToConsiderRecent === undefined
-			? true
-			: differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
+			  ? true
+			  : differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
 	}
 
 	/**
@@ -117,7 +120,6 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 	 */
 	protected async collectReleaseData(
 		context: Context,
-		// eslint-disable-next-line default-param-last
 		mode: ReleaseSelectionMode = this.defaultMode,
 		releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
 		includeDependencies = true,
@@ -233,10 +235,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 				const recentReleases =
 					this.numberBusinessDaysToConsiderRecent === undefined
 						? sortedByDate
-						: filterVersionsOlderThan(
-								sortedByDate,
-								this.numberBusinessDaysToConsiderRecent,
-						  );
+						: filterVersionsOlderThan(sortedByDate, this.numberBusinessDaysToConsiderRecent);
 
 				// No recent releases, so set the latest to the highest semver
 				if (recentReleases.length === 0) {
@@ -268,9 +267,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 						answer === undefined
 							? recentReleases[0].version
 							: (answer.selectedPackageVersion as string);
-					latestReleasedVersion = recentReleases.find(
-						(v) => v.version === selectedVersion,
-					);
+					latestReleasedVersion = recentReleases.find((v) => v.version === selectedVersion);
 				}
 
 				break;
@@ -281,9 +278,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 				if (latestReleasedVersion === undefined) {
 					const [, previousMinor] = getPreviousVersions(repoVersion);
 					this.info(
-						`The in-repo version of ${chalk.blue(
-							releaseGroupOrPackage,
-						)} is ${chalk.yellow(
+						`The in-repo version of ${chalk.blue(releaseGroupOrPackage)} is ${chalk.yellow(
 							repoVersion,
 						)}, but there's no release for that version. Picked previous minor version instead: ${chalk.green(
 							previousMinor ?? "undefined",
@@ -313,8 +308,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 
 		const vIndex = sortedByVersion.findIndex(
 			(v) =>
-				v.version === latestReleasedVersion?.version &&
-				v.date === latestReleasedVersion?.date,
+				v.version === latestReleasedVersion?.version && v.date === latestReleasedVersion?.date,
 		);
 		const previousReleasedVersion =
 			vIndex + 1 <= versionCount
@@ -407,10 +401,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			flags.highest === true
 				? "version"
 				: flags.mostRecent === true
-				? "date"
-				: flags.interactive
-				? "interactive"
-				: this.defaultMode;
+				  ? "date"
+				  : flags.interactive
+					  ? "interactive"
+					  : this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
 		this.releaseGroupName = flags.releaseGroup;

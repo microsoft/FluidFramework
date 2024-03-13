@@ -49,7 +49,8 @@ export type InsertableObjectFromSchemaRecord<
  * @typeParam Name - The full (including scope) name/identifier for the schema.
  * @typeParam Kind - Which kind of node this schema is for.
  * @typeParam TNode - API for nodes that use this schema.
- * @typeParam TBuild - Data which can be used to construct an unhydrated node of this type.
+ * @typeParam TBuild - Data which can be used to construct an {@link Unhydrated} node of this type.
+ * @typeParam Info - Data used when defining this schema.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
  * @public
@@ -60,9 +61,10 @@ export type TreeNodeSchema<
 	TNode = unknown,
 	TBuild = never,
 	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
+	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
 
 /**
  * Schema which is not a class.
@@ -78,7 +80,8 @@ export interface TreeNodeSchemaNonClass<
 	out TNode = unknown,
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	create(data: TInsertable): TNode;
 }
 

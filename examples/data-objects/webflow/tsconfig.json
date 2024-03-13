@@ -1,18 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
-		"composite": true,
-		"jsx": "react",
 		"strictNullChecks": false,
 		"rootDir": "./src",
-		// Note: despite being esnext, this publishes to "dist" over "lib" to keep root project settings' debug launch targets
-		// reasonable (source map config takes a dependency on executed JS being in "dist" for mocha tests).
-		// If we convert the remaining group of client packages to use esnext modules only,
-		// we likely want to standardize the esnext build directory.
-		"outDir": "./dist",
-		"types": ["node", "react", "react-dom"],
-		"module": "esnext",
+		"outDir": "./lib",
+		"types": ["react", "react-dom"],
 		"resolveJsonModule": true,
 	},
 	"include": ["src/**/*"],

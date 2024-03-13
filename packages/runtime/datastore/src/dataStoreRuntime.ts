@@ -61,6 +61,7 @@ import {
 	unpackChildNodesUsedRoutes,
 	addBlobToSummary,
 	processAttachMessageGCData,
+	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -403,6 +404,21 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
+	 * Validate user provided channel ID
+	 * Channel ID has limitations. "/" is not allowed as IDs in storage can not have slashes - we parse tree paths and use "/" as separator.
+	 * IDs cannot start with "_" as it could result in collision of IDs with auto-assigned (by FF) short IDs.
+	 * @param id - channel ID.
+	 */
+	protected validateChannelId(id: string) {
+		if (id.includes("/")) {
+			throw new UsageError(`Id cannot contain slashes: ${id}`);
+		}
+		if (id.startsWith("_")) {
+			throw new UsageError(`Id cannot start with underscore: ${id}`);
+		}
+	}
+
+	/**
 	 * Api which allows caller to create the channel first and then add it to the runtime.
 	 * The channel type should be present in the registry, otherwise the runtime would reject
 	 * the channel. Also the runtime used to create the channel object should be same to which
@@ -411,9 +427,7 @@ export class FluidDataStoreRuntime
 	 */
 	public addChannel(channel: IChannel): void {
 		const id = channel.id;
-		if (id.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: ${id}`);
-		}
+		this.validateChannelId(id);
 
 		this.verifyNotClosed();
 
@@ -430,9 +444,30 @@ export class FluidDataStoreRuntime
 		this.identifyLocalChangeInSummarizer("DDSCreatedInSummarizer", id, type);
 	}
 
-	public createChannel(id: string = uuid(), type: string): IChannel {
-		if (id.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: ${id}`);
+	public createChannel(idArg: string | undefined, type: string): IChannel {
+		let id: string;
+
+		if (idArg !== undefined) {
+			id = idArg;
+			this.validateChannelId(id);
+		} else {
+			// We use three non-overlapping namespaces:
+			// - detached state: even numbers
+			// - attached state: odd numbers
+			// - uuids
+			// In first two cases we will encode result as strings in more compact form, with leading underscore,
+			// to ensure no overlap with user-provided DDS names (see validateChannelId())
+			if (this.visibilityState !== VisibilityState.GloballyVisible) {
+				// container is detached, only one client observes content, no way to hit collisions with other clients.
+				id = encodeCompactIdToString(2 * this.contexts.size, "_");
+			} else {
+				// Due to back-compat, we could not depend yet on generateDocumentUniqueId() being there.
+				// We can remove the need to leverage uuid() as fall-back in couple releases.
+				const res =
+					this.dataStoreContext.containerRuntime.generateDocumentUniqueId?.() ?? uuid();
+				id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
+			}
+			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
 
 		this.verifyNotClosed();
@@ -1103,43 +1138,17 @@ export class FluidDataStoreRuntime
 
 	private attachListener() {
 		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-		this.dataStoreContext.once("attaching", () => {
-			/**
-			 * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
-			 * locally visible. However, before visibility state was added, this may not have been the case and data
-			 * store can move to "attaching" state in 2 scenarios:
-			 * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
-			 * 2) After attachGraph() is called - When a detached container is attached.
-			 *
-			 * The basic idea is that all local object should become locally visible before they are globally visible.
-			 */
-			this.attachGraph();
 
-			this._attachState = AttachState.Attaching;
-
-			assert(
-				this.visibilityState === VisibilityState.LocallyVisible,
-				0x2d1 /* "Data store should be locally visible before it can become globally visible." */,
-			);
-
-			// Mark the data store globally visible and make its child channels visible as well.
-			this.visibilityState = VisibilityState.GloballyVisible;
-			this.localChannelContextQueue.forEach((channel) => {
-				channel.makeVisible();
-			});
-			this.localChannelContextQueue.clear();
-
-			// This promise resolution will be moved to attached event once we fix the scheduler.
-			this.deferredAttached.resolve();
-			this.emit("attaching");
+		// back-compat, to be removed in the future.
+		// Added in "2.0.0-rc.2.0.0" timeframe.
+		(this.dataStoreContext as any).once?.("attaching", () => {
+			this.setAttachState(AttachState.Attaching);
 		});
-		this.dataStoreContext.once("attached", () => {
-			assert(
-				this.visibilityState === VisibilityState.GloballyVisible,
-				0x2d2 /* "Data store should be globally visible when its attached." */,
-			);
-			this._attachState = AttachState.Attached;
-			this.emit("attached");
+
+		// back-compat, to be removed in the future.
+		// Added in "2.0.0-rc.2.0.0" timeframe.
+		(this.dataStoreContext as any).once?.("attached", () => {
+			this.setAttachState(AttachState.Attached);
 		});
 	}
 
@@ -1177,6 +1186,51 @@ export class FluidDataStoreRuntime
 			stack: generateStack(),
 		});
 		this.localChangesTelemetryCount--;
+	}
+
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+		switch (attachState) {
+			case AttachState.Attaching:
+				/**
+				 * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
+				 * locally visible. However, before visibility state was added, this may not have been the case and data
+				 * store can move to "attaching" state in 2 scenarios:
+				 * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
+				 * 2) After attachGraph() is called - When a detached container is attached.
+				 *
+				 * The basic idea is that all local object should become locally visible before they are globally visible.
+				 */
+				this.attachGraph();
+
+				this._attachState = AttachState.Attaching;
+
+				assert(
+					this.visibilityState === VisibilityState.LocallyVisible,
+					0x2d1 /* "Data store should be locally visible before it can become globally visible." */,
+				);
+
+				// Mark the data store globally visible and make its child channels visible as well.
+				this.visibilityState = VisibilityState.GloballyVisible;
+				this.localChannelContextQueue.forEach((channel) => {
+					channel.makeVisible();
+				});
+				this.localChannelContextQueue.clear();
+
+				// This promise resolution will be moved to attached event once we fix the scheduler.
+				this.deferredAttached.resolve();
+				this.emit("attaching");
+				break;
+			case AttachState.Attached:
+				assert(
+					this.visibilityState === VisibilityState.GloballyVisible,
+					0x2d2 /* "Data store should be globally visible when its attached." */,
+				);
+				this._attachState = AttachState.Attached;
+				this.emit("attached");
+				break;
+			default:
+				unreachableCase(attachState, "unreached");
+		}
 	}
 }
 

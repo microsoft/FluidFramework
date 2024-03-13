@@ -60,7 +60,10 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 		}
 
 		return "semver";
-	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
+	} else if (
+		typeof rangeOrVersion === "string" &&
+		semver.validRange(rangeOrVersion) !== null
+	) {
 		// Must be a range string
 		if (isInternalVersionRange(rangeOrVersion)) {
 			return "internal";
@@ -83,12 +86,6 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 		}
 	}
 	return "semver";
-}
-
-function fatal(error: string): never {
-	const e = new Error(error);
-	(e as any).fatal = true;
-	throw e;
 }
 
 /**
@@ -145,7 +142,7 @@ export function bumpVersionScheme(
 			}
 		}
 		default: {
-			fatal(`Unexpected version scheme: ${scheme}`);
+			throw new Error(`Unexpected version scheme: ${scheme}`);
 		}
 	}
 }
@@ -200,8 +197,10 @@ export function sortVersions(versionList: string[], allowPrereleases = false): s
  * Parses a version from a git tag.
  * @param tag - The tag.
  * @returns A version parsed from the tag.
+ *
+ * TODO: Need up reconcile slightly different version in build-cli/src/library/context.ts
  */
-export function getVersionFromTag(tag: string): string | undefined {
+function getVersionFromTag(tag: string): string | undefined {
 	const tagSplit = tag.split("_v");
 	if (tagSplit.length !== 2) {
 		return undefined;

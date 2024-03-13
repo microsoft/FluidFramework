@@ -799,6 +799,8 @@ export class MockFluidDataStoreRuntime
 		return null as any as IChannel;
 	}
 
+	public addChannel(channel: IChannel): void {}
+
 	public get isAttached(): boolean {
 		return this.attachState !== AttachState.Detached;
 	}

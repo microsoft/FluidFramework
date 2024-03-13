@@ -231,7 +231,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				// resolution progress is tracked by the Feature 465 work item in AzDO
 				flushMode: FlushMode.Immediate,
 				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: true,
+				enableRuntimeIdCompressor: "on",
 			},
 			provideEntryPoint,
 		});

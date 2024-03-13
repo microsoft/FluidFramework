@@ -1,5 +1,6 @@
 # Build output
 dist
+lib
 *.tsbuildinfo
 
 # npm dependencies
