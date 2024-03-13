@@ -4,9 +4,9 @@
  */
 import React from "react";
 
-import { type FluidUnknownObjectNode } from "@fluidframework/devtools-core";
+import type { FluidUnknownObjectNode } from "@fluidframework/devtools-core";
 
-import { type DataVisualizationTreeProps } from "./CommonInterfaces.js";
+import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
 import { TreeItem } from "./TreeItem.js";
 
