@@ -6,7 +6,6 @@
 		"types": ["mocha", "node"],
 	},
 	"include": ["./**/*"],
-	"exclude": ["./commonjs/*"],
 	"references": [
 		{
 			"path": "../..",

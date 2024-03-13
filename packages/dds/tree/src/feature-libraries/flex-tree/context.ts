@@ -23,7 +23,7 @@ import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
 import { NodeKeys, SimpleNodeKeys } from "./nodeKeys.js";
 
 /**
- * A common context of a "forest" of EditableTrees.
+ * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
  * @internal
  */
@@ -47,9 +47,9 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 }
 
 /**
- * Implementation of `EditableTreeContext`.
+ * Implementation of `FlexTreeContext`.
  *
- * @remarks An editor is required to edit the EditableTrees.
+ * @remarks An editor is required to edit the FlexTree.
  */
 export class Context implements FlexTreeContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();

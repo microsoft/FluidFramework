@@ -1,5 +1,17 @@
 # @fluidframework/odsp-urlresolver
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   Resolved URLs no longer use non-standard protocols ([#19840](https://github.com/microsoft/FluidFramework/issues/19840)) [9d3d185183](https://github.com/microsoft/FluidFramework/commits/9d3d1851830d953792a6dfad60dde6f1c59480de)
+
+    Previously, `IResolvedUrl.url` could use a non-standard protocol like `fluid://`, `fluid-odsp://`, or `fluid-test://`. These have been replaced with `https://` to permit standards-compliant URL parsing.
+
+-   Remove deprecated package @fluid-tools/fluidapp-odsp-urlresolver ([#19262](https://github.com/microsoft/FluidFramework/issues/19262)) [8990be8bbc](https://github.com/microsoft/FluidFramework/commits/8990be8bbc229c6545eb32023f9caa1dcca8568d)
+
+    The FluidAppOdspUrlResolver class is now incorporated into the @fluidframework/odsp-urlresolver package.
+
 ## 2.0.0-rc.1.0.0
 
 Dependency updates only.
