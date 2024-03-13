@@ -10,7 +10,7 @@ import {
 	MockContainerRuntimeFactory,
 	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
-} from "./mocks";
+} from "./mocks.js";
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.
