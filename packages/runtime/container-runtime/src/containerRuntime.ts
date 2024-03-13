@@ -2153,14 +2153,8 @@ export class ContainerRuntime
 		return this.consecutiveReconnects < this.maxConsecutiveReconnects;
 	}
 
-	private resetReconnectCount(message?: ISequencedDocumentMessage) {
-		// Chunked ops don't count towards making progress as they are sent
-		// in their own batches before the originating batch is sent.
-		// Therefore, receiving them while attempting to send the originating batch
-		// does not mean that the container is making any progress.
-		if (message?.type !== ContainerMessageType.ChunkedOp) {
-			this.consecutiveReconnects = 0;
-		}
+	private resetReconnectCount() {
+		this.consecutiveReconnects = 0;
 	}
 
 	private replayPendingStates() {
@@ -2417,11 +2411,7 @@ export class ContainerRuntime
 
 		try {
 			let localOpMetadata: unknown;
-			if (
-				local &&
-				messageWithContext.modernRuntimeMessage &&
-				message.type !== ContainerMessageType.ChunkedOp
-			) {
+			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
 				);
@@ -2443,7 +2433,7 @@ export class ContainerRuntime
 				// If we have processed a local op, this means that the container is
 				// making progress and we can reset the counter for how many times
 				// we have consecutively replayed the pending states
-				this.resetReconnectCount(message);
+				this.resetReconnectCount();
 			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
@@ -2499,6 +2489,9 @@ export class ContainerRuntime
 				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
+				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
+				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
+				assert(false, "should not even get here");
 			case ContainerMessageType.Rejoin:
 				break;
 			default: {
