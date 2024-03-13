@@ -7,6 +7,7 @@
     Such tags are now handled in the following way:
     -   [{@label}](https://tsdoc.org/pages/tags/label/) tags are simply omitted from the output (they are intended as metadata, not documentation content).
     -   Other custom inline tags are emitted as italicized text.
+-   Fixed a bug where pre-escaped text contents (including embedded HTML content) would be incorrectly re-escaped.
 
 ### ⚠ BREAKING CHANGES
 
