@@ -22,11 +22,11 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { type DocumentNode, type SectionNode } from "../documentation-domain";
-import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities";
-import { createDocument } from "./Utilities";
-import { type ApiItemTransformationConfiguration } from "./configuration";
-import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
+import { type DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import { createDocument } from "./Utilities.js";
+import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
+import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
 
 /**
  * Creates a {@link DocumentNode} for the specified `apiItem`.
