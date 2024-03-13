@@ -215,35 +215,35 @@ export class AppData extends DataObject {
 		// TODO: Maybe include example handle
 
 		class LeafSchema extends builder.object("leaf-item", {
-			leafField: [builder.boolean, builder.handle, builder.string],
+			cherry: [builder.boolean, builder.handle, builder.string],
 		}) {}
 
 		class ChildSchema extends builder.object("child-item", {
-			childField: [builder.string, builder.boolean],
-			childData: builder.optional(LeafSchema),
+			apple: [builder.string, builder.boolean],
+			banana: builder.optional(LeafSchema),
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.array(ChildSchema),
-			childrenTwo: builder.number,
+			foo: builder.array(ChildSchema),
+			bar: builder.number,
 		}) {}
 
 		const config = new TreeConfiguration(RootNodeSchema, () => ({
-			childrenOne: [
+			foo: [
 				{
-					childField: "Hello world!",
-					childData: {
-						leafField: "Hello world again!",
+					apple: "Hello world!",
+					banana: {
+						cherry: "Hello world again!",
 					},
 				},
 				{
-					childField: true,
-					childData: {
-						leafField: false,
+					apple: true,
+					banana: {
+						cherry: false,
 					},
 				},
 			],
-			childrenTwo: 32,
+			bar: 32,
 		}));
 
 		sharedTree.schematize(config);

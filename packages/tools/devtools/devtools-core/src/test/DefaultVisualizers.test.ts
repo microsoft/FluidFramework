@@ -404,13 +404,13 @@ describe("DefaultVisualizers unit tests", () => {
 		) as ITree;
 
 		class ChildSchema extends builder.object("child-item", {
-			childField: [builder.boolean, builder.handle, builder.string],
-			childData: builder.optional(builder.string),
+			apple: [builder.boolean, builder.handle, builder.string],
+			banana: builder.optional(builder.string),
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.array(ChildSchema),
-			childrenTwo: builder.number,
+			foo: builder.array(ChildSchema),
+			bar: builder.number,
 		}) {}
 
 		sharedTree.schematize(
@@ -418,17 +418,17 @@ describe("DefaultVisualizers unit tests", () => {
 				RootNodeSchema,
 				() =>
 					new RootNodeSchema({
-						childrenOne: [
+						foo: [
 							{
-								childField: true,
-								childData: "Hello world!",
+								apple: true,
+								banana: "Hello world!",
 							},
 							{
-								childField: false, // TODO: Use a handle here.
-								childData: undefined,
+								apple: false, // TODO: Use a handle here.
+								banana: undefined,
 							},
 						],
-						childrenTwo: 32,
+						bar: 32,
 					}),
 			),
 		);
