@@ -18,12 +18,12 @@ import {
 } from "@fluid-experimental/property-changeset";
 
 import _ from "lodash";
-import { ModificationContext } from "./modificationContext";
-import { RemovalContext } from "./removalContext";
+import { ModificationContext } from "./modificationContext.js";
+import { RemovalContext } from "./removalContext.js";
 import {
 	getOrInsertDefaultInNestedObjects,
 	getInNestedObjects,
-} from "../external/utils/nestedObjectHelpers";
+} from "../external/utils/nestedObjectHelpers.js";
 import {
 	escapeTokenizedPathForMap,
 	unescapeTokenizedStringForMap,
@@ -37,13 +37,13 @@ import {
 	invokeWithProperty,
 	invokeWithCollectionProperty,
 	createRegistrationFunction,
-} from "./internalUtils";
-import { concatTokenizedPath } from "./dataBindingTree";
-import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from "../internal/constants";
-import { PropertyElement } from "../internal/propertyElement";
-import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from "..";
-import { isCollection, isReferenceProperty } from "../internal/typeGuards";
-import { IRegisterOnPropertyOptions } from "./IRegisterOnPropertyOptions";
+} from "./internalUtils.js";
+import { concatTokenizedPath } from "./dataBindingTree.js";
+import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from "../internal/constants.js";
+import { PropertyElement } from "../internal/propertyElement.js";
+import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from "../index.js";
+import { isCollection, isReferenceProperty } from "../internal/typeGuards.js";
+import { IRegisterOnPropertyOptions } from "./IRegisterOnPropertyOptions.js";
 
 /**
  * _globalVisitIndex is to avoid callbacks being called twice. This works around bugs in getChangesToTokenizedPaths
