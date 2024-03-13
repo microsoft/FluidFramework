@@ -254,7 +254,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly containerRuntime: IContainerRuntimeBase;
     // (undocumented)
-    deleteChildSummarizerNode?(id: string): void;
+    deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     ensureNoDataModelChanges<T>(callback: () => T): T;

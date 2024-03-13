@@ -6,6 +6,7 @@
 import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISubscribable } from "../events/index.js";
 import { IDisposable } from "../util/index.js";
+import { CommitMetadata, Revertible } from "../core/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
@@ -171,4 +172,26 @@ export interface TreeViewEvents {
 	 * This does NOT include changes to the content (fields/children) of the root node: for that case subscribe to events on the root node.
 	 */
 	rootChanged(): void;
+
+	/**
+	 * Fired when a revertible made on this view is disposed.
+	 *
+	 * @param revertible - The revertible that was disposed.
+	 */
+	revertibleDisposed(revertible: Revertible): void;
+
+	/**
+	 * Fired when:
+	 * - a local commit is applied outside of a transaction
+	 * - a local transaction is committed
+	 *
+	 * The event is not fired when:
+	 * - a local commit is applied within a transaction
+	 * - a remote commit is applied
+	 *
+	 * @param data - information about the commit that was applied
+	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
+	 * this commit is not revertible.
+	 */
+	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
 }

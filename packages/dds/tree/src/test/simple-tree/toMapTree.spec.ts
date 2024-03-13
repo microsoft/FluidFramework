@@ -378,14 +378,45 @@ describe("toMapTree", () => {
 	});
 
 	it("ambagious unions", () => {
-		const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-		const a = schemaBuilder.object("a", {});
-		const b = schemaBuilder.object("b", {});
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const a = schemaBuilder.object("a", { x: schemaBuilder.optional(leaf.string) });
+		const b = schemaBuilder.object("b", { x: schemaBuilder.optional(leaf.string) });
 		const schema = schemaBuilder.intoSchema([a, b]);
 
 		assert.throws(
 			() => nodeDataToMapTree({}, schema, schema.rootFieldSchema.allowedTypeSet),
 			/\["test.a","test.b"]/,
+		);
+
+		assert.throws(
+			() => nodeDataToMapTree({ x: "hello" }, schema, schema.rootFieldSchema.allowedTypeSet),
+			/\["test.a","test.b"]/,
+		);
+	});
+
+	it("unambagious unions", () => {
+		const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
+			scope: "test",
+			libraries: [leaf.library],
+		});
+		const a = schemaBuilder.object("a", { a: leaf.string, c: leaf.string });
+		const b = schemaBuilder.object("b", { b: leaf.string, c: leaf.string });
+		const schema = schemaBuilder.intoSchema([a, b]);
+
+		assert.doesNotThrow(() =>
+			nodeDataToMapTree(
+				{ a: "hello", c: "world" },
+				schema,
+				schema.rootFieldSchema.allowedTypeSet,
+			),
+		);
+
+		assert.doesNotThrow(() =>
+			nodeDataToMapTree(
+				{ b: "hello", c: "world" },
+				schema,
+				schema.rootFieldSchema.allowedTypeSet,
+			),
 		);
 	});
 

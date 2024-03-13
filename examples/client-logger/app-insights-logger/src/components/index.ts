@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { App } from "./App";
+export { App } from "./App.js";

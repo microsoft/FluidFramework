@@ -167,7 +167,7 @@ export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInpu
 export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
 
 // @internal
-export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+export function brand<T>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
 
 // @internal
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
@@ -189,6 +189,7 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 
 // @internal @sealed
 export abstract class BrandedType<out ValueType, Name extends string> {
+    static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
     // (undocumented)
     protected _typeCheck?: Covariant<ValueType>;
@@ -203,7 +204,7 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @internal
 export interface CheckoutEvents {
     afterBatch(): void;
-    newRevertible(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
     revertibleDisposed(revertible: Revertible): void;
 }
 
@@ -227,6 +228,19 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
 } & (TValueSchema extends ValueSchema ? {
     [valueSymbol]: TreeValue<TValueSchema>;
 } : EmptyObject)> & TTypedFields : TValueSchema extends ValueSchema ? TreeValue<TValueSchema> : undefined;
+
+// @public
+export enum CommitKind {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @public
+export interface CommitMetadata {
+    isLocal: boolean;
+    kind: CommitKind;
+}
 
 // @internal
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
@@ -429,6 +443,7 @@ export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDa
 
 // @internal @sealed
 export abstract class ErasedType<out Name extends string> {
+    static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
 }
 
@@ -1230,7 +1245,7 @@ export interface Named<TName> {
 }
 
 // @internal
-export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
+export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<unknown, infer Name> ? Name : never;
 
 // @internal
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
@@ -1432,33 +1447,14 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @internal
+// @public
 export interface Revertible {
-    discard(): RevertibleResult;
-    readonly kind: RevertibleKind;
-    readonly origin: {
-        readonly isLocal: boolean;
-    };
-    retain(): RevertibleResult;
-    revert(): RevertibleResult;
+    release(): void;
+    revert(): void;
     readonly status: RevertibleStatus;
 }
 
-// @internal
-export enum RevertibleKind {
-    Default = 0,
-    Rebase = 3,
-    Redo = 2,
-    Undo = 1
-}
-
-// @internal
-export enum RevertibleResult {
-    Failure = 1,
-    Success = 0
-}
-
-// @internal
+// @public
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
@@ -1981,6 +1977,8 @@ export interface TreeView<in out TRoot> extends IDisposable {
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
     rootChanged(): void;
 }
 
@@ -2048,7 +2046,7 @@ export interface ValueFieldEditBuilder {
 }
 
 // @internal
-export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
+export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
 // @internal
 export enum ValueSchema {
