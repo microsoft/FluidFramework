@@ -1,7 +1,6 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+
+
+
 import { EOL as newline } from "os";
 
 import { Handler, readFile, writeFile } from "../common";
@@ -117,7 +116,7 @@ export const handlers: Handler[] = [
 			headerStart: /(#![^\n]*\r?\n)?\/\*!\r?\n/, // Begins with optional hashbang followed by '/*!'
 			lineStart: / \* /, // Subsequent lines begins with ' * '
 			lineEnd: /\r?\n/, // Subsequent lines end with CRLF or LF
-			headerEnd: / \*\/\r?\n/, // Header ends with ' */' on a line by itself.
+			headerEnd: / \*\/\r?\n\r?\n/, // Header ends with ' */' on a line by itself, followed by another newline
 		}),
 		resolver: (file) => {
 			const prevContent = readFile(file);
