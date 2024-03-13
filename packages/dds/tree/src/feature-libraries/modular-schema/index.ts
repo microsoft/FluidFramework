@@ -47,8 +47,8 @@ export {
 	FieldChangeset,
 	HasFieldChanges,
 	ModularChangeset,
-	NodeChangeset,
 	NodeExistsConstraint,
+	NodeId,
 } from "./modularChangeTypes.js";
 export {
 	convertGenericChange,

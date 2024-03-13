@@ -16,15 +16,11 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 } from "../../../core/index.js";
-import {
-	FieldChange,
-	FieldKinds,
-	NodeChangeset,
-	SequenceField as SF,
-} from "../../../feature-libraries/index.js";
+import { FieldChange, FieldKinds, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
+import { NodeId } from "../../../feature-libraries/modular-schema/index.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import { toDelta } from "./utils.js";
 
@@ -100,17 +96,13 @@ export function testToDelta() {
 		});
 
 		it("revive and modify => restore and modify", () => {
-			const nestedChange: FieldChange = {
-				fieldKind: FieldKinds.sequence.identifier,
-				change: brand("Dummy Child Change"),
-			};
-			const changes = {
-				fieldChanges: new Map([[fooField, nestedChange]]),
-			};
-			const changeset = [Mark.revive(1, { revision: tag, localId: brand(0) }, { changes })];
+			const nodeId: NodeId = { localId: brand(0) };
+			const changeset = [
+				Mark.revive(1, { revision: tag, localId: brand(0) }, { changes: nodeId }),
+			];
 			const fieldChanges = new Map([[fooField, {}]]);
-			const deltaFromChild = (child: NodeChangeset): DeltaFieldMap => {
-				assert.deepEqual(child, changes);
+			const deltaFromChild = (child: NodeId): DeltaFieldMap => {
+				assert.deepEqual(child, nodeId);
 				return fieldChanges;
 			};
 			const actual = SF.sequenceFieldToDelta(makeAnonChange(changeset), deltaFromChild);
@@ -292,7 +284,10 @@ export function testToDelta() {
 			const nodeChange = {
 				fieldChanges: new Map([[fooField, nestedChange]]),
 			};
-			const changeset = [Mark.insert(1, brand(0), { changes: nodeChange })];
+
+			const nodeId: NodeId = { localId: brand(0) };
+
+			const changeset = [Mark.insert(1, brand(0), { changes: nodeId })];
 			const nestedMoveDelta = new Map([
 				[fooField, { local: [{ attach: { minor: moveId }, count: 42 }] }],
 			]);
@@ -301,8 +296,8 @@ export function testToDelta() {
 				global: [{ id: buildId, fields: nestedMoveDelta }],
 				local: [{ count: 1, attach: buildId }],
 			};
-			const deltaFromChild = (child: NodeChangeset): DeltaFieldMap => {
-				assert.deepEqual(child, nodeChange);
+			const deltaFromChild = (child: NodeId): DeltaFieldMap => {
+				assert.deepEqual(child, nodeId);
 				return nestedMoveDelta;
 			};
 			const actual = SF.sequenceFieldToDelta(makeAnonChange(changeset), deltaFromChild);

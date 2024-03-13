@@ -5,10 +5,11 @@
 
 import { strict as assert } from "assert";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
+import { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
+	emptyDelta,
 	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
@@ -45,6 +46,7 @@ import {
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import {
+	NodeId,
 	RebaseRevisionMetadata,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
@@ -79,8 +81,8 @@ const OptionalChange = {
 		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
-	buildChildChange(childChange: TestChange) {
-		return optionalFieldEditor.buildChildChange(0, childChange as NodeChangeset);
+	buildChildChange(childChange: NodeId) {
+		return optionalFieldEditor.buildChildChange(0, childChange);
 	},
 };
 
@@ -90,8 +92,11 @@ const failCrossFieldManager: CrossFieldManager = {
 };
 
 function toDelta(change: OptionalChangeset, revision?: RevisionTag): DeltaFieldChanges {
-	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
-		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
+	return optionalFieldIntoDelta(
+		tagChange(change, revision),
+		// XXX
+		(childChange) => TestChange.toDelta(tagChange(TestChange.mint([], 0), revision)),
+		// TestChange.toDelta(tagChange(childChange, revision)),
 	);
 }
 
@@ -131,7 +136,6 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 function invert(change: TaggedChange<OptionalChangeset>, isRollback: boolean): OptionalChangeset {
 	const inverted = optionalChangeRebaser.invert(
 		change,
-		TestChange.invert as any,
 		isRollback,
 		idAllocatorFromMaxId(),
 		failCrossFieldManager,
@@ -299,10 +303,12 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			mostRecentEdit: {
 				changeset: tagChange(
 					OptionalChange.buildChildChange(
-						TestChange.mint(
-							computeChildChangeInputContext(state),
-							changeChildIntention,
-						),
+						// XXX
+						{ localId: brand(0) },
+						// TestChange.mint(
+						// 	computeChildChangeInputContext(state),
+						// 	changeChildIntention,
+						// ),
 					),
 					tagFromIntention(changeChildIntention),
 				),
@@ -385,7 +391,6 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 		const inverseChangeset = optionalChangeRebaser.invert(
 			state.mostRecentEdit.changeset,
-			invertTestChangeViaNewIntention as any,
 			false,
 			idAllocatorFromMaxId(),
 			failCrossFieldManager,

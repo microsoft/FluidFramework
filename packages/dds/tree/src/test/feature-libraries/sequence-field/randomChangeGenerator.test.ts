@@ -4,26 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { NodeChangeset } from "../../../feature-libraries/index.js";
 import { FieldKey } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import { generateRandomChange } from "./randomChangeGenerator.js";
 import { MarkMaker as Mark } from "./testEdits.js";
+import { NodeId } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const testSeed = 432167897;
 const maxIndex = 3;
 const fooField: FieldKey = brand("foo");
-const childGen = (seed: number): NodeChangeset => ({
-	fieldChanges: new Map([
-		[
-			fooField,
-			{
-				fieldKind: brand("field"),
-				change: brand({ type: "Insert", content: seed }),
-			},
-		],
-	]),
-});
+const childGen = (seed: number): NodeId => ({ localId: brand(seed) });
 
 export function testGenerateRandomChange() {
 	describe("generateRandomChange", () => {

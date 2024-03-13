@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { NodeChangeset } from "./modularChangeTypes.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 /**
  * A field-kind-agnostic change to a single node within a field.
  */
-export interface GenericChange<TChildChange = NodeChangeset> {
+export interface GenericChange<TChildChange = NodeId> {
 	/**
 	 * Index within the field of the changed node.
 	 */
@@ -22,4 +22,4 @@ export interface GenericChange<TChildChange = NodeChangeset> {
 /**
  * A field-agnostic set of changes to the elements of a field.
  */
-export type GenericChangeset<TChildChange = NodeChangeset> = GenericChange<TChildChange>[];
+export type GenericChangeset<TChildChange = NodeId> = GenericChange<TChildChange>[];

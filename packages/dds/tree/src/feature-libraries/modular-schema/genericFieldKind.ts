@@ -26,7 +26,7 @@ import {
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
-import { NodeChangeset } from "./modularChangeTypes.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -72,14 +72,11 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
-		invert: (
-			{ change }: TaggedChange<GenericChangeset>,
-			invertChild: NodeChangeInverter,
-		): GenericChangeset => {
+		invert: ({ change }: TaggedChange<GenericChangeset>): GenericChangeset => {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange),
+					nodeChange,
 				}),
 			);
 		},
@@ -127,8 +124,8 @@ function rebaseGenericChange(
 		const b = over[iOver];
 		const aIndex = a?.index ?? Infinity;
 		const bIndex = b?.index ?? Infinity;
-		let nodeChangeA: NodeChangeset | undefined;
-		let nodeChangeB: NodeChangeset | undefined;
+		let nodeChangeA: NodeId | undefined;
+		let nodeChangeB: NodeId | undefined;
 		let index: number;
 		if (aIndex === bIndex) {
 			index = a.index;

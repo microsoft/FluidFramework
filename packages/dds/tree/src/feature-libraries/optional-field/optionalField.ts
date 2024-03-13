@@ -31,7 +31,7 @@ import {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeset,
+	NodeId,
 	FieldEditor,
 	NodeExistenceState,
 	FieldChangeHandler,
@@ -179,7 +179,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			composedFieldSrc = change1FieldSrc;
 		}
 
-		const childChanges2ByOriginalId = new RegisterMap<NodeChangeset>();
+		const childChanges2ByOriginalId = new RegisterMap<NodeId>();
 		for (const [id, change] of change2.childChanges) {
 			if (id === "self") {
 				if (change1FieldSrc !== undefined) {
@@ -280,7 +280,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
-		invertChild: NodeChangeInverter,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 	): OptionalChangeset => {
@@ -309,7 +308,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			moves: invertedMoves,
 			childChanges: childChanges.map(([id, childChange]) => {
 				const taggedId = tagRegister(id);
-				return [invertIdMap.get(taggedId) ?? taggedId, invertChild(childChange)];
+				return [invertIdMap.get(taggedId) ?? taggedId, childChange];
 			}),
 		};
 
@@ -379,7 +378,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			rebasedMoves.push([src, newDst ?? dst]);
 		}
 
-		const overChildChangesBySrc = new RegisterMap<NodeChangeset>();
+		const overChildChangesBySrc = new RegisterMap<NodeId>();
 		for (const [id, childChange] of overChange.childChanges) {
 			overChildChangesBySrc.set(tagRegister(id) ?? id, childChange);
 		}
@@ -607,7 +606,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	}),
 
-	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
+	buildChildChange: (index: number, childChange: NodeId): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 		return {
 			moves: [],

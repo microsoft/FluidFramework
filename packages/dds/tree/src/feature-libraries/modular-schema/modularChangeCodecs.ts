@@ -30,6 +30,7 @@ import {
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	FieldChangeMap,
 	FieldChangeset,
@@ -78,7 +79,7 @@ export function makeV0Codec(
 
 	const getMapEntry = (field: FieldKindWithEditor) => {
 		const codec = field.changeHandler
-			.codecsFactory(nodeChangesetCodec, revisionTagCodec)
+			.codecsFactory(makeChangeAtomIdCodec(revisionTagCodec), revisionTagCodec)
 			.resolve(0);
 		return {
 			codec,
@@ -326,6 +327,9 @@ export function makeV0Codec(
 			const encodedChange = change as unknown as EncodedModularChangeset;
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
+
+				// XXX
+				nodeChanges: new Map(),
 			};
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);

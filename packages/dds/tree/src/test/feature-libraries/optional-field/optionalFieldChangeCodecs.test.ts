@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import { NodeChangeset } from "../../../feature-libraries/index.js";
+
 import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
 import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import {
@@ -16,20 +16,20 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import { IJsonCodec } from "../../../codec/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
-import { changesetForChild } from "../fieldKindTestUtils.js";
 import { Change } from "./optionalFieldUtils.js";
+import { NodeId } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 
-const nodeChange1 = changesetForChild("nodeChange1");
+const nodeChange1: NodeId = { localId: brand(0) };
 
 const encodedChild = "encoded child";
 
 const childCodec1: IJsonCodec<
-	NodeChangeset,
+	NodeId,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
 	ChangeEncodingContext
 > = {
-	encode: (change: NodeChangeset) => {
+	encode: (change: NodeId) => {
 		assert.deepEqual(change, nodeChange1);
 		return encodedChild;
 	},

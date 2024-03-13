@@ -334,7 +334,6 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	const revisionMetadata = defaultRevisionMetadataFromChanges([cleanChange]);
 	let inverted = SF.invert(
 		cleanChange,
-		TestChange.invert,
 		true,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
@@ -348,7 +347,6 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		table.dstQueries.clear();
 		inverted = SF.invert(
 			cleanChange,
-			TestChange.invert,
 			true,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,

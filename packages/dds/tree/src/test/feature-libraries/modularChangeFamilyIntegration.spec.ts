@@ -217,6 +217,7 @@ describe("ModularChangeFamily integration", () => {
 			]);
 
 			const expected: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
@@ -524,6 +525,7 @@ describe("ModularChangeFamily integration", () => {
 
 		it("prunes its output", () => {
 			const a: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[
 						brand("foo"),
@@ -535,6 +537,7 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 			const b: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[
 						brand("bar"),
@@ -628,6 +631,7 @@ describe("ModularChangeFamily integration", () => {
 			];
 
 			const expected: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
@@ -640,6 +644,7 @@ describe("ModularChangeFamily integration", () => {
 	describe("toDelta", () => {
 		it("works when nested changes come from different revisions", () => {
 			const change: ModularChangeset = {
+				nodeChanges: new Map(),
 				fieldChanges: new Map([
 					[
 						brand("foo"),

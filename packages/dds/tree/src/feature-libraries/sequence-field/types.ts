@@ -4,7 +4,7 @@
  */
 
 import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
-import { NodeChangeset } from "../modular-schema/index.js";
+import { NodeId } from "../modular-schema/index.js";
 import { DetachIdOverrideType } from "./format.js";
 
 export type CellCount = number;
@@ -25,7 +25,7 @@ export interface HasMoveId {
 	id: MoveId;
 }
 
-export type NodeChangeType = NodeChangeset;
+export type NodeChangeType = NodeId;
 
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.

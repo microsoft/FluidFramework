@@ -9,7 +9,7 @@ import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../code
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
-import type { NodeChangeset } from "../modular-schema/index.js";
+import type { NodeId } from "../modular-schema/index.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
@@ -18,7 +18,7 @@ export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeC
 	ChangeEncodingContext
 >([[0, unitCodec]]);
 
-export const makeOptionalFieldCodecFamily = <TChildChange = NodeChangeset>(
+export const makeOptionalFieldCodecFamily = <TChildChange = NodeId>(
 	childCodec: IJsonCodec<
 		TChildChange,
 		JsonCompatibleReadOnly,
@@ -60,7 +60,7 @@ function makeRegisterIdCodec(
 	};
 }
 
-function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
+function makeOptionalFieldCodec<TChildChange = NodeId>(
 	childCodec: IJsonCodec<
 		TChildChange,
 		JsonCompatibleReadOnly,

@@ -17,7 +17,7 @@ import { IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
-import { NodeChangeset } from "./modularChangeTypes.js";
+import { NodeId } from "./modularChangeTypes.js";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -31,7 +31,7 @@ export interface FieldChangeHandler<
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (
 		childCodec: IJsonCodec<
-			NodeChangeset,
+			NodeId,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
 			ChangeEncodingContext
@@ -103,7 +103,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	invert(
 		change: TaggedChange<TChangeset>,
-		invertChild: NodeChangeInverter,
 		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
@@ -162,7 +161,7 @@ export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
 	 */
-	buildChildChange(childIndex: number, change: NodeChangeset): TChangeset;
+	buildChildChange(childIndex: number, change: NodeId): TChangeset;
 }
 
 /**
@@ -170,12 +169,12 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @internal
  */
-export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
+export type ToDelta = (child: NodeId) => DeltaFieldMap;
 
 /**
  * @internal
  */
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeId) => NodeId;
 
 /**
  * @internal
@@ -189,34 +188,34 @@ export enum NodeExistenceState {
  * @internal
  */
 export type NodeChangeRebaser = (
-	change: NodeChangeset | undefined,
-	baseChange: NodeChangeset | undefined,
+	change: NodeId | undefined,
+	baseChange: NodeId | undefined,
 	/**
 	 * Whether or not the node is alive or dead in the input context of change.
 	 * Defaults to Alive if undefined.
 	 */
 	state?: NodeExistenceState,
-) => NodeChangeset | undefined;
+) => NodeId | undefined;
 
 /**
  * @internal
  */
 export type NodeChangeComposer = (
-	change1: NodeChangeset | undefined,
-	change2: NodeChangeset | undefined,
-) => NodeChangeset;
+	change1: NodeId | undefined,
+	change2: NodeId | undefined,
+) => NodeId;
 
 /**
  * @internal
  */
-export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
+export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 
 /**
  * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
  *
  * @internal
  */
-export type RelevantRemovedRootsFromChild = (child: NodeChangeset) => Iterable<DeltaDetachedNodeId>;
+export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getBaseRevisions: () => RevisionTag[];

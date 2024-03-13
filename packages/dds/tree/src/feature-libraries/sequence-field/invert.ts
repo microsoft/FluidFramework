@@ -49,7 +49,6 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
  */
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
-	invertChild: NodeChangeInverter<TNodeChange>,
 	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
@@ -58,7 +57,6 @@ export function invert<TNodeChange>(
 	return invertMarkList(
 		change.change,
 		change.revision,
-		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
 		revisionMetadata,
 	);
@@ -67,20 +65,13 @@ export function invert<TNodeChange>(
 function invertMarkList<TNodeChange>(
 	markList: MarkList<TNodeChange>,
 	revision: RevisionTag | undefined,
-	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(
-			mark,
-			revision,
-			invertChild,
-			crossFieldManager,
-			revisionMetadata,
-		);
+		const inverseMarks = invertMark(mark, revision, crossFieldManager, revisionMetadata);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -90,21 +81,17 @@ function invertMarkList<TNodeChange>(
 function invertMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
 	revision: RevisionTag | undefined,
-	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange>[] {
 	if (!isImpactful(mark, revision, revisionMetadata)) {
 		const inputId = getInputCellId(mark, revision, revisionMetadata);
-		return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, inputId)];
+		return [invertNodeChangeOrSkip(mark.count, mark.changes, inputId)];
 	}
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType: {
 			const inverse = { ...mark };
-			if (mark.changes !== undefined) {
-				inverse.changes = invertChild(mark.changes);
-			}
 			return [inverse];
 		}
 		case "Remove": {
@@ -129,7 +116,7 @@ function invertMark<TNodeChange>(
 								id: inputId,
 							},
 					  };
-			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
+			return [withNodeChange(inverse, mark.changes)];
 		}
 		case "Insert": {
 			const inputId = getInputCellId(mark, revision, revisionMetadata);
@@ -147,7 +134,7 @@ function invertMark<TNodeChange>(
 				id: inputId,
 			};
 
-			const inverse = withNodeChange(removeMark, invertNodeChange(mark.changes, invertChild));
+			const inverse = withNodeChange(removeMark, mark.changes);
 			return [inverse];
 		}
 		case "MoveOut": {
@@ -163,7 +150,7 @@ function invertMark<TNodeChange>(
 					endpoint.revision,
 					endpoint.localId,
 					mark.count,
-					invertChild(mark.changes),
+					mark.changes,
 					true,
 				);
 			}
@@ -245,14 +232,12 @@ function invertMark<TNodeChange>(
 			const attachInverses = invertMark(
 				attach,
 				revision,
-				invertChild,
 				crossFieldManager,
 				revisionMetadata,
 			);
 			const detachInverses = invertMark(
 				detach,
 				revision,
-				invertChild,
 				crossFieldManager,
 				revisionMetadata,
 			);
@@ -364,14 +349,13 @@ function applyMovedChanges<TNodeChange>(
 function invertNodeChangeOrSkip<TNodeChange>(
 	count: number,
 	changes: TNodeChange | undefined,
-	inverter: NodeChangeInverter<TNodeChange>,
 	cellId?: CellId,
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(count === 1, 0x66c /* A modify mark must have length equal to one */);
 		const noop: CellMark<NoopMark, TNodeChange> = {
 			count,
-			changes: inverter(changes),
+			changes,
 		};
 		if (cellId !== undefined) {
 			noop.cellId = cellId;

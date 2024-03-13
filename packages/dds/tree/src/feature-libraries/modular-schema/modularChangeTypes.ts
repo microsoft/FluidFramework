@@ -4,6 +4,7 @@
  */
 
 import {
+	ChangeAtomId,
 	ChangeAtomIdMap,
 	ChangesetLocalId,
 	FieldKey,
@@ -30,6 +31,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	 */
 	readonly revisions?: readonly RevisionInfo[];
 	readonly fieldChanges: FieldChangeMap;
+	readonly nodeChanges: ChangeAtomIdMap<NodeChangeset>;
 	readonly constraintViolationCount?: number;
 	readonly builds?: ChangeAtomIdMap<TreeChunk>;
 	readonly destroys?: ChangeAtomIdMap<number>;
@@ -50,6 +52,8 @@ export interface NodeExistsConstraint {
 export interface NodeChangeset extends HasFieldChanges {
 	nodeExistsConstraint?: NodeExistsConstraint;
 }
+
+export type NodeId = ChangeAtomId;
 
 /**
  * @internal
