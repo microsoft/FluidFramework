@@ -27,7 +27,8 @@ type ApiLevel = (typeof knownLevels)[number];
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
 > {
-	static readonly description = `Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
+	static readonly description =
+		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
 		tsconfig: Flags.file({
@@ -51,8 +52,7 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const { tsconfig, data, onlyInternal, organize } = this.flags;
-		const dataFilePath =
-			data ?? path.join(__dirname, "../../data/rawApiLevels.jsonc");
+		const dataFilePath = data ?? path.join(__dirname, "../../../data/rawApiLevels.jsonc");
 		const apiLevelData = await loadData(dataFilePath);
 		await updateImports(tsconfig, apiLevelData, onlyInternal, organize, this.logger);
 	}
@@ -123,8 +123,12 @@ async function updateImports(
 				} else {
 					// TODO: Handle default import if needed.
 					const defaultImport = importDeclaration.getDefaultImport();
-					if(defaultImport !== undefined) {
-						log?.warning(`Found a default import (not yet implemented): ${defaultImport.getText().trim()}`)
+					if (defaultImport !== undefined) {
+						log?.warning(
+							`Found a default import (not yet implemented): ${defaultImport
+								.getText()
+								.trim()}`,
+						);
 					}
 					const namedImports = importDeclaration.getNamedImports();
 
@@ -140,20 +144,13 @@ async function updateImports(
 						// is trimmed, but leading or trailing text like "type" or "as foo" is still included. This is the string
 						// that will be used in the new imports.
 						const fullImportSpecifierText = importSpecifier.getFullText().trim();
-						const expectedLevel = getApiLevelForImportName(
-							name,
-							data,
-							"public",
-							onlyInternal,
-						);
+						const expectedLevel = getApiLevelForImportName(name, data, "public", onlyInternal);
 
 						log?.verbose(
 							`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
 						);
 						const newSpecifier =
-							expectedLevel === "public"
-								? moduleName
-								: `${moduleName}/${expectedLevel}`;
+							expectedLevel === "public" ? moduleName : `${moduleName}/${expectedLevel}`;
 
 						if (!newImports.has(newSpecifier)) {
 							newImports.set(newSpecifier, []);
@@ -171,22 +168,29 @@ async function updateImports(
 		}
 
 		for (const [newSpecifier, names] of newImports) {
-			// TODO: Not sure this check is necessary.
+			// Not sure this check is necessary.
 			if (names.length > 0) {
 				sourceFile.addImportDeclaration({
 					namedImports: names,
 					moduleSpecifier: newSpecifier,
 				});
+				sourceFileChanged = true;
 			}
 			log?.info(`ADDED import from ${newSpecifier}`);
 		}
 
 		if (sourceFileChanged && organizeImports) {
-			log?.info(`Organizing imports in: ${sourceFile.getBaseName()}`);
+			log?.info(`Organized imports in: ${sourceFile.getBaseName()}`);
 			sourceFile.organizeImports();
 		}
+
+		if (sourceFileChanged) {
+			await sourceFile.save();
+		}
 	}
-	await project.save();
+
+	// Don't save the project since we're saving source files one at a time instead
+	// await project.save();
 }
 
 // This raw data comes from this ripgrep one-liner:
