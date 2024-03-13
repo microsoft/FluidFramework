@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { isAny } from "./typeCheck.js";
-import { Brand, BrandedType, ValueFromBranded, NameFromBranded } from "./brand.js";
+import type { isAny } from "./typeCheck.js";
+import type { Brand, BrandedType, ValueFromBranded, NameFromBranded } from "./brand.js";
 
 /**
  * Converts a Branded type into an "opaque" handle.

@@ -37,11 +37,14 @@ type _check =
 
 const _branded: T1 = brand(0);
 
-// @ts-expect-error No type to infer: does not build.
-const _branded2 = brand(0);
+// Ensure optional fields can be assigned from brand.
+const _branded2: T1 | undefined = brand(0);
 
 // @ts-expect-error No type to infer: does not build.
-const untypedOpaque = brandOpaque(0);
+const _branded3 = brand(0);
+
+// @ts-expect-error Non-branded type does not build.
+const _branded4: number = brand(0);
 
 // Erased
 interface E4 extends Erased<"4"> {}

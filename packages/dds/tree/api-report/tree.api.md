@@ -167,7 +167,7 @@ export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInpu
 export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
 
 // @internal
-export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+export function brand<T>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
 
 // @internal
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
@@ -1245,7 +1245,7 @@ export interface Named<TName> {
 }
 
 // @internal
-export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
+export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<unknown, infer Name> ? Name : never;
 
 // @internal
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
@@ -2046,7 +2046,7 @@ export interface ValueFieldEditBuilder {
 }
 
 // @internal
-export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
+export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
 // @internal
 export enum ValueSchema {

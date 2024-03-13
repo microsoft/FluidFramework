@@ -4,8 +4,8 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { Covariant, isAny } from "./typeCheck.js";
-import { Assume } from "./typeUtils.js";
+import type { Covariant, isAny } from "./typeCheck.js";
+import type { Assume } from "./typeUtils.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -151,7 +151,7 @@ export abstract class BrandedType<out ValueType, Name extends string> {
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
+export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<
 	infer ValueType,
 	string
 >
@@ -163,8 +163,8 @@ export type ValueFromBranded<T extends BrandedType<any, string>> = T extends Bra
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<
-	any,
+export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<
+	unknown,
 	infer Name
 >
 	? Name
@@ -188,9 +188,16 @@ export function fromErased<
  * Adds a type {@link Brand} to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
+ * @privateRemarks
+ * Leaving `T` unconstrained here allows for better type inference when branding unions.
+ * For example when assigning `brand(number)` a number to an optional branded number field,
+ * constraining T to `BrandedType<unknown, string>` causes the inference to fail and requires explicitly providing the type parameter.
+ * For example leaving T unconstrained instead allows the union of `BrandedType | undefined` to distribute over the conditional allowing the branding only the the union members which should be branded.
+ * This does not permit branding an optional value into an optional field since non branded union members are still excluded from input to this function:
+ * this is an intended restriction as it causes compile errors for misuse of this function (like using brand when the relevant type is not a branded type).
  * @internal
  */
-export function brand<T extends Brand<any, string>>(
+export function brand<T>(
 	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
 ): T {
 	return value as T;
@@ -202,7 +209,7 @@ export function brand<T extends Brand<any, string>>(
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @internal
  */
-export function brandErased<T extends BrandedType<any, string>>(
+export function brandErased<T extends BrandedType<unknown, string>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): ErasedType<NameFromBranded<T>> {
 	return value as ErasedType<NameFromBranded<T>>;
