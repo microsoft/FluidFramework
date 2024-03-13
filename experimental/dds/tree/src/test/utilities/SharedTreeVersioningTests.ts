@@ -421,13 +421,6 @@ export function runSharedTreeVersioningTests(
 				}
 			}
 			expect(tree1.equals(tree2)).to.be.true;
-
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(1);
-			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
-			);
 		});
 
 		it('interns strings correctly after upgrading from 0.0.2', async () => {
@@ -501,13 +494,6 @@ export function runSharedTreeVersioningTests(
 			expect(tree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 			expect(tree.attributeNodeId(nodeId)).to.equal(attributionId);
 			expect(tree2.attributeNodeId(tree2.convertToNodeId(stableNodeId))).to.equal(attributionId);
-
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(1);
-			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
-			);
 		});
 
 		describe('telemetry', () => {
