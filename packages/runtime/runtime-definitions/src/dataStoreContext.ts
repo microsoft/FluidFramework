@@ -364,6 +364,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
+
+	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 /**
@@ -377,13 +379,6 @@ export type CreateChildSummarizerNodeFn = (
 	 */
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
-
-/**
- * @alpha
- */
-export interface IFluidDataStoreContextEvents extends IEvent {
-	(event: "attaching" | "attached", listener: () => void);
-}
 
 /**
  * Represents the context for the data store like objects. It is used by the data store runtime to
@@ -489,7 +484,7 @@ export interface IFluidParentContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	deleteChildSummarizerNode?(id: string): void;
+	deleteChildSummarizerNode(id: string): void;
 
 	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
@@ -508,6 +503,12 @@ export interface IFluidParentContext
 		srcHandle: { absolutePath: string },
 		outboundHandle: { absolutePath: string },
 	): void;
+
+	/**
+	 * Called by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
+	 * @param address - The address of the channel that is dirty.
+	 */
+	setChannelDirty(address: string): void;
 }
 
 /**
@@ -515,9 +516,7 @@ export interface IFluidParentContext
  * get information and call functionality to the container.
  * @alpha
  */
-export interface IFluidDataStoreContext
-	extends IEventProvider<IFluidDataStoreContextEvents>,
-		IFluidParentContext {
+export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
 	/**
 	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads
@@ -538,12 +537,6 @@ export interface IFluidDataStoreContext
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
 	readonly createProps?: any;
-
-	/**
-	 * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.
-	 * @param address - The address of the channel that is dirty.
-	 */
-	setChannelDirty(address: string): void;
 
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.

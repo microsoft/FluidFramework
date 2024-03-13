@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-declare let __webpack_public_path__: string;
+import react_collapsible from "react-collapsible";
+
+export { react_collapsible as Collapsible };
