@@ -3,7 +3,6 @@
 	"compilerOptions": {
 		"resolveJsonModule": true,
 		"outDir": "./lib",
-		"allowJs": true,
 		"types": ["jest"], // Required because of the comingled building of test and src files
 	},
 	"exclude": ["dist", "node_modules"],
@@ -11,8 +10,6 @@
 		"src/**/*",
 		"assets/**/*",
 		"custom.d.ts",
-
-		// Required because /src/InspectorTable.stories.tsx imports '../test/common.js'
-		"test/**/*",
+		"test/**/*", // Required because /src/InspectorTable.stories.tsx imports '../test/common.js'
 	],
 }
