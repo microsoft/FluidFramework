@@ -1,6 +1,6 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
-	"files": {
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+		"files": {
 		"ignoreUnknown": true,
 		"ignore": ["**/_api-extractor-temp/**", "**/oclif.manifest.json", "**/_package.json"]
 	},
