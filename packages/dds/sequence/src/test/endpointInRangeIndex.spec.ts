@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Client } from "@fluidframework/merge-tree";
-import { EndpointInRangeIndex, IEndpointInRangeIndex } from "../intervalIndex";
-import { Interval, intervalHelpers } from "../intervals";
+import { EndpointInRangeIndex, IEndpointInRangeIndex } from "../intervalIndex/index.js";
+import { Interval, intervalHelpers } from "../intervals/index.js";
 import {
 	assertPlainNumberIntervals,
 	createTestInterval,
 	generateRandomIntervals,
-} from "./intervalIndexTestUtils";
+} from "./intervalIndexTestUtils.js";
 
 class TestEndpointInRangeIndex implements IEndpointInRangeIndex<Interval> {
 	private readonly intervals: Interval[];

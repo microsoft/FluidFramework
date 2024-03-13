@@ -50,16 +50,12 @@ import {
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./defaultMap";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
-import { SequenceInterval } from "./intervals";
-import {
-	IIntervalCollection,
-	IntervalCollection,
-	SequenceIntervalCollectionValueType,
-} from "./intervalCollection";
-import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection";
+import { IntervalCollectionMap, IMapOperation } from "./intervalCollectionMap.js";
+import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
+import { SequenceInterval } from "./intervals/index.js";
+import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
+import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
+import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -257,7 +253,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
+	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
 	constructor(
 		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
@@ -307,7 +303,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
 		});
 
-		this.intervalCollections = new DefaultMap(
+		this.intervalCollections = new IntervalCollectionMap(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => {
@@ -647,7 +643,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
-		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
+		assert(
+			originalRefSeq !== undefined,
+			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
+		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
 			if (
 				!this.intervalCollections.tryResubmitMessage(
@@ -739,7 +738,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
-			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			assert(recordedRefSeq !== undefined, 0x8bc /* No pending recorded refSeq found */);
 			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
 			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
 			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for

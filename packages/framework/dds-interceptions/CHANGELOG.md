@@ -1,5 +1,13 @@
 # @fluidframework/dds-interceptions
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   @fluidframework/dds-interceptions is now considered experimental ([#19679](https://github.com/microsoft/FluidFramework/issues/19679)) [181d802c9b](https://github.com/microsoft/FluidFramework/commits/181d802c9bb990ec3464d0c9d78126b05fa06cd3)
+
+    The DDS interception pattern was intended to support attribution scenarios but is now in process of being replaced by a different attributor approach. It is not recommended for use.
+
 ## 2.0.0-rc.1.0.0
 
 Dependency updates only.

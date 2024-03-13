@@ -24,7 +24,8 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MatrixItem, SharedMatrix } from "../matrix.js";
+import { SharedMatrix } from "../matrix.js";
+import { MatrixItem } from "../ops.js";
 import { SharedMatrixFactory } from "../runtime.js";
 import { _dirname } from "./dirname.cjs";
 

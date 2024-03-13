@@ -342,7 +342,7 @@ export class PureDataObjectFactory<
 		const result = await dataStore.trySetAlias(rootDataStoreId);
 		if (result !== "Success") {
 			const handle = await runtime.getAliasedDataStoreEntryPoint(rootDataStoreId);
-			assert(handle !== undefined, "Should have retrieved aliased handle");
+			assert(handle !== undefined, 0x8e1 /* Should have retrieved aliased handle */);
 			return (await handle.get()) as TObj;
 		}
 		return instance;

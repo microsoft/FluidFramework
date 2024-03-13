@@ -2,14 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	Context,
-	Logger,
-	MonoRepo,
-	Package,
-	VersionDetails,
-	updatePackageJsonFile,
-} from "@fluidframework/build-tools";
+import { Logger, MonoRepo, Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import {
 	InterdependencyRange,
 	ReleaseVersion,
@@ -44,6 +37,7 @@ import {
 	selectAndFilterPackages,
 } from "../filter";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
+import { Context, VersionDetails } from "./context";
 
 /**
  * An object that maps package names to version strings or range strings.
@@ -74,9 +68,7 @@ export async function npmCheckUpdates(
 	depsToUpdate: ReleasePackage[] | RegExp[],
 	releaseGroupFilter: ReleaseGroup | undefined,
 	depUpdateType: DependencyUpdateType,
-	// eslint-disable-next-line default-param-last
 	prerelease = false,
-	// eslint-disable-next-line default-param-last
 	writeChanges = false,
 	log?: Logger,
 ): Promise<{
@@ -486,7 +478,6 @@ export async function setVersion(
 	context: Context,
 	releaseGroupOrPackage: MonoRepo | Package,
 	version: semver.SemVer,
-	// eslint-disable-next-line default-param-last
 	interdependencyRange: InterdependencyRange = "^",
 	log?: Logger,
 ): Promise<void> {
@@ -751,9 +742,7 @@ export async function npmCheckUpdatesHomegrown(
 	releaseGroup: ReleaseGroup | ReleasePackage | undefined,
 	depsToUpdate: ReleasePackage[],
 	releaseGroupFilter: ReleaseGroup | undefined,
-	// eslint-disable-next-line default-param-last
 	prerelease = false,
-	// eslint-disable-next-line default-param-last
 	writeChanges = true,
 	log?: Logger,
 ): Promise<{

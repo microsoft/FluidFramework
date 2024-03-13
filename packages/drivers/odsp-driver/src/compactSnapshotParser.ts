@@ -200,7 +200,7 @@ function readTreeSection(node: NodeCore): {
 			assertBoolInstance(records.omitted, "omitted should be a boolean");
 			assert(
 				!records.omitted || snapshotTree.groupId !== undefined,
-				"GroupId absent but omitted is true",
+				0x8df /* GroupId absent but omitted is true */,
 			);
 			snapshotTree.omitted = records.omitted;
 		}

@@ -174,26 +174,29 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 		assert(dataObjectTree.type === SummaryType.Tree, "dataObjectTree should be a tree");
 		assert(dataObjectTree.groupId === loadingGroupId, "GroupId should be on the summary tree");
 
-		// TODO: Enable this portion in tinylicious
-		if (provider.driver.type === "local") {
-			const container2 = await provider.loadContainer(runtimeFactory, undefined, {
-				[LoaderHeader.version]: summaryVersion,
-			});
+		const container2 = await provider.loadContainer(runtimeFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
 
-			const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
-			const handleA2 = mainObject2._root.get("dataObjectA");
-			const handleB2 = mainObject2._root.get("dataObjectB");
-			const handleC2 = mainObject2._root.get("dataObjectC");
-			const handleD2 =
-				await mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD");
-			assert(handleA2 !== undefined, "handleA2 should not be undefined");
-			assert(handleB2 !== undefined, "handleB2 should not be undefined");
-			assert(handleC2 !== undefined, "handleC2 should not be undefined");
-			assert(handleD2 !== undefined, "handleD2 should not be undefined");
-			const dataObjectA2 = (await handleA2.get()) as TestDataObject;
-			const dataObjectB2 = (await handleB2.get()) as TestDataObject;
-			const dataObjectC2 = (await handleC2.get()) as TestDataObject;
-			const dataObjectD2 = (await handleD2.get()) as TestDataObject;
+		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
+		const handleA2 = mainObject2._root.get("dataObjectA");
+		const handleB2 = mainObject2._root.get("dataObjectB");
+		const handleC2 = mainObject2._root.get("dataObjectC");
+		const handleD2 =
+			await mainObject2.containerRuntime.getAliasedDataStoreEntryPoint("dataObjectD");
+		assert(handleA2 !== undefined, "handleA2 should not be undefined");
+		assert(handleB2 !== undefined, "handleB2 should not be undefined");
+		assert(handleC2 !== undefined, "handleC2 should not be undefined");
+		assert(handleD2 !== undefined, "handleD2 should not be undefined");
+		const dataObjectA2 = (await handleA2.get()) as TestDataObject;
+		const dataObjectB2 = (await handleB2.get()) as TestDataObject;
+		const dataObjectC2 = (await handleC2.get()) as TestDataObject;
+		const dataObjectD2 = (await handleD2.get()) as TestDataObject;
+
+		// TODO: Enable this portion in tinylicious
+		// This allows us to test against services without groupId enabled.
+		// Round tripping of groupId only works for local driver, regardless the rest should just work as intended
+		if (provider.driver.type === "local") {
 			assert.equal(dataObjectA2.loadingGroupId, loadingGroupId, "A groupId not set");
 			assert.equal(dataObjectB2.loadingGroupId, loadingGroupId, "B groupId not set");
 			assert.equal(dataObjectC2.loadingGroupId, loadingGroupId2, "B groupId not set");
