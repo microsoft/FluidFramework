@@ -120,7 +120,6 @@ export abstract class ReleaseReportBaseCommand<
 	 */
 	protected async collectReleaseData(
 		context: Context,
-		// eslint-disable-next-line default-param-last
 		mode: ReleaseSelectionMode = this.defaultMode,
 		releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
 		includeDependencies = true,
