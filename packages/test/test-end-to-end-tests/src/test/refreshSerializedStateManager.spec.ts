@@ -30,7 +30,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("Refresh SerializedStateManager attributes", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
 	const stringId = "sharedStringKey";
 	const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -50,7 +50,7 @@ describeCompat("Refresh serializedStateAttributes", "NoCompat", (getTestObjectPr
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({
