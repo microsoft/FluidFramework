@@ -243,7 +243,11 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
  * It helps to filter out lower verions configs that the ones intended to be tested on a
  * particular suite.
  */
-export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	config: CompatConfig,
+	base?: string,
+) {
 	let lowerVersion: string | number = config.compatVersion;
 	// For CrossVersion there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossVersion) {
@@ -252,7 +256,7 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 				? (config.loadVersion as string)
 				: config.compatVersion;
 	}
-	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
+	const compatVersion = getRequestedVersion(base ?? testBaseVersion(lowerVersion), lowerVersion);
 	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
