@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 
 /**
  * Not really buffered, we just need a default implementation of the interface.
