@@ -4,6 +4,7 @@
  */
 
 import { NumericOptions, TUnsafe, Type } from "@sinclair/typebox";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { Covariant, isAny } from "./typeCheck.js";
 import { Assume } from "./utils.js";
 
@@ -25,11 +26,26 @@ export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueTy
 
 /**
  * "opaque" handle which can be used to expose a branded type without referencing its value type.
- *
+ * @remarks
  * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
- * uses the type name instead of expanding it:
+ * uses the type name instead of expanding it.
+ *
+ * @example
  * ```typescript
- * export interface MyType extends Erased<"myPackage.MyType">{}
+ * // Public
+ * export interface ErasedMyType extends Erased<"myPackage.MyType"> {}
+ * // Internal
+ * export interface MyType {
+ * 	example: number;
+ * }
+ * export interface BrandedMyType extends Brand<MyType, ErasedMyType> {}
+ * // Usage
+ * export function extract(input: ErasedMyType): BrandedMyType {
+ * 	return fromErased<BrandedMyType>(input);
+ * }
+ * export function erase(input: MyType): ErasedMyType {
+ * 	return brandErased<BrandedMyType>(input);
+ * }
  * ```
  * @internal
  */
@@ -42,7 +58,7 @@ export type Erased<Name extends string> = ErasedType<Name>;
  * - make the member protected (so you don't accidentally try and read it).
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  *
- * See `InternalTypes.MakeNominal` for some more details.
+ * See {@link MakeNominal} for more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
@@ -66,6 +82,17 @@ export abstract class ErasedType<out Name extends string> {
 	 * This class should never exist at runtime, so make it un-constructable.
 	 */
 	private constructor() {}
+
+	/**
+	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
+	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
+	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 */
+	public static [Symbol.hasInstance](value: never): value is never {
+		throw new UsageError(
+			"ErasedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
+		);
+	}
 }
 
 /**
@@ -106,6 +133,17 @@ export abstract class BrandedType<out ValueType, Name extends string> {
 	 * This class should never exist at runtime, so make it un-constructable.
 	 */
 	private constructor() {}
+
+	/**
+	 * Since this class is a compile time only type brand, `instanceof` will never work with it.
+	 * This `Symbol.hasInstance` implementation ensures that `instanceof` will error if used,
+	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
+	 */
+	public static [Symbol.hasInstance](value: never): value is never {
+		throw new UsageError(
+			"BrandedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
+		);
+	}
 }
 
 /**

@@ -189,6 +189,7 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 
 // @internal @sealed
 export abstract class BrandedType<out ValueType, Name extends string> {
+    static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
     // (undocumented)
     protected _typeCheck?: Covariant<ValueType>;
@@ -442,6 +443,7 @@ export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDa
 
 // @internal @sealed
 export abstract class ErasedType<out Name extends string> {
+    static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
 }
 
