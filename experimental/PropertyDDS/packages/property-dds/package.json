@@ -70,8 +70,6 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs due to high overhead - npm run test:mocha:cjs",
-		"test:mocha-ts": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit --timeout 1500000",
-		"test:mocha-ts-inspect": "cross-env FLUID_TEST_VERBOSE=1 TS_NODE_PROJECT=./src/test/tsconfig.json mocha --inspect-brk --require ts-node/register --extensions ts,tsx  \"src/test/**/*.spec.ts\" --exit --timeout 1500000",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
