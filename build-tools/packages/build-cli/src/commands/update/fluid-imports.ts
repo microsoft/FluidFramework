@@ -110,7 +110,10 @@ async function updateImports(
 		// Collect the existing declarations
 		for (const importDeclaration of imports) {
 			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-			if (moduleSpecifier.startsWith("@fluid")) {
+			if (
+				moduleSpecifier.startsWith("@fluid") ||
+				["fluid-framework", "tinylicious"].includes(moduleSpecifier)
+			) {
 				log?.verbose(`Found a fluid import: '${moduleSpecifier}'`);
 				const modulePieces = moduleSpecifier.split("/");
 				const moduleName = modulePieces.slice(0, 2).join("/");
