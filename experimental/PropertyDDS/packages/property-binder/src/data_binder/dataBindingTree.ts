@@ -12,7 +12,7 @@
 import _ from "underscore";
 import { PathHelper } from "@fluid-experimental/property-changeset";
 import { PATH_TOKENS_TYPE, TOKEN_TYPES_TYPE } from "@fluid-experimental/property-properties";
-import { DataBinding } from "./dataBinding";
+import { DataBinding } from "./dataBinding.js";
 
 export type NodeType = DataBindingTree | ArrayNode | null | undefined;
 interface Value {
