@@ -14,11 +14,11 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain";
-import { type ApiModuleLike, filterByKind } from "../../utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createChildDetailsSection, createMemberTables } from "../helpers";
-import { filterItems } from "../ApiItemTransformUtilities";
+import { type SectionNode } from "../../documentation-domain/index.js";
+import { type ApiModuleLike, filterByKind } from "../../utilities/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import { filterItems } from "../ApiItemTransformUtilities.js";
 
 /**
  * Default documentation transform for module-like API items (packages, namespaces).

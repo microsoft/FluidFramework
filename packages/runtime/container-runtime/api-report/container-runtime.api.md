@@ -26,7 +26,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IEvent as IEvent_2 } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
@@ -103,6 +102,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     protected createDataStoreId(): string;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    deleteChild(dataStoreId: string): void;
     deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[];
     // (undocumented)
     readonly dispose: () => void;
@@ -711,7 +712,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 }
 
 // @internal (undocumented)
-export interface IFluidDataStoreContextEvents extends IEvent_2 {
+export interface IFluidDataStoreContextEvents extends IEvent {
     // (undocumented)
     (event: "attaching" | "attached", listener: () => void): any;
 }

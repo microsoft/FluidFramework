@@ -1570,7 +1570,10 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: this.reSubmit.bind(this),
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -2816,6 +2819,7 @@ export class ContainerRuntime
 				}
 				break;
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.GC: {
 				return false;
 			}
