@@ -1316,7 +1316,10 @@ export class Container
 						});
 					}
 
-					this.serializedStateManager.setAfterAttachProperties(await attachP, this.service?.policies?.supportGetSnapshotApi ?? false);
+					this.serializedStateManager.setAfterAttachProperties(
+						await attachP,
+						this.service?.policies?.supportGetSnapshotApi ?? false,
+					);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{

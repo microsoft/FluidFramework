@@ -76,7 +76,7 @@ export class SerializedStateManager {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
 			if (this.refreshRequired()) {
-				this.refreshAttributes();
+				this.refreshSerializedAttributes();
 			}
 		}
 	}
@@ -107,7 +107,7 @@ export class SerializedStateManager {
 			return { snapshotTree, version };
 		} else {
 			// kick off refresh process in the background.
-			this.refreshAttributes();
+			this.refreshSerializedAttributes();
 			return { snapshotTree: this.snapshot.tree, version: undefined };
 		}
 	}
@@ -170,7 +170,7 @@ export class SerializedStateManager {
 		return { snapshot, version };
 	}
 
-	public refreshAttributes() {
+	private refreshSerializedAttributes() {
 		if (!this.fetching) {
 			this.fetching = true;
 			this.fetchSnapshotCore(undefined, this.supportGetSnapshotApi)
@@ -226,7 +226,7 @@ export class SerializedStateManager {
 							firstProcessedOpSequenceNumber: firstSavedOpSN,
 						});
 						console.log("Snapshot didn't refresh RRRRRRRRRR");
-					} 
+					}
 				})
 				.catch((error) => {
 					console.log("SNAPSHOT REFRESH ERRORRRRRRRR", error);
