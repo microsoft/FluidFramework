@@ -3088,15 +3088,12 @@ importers:
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.55.0
-      expect-puppeteer: ^9.0.2
       fluid-framework: workspace:~
       html-webpack-plugin: ^5.5.0
       prettier: ~3.0.3
       process: ^0.11.10
-      puppeteer: ^22.2.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
@@ -3126,13 +3123,10 @@ importers:
       '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      cross-env: 7.0.3
       eslint: 8.55.0
-      expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
       prettier: 3.0.3
       process: 0.11.10
-      puppeteer: 22.2.0_typescript@5.1.6
       rimraf: 4.4.1
       tailwindcss: 3.3.6
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
