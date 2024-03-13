@@ -467,7 +467,7 @@ describe("PropertyDDS", () => {
 			});
 
 			describe("Randomized Tests", () => {
-				const count = 1;
+				const count = 100;
 				const startTest = 0;
 				const logTest = true;
 
