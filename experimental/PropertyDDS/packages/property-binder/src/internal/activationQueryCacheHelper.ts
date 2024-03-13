@@ -10,7 +10,6 @@ import * as _ from "underscore";
 import { getLocalOrRemoteSchema } from "../data_binder/internalUtils.js";
 import { DataBinder, DataBinding } from "../index.js";
 
-
 export interface ActivationInfo {
 	dataBinder: DataBinder;
 	userData: any;
