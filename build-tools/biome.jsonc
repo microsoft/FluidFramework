@@ -1,8 +1,8 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-		"files": {
+	"files": {
 		"ignoreUnknown": true,
-		"ignore": ["**/_api-extractor-temp/**", "**/oclif.manifest.json", "**/_package.json"]
+		"ignore": ["**/*.generated.*", "**/_api-extractor-temp/**", "**/_package.json"]
 	},
 	"vcs": {
 		"enabled": true,
@@ -43,11 +43,14 @@
 	},
 	"overrides": [
 		{
-			"include": [".vscode/**/*.json"],
+			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
 			"json": {
 				"parser": {
 					"allowComments": true,
 					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
 				}
 			}
 		}
