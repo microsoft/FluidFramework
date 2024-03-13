@@ -107,7 +107,6 @@ async function updateImports(
 		 */
 		const newImports: Map<string, string[]> = new Map();
 
-		// TODO: Optimize later if needed
 		// Collect the existing declarations
 		for (const importDeclaration of imports) {
 			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
@@ -123,14 +122,17 @@ async function updateImports(
 					log?.verbose(`Skipping ${moduleSpecifier}`);
 				} else {
 					// TODO: Handle default import if needed.
-					// const defaultImport = importDeclaration.getDefaultImport();
+					const defaultImport = importDeclaration.getDefaultImport();
+					if(defaultImport !== undefined) {
+						log?.warning(`Found a default import (not yet implemented): ${defaultImport.getText().trim()}`)
+					}
 					const namedImports = importDeclaration.getNamedImports();
 
 					log?.info(`Iterating named imports...`);
 					for (const importSpecifier of namedImports) {
 						const alias = importSpecifier.getAliasNode();
 						if (alias !== undefined) {
-							log?.info(`Got an alias: ${alias.getText()}`);
+							log?.warning(`Found an alias (not yet implemented): ${alias.getText().trim()}`);
 						}
 
 						const name = importSpecifier.getName();
@@ -163,7 +165,6 @@ async function updateImports(
 					// This does re-order code, but that seems like a fact of life here. The organize flag can be used to add some
 					// determinism to the output.
 					importDeclaration.remove();
-					sourceFileChanged = true;
 					log?.info(`REMOVED import from ${moduleSpecifier}`);
 				}
 			}
