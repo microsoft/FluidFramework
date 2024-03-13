@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { UpgradeType } from "../internal/semvermap";
+import { UpgradeType } from "../internal/semvermap.js";
 
 /**
  * Options for {@link DataBinder.defineDataBinding}
