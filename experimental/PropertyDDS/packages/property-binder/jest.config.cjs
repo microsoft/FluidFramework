@@ -15,7 +15,8 @@ module.exports = {
 		],
 	],
 	// The glob patterns Jest uses to detect test files
-	testMatch: ["/**/dist/test/*.spec.js"],
+	// Test only CommonJS as test files (mostly .js) use only CommonJS patterns.
+	testMatch: ["**/dist/test/*.spec.js"],
 
 	testEnvironment: "jsdom",
 

@@ -47,6 +47,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	private readonly viewSchema: ViewSchema;
 
+	private readonly unregisterCallbacks = new Set<() => void>();
 	private disposed = false;
 
 	public constructor(
@@ -58,6 +59,17 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.flexConfig = toFlexConfig(config);
 		this.viewSchema = new ViewSchema(defaultSchemaPolicy, {}, this.flexConfig.schema);
 		this.update();
+
+		this.unregisterCallbacks.add(
+			this.checkout.events.on("commitApplied", (data, getRevertible) =>
+				this.events.emit("commitApplied", data, getRevertible),
+			),
+		);
+		this.unregisterCallbacks.add(
+			this.checkout.events.on("revertibleDisposed", (revertible) =>
+				this.events.emit("revertibleDisposed", revertible),
+			),
+		);
 	}
 
 	public upgradeSchema(): void {
@@ -155,8 +167,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.view = new SchematizeError(compatibility);
 				const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
 					unregister();
+					this.unregisterCallbacks.delete(unregister);
 					this.update();
 				});
+				this.unregisterCallbacks.add(unregister);
 				break;
 			}
 			default: {
@@ -170,6 +184,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		if (this.view !== undefined && !(this.view instanceof SchematizeError)) {
 			this.view[disposeSymbol]();
 			this.view = undefined;
+			this.unregisterCallbacks.forEach((unregister) => unregister());
 		}
 	}
 

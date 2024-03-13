@@ -1570,7 +1570,10 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: this.reSubmit.bind(this),
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -2816,6 +2819,7 @@ export class ContainerRuntime
 				}
 				break;
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.GC: {
 				return false;
 			}
@@ -3049,24 +3053,6 @@ export class ContainerRuntime
 
 		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(usedRoutes);
 		this.channelCollection.updateUsedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * This is called to update objects whose routes are unused.
-	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-		this.channelCollection.updateUnusedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * @deprecated Replaced by deleteSweepReadyNodes.
-	 */
-	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
-		throw new Error("deleteUnusedRoutes should not be called");
 	}
 
 	/**

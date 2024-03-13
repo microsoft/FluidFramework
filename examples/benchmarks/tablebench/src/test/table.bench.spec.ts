@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { NodeFromSchema, SharedTree, type ISharedTree } from "@fluidframework/tree";
+import { NodeFromSchema, SharedTree, type ITree } from "@fluidframework/tree";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { generateTable, Table } from "..";
-import { create, measureAttachmentSummary, measureEncodedLength } from "./utils";
+import { generateTable, Table } from "../index.js";
+import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
 const numRows = isInPerformanceTestingMode ? 10000 : 100;
 
@@ -69,7 +69,7 @@ describe("Table", () => {
 			title: `SharedTree`,
 			before: () => {
 				({ channel, processAllMessages } = create(SharedTree.getFactory()));
-				const tree = channel as ISharedTree;
+				const tree = channel as ITree;
 
 				const view = tree.schematize({
 					schema: Table,
@@ -101,7 +101,7 @@ describe("Table", () => {
 
 	describe(`@Size of ${numRows} rows`, () => {
 		describe("attachment summary size", () => {
-			let tree: ISharedTree;
+			let tree: ITree;
 			let matrix: SharedMatrix;
 
 			/**
@@ -185,7 +185,7 @@ describe("Table", () => {
 
 			it("SharedTree", () => {
 				const { channel, processAllMessages } = create(SharedTree.getFactory());
-				tree = channel as ISharedTree;
+				tree = channel as ITree;
 
 				tree.schematize({
 					schema: Table,

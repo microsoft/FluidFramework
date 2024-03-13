@@ -17,7 +17,7 @@ import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	IClientDetails,
 	IDocumentMessage,
