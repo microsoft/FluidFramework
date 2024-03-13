@@ -9,9 +9,9 @@ import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import {
 	defaultInspectorTableChildGetter,
 	defaultInspectorTableNameGetter,
-} from "../src/InspectorTable";
-import { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes";
-import { search, showNextResult } from "../src/utils";
+} from "../src/InspectorTable.js";
+import { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/InspectorTableTypes.js";
+import { search, showNextResult } from "../src/utils.js";
 
 import {
 	findRow,
@@ -19,15 +19,15 @@ import {
 	getHash,
 	initializeWorkspace,
 	getAllMatchesFromRows,
-} from "./testUtils";
+} from "./testUtils.js";
 import {
 	toTableRows,
 	dummyChild,
 	fillExpanded,
 	expandAll,
 	sanitizePath,
-} from "../src/propertyInspectorUtils";
-import { uniqueIdentifier } from "./common";
+} from "../src/propertyInspectorUtils.js";
+import { uniqueIdentifier } from "./common.js";
 
 describe("InspectorTable", () => {
 	let workspace;

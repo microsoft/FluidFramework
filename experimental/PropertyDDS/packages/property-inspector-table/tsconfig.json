@@ -1,12 +1,18 @@
 {
-	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
+	"extends": "../../../../common/build/build-common/tsconfig.bundler.json",
 	"compilerOptions": {
 		"resolveJsonModule": true,
-		"typeRoots": ["../node_modules/@types"],
 		"outDir": "./lib",
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
+		"allowJs": true,
+		"types": ["jest"], // Required because of the comingled building of test and src files
 	},
 	"exclude": ["dist", "node_modules"],
-	"include": ["src/**/*", "assets/**/*", "custom.d.ts", "test/**/*"],
+	"include": [
+		"src/**/*",
+		"assets/**/*",
+		"custom.d.ts",
+
+		// Required because /src/InspectorTable.stories.tsx imports '../test/common.js'
+		"test/**/*",
+	],
 }
