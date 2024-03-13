@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { isAny } from "./typeCheck.js";
 import { Brand, BrandedType, ValueFromBranded, NameFromBranded } from "./brand.js";
 
