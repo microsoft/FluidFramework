@@ -78,6 +78,7 @@ export function visitDelta(
 		rootDestructions,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
+	// todoj process refreshers without building them?
 	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
 	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
