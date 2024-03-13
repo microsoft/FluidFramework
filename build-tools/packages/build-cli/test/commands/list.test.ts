@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import { expect } from "chai";
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { FeedsForPackages } from "../../src/commands/list";
+import { Context } from "../../src/library";
 
 describe("feeds", async () => {
 	const resolvedRoot = await getResolvedFluidRoot();

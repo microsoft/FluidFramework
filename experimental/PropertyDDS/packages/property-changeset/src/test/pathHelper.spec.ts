@@ -8,7 +8,7 @@
  */
 
 import { expect } from "chai";
-import { PathHelper } from "../pathHelper";
+import { PathHelper } from "../pathHelper.js";
 
 describe("PathHelper", function () {
 	describe("tokenizePathString", function () {

@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { UnorderedListNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import type { RenderContext } from "../RenderContext";
-import { renderListContents } from "../Utilities";
+import type { UnorderedListNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderListContents } from "../Utilities.js";
 
 /**
  * Renders a {@link UnorderedListNode} as HTML.

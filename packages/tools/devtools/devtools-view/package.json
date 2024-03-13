@@ -92,7 +92,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@previewjs/api": "^13.0.0",

@@ -6,14 +6,14 @@ import * as Path from "node:path";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import { type Heading } from "../Heading";
-import { type Link } from "../Link";
-import { getQualifiedApiItemName, getReleaseTag } from "../utilities";
+import { type Heading } from "../Heading.js";
+import { type Link } from "../Link.js";
+import { getQualifiedApiItemName, getReleaseTag } from "../utilities/index.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type DocumentBoundaries,
 	type HierarchyBoundaries,
-} from "./configuration";
+} from "./configuration/index.js";
 
 /**
  * This module contains `ApiItem`-related utilities for use in transformation logic.
