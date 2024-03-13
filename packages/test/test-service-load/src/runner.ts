@@ -19,7 +19,7 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { ILoadTest, IRunConfig } from "./loadTestDataStore";
+import { ILoadTest, IRunConfig } from "./loadTestDataStore.js";
 import {
 	configProvider,
 	createCodeLoader,
@@ -28,14 +28,14 @@ import {
 	getProfile,
 	globalConfigurations,
 	safeExit,
-} from "./utils";
-import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
+} from "./utils.js";
+import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver.js";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
 	getOptionOverride,
-} from "./optionsMatrix";
+} from "./optionsMatrix.js";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {
