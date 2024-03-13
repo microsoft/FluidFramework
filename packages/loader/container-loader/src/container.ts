@@ -1316,7 +1316,7 @@ export class Container
 						});
 					}
 
-					this.serializedStateManager.setSnapshot(await attachP);
+					this.serializedStateManager.setAfterAttachProperties(await attachP, this.service?.policies?.supportGetSnapshotApi ?? false);
 					if (!this.closed) {
 						this.handleDeltaConnectionArg(
 							{
@@ -1582,7 +1582,7 @@ export class Container
 		// Fetch specified snapshot.
 		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
-			this.service?.policies?.supportGetSnapshotApi,
+			this.service?.policies?.supportGetSnapshotApi ?? false,
 		);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(

@@ -242,7 +242,7 @@ describe("serializedStateManager", () => {
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
 		assert(snapshotTree);
 		assert.strictEqual(version, undefined);
@@ -265,7 +265,7 @@ describe("serializedStateManager", () => {
 			async (storage, tree) => getAttributesFromStorage(storage, tree),
 		);
 		// equivalent to attach
-		serializedStateManager.setSnapshot({ tree: { trees: {}, blobs: {} }, blobs: {} });
+		serializedStateManager.setAfterAttachProperties({ tree: { trees: {}, blobs: {} }, blobs: {} }, false);
 		for (let num = 0; num < 10; ++num) {
 			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
@@ -288,7 +288,7 @@ describe("serializedStateManager", () => {
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
 		assert(snapshotTree);
 		assert.strictEqual(version?.id, "test");
