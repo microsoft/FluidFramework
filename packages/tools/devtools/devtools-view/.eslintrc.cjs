@@ -28,16 +28,6 @@ module.exports = {
 		 */
 		"unicorn/no-useless-undefined": "off",
 
-		"import/no-internal-modules": [
-			"error",
-			{
-				allow: [
-					// Allow use of unstable API
-					"@fluentui/react-components/unstable",
-				],
-			},
-		],
-
 		// Forbid new imports from legacy FluentUI react package.
 		// We have a couple of components that still use it, but new usages should not be added without due consideration.
 		"no-restricted-imports": ["error", "@fluentui/react"],

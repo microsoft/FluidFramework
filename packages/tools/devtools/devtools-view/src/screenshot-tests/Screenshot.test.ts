@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import Path from "node:path";
 import { expect } from "chai";
 import chalk from "chalk";

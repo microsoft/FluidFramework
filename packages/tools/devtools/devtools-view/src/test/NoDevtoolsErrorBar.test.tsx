@@ -9,7 +9,6 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-// eslint-disable-next-line import/no-internal-modules
 import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../components/index.js";
 
 describe("NoDevtoolsErrorBar component tests", () => {
