@@ -26,7 +26,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import { type DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
-import { type Logger } from "../Logging";
+import { type Logger } from "../Logging.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.

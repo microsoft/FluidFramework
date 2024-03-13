@@ -53,6 +53,8 @@ export async function scribeCreate(
 	const internalAlfredUrl = config.get("worker:alfredUrl");
 	const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
 	const maxLogtailLength = (config.get("scribe:maxLogtailLength") as number) ?? 2000;
+	const maxPendingCheckpointMessagesLength =
+		(config.get("scribe:maxPendingCheckpointMessagesLength") as number) ?? 2000;
 	const verifyLastOpPersistence =
 		(config.get("scribe:verifyLastOpPersistence") as boolean) ?? false;
 	const transientTenants = config.get("shared:transientTenants") as string[];
@@ -169,6 +171,7 @@ export async function scribeCreate(
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
 		maxLogtailLength,
+		maxPendingCheckpointMessagesLength,
 	);
 }
 

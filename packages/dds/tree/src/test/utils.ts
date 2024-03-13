@@ -95,7 +95,6 @@ import {
 	announceDelta,
 	FieldKey,
 	Revertible,
-	RevertibleKind,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	RevisionInfo,
@@ -107,6 +106,8 @@ import {
 	RevisionTagCodec,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
+	CommitMetadata,
+	CommitKind,
 } from "../core/index.js";
 import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
@@ -126,7 +127,8 @@ import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { requireSchema } from "../shared-tree/schematizingTreeView.js";
+import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
+import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
 
 // Testing utilities
 
@@ -1053,8 +1055,8 @@ export function rootFromDeltaFieldMap(
 
 export function createTestUndoRedoStacks(
 	events: ISubscribable<{
-		newRevertible(type: Revertible): void;
-		revertibleDisposed(revertible: Revertible): void;
+		commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+		revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
 	}>,
 ): {
 	undoStack: Revertible[];
@@ -1064,25 +1066,25 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
-		revertible.retain();
-		if (revertible.kind === RevertibleKind.Undo) {
-			redoStack.push(revertible);
-		} else {
-			undoStack.push(revertible);
+	const unsubscribeFromNew = events.on("commitApplied", ({ kind }, getRevertible) => {
+		if (getRevertible !== undefined) {
+			const revertible = getRevertible();
+			if (kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				undoStack.push(revertible);
+			}
 		}
 	});
 
 	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
-		if (revertible.kind === RevertibleKind.Undo) {
-			const index = redoStack.indexOf(revertible);
-			if (index !== -1) {
-				redoStack.splice(index, 1);
-			}
+		const redoIndex = redoStack.indexOf(revertible);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
 		} else {
-			const index = undoStack.indexOf(revertible);
-			if (index !== -1) {
-				undoStack.splice(index, 1);
+			const undoIndex = undoStack.indexOf(revertible);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
 			}
 		}
 	});
@@ -1091,10 +1093,10 @@ export function createTestUndoRedoStacks(
 		unsubscribeFromNew();
 		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 		for (const revertible of redoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1169,5 +1171,24 @@ export function treeTestFactory(
 		options.attributes ?? new SharedTreeFactory().attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
 		options.telemetryContextPrefix ?? "SharedTree",
+	);
+}
+
+/**
+ * Given the TreeConfiguration, returns a view.
+ *
+ * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
+ * This should allow realistic (app like testing) of all the simple-tree APIs.
+ */
+export function getView<TSchema extends ImplicitFieldSchema>(
+	config: TreeConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createMockNodeKeyManager(),
+		brand(defaultNodeKeyFieldKey),
 	);
 }

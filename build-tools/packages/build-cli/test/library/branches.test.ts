@@ -4,7 +4,7 @@
  */
 import { assert } from "chai";
 
-import { MonoRepoKind } from "@fluidframework/build-tools";
+import { MonoRepoKind } from "../../src/library";
 
 import {
 	generateBumpDepsBranchName,

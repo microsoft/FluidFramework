@@ -120,7 +120,6 @@ describe("Garbage Collection configurations", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes: (sweepReadyRoutes: string[]): string[] => {
 				return [];
 			},

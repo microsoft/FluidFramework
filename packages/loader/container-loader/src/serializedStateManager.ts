@@ -125,19 +125,24 @@ export class SerializedStateManager {
 				(await this.storageAdapter.getSnapshot?.({
 					versionId: specifiedVersion,
 				})) ?? undefined;
-			const version: IVersion = {
-				id: snapshot?.snapshotTree.id ?? "",
-				treeId: snapshot?.snapshotTree.id ?? "",
-			};
+			const version: IVersion | undefined =
+				snapshot?.snapshotTree.id === undefined
+					? undefined
+					: {
+							id: snapshot.snapshotTree.id,
+							treeId: snapshot.snapshotTree.id,
+					  };
 
 			if (snapshot === undefined && specifiedVersion !== undefined) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "getSnapshotTreeFailed",
-					id: version.id,
+					id: specifiedVersion,
 				});
-			} else if (snapshot !== undefined && version === undefined) {
+				// Not sure if this should be here actually
+			} else if (snapshot !== undefined && version?.id === undefined) {
 				this.mc.logger.sendErrorEvent({
-					eventName: "getSnapshotFetchedTreeWithoutVersion",
+					eventName: "getSnapshotFetchedTreeWithoutVersionId",
+					hasVersion: version !== undefined, // if hasVersion is true, this means that the contract with the service was broken.
 				});
 			}
 			return { snapshot, version };
@@ -166,6 +171,11 @@ export class SerializedStateManager {
 
 		if (snapshot === undefined && version !== undefined) {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
+		} else if (snapshot !== undefined && version?.id === undefined) {
+			this.mc.logger.sendErrorEvent({
+				eventName: "getSnapshotFetchedTreeWithoutVersionId",
+				hasVersion: version !== undefined, // if hasVersion is true, this means that the contract with the service was broken.
+			});
 		}
 		return { snapshot, version };
 	}
@@ -281,7 +291,7 @@ export class SerializedStateManager {
 						"Can't get pending local state unless offline load is enabled",
 					);
 				}
-				assert(this.snapshot !== undefined, "no base data");
+				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState(props);
 				const pendingState: IPendingContainerState = {
 					attached: true,

@@ -87,7 +87,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -101,7 +101,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.42.3",
@@ -113,7 +113,7 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-240326",
+		"tinylicious": "^4.0.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
