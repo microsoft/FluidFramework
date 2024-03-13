@@ -50,13 +50,6 @@ parameters:
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
   default: repo
-# If set to true, test scripts will run without the ":full" specifier for compat matrix.
-# This is useful to do quicker runs of this pipeline when testing the full compat matrix is not a priority, like
-# when needing to test a change to the pipeline itself, or just needing its artifacts to test a subsequent pipeline.
-- name: reducedCompatMatrix
-  displayName: Run with reduced (not full) compat matrix?
-  type: boolean
-  default: false
 
 trigger:
   branches:
@@ -159,12 +152,8 @@ extends:
     - webpack
     - ci:test:mocha
     - ci:test:jest
-    - ${{ if or(eq(variables['System.TeamProject'], 'public'), eq(parameters.reducedCompatMatrix, true)) }}:
-      - ci:test:realsvc:local
-      - ci:test:realsvc:tinylicious
-    - ${{ else }}:
-      - ci:test:realsvc:local:full
-      - ci:test:realsvc:tinylicious:full
+    - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
