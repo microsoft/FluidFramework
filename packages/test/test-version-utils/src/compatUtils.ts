@@ -86,7 +86,7 @@ function filterRuntimeOptionsForVersion(
 	} else if (version.includes("2.0.0-rc")) {
 		const {
 			compressionOptions = {
-				minimumBatchSizeInBytes: 500,
+				minimumBatchSizeInBytes: 200,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
 			chunkSizeInBytes = 200,
@@ -99,11 +99,11 @@ function filterRuntimeOptionsForVersion(
 		//    i.e. all kinds other than CompatKind.CrossVersion, E2E tests, and describeInstallVersions() tests.
 		// 2) cross-version tests refer to all configs going thorugh getCompatVersionedTestObjectProviderFromApis(), i.e. CompatKind.CrossVersion
 		options = {
-			... options,
-			compressionOptions, // 2 same-version tests failed; 2 cross-version tests fail; seems like functional bugs.
-			chunkSizeInBytes, // same-version test "can send and receive multiple batch ops that are flushed on JS turn" fails; 0 cross-version tests failed.
-			enableRuntimeIdCompressor, // 9 same-version tests failed; 0 cross-version tests failed.
-			enableGroupedBatching, // 0 same-version tests failed; 14 cross-version tests failed, all look like functional bugs.
+			...options,
+			compressionOptions,
+			chunkSizeInBytes,
+			enableRuntimeIdCompressor,
+			enableGroupedBatching,
 		};
 	}
 	return options;
@@ -205,9 +205,6 @@ export async function getVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			// If you isolate each runtime option and test them individually then only 13 test fails.
-			// But enabling all 2.0 options results in 69 tests failing!
-			// Most of the failures are due to error generated as result of sending ops in disconnected state, which is a bit weird.
 			filterRuntimeOptionsForVersion(
 				apis.containerRuntime.version,
 				containerOptions?.runtimeOptions,
