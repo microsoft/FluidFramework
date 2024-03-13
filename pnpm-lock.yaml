@@ -2637,73 +2637,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  examples/data-objects/table-view:
-    specifiers:
-      '@fluid-example/example-utils': workspace:~
-      '@fluid-example/table-document': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.34.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/matrix': workspace:~
-      '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/sequence': workspace:~
-      '@tiny-calc/micro': 0.0.0-alpha.5
-      '@tiny-calc/nano': 0.0.0-alpha.5
-      '@types/node': ^18.19.0
-      '@types/react': ^17.0.44
-      copyfiles: ^2.4.1
-      css-loader: ^1.0.0
-      eslint: ~8.55.0
-      prettier: ~3.0.3
-      react: ^17.0.1
-      rimraf: ^4.4.0
-      source-map-loader: ^2.0.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
-      typescript: ~5.1.6
-      url-loader: ^2.1.0
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
-    dependencies:
-      '@fluid-example/example-utils': link:../../utils/example-utils
-      '@fluid-example/table-document': link:../table-document
-      '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
-      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/matrix': link:../../../packages/dds/matrix
-      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/sequence': link:../../../packages/dds/sequence
-      '@tiny-calc/micro': 0.0.0-alpha.5
-      '@tiny-calc/nano': 0.0.0-alpha.5
-      react: 17.0.2
-    devDependencies:
-      '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
-      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
-      '@types/react': 17.0.71
-      copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
-      eslint: 8.55.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      source-map-loader: 2.0.2_webpack@5.89.0
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
-      typescript: 5.1.6
-      url-loader: 2.3.0_webpack@5.89.0
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
-
   examples/data-objects/todo:
     specifiers:
       '@fluid-example/example-utils': workspace:~
@@ -21510,6 +21443,7 @@ packages:
     resolution: {integrity: sha512-ldmINj6PDn5SaeIT9STO/P1O2rhPZjSkIoWUaXjfuBAEcE5bflwh5+WTFShofJcpnaCVpGannXuDS0+qn6Ctfg==}
     dependencies:
       '@tiny-calc/nano': 0.0.0-alpha.5
+    dev: true
 
   /@tiny-calc/nano/0.0.0-alpha.5:
     resolution: {integrity: sha512-Hs37tz9ZtvK21/5s4tjt5RBa/PFHKYS0AzvdxiXuSd3+AKQN2ygxw7uwD9j0DIG9qONddg1vIASO77JIGyZzyw==}
