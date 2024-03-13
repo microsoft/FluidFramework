@@ -489,6 +489,7 @@ describeCompat(
 				string1.removeText(string1.getLength() - 1, string1.getLength());
 			}
 			await provider.ensureSynchronized();
+			await new Promise(setImmediate);
 			const pendingState2 = await container2.closeAndGetPendingLocalState?.();
 			assert.ok(pendingState2);
 

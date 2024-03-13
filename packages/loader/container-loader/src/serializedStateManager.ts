@@ -56,7 +56,7 @@ export class SerializedStateManager {
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
-		if (pendingLocalState && _offlineLoadEnabled) {
+		if (pendingLocalState /* && _offlineLoadEnabled */) {
 			this.snapshot = {
 				tree: pendingLocalState.baseSnapshot,
 				blobs: pendingLocalState.snapshotBlobs,
