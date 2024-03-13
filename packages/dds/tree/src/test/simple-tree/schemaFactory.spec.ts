@@ -8,10 +8,8 @@ import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
@@ -27,6 +25,7 @@ import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../uti
 import { TreeFactory } from "../../treeFactory.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
+import { hydrate } from "./utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -644,21 +643,38 @@ describe("schemaFactory", () => {
 		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
 		assert.equal(schemaFromValue(false), f.boolean);
 	});
-});
 
-/**
- * Create a tree and use it to hydrate the input.
- */
-function hydrate<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
-): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => data);
-	const factory = new TreeFactory({});
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"tree",
-	);
-	const root = tree.schematize(config).root;
-	return root;
-}
+	it("extra fields in object constructor", () => {
+		const f = new SchemaFactory("");
+
+		class Empty extends f.object("C", {}) {}
+
+		// TODO: should not build
+		// BUG: object schema with no fields permit construction with any object, not just empty object.
+		// TODO: this should runtime error when constructed (not just when hydrated)
+		const c2 = new Empty({ x: {} });
+
+		class NonEmpty extends f.object("C", { a: f.null }) {}
+
+		// @ts-expect-error Invalid extra field
+		// TODO: this should error when constructed (not just when hydrated)
+		new NonEmpty({ a: null, b: 0 });
+	});
+
+	it("object nested implicit construction", () => {
+		const f = new SchemaFactory("");
+
+		class C extends f.object("C", {}) {
+			public readonly c = "X";
+		}
+		class B extends f.object("B", {
+			b: C,
+		}) {}
+		class A extends f.object("A", {
+			a: B,
+		}) {}
+
+		const tree = hydrate(A, { a: { b: {} } });
+		assert.equal(tree.a.b.c, "X");
+	});
+});

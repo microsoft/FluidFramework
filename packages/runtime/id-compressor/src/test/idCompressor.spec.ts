@@ -13,9 +13,9 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
+} from "..//index.js";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import { createSessionId } from "../utilities.js";
 import {
 	performFuzzActions,
 	sessionIds,
@@ -27,8 +27,8 @@ import {
 	roundtrip,
 	makeOpGenerator,
 	CompressorFactory,
-} from "./idCompressorTestUtilities";
-import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon";
+} from "./idCompressorTestUtilities.js";
+import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon.js";
 
 describe("IdCompressor", () => {
 	it("reports the proper session ID", () => {

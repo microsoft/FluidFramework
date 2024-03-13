@@ -21,7 +21,7 @@
 import fs from "fs";
 import process from "process";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Sanitizer } from "./sanitizer";
+import { Sanitizer } from "./sanitizer.js";
 
 function printUsage() {
 	console.log("Usage:");

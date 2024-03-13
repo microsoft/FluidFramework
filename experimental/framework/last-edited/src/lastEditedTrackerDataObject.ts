@@ -6,8 +6,8 @@
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import { LastEditedTracker } from "./lastEditedTracker";
-import { IProvideFluidLastEditedTracker } from "./interfaces";
+import { LastEditedTracker } from "./lastEditedTracker.js";
+import { IProvideFluidLastEditedTracker } from "./interfaces.js";
 
 /**
  * LastEditedTrackerDataObject creates a LastEditedTracker that keeps track of the latest edits to the document.

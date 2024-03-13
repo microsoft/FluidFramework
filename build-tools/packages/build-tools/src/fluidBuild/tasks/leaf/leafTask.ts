@@ -45,7 +45,12 @@ export abstract class LeafTask extends Task {
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
 
-	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+	constructor(
+		node: BuildPackage,
+		command: string,
+		taskName: string | undefined,
+		private readonly isTemp: boolean = false, // indicate if the task is for temporary and not for execution.
+	) {
 		super(node, command, taskName);
 		if (!this.isDisabled) {
 			this.node.buildContext.taskStats.leafTotalCount++;
@@ -139,6 +144,9 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get isDisabled() {
+		if (this.isTemp) {
+			return true;
+		}
 		const isLintTask = this.executable === "eslint" || this.executable === "prettier";
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
@@ -244,9 +252,9 @@ export abstract class LeafTask extends Task {
 			cwd: this.node.pkg.directory,
 			env: {
 				...process.env,
-				PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${
-					path.delimiter
-				}${process.env["PATH"]}`,
+				PATH: `${path.join(this.node.pkg.directory, "node_modules", ".bin")}${path.delimiter}${
+					process.env["PATH"]
+				}`,
 			},
 		});
 	}
@@ -321,6 +329,8 @@ export abstract class LeafTask extends Task {
 
 	protected async checkIsUpToDate(): Promise<boolean> {
 		if (this.isDisabled) {
+			// disabled task are not included in the leafTotalCount
+			// so we don't need to update the leafUpToDateCount as well. Just return.
 			return true;
 		}
 		if (options.lintonly) {
@@ -375,25 +385,6 @@ export abstract class LeafTask extends Task {
 		return path.join(this.node.pkg.directory, filePath);
 	}
 
-	protected get allDependentTasks() {
-		return (function* (dependentTasks) {
-			const pending: LeafTask[] = [...dependentTasks];
-			const seen = new Set<LeafTask>();
-			while (true) {
-				const leafTask = pending.pop();
-				if (!leafTask) {
-					return;
-				}
-				if (seen.has(leafTask)) {
-					continue;
-				}
-				seen.add(leafTask);
-				yield leafTask;
-				pending.push(...leafTask.getDependentLeafTasks());
-			}
-		})(this.getDependentLeafTasks());
-	}
-
 	/**
 	 * Subclass should override these to configure the leaf task
 	 */
@@ -404,7 +395,11 @@ export abstract class LeafTask extends Task {
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
-	// do this task support recheck when it time to execute (even when the dependent task is out of date)
+	// Return if the task support recheck when it time to execute.
+	// Default to false so that the task will execute if any of the dependent task is out of date at the
+	// beginning of the build.
+	// Override to true if the task know all the input dependencies (e.g. tsc) able to detect if
+	// the dependent task's output changes this tasks' input and really need rebuild or not.
 	protected get recheckLeafIsUpToDate(): boolean {
 		return false;
 	}
@@ -510,7 +505,11 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	protected get doneFile(): string {
 		const name = path.parse(this.executable).name.replace(/\s/g, "_");
 		// use 8 char of the sha256 hash of the command to distinguish different tasks
-		const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
+		const hash = crypto
+			.createHash("sha256")
+			.update(this.command)
+			.digest("hex")
+			.substring(0, 8);
 		return `${name}-${hash}.done.build.log`;
 	}
 
@@ -537,6 +536,7 @@ export class UnknownLeafTask extends LeafTask {
 			return true;
 		}
 		// Because we don't know, it is always out of date and need to rebuild
+		this.traceTrigger("Unknown task");
 		return false;
 	}
 }

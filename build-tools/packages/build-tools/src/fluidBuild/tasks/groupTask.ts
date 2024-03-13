@@ -37,6 +37,19 @@ export class GroupTask extends Task {
 		}
 	}
 
+	public addDependentTasks(dependentTasks: Task[], isDefault: boolean): void {
+		if (isDefault) {
+			// Propagate to unnamed subtasks only if it's a default dependency
+			for (const task of this.subTasks) {
+				if (task.taskName === undefined) {
+					task.addDependentTasks(dependentTasks, isDefault);
+				}
+			}
+		} else {
+			super.addDependentTasks(dependentTasks, isDefault);
+		}
+	}
+
 	public collectLeafTasks(leafTasks: Set<LeafTask>) {
 		for (const task of this.subTasks) {
 			task.collectLeafTasks(leafTasks);

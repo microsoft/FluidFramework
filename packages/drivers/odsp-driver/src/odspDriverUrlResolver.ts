@@ -12,12 +12,12 @@ import {
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { getOdspResolvedUrl } from "./odspUtils";
-import { getHashedDocumentId } from "./odspPublicUtils";
-import { ClpCompliantAppHeader } from "./contractsPublic";
-import { pkgVersion } from "./packageVersion";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { getOdspResolvedUrl } from "./odspUtils.js";
+import { getHashedDocumentId } from "./odspPublicUtils.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { pkgVersion } from "./packageVersion.js";
 
 function getUrlBase(
 	siteUrl: string,
@@ -96,7 +96,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 	/**
 	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
-	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {

@@ -42,7 +42,7 @@ import {
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import { SharedTreeTestFactory } from "../utils.js";
+import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import { leaf } from "../../domains/index.js";
 import { TestSharedTreeCore } from "./utils.js";
@@ -167,11 +167,6 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("newRevertible", (revertible) => {
-			revertible.discard();
-		});
-
 		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
 		assert.equal(getTrunkLength(tree), 1);
@@ -217,11 +212,6 @@ describe("SharedTreeCore", () => {
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
-		});
-
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("newRevertible", (revertible) => {
-			revertible.discard();
 		});
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
@@ -314,12 +304,12 @@ describe("SharedTreeCore", () => {
 		const config = {
 			schema,
 			initialTree: undefined,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematizeInternal(config);
+		const view1 = schematizeFlexTree(tree1, config);
 		containerRuntimeFactory.processAllMessages();
-		const view2 = tree2.schematizeInternal(config);
+		const view2 = schematizeFlexTree(tree2, config);
 		const editable1 = view1.flexTree;
 		const editable2 = view2.flexTree;
 

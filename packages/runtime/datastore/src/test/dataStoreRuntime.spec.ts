@@ -17,7 +17,7 @@ import {
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { IFluidDataStoreRuntime, IChannel } from "@fluidframework/datastore-definitions";
 import { IErrorBase, FluidObject } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 
 describe("FluidDataStoreRuntime Tests", () => {
 	let dataStoreContext: MockFluidDataStoreContext;

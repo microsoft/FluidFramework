@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { InterdependencyRange, DEFAULT_INTERDEPENDENCY_RANGE } from "@fluid-tools/version-tools";
+import {
+	InterdependencyRange,
+	DEFAULT_INTERDEPENDENCY_RANGE,
+} from "@fluid-tools/version-tools";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import * as path from "path";
@@ -17,44 +20,6 @@ import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 export type PackageManager = "npm" | "pnpm" | "yarn";
-
-/**
- * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
- * in the fluid-build section of the root package.json.
- * @deprecated
- */
-export enum MonoRepoKind {
-	Client = "client",
-	Server = "server",
-	Azure = "azure",
-	BuildTools = "build-tools",
-	GitRest = "gitrest",
-	Historian = "historian",
-}
-
-/**
- * A type guard used to determine if a string is a MonoRepoKind.
- * @deprecated
- */
-export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
-	if (str === undefined) {
-		return false;
-	}
-
-	const list = Object.values<string>(MonoRepoKind);
-	const isMonoRepoValue = list.includes(str);
-	return isMonoRepoValue;
-}
-
-/**
- * An iterator that returns only the Enum values of MonoRepoKind.
- * @deprecated
- */
-export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
-	for (const [, flag] of Object.entries(MonoRepoKind)) {
-		yield flag;
-	}
-}
 
 /**
  * A monorepo is a collection of packages that are versioned and released together.
@@ -187,15 +152,17 @@ export class MonoRepo {
 			this.packages.push(Package.load(path.join(pkgDir, "package.json"), kind, this));
 		}
 
+		if (packageManager === "pnpm") {
+			const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
+			const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
+			this.workspaceGlobs = YAML.parse(workspaceString).packages;
+		}
+
 		// only needed for bump tools
 		const lernaPath = path.join(repoPath, "lerna.json");
 		if (existsSync(lernaPath)) {
 			const lerna = readJsonSync(lernaPath);
-			if (packageManager === "pnpm") {
-				const pnpmWorkspace = path.join(repoPath, "pnpm-workspace.yaml");
-				const workspaceString = readFileSync(pnpmWorkspace, "utf-8");
-				this.workspaceGlobs = YAML.parse(workspaceString).packages;
-			} else if (lerna.packages !== undefined) {
+			if (packageManager !== "pnpm" && lerna.packages !== undefined) {
 				this.workspaceGlobs = lerna.packages;
 			}
 
@@ -204,7 +171,7 @@ export class MonoRepo {
 				this.version = lerna.version;
 				versionFromLerna = true;
 			}
-		} else {
+		} else if (packageManager !== "pnpm") {
 			// Load globs from package.json directly
 			if (this.pkg.packageJson.workspaces instanceof Array) {
 				this.workspaceGlobs = this.pkg.packageJson.workspaces;
@@ -229,8 +196,8 @@ export class MonoRepo {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			? "npm run install-strict"
-			: "npm i --no-package-lock --no-shrinkwrap";
+			  ? "npm run install-strict"
+			  : "npm i --no-package-lock --no-shrinkwrap";
 	}
 
 	public get fluidBuildConfig(): IFluidBuildConfig | undefined {

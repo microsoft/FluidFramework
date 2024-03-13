@@ -462,7 +462,7 @@ export function testCorrectness() {
 					manager.addSequencedChange(commit4, brand(4), brand(0));
 
 					// discard the oldest revertible and trim the trunk
-					undoStack[0].discard();
+					undoStack[0].release();
 					manager.advanceMinimumSequenceNumber(brand(4));
 
 					// check that all commits except the first are still in the trunk
@@ -496,7 +496,7 @@ export function testCorrectness() {
 							sequenceNumber: brand(1),
 						},
 					],
-					branches: new Map(),
+					peerLocalBranches: new Map(),
 				});
 				manager.addSequencedChange(
 					{

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import _ from "lodash";
+import * as _ from "lodash";
 
 import { expect } from "chai";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";

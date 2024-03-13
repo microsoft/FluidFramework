@@ -7,10 +7,9 @@ import { Command, Flags, Interfaces } from "@oclif/core";
 import { type PrettyPrintableError } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 
-import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
-
+import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { rootPathFlag } from "./flags";
-import { indentString } from "./library";
+import { Context, indentString } from "./library";
 import { CommandLogger } from "./logging";
 
 /**

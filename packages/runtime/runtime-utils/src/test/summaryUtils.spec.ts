@@ -21,7 +21,7 @@ import {
 	convertToSummaryTree,
 	TelemetryContext,
 	utf8ByteLength,
-} from "../summaryUtils";
+} from "../summaryUtils.js";
 
 describe("Summary Utils", () => {
 	function assertSummaryTree(obj: SummaryObject): ISummaryTree {
