@@ -149,6 +149,7 @@
 		"eslint-config-oclif": "^5.0.0",
 		"eslint-config-oclif-typescript": "^3.0.8",
 		"eslint-config-prettier": "~9.0.0",
+		"json5": "^2.2.3",
 		"jssm-viz-cli": "^5.89.2",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",

@@ -112,6 +112,7 @@ importers:
       gray-matter: ^4.0.3
       human-id: ^4.0.0
       inquirer: ^8.2.5
+      json5: ^2.2.3
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
@@ -209,6 +210,7 @@ importers:
       eslint-config-oclif: 5.0.0_eslint@8.55.0
       eslint-config-oclif-typescript: 3.0.8_bpztyfltmpuv6lhsgzfwtmxhte
       eslint-config-prettier: 9.0.0_eslint@8.55.0
+      json5: 2.2.3
       jssm-viz-cli: 5.89.2
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4

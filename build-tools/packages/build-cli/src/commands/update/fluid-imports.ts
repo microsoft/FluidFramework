@@ -4,13 +4,22 @@
  * Licensed under the MIT License.
  */
 
-import { Package, type Logger } from "@fluidframework/build-tools";
+import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import { readFile } from "fs-extra";
+import * as JSON5 from "json5";
 import path from "node:path";
 import { Project } from "ts-morph";
 import { BaseCommand } from "../../base";
 
-type ApiLevel = "internal" | "public" | "alpha" | "beta";
+// These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
+// command is likely to be deprecated soon, so no effort has been made to unify them.
+const publicLevel = "public";
+const betaLevel = "beta";
+const alphaLevel = "alpha";
+const internalLevel = "internal";
+const knownLevels = [publicLevel, betaLevel, alphaLevel, internalLevel] as const;
+type ApiLevel = (typeof knownLevels)[number];
 
 /**
  * Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.).
@@ -18,10 +27,18 @@ type ApiLevel = "internal" | "public" | "alpha" | "beta";
 export default class UpdateFluidImportsCommand extends BaseCommand<
 	typeof UpdateFluidImportsCommand
 > {
-	static readonly description =
-		`Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
+	static readonly description = `Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)`;
 
 	static readonly flags = {
+		tsconfig: Flags.file({
+			description: "Path to a tsconfig file that will be used to load project files.",
+			default: "./tsconfig.json",
+			exists: true,
+		}),
+		data: Flags.file({
+			description: "Path to a data file containing raw API level data.",
+			exists: true,
+		}),
 		organize: Flags.boolean({
 			description:
 				"Organize the imports in any file that is modified. Note that this can make it more difficult to see the rewritten import changes.",
@@ -33,14 +50,11 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 	};
 
 	public async run(): Promise<void> {
-		const pkg = new Package("./package.json", "n/a");
-		await updateImports(
-			pkg,
-			typeMapData,
-			this.flags.onlyInternal,
-			this.flags.organize,
-			this.logger,
-		);
+		const { tsconfig, data, onlyInternal, organize } = this.flags;
+		const dataFilePath =
+			data ?? path.join(__dirname, "../../data/rawApiLevels.jsonc");
+		const apiLevelData = await loadData(dataFilePath);
+		await updateImports(tsconfig, apiLevelData, onlyInternal, organize, this.logger);
 	}
 }
 
@@ -61,15 +75,14 @@ function getApiLevelForImportName(
 }
 
 async function updateImports(
-	pkg: Package,
+	tsConfigFilePath: string,
 	mappingData: MapData,
-	// Refactor to include this in the mappingData itself?
 	onlyInternal: boolean,
 	organizeImports: boolean,
 	log?: Logger,
 ): Promise<void> {
 	const project = new Project({
-		tsConfigFilePath: path.join(pkg.directory, "tsconfig.json"),
+		tsConfigFilePath,
 	});
 	const sourceFiles = project
 		.getSourceFiles()
@@ -125,13 +138,20 @@ async function updateImports(
 						// is trimmed, but leading or trailing text like "type" or "as foo" is still included. This is the string
 						// that will be used in the new imports.
 						const fullImportSpecifierText = importSpecifier.getFullText().trim();
-						const expectedLevel = getApiLevelForImportName(name, data, "public", onlyInternal);
+						const expectedLevel = getApiLevelForImportName(
+							name,
+							data,
+							"public",
+							onlyInternal,
+						);
 
 						log?.verbose(
 							`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
 						);
 						const newSpecifier =
-							expectedLevel === "public" ? moduleName : `${moduleName}/${expectedLevel}`;
+							expectedLevel === "public"
+								? moduleName
+								: `${moduleName}/${expectedLevel}`;
 
 						if (!newImports.has(newSpecifier)) {
 							newImports.set(newSpecifier, []);
@@ -168,165 +188,51 @@ async function updateImports(
 	await project.save();
 }
 
-// This raw data comes from this one-liner:
+// This raw data comes from this ripgrep one-liner:
 //
-// rg -UPNo -g '**/api-report/*.api.md' --multiline-dotall --heading '\s*@(alpha|beta|public|internal).*?export\s*(\w*)\s(\w*).*?(?:\{|;)' -r '{ "scope": "$1", "kind": "$2", "name": "$3" }'
+// rg -UPNo -g '**/api-report/*.api.md' --multiline-dotall --heading '\s*@(alpha|beta|public|internal).*?export\s*(\w*)\s(\w*).*?(?:\{|;)' -r '{ "level": "$1", "kind": "$2", "name": "$3" },'
 //
 // It's transformed into a more usable format in the code below.
 interface MemberDataRaw {
-	scope: ApiLevel;
+	level: ApiLevel;
 	kind: string;
 	name: string;
 }
 
-const typeMapDataRaw: Record<string, MemberDataRaw[]> = {
-	"@fluidframework/container-runtime": [
-		{ scope: "internal", kind: "const", name: "agentSchedulerId" },
-		{ scope: "internal", kind: "const", name: "AllowInactiveRequestHeaderKey" },
-		{ scope: "alpha", kind: "const", name: "AllowTombstoneRequestHeaderKey" },
-		{ scope: "internal", kind: "class", name: "ChannelCollectionFactory" },
-		{ scope: "internal", kind: "type", name: "CompatModeBehavior" },
-		{ scope: "alpha", kind: "enum", name: "CompressionAlgorithms" },
-		{ scope: "alpha", kind: "enum", name: "ContainerMessageType" },
-		{ scope: "alpha", kind: "class", name: "ContainerRuntime" },
-		{ scope: "internal", kind: "interface", name: "ContainerRuntimeMessage" },
-		{ scope: "alpha", kind: "const", name: "DefaultSummaryConfiguration" },
-		{ scope: "internal", kind: "function", name: "detectOutboundReferences" },
-		{ scope: "alpha", kind: "type", name: "EnqueueSummarizeResult" },
-		{ scope: "internal", kind: "class", name: "FluidDataStoreRegistry" },
-		{ scope: "alpha", kind: "type", name: "GCFeatureMatrix" },
-		{ scope: "alpha", kind: "const", name: "GCNodeType" },
-		{ scope: "alpha", kind: "type", name: "GCNodeType" },
-		{ scope: "alpha", kind: "type", name: "GCVersion" },
-		{ scope: "alpha", kind: "interface", name: "IAckedSummary" },
-		{ scope: "alpha", kind: "interface", name: "IAckSummaryResult" },
-		{ scope: "alpha", kind: "interface", name: "IBaseSummarizeResult" },
-		{ scope: "alpha", kind: "interface", name: "IBlobManagerLoadInfo" },
-		{ scope: "alpha", kind: "interface", name: "IBroadcastSummaryResult" },
-		{ scope: "alpha", kind: "interface", name: "ICancellableSummarizerController" },
-		{ scope: "alpha", kind: "interface", name: "ICancellationToken" },
-		{ scope: "internal", kind: "interface", name: "IChunkedOp" },
-		{ scope: "alpha", kind: "interface", name: "IClientSummaryWatcher" },
-		{ scope: "alpha", kind: "interface", name: "ICompressionRuntimeOptions" },
-		{ scope: "alpha", kind: "interface", name: "IConnectableRuntime" },
-		{ scope: "internal", kind: "interface", name: "IContainerRuntimeMessageCompatDetails" },
-		{ scope: "alpha", kind: "interface", name: "IContainerRuntimeMetadata" },
-		{ scope: "alpha", kind: "interface", name: "IContainerRuntimeOptions" },
-		{ scope: "alpha", kind: "interface", name: "ICreateContainerMetadata" },
-		{ scope: "alpha", kind: "interface", name: "IEnqueueSummarizeOptions" },
-		{ scope: "alpha", kind: "interface", name: "IGCMetadata" },
-		{ scope: "alpha", kind: "interface", name: "IGCRuntimeOptions" },
-		{ scope: "alpha", kind: "interface", name: "IGCStats" },
-		{ scope: "alpha", kind: "interface", name: "IGeneratedSummaryStats" },
-		{ scope: "alpha", kind: "interface", name: "IGenerateSummaryTreeResult" },
-		{ scope: "alpha", kind: "interface", name: "IMarkPhaseStats" },
-		{ scope: "alpha", kind: "interface", name: "INackSummaryResult" },
-		{ scope: "alpha", kind: "const", name: "InactiveResponseHeaderKey" },
-		{ scope: "alpha", kind: "interface", name: "IOnDemandSummarizeOptions" },
-		{ scope: "alpha", kind: "interface", name: "IRefreshSummaryAckOptions" },
-		{ scope: "alpha", kind: "interface", name: "IRetriableFailureResult" },
-		{ scope: "alpha", kind: "interface", name: "ISerializedElection" },
-		{ scope: "internal", kind: "function", name: "isRuntimeMessage" },
-		{ scope: "alpha", kind: "interface", name: "ISubmitSummaryOpResult" },
-		{ scope: "alpha", kind: "interface", name: "ISubmitSummaryOptions" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizeEventProps" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizeOptions" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizer" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizeResults" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizerEvents" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizerInternalsProvider" },
-		{ scope: "alpha", kind: "interface", name: "ISummarizerRuntime" },
-		{ scope: "internal", kind: "interface", name: "ISummarizingWarning" },
-		{ scope: "alpha", kind: "interface", name: "ISummary" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryAckMessage" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryBaseConfiguration" },
-		{ scope: "alpha", kind: "type", name: "ISummaryCancellationToken" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryCollectionOpEvents" },
-		{ scope: "alpha", kind: "type", name: "ISummaryConfiguration" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryConfigurationDisableHeuristics" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryConfigurationDisableSummarizer" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryConfigurationHeuristics" },
-		{ scope: "alpha", kind: "type", name: "ISummaryMetadataMessage" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryNackMessage" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryOpMessage" },
-		{ scope: "alpha", kind: "interface", name: "ISummaryRuntimeOptions" },
-		{ scope: "alpha", kind: "interface", name: "ISweepPhaseStats" },
-		{ scope: "alpha", kind: "interface", name: "IUploadSummaryResult" },
-		{ scope: "internal", kind: "const", name: "neverCancelledSummaryToken" },
-		{ scope: "alpha", kind: "type", name: "OpActionEventListener" },
-		{ scope: "alpha", kind: "type", name: "OpActionEventName" },
-		{
-			scope: "internal",
-			kind: "interface",
-			name: "RecentlyAddedContainerRuntimeMessageDetails",
-		},
-		{ scope: "internal", kind: "enum", name: "RuntimeHeaders" },
-		{ scope: "internal", kind: "enum", name: "RuntimeMessage" },
-		{ scope: "alpha", kind: "interface", name: "SubmitSummaryFailureData" },
-		{ scope: "alpha", kind: "type", name: "SubmitSummaryResult" },
-		{ scope: "alpha", kind: "class", name: "Summarizer" },
-		{ scope: "alpha", kind: "type", name: "SummarizeResultPart" },
-		{ scope: "alpha", kind: "type", name: "SummarizerStopReason" },
-		{ scope: "alpha", kind: "class", name: "SummaryCollection" },
-		{ scope: "alpha", kind: "type", name: "SummaryStage" },
-		{ scope: "alpha", kind: "const", name: "TombstoneResponseHeaderKey" },
-		{ scope: "internal", kind: "interface", name: "UnknownContainerRuntimeMessage" },
-		{ scope: "internal", kind: "function", name: "unpackRuntimeMessage" },
-	],
-	"@fluidframework/container-runtime-definitions": [
-		{ scope: "alpha", kind: "interface", name: "IContainerRuntime" },
-		{ scope: "alpha", kind: "type", name: "IContainerRuntimeBaseWithCombinedEvents" },
-		{ scope: "alpha", kind: "interface", name: "IContainerRuntimeEvents" },
-		{
-			scope: "alpha",
-			kind: "interface",
-			name: "IContainerRuntimeWithResolveHandle_Deprecated",
-		},
-	],
-};
+type MemberData = Partial<Record<ApiLevel, string[]>>;
+type MapData = Map<string, MemberData>;
 
-interface MemberData {
-	internal?: string[];
-	public?: string[];
-	alpha?: string[];
-	beta?: string[];
+function isKnownLevel(level: string): level is ApiLevel {
+	return (knownLevels as readonly string[]).includes(level);
 }
 
-// Load the raw data into a more useable form
-type MapData = Map<string, MemberData>;
-const typeMapData: MapData = new Map();
-for (const [moduleName, members] of Object.entries(typeMapDataRaw)) {
-	const entry = typeMapData.get(moduleName) ?? {};
-	for (const member of members) {
-		switch (member.scope) {
-			case "internal": {
-				if (entry.internal === undefined) {
-					entry.internal = [member.name];
-				} else {
-					entry.internal.push(member.name);
-				}
-				break;
-			}
-			case "public": {
-				if (entry.public === undefined) {
-					entry.public = [member.name];
-				} else {
-					entry.public.push(member.name);
-				}
-				break;
-			}
-			case "alpha": {
-				if (entry.alpha === undefined) {
-					entry.alpha = [member.name];
-				} else {
-					entry.alpha.push(member.name);
-				}
-				break;
-			}
-			default: {
-				throw new Error(`Unknown API level: ${member.scope}`);
-			}
-		}
+function ensureLevel(entry: MemberData, level: keyof MemberData): string[] {
+	const entryData = entry[level];
+	if (entryData !== undefined) {
+		return entryData;
 	}
-	typeMapData.set(moduleName, entry);
+	const newData: string[] = [];
+	entry[level] = newData;
+	return newData;
+}
+
+async function loadData(dataFile: string): Promise<MapData> {
+	// Load the raw data file
+	const rawData: string = (await readFile(dataFile)).toString();
+	const apiLevelDataRaw: Record<string, MemberDataRaw[]> = JSON5.parse(rawData);
+
+	// Transform the raw data into a more useable form
+	const apiLevelData = new Map<string, MemberData>();
+	for (const [moduleName, members] of Object.entries(apiLevelDataRaw)) {
+		const entry = apiLevelData.get(moduleName) ?? {};
+		for (const member of members) {
+			const { level } = member;
+			if (!isKnownLevel(level)) {
+				throw new Error(`Unknown API level: ${level}`);
+			}
+			ensureLevel(entry, level).push(member.name);
+		}
+		apiLevelData.set(moduleName, entry);
+	}
+	return apiLevelData;
 }
