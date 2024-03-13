@@ -112,8 +112,9 @@ describe("expose joinSessionInfo Tests", () => {
 			new MockLogger().toTelemetryLogger(),
 		);
 		const errorToThrow = createOdspNetworkError("TestError", 429);
+		const errorFromEvent = "connect_document_error";
 		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: "connect_document_error", errorToThrow },
+			connect_document: { eventToEmit: errorFromEvent, errorToThrow },
 		});
 		const client: IClient = {
 			mode: "read",
@@ -140,15 +141,15 @@ describe("expose joinSessionInfo Tests", () => {
 		} catch (error) {
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(error as any).isSocketError === false,
-				"'connect_document_error' is not a socket error. 'isSocketError' should be false",
+				(error as any).errorFrom === errorFromEvent,
+				`errorFrom param with value as '${errorFromEvent}' should be available`,
 			);
 
 			const info =
 				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
 			assert(
 				info === undefined,
-				"joinSession cache should get cleared when 'connect_document_error' occurs",
+				`joinSession cache should get cleared when '${errorFromEvent}' occurs`,
 			);
 		} finally {
 			// reset nonPersistenCache changes from the test
@@ -172,8 +173,9 @@ describe("expose joinSessionInfo Tests", () => {
 			new MockLogger().toTelemetryLogger(),
 		);
 		const errorToThrow = createOdspNetworkError("TestSocketError", 401);
+		const errorFromEvent = "connect_error";
 		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: "connect_error", errorToThrow },
+			connect_document: { eventToEmit: errorFromEvent, errorToThrow },
 		});
 		const client: IClient = {
 			mode: "read",
@@ -200,15 +202,15 @@ describe("expose joinSessionInfo Tests", () => {
 		} catch (error) {
 			assert(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-				(error as any).isSocketError === true,
-				"'connect_error' is a socket error. 'isSocketError' should be true",
+				(error as any).errorFrom === errorFromEvent,
+				`errorFrom param with value as ${errorFromEvent} should be present`,
 			);
 
 			const info =
 				await odspDocumentServiceFactory.getRelayServiceSessionInfo(odspResolvedUrl);
 			assert(
 				info === joinSessionResponse,
-				"joinSession cache should not get cleared when 'connect_error' occurs",
+				`joinSession cache should not get cleared when '${errorFromEvent}' occurs`,
 			);
 		} finally {
 			// reset nonPersistenCache changes from the test
