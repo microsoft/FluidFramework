@@ -4,8 +4,7 @@
  */
 
 module.exports = {
-	preset: "ts-jest",
-	roots: ["<rootDir>"],
+	roots: ["<rootDir>/src"],
 	reporters: [
 		"default",
 		[
@@ -17,12 +16,29 @@ module.exports = {
 		],
 	],
 	transform: {
-		"^.+\\.tsx?$": "ts-jest",
-		"^.+\\.jsx?$": "babel-jest",
+		"^.+\\.tsx?$": [
+			"ts-jest",
+			{
+				tsconfig: "src/test/tsconfig.cjs.json",
+			},
+		],
+		"^.+\\.cts$": [
+			"ts-jest",
+			{
+				tsconfig: "src/test/tsconfig.cjs.json",
+			},
+		],
 	},
-	testMatch: ["**/dist/test/?(*.)+(spec|test).*js"],
+	testRegex: "src/test/.*.test\\.tsx?$",
+	// testRegex: "/dist/test/(.*|(\\.|/)(test|spec))\\.(js|jsx)?$",
+	// testMatch: ["**/?dist/?test/?(*.)+(spec|test).*s?(x)"],
 	testPathIgnorePatterns: ["/node_modules/"],
-	moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+	moduleNameMapper: {
+		// Remove explicit .(c)js from local paths to allow jest to find the .ts* files
+		"^(\\.{1,2}/.*)\\.js$": "$1",
+		// "^(\\.{1,2}/.*)\\.cjs$": "$1",
+	},
+	moduleFileExtensions: ["ts", "mts", "cts", "tsx", "js", "cjs", "mjs", "jsx", "json", "node"],
 	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],
 	testEnvironment: "jsdom",
 };

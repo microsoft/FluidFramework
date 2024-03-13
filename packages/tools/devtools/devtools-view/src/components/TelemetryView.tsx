@@ -24,7 +24,6 @@ import {
 	tokens,
 } from "@fluentui/react-components";
 import React, { useState, useRef } from "react";
-import SplitPane from "react-split-pane";
 import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
@@ -39,6 +38,7 @@ import {
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
 
 /**

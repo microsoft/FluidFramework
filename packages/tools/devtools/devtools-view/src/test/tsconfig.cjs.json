@@ -1,8 +1,10 @@
 {
-	// This config must be used in a "type": "commonjs" environment. (Use tsc-mult.)
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc.)
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/test",
+		// "allowJs": true,
+		// "module": "Node16",
 	},
 	"references": [
 		{

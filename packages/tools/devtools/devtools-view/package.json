@@ -55,12 +55,12 @@
 		"test:jest": "jest",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:mocha": "echo TODO: enable tests",
-		"test:mocha:cjs": "mocha  --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha  --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha \"dist/screenshot-tests/Screenshot.test.js\" --delay --exit",
+		"test:mocha:esm": "mocha \"lib/screenshot-tests/Screenshot.test.js\" --delay --exit",
 		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch"
 	},
 	"dependencies": {
