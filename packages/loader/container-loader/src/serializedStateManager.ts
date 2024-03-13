@@ -136,6 +136,10 @@ export class SerializedStateManager {
 					eventName: "getSnapshotTreeFailed",
 					id: version.id,
 				});
+			} else if (snapshot !== undefined && version === undefined) {
+				this.mc.logger.sendErrorEvent({
+					eventName: "getSnapshotFetchedTreeWithoutVersion",
+				});
 			}
 			return { snapshot, version };
 		}

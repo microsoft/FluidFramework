@@ -388,7 +388,6 @@ export class Container
 {
 	/**
 	 * Load an existing container.
-	 * @internal
 	 */
 	public static async load(
 		loadProps: IContainerLoadProps,
@@ -513,7 +512,6 @@ export class Container
 
 	/**
 	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
-	 * @internal
 	 */
 	public readonly clone: (
 		loadProps: IContainerLoadProps,
@@ -743,9 +741,6 @@ export class Container
 
 	private readonly _lifecycleEvents = new TypedEventEmitter<IContainerLifecycleEvents>();
 
-	/**
-	 * @internal
-	 */
 	constructor(
 		createProps: IContainerCreateProps,
 		loadProps?: Pick<IContainerLoadProps, "pendingLocalState">,
