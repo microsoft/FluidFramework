@@ -37,6 +37,8 @@ export class SerializedStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
+	private supportGetSnapshotApi: boolean = false;
+	private fetchPromise: Promise<void> | undefined = undefined;
 	// private readonly promiseCache: PromiseCache<string, { snapshot?: ISnapshot | ISnapshotTree; version?: IVersion } > = new PromiseCache();;
 	// private readonly retryDelay = 1000; // Initial delay in milliseconds for the first retry.
 
@@ -63,9 +65,16 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
+	private refreshRequired() {
+		return this.processedOps.length > 100;
+	}
+
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
+			if (this.refreshRequired()) {
+				this.refreshAttributes();
+			}
 		}
 	}
 
@@ -78,6 +87,7 @@ export class SerializedStateManager {
 		specifiedVersion: string | undefined,
 		supportGetSnapshotApi: boolean | undefined,
 	) {
+		this.supportGetSnapshotApi = supportGetSnapshotApi ?? false;
 		if (this.pendingLocalState === undefined) {
 			const { snapshot, version } = await this.fetchSnapshotCore(
 				specifiedVersion,
@@ -94,19 +104,12 @@ export class SerializedStateManager {
 			}
 			return { snapshotTree, version };
 		} else {
-			const { snapshot, version } = {
-				snapshot: this.pendingLocalState.baseSnapshot,
-				version: undefined,
-			};
-			const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-				? snapshot.snapshotTree
-				: snapshot;
 			this.snapshot = {
 				tree: this.pendingLocalState.baseSnapshot,
 				blobs: this.pendingLocalState.snapshotBlobs,
 			};
-			this.refreshAttributes(supportGetSnapshotApi);
-			return { snapshotTree, version };
+			this.refreshAttributes();
+			return { snapshotTree: this.pendingLocalState.baseSnapshot, version: undefined };
 		}
 	}
 
@@ -164,49 +167,78 @@ export class SerializedStateManager {
 		return { snapshot, version };
 	}
 
-	public refreshAttributes(supportGetSnapshotApi: boolean | undefined) {
-		this.fetchSnapshotCore(undefined, supportGetSnapshotApi)
-			.then(async ({ snapshot }) => {
-				const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-					? snapshot.snapshotTree
-					: snapshot;
-				assert(snapshotTree !== undefined, "Snapshot should exist");
-				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
+	public refreshAttributes() {
+		if (this.fetchPromise === undefined) {
+			this.fetchPromise = this.fetchSnapshotCore(undefined, this.supportGetSnapshotApi)
+				.then(async ({ snapshot }) => {
+					const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+						? snapshot.snapshotTree
+						: snapshot;
+					assert(snapshotTree !== undefined, "Snapshot should exist");
+					const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 
-				const attributes: IDocumentAttributes = await this.getDocumentAttributes(
-					this.storageAdapter,
-					snapshotTree,
-				);
-				const snapshotSN = attributes.sequenceNumber;
-				const firstSavedOpSN = this.processedOps[0].sequenceNumber;
-				const lastSavedOpSN =
-					this.processedOps[this.processedOps.length - 1].sequenceNumber;
+					const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+						this.storageAdapter,
+						snapshotTree,
+					);
+					if (this.processedOps.length === 0) {
+						this.snapshot = { tree: snapshotTree, blobs };
+						return;
+					}
+					const snapshotSN = attributes.sequenceNumber;
+					const firstSavedOpSN = this.processedOps[0].sequenceNumber;
+					const lastSavedOpSN =
+						this.processedOps[this.processedOps.length - 1].sequenceNumber;
 
-				if (snapshotSN < firstSavedOpSN - 1) {
-					console.log("ERROR RRRRRRRRRRRRRR <");
-					throw new Error("Fetched snapshot is not latest available");
-				} else if (snapshotSN < firstSavedOpSN) {
-					// snapshotSN === firstSavedOpSN - 1:
-					// Snapshot is exactly one less than the first processed op sequence number.
-					// Meaning new snapshot is the same as before refreshing. Do nothing.
-					// Add telemetry here to check we tried to update the snapshot but got the same one.
-					return;
-				} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
-					// Snapshot is between the first and last saved operation.
-					console.log("SNAPSHOT REFRESHHHHHHHHHHHHHHH");
-					this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
-					this.snapshot = { tree: snapshotTree, blobs };
-				} else if (snapshotSN > lastSavedOpSN) {
-					// Snapshot is newer than the newest processed op.
-					// We need to wait and catch up with the operations to reach the snapshot's state.
-					console.log("Snapshot didn't refresh RRRRRRRRRR");
-				} else {
-					assert(!true, "Impossible case");
-				}
-			})
-			.catch((error) => {
-				console.log("FAILUREEEEEEEEEE: ", error);
-			});
+					if (snapshotSN < firstSavedOpSN - 1) {
+						this.mc.logger.sendErrorEvent({
+							eventName: "Old_Snapshot_Fetch_While_Refresing",
+							snapshotSequenceNumber: snapshotSN,
+							firstProcessedOpSequenceNumber: firstSavedOpSN,
+						});
+						throw new Error("Fetched snapshot is not latest available");
+					} else if (snapshotSN === firstSavedOpSN - 1) {
+						// Snapshot is exactly one less than the first processed op sequence number.
+						// Meaning new snapshot is the same as before refreshing. Do nothing.
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "Previous_Snapshot_Fetch_While_Refreshing",
+							snapshotSequenceNumber: snapshotSN,
+							firstProcessedOpSequenceNumber: firstSavedOpSN,
+						});
+						return;
+					} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
+						// Snapshot is between the first and last saved operation.
+						console.log("SNAPSHOT REFRESHHHHHHHHHHHHHHH");
+						this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+						this.snapshot = { tree: snapshotTree, blobs };
+					} else if (snapshotSN > lastSavedOpSN) {
+						// Snapshot is newer than the newest processed op.
+						// We need to wait and catch up with ops to reach the snapshot's state.
+						// addProcessedOps will kick the refresh process later
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "New_Snapshot_Fetch_While_Refresh",
+							snapshotSequenceNumber: snapshotSN,
+							firstProcessedOpSequenceNumber: firstSavedOpSN,
+						});
+						console.log("Snapshot didn't refresh RRRRRRRRRR");
+					} else {
+						assert(!true, "Impossible case");
+					}
+				})
+				.catch((error) => {
+					// Ignore errors for current attempt as addProcessedOps will retry again eventually
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: "Could_Not_Refresh_Snapshot",
+						},
+						error,
+					);
+				})
+				.finally(() => {
+					// Once the fetch is complete, reset this.fetchPromise.
+					this.fetchPromise = undefined;
+				});
+		}
 	}
 	/**
 	 * This method is only meant to be used by Container.attach() to set the initial
