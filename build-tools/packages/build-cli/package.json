@@ -125,7 +125,7 @@
 	"devDependencies": {
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/async": "^3.2.20",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
