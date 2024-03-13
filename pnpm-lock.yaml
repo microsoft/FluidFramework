@@ -1476,7 +1476,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/tinylicious-client': workspace:~
-      '@microsoft/api-extractor': ^7.39.1
+      '@microsoft/api-extractor': ^7.42.3
       '@microsoft/applicationinsights-web': ^2.8.11
       '@testing-library/dom': ^8.2.0
       '@testing-library/jest-dom': ^5.16.5
