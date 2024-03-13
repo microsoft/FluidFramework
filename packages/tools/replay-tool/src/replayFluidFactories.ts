@@ -29,8 +29,8 @@ import {
 	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { UnknownChannelFactory } from "./unknownChannel";
-import { ReplayToolContainerEntryPoint } from "./helpers";
+import { UnknownChannelFactory } from "./unknownChannel.js";
+import { ReplayToolContainerEntryPoint } from "./helpers.js";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {

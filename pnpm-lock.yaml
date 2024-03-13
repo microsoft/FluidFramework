@@ -11296,6 +11296,7 @@ importers:
 
   packages/tools/replay-tool:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -11366,6 +11367,7 @@ importers:
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       json-stable-stringify: 1.1.0
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1

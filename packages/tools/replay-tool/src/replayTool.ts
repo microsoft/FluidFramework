@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ReplayArgs } from "./replayArgs";
-import { ReplayTool } from "./replayMessages";
+import { ReplayArgs } from "./replayArgs.js";
+import { ReplayTool } from "./replayMessages.js";
 
 const optionsArray = [
 	"Location:",

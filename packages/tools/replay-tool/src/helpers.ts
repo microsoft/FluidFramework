@@ -23,9 +23,9 @@ import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,
-} from "./replayFluidFactories";
-import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
-import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
+} from "./replayFluidFactories.js";
+import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
+import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";
 
 export interface ReplayToolContainerEntryPoint {
 	readonly containerRuntime: ContainerRuntime;

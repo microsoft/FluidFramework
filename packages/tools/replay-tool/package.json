@@ -12,18 +12,29 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"bin": {
 		"replayTool": "bin/replayTool"
 	},
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
-		"ci:build:docs": "api-extractor run",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -32,7 +43,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-experimental/ink": "workspace:~",
@@ -65,11 +76,11 @@
 		"json-stable-stringify": "^1.0.1"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
 		"@types/json-stable-stringify": "^1.0.32",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
@@ -77,17 +88,6 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs"
-				],
-				"script": false
-			}
-		}
 	},
 	"typeValidation": {
 		"disabled": true,
