@@ -52,7 +52,7 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  * If a version of runtime does not support some options, they are removed.
  * If a version runtime supports some options, such options are enabled to increase a chance of
  * hitting feature set controlled by such options, and thus increase chances of finding product bugs.
- * 
+ *
  * @param version - a version of container runtime to be used in test
  * @param optionsArg - input runtime options (optional)
  * @returns - runtime options that should be used with a given version of container runtime
@@ -205,16 +205,13 @@ export async function getVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			containerOptions?.runtimeOptions,
 			// If you isolate each runtime option and test them individually then only 13 test fails.
 			// But enabling all 2.0 options results in 69 tests failing!
 			// Most of the failures are due to error generated as result of sending ops in disconnected state, which is a bit weird.
-			/*
 			filterRuntimeOptionsForVersion(
 				apis.containerRuntime.version,
 				containerOptions?.runtimeOptions,
 			),
-			*/
 		);
 	};
 
@@ -300,10 +297,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(
-				versionForLoading,
-				containerOptions?.runtimeOptions,
-			),
+			filterRuntimeOptionsForVersion(versionForLoading, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);
 	};
@@ -320,10 +314,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			// containerOptions?.runtimeOptions,
-			filterRuntimeOptionsForVersion(
-				versionForLoading,
-				containerOptions?.runtimeOptions,
-			),
+			filterRuntimeOptionsForVersion(versionForLoading, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);
 	};
