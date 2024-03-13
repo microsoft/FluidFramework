@@ -7,8 +7,6 @@ export {
 	brand,
 	Brand,
 	BrandedType,
-	brandedNumberType,
-	brandedStringType,
 	fromErased,
 	Erased,
 	ErasedType,
@@ -16,6 +14,7 @@ export {
 	ValueFromBranded,
 	brandErased,
 } from "./brand.js";
+export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export { brandOpaque, extractFromOpaque, ExtractFromOpaque, Opaque } from "./opaque.js";
 export {
 	deleteFromNestedMap,
