@@ -17,11 +17,7 @@
 	"bin": {
 		"fluid-readme": "./bin/run.js"
 	},
-	"files": [
-		"/bin",
-		"/lib",
-		"/oclif.manifest.json"
-	],
+	"files": ["/bin", "/lib", "/oclif.manifest.json"],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run build:readme",
@@ -76,21 +72,15 @@
 		"bin": "fluid-readme",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": [
-			"-h"
-		],
-		"additionalVersionFlags": [
-			"-V"
-		],
+		"additionalHelpFlags": ["-h"],
+		"additionalVersionFlags": ["-V"],
 		"plugins": [],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/readme-command/<%- commandPath %>",
 		"topicSeparator": " "
 	},
 	"pnpm": {
 		"updateConfig": {
-			"ignoreDependencies": [
-				"typescript"
-			]
+			"ignoreDependencies": ["typescript"]
 		}
 	}
 }

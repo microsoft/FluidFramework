@@ -53,6 +53,14 @@
 					"trailingCommas": "all"
 				}
 			}
+		},
+		{
+			"include": ["**/package.json"],
+			"json": {
+				"formatter": {
+					"lineWidth": 80
+				}
+			}
 		}
 	]
 }

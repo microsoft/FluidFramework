@@ -24,11 +24,7 @@
 	"bin": {
 		"fluv": "./bin/run.js"
 	},
-	"files": [
-		"/bin",
-		"/lib",
-		"/oclif.manifest.json"
-	],
+	"files": ["/bin", "/lib", "/oclif.manifest.json"],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run build:test",
@@ -58,21 +54,11 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"lib/test/**/*.*js"
-		],
+		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
 		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"lib/**/*.*js"
-		],
+		"include": ["src/**/*.*ts", "lib/**/*.*js"],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -120,16 +106,9 @@
 		"bin": "fluv",
 		"dirname": "fluv",
 		"commands": "./lib/commands",
-		"additionalHelpFlags": [
-			"-h"
-		],
-		"additionalVersionFlags": [
-			"-V"
-		],
-		"plugins": [
-			"@oclif/plugin-autocomplete",
-			"@oclif/plugin-help"
-		],
+		"additionalHelpFlags": ["-h"],
+		"additionalVersionFlags": ["-V"],
+		"plugins": ["@oclif/plugin-autocomplete", "@oclif/plugin-help"],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/version-tools/<%- commandPath %>",
 		"topicSeparator": " ",
 		"topics": {}
