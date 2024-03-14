@@ -60,3 +60,6 @@ type _check1 =
 	// Check strong typing
 	| requireFalse<isAssignableTo<E4, E5>>
 	| requireFalse<isAssignableTo<T4, T5>>;
+
+// @ts-expect-error From erased rejects mismatched brands
+const branded2: T5 = fromErased(erased);

@@ -5,7 +5,6 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils";
 import type { Covariant, isAny } from "./typeCheck.js";
-import type { Assume } from "./typeUtils.js";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -20,8 +19,8 @@ import type { Assume } from "./typeUtils.js";
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
  * @internal
  */
-export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType &
-	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
+export type Brand<ValueType, Name extends string | ErasedType> = ValueType &
+	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Name>;
 
 /**
  * "opaque" handle which can be used to expose a branded type without referencing its value type.
@@ -46,9 +45,9 @@ export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueTy
  * 	return brandErased<BrandedMyType>(input);
  * }
  * ```
- * @internal
+ * @public
  */
-export type Erased<Name extends string> = ErasedType<Name>;
+export type Erased<Name> = ErasedType<Name>;
 
 /**
  * Helper for {@link Erased}.
@@ -57,15 +56,15 @@ export type Erased<Name extends string> = ErasedType<Name>;
  * - make the member protected (so you don't accidentally try and read it).
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  *
- * See {@link MakeNominal} for more details.
+ * See `MakeNominal` for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
  *
  * @sealed
- * @internal
+ * @public
  */
-export abstract class ErasedType<out Name extends string> {
+export abstract class ErasedType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
@@ -97,7 +96,7 @@ export abstract class ErasedType<out Name extends string> {
 /**
  * Helper for {@link Brand}.
  *
- * See `InternalTypes.MakeNominal` for some more details.
+ * See `MakeNominal` for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
@@ -116,7 +115,7 @@ export abstract class ErasedType<out Name extends string> {
  * @sealed
  * @internal
  */
-export abstract class BrandedType<out ValueType, Name extends string> {
+export abstract class BrandedType<out ValueType, Name> {
 	protected _typeCheck?: Covariant<ValueType>;
 	/**
 	 * Compile time only marker to make type checking more strict.
@@ -151,9 +150,9 @@ export abstract class BrandedType<out ValueType, Name extends string> {
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<
+export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	infer ValueType,
-	string
+	unknown
 >
 	? ValueType
 	: never;
@@ -163,7 +162,7 @@ export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends
  * but shows up as part of branded types so API-Extractor requires it to be exported.
  * @internal
  */
-export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<
+export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<
 	unknown,
 	infer Name
 >
@@ -178,9 +177,9 @@ export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends 
  * @internal
  */
 export function fromErased<
-	TBranded extends BrandedType<unknown, string>,
-	TName extends string = NameFromBranded<TBranded>,
->(value: ErasedType<TName>): TBranded {
+	TBranded extends BrandedType<unknown, TName>,
+	TName = NameFromBranded<TBranded>,
+>(value: TBranded extends BrandedType<unknown, infer Name> ? ErasedType<Name> : never): TBranded {
 	return value as unknown as TBranded;
 }
 
@@ -198,7 +197,7 @@ export function fromErased<
  * @internal
  */
 export function brand<T>(
-	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
+	value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never,
 ): T {
 	return value as T;
 }
@@ -209,7 +208,7 @@ export function brand<T>(
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @internal
  */
-export function brandErased<T extends BrandedType<unknown, string>>(
+export function brandErased<T extends BrandedType<unknown, unknown>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): ErasedType<NameFromBranded<T>> {
 	return value as ErasedType<NameFromBranded<T>>;
