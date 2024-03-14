@@ -143,6 +143,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		],
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		loaderProps: {},
+		runtimeOptions: {
+			enableRuntimeIdCompressor: "off",
+		},
 	};
 
 	const containerConfigWithCompressor: ITestContainerConfig = {

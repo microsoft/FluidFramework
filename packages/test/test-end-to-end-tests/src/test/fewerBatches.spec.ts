@@ -58,6 +58,10 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		const configWithFeatureGates = {
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
+			runtimeOptions: {
+				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+				...containerConfig.runtimeOptions,
+			},
 		};
 
 		// Create a Container for the first client.
@@ -99,6 +103,7 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 				...testContainerConfig,
 				runtimeOptions: {
 					flushMode: test.flushMode,
+					chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
 				},
 			});
 
