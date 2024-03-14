@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Defines a data structure for storing an DataBinding tree that mirrors a property set hierarchy with
  * DataBindings representing certain properties. Meant to handle the case where there are many properties but only some
@@ -12,7 +13,7 @@
 import _ from "underscore";
 import { PathHelper } from "@fluid-experimental/property-changeset";
 import { PATH_TOKENS_TYPE, TOKEN_TYPES_TYPE } from "@fluid-experimental/property-properties";
-import { DataBinding } from "./dataBinding";
+import { DataBinding } from "./dataBinding.js";
 
 export type NodeType = DataBindingTree | ArrayNode | null | undefined;
 interface Value {

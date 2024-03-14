@@ -416,7 +416,7 @@ function shallowCompatibilityTest(
 		throw Error("Expected inserted value to be a map");
 	}
 
-	assert(schema instanceof FlexObjectNodeSchema, "Expected object schema");
+	assert(schema instanceof FlexObjectNodeSchema, 0x906 /* Expected object schema */);
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:
 	// * Types which are strict subsets of other types in the same polymorphic union

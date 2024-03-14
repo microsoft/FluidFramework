@@ -630,7 +630,7 @@
             "error"
         ],
         "import/order": [
-            "error"
+            "off"
         ],
         "indent": [
             "off"

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Handler } from "../common";
 import { handler as assertShortCodeHandler } from "./assertShortCode";
 import { handlers as copyrightFileHeaderHandlers } from "./copyrightFileHeader";

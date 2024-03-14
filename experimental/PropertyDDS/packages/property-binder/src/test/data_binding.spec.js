@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals should, sinon, expect  */
 /* eslint spaced-comment: 0 */
 /* eslint no-unused-expressions: 0 */
