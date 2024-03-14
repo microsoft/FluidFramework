@@ -107,7 +107,7 @@ module.exports = {
 			script: false,
 		},
 		"format": {
-			dependsOn: ["format:prettier", "format:biome"],
+			dependsOn: ["prettier:fix", "format:prettier", "format:biome"],
 			script: false,
 		},
 		"check:biome": [],

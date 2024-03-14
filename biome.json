@@ -1,0 +1,45 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"root": ".",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"ignore": [
+			"**/*.generated.*",
+			"**/_api-extractor-temp/**",
+			"**/test/snapshots/content/**",
+			"**/biome.jsonc"
+		],
+		"maxSize": 2097152
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": false,
+		"rules": {
+			"recommended": true
+		}
+	},
+	"formatter": {
+		"enabled": false
+	},
+	"overrides": [
+		{
+			"include": ["**/.vscode/**", "**/tsconfig*.json", "**/api-extractor*.json"],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
+				}
+			}
+		}
+	]
+}
