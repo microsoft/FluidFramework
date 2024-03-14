@@ -317,6 +317,7 @@
 				"dependsOn": [
 					"prettier:root:fix",
 					"^prettier:fix",
+					"^format:prettier",
 					"^format:biome"
 				],
 				"script": false
