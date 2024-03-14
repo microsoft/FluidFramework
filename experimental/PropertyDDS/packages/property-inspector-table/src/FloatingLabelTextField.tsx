@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { withStyles, WithStyles } from "@material-ui/core/styles";
 import TextField, { StandardTextFieldProps } from "@material-ui/core/TextField";
 import classNames from "classnames";

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import readPkgUp from "read-pkg-up";

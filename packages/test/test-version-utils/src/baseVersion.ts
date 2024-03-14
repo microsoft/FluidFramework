@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import nconf from "nconf";
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { resolveVersion } from "./versionUtils.js";

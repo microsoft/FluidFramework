@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable prefer-template */
 
 import React, { ReactNode, useEffect, useState } from "react";

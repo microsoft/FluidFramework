@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import chai, { assert, expect } from "chai";
 
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
