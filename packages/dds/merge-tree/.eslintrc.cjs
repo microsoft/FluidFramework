@@ -14,6 +14,7 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"import/order": "off",
 		"keyword-spacing": "off", // Off because it conflicts with typescript-formatter
 		"no-case-declarations": "off",
 		"prefer-arrow/prefer-arrow-functions": "off",

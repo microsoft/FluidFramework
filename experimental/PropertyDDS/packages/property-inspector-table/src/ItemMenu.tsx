@@ -8,10 +8,10 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import { makeStyles } from "@material-ui/styles";
 import * as React from "react";
-import { ModalConsumer } from "./ModalManager";
-import { SvgIcon } from "./SVGIcon";
 import { DeleteModal, IDeleteOptions } from "./DeleteModal";
 import { IDeleteModalTextParameters } from "./DeleteModalTextParameters";
+import { ModalConsumer } from "./ModalManager";
+import { SvgIcon } from "./SVGIcon";
 import { IShareOptions, ShareModal } from "./ShareModal";
 
 export interface ICopyOptions {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IAgentScheduler } from "./agent.js";
 
 /**

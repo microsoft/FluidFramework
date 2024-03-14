@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { makeRandom } from "..";
 import { integer } from "../distributions";
 import { makeUuid4 } from "../random";
-import { computeChiSquared, chiSquaredCriticalValues, Counter, parseUuid } from "./utils";
+import { Counter, chiSquaredCriticalValues, computeChiSquared, parseUuid } from "./utils";
 
 // For stochastic tests, we use the following predetermined seeds.
 const testSeeds: [number, number, number, number][] = [

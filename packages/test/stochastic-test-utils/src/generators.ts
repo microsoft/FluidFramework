@@ -9,9 +9,9 @@ import {
 	AsyncGenerator,
 	AsyncWeights,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Weights,
+	done,
 } from "./types";
 
 /**

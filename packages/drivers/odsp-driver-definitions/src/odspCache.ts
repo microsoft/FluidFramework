@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl, type FiveDaysMs } from "@fluidframework/driver-definitions";
+import { type FiveDaysMs, IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
  * Must be less than IDocumentStorageServicePolicies.maximumCacheDurationMs policy of 5 days.

@@ -5,9 +5,9 @@
 
 import { expect } from 'chai';
 import { StablePlace, StableRange } from '../ChangeTypes.js';
-import { convertStablePlaceIds, convertStableRangeIds, convertNodeDataIds } from '../IdConversion.js';
+import { convertNodeDataIds, convertStablePlaceIds, convertStableRangeIds } from '../IdConversion.js';
 import { NodeId, StableNodeId } from '../Identifiers.js';
-import { refreshTestTree, areNodesEquivalent } from './utilities/TestUtilities.js';
+import { areNodesEquivalent, refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('0_0_2 type conversions', () => {
 	const testTree = refreshTestTree();

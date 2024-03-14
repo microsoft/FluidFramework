@@ -11,6 +11,9 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
+	rules: {
+		"import/order": "off",
+	},
 	overrides: [
 		{
 			// Rules only for test files

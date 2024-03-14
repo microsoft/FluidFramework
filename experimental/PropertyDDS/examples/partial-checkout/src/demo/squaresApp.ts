@@ -5,15 +5,15 @@
 
 import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 
+import { SQUARES_DEMO_SCHEMAS } from "@fluid-example/schemas";
 // import { IPropertyTree } from "../dataObject";
 import { DataBinder } from "@fluid-experimental/property-binder";
-import _ from "lodash";
-import { SQUARES_DEMO_SCHEMAS } from "@fluid-example/schemas";
 import { assert } from "@fluidframework/core-utils";
+import _ from "lodash";
 import { IPropertyTree } from "../dataObject.js";
 import { renderMoveButton } from "../view.js";
-import { SquaresBoard } from "./views/squaresBoard.js";
 import { IPoint2D, Square } from "./views/square.js";
+import { SquaresBoard } from "./views/squaresBoard.js";
 
 import { ColoredSquareBinding } from "./bindings/coloredSquareBinding.js";
 import { SquaresBoardBinding } from "./bindings/squaresBoardBinding.js";

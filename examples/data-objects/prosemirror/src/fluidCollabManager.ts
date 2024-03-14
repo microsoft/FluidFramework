@@ -6,9 +6,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-
-import { createGroupOp, createRemoveRangeOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
-import { SharedString, Marker, ReferenceType, TextSegment } from "@fluidframework/sequence";
+import { IMergeTreeDeltaOp, createGroupOp, createRemoveRangeOp } from "@fluidframework/merge-tree";
+import { Marker, ReferenceType, SharedString, TextSegment } from "@fluidframework/sequence";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";
@@ -18,14 +17,15 @@ import { EditorView } from "prosemirror-view";
 import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge.js";
 import { schema } from "./fluidSchema.js";
 import { create as createSelection } from "./selection.js";
-export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 /* eslint-disable import/no-internal-modules, import/no-unassigned-import */
-import "prosemirror-view/style/prosemirror.css";
-import "prosemirror-menu/style/menu.css";
 import "prosemirror-example-setup/style/style.css";
+import "prosemirror-menu/style/menu.css";
+import "prosemirror-view/style/prosemirror.css";
 import "./style.css";
 /* eslint-enable import/no-internal-modules, import/no-unassigned-import */
+
+export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
 export interface IProvideRichTextEditor {
 	readonly IRichTextEditor: IRichTextEditor;

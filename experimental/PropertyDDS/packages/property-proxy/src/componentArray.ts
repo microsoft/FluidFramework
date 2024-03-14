@@ -13,7 +13,7 @@ import {
 } from "@fluid-experimental/property-properties";
 
 import { PropertyProxy } from "./propertyProxy";
-import { forceType, Utilities } from "./utilities";
+import { Utilities, forceType } from "./utilities";
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.

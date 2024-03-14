@@ -4,9 +4,9 @@
  */
 
 import * as React from "react";
+import { IInspectorRow } from "./InspectorTableTypes";
 import { SvgIcon } from "./SVGIcon";
 import { iconHeight, iconWidth } from "./constants";
-import { IInspectorRow } from "./InspectorTableTypes";
 
 const typeIdToColor = {
 	Bool: "#9FC966",

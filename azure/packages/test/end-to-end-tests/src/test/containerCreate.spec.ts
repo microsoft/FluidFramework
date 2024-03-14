@@ -11,9 +11,9 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureClient } from "./AzureClientFactory";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

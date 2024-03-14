@@ -7,53 +7,36 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	addProperties,
 	Client,
-	createMap,
-	getSlideToSegoff,
+	DetachedReferencePosition,
 	ISegment,
+	LocalReferencePosition,
 	MergeTreeDeltaType,
 	PropertySet,
-	LocalReferencePosition,
 	ReferenceType,
+	SlidingPreference,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+	addProperties,
+	createMap,
+	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	UnassignedSequenceNumber,
-	DetachedReferencePosition,
-	UniversalSequenceNumber,
-	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
-	IMapMessageLocalMetadata,
 	IIntervalCollectionFactory,
-	IValueOpEmitter,
 	IIntervalCollectionOperation,
 	IIntervalCollectionType,
+	IMapMessageLocalMetadata,
+	IValueOpEmitter,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
-import {
-	CompressedSerializedInterval,
-	IIntervalHelpers,
-	Interval,
-	IntervalOpType,
-	IntervalStickiness,
-	IntervalType,
-	ISerializableInterval,
-	ISerializedInterval,
-	SequenceInterval,
-	SerializedIntervalDelta,
-	createPositionReferenceFromSegoff,
-	endReferenceSlidingPreference,
-	startReferenceSlidingPreference,
-	sequenceIntervalHelpers,
-	createInterval,
-} from "./intervals/index.js";
 import {
 	EndpointIndex,
 	IEndpointIndex,
@@ -63,6 +46,23 @@ import {
 	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
 } from "./intervalIndex/index.js";
+import {
+	CompressedSerializedInterval,
+	IIntervalHelpers,
+	ISerializableInterval,
+	ISerializedInterval,
+	Interval,
+	IntervalOpType,
+	IntervalStickiness,
+	IntervalType,
+	SequenceInterval,
+	SerializedIntervalDelta,
+	createInterval,
+	createPositionReferenceFromSegoff,
+	endReferenceSlidingPreference,
+	sequenceIntervalHelpers,
+	startReferenceSlidingPreference,
+} from "./intervals/index.js";
 
 /**
  * Defines a position and side relative to a character in a sequence.

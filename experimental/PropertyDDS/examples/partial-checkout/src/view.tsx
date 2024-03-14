@@ -6,22 +6,22 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import _ from "lodash";
 import {
 	IDataCreationOptions,
 	IInspectorRow,
-	fetchRegisteredTemplates,
-	InspectorTable,
 	IInspectorTableProps,
-	handlePropertyDataCreation,
+	InspectorTable,
 	ModalManager,
 	ModalRoot,
+	fetchRegisteredTemplates,
+	handlePropertyDataCreation,
 } from "@fluid-experimental/property-inspector-table";
+import _ from "lodash";
 
+import { DataBinder } from "@fluid-experimental/property-binder";
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { DataBinder } from "@fluid-experimental/property-binder";
-import { SquaresApp, randomSquaresBoardGenerator, moveSquares } from "./demo/squaresApp.js";
+import { SquaresApp, moveSquares, randomSquaresBoardGenerator } from "./demo/squaresApp.js";
 
 import { IPropertyTree } from "./dataObject.js";
 

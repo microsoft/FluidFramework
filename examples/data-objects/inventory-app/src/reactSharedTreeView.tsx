@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
-import {
-	TreeConfiguration,
-	ITree,
-	TreeFieldFromImplicitField,
-	TreeView,
-	SchemaIncompatible,
-	SharedTree,
-	type ImplicitFieldSchema,
-} from "@fluidframework/tree";
 import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	ITree,
+	type ImplicitFieldSchema,
+	SchemaIncompatible,
+	SharedTree,
+	TreeConfiguration,
+	TreeFieldFromImplicitField,
+	TreeView,
+} from "@fluidframework/tree";
+import * as React from "react";
 
 /**
  * This file contains logic not specific to this particular sample that other apps may want to use.

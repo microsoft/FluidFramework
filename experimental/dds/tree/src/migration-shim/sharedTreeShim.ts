@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from '@fluidframework/container-definitions';
 import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils';
 import {
-	type IChannelFactory,
 	type IChannelAttributes,
+	type IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
-	type ITelemetryContext,
 	type ISummaryTreeWithStats,
+	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
 import { type ITree } from '@fluidframework/tree';
-import { AttachState } from '@fluidframework/container-definitions';
-import { assert } from '@fluidframework/core-utils';
-import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
 import { type IShim } from './types.js';

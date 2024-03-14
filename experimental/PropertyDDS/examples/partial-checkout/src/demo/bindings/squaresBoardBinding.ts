@@ -4,8 +4,8 @@
  */
 
 import { DataBinding } from "@fluid-experimental/property-binder";
-import { SquaresBoard } from "../views/squaresBoard.js";
 import { Square } from "../views/square.js";
+import { SquaresBoard } from "../views/squaresBoard.js";
 
 export class SquaresBoardBinding extends DataBinding {
 	public board: SquaresBoard;

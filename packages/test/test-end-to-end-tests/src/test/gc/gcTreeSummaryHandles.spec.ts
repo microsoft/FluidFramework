@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -14,9 +14,9 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummarizerStopReason,
 	SummaryCollection,
+	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import {
 	DriverHeader,
@@ -25,14 +25,14 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	waitForContainerConnection,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**

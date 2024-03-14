@@ -13,6 +13,7 @@ module.exports = {
 		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-internal-modules": "off",
+		"import/order": "off",
 		"max-len": "off",
 		"no-bitwise": "off",
 		"no-case-declarations": "off",
