@@ -9,7 +9,7 @@ import {
 	SchemaFactory,
 	SharedTree,
 	NodeFromSchema,
-	type ISharedTree,
+	type ITree,
 } from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -101,8 +101,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 }
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
-	private _sharedTree: ISharedTree | undefined;
-	private get sharedTree(): ISharedTree {
+	private _sharedTree: ITree | undefined;
+	private get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {
 			throw new Error("Not initialized properly");
 		}
@@ -132,10 +132,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(
-			undefined,
-			newTreeFactory.type,
-		) as ISharedTree;
+		this._sharedTree = this.runtime.createChannel(undefined, newTreeFactory.type) as ITree;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 		// Convenient repro for bug AB#5975
 		// const retrievedSharedTree = await this._sharedTree.handle.get();
@@ -148,7 +145,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	// This would usually live in hasInitialized - I'm using initializingFromExisting here due to bug AB#5975.
 	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(sharedTreeKey)!.get();
 	}
 
 	protected async hasInitialized(): Promise<void> {
