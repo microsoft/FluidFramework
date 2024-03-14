@@ -35,12 +35,7 @@ import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
-import {
-	type TreeNodeSchema as TreeNodeSchemaClass,
-	type InsertableTypedNode,
-	NodeKind,
-	TreeMapNode,
-} from "./schemaTypes.js";
+import { type InsertableTypedNode, NodeKind, TreeMapNode, TreeNodeSchema } from "./schemaTypes.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { Unhydrated, TreeNode } from "./types.js";
 import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
@@ -107,13 +102,13 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 }
 
 /**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
+ * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
  */
 export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
 
-export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
+export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
 	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
+		return schema[simpleSchemaSymbol] as TreeNodeSchema;
 	}
 	return undefined;
 }
@@ -125,14 +120,19 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	const classSchema = getClassSchema(schema);
+	const classSchema = getSimpleSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
-	if (typeof classSchema === "function") {
-		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-		return new simpleSchema(flexNode);
-	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
+	return createTree(classSchema as TreeNodeSchema<any, any, TreeNode | TreeValue>, flexNode);
+}
+
+export function createTree<TNode, TInsert>(
+	schema: TreeNodeSchema<string, NodeKind, TNode, TInsert>,
+	data: TInsert | FlexTreeNode,
+): TNode {
+	if (typeof schema === "function") {
+		return new schema(data as TInsert);
 	}
+	return schema.create(data as TInsert);
 }
 
 /**
@@ -720,7 +720,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode,
 			key: string,
-			value: InsertableTypedNode<TreeNodeSchemaClass>,
+			value: InsertableTypedNode<TreeNodeSchema>,
 		): TreeMapNode {
 			const node = getFlexNode(this);
 
@@ -815,12 +815,12 @@ function createMapProxy(
  */
 export function createRawNodeProxy(
 	schema: FlexTreeNodeSchema,
-	content: InsertableTypedNode<TreeNodeSchemaClass> & object,
+	content: InsertableTypedNode<TreeNodeSchema> & object,
 	allowAdditionalProperties: boolean,
 	target?: object,
 ): Unhydrated<TreeNode> {
 	// Shallow copy the content and then add the type name symbol to it.
-	let flexNode: RawTreeNode<FlexTreeNodeSchema, InsertableTypedNode<TreeNodeSchemaClass>>;
+	let flexNode: RawTreeNode<FlexTreeNodeSchema, InsertableTypedNode<TreeNodeSchema>>;
 	let proxy: TreeNode;
 	if (schema instanceof FlexObjectNodeSchema) {
 		const contentCopy = copyContent(schema.name, content);
@@ -1140,7 +1140,7 @@ function modifyChildren<T extends FlexTreeNode>(
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
 function getNodeKind(node: TreeNode): NodeKind {
 	return (
-		getClassSchema(getFlexNode(node).schema)?.kind ??
+		getSimpleSchema(getFlexNode(node).schema)?.kind ??
 		fail("NodeBase should always have class schema")
 	);
 }

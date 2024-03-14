@@ -26,7 +26,7 @@ import { TreeContent } from "../shared-tree/index.js";
 import {
 	InsertableContent,
 	extractFactoryContent,
-	getClassSchema,
+	getSimpleSchema,
 	simpleSchemaSymbol,
 } from "./proxies.js";
 import { cursorFromNodeData } from "./toMapTree.js";
@@ -89,7 +89,7 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const nodeSchema = new Map(
 		mapIterable(schemaMap, ([key, value]) => {
 			const schema = value.toFlex();
-			const classSchema = getClassSchema(schema);
+			const classSchema = getSimpleSchema(schema);
 			if (classSchema === undefined) {
 				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
