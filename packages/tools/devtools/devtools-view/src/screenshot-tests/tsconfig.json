@@ -10,6 +10,7 @@
 		{
 			"path": "../..",
 		},
+		// reference the [jest] test build for MockMessageRelay
 		{
 			"path": "../test",
 		},

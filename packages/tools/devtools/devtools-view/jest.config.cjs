@@ -20,15 +20,17 @@ module.exports = {
 		"^.+\\.c?tsx?$": [
 			"ts-jest",
 			{
-				tsconfig: "src/test/tsconfig.cjs.json",
+				tsconfig: "src/test/tsconfig.json",
 			},
 		],
 	},
-	testRegex: "src/test/.*.test\\.tsx?$",
+	// This regex will match source (TypeScript) or transpiled (JavaScript) files.
+	// Change `roots` to select between those.
+	testRegex: "test/.*\\.test\\.[jt]sx?$",
 	testPathIgnorePatterns: ["/node_modules/"],
 	moduleNameMapper: {
 		// Remove explicit .(c)js from local paths to allow jest to find the .ts* files
-		"^(\\.{1,2}/.*)\\.js$": "$1",
+		"^(\\.{1,2}/.*)\\.c?js$": "$1",
 	},
 	moduleFileExtensions: ["ts", "tsx", "cts", "mts", "js", "cjs", "mjs", "jsx", "json", "node"],
 	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/"],

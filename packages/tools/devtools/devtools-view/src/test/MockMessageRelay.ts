@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IMessageRelay,
-	type IMessageRelayEvents,
-	type IDevtoolsMessage,
+import type {
+	IMessageRelay,
+	IMessageRelayEvents,
+	IDevtoolsMessage,
 } from "@fluidframework/devtools-core";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
