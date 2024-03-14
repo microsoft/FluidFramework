@@ -88,9 +88,11 @@ describe("IntervalCollection detached", () => {
 	describe("interval changed while detached", () => {
 		it("slides immediately on segment removal", () => {
 			sharedString.insertText(0, "0123");
-			const interval = collection.add({ start: 0, end: 2 });
-			collection.change(interval.getIntervalId(), { start: 0, end: 0 });
+			const id = collection.add({ start: 0, end: 2 }).getIntervalId();
+			collection.change(id, { start: 0, end: 0 });
 			sharedString.removeText(0, 1);
+			const interval = collection.getIntervalById(id);
+			assert(interval !== undefined, "interval should be defined");
 			assert.equal((interval.start.getSegment() as TextSegment)?.text, "123");
 			assert.equal((interval.end.getSegment() as TextSegment)?.text, "123");
 		});
