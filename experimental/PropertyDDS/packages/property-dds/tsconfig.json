@@ -6,6 +6,8 @@
 		"noUnusedLocals": false,
 		"outDir": "./lib",
 		"rootDir": "./src",
+		// Types for 'node' are required by the 'msgpackr' dependency's 'index.d.ts',
+		// even thought we avoid the node-specific functionality at runtime.
 		"types": ["node"],
 	},
 	"include": ["src/**/*"],
