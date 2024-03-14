@@ -17,14 +17,15 @@ export class OpenAI {
 	}
 
 	public async sendCompletionPrompt(
-		prompt: string,
-		functionDefinitions: Record<string, unknown>[],
+		messages: { role: string; content: string }[],
+		functions: Record<string, unknown>[],
+		max_tokens: number = 4096,
 	) {
 		const requestBody = {
 			model: "gpt-3.5-turbo",
-			messages: [{ role: "user", content: prompt }],
-			functions: functionDefinitions,
-			max_tokens: 4096,
+			messages,
+			functions,
+			max_tokens,
 			n: 1,
 			temperature: 0, // Setting this makes chatGPT as deterministic as possible
 		};

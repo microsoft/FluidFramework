@@ -1,7 +1,7 @@
 import {
-	SummarizeTextAction,
-	type SummarizeTextActionFunction,
-} from "../../src/actions/summarizeAction";
+	TextSummarizeAction,
+	TextSummarizeActionResponse,
+} from "../../src/actions/textSummarizeAction";
 import { OpenAI } from "../../src/openAi";
 
 describe("Summarize LLM Action", () => {
@@ -12,7 +12,7 @@ describe("Summarize LLM Action", () => {
 
 		const openAi = new OpenAI();
 
-		const response: SummarizeTextActionFunction = await SummarizeTextAction.execute(
+		const response: TextSummarizeActionResponse = await TextSummarizeAction.execute(
 			openAi,
 			sourceText,
 		);
