@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import InspectorTableIcons from "../assets/icons/SVGStoreIcons/index.js";
+import InspectorTableIcons from "../assets/icons/SVGStoreIcons/index.cjs";
 export { InspectorTableIcons };
 
 export { CustomChip } from "./CustomChip.js";

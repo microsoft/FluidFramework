@@ -4,6 +4,6 @@
  */
 
 // eslint-disable-next-line import/no-unassigned-import
-import "../assets/icons/SVGStoreIcons/index.js";
+import "../assets/icons/SVGStoreIcons/index.cjs";
 
 export const InspectorTableDecorator = (storyFn) => storyFn();

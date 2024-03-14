@@ -6,7 +6,7 @@
 import { MuiThemeProvider } from "@material-ui/core/styles";
 import * as React from "react";
 // eslint-disable-next-line import/no-unassigned-import
-import "../assets/icons/SVGStoreIcons/index.js";
+import "../assets/icons/SVGStoreIcons/index.cjs";
 import { theme } from "./Theme.js";
 
 export const InspectorDecorator = (storyFn) => (

@@ -11,7 +11,7 @@ module.exports = (env) => {
 	return {
 		mode: "production",
 		entry: {
-			main: "./assets/icons/SVGStoreIcons/index.js",
+			main: "./assets/icons/SVGStoreIcons/index.cjs",
 		},
 		resolve: {
 			extensions: [".ts", ".tsx", ".js"],
@@ -33,7 +33,7 @@ module.exports = (env) => {
 			],
 		},
 		output: {
-			filename: "./index.js",
+			filename: "./index.cjs",
 			path: path.resolve(__dirname, "dist", "assets", "icons", "SVGStoreIcons"),
 		},
 	};
