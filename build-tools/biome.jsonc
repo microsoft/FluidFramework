@@ -1,66 +1,11 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"files": {
-		"ignoreUnknown": true,
-		"ignore": ["**/*.generated.*", "**/_api-extractor-temp/**", "**/_package.json"]
-	},
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
+	"extends": ["../biome.json"],
 	"organizeImports": {
+		// TODO: Will be enabled in a separate change.
 		"enabled": false
 	},
-	"linter": {
-		"enabled": false,
-		"rules": {
-			"recommended": true
-		}
-	},
 	"formatter": {
-		"enabled": true,
-		"formatWithErrors": true,
-		"indentStyle": "tab",
-		"lineWidth": 95,
-		"lineEnding": "lf"
-	},
-	"javascript": {
-		"formatter": {
-			"arrowParentheses": "always",
-			"jsxQuoteStyle": "double",
-			"semicolons": "always",
-			"trailingComma": "all",
-			"quoteProperties": "preserve",
-			"quoteStyle": "double",
-			"bracketSpacing": true
-		}
-	},
-	"json": {
-		"formatter": {
-			"indentStyle": "tab"
-		}
-	},
-	"overrides": [
-		{
-			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
-			"json": {
-				"parser": {
-					"allowComments": true,
-					"allowTrailingCommas": true
-				},
-				"formatter": {
-					"trailingCommas": "all"
-				}
-			}
-		},
-		{
-			"include": ["**/package.json"],
-			"json": {
-				"formatter": {
-					"lineWidth": 80
-				}
-			}
-		}
-	]
+		"enabled": true
+	}
 }

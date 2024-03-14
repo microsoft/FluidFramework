@@ -13,7 +13,8 @@
 			"**/_api-extractor-temp/**",
 			"**/test/snapshots/content/**",
 			"**/localOdspSnapshots/**",
-			"**/biome.jsonc"
+			"**/biome.jsonc",
+			"**/_package.json"
 		],
 		"maxSize": 2097152
 	},
@@ -27,11 +28,31 @@
 		}
 	},
 	"formatter": {
-		"enabled": false
+		"enabled": false,
+		"formatWithErrors": true,
+		"indentStyle": "tab",
+		"lineWidth": 95,
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"arrowParentheses": "always",
+			"jsxQuoteStyle": "double",
+			"semicolons": "always",
+			"trailingComma": "all",
+			"quoteProperties": "preserve",
+			"quoteStyle": "double",
+			"bracketSpacing": true
+		}
+	},
+	"json": {
+		"formatter": {
+			"indentStyle": "tab"
+		}
 	},
 	"overrides": [
 		{
-			"include": ["**/.vscode/**", "**/tsconfig*.json", "**/api-extractor*.json"],
+			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
 			"json": {
 				"parser": {
 					"allowComments": true,
@@ -39,6 +60,14 @@
 				},
 				"formatter": {
 					"trailingCommas": "all"
+				}
+			}
+		},
+		{
+			"include": ["**/package.json"],
+			"json": {
+				"formatter": {
+					"lineWidth": 80
 				}
 			}
 		}
