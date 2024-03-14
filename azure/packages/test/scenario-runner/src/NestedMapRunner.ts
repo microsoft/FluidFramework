@@ -1,9 +1,9 @@
-import { AzureClient } from "@fluidframework/azure-client";
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
