@@ -25,7 +25,6 @@
 		"build:readme": "node ./bin/dev generate readme",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache",
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
