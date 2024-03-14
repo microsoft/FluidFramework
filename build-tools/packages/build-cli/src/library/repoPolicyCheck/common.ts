@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 /**
  * each handler has a name for filtering and a match regex for matching which files it should resolve

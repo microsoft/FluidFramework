@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-
+import fs from "node:fs";
 import { Handler, readFile, writeFile } from "../common";
 
 const serverPath = "server/routerlicious/";
@@ -34,7 +33,7 @@ export const handler: Handler = {
 			fs.readFileSync(serverDockerfilePath),
 		);
 
-		if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
+		if (!dockerfileContents.includes(dockerfileCopyText)) {
 			return "Routerlicious Dockerfile missing COPY command for this package";
 		}
 	},
@@ -44,10 +43,10 @@ export const handler: Handler = {
 		// add to Dockerfile
 		let dockerfileContents = readFile(serverDockerfilePath);
 
-		if (dockerfileContents.indexOf(dockerfileCopyText) === -1) {
+		if (!dockerfileContents.includes(dockerfileCopyText)) {
 			// regex basically find the last of 3 or more consecutive COPY package lines
 			const endOfCopyLinesRegex =
-				/(COPY\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
+				/(copy\s+server\/routerlicious\/packages\/.*\/package\*\.json\s+server\/routerlicious\/packages\/.*\/\s*\n){3,}[^\S\r]*(?<newline>\r?\n)+/gi;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const regexMatch = endOfCopyLinesRegex.exec(dockerfileContents)!;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -55,7 +54,7 @@ export const handler: Handler = {
 			const insertIndex = regexMatch.index + regexMatch[0].length - localNewline.length;
 
 			dockerfileContents =
-				dockerfileContents.substring(0, insertIndex) +
+				dockerfileContents.slice(0, Math.max(0, insertIndex)) +
 				dockerfileCopyText +
 				localNewline +
 				dockerfileContents.substring(insertIndex, dockerfileContents.length);

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import {
 	NoSubstitutionTemplateLiteral,
 	Node,
@@ -100,7 +100,7 @@ export const handler: Handler = {
 							)}\n\t${getCallsiteString(numLit)}`;
 						}
 						shortCodes.set(numLitValue, numLit);
-						//calculate the maximun short code to ensure we don't duplicate
+						// calculate the maximun short code to ensure we don't duplicate
 						maxShortCode = Math.max(numLitValue, maxShortCode);
 
 						// If comment already exists, extract it for the mapping file
@@ -135,39 +135,43 @@ export const handler: Handler = {
 					}
 					// If it's a simple string literal, track the file for replacements later
 					case SyntaxKind.StringLiteral:
-					case SyntaxKind.NoSubstitutionTemplateLiteral:
+					case SyntaxKind.NoSubstitutionTemplateLiteral: {
 						newAssetFiles.add(sourceFile);
 						break;
+					}
 					// Anything else isn't supported
-					case SyntaxKind.TemplateExpression:
+					case SyntaxKind.TemplateExpression: {
 						templateErrors.push(msg);
 						break;
+					}
 					case SyntaxKind.BinaryExpression:
-					case SyntaxKind.CallExpression:
+					case SyntaxKind.CallExpression: {
 						// TODO: why are CallExpression and BinaryExpression silently allowed?
 						break;
-					default:
+					}
+					default: {
 						otherErrors.push(msg);
 						break;
+					}
 				}
 			}
 		}
 
 		const errorMessages: string[] = [];
-		if (templateErrors.length !== 0) {
+		if (templateErrors.length > 0) {
 			errorMessages.push(
 				`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
 					`Use a string literal instead.\n${templateErrors.map(getCallsiteString).join("\n")}`,
 			);
 		}
-		if (otherErrors.length !== 0) {
+		if (otherErrors.length > 0) {
 			errorMessages.push(
 				`Unsupported argument kind:\n${otherErrors
 					.map((msg) => `${SyntaxKind[msg.getKind()]}: ${getCallsiteString(msg)}`)
 					.join("\n")}`,
 			);
 		}
-		if (errorMessages.length !== 0) {
+		if (errorMessages.length > 0) {
 			throw new Error(errorMessages.join("\n\n"));
 		}
 	},
@@ -191,7 +195,7 @@ export const handler: Handler = {
 				if (isStringLiteral(msg)) {
 					// resolve === fix
 					if (resolve) {
-						//for now we don't care about filling gaps, but possible
+						// for now we don't care about filling gaps, but possible
 						const shortCode = ++maxShortCode;
 						shortCodes.set(shortCode, msg);
 						const text = msg.getLiteralText();
@@ -221,12 +225,10 @@ export const handler: Handler = {
 };
 
 function writeShortCodeMappingFile() {
-	const mapContents = Array.from(codeToMsgMap.entries())
-		.sort()
-		.reduce((accum, current) => {
-			accum[current[0]] = current[1];
-			return accum;
-		}, {} as any);
+	const mapContents = [...codeToMsgMap.entries()].sort().reduce((accum, current) => {
+		accum[current[0]] = current[1];
+		return accum;
+	}, {} as any);
 	const targetFolder = "packages/runtime/test-runtime-utils/src";
 
 	if (!fs.existsSync(targetFolder)) {

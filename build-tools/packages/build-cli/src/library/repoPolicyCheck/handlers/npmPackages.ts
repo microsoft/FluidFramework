@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import * as child_process from "child_process";
-import fs from "fs";
-import { EOL as newline } from "os";
-import path from "path";
-import * as readline from "readline";
+import * as child_process from "node:child_process";
+import fs from "node:fs";
+import { EOL as newline } from "node:os";
+import path from "node:path";
+import * as readline from "node:readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { 
-	PackageJson, 
-	updatePackageJsonFile, 
-	loadFluidBuildConfig, 
-	PackageNamePolicyConfig, 
-	ScriptRequirement 
+import {
+	PackageJson,
+	updatePackageJsonFile,
+	loadFluidBuildConfig,
+	PackageNamePolicyConfig,
+	ScriptRequirement,
 } from "@fluidframework/build-tools";
 import { Handler, readFile, writeFile } from "../common";
 
@@ -389,7 +389,7 @@ interface ParsedArg {
  * @param commandLine - complete command line as a simple string
  * @param onlyDoubleQuotes - only consider double quotes for grouping
  * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
- *  and `original` corresponding strings.
+ * and `original` corresponding strings.
  */
 function parseArgs(
 	commandLine: string,
@@ -397,11 +397,11 @@ function parseArgs(
 ): ParsedArg[] {
 	const regexArg = onlyDoubleQuotes
 		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
-		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
+		: /(?<!\S)(?:[^\s"'\\]|\\\S)*(?:(["']).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"'\\]|\\\S)*|$))*(?!\S)/g;
 	const regexQuotedSegment = onlyDoubleQuotes
 		? /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(")(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g
-		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(['"])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
-	const regexEscapedCharacters = onlyDoubleQuotes ? /\\([\\"])/g : /\\([\\'"])/g;
+		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(["'])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
+	const regexEscapedCharacters = onlyDoubleQuotes ? /\\(["\\])/g : /\\(["'\\])/g;
 	return [...commandLine.matchAll(regexArg)].map((matches) => ({
 		arg: matches[0].replace(regexQuotedSegment, "$2").replace(regexEscapedCharacters, "$1"),
 		original: matches[0],
@@ -428,7 +428,7 @@ function quoteAndEscapeArgsForUniversalCommandLine(
 	// escaped with \ and \ itself must therefore be escaped.
 	// Unix shells also use single quotes for grouping. Rather than escape those,
 	// which Windows command shell would not unescape, those args must be grouped.
-	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
+	const escapedArg = resolvedArg.replace(/(["\\])/g, "\\$1");
 	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
 	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
 }
@@ -444,30 +444,30 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg):
 	// Check for exactly `&&` or `|`.
 	if (arg === "&&" || arg === "|") {
 		// Use quoting if original had any quoting.
-		return arg !== original ? `"${arg}"` : arg;
+		return arg === original ? arg : `"${arg}"`;
 	}
 
 	// Check for unquoted start of `&&` or `|`.
-	if (!/^['"]/.test(original)) {
+	if (!/^["']/.test(original)) {
 		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
 		if (specialStart) {
 			// Separate the `&&` or `|` from remainder that will be its own arg.
 			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
 				arg: specialStart[2],
-				original: original.substring(specialStart[1].length),
+				original: original.slice(specialStart[1].length),
 			});
 			return `${specialStart[1]} ${remainder}`;
 		}
 	}
 
 	// Check for unquoted tail `|`.
-	if (!/['"]$/.test(original)) {
+	if (!/["']$/.test(original)) {
 		const specialEnd = /^(.+)\|$/.exec(arg);
 		if (specialEnd) {
 			// Separate the `|` from prior that will be its own arg.
 			const prior = quoteAndEscapeArgsForUniversalScriptLine({
 				arg: specialEnd[1],
-				original: original.substring(0, original.length - 1),
+				original: original.slice(0, Math.max(0, original.length - 1)),
 			});
 			return `${prior} |`;
 		}
@@ -476,7 +476,7 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg):
 	// Among the special characters `>`, `|`, `;`, and `&`, check for `&` at
 	// start, pipe (with anything else), or `;`. Some common `&` uses like `2>&1`
 	// should also remain unquoted.
-	const forceQuote = /^&|[|;]/.test(arg);
+	const forceQuote = /^&|[;|]/.test(arg);
 
 	return quoteAndEscapeArgsForUniversalCommandLine(arg, { forceQuote });
 }
@@ -511,8 +511,8 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const ret: string[] = [];
@@ -547,7 +547,8 @@ export const handlers: Handler[] = [
 
 			if (ret.length > 1) {
 				return `${ret.join(newline)}`;
-			} else if (ret.length === 1) {
+			}
+			if (ret.length === 1) {
 				return ret[0];
 			}
 
@@ -581,8 +582,8 @@ export const handlers: Handler[] = [
 			let json: { name: string };
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			// "root" is the package name for monorepo roots, so ignore them
@@ -590,9 +591,8 @@ export const handlers: Handler[] = [
 				const matched = json.name.match(/^(@.+)\//);
 				if (matched !== null) {
 					return `Scope ${matched[1]} is an unexpected Fluid scope`;
-				} else {
-					return `Package ${json.name} is an unexpected unscoped package`;
 				}
+				return `Package ${json.name} is an unexpected unscoped package`;
 			}
 		},
 	},
@@ -605,8 +605,8 @@ export const handlers: Handler[] = [
 			let json: { name: string; private?: boolean; dependencies: Record<string, string> };
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			ensurePrivatePackagesComputed();
@@ -642,8 +642,8 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const packageName = json.name;
@@ -652,26 +652,25 @@ export const handlers: Handler[] = [
 
 			if (!readmeInfo.exists) {
 				return `Package directory ${packageDir} contains no README.md`;
-			} else if (readmeInfo.title !== packageName) {
+			}
+			if (readmeInfo.title !== packageName) {
 				// These packages don't follow the convention of starting the readme with "# PackageName"
-				const skip = ["root", "fluid-docs"].some((skipMe) => packageName === skipMe);
+				const skip = ["root", "fluid-docs"].includes(packageName);
 				if (!skip) {
 					return `Readme in package directory ${packageDir} should begin with heading "${json.name}"`;
 				}
 			}
 
-			if (fs.existsSync(path.join(packageDir, "Dockerfile"))) {
-				if (!readmeInfo.trademark) {
-					return `Readme in package directory ${packageDir} with Dockerfile should contain with trademark verbiage`;
-				}
+			if (fs.existsSync(path.join(packageDir, "Dockerfile")) && !readmeInfo.trademark) {
+				return `Readme in package directory ${packageDir} with Dockerfile should contain with trademark verbiage`;
 			}
 		},
 		resolver: (file) => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
+			} catch {
+				return { resolved: false, message: `Error parsing JSON file: ${file}` };
 			}
 
 			const packageName = json.name;
@@ -691,7 +690,7 @@ export const handlers: Handler[] = [
 			const fixTrademark =
 				!readmeInfo.trademark && !readmeInfo.readme.includes("## Trademark");
 			if (fixTrademark) {
-				const existingNewLine = readmeInfo.readme[readmeInfo.readme.length - 1] === "\n";
+				const existingNewLine = readmeInfo.readme.endsWith("\n");
 				writeFile(
 					readmeInfo.filePath,
 					`${readmeInfo.readme}${existingNewLine ? "" : newline}${trademark}`,
@@ -715,8 +714,8 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const packageName = json.name;
@@ -729,7 +728,7 @@ export const handlers: Handler[] = [
 			// Full match isn't required for cases where the package name is prefixed with names from earlier in the path
 			if (!nameWithoutScope.toLowerCase().endsWith(folderName.toLowerCase())) {
 				// These packages don't follow the convention of the dir matching the tail of the package name
-				const skip = ["root"].some((skipMe) => packageName === skipMe);
+				const skip = ["root"].includes(packageName);
 				if (!skip) {
 					return `Containing folder ${folderName} for package ${packageName} should be named similarly to the package`;
 				}
@@ -743,8 +742,8 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (json.private) {
@@ -789,8 +788,8 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -806,21 +805,19 @@ export const handlers: Handler[] = [
 					"prettier:fix",
 				);
 				const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
-				const isLernaFormat = json["scripts"]["format"]?.includes("lerna");
+				const isLernaFormat = json.scripts.format?.includes("lerna");
 
-				if (!isLernaFormat) {
-					if (hasPrettierScript || hasPrettierFixScript || hasFormatScript) {
-						if (!hasPrettierScript) {
-							missingScripts.push(`prettier`);
-						}
+				if (!isLernaFormat && (hasPrettierScript || hasPrettierFixScript || hasFormatScript)) {
+					if (!hasPrettierScript) {
+						missingScripts.push(`prettier`);
+					}
 
-						if (!hasPrettierFixScript) {
-							missingScripts.push(`prettier:fix`);
-						}
+					if (!hasPrettierFixScript) {
+						missingScripts.push(`prettier:fix`);
+					}
 
-						if (!hasFormatScript) {
-							missingScripts.push(`format`);
-						}
+					if (!hasFormatScript) {
+						missingScripts.push(`format`);
 					}
 				}
 			}
@@ -885,8 +882,8 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -920,8 +917,8 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -960,8 +957,8 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -986,11 +983,11 @@ export const handlers: Handler[] = [
 		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				Object.entries(json.scripts).forEach(([scriptName, scriptContent]) => {
+				for (const [scriptName, scriptContent] of Object.entries(json.scripts)) {
 					if (scriptContent) {
 						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
 					}
-				});
+				}
 			});
 
 			return result;
@@ -1007,12 +1004,12 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const packageDir = path.dirname(file);
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (
 				scripts !== undefined &&
 				Object.keys(scripts).some((name) => name.startsWith("test"))
@@ -1040,7 +1037,7 @@ export const handlers: Handler[] = [
 				(json.devDependencies &&
 					Object.keys(json.devDependencies).some((name) => dep.includes(name)))
 			) {
-				return `Package has one of "${dep.join()}" dependency but no test scripts`;
+				return `Package has one of "${dep.join(",")}" dependency but no test scripts`;
 			}
 		},
 	},
@@ -1055,15 +1052,15 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const testScript = scripts["test"];
+			const testScript = scripts.test;
 
 			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
 
@@ -1100,15 +1097,15 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const mochaScriptName = scripts["test:mocha"] !== undefined ? "test:mocha" : "test";
+			const mochaScriptName = scripts["test:mocha"] === undefined ? "test" : "test:mocha";
 			const mochaScript = scripts[mochaScriptName];
 
 			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
@@ -1122,10 +1119,8 @@ export const handlers: Handler[] = [
 				fs.existsSync(path.join(packageDir, name)),
 			);
 
-			if (mochaRcName === undefined) {
-				if (!mochaScript.includes(" --config ")) {
-					return "Missing config arguments";
-				}
+			if (mochaRcName === undefined && !mochaScript.includes(" --config ")) {
+				return "Missing config arguments";
 			}
 		},
 	},
@@ -1139,15 +1134,15 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const jestScriptName = scripts["test:jest"] !== undefined ? "test:jest" : "test";
+			const jestScriptName = scripts["test:jest"] === undefined ? "test" : "test:jest";
 			const jestScript = scripts[jestScriptName];
 
 			if (jestScript === undefined || !jestScript.startsWith("jest")) {
@@ -1203,11 +1198,11 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
@@ -1240,11 +1235,11 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
@@ -1264,23 +1259,21 @@ export const handlers: Handler[] = [
 
 			const missing = missingCleanDirectories(scripts);
 
-			if (missing.length !== 0) {
+			if (missing.length > 0) {
 				return `'clean' script missing the following:${missing
 					.map((i) => `\n\t${i}`)
 					.join("")}`;
 			}
 
-			if (cleanScript) {
-				if (cleanScript !== getPreferredScriptLine(cleanScript)) {
-					return "'clean' script should double quote the globs and only the globs";
-				}
+			if (cleanScript && cleanScript !== getPreferredScriptLine(cleanScript)) {
+				return "'clean' script should double quote the globs and only the globs";
 			}
 		},
 		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
-				let clean: string = json.scripts["clean"] ?? "rimraf --glob";
+				let clean: string = json.scripts.clean ?? "rimraf --glob";
 				if (!clean.startsWith("rimraf --glob")) {
 					result.resolved = false;
 					result.message =
@@ -1291,7 +1284,7 @@ export const handlers: Handler[] = [
 					clean += ` ${missing.join(" ")}`;
 				}
 				// clean up for grouping
-				json.scripts["clean"] = getPreferredScriptLine(clean);
+				json.scripts.clean = getPreferredScriptLine(clean);
 			});
 
 			return result;
@@ -1306,8 +1299,8 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (
@@ -1336,8 +1329,8 @@ export const handlers: Handler[] = [
 
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (!shouldCheckExportsField(json)) {
@@ -1433,8 +1426,8 @@ export const handlers: Handler[] = [
 			let packageJson: PackageJson;
 			try {
 				packageJson = JSON.parse(readFile(packageJsonFilePath));
-			} catch (err) {
-				return "Error parsing JSON file: " + packageJsonFilePath;
+			} catch {
+				return `Error parsing JSON file: ${packageJsonFilePath}`;
 			}
 
 			if (packageJson.private) {
@@ -1550,7 +1543,7 @@ export const handlers: Handler[] = [
 function missingCleanDirectories(scripts: any) {
 	const expectedClean: string[] = [];
 
-	if (scripts["tsc"]) {
+	if (scripts.tsc) {
 		expectedClean.push("dist");
 	}
 
@@ -1562,16 +1555,15 @@ function missingCleanDirectories(scripts: any) {
 		expectedClean.push("lib");
 	}
 
-	if (scripts["build"]?.startsWith("fluid-build")) {
-		expectedClean.push("*.tsbuildinfo");
-		expectedClean.push("*.build.log");
+	if (scripts.build?.startsWith("fluid-build")) {
+		expectedClean.push("*.tsbuildinfo", "*.build.log");
 	}
 
 	if (scripts["build:docs"]) {
 		expectedClean.push("_api-extractor-temp");
 	}
 
-	if (scripts["test"] && !scripts["test"].startsWith("echo")) {
+	if (scripts.test && !scripts.test.startsWith("echo")) {
 		expectedClean.push("nyc");
 	}
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));

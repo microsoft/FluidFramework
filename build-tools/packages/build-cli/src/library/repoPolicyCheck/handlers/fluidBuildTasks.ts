@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import * as JSON5 from "json5";
 import * as semver from "semver";
-import { Package, PackageJson, updatePackageJsonFile,
+import {
+	Package,
+	PackageJson,
+	updatePackageJsonFile,
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 	getEsLintConfigFilePath,
-	FluidRepo, loadFluidBuildConfig,
-	TscUtils
- } from "@fluidframework/build-tools";
+	FluidRepo,
+	loadFluidBuildConfig,
+	TscUtils,
+} from "@fluidframework/build-tools";
 import { Handler, readFile } from "../common";
 
 /**
@@ -90,7 +94,7 @@ function findScript(json: PackageJson, command: string) {
 	for (const script in json.scripts) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const scriptCommands = json.scripts[script]!.split("&&");
-		scriptCommands.forEach((scriptCommand, index) => {
+		for (const [index, scriptCommand] of scriptCommands.entries()) {
 			if (command === scriptCommand.trim()) {
 				// Rank better (lower) when there are fewer commands and the command is earlier
 				// in the list.
@@ -99,7 +103,7 @@ function findScript(json: PackageJson, command: string) {
 					bestScript = { rank, script };
 				}
 			}
-		});
+		}
 		// If we find an exact match, we can stop looking.
 		if (bestScript.rank === 1) {
 			return bestScript.script;
@@ -113,7 +117,7 @@ function findScript(json: PackageJson, command: string) {
  *
  * @param json - the package.json content to search script in
  * @param config - the tsc-multi config to check for
- * @returns  first script name found to match the command
+ * @returns first script name found to match the command
  *
  * @remarks
  */
@@ -133,7 +137,7 @@ function findTscMultiScript(json: PackageJson, config: string) {
  *
  * @param json - the package.json content to search script in
  * @param project - the tsc project to check for; `undefined` checks for unspecified project
- * @returns  first script name found to match the command
+ * @returns first script name found to match the command
  *
  * @remarks
  */
@@ -142,10 +146,11 @@ function findFluidTscScript(json: PackageJson, project: string | undefined) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const scriptCommand = json.scripts[script]!;
 
-		if (scriptCommand.startsWith("fluid-tsc")) {
-			if (project ? scriptCommand.includes(project) : !scriptCommand.includes("--project")) {
-				return script;
-			}
+		if (
+			scriptCommand.startsWith("fluid-tsc") &&
+			(project ? scriptCommand.includes(project) : !scriptCommand.includes("--project"))
+		) {
+			return script;
 		}
 	}
 }
@@ -243,7 +248,7 @@ function eslintGetScriptDependencies(
 	root: string,
 	json: PackageJson,
 ): (string | string[])[] {
-	if (json.scripts?.["eslint"] === undefined) {
+	if (json.scripts?.eslint === undefined) {
 		return [];
 	}
 
@@ -254,7 +259,7 @@ function eslintGetScriptDependencies(
 
 	let config;
 	try {
-		const ext = path.parse(eslintConfig).ext;
+		const { ext } = path.parse(eslintConfig);
 		if (ext !== ".js" && ext !== ".cjs") {
 			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
@@ -265,8 +270,8 @@ function eslintGetScriptDependencies(
 				throw new Error(`Exports not found in ${eslintConfig}`);
 			}
 		}
-	} catch (e) {
-		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${e}`);
+	} catch (error) {
+		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${error}`);
 	}
 
 	let projects: string | string[] | undefined = config.parserOptions?.project;
@@ -326,7 +331,7 @@ function hasTaskDependency(
 		pending.push(...taskDefinitions[taskName].dependsOn);
 	}
 
-	while (pending.length !== 0) {
+	while (pending.length > 0) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const dep = pending.pop()!;
 		if (seenDep.has(dep)) {
@@ -398,21 +403,19 @@ function patchTaskDeps(
 		const fileDep = json.fluidBuild?.tasks?.[taskName];
 		if (fileDep === undefined) {
 			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
-			if (json.fluidBuild !== undefined) {
-				if (json.fluidBuild.tasks !== undefined) {
-					tasks = json.fluidBuild.tasks;
-				} else {
-					tasks = {};
-					json.fluidBuild.tasks = tasks;
-				}
-			} else {
+			if (json.fluidBuild === undefined) {
 				tasks = {};
 				json.fluidBuild = { tasks };
+			} else if (json.fluidBuild.tasks === undefined) {
+				tasks = {};
+				json.fluidBuild.tasks = tasks;
+			} else {
+				tasks = json.fluidBuild.tasks;
 			}
 
 			tasks[taskName] = taskDeps.map((dep) => {
 				if (Array.isArray(dep)) {
-					throw new Error(
+					throw new TypeError(
 						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${dep.join(
 							" or ",
 						)}`,
@@ -424,15 +427,15 @@ function patchTaskDeps(
 			let depArray: string[];
 			if (Array.isArray(fileDep)) {
 				depArray = fileDep;
-			} else if (fileDep.dependsOn !== undefined) {
-				depArray = fileDep.dependsOn;
-			} else {
+			} else if (fileDep.dependsOn === undefined) {
 				depArray = [];
 				fileDep.dependsOn = depArray;
+			} else {
+				depArray = fileDep.dependsOn;
 			}
 			for (const missingDep of missingTaskDependencies) {
 				if (Array.isArray(missingDep)) {
-					throw new Error(
+					throw new TypeError(
 						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${missingDep.join(
 							" or ",
 						)}`,
@@ -471,7 +474,7 @@ function getTscCommandDependencies(
 	if (
 		json.scripts["build:test"] === undefined &&
 		json.scripts["typetests:gen"] !== undefined &&
-		(script === "tsc" || (json.scripts["tsc"] === undefined && script === "build:esnext"))
+		(script === "tsc" || (json.scripts.tsc === undefined && script === "build:esnext"))
 	) {
 		deps.push("typetests:gen");
 	}
@@ -514,18 +517,18 @@ export const handlers: Handler[] = [
 			let json;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (!isFluidBuildEnabled(root, json)) {
 				return;
-			}			
+			}
 			try {
 				const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
-			} catch (e: any) {
-				return e.message;
+			} catch (error: any) {
+				return error.message;
 			}
 		},
 		resolver: (file, root) => {
@@ -533,13 +536,12 @@ export const handlers: Handler[] = [
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
-				}				
+				}
 				try {
 					const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
-				} catch (e: any) {
-					result = { resolved: false, message: e.message };
-					return;
+				} catch (error: any) {
+					result = { resolved: false, message: error.message };
 				}
 			});
 			return result;
@@ -552,8 +554,8 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (!isFluidBuildEnabled(root, json)) {
@@ -585,8 +587,8 @@ export const handlers: Handler[] = [
 							if (error) {
 								errors.push(error);
 							}
-						} catch (e: any) {
-							return e.message;
+						} catch (error: any) {
+							return error.message;
 						}
 					}
 				}
@@ -618,8 +620,8 @@ export const handlers: Handler[] = [
 									deps,
 								);
 								patchTaskDeps(root, json, script, checkDeps);
-							} catch (e: any) {
-								result = { resolved: false, message: e.message };
+							} catch (error: any) {
+								result = { resolved: false, message: error.message };
 								return;
 							}
 						}

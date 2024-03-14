@@ -7,7 +7,7 @@ import { Handler, readFile, writeFile } from "../common";
 
 export const handler: Handler = {
 	name: "fluid-case",
-	match: /(^|\/)[^/]+\.([tj]s?|html|md|json)$/i,
+	match: /(^|\/)[^/]+\.([jt]s?|html|md|json)$/i,
 	handler: async (file) => {
 		const content = readFile(file);
 		// search for Fluid Framework

@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
-
+import fs from "node:fs";
+import path from "node:path";
 import { loadFluidBuildConfig, PackageJson } from "@fluidframework/build-tools";
 import { Handler, readFile } from "../common";
 
@@ -23,8 +22,8 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(packageJsonFile));
-			} catch (err) {
-				return "Error parsing JSON file: " + packageJsonFile;
+			} catch {
+				return `Error parsing JSON file: ${packageJsonFile}`;
 			}
 
 			// Ignore any paths in the policy configuration.

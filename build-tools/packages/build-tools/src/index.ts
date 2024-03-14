@@ -30,7 +30,5 @@ export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
 } from "./common/fluidTaskDefinitions";
-export {
-	getEsLintConfigFilePath,	
-} from "./common/taskUtils";
+export { getEsLintConfigFilePath } from "./common/taskUtils";
 export * as TscUtils from "./common/tscUtils";

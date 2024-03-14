@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unlinkSync } from "fs";
-import path from "path";
-
+import { unlinkSync } from "node:fs";
+import path from "node:path";
 import { loadFluidBuildConfig, IFluidBuildConfig } from "@fluidframework/build-tools";
 import { Handler, readFile } from "../common";
 
@@ -65,7 +64,6 @@ export const handlers: Handler[] = [
 					return `A private registry URL is in lock file: ${file}:\n${results.join("\n")}`;
 				}
 			}
-			return;
 		},
 	},
 	{
@@ -77,7 +75,6 @@ export const handlers: Handler[] = [
 			if (match === null) {
 				return `Unexpected 'lockFileVersion' (Please use NPM v6: 'npm i -g npm@latest-6'): ${file}`;
 			}
-			return;
 		},
 	},
 	{
@@ -87,10 +84,11 @@ export const handlers: Handler[] = [
 			const manifest = loadFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
-			if (path.basename(file) === "package-lock.json") {
-				if (!knownPaths.includes(path.dirname(file))) {
-					return `Unexpected package-lock.json file at: ${file}`;
-				}
+			if (
+				path.basename(file) === "package-lock.json" &&
+				!knownPaths.includes(path.dirname(file))
+			) {
+				return `Unexpected package-lock.json file at: ${file}`;
 			}
 
 			return undefined;
@@ -99,14 +97,15 @@ export const handlers: Handler[] = [
 			const manifest = loadFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
-			if (path.basename(file) === "package-lock.json") {
-				if (!knownPaths.includes(path.dirname(file))) {
-					unlinkSync(file);
-					return {
-						resolved: true,
-						message: `Deleted unexpected package-lock.json file at: ${file}`,
-					};
-				}
+			if (
+				path.basename(file) === "package-lock.json" &&
+				!knownPaths.includes(path.dirname(file))
+			) {
+				unlinkSync(file);
+				return {
+					resolved: true,
+					message: `Deleted unexpected package-lock.json file at: ${file}`,
+				};
 			}
 
 			return { resolved: true };
