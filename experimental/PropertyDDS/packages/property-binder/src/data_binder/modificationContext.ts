@@ -6,10 +6,10 @@
  * @fileoverview Provides the contextual information for the onModify callbacks.
  */
 
-import { DataBinding } from "./dataBinding";
+import { DataBinding } from "./dataBinding.js";
 import { BaseProperty } from "@fluid-experimental/property-properties";
-import { BaseContext } from "./baseContext";
-import { PropertyElement } from "../internal/propertyElement";
+import { BaseContext } from "./baseContext.js";
+import { PropertyElement } from "../internal/propertyElement.js";
 import { SerializedChangeSet, Utils } from "@fluid-experimental/property-changeset";
 
 /**

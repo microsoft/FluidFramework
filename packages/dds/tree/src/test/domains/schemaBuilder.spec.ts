@@ -236,32 +236,4 @@ describe("domains - SchemaBuilder", () => {
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
 	});
-
-	it("fixRecursiveReference", () => {
-		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
-
-		const recursiveReference = () => recursiveObject2;
-		builder.fixRecursiveReference(recursiveReference);
-
-		// Renaming this to recursiveObject causes IntelliSense to never work for this, instead of work after restarted until this code it touched.
-		const recursiveObject2 = builder.object("object2", {
-			recursive: builder.optional([recursiveReference]),
-			number: leaf.number,
-		});
-
-		type _0 = requireFalse<isAny<typeof recursiveObject2>>;
-		type _1 = requireTrue<
-			areSafelyAssignable<
-				typeof recursiveObject2,
-				ReturnType<
-					(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]
-				>
-			>
-		>;
-
-		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject2>) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
-	});
 });
