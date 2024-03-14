@@ -49,7 +49,7 @@ export class TscTask extends LeafTask {
 		if (parsedCommandLine?.options.build) {
 			// https://github.com/microsoft/TypeScript/issues/57780
 			// `tsc -b` by design doesn't rebuild if dependent packages changed
-			// but not a referenced project. Just force it if we detected the change and 
+			// but not a referenced project. Just force it if we detected the change and
 			// invoke the build.
 			return `${this.command} --force`;
 		}
