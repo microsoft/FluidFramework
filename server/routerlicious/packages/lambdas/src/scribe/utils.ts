@@ -51,3 +51,22 @@ export const sendToDeli = (
 export const getClientIds = (protocolState: IProtocolState, clientCount: number) => {
 	return protocolState.members.slice(0, clientCount).map((member) => member[0]);
 };
+
+/**
+ * Whether to write checkpoint to local db.
+ * @param noActiveClients - whether there are any active clients
+ * @param globalCheckpointOnly - whether to always write checkpoints to global db
+ * @returns whether to write checkpoint to local db
+ */
+export const isLocalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly: boolean) => {
+	return !isGlobalCheckpoint(noActiveClients, globalCheckpointOnly);
+};
+/**
+ * Whether to write checkpoint to global db.
+ * @param noActiveClients - whether there are any active clients
+ * @param globalCheckpointOnly - whether to always write checkpoints to global db
+ * @returns whether to write checkpoint to global db
+ */
+export const isGlobalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly: boolean) => {
+	return noActiveClients || globalCheckpointOnly;
+};
