@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# IMPORTANT: This script requires the `npe` package be installed globally. To do that run `pnpm add -g npe`.
+# IMPORTANT: This script requires the `npe` package be installed globally. To do that run `pnpm add -g npe`. It also
+# needs fd and sd, modern find and sed replacements.
 
 set -eux -o pipefail
 
@@ -16,6 +17,10 @@ npe scripts.lint:fix "fluid-build . --task eslint:fix --task format"
 # Add deps in case they're missing
 npe devDependencies.@fluidframework/build-tools "^0.34.0"
 npe devDependencies.prettier "~3.0.3"
+
+# Replace prettier and prettier:fix with check:prettier and format:prettier
+fd --glob "**/package.json" --exec sd --fixed-strings '"prettier:fix": "' '"format:prettier": "'
+fd --glob "**/package.json" --exec sd --fixed-strings '"prettier": "' '"check:prettier": "'
 
 # # add biome formatting and check scripts
 # npe scripts.format "fluid-build --task format ."
@@ -36,17 +41,6 @@ npe devDependencies.prettier "~3.0.3"
 # # clean up lint task
 npe scripts.lint "fluid-build . --task lint"
 # npe scripts.lint:fix "npm run eslint:fix"
-
-# cat << EOF > .prettierignore
-# # Ignore all files...
-# **/*.*
-# */*
-
-# # ...except JSON files not handled by biome
-# !tsconfig.json
-# !package.json
-# EOF
-# -L dir release-1,release-4 \
 
 # hyperfine --runs 10 --warmup 1 \
 # -L command 'prettier:fix','format:biome' \
