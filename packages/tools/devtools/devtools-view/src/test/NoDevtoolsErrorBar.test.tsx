@@ -8,6 +8,7 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../components/index.js";
 
@@ -23,22 +24,20 @@ describe("NoDevtoolsErrorBar component tests", () => {
 	});
 
 	it("Clicking close button invokes `dismiss`", async (): Promise<void> => {
-		const userEvent = await import("@testing-library/user-event");
 		const dismiss = jest.fn();
 		render(<NoDevtoolsErrorBar dismiss={dismiss} retrySearch={(): void => {}} />);
 
 		const dismissButton = await screen.findByRole("button"); // Dismiss button is first button rendered
-		await userEvent.userEvent.click(dismissButton);
+		await userEvent.click(dismissButton);
 		expect(dismiss).toHaveBeenCalled();
 	});
 
 	it("Clicking retry button invokes `retrySearch`", async (): Promise<void> => {
-		const userEvent = await import("@testing-library/user-event");
 		const retrySearch = jest.fn();
 		render(<NoDevtoolsErrorBar dismiss={(): void => {}} retrySearch={retrySearch} />);
 
 		const retrySearchButton = await screen.findByTestId("retry-search-button");
-		await userEvent.userEvent.click(retrySearchButton);
+		await userEvent.click(retrySearchButton);
 		expect(retrySearch).toHaveBeenCalled();
 	});
 });

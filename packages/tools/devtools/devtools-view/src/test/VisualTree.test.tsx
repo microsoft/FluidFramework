@@ -8,6 +8,7 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import {
 	type IDevtoolsMessage,
 	GetDataVisualization,
@@ -119,8 +120,7 @@ describe("VisualTreeView component tests", () => {
 
 		// TODO: Loop the expand button for n-amount of times.
 		const expandButton = await screen.findByTestId("tree-button");
-		const userEvent = await import("@testing-library/user-event");
-		await userEvent.userEvent.click(expandButton);
+		await userEvent.click(expandButton);
 
 		await screen.findByText(/test-node-key/);
 

@@ -54,10 +54,7 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest",
 		"test:jest:coverage": "jest --coverage --ci",
-		"test:mocha": "echo TODO: enable tests",
-		"test:mocha:cjs": "mocha \"dist/screenshot-tests/Screenshot.test.js\" --delay --exit",
-		"test:mocha:esm": "mocha \"lib/screenshot-tests/Screenshot.test.js\" --delay --exit",
-		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
+		"test:mocha:fail": "mocha lib/screenshot-tests/Screenshot.test.js --delay --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
@@ -84,9 +81,6 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.13.0",
-		"@babel/preset-env": "^7.23.3",
-		"@babel/preset-react": "^7.23.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",

@@ -4,14 +4,18 @@
  */
 
 import Path from "node:path";
+
+import { decodeComponentId, type RPCs } from "@previewjs/api";
+import { createChromelessWorkspace } from "@previewjs/chromeless";
+import reactPlugin from "@previewjs/plugin-react";
 import { expect } from "chai";
 import chalk from "chalk";
 import { run } from "mocha";
+import { globby } from "globby";
 import { chromium } from "playwright";
 import { simpleGit, pathspec } from "simple-git";
 
-import { ThemeOption } from "../ThemeHelper.js";
-import type { RPCs } from "../previewApi.cjs";
+import { ThemeOption } from "../ThemeHelper";
 
 /**
  * Viewport configuration for running a screenshot test.
@@ -127,23 +131,18 @@ async function generateTestSuite(): Promise<void> {
 
 	// Initialize chromium browser instance for test suite
 	const browser = await chromium.launch();
-	const createChromelessWorkspace = await import("@previewjs/chromeless");
 
-	const reactPlugin = await import("@previewjs/plugin-react");
-
-	const workspace = await createChromelessWorkspace.createChromelessWorkspace({
-		frameworkPlugins: [reactPlugin.default],
+	const workspace = await createChromelessWorkspace({
+		frameworkPlugins: [reactPlugin],
 		rootDirPath: workingDirectory,
 	});
 
-	const storyModules = await import("globby").then(async ({ globby }) =>
-		globby(storiesPathPatterns, {
-			gitignore: false,
-			ignore: ["**/node_modules/**"],
-			cwd: workingDirectory,
-			followSymbolicLinks: false,
-		}),
-	);
+	const storyModules = await globby(storiesPathPatterns, {
+		gitignore: false,
+		ignore: ["**/node_modules/**"],
+		cwd: workingDirectory,
+		followSymbolicLinks: false,
+	});
 
 	// `describe` blocks cannot be async, so before we start building out the test suites, we will asynchronously
 	// create a mapping of story modules to all of the story components they contain.
@@ -172,90 +171,69 @@ async function generateTestSuite(): Promise<void> {
 			// Story module sub-suite
 			// eslint-disable-next-line jest/valid-title
 			describe(storyFileName, () => {
-				// const chalk = await import("chalk");
 				// Create sub-suite for each component
 				for (const component of components) {
 					const { componentId } = component;
+					const { name: storyName } = decodeComponentId(componentId);
 
-					import("@previewjs/api")
-						.then((module) => {
-							const { decodeComponentId } = module;
+					// Story (component) sub-suite
+					// eslint-disable-next-line jest/valid-title
+					describe(storyName, () => {
+						// We expect this to succeed. If not, let the test blow up.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						const storyModuleName = storyFileName.match(/(.*)\.stories\.tsx/)![1];
 
-							const { name: storyName } = decodeComponentId(componentId);
+						// Generate an individual test for each theme / viewport combination.
+						for (const theme of allThemes) {
+							for (const viewport of defaultViewports) {
+								const testName = getScreenshotTestName(storyName, theme, viewport);
 
-							// Story (component) sub-suite
-							// eslint-disable-next-line jest/valid-title
-							describe(storyName, () => {
-								// We expect this to succeed. If not, let the test blow up.
-								const storyModuleName =
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									storyFileName.match(/(.*)\.stories\.tsx/)![1];
+								// eslint-disable-next-line jest/valid-title
+								it(testName, async (): Promise<void> => {
+									const screenshotFilePath = getScreenshotTestPath(
+										testName,
+										storyModuleName,
+										screenshotsDirectory,
+									);
 
-								// Generate an individual test for each theme / viewport combination.
-								for (const theme of allThemes) {
-									for (const viewport of defaultViewports) {
-										const testName = getScreenshotTestName(
-											storyName,
-											theme,
-											viewport,
+									const page = await browser.newPage({
+										viewport,
+
+										// Dark mode vs light mode setting
+										// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
+										colorScheme: colorSchemeFromTheme(theme),
+
+										// High contrast setting
+										// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
+										forcedColors: forcedColorsFromTheme(theme),
+									});
+									const preview = await workspace.preview.start(page);
+
+									try {
+										await preview.show(componentId);
+										await preview.iframe.takeScreenshot(screenshotFilePath);
+									} catch (error) {
+										console.error(
+											chalk.red(
+												`Failed to generate ${testName} screenshot due to an error:`,
+											),
+											error,
 										);
-
-										// eslint-disable-next-line jest/valid-title
-										it(testName, async (): Promise<void> => {
-											const screenshotFilePath = getScreenshotTestPath(
-												testName,
-												storyModuleName,
-												screenshotsDirectory,
-											);
-
-											const page = await browser.newPage({
-												viewport,
-
-												// Dark mode vs light mode setting
-												// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
-												colorScheme: colorSchemeFromTheme(theme),
-
-												// High contrast setting
-												// docs: https://playwright.dev/docs/api/class-page#page-emulate-media
-												forcedColors: forcedColorsFromTheme(theme),
-											});
-											const preview = await workspace.preview.start(page);
-
-											try {
-												await preview.show(componentId);
-												await preview.iframe.takeScreenshot(
-													screenshotFilePath,
-												);
-											} catch (error) {
-												console.error(
-													chalk.red(
-														`Failed to generate ${testName} screenshot due to an error:`,
-													),
-													error,
-												);
-												throw error;
-											}
-
-											const screenshotDiff =
-												await checkScreenshotDiff(screenshotFilePath);
-
-											if (screenshotDiff) {
-												expect.fail(
-													"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
-												);
-											}
-										});
+										throw error;
 									}
-								}
-							});
-						})
-						.catch((error) => {
-							// Handle any errors that occur during the import
-							console.error(
-								"An error occurred while dynamically importing @previewjs/api:",
-								error,
-							);
-						});
+
+									const screenshotDiff =
+										await checkScreenshotDiff(screenshotFilePath);
+
+									if (screenshotDiff) {
+										expect.fail(
+											"Git detected a screenshot diff. Please check the visual diff and commit the changes if appropriate.",
+										);
+									}
+								});
+							}
+						}
+					});
 				}
 			});
 		}

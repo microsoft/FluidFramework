@@ -10964,9 +10964,6 @@ importers:
 
   packages/tools/devtools/devtools-view:
     specifiers:
-      '@babel/core': ^7.13.0
-      '@babel/preset-env': ^7.23.3
-      '@babel/preset-react': ^7.23.3
       '@fluentui/react': ^8.109.4
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-hooks': ^8.6.24
@@ -11052,9 +11049,6 @@ importers:
       recharts: 2.10.1_oxfzelaz5ynxsop2v2nu2h2m64
       scheduler: 0.20.2
     devDependencies:
-      '@babel/core': 7.23.3
-      '@babel/preset-env': 7.23.3_@babel+core@7.23.3
-      '@babel/preset-react': 7.23.3_@babel+core@7.23.3
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -11099,7 +11093,7 @@ importers:
       prop-types: 15.8.1
       rimraf: 4.4.1
       simple-git: 3.21.0
-      ts-jest: 29.1.1_7c6s2cwl7nw46fjeerv4uupgbm
+      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       typescript: 5.1.6
       vite: 4.5.0_@types+node@18.19.1
 
