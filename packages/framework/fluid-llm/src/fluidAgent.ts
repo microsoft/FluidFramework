@@ -62,7 +62,7 @@ export class FluidAgent {
 		const newMessageHistory = [...this.messageHistory, { role: "user", content: message }];
 		let response;
 		try {
-			response = await this.openAi.sendCompletionPrompt(this.messageHistory, this.tools);
+			response = await this.openAi.sendCompletionPrompt(newMessageHistory, this.tools);
 			this.messageHistory = newMessageHistory;
 		} catch (error) {
 			console.log(error);
