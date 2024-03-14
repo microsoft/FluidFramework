@@ -12,24 +12,24 @@ import { EmptyKey, type FieldKey, type MapTree } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../domains/leafDomain.js";
 import {
+	type AllowedTypeSet,
+	Any,
+	type CursorWithNode,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	FlexTreeSchema,
+	LeafNodeSchema,
+	Multiplicity,
 	allowsValue,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	type CursorWithNode,
-	isFluidHandle,
-	Multiplicity,
-	type FlexTreeNodeSchema,
-	FlexTreeSchema,
-	type AllowedTypeSet,
-	FlexFieldSchema,
-	Any,
-	FlexFieldNodeSchema,
-	isTreeValue,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
 	getAllowedTypes,
+	isFluidHandle,
+	isTreeValue,
 	typeNameSymbol,
-	FlexObjectNodeSchema,
 } from "../feature-libraries/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";

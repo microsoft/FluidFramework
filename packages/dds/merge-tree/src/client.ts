@@ -5,31 +5,40 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import {
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+import type {
+	IMergeTreeClientSequenceArgs,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+} from "./mergeTreeDeltaCallback.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
-	compareStrings,
 	IMoveInfo,
-	ISegmentLeaf,
 	ISegment,
 	ISegmentAction,
+	ISegmentLeaf,
 	Marker,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
+	compareStrings,
 } from "./mergeTreeNodes.js";
 import {
 	createAnnotateMarkerOp,
@@ -47,30 +56,21 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
+	// eslint-disable-next-line import/no-deprecated
+	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
+	IMergeTreeRemoveMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
-import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper } from "./textSegment.js";
-import { SnapshotV1 } from "./snapshotV1.js";
-import { ReferencePosition, DetachedReferencePosition } from "./referencePositions.js";
-import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import {
-	IMergeTreeClientSequenceArgs,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-} from "./index.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;

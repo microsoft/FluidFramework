@@ -5,30 +5,30 @@
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
-	TreeFieldStoredSchema,
-	StoredSchemaCollection,
-	TreeNodeSchemaIdentifier,
-	ValueSchema,
-	ObjectNodeStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	ValueSchema,
 } from "../../../core/index.js";
-import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { fail } from "../../../util/index.js";
+import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { Multiplicity } from "../../multiplicity.js";
-import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
 import {
 	EncoderCache,
 	FieldEncoder,
-	KeyedFieldEncoder,
 	FieldShaper,
+	KeyedFieldEncoder,
 	TreeShaper,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
 } from "./compressedEncode.js";
-import { NodeShape } from "./nodeShape.js";
 import { FieldBatch } from "./fieldBatch.js";
+import { EncodedFieldBatch, EncodedValueShape } from "./format.js";
+import { NodeShape } from "./nodeShape.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.

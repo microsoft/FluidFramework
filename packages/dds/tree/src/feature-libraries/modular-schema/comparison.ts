@@ -4,18 +4,18 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { compareSets, fail } from "../../util/index.js";
 import {
-	TreeNodeStoredSchema,
-	ValueSchema,
-	TreeFieldStoredSchema,
-	TreeTypeSet,
-	TreeStoredSchema,
-	storedEmptyFieldSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
+	TreeTypeSet,
+	ValueSchema,
+	storedEmptyFieldSchema,
 } from "../../core/index.js";
+import { compareSets, fail } from "../../util/index.js";
 import { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
