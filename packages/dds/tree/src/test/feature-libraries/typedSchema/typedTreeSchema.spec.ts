@@ -5,27 +5,27 @@
 
 import { strict as assert } from "assert";
 import { jsonArray, jsonObject, jsonSchema, leaf } from "../../../domains/index.js";
+import { FieldKinds, SchemaBuilderBase } from "../../../feature-libraries/index.js";
+import {
+	Any,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	LeafNodeSchema,
+	allowedTypesIsAny,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsObjectNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
 import {
 	isAssignableTo,
 	requireAssignableTo,
 	requireFalse,
 	requireTrue,
 } from "../../../util/index.js";
-import {
-	Any,
-	FlexFieldNodeSchema,
-	FlexFieldSchema,
-	FlexObjectNodeSchema,
-	allowedTypesIsAny,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/typed-schema/typedTreeSchema.js";
-import { FieldKinds, SchemaBuilderBase } from "../../../feature-libraries/index.js";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilderBase(FieldKinds.optional, {

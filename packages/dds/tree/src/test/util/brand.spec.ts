@@ -5,10 +5,10 @@
 
 import {
 	Brand,
-	brand,
 	Erased,
-	fromErased,
+	brand,
 	brandErased,
+	fromErased,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/brand.js";
@@ -16,8 +16,8 @@ import {
 import {
 	areSafelyAssignable,
 	isAssignableTo,
-	requireTrue,
 	requireFalse,
+	requireTrue,
 } from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.

@@ -6,10 +6,10 @@
 import { assert } from "@fluidframework/core-utils";
 import { FieldKey, ValueSchema } from "../../core/index.js";
 import {
-	FlexTreeObjectNode,
 	FlexTreeContext,
 	FlexTreeField,
 	FlexTreeNode,
+	FlexTreeObjectNode,
 } from "../flex-tree/index.js";
 import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
+import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
-import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
+import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 
 export const noChangeCodecFamily: ICodecFamily<0, ChangeEncodingContext> = makeCodecFamily<
 	0,

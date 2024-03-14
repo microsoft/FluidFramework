@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -12,7 +10,9 @@ import type {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import type { ChangeConnectionState, DDSFuzzModel, BaseOperation } from "../ddsFuzzHarness.js";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
+import type { BaseOperation, ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
 
 /**
  * Mock DDS which holds no data.

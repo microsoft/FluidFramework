@@ -6,15 +6,15 @@
 import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import {
-	appendToMergeTreeDeltaRevertibles,
 	MergeTreeDeltaRevertible,
+	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
-import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { createRevertDriver } from "./testClient.js";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 /**
  * Run a custom "spy function" every time the given method is invoked.

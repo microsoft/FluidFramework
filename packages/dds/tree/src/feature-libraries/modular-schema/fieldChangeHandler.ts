@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import {
-	TaggedChange,
-	RevisionTag,
-	RevisionMetadataSource,
-	DeltaFieldMap,
-	DeltaFieldChanges,
-	DeltaDetachedNodeId,
-	EncodedRevisionTag,
 	ChangeEncodingContext,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	EncodedRevisionTag,
+	RevisionMetadataSource,
+	RevisionTag,
+	TaggedChange,
 } from "../../core/index.js";
 import { IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index.js";
-import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import { NodeChangeset } from "./modularChangeTypes.js";

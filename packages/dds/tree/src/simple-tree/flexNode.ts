@@ -4,21 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../util/index.js";
 import {
-	FlexObjectNodeSchema,
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
-	FlexTreeNode,
-	FlexTreeObjectNode,
+	FlexObjectNodeSchema,
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
+	FlexTreeNode,
+	FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 } from "../feature-libraries/index.js";
-import { TreeNode, TypedNode } from "./types.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeMapNode } from "./schemaTypes.js";
+import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
+import { TreeMapNode } from "./schemaTypes.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode, TypedNode } from "./types.js";
 
 /** Associates an FlexTreeNode with a target object  */
 const targetSymbol = Symbol("FlexNodeTarget");
