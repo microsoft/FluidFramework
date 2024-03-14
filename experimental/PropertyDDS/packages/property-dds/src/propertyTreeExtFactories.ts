@@ -19,8 +19,8 @@ import {
 	ISnapshotSummary,
 	SharedPropertyTree,
 	SharedPropertyTreeOptions,
-} from "./propertyTree";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
+} from "./propertyTree.js";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
 
 /**
  * @internal

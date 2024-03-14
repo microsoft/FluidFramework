@@ -11,7 +11,7 @@ import {
 	createLogger,
 	type TelemetryFilter,
 	type FluidAppInsightsLoggerConfig,
-} from "../fluidAppInsightsLogger";
+} from "../fluidAppInsightsLogger.js";
 
 describe("FluidAppInsightsLogger", () => {
 	let appInsightsClient: ApplicationInsights;
