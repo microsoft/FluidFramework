@@ -186,14 +186,16 @@ describe("ModularChangeFamily integration", () => {
 				defaultRevisionMetadataFromChanges([taggedMoves]),
 			);
 			const fieldCExpected = [MarkMaker.remove(1, brand(3))];
-			const node2Expected = {
+
+			const nodeId2: NodeId = { localId: brand(4) };
+			const node2Expected: NodeChangeset = {
 				fieldChanges: new Map([
-					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+					[fieldC, { fieldKind: sequence.identifier, change: brand(fieldCExpected) }],
 				]),
 			};
 
 			const fieldBExpected = purgeUnusedCellOrderingInfo([
-				{ count: 1, changes: node2Expected },
+				{ count: 1, changes: nodeId2 },
 				// The two marks below a not essential and only exist because we're currently using tombstone
 				{ count: 1 },
 				{
@@ -206,31 +208,36 @@ describe("ModularChangeFamily integration", () => {
 				},
 			]);
 
-			const node1Expected = {
+			const nodeId1: NodeId = { localId: brand(5) };
+			const node1Expected: NodeChangeset = {
 				fieldChanges: new Map([
-					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+					[fieldB, { fieldKind: sequence.identifier, change: brand(fieldBExpected) }],
 				]),
 			};
 
 			const fieldAExpected = purgeUnusedCellOrderingInfo([
-				{ count: 1, changes: node1Expected },
+				{ count: 1, changes: nodeId1 },
 				// The two marks below a not essential and only exist because we're currently using tombstones
 				{ count: 1 },
 				{
 					count: 1,
 					cellId: {
 						revision: tag1,
-						localId: brand(1),
-						adjacentCells: [{ id: brand(1), count: 1 }],
+						localId: brand(2),
+						adjacentCells: [{ id: brand(2), count: 1 }],
 					},
 				},
 			]);
 
 			const expected: ModularChangeset = {
-				nodeChanges: new Map(),
+				nodeChanges: nestedMapFromFlatList([
+					[nodeId1.revision, nodeId1.localId, node1Expected],
+					[nodeId2.revision, nodeId2.localId, node2Expected],
+				]),
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				maxId: brand(5),
 			};
 
 			assert.deepEqual(rebased, expected);
