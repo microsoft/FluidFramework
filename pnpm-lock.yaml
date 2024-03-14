@@ -81,6 +81,7 @@ importers:
 
   azure/packages/azure-local-service:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
@@ -95,6 +96,7 @@ importers:
     dependencies:
       tinylicious: 4.0.0
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -109,6 +111,7 @@ importers:
   azure/packages/azure-service-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@2.0.0-internal.8.0.0
       '@fluidframework/build-common': ^2.0.3
@@ -132,6 +135,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/2.0.0-internal.8.0.0
       '@fluidframework/build-common': 2.0.3
@@ -149,6 +153,7 @@ importers:
 
   azure/packages/test/end-to-end-tests:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -212,6 +217,7 @@ importers:
       tinylicious: 4.0.0
       uuid: 9.0.1
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -228,6 +234,7 @@ importers:
 
   azure/packages/test/scenario-runner:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
@@ -295,6 +302,7 @@ importers:
       tinylicious: 4.0.0
       uuid: 9.0.1
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -7559,6 +7567,7 @@ importers:
   packages/framework/agent-scheduler:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/agent-scheduler-previous': npm:@fluidframework/agent-scheduler@2.0.0-internal.8.0.0
@@ -7599,6 +7608,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/agent-scheduler-previous': /@fluidframework/agent-scheduler/2.0.0-internal.8.0.0
       '@fluidframework/build-common': 2.0.3
@@ -7616,6 +7626,7 @@ importers:
   packages/framework/aqueduct:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -7665,6 +7676,7 @@ importers:
       '@fluidframework/synthesize': link:../synthesize
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/aqueduct-previous': /@fluidframework/aqueduct/2.0.0-internal.8.0.0
@@ -7689,6 +7701,7 @@ importers:
   packages/framework/attributor:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
@@ -7740,6 +7753,7 @@ importers:
       lz4js: 0.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -7768,6 +7782,7 @@ importers:
   packages/framework/client-logger/app-insights-logger:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/app-insights-logger-previous': npm:@fluidframework/app-insights-logger@2.0.0-rc.1.0.1
@@ -7802,6 +7817,7 @@ importers:
       '@ungap/structured-clone': 1.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/app-insights-logger-previous': /@fluidframework/app-insights-logger/2.0.0-rc.1.0.1_tslib@1.14.1
@@ -7829,6 +7845,7 @@ importers:
   packages/framework/data-object-base:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -7867,6 +7884,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -7882,6 +7900,7 @@ importers:
   packages/framework/dds-interceptions:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -7917,6 +7936,7 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -7943,6 +7963,7 @@ importers:
   packages/framework/fluid-framework:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -7971,6 +7992,7 @@ importers:
       '@fluidframework/tree': link:../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -7986,6 +8008,7 @@ importers:
   packages/framework/fluid-static:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -8035,6 +8058,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -8061,6 +8085,7 @@ importers:
   packages/framework/oldest-client-observer:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -8087,6 +8112,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-private/test-dds-utils': link:../../dds/test-dds-utils
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -8104,6 +8130,7 @@ importers:
   packages/framework/request-handler:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8139,6 +8166,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -8165,6 +8193,7 @@ importers:
   packages/framework/synthesize:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8192,6 +8221,7 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -8218,6 +8248,7 @@ importers:
   packages/framework/undo-redo:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -8254,6 +8285,7 @@ importers:
       '@fluidframework/sequence': link:../../dds/sequence
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -8281,6 +8313,7 @@ importers:
   packages/loader/container-loader:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-loader-utils': workspace:~
@@ -8337,6 +8370,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-private/test-loader-utils': link:../test-loader-utils
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -8368,6 +8402,7 @@ importers:
   packages/loader/driver-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -8416,6 +8451,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -8443,6 +8479,7 @@ importers:
   packages/loader/test-loader-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8466,6 +8503,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
