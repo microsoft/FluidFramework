@@ -32,17 +32,8 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prepack": "npm run webpack",
 		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
-		"start": "webpack serve --config webpack.config.cjs --env mode=local",
-		"start:docker": "webpack serve --config webpack.config.cjs --env mode=docker",
-		"start:r11s": "webpack serve --config webpack.config.cjs --env mode=r11s",
-		"start:spo": "webpack serve --config webpack.config.cjs --env mode=spo",
-		"start:spo-df": "webpack serve --config webpack.config.cjs --env mode=spo-df",
-		"start:tinylicious": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
-		"webpack": "webpack --env production",
-		"webpack:dev": "webpack --env development"
+		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore"
 	},
 	"dependencies": {
 		"@fluid-example/multiview-coordinate-interface": "workspace:~",
@@ -50,20 +41,13 @@
 		"@fluidframework/map": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@types/node": "^18.19.0",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ts-loader": "^9.3.0",
-		"typescript": "~5.1.6",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.6.0",
-		"webpack-merge": "^5.8.0"
+		"typescript": "~5.1.6"
 	},
 	"fluid": {
 		"browser": {
