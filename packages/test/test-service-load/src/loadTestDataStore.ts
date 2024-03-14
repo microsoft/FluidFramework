@@ -25,7 +25,7 @@ import { delay, assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoadTestConfig } from "./testConfigFile.js";
+import { ILoadTestConfig } from "./testConfigFile";
 
 export interface IRunConfig {
 	runId: number;
