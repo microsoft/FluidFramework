@@ -5,14 +5,22 @@
 
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "../../index.js";
-import { BatchMessage, IBatch, OpGroupingManager } from "../../opLifecycle/index.js";
+import {
+	BatchMessage,
+	IBatch,
+	OpGroupingManager,
+	isGroupedBatch,
+} from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {
 	const mockLogger = new MockLogger();
-	const createBatch = (length: number, hasReentrantOps?: boolean): IBatch => ({
-		...messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(1)))),
+	const createBatch = (
+		length: number,
+		hasReentrantOps?: boolean,
+		opHasMetadata: boolean = false,
+	): IBatch => ({
+		...messagesToBatch(new Array(length).fill(createMessage(opHasMetadata))),
 		hasReentrantOps,
 	});
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
@@ -22,90 +30,188 @@ describe("OpGroupingManager", () => {
 			.reduce((a, b) => a + b),
 		referenceSequenceNumber: messages[0].referenceSequenceNumber,
 	});
-	const createMessage = (contents: string) => ({
-		metadata: { flag: true },
+	const createMessage = (opHasMetadata: boolean) => ({
+		metadata: opHasMetadata ? { flag: true } : undefined,
 		localOpMetadata: undefined,
 		type: ContainerMessageType.FluidDataStoreOp,
-		contents,
+		contents: "0",
 		referenceSequenceNumber: 0,
 	});
-	const generateStringOfSize = (sizeInBytes: number): string =>
-		new Array(sizeInBytes + 1).join("0");
 
 	describe("Configs", () => {
-		it("Grouped batching is disabled", () => {
-			assert.strictEqual(
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: false,
-						opCountThreshold: 0,
-						reentrantBatchGroupingEnabled: true,
-					},
-					mockLogger,
-				).shouldGroup(createBatch(100)),
-				false,
-			);
-		});
+		interface ConfigOption {
+			enabled: boolean;
+			tooSmall?: boolean;
+			reentrant?: boolean;
+			reentryEnabled?: boolean;
+			expectedResult: boolean;
+		}
+		const options: ConfigOption[] = [
+			{ enabled: false, expectedResult: false },
+			{ enabled: true, tooSmall: true, expectedResult: false },
+			{ enabled: true, reentrant: true, expectedResult: false },
+			{ enabled: true, reentrant: true, reentryEnabled: true, expectedResult: true },
+			{ enabled: true, expectedResult: true },
+		];
 
-		it("Grouped batching is enabled but the batch is too small", () => {
-			assert.strictEqual(
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-						opCountThreshold: 10,
-						reentrantBatchGroupingEnabled: true,
-					},
-					mockLogger,
-				).shouldGroup(createBatch(5)),
-				false,
-			);
-		});
-
-		it("Grouped batching is enabled, the batch is large enough, but it is reentrant", () => {
-			assert.strictEqual(
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
-					},
-					mockLogger,
-				).shouldGroup(createBatch(5, true)),
-				false,
-			);
-		});
-
-		it("Grouped batching is enabled, the batch is large enough, and it is reentrant", () => {
-			assert.strictEqual(
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: true,
-					},
-					mockLogger,
-				).shouldGroup(createBatch(5, true)),
-				true,
-			);
-		});
-
-		it("Grouped batching is enabled and the batch is large enough", () => {
-			assert.strictEqual(
-				new OpGroupingManager(
-					{
-						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
-					},
-					mockLogger,
-				).shouldGroup(createBatch(5)),
-				true,
-			);
+		options.forEach((option) => {
+			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
+				option.tooSmall === true
+			}] reentrant [${option.reentrant === true}] reentryEnabled [${
+				option.reentryEnabled === true
+			}]`, () => {
+				assert.strictEqual(
+					new OpGroupingManager(
+						{
+							groupedBatchingEnabled: option.enabled,
+							opCountThreshold: option.tooSmall === true ? 10 : 2,
+							reentrantBatchGroupingEnabled: option.reentryEnabled ?? false,
+						},
+						mockLogger,
+					).shouldGroup(createBatch(5, option.reentrant)),
+					option.expectedResult,
+				);
+			});
 		});
 	});
 
-	describe("Fakes clientSequenceNumber when ungrouping", () => {
-		it("grouped op", () => {
+	describe("groupBatch", () => {
+		it("grouped batching disabled", () => {
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: false,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).groupBatch(createBatch(5));
+			assert.strictEqual(result.content.length, 5);
+			assert.deepStrictEqual(result.content, [
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+			]);
+		});
+
+		it("grouped batching enabled", () => {
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).groupBatch(createBatch(5));
+			assert.strictEqual(result.content.length, 1);
+			assert.deepStrictEqual(result.content, [
+				{
+					contents:
+						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "groupedBatch",
+				},
+			]);
+		});
+
+		it("grouped batching enabled, not large enough", () => {
+			const result = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 10,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			).groupBatch(createBatch(5));
+			assert.strictEqual(result.content.length, 5);
+			assert.deepStrictEqual(result.content, [
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+				{
+					contents: "0",
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: 0,
+					type: "component",
+				},
+			]);
+		});
+
+		it("grouped batching enabled, op metadata not allowed", () => {
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: true,
+						opCountThreshold: 2,
+						reentrantBatchGroupingEnabled: false,
+					},
+					mockLogger,
+				).groupBatch(createBatch(5, false, true));
+			});
+		});
+	});
+
+	describe("ungroupOp", () => {
+		it("packed grouped op", () => {
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
@@ -133,6 +239,58 @@ describe("OpGroupingManager", () => {
 				},
 			} as any;
 
+			assert.strictEqual(isGroupedBatch(op), true);
+			const result = opGroupingManager.ungroupOp(op);
+
+			assert.deepStrictEqual(result, [
+				{
+					clientSequenceNumber: 1,
+					contents: "1",
+					compression: undefined,
+					metadata: undefined,
+				},
+				{
+					clientSequenceNumber: 2,
+					contents: "2",
+					compression: undefined,
+					metadata: undefined,
+				},
+				{
+					clientSequenceNumber: 3,
+					contents: "3",
+					compression: undefined,
+					metadata: undefined,
+				},
+			]);
+		});
+
+		it("unpacked grouped op", () => {
+			const opGroupingManager = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+				mockLogger,
+			);
+
+			const op = {
+				clientSequenceNumber: 10,
+				type: OpGroupingManager.groupedBatchOp,
+				contents: [
+					{
+						contents: "1",
+					},
+					{
+						contents: "2",
+					},
+					{
+						contents: "3",
+					},
+				],
+			} as any;
+
+			assert.strictEqual(isGroupedBatch(op), true);
 			const result = opGroupingManager.ungroupOp(op);
 
 			assert.deepStrictEqual(result, [
@@ -172,14 +330,8 @@ describe("OpGroupingManager", () => {
 				contents: "1",
 			} as any;
 
-			const result = opGroupingManager.ungroupOp(op);
-
-			assert.deepStrictEqual(result, [
-				{
-					clientSequenceNumber: 10,
-					contents: "1",
-				},
-			]);
+			assert.strictEqual(isGroupedBatch(op), false);
+			assert.throws(() => opGroupingManager.ungroupOp(op));
 		});
 
 		it("non-grouped op with grouped batching disabled", () => {
@@ -197,94 +349,50 @@ describe("OpGroupingManager", () => {
 				contents: "1",
 			} as any;
 
-			const result = opGroupingManager.ungroupOp(op);
-
-			assert.deepStrictEqual(result, [
-				{
-					clientSequenceNumber: 10,
-					contents: "1",
-				},
-			]);
+			assert.strictEqual(isGroupedBatch(op), false);
+			assert.throws(() => opGroupingManager.ungroupOp(op));
 		});
-	});
 
-	it("Ungrouping multiple times does not mess up groupedBatch messages", () => {
-		const groupedBatch = {
-			type: "op",
-			sequenceNumber: 10,
-			clientSequenceNumber: 12,
-			contents: {
-				type: OpGroupingManager.groupedBatchOp,
-				contents: [
-					{
-						contents: {
-							type: ContainerMessageType.FluidDataStoreOp,
+		it("Ungrouping multiple times is not allowed", () => {
+			const groupedBatch = {
+				type: "op",
+				sequenceNumber: 10,
+				clientSequenceNumber: 12,
+				contents: {
+					type: OpGroupingManager.groupedBatchOp,
+					contents: [
+						{
 							contents: {
-								contents: "a",
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: {
+									contents: "a",
+								},
 							},
 						},
-					},
-					{
-						contents: {
-							type: ContainerMessageType.FluidDataStoreOp,
+						{
 							contents: {
-								contents: "b",
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: {
+									contents: "b",
+								},
 							},
 						},
-					},
-				],
-			},
-		} as any;
-		const opGroupingManager = new OpGroupingManager(
-			{
-				groupedBatchingEnabled: false,
-				opCountThreshold: 2,
-				reentrantBatchGroupingEnabled: true,
-			},
-			mockLogger,
-		);
+					],
+				},
+			} as any;
+			const opGroupingManager = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: false,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+				mockLogger,
+			);
 
-		// Run the groupedBatch through a couple times to ensure it cannot get messed up
-		let messagesToUngroup: ISequencedDocumentMessage[] = [groupedBatch];
-		let result: ISequencedDocumentMessage[] = [];
-		for (let i = 0; i < 4; i++) {
-			result = [];
-			for (const message of messagesToUngroup) {
-				for (const ungroupedOp of opGroupingManager.ungroupOp(message)) {
-					result.push(ungroupedOp);
-				}
+			for (const ungroupedOp of opGroupingManager.ungroupOp(groupedBatch)) {
+				assert.strictEqual(isGroupedBatch(ungroupedOp), false);
+				assert.throws(() => opGroupingManager.ungroupOp(ungroupedOp));
 			}
-			messagesToUngroup = [...result];
-		}
-
-		const expected = [
-			{
-				type: "op",
-				sequenceNumber: 10,
-				clientSequenceNumber: 1,
-				metadata: undefined,
-				compression: undefined,
-				contents: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {
-						contents: "a",
-					},
-				},
-			},
-			{
-				type: "op",
-				sequenceNumber: 10,
-				clientSequenceNumber: 2,
-				metadata: undefined,
-				compression: undefined,
-				contents: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {
-						contents: "b",
-					},
-				},
-			},
-		];
-		assert.deepStrictEqual(result, expected, "ungrouping should work as expected");
+		});
 	});
 });

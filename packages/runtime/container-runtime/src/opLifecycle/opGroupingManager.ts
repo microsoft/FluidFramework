@@ -100,24 +100,29 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+		assert(isGroupedBatch(op), "can only ungroup a grouped batch");
+
 		let messages: IGroupedMessage[] = [];
 		// ! Important to check "op.contents" first
 		if (isGroupContents(op.contents)) {
 			messages = op.contents.contents;
 		} else if (isGroupContents(op)) {
 			messages = op.contents;
-		} else {
-			return [op];
 		}
 
 		let fakeCsn = 1;
-		return messages.map((subMessage) => ({
-			...op,
-			clientSequenceNumber: fakeCsn++,
-			contents: subMessage.contents,
-			metadata: subMessage.metadata,
-			compression: subMessage.compression,
-		}));
+		return messages.map((subMessage) => {
+			// We don't want to preserve the "groupedBatch" type in case this ungrouped message is accidentally passed back through
+			const { type: _, ...props } = op;
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			return {
+				...props,
+				clientSequenceNumber: fakeCsn++,
+				contents: subMessage.contents,
+				metadata: subMessage.metadata,
+				compression: subMessage.compression,
+			} as ISequencedDocumentMessage;
+		});
 	}
 
 	public shouldGroup(batch: IBatch): boolean {
