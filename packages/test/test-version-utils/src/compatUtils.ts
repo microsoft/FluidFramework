@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	FluidObject,
@@ -42,7 +43,6 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
-import * as semver from "semver";
 
 /**
  * @internal
