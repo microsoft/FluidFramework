@@ -1208,12 +1208,30 @@ export class LeafNodeSchema<const out Name extends string = string, const out Sp
     protected _typeCheck2?: MakeNominal;
 }
 
+// @internal (undocumented)
+export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(leafValue: ValueSchema);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly leafValue: ValueSchema;
+}
+
 // @internal
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
 }
 
 // @public
 export interface MakeNominal {
+}
+
+// @internal (undocumented)
+export class MapNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(mapFields: TreeFieldStoredSchema);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly mapFields: TreeFieldStoredSchema;
 }
 
 // @internal
@@ -1332,6 +1350,15 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @internal (undocumented)
+export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+}
 
 // @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
