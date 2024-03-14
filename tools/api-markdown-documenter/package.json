@@ -75,7 +75,8 @@
 		"@microsoft/api-extractor-model": "~7.28.2",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/node-core-library": "^3.55.2",
-		"chalk": "^4.1.2"
+		"chalk": "^4.1.2",
+		"hast-util-to-html": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
@@ -85,6 +86,7 @@
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/chai": "^4.3.4",
+		"@types/hast": "^3.0.4",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.15.11",
 		"@types/unist": "^2.0.6",
