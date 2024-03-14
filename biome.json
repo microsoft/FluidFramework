@@ -12,6 +12,7 @@
 			"**/*.generated.*",
 			"**/_api-extractor-temp/**",
 			"**/test/snapshots/content/**",
+			"**/localOdspSnapshots/**",
 			"**/biome.jsonc"
 		],
 		"maxSize": 2097152
