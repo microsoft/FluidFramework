@@ -17,6 +17,7 @@ import {
 	isFluidHandle,
 	isLazy,
 	markEager,
+	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
@@ -68,7 +69,12 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	public readonly kind = NodeKind.Leaf;
 	public readonly info: T["info"];
 	public readonly implicitlyConstructable = true as const;
-	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
+	public create(data: TreeValue<T["info"]> | FlexTreeNode): TreeValue<T["info"]> {
+		if (isFlexTreeNode(data)) {
+			const value = data.value;
+			assert(valueSchemaAllows(this.info, value), "invalid value");
+			return value;
+		}
 		return data;
 	}
 

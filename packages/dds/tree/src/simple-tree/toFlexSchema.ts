@@ -249,7 +249,6 @@ export function convertNodeSchema(
 				setFlexSchemaFromClassSchema(schema, out);
 			}
 		}
-		(out as any)[simpleSchemaSymbol] = schema;
 		return out;
 	};
 	schemaMap.set(brand(schema.identifier), { original: schema, toFlex });
@@ -272,5 +271,8 @@ export function setFlexSchemaFromClassSchema(
 	simple: TreeNodeSchema,
 	flex: TreeNodeSchemaBase,
 ): void {
+	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
+	assert(!(simpleSchemaSymbol in flex), "flex schema already marked");
 	(simple as any)[flexSchemaSymbol] = flex;
+	(flex as any)[simpleSchemaSymbol] = simple;
 }
