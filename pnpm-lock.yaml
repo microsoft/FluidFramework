@@ -10399,6 +10399,7 @@ importers:
       '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-private/test-drivers': workspace:~
       '@fluid-private/test-pairwise-generator': workspace:~
+      '@fluid-private/test-version-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -10440,6 +10441,7 @@ importers:
       '@fluid-private/stochastic-test-utils': link:../stochastic-test-utils
       '@fluid-private/test-drivers': link:../test-drivers
       '@fluid-private/test-pairwise-generator': link:../test-pairwise-generator
+      '@fluid-private/test-version-utils': link:../test-version-utils
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader

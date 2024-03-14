@@ -5,6 +5,7 @@
 
 import crypto from "crypto";
 import fs from "fs";
+import path from "node:path";
 import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
@@ -30,6 +31,7 @@ import {
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
+import { getMainEntryPointForPackage } from "@fluid-private/test-version-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
@@ -45,8 +47,13 @@ const packageName = `${pkgName}@${pkgVersion}`;
 class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = (minLogLevel?: LogLevel) =>
 		new LazyPromise<FileLogger>(async () => {
-			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+			const loggerPkgPath = process.env.FLUID_TEST_LOGGER_PKG_PATH;
+
+			if (loggerPkgPath !== undefined) {
+				// NOTE: as of 2024-03-13, the aria-logger package we inject is commonjs-only.
+				// When it is updated to be esm, we'll need to update this call accordingly.
+				const entryPoint = getMainEntryPointForPackage(loggerPkgPath, "commonjs");
+				await import(path.join(loggerPkgPath, entryPoint));
 				const logger = getTestLogger?.();
 				assert(logger !== undefined, "Expected getTestLogger to return something");
 				return new FileLogger(logger, minLogLevel);
