@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals should, sinon, expect */
 import { DataBinder } from "../data_binder/dataBinder";
 import { DataBinding } from "../data_binder/dataBinding";

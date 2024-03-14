@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals sinon, expect, should */
 import { DataBinder } from "../data_binder/dataBinder";
 import { SingletonDataBinding, StatelessDataBinding } from "../data_binder/statelessDataBinding";

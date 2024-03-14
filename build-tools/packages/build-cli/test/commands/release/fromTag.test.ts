@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { test } from "@oclif/test";
 import chai, { expect } from "chai";
