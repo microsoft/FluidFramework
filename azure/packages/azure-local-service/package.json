@@ -1,51 +1,54 @@
 {
-	"name": "@fluidframework/azure-local-service",
-	"version": "2.0.0-rc.2.0.0",
-	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
-	"homepage": "https://fluidframework.com",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "azure/packages/azure-local-service"
-	},
-	"license": "MIT",
-	"author": "Microsoft and contributors",
-	"type": "module",
-	"bin": "lib/index.js",
-	"scripts": {
-		"build": "fluid-build . --task build",
-		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"start": "pm2 start -n azure-local-service lib/index.js",
-		"start:debug": "node --inspect=0.0.0.0:9229 lib/index.js",
-		"stop": "pm2 stop azure-local-service",
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"dependencies": {
-		"tinylicious": "^4.0.0"
-	},
-	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"eslint": "~8.55.0",
-		"eslint-config-prettier": "~9.0.0",
-		"pm2": "^5.3.1",
-		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"ts-node": "^10.9.1",
-		"typescript": "~5.1.6"
-	},
-	"typeValidation": {
-		"disabled": true,
-		"broken": {}
-	}
+  "name": "@fluidframework/azure-local-service",
+  "version": "2.0.0-rc.2.0.0",
+  "description": "Local implementation of the Azure Fluid Relay service for testing/development use",
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "azure/packages/azure-local-service"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "type": "module",
+  "bin": "lib/index.js",
+  "scripts": {
+    "build": "fluid-build . --task build",
+    "build:compile": "fluid-build . --task compile",
+    "build:esnext": "tsc --project ./tsconfig.json",
+    "check:biome": "biome check .",
+    "check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+    "clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "fluid-build --task format .",
+    "format:biome": "biome check --apply .",
+    "format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+    "lint": "fluid-build . --task lint",
+    "lint:fix": "fluid-build . --task eslint:fix --task format",
+    "start": "pm2 start -n azure-local-service lib/index.js",
+    "start:debug": "node --inspect=0.0.0.0:9229 lib/index.js",
+    "stop": "pm2 stop azure-local-service",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "tinylicious": "^4.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.6.1",
+    "@fluidframework/build-common": "^2.0.3",
+    "@fluidframework/build-tools": "^0.34.0",
+    "@fluidframework/eslint-config-fluid": "^5.1.0",
+    "eslint": "~8.55.0",
+    "eslint-config-prettier": "~9.0.0",
+    "pm2": "^5.3.1",
+    "prettier": "~3.0.3",
+    "rimraf": "^4.4.0",
+    "ts-node": "^10.9.1",
+    "typescript": "~5.1.6"
+  },
+  "typeValidation": {
+    "disabled": true,
+    "broken": {}
+  }
 }
