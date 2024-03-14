@@ -252,8 +252,8 @@ module.exports = {
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
-				// These packages use biome for formatting
-				"build-tools/",
+				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				".*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
