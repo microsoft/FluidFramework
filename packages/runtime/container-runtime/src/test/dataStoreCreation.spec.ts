@@ -137,7 +137,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -162,7 +161,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -187,7 +185,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -212,7 +209,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -237,7 +233,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -259,7 +254,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -284,7 +278,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -309,7 +302,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {
@@ -334,7 +326,6 @@ describe("Data Store Creation Tests", () => {
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
-				isRootDataStore: false,
 			});
 
 			try {

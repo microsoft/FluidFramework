@@ -120,7 +120,12 @@ export class Outbox {
 	}
 
 	public get messageCount(): number {
-		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+		return (
+			this.attachFlowBatch.length +
+			this.mainBatch.length +
+			this.blobAttachBatch.length +
+			this.idAllocationBatch.length
+		);
 	}
 
 	public get isEmpty(): boolean {
@@ -334,10 +339,15 @@ export class Outbox {
 			return;
 		}
 
-		const processedBatch = this.compressBatch(
-			shouldGroup ? rawBatch : this.params.groupingManager.groupBatch(rawBatch),
-		);
-		this.sendBatch(processedBatch);
+		// Did we disconnect?
+		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
+		if (this.params.shouldSend()) {
+			const processedBatch = this.compressBatch(
+				shouldGroup ? rawBatch : this.params.groupingManager.groupBatch(rawBatch),
+			);
+			this.sendBatch(processedBatch);
+		}
 
 		this.persistBatch(rawBatch.content);
 	}
@@ -423,10 +433,7 @@ export class Outbox {
 	 */
 	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
-
-		// Did we disconnect in the middle of turn-based batch?
-		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-		if (length === 0 || !this.params.shouldSend()) {
+		if (length === 0) {
 			return;
 		}
 

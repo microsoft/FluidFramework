@@ -10,13 +10,7 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import {
-	FlexAllowedTypes,
-	FieldKinds,
-	SchemaBuilderBase,
-	FlexFieldSchema,
-} from "../feature-libraries/index.js";
-import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util/index.js";
+import { FieldKinds, SchemaBuilderBase, FlexFieldSchema } from "../feature-libraries/index.js";
 import { leaf } from "./leafDomain.js";
 
 const builder = new SchemaBuilderBase(FieldKinds.optional, { scope: "Test Recursive Domain" });
@@ -25,24 +19,6 @@ export const recursiveObject = builder.objectRecursive("object", {
 	recursive: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 	number: leaf.number,
 });
-
-function fixRecursiveReference<T extends FlexAllowedTypes>(...types: T): void {}
-
-const recursiveReference = () => recursiveObject2;
-fixRecursiveReference(recursiveReference);
-
-export const recursiveObject2 = builder.object("object2", {
-	recursive: FlexFieldSchema.create(FieldKinds.optional, [recursiveReference]),
-	number: leaf.number,
-});
-
-type _0 = requireFalse<isAny<typeof recursiveObject2>>;
-type _1 = requireTrue<
-	areSafelyAssignable<
-		typeof recursiveObject2,
-		ReturnType<(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]>
-	>
->;
 
 export const library = builder.intoLibrary();
 

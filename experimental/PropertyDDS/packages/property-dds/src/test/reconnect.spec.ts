@@ -18,8 +18,8 @@ import {
 	StringProperty,
 	Float64Property,
 } from "@fluid-experimental/property-properties";
-import { SharedPropertyTree } from "../propertyTree";
-import { PropertyTreeFactory } from "../propertyTreeFactory";
+import { SharedPropertyTree } from "../propertyTree.js";
+import { PropertyTreeFactory } from "../propertyTreeFactory.js";
 
 // a "namespace" uuid to generate uuidv5 in fuzz tests
 const namespaceGuid = "4da9a064-f910-44bf-b840-ffdd699a2e05";

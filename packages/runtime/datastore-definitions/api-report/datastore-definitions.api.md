@@ -89,6 +89,7 @@ export interface IDeltaHandler {
 
 // @public
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)

@@ -20,7 +20,6 @@ import {
 	FlexImplicitFieldSchema,
 	FlexObjectNodeSchema,
 	Unenforced,
-	FlexAllowedTypes,
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	TreeNodeSchemaBase,
@@ -301,19 +300,6 @@ export class SchemaBuilder<
 	 * {@link leaf.null}
 	 */
 	public readonly null = leaf.null;
-
-	/**
-	 * Function which can be used for its compile time side-effects to tweak the evaluation order of recursive types to make them compile.
-	 * @remarks
-	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
-	 *
-	 * Also be aware that code which relies on this (or the "recursive" SchemaBuilder methods tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
-	 * The command `TypeScript: Restart TS Server` should fix it.
-	 * Sometimes this does not work: the exact cause has not been confirmed but if you have the file open multiple times (for example in both sides of a window split into two columns): closing the extra copy may help.
-	 * Focusing the file with the errors before running `TypeScript: Restart TS Server` can also help.
-	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
-	 */
-	public fixRecursiveReference<T extends FlexAllowedTypes>(...types: T): void {}
 }
 
 /**

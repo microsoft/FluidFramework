@@ -33,7 +33,6 @@ export function testChangeEditManagerFactory(options: {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = editManagerFactory(family, {
 		sessionId: options.sessionId,
-		autoDiscardRevertibles: options.autoDiscardRevertibles,
 	});
 
 	return { manager, family };
@@ -43,10 +42,8 @@ export function editManagerFactory<TChange = TestChange>(
 	family: ChangeFamily<any, TChange>,
 	options: {
 		sessionId?: SessionId;
-		autoDiscardRevertibles?: boolean;
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
-	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const genId = () => testIdCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
@@ -54,12 +51,6 @@ export function editManagerFactory<TChange = TestChange>(
 		ChangeFamily<ChangeFamilyEditor, TChange>
 	>(family, options.sessionId ?? ("0" as SessionId), genId);
 
-	if (autoDiscardRevertibles === true) {
-		// by default, discard revertibles in the edit manager tests
-		manager.localBranch.on("newRevertible", (revertible) => {
-			revertible.discard();
-		});
-	}
 	return manager;
 }
 

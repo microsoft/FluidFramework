@@ -247,7 +247,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];

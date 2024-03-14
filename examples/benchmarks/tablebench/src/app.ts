@@ -9,9 +9,9 @@
  */
 
 import { TreeConfiguration } from "@fluidframework/tree";
-import { Table } from "./tree";
-import { initFluid } from "./azure";
-import { generateTable } from "./data";
+import { Table } from "./tree/index.js";
+import { initFluid } from "./azure.js";
+import { generateTable } from "./data.js";
 
 export { generateTable };
 export { Table };
