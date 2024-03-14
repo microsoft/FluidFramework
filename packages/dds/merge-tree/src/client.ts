@@ -19,14 +19,14 @@ import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/t
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
-import {
+import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+import type {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
-} from "./index.js";
-import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
-import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+} from "./mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
