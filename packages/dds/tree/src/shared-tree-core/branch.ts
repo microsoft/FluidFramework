@@ -409,11 +409,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const getRevertible = () => {
 			assert(
 				withinEventContext,
-				"cannot get a revertible outside of the context of a commitApplied event",
+				0x902 /* cannot get a revertible outside of the context of a commitApplied event */,
 			);
 			assert(
 				this._revertibleCommits.get(revision) === undefined,
-				"cannot get the revertible more than once",
+				0x903 /* cannot get the revertible more than once */,
 			);
 
 			const revertibleCommits = this._revertibleCommits;
@@ -427,7 +427,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				revert: () => {
 					assert(
 						revertible.status === RevertibleStatus.Valid,
-						"a disposed revertible cannot be reverted",
+						0x904 /* a disposed revertible cannot be reverted */,
 					);
 					this.revertRevertible(revision, data.kind);
 				},
@@ -435,7 +435,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				dispose: () => {
 					assert(
 						revertible.status === RevertibleStatus.Valid,
-						"a disposed revertible cannot be reverted",
+						0x905 /* a disposed revertible cannot be reverted */,
 					);
 					this.disposeRevertible(revertible, revision);
 				},

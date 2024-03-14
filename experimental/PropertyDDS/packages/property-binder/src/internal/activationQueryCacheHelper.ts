@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import type { ExtractedContext } from "@fluid-experimental/property-changeset";

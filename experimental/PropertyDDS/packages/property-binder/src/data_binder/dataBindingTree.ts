@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Defines a data structure for storing an DataBinding tree that mirrors a property set hierarchy with
  * DataBindings representing certain properties. Meant to handle the case where there are many properties but only some

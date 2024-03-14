@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
 import { ClientWrapper } from "./client.js";
 import { ClientsField, FlexClient, FlexBubble } from "./schema.js";
