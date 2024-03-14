@@ -125,23 +125,14 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	let output: TreeNode | TreeValue;
 	const classSchema = getClassSchema(schema);
-	if (classSchema !== undefined) {
-		if (typeof classSchema === "function") {
-			const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-			output = new simpleSchema(flexNode);
-		} else {
-			output = (schema as unknown as { create: (data: FlexTreeNode) => TreeNode }).create(
-				flexNode,
-			);
-		}
+	assert(classSchema !== undefined, "node without schema");
+	if (typeof classSchema === "function") {
+		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
+		return new simpleSchema(flexNode);
 	} else {
-		// Fallback to createNodeProxy if needed.
-		// TODO: maybe remove this fallback and error once migration to class based schema is done.
-		output = createNodeProxy(flexNode, false);
+		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
-	return output;
 }
 
 /**
