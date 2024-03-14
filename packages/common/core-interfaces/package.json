@@ -1,153 +1,156 @@
 {
-	"name": "@fluidframework/core-interfaces",
-	"version": "2.0.0-rc.2.0.0",
-	"description": "Fluid object interfaces",
-	"homepage": "https://fluidframework.com",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "common/lib/core-interfaces"
-	},
-	"license": "MIT",
-	"author": "Microsoft and contributors",
-	"sideEffects": false,
-	"type": "module",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/core-interfaces-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/core-interfaces-public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/core-interfaces-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/core-interfaces-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		}
-	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
-		"api-extractor:esnext": "api-extractor run --local",
-		"build": "fluid-build . --task build",
-		"build:commonjs": "fluid-build . --task commonjs",
-		"build:compile": "fluid-build . --task compile",
-		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
-		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
-		"ci:build": "npm run build:compile",
-		"ci:build:docs": "api-extractor run",
-		"ci:test": "echo No test for this package",
-		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"tsc:watch": "tsc --watch",
-		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
-	},
-	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "^0.34.0",
-		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-internal.8.0.0",
-		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@microsoft/api-extractor": "^7.42.3",
-		"@types/node": "^18.19.0",
-		"copyfiles": "^2.4.1",
-		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
-		"rimraf": "^4.4.0",
-		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:docs": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs",
-					"api-extractor:esnext"
-				],
-				"script": false
-			}
-		}
-	},
-	"typeValidation": {
-		"broken": {
-			"RemovedInterfaceDeclaration_ITelemetryLogger": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryGenericEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITelemetryProperties": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_TelemetryEventCategory": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
-	}
+  "name": "@fluidframework/core-interfaces",
+  "version": "2.0.0-rc.2.0.0",
+  "description": "Fluid object interfaces",
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "common/lib/core-interfaces"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./public": {
+      "import": {
+        "types": "./lib/core-interfaces-public.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./dist/core-interfaces-public.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./alpha": {
+      "import": {
+        "types": "./lib/core-interfaces-alpha.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./dist/core-interfaces-alpha.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./internal": {
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "api": "fluid-build . --task api",
+    "api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+    "api-extractor:esnext": "api-extractor run --local",
+    "build": "fluid-build . --task build",
+    "build:commonjs": "fluid-build . --task commonjs",
+    "build:compile": "fluid-build . --task compile",
+    "build:docs": "fluid-build . --task api",
+    "build:esnext": "tsc --project ./tsconfig.json",
+    "build:test": "npm run build:test:esm && npm run build:test:cjs",
+    "build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+    "build:test:esm": "tsc --project ./src/test/tsconfig.json",
+    "check:are-the-types-wrong": "attw --pack . --entrypoints .",
+    "check:biome": "biome check .",
+    "check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+    "check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
+    "ci:build": "npm run build:compile",
+    "ci:build:docs": "api-extractor run",
+    "ci:test": "echo No test for this package",
+    "ci:test:coverage": "echo No test for this package",
+    "clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "fluid-build --task format .",
+    "format:biome": "biome check --apply .",
+    "format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+    "lint": "fluid-build . --task lint",
+    "lint:fix": "fluid-build . --task eslint:fix --task format",
+    "tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
+    "tsc:watch": "tsc --watch",
+    "typetests:gen": "fluid-type-test-generator",
+    "typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.13.3",
+    "@biomejs/biome": "^1.6.1",
+    "@fluid-tools/build-cli": "^0.34.0",
+    "@fluidframework/build-common": "^2.0.3",
+    "@fluidframework/build-tools": "^0.34.0",
+    "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.0.0-internal.8.0.0",
+    "@fluidframework/eslint-config-fluid": "^5.1.0",
+    "@microsoft/api-extractor": "^7.42.3",
+    "@types/node": "^18.19.0",
+    "copyfiles": "^2.4.1",
+    "eslint": "~8.55.0",
+    "prettier": "~3.0.3",
+    "rimraf": "^4.4.0",
+    "typescript": "~5.1.6"
+  },
+  "fluidBuild": {
+    "tasks": {
+      "build:docs": {
+        "dependsOn": [
+          "...",
+          "api-extractor:commonjs",
+          "api-extractor:esnext"
+        ],
+        "script": false
+      }
+    }
+  },
+  "typeValidation": {
+    "broken": {
+      "RemovedInterfaceDeclaration_ITelemetryLogger": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ITelemetryPerformanceEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ITelemetryGenericEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ITelemetryErrorEvent": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ITelemetryProperties": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_TelemetryEventCategory": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
+        "backCompat": false,
+        "forwardCompat": false
+      }
+    }
+  }
 }
