@@ -1,17 +1,18 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-import { AzureClient } from "@fluidframework/azure-client";
+* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+* Licensed under the MIT License.
+*/
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { AzureClient } from "@fluidframework/azure-client";
 
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnerStatus } from "./interface.js";
+import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
 	getAzureClientConnectionConfigFromEnv,
 	getScenarioRunnerTelemetryEventMap,
 } from "./utils.js";
-import { getLogger } from "./logger.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("AzureClient");
 
