@@ -77,7 +77,7 @@ export class StatelessDataBinding extends DataBinding {
 	 */
 	getProperty(): BaseProperty | undefined {
 		console.assert(
-			this._property,
+			this._property !== undefined,
 			"Calling getProperty while not in a onPostCreate, onModify etc. callback",
 		);
 		return this._property;

@@ -20,7 +20,7 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
@@ -117,7 +117,10 @@ export interface ISharedPropertyTreeEncDec {
 		encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 		decode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 	};
-	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary };
+	summaryEncoder: {
+		encode: (ISnapshotSummary) => IsoBuffer;
+		decode: (IsoBuffer) => ISnapshotSummary;
+	};
 }
 
 /**
