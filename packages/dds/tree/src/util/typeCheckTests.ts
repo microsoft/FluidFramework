@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
-import {
+import type {
 	MakeNominal,
 	Covariant,
 	Contravariant,

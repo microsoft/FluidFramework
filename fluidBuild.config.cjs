@@ -215,7 +215,6 @@ module.exports = {
 				// These files all require a node shebang at the top of the file.
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.

@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-import isEmpty from "lodash/isEmpty";
-import findIndex from "lodash/findIndex";
-import find from "lodash/find";
-import isEqual from "lodash/isEqual";
-import range from "lodash/range";
+import lodash from "lodash";
+
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
+const { isEmpty, findIndex, find, isEqual, range } = lodash;
+
 import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
@@ -40,7 +39,7 @@ import {
 
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
-import { PropertyTreeFactory } from "./propertyTreeFactory";
+import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**
  * @internal
