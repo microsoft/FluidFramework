@@ -3,19 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	IVersion,
-} from "@fluidframework/protocol-definitions";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
-import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	UsageError,
-	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentStorageService,
@@ -23,8 +11,20 @@ import {
 	ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
-import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import {
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	IVersion,
+} from "@fluidframework/protocol-definitions";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	UsageError,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { IPendingContainerState } from "./container.js";
+import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];

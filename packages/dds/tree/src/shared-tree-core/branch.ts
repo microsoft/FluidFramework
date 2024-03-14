@@ -5,24 +5,24 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
+	BranchRebaseResult,
 	ChangeFamily,
 	ChangeFamilyEditor,
-	findAncestor,
-	GraphCommit,
-	mintCommit,
-	tagChange,
-	TaggedChange,
-	rebaseBranch,
-	RevisionTag,
-	findCommonAncestor,
-	makeAnonChange,
-	Revertible,
-	RevertibleStatus,
-	BranchRebaseResult,
-	rebaseChangeOverChanges,
-	tagRollbackInverse,
 	CommitKind,
 	CommitMetadata,
+	GraphCommit,
+	Revertible,
+	RevertibleStatus,
+	RevisionTag,
+	TaggedChange,
+	findAncestor,
+	findCommonAncestor,
+	makeAnonChange,
+	mintCommit,
+	rebaseBranch,
+	rebaseChangeOverChanges,
+	tagChange,
+	tagRollbackInverse,
 } from "../core/index.js";
 import { EventEmitter, ISubscribable } from "../events/index.js";
 import { TransactionStack } from "./transactionStack.js";

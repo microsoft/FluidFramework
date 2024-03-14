@@ -4,8 +4,8 @@
  */
 
 import { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
-import { Brand, Opaque, brand } from "../../util/index.js";
 import { TreeNodeSchemaIdentifier } from "../../core/index.js";
+import { Brand, Opaque, brand } from "../../util/index.js";
 
 /**
  * A key which uniquely identifies a node in the tree within this session.

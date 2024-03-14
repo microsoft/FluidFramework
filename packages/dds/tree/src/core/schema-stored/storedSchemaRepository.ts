@@ -4,8 +4,9 @@
  */
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
-import { createEmitter, ISubscribable } from "../../events/index.js";
+import { ISubscribable, createEmitter } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
+import { TreeNodeSchemaIdentifier } from "./format.js";
 import {
 	StoredSchemaCollection,
 	TreeFieldStoredSchema,
@@ -13,7 +14,6 @@ import {
 	TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "./schema.js";
-import { TreeNodeSchemaIdentifier } from "./format.js";
 
 /**
  * Events for {@link TreeStoredSchemaSubscription}.

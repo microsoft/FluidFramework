@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { IIntervalCollection, Side } from "../intervalCollection.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
 import {
+	SharedStringRevertible,
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 	revertSharedStringRevertibles,
-	SharedStringRevertible,
 } from "../revertibles.js";
-import { SharedString } from "../sharedString.js";
-import { IIntervalCollection, Side } from "../intervalCollection.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
-import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 describe("Sequence.Revertibles with Local Edits", () => {

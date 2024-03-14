@@ -3,34 +3,34 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { makeSerializable, IntervalCollectionTypeLocalValue } from "./IntervalCollectionValues.js";
+import { IntervalCollectionTypeLocalValue, makeSerializable } from "./IntervalCollectionValues.js";
 import {
+	type IntervalCollection,
+	reservedIntervalIdKey,
+	toOptionalSequencePlace,
+	toSequencePlace,
+} from "./intervalCollection.js";
+import {
+	IIntervalCollectionType,
+	IIntervalCollectionTypeOperationValue,
+	IMapMessageLocalMetadata,
 	ISerializableIntervalCollection,
+	ISharedDefaultMapEvents,
 	IValueChanged,
 	// eslint-disable-next-line import/no-deprecated
 	IValueOpEmitter,
-	IIntervalCollectionType,
-	ISharedDefaultMapEvents,
-	IMapMessageLocalMetadata,
 	SequenceOptions,
-	IIntervalCollectionTypeOperationValue,
 } from "./intervalCollectionMapInterfaces.js";
 import {
-	SerializedIntervalDelta,
-	IntervalDeltaOpType,
 	type ISerializableInterval,
+	IntervalDeltaOpType,
+	SerializedIntervalDelta,
 } from "./intervals/index.js";
-import {
-	toSequencePlace,
-	toOptionalSequencePlace,
-	reservedIntervalIdKey,
-	type IntervalCollection,
-} from "./intervalCollection.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
