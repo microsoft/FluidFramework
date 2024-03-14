@@ -4,7 +4,7 @@
  */
 
 import { IWebhookManager } from "@fluidframework/server-services-core";
-import axios from "axios";
+import axios, { default as Axios, isAxiosError } from "axios";
 
 /**
  * Manages Webhooks and associated events
@@ -12,9 +12,11 @@ import axios from "axios";
 export class WebhookManager implements IWebhookManager {
 	// Map of webhook event names to URL's (webhooks)
 	private readonly eventSubscriptions: Map<string, Set<string>>;
+	private readonly internalHistorianUrl: string;
 
-	constructor() {
+	constructor(historianUrl: string) {
 		this.eventSubscriptions = new Map();
+		this.internalHistorianUrl = historianUrl;
 	}
 
 	public getSubscriptions(eventName: string): Set<string> {
@@ -43,7 +45,7 @@ export class WebhookManager implements IWebhookManager {
 		urlSubscriptions.delete(url);
 	}
 
-	public async handleEvent(event: string, payload: unknown) {
+	public async handleEvent(event: string, payload: object) {
 		const urlSubscriptions = this.eventSubscriptions.get(event) ?? new Set();
 		for (const url of urlSubscriptions) {
 			const response = await axios.post(url, payload);
@@ -55,6 +57,45 @@ export class WebhookManager implements IWebhookManager {
 				console.log(
 					`Successfully send event payload response from Client url: ${url} for event: ${event}`,
 				);
+			}
+		}
+	}
+
+	public async getLatestSummary(tenantId: string): Promise<string> {
+		const requestUrl = `${this.internalHistorianUrl}/repos/${tenantId}/git/summaries/latest?disableCache=true`;
+
+		try {
+			const response = await Axios.get(requestUrl);
+			console.log(`RESPONSE RECEIVED`);
+			console.log(`MESSAGE: ${JSON.stringify(response)}`);
+			const messages = response.data.blobs
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				.filter((e) => e.content.includes("blobs") && e.content.includes("content"))
+				.map((e) => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					return e.content;
+				});
+
+			console.log(
+				`HttpStatus: ${response.status}\nHttpStatusText: ${
+					response.statusText
+				}\nResponseData:\n${JSON.stringify(response.data)}`,
+			);
+			console.log(`messages:\n${messages}`);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return messages;
+		} catch (error: unknown) {
+			if (isAxiosError(error) && error.response) {
+				// eslint-disable-next-line max-len
+				console.log(
+					`Axios error: ${error.config?.url}\nHttp status: ${
+						error.response.status
+					}\nHttp statusText: ${error.response.statusText}\nHttpHeader: ${JSON.stringify(
+						error.response.headers,
+					)}\nResponseData: ${JSON.stringify(error.response?.data)}`,
+				);
+			} else {
+				console.log(error);
 			}
 		}
 	}

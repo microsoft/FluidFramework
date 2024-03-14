@@ -289,6 +289,9 @@ export class ScribeLambda implements IPartitionLambda {
 												tenantId: this.tenantId,
 											},
 										});
+										const messages = this.webhookManager?.getLatestSummary(
+											this.tenantId,
+										);
 										this.webhookManager?.handleEvent(
 											SummaryWebhookEvents.NEW_SUMMARY_CREATED,
 											{
@@ -296,6 +299,7 @@ export class ScribeLambda implements IPartitionLambda {
 												tenantId: this.tenantId,
 												documentId: this.documentId,
 												summaryResult,
+												messages,
 											},
 										);
 										Lumberjack.info(
