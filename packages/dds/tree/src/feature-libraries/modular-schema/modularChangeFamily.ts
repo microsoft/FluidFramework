@@ -630,7 +630,7 @@ export class ModularChangeFamily
 			...newCrossFieldTable<FieldChange>(),
 			fieldToContext: new Map(),
 			rebasedNodeCache: new Map(),
-			nodeIdMapping: new Map(),
+			nodeIdPairs: [],
 		};
 
 		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
@@ -654,34 +654,41 @@ export class ModularChangeFamily
 		);
 
 		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		forEachInNestedMap(change.nodeChanges, (nodeChange1, revision, localId) => {
-			const id2 = tryGetFromNestedMap(crossFieldTable.nodeIdMapping, revision, localId);
-			let rebasedNode: NodeChangeset | undefined;
-			if (id2 !== undefined) {
-				const nodeChange2 = tryGetFromNestedMap(
-					over.change.nodeChanges,
-					id2.revision,
-					id2.localId,
-				);
+		for (const [newId, taggedBaseId] of crossFieldTable.nodeIdPairs) {
+			const newNodeChange =
+				newId !== undefined
+					? tryGetFromNestedMap(change.nodeChanges, newId.revision, newId.localId)
+					: undefined;
 
-				assert(nodeChange2 !== undefined, "Unknown node ID");
-				rebasedNode = this.rebaseNodeChange(
-					nodeChange1,
-					tagChange(nodeChange2, id2.revision),
-					genId,
-					crossFieldTable,
-					() => true,
-					rebaseMetadata,
-					constraintState,
-				);
-			} else {
-				rebasedNode = nodeChange1;
-			}
+			const taggedBaseNodeChange =
+				taggedBaseId !== undefined
+					? tagChange(
+							tryGetFromNestedMap(
+								over.change.nodeChanges,
+								taggedBaseId.change.revision,
+								taggedBaseId.change.localId,
+							) ?? fail("Unknown node ID"),
+							taggedBaseId.revision,
+					  )
+					: makeAnonChange({});
+
+			const rebasedNode = this.rebaseNodeChange(
+				newNodeChange,
+				taggedBaseNodeChange,
+				genId,
+				crossFieldTable,
+				() => true,
+				rebaseMetadata,
+				constraintState,
+			);
 
 			if (rebasedNode !== undefined) {
-				setInNestedMap(rebasedNodes, revision, localId, rebasedNode);
+				const nodeId =
+					newId ?? taggedBaseId?.change ?? fail("Should not have two undefined IDs");
+
+				setInNestedMap(rebasedNodes, nodeId.revision, nodeId.localId, rebasedNode);
 			}
-		});
+		}
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
@@ -705,21 +712,7 @@ export class ModularChangeFamily
 				context.rebasedChange.change = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
 					tagChange(baseChangeset, context.baseRevision),
-					(curr, base, existenceState) => {
-						const key = curr ?? base;
-						if (key === undefined) {
-							return undefined;
-						}
-
-						if (curr !== undefined && base !== undefined) {
-							setInNestedMap(
-								crossFieldTable.nodeIdMapping,
-								curr.revision,
-								curr.localId,
-								base,
-							);
-						}
-					},
+					(curr, base, existenceState) => curr,
 					genId,
 					newCrossFieldManager(crossFieldTable, field),
 					rebaseMetadata,
@@ -777,15 +770,10 @@ export class ModularChangeFamily
 				baseChild: NodeId | undefined,
 				stateChange: NodeExistenceState | undefined,
 			) => {
-				if (child !== undefined && baseChild !== undefined) {
-					setInNestedMap(
-						crossFieldTable.nodeIdMapping,
-						child.revision,
-						child.localId,
-						baseChild,
-					);
-				}
+				const taggedBase =
+					baseChild !== undefined ? tagChange(baseChild, over.revision) : undefined;
 
+				crossFieldTable.nodeIdPairs.push([child, taggedBase]);
 				return child ?? baseChild;
 			};
 
@@ -1370,7 +1358,10 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 */
 	rebasedNodeCache: Map<NodeChangeset, NodeChangeset>;
 
-	nodeIdMapping: ChangeAtomIdMap<NodeId>;
+	/**
+	 * List of (newId, baseId) pairs encountered so far.
+	 */
+	nodeIdPairs: [NodeId | undefined, TaggedChange<NodeId> | undefined][];
 }
 
 interface RebaseFieldContext {
