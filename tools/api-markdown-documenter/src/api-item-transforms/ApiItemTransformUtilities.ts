@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import * as Path from "node:path";
 
 import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";

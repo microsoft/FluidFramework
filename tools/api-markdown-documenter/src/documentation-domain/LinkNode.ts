@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { type Link, type UrlTarget } from "../Link.js";
 import {
 	DocumentationParentNodeBase,

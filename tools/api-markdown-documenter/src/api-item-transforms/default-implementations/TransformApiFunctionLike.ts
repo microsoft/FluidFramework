@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { type SectionNode } from "../../documentation-domain/index.js";
 import { type ApiFunctionLike } from "../../utilities/index.js";
 import { type ApiItemTransformationConfiguration } from "../configuration/index.js";

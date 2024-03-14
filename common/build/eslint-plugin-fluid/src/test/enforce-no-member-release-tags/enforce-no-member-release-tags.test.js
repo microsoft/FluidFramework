@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");

@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
 import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain/index.js";

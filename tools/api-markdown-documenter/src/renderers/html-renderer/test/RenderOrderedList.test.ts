@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { expect } from "chai";
 
 import { OrderedListNode } from "../../../documentation-domain/index.js";
