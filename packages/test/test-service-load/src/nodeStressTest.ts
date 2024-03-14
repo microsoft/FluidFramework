@@ -13,8 +13,8 @@ import {
 	ITestDriver,
 } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoadTestConfig } from "./testConfigFile.js";
-import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
+import { ILoadTestConfig } from "./testConfigFile";
+import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:

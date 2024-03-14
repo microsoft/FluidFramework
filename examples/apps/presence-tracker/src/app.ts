@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import { ITrackerAppModel, TrackerContainerRuntimeFactory } from "./containerCode.js";
 import { renderFocusPresence, renderMousePresence } from "./view.js";

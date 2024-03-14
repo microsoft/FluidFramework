@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import type {
