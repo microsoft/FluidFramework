@@ -36,7 +36,9 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json && tsc --project ./src/test/tsconfig.cjs.json",
+		"build:test": "npm run build:test:jest && npm run build:test:mocha",
+		"build:test:mocha": "tsc --project ./src/screenshot-tests/tsconfig.json",
+		"build:test:jest": "tsc --project ./src/test/tsconfig.json",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -149,7 +151,11 @@
 					"api-extractor:commonjs"
 				],
 				"script": false
-			}
+			},
+			"build:test:mocha": [
+				"...",
+				"build:test:jest"
+			]
 		}
 	},
 	"typeValidation": {
