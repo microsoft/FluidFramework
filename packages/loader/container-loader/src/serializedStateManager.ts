@@ -4,6 +4,7 @@
  */
 
 import {
+	IDocumentAttributes,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
@@ -35,29 +36,48 @@ export class SerializedStateManager {
 		  }
 		| undefined;
 	private readonly mc: MonitoringContext;
+	private supportGetSnapshotApi: boolean = false;
+	private fetching: boolean = false;
 
 	constructor(
-		private readonly pendingLocalState: IPendingContainerState | undefined,
+		pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
 		private readonly storageAdapter: Pick<
 			IDocumentStorageService,
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
+		private readonly getDocumentAttributes: (
+			storage,
+			tree: ISnapshotTree,
+		) => Promise<IDocumentAttributes>,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
 			namespace: "serializedStateManager",
 		});
+		if (pendingLocalState /* && _offlineLoadEnabled */) {
+			this.snapshot = {
+				tree: pendingLocalState.baseSnapshot,
+				blobs: pendingLocalState.snapshotBlobs,
+			};
+		}
 	}
 
 	public get offlineLoadEnabled(): boolean {
 		return this._offlineLoadEnabled;
 	}
 
+	private refreshRequired() {
+		return this.processedOps.length > 100;
+	}
+
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
+			if (this.refreshRequired()) {
+				this.refreshSerializedAttributes();
+			}
 		}
 	}
 
@@ -68,29 +88,28 @@ export class SerializedStateManager {
 
 	public async fetchSnapshot(
 		specifiedVersion: string | undefined,
-		supportGetSnapshotApi: boolean | undefined,
+		supportGetSnapshotApi: boolean,
 	) {
-		const { snapshot, version } =
-			this.pendingLocalState === undefined
-				? await this.fetchSnapshotCore(specifiedVersion, supportGetSnapshotApi)
-				: { snapshot: this.pendingLocalState.baseSnapshot, version: undefined };
-		const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-			? snapshot.snapshotTree
-			: snapshot;
-		if (this.pendingLocalState) {
-			this.snapshot = {
-				tree: this.pendingLocalState.baseSnapshot,
-				blobs: this.pendingLocalState.snapshotBlobs,
-			};
-		} else {
-			assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
-			// non-interactive clients will not have any pending state we want to save
+		this.supportGetSnapshotApi = supportGetSnapshotApi;
+		if (this.snapshot === undefined) {
+			const { snapshot, version } = await this.fetchSnapshotCore(
+				specifiedVersion,
+				supportGetSnapshotApi,
+			);
+			const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+				? snapshot.snapshotTree
+				: snapshot;
+			assert(snapshotTree !== undefined, "Snapshot should exist");
 			if (this.offlineLoadEnabled) {
 				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
 				this.snapshot = { tree: snapshotTree, blobs };
 			}
+			return { snapshotTree, version };
+		} else {
+			// kick off refresh process in the background.
+			this.refreshSerializedAttributes();
+			return { snapshotTree: this.snapshot.tree, version: undefined };
 		}
-		return { snapshotTree, version };
 	}
 
 	private async fetchSnapshotCore(
@@ -161,20 +180,95 @@ export class SerializedStateManager {
 		return { snapshot, version };
 	}
 
+	private refreshSerializedAttributes() {
+		if (!this.fetching) {
+			this.fetching = true;
+			this.fetchSnapshotCore(undefined, this.supportGetSnapshotApi)
+				.then(async ({ snapshot }) => {
+					const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+						? snapshot.snapshotTree
+						: snapshot;
+					assert(snapshotTree !== undefined, "Snapshot should exist");
+					const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
+
+					const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+						this.storageAdapter,
+						snapshotTree,
+					);
+					if (this.processedOps.length === 0) {
+						this.snapshot = { tree: snapshotTree, blobs };
+						return;
+					}
+					const snapshotSN = attributes.sequenceNumber;
+					const firstSavedOpSN = this.processedOps[0].sequenceNumber;
+					const lastSavedOpSN =
+						this.processedOps[this.processedOps.length - 1].sequenceNumber;
+
+					if (snapshotSN < firstSavedOpSN - 1) {
+						this.mc.logger.sendErrorEvent({
+							eventName: "Old_Snapshot_Fetch_While_Refresing",
+							snapshotSequenceNumber: snapshotSN,
+							firstProcessedOpSequenceNumber: firstSavedOpSN,
+						});
+						throw new Error("Fetched snapshot is not latest available");
+					} else if (snapshotSN === firstSavedOpSN - 1) {
+						// Snapshot is exactly one less than the first processed op sequence number.
+						// Meaning new snapshot is the same as before refreshing. Do nothing.
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "Previous_Snapshot_Fetch_While_Refreshing",
+							snapshotSequenceNumber: snapshotSN,
+							firstProcessedOpSequenceNumber: firstSavedOpSN,
+						});
+						return;
+					} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
+						// Snapshot is between the first and last saved operation.
+						console.log("SNAPSHOT REFRESHHHHHHHHHHHHHHH");
+						this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+						this.snapshot = { tree: snapshotTree, blobs };
+					} else {
+						// snapshotSN > lastSavedOpSN
+						// Snapshot is newer than the newest processed op.
+						// We need to wait and catch up with ops to reach the snapshot's state.
+						// addProcessedOps will kick the refresh process later
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "New_Snapshot_Fetch_While_Refresh",
+							snapshotSequenceNumber: snapshotSN,
+							firstProcessedOpSequenceNumber: firstSavedOpSN,
+						});
+						console.log("Snapshot didn't refresh RRRRRRRRRR");
+					}
+				})
+				.catch((error) => {
+					console.log("SNAPSHOT REFRESH ERRORRRRRRRR", error);
+					// Ignore errors for current attempt as addProcessedOps will retry again eventually
+					// this.mc.logger.sendErrorEvent(
+					// 	{
+					// 		eventName: "Could_Not_Refresh_Snapshot",
+					// 	},
+					// 	error,
+					// );
+				})
+				.finally(() => {
+					// Once the fetch is complete, reset this.fetching
+					this.fetching = false;
+				});
+		}
+	}
 	/**
-	 * This method is only meant to be used by Container.attach() to set the initial
-	 * base snapshot when attaching.
-	 * @param snapshot - snapshot and blobs collected while attaching
+	 * This method is only meant to be used by Container.attach() to set initial
+	 * properties required in this class but are gotten after attaching.
 	 */
-	public setSnapshot(
+	public setAfterAttachProperties(
 		snapshot:
 			| {
 					tree: ISnapshotTree;
 					blobs: ISerializableBlobContents;
 			  }
 			| undefined,
+		supportGetSnapshotApi: boolean,
 	) {
 		this.snapshot = snapshot;
+		this.supportGetSnapshotApi = supportGetSnapshotApi;
 	}
 
 	public async getPendingLocalStateCore(
@@ -188,7 +282,7 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				notifyImminentClosure: props.notifyImminentClosure,
-				processedOpsSize: this.processedOps.length,
+				savedOpsSize: this.processedOps.length,
 				clientId,
 			},
 			async () => {
