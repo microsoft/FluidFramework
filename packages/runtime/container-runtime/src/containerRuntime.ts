@@ -2410,6 +2410,15 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
+			// See commit that added this assert for more details.
+			// These calls should be made for all but chunked ops:
+			// 1) this.pendingStateManager.processPendingLocalMessage() below
+			// 2) this.resetReconnectCount() below
+			assert(
+				message.type !== ContainerMessageType.ChunkedOp,
+				"we should never get here with chunked ops",
+			);
+
 			let localOpMetadata: unknown;
 			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
