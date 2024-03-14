@@ -44,8 +44,8 @@ import {
 } from "@fluidframework/runtime-definitions";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { v4 as uuid } from "uuid";
-import { MockDeltaManager } from "./mockDeltas";
-import { MockHandle } from "./mockHandle";
+import { MockDeltaManager } from "./mockDeltas.js";
+import { MockHandle } from "./mockHandle.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing

@@ -9,7 +9,7 @@ import {
 	IPropertyTreeMessage,
 	IRemotePropertyTreeMessage,
 	OpKind,
-} from "../propertyTree";
+} from "../propertyTree.js";
 
 describe("PropertyTree", () => {
 	describe("Pruning History", () => {
