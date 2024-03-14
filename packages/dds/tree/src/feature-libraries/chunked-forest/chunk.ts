@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	CursorLocationType,
+	FieldKey,
 	ITreeCursor,
 	ITreeCursorSynchronous,
-	FieldKey,
 	rootFieldKey,
 } from "../../core/index.js";
 import { ReferenceCounted } from "../../util/index.js";

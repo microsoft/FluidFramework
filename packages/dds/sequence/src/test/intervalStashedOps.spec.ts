@@ -6,18 +6,18 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IntervalType } from "@fluidframework/sequence-previous";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalType } from "@fluidframework/sequence-previous";
-import { AttachState } from "@fluidframework/container-definitions";
-import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
 import { IIntervalCollection } from "../intervalCollection.js";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
+import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 const assertIntervals = (
 	sharedString: SharedString,

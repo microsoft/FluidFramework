@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { Client } from "@fluidframework/merge-tree";
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -12,14 +13,13 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { Client } from "@fluidframework/merge-tree";
+import { IIntervalCollection } from "../intervalCollection.js";
+import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";
+import { Interval, intervalHelpers } from "../intervals/index.js";
 import {
 	SharedIntervalCollection,
 	SharedIntervalCollectionFactory,
 } from "../sharedIntervalCollection.js";
-import { IIntervalCollection } from "../intervalCollection.js";
-import { Interval, intervalHelpers } from "../intervals/index.js";
-import { IOverlappingIntervalsIndex, OverlappingIntervalsIndex } from "../intervalIndex/index.js";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,

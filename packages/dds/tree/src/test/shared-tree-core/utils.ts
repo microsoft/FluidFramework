@@ -5,7 +5,8 @@
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
+import { ICodecOptions } from "../../codec/index.js";
+import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
@@ -15,9 +16,8 @@ import {
 	defaultSchemaPolicy,
 	makeFieldBatchCodec,
 } from "../../feature-libraries/index.js";
+import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
 import { testRevisionTagCodec } from "../utils.js";
-import { ICodecOptions } from "../../codec/index.js";
-import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
 
 /**
  * A `SharedTreeCore` with

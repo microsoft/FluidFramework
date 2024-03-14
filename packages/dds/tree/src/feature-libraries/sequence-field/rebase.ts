@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -12,6 +11,7 @@ import {
 	RevisionTag,
 	TaggedChange,
 } from "../../core/index.js";
+import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
@@ -19,63 +19,63 @@ import {
 	RebaseRevisionMetadata,
 	getIntention,
 } from "../modular-schema/index.js";
-import {
-	isDetach,
-	cloneMark,
-	areInputCellsEmpty,
-	markEmptiesCells,
-	markFillsCells,
-	getOffsetInCellRange,
-	compareLineages,
-	withNodeChange,
-	cloneCellId,
-	areOutputCellsEmpty,
-	isNewAttach,
-	getInputCellId,
-	isAttachAndDetachEffect,
-	getEndpoint,
-	isAttach,
-	compareCellsFromSameRevision,
-	cellSourcesFromMarks,
-	isTombstone,
-	compareCellPositionsUsingTombstones,
-	isImpactfulCellRename,
-	CellOrder,
-	getDetachIdForLineage,
-	getDetachOutputId,
-	splitMarkEffect,
-	extractMarkEffect,
-} from "./utils.js";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	NoopMark,
-	MoveId,
-	NoopMarkType,
-	HasLineage,
-	IdRange,
-	CellMark,
-	CellId,
-	MarkEffect,
-	MoveOut,
-	MoveIn,
-	LineageEvent,
-} from "./types.js";
-import { MarkListFactory } from "./markListFactory.js";
-import {
-	getMoveEffect,
-	setMoveEffect,
-	isMoveMark,
-	MoveEffect,
-	MoveEffectTable,
-	isMoveOut,
-	isMoveIn,
-} from "./moveEffectTable.js";
-import { MarkQueue } from "./markQueue.js";
-import { EmptyInputCellMark } from "./helperTypes.js";
 import { CellOrderingMethod, sequenceConfig } from "./config.js";
 import { DetachIdOverrideType } from "./format.js";
+import { EmptyInputCellMark } from "./helperTypes.js";
+import { MarkListFactory } from "./markListFactory.js";
+import { MarkQueue } from "./markQueue.js";
+import {
+	MoveEffect,
+	MoveEffectTable,
+	getMoveEffect,
+	isMoveIn,
+	isMoveMark,
+	isMoveOut,
+	setMoveEffect,
+} from "./moveEffectTable.js";
+import {
+	CellId,
+	CellMark,
+	Changeset,
+	HasLineage,
+	IdRange,
+	LineageEvent,
+	Mark,
+	MarkEffect,
+	MarkList,
+	MoveId,
+	MoveIn,
+	MoveOut,
+	NoopMark,
+	NoopMarkType,
+} from "./types.js";
+import {
+	CellOrder,
+	areInputCellsEmpty,
+	areOutputCellsEmpty,
+	cellSourcesFromMarks,
+	cloneCellId,
+	cloneMark,
+	compareCellPositionsUsingTombstones,
+	compareCellsFromSameRevision,
+	compareLineages,
+	extractMarkEffect,
+	getDetachIdForLineage,
+	getDetachOutputId,
+	getEndpoint,
+	getInputCellId,
+	getOffsetInCellRange,
+	isAttach,
+	isAttachAndDetachEffect,
+	isDetach,
+	isImpactfulCellRename,
+	isNewAttach,
+	isTombstone,
+	markEmptiesCells,
+	markFillsCells,
+	splitMarkEffect,
+	withNodeChange,
+} from "./utils.js";
 
 /**
  * Rebases `change` over `base` assuming they both apply to the same initial state.

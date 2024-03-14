@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import {
-	TreeStoredSchema,
-	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	schemaFormat,
 	BrandedTreeNodeSchemaDataFormat,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchema,
+	schemaFormat,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, fail, fromErased } from "../../util/index.js";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { Format } from "./format.js";
 
 export function encodeRepo(repo: TreeStoredSchema): Format {
