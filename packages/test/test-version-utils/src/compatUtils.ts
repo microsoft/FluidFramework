@@ -291,12 +291,21 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 
 	// We want to ensure that we are testing all latest rutime features, but only if both runtimes
 	// (one that creates containers and one that loads them) are supported them.
-	// Ideally, we should use runtime options config that is defined by min version of the two runtimes.
-	// But it should be totally fine to use runtime options supported/defied by containerRuntimeForLoading.
-	// If higher version then containerRuntime, then we will pass configs to containerRuntime that it does not
-	// understand, and it will simply ignore them.
+	//
+	// Theoretically it should be fine to use config for apis.containerRuntimeForLoading?.version.
+	// If it's higher then apis.containerRuntime, then unknown to lower version of apis.containerRuntime
+	// would be ignored.
+	// 
+	// But TestObjectProviderWithVersionedLoad.createLoader() implementation is dumb - it resets this.useCreateApi
+	// on first call and thus uses apis.containerRuntimeForLoading for any container created after.
+	// Many use non-first container instance to send ops, so that screws things up.
+	//
+	// As result, we absolutly need to use the min between two versions!
 	const versionForLoading = apis.containerRuntimeForLoading?.version;
 	assert(versionForLoading !== undefined, "versionForLoading");
+	const versionForCreating = apis.containerRuntime?.version;
+	assert(versionForCreating !== undefined, "versionForLoading");
+	const minVersion =  versionForLoading.localeCompare(versionForCreating) < 0 ? versionForLoading : versionForCreating;
 
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
@@ -306,7 +315,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(versionForLoading, containerOptions?.runtimeOptions),
+			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);
 	};
@@ -323,7 +332,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			TestDataObjectType,
 			dataStoreFactory,
 			// containerOptions?.runtimeOptions,
-			filterRuntimeOptionsForVersion(versionForLoading, containerOptions?.runtimeOptions),
+			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);
 	};
