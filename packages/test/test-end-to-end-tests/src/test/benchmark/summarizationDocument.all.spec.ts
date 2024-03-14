@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { delay } from "@fluidframework/core-utils";

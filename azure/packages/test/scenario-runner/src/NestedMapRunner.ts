@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ConnectionState } from "@fluidframework/container-loader";
 import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { AzureClient } from "@fluidframework/azure-client";

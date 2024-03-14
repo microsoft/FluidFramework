@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { benchmark } from "@fluid-tools/benchmark";

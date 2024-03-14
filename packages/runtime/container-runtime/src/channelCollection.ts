@@ -739,7 +739,7 @@ export class ChannelCollection
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.reSubmitChannelOp(type, content, localOpMetadata);
 			default:
-				assert(false, "unknown op type");
+				assert(false, 0x907 /* unknown op type */);
 		}
 	}
 
@@ -790,7 +790,7 @@ export class ChannelCollection
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.applyStashedChannelChannelOp(opContents.contents);
 			default:
-				assert(false, "unknon type of op");
+				assert(false, 0x908 /* unknon type of op */);
 		}
 	}
 
