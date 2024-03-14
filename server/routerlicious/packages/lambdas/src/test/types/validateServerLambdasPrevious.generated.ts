@@ -417,6 +417,7 @@ declare function get_old_InterfaceDeclaration_ISummaryReader():
 declare function use_current_InterfaceDeclaration_ISummaryReader(
     use: TypeOnly<current.ISummaryReader>): void;
 use_current_InterfaceDeclaration_ISummaryReader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummaryReader());
 
 /*
@@ -681,6 +682,7 @@ declare function get_old_ClassDeclaration_SummaryReader():
 declare function use_current_ClassDeclaration_SummaryReader(
     use: TypeOnly<current.SummaryReader>): void;
 use_current_ClassDeclaration_SummaryReader(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SummaryReader());
 
 /*

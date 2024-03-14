@@ -11,7 +11,6 @@ export interface IWebhookManager {
 	unsubscribe(url: string, event: WebhookEvent): void;
 	handleEvent(event: string, payload: IWebhookEventPayload): void;
 	getSubscriptions(eventName: WebhookEvent): Set<string>;
-	getLatestSummary(tenantId: string, documentId: string): Promise<string>;
 }
 
 /**

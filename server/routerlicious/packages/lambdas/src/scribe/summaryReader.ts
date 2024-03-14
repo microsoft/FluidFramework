@@ -43,6 +43,26 @@ export class SummaryReader implements ISummaryReader {
 		this.lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 	}
 
+	public async getLastWholeFlatSummary() {
+		if (this.enableWholeSummaryUpload) {
+			try {
+				const wholeFlatSummary = await requestWithRetry(
+					async () => this.summaryStorage.getSummary(LatestSummaryId),
+					"readWholeSummary_getSummary",
+					this.lumberProperties,
+					shouldRetryNetworkError,
+					this.maxRetriesOnError,
+				);
+				return wholeFlatSummary;
+			} catch (error) {
+				console.log(`Error reading latest whole flat summary`);
+			}
+		} else {
+			console.error(`Whole summary upload is not enabled.`);
+			return undefined;
+		}
+	}
+
 	/**
 	 * Reads the most recent version of summary for a document. In case the storage is having trouble processing the
 	 * request, returns a set of defaults with fromSummary flag set to false.

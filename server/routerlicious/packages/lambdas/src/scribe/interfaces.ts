@@ -9,6 +9,7 @@ import {
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import type { IWholeFlatSummary } from "@fluidframework/server-services-client";
 import { IScribe, ISequencedOperationMessage } from "@fluidframework/server-services-core";
 
 /**
@@ -35,6 +36,7 @@ export interface ILatestSummaryState {
  */
 export interface ISummaryReader {
 	readLastSummary(): Promise<ILatestSummaryState>;
+	getLastWholeFlatSummary(): Promise<IWholeFlatSummary | undefined>;
 }
 
 /**

@@ -50,7 +50,12 @@ import {
 	IServerMetadata,
 	DocumentCheckpointManager,
 } from "../utils";
-import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
+import {
+	ICheckpointManager,
+	IPendingMessageReader,
+	ISummaryWriter,
+	type ISummaryReader,
+} from "./interfaces";
 import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 
 /**
@@ -120,6 +125,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly isEphemeralContainer: boolean,
 		private readonly localCheckpointEnabled: boolean,
 		private readonly maxPendingCheckpointMessagesLength: number,
+		private readonly summaryReader?: ISummaryReader,
 		private readonly webhookManager?: IWebhookManager,
 	) {
 		this.lastOffset = scribe.logOffset;
@@ -289,48 +295,36 @@ export class ScribeLambda implements IPartitionLambda {
 												tenantId: this.tenantId,
 											},
 										});
+										let messages;
+										if (this.summaryReader) {
+											const summary =
+												await this.summaryReader.getLastWholeFlatSummary();
+											if (summary?.blobs) {
+												messages = summary.blobs
+													.filter(
+														(e) =>
+															e.content.includes("blobs") &&
+															e.content.includes("content"),
+													)
+													.map((e) => {
+														return e.content;
+													});
+											}
+										}
+										this.webhookManager?.handleEvent(
+											SummaryWebhookEvents.NEW_SUMMARY_CREATED,
+											{
+												eventName: SummaryWebhookEvents.NEW_SUMMARY_CREATED,
+												tenantId: this.tenantId,
+												documentId: this.documentId,
+												summaryResult,
+												messages,
+											},
+										);
 										Lumberjack.info(
 											summaryResult,
 											getLumberBaseProperties(this.documentId, this.tenantId),
 										);
-
-										let messages;
-										try {
-											messages = await this.webhookManager?.getLatestSummary(
-												this.tenantId,
-												this.documentId,
-											);
-										} catch (error) {
-											Lumberjack.error(
-												`Error getting latest summary.`,
-												getLumberBaseProperties(
-													this.documentId,
-													this.tenantId,
-												),
-												error,
-											);
-										}
-										try {
-											this.webhookManager?.handleEvent(
-												SummaryWebhookEvents.NEW_SUMMARY_CREATED,
-												{
-													eventName:
-														SummaryWebhookEvents.NEW_SUMMARY_CREATED,
-													tenantId: this.tenantId,
-													documentId: this.documentId,
-													summaryResult,
-													messages: messages ?? "No data found",
-												},
-											);
-										} catch (error) {
-											Lumberjack.error(
-												`Error sending event: NEW_SUMMARY_CREATED.`,
-												getLumberBaseProperties(
-													this.documentId,
-													this.tenantId,
-												),
-											);
-										}
 									} else {
 										const nackMessage = summaryResponse.message as ISummaryNack;
 										await this.sendSummaryNack(nackMessage);
@@ -626,9 +620,6 @@ export class ScribeLambda implements IPartitionLambda {
 							`Adding client to quorum: ${clientId}`,
 							getLumberBaseProperties(this.documentId, this.tenantId),
 						);
-					}
-					this.protocolHandler.processMessage(clonedMessage, false);
-					if (message.type === MessageType.ClientJoin) {
 						this.webhookManager?.handleEvent(
 							CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
 							{
@@ -641,6 +632,7 @@ export class ScribeLambda implements IPartitionLambda {
 							},
 						);
 					}
+					this.protocolHandler.processMessage(clonedMessage, false);
 				} else {
 					let clientId;
 					if (message.type === MessageType.ClientLeave) {
@@ -650,9 +642,6 @@ export class ScribeLambda implements IPartitionLambda {
 							`Removing client from quorum: ${clientId}`,
 							getLumberBaseProperties(this.documentId, this.tenantId),
 						);
-					}
-					this.protocolHandler.processMessage(message, false);
-					if (message.type === MessageType.ClientLeave) {
 						this.webhookManager?.handleEvent(
 							CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE,
 							{
@@ -665,6 +654,7 @@ export class ScribeLambda implements IPartitionLambda {
 							},
 						);
 					}
+					this.protocolHandler.processMessage(message, false);
 				}
 			} catch (error) {
 				// We should mark the document as corrupt here

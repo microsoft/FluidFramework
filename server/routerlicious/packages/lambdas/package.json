@@ -107,6 +107,12 @@
 			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISummaryReader": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SummaryReader": {
+				"forwardCompat": false
 			}
 		}
 	}

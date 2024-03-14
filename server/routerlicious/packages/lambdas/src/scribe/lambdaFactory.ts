@@ -332,6 +332,7 @@ export class ScribeLambdaFactory
 			document.isEphemeralContainer ?? false,
 			this.checkpointService.getLocalCheckpointEnabled(),
 			this.maxPendingCheckpointMessagesLength,
+			summaryReader,
 			this.webhookManager,
 		);
 

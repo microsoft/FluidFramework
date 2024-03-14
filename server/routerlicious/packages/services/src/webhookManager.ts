@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { ScopeType } from "@fluidframework/protocol-definitions";
-import { BasicRestWrapper, generateToken } from "@fluidframework/server-services-client";
-import { IWebhookManager, type ITenantManager } from "@fluidframework/server-services-core";
-import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { IWebhookManager } from "@fluidframework/server-services-core";
 import axios from "axios";
 
 /**
@@ -16,13 +12,9 @@ import axios from "axios";
 export class WebhookManager implements IWebhookManager {
 	// Map of webhook event names to URL's (webhooks)
 	private readonly eventSubscriptions: Map<string, Set<string>>;
-	private readonly internalHistorianUrl: string;
-	private readonly tenantManager: ITenantManager;
 
-	constructor(historianUrl: string, tenantManager: ITenantManager) {
+	constructor() {
 		this.eventSubscriptions = new Map();
-		this.internalHistorianUrl = historianUrl;
-		this.tenantManager = tenantManager;
 	}
 
 	public getSubscriptions(eventName: string): Set<string> {
@@ -65,53 +57,5 @@ export class WebhookManager implements IWebhookManager {
 				);
 			}
 		}
-	}
-
-	public async getLatestSummary(tenantId: string, documentId: string): Promise<string> {
-		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
-		const requestUrl = `/repos/${tenantId}/git/summaries/latest?disableCache=true`;
-
-		try {
-			const response = await restWrapper.get<any>(requestUrl);
-			const messages = response.data?.blobs
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				.filter((e) => e.content.includes("blobs") && e.content.includes("content"))
-				.map((e) => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					return e.content;
-				});
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return messages ?? "No Data";
-		} catch (error) {
-			console.log(`Error getting latest summary. ${JSON.stringify(error).substring(0, 300)}`);
-		}
-	}
-
-	private async getBasicRestWrapper(tenantId: string, documentId: string) {
-		const key = await this.tenantManager.getKey(tenantId);
-
-		const defaultQueryString = {
-			token: fromUtf8ToBase64(`${tenantId}`),
-		};
-		const getDefaultHeaders = () => {
-			const jwtToken = generateToken(tenantId, documentId, key, [ScopeType.DocRead]);
-			return {
-				Authorization: `Basic ${jwtToken}`,
-			};
-		};
-
-		const restWrapper = new BasicRestWrapper(
-			this.internalHistorianUrl,
-			defaultQueryString /* defaultQueryString */,
-			undefined /* maxBodyLength */,
-			undefined /* maxContentLength */,
-			getDefaultHeaders(),
-			undefined /* Axios */,
-			undefined /* refreshDefaultQueryString */,
-			getDefaultHeaders /* refreshDefaultHeaders */,
-			getCorrelationId /* getCorrelationId */,
-		);
-		return restWrapper;
 	}
 }
