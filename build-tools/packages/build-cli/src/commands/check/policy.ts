@@ -9,7 +9,9 @@ import * as path from "node:path";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
 
-import { loadFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
+import { loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { Handler } from "../../library/repoPolicyCheck/common";
+import { policyHandlers } from "../../library/repoPolicyCheck/handlers";
 
 import { BaseCommand } from "../../base";
 import { Context, Repository } from "../../library";

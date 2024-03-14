@@ -11,10 +11,14 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import { loadFluidBuildConfig } from "../../common/fluidUtils";
+import { 
+	PackageJson, 
+	updatePackageJsonFile, 
+	loadFluidBuildConfig, 
+	PackageNamePolicyConfig, 
+	ScriptRequirement 
+} from "@fluidframework/build-tools";
 import { Handler, readFile, writeFile } from "../common";
-import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -436,7 +440,7 @@ function quoteAndEscapeArgsForUniversalCommandLine(
  * @param parsedArg - one result from parseArgs
  * @returns preferred string to use within a command script string
  */
-function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) {
+function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg): string {
 	// Check for exactly `&&` or `|`.
 	if (arg === "&&" || arg === "|") {
 		// Use quoting if original had any quoting.
@@ -1181,7 +1185,7 @@ export const handlers: Handler[] = [
 				return `Unexpected reporters in '${jestConfigFile}'`;
 			}
 
-			if (json["jest-junit"] !== undefined) {
+			if ((json as any)["jest-junit"] !== undefined) {
 				return `Extraneous jest-unit config in ${file}`;
 			}
 		},
@@ -1345,7 +1349,7 @@ export const handlers: Handler[] = [
 				return "Missing 'exports' field in package.json.";
 			}
 
-			const exportsRoot = exportsField?.["."];
+			const exportsRoot = (exportsField as any)?.["."];
 			if (exportsRoot === undefined) {
 				return "Missing '.' entry in 'exports' field in package.json.";
 			}

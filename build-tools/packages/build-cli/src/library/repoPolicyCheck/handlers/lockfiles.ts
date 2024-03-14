@@ -6,8 +6,7 @@
 import { unlinkSync } from "fs";
 import path from "path";
 
-import { IFluidBuildConfig, IFluidRepoPackageEntry } from "../../common/fluidRepo";
-import { loadFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig, IFluidBuildConfig } from "@fluidframework/build-tools";
 import { Handler, readFile } from "../common";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
@@ -34,7 +33,7 @@ const getKnownPaths = (manifest: IFluidBuildConfig) => {
 			// Add paths from entries that are arrays
 			const arrayVals = Object.values(manifest.repoPackages).filter(
 				(p) => typeof p !== "string",
-			) as IFluidRepoPackageEntry[];
+			);
 			for (const arr of arrayVals) {
 				if (Array.isArray(arr)) {
 					_knownPaths.push(...arr.map((p) => p.toString()));

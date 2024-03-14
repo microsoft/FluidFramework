@@ -7,15 +7,13 @@ import fs from "fs";
 import path from "path";
 import * as JSON5 from "json5";
 import * as semver from "semver";
-import { Package, PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import {
+import { Package, PackageJson, updatePackageJsonFile,
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
-} from "../../common/fluidTaskDefinitions";
-import { getEsLintConfigFilePath } from "../../common/taskUtils";
-import { FluidRepo } from "../../common/fluidRepo";
-import { loadFluidBuildConfig } from "../../common/fluidUtils";
-import * as TscUtils from "../../common/tscUtils";
+	getEsLintConfigFilePath,
+	FluidRepo, loadFluidBuildConfig,
+	TscUtils
+ } from "@fluidframework/build-tools";
 import { Handler, readFile } from "../common";
 
 /**
@@ -244,7 +242,7 @@ function eslintGetScriptDependencies(
 	packageDir: string,
 	root: string,
 	json: PackageJson,
-): string[] {
+): (string | string[])[] {
 	if (json.scripts?.["eslint"] === undefined) {
 		return [];
 	}
@@ -271,7 +269,7 @@ function eslintGetScriptDependencies(
 		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${e}`);
 	}
 
-	let projects = config.parserOptions?.project;
+	let projects: string | string[] | undefined = config.parserOptions?.project;
 	if (projects === undefined) {
 		// If we don't have projects, our task needs to have dependent build scripts
 		return getDefaultTscTaskDependencies(root, json);
@@ -522,10 +520,9 @@ export const handlers: Handler[] = [
 
 			if (!isFluidBuildEnabled(root, json)) {
 				return;
-			}
-			let scriptDeps: string[];
+			}			
 			try {
-				scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+				const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
 			} catch (e: any) {
 				return e.message;
@@ -536,10 +533,9 @@ export const handlers: Handler[] = [
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
-				}
-				let scriptDeps: string[];
+				}				
 				try {
-					scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+					const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
 				} catch (e: any) {
 					result = { resolved: false, message: e.message };

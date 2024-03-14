@@ -15,7 +15,7 @@ import {
 	packagePublishesToFeed,
 	feeds,
 	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
-} from "@fluidframework/build-tools/dist/repoPolicyCheck/handlers/npmPackages";
+} from "../library/repoPolicyCheck/handlers/npmPackages";
 import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { writeFileSync } from "node:fs";
 

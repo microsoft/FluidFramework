@@ -17,11 +17,20 @@ export {
 	updatePackageJsonFile,
 } from "./common/npmPackage";
 export { Timer } from "./common/timer";
-export { type Handler } from "./repoPolicyCheck/common";
-export { policyHandlers } from "./repoPolicyCheck/handlers";
 export type {
 	IFluidBuildConfig,
 	PackageNamePolicyConfig,
 	PolicyConfig,
 	PreviousVersionStyle,
+	ScriptRequirement,
 } from "./common/fluidRepo";
+
+// For repo policy check
+export {
+	normalizeGlobalTaskDefinitions,
+	getTaskDefinitions,
+} from "./common/fluidTaskDefinitions";
+export {
+	getEsLintConfigFilePath,	
+} from "./common/taskUtils";
+export * as TscUtils from "./common/tscUtils";
