@@ -8,6 +8,7 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { createChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
+/** @internal */
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
 	private readonly notBoundContexts = new Set<string>();
 

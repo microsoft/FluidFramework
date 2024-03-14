@@ -7,7 +7,6 @@ import * as path from "path";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
-	ReleaseVersion,
 	VersionBumpType,
 } from "@fluid-tools/version-tools";
 
@@ -417,21 +416,4 @@ export class FluidRepo {
 		// Replace \ in result with / in case OS is Windows.
 		return path.relative(this.resolvedRoot, p).replace(/\\/g, "/");
 	}
-}
-
-/**
- * Represents a release version and its release date, if applicable.
- *
- * @internal
- */
-export interface VersionDetails {
-	/**
-	 * The version of the release.
-	 */
-	version: ReleaseVersion;
-
-	/**
-	 * The date the version was released, if applicable.
-	 */
-	date?: Date;
 }

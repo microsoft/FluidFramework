@@ -479,6 +479,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
@@ -1569,7 +1570,10 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: this.reSubmit.bind(this),
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -1793,8 +1797,13 @@ export class ContainerRuntime
 		return this.summarizerNode.deleteChild(id);
 	}
 
+	/* IFluidParentContext APIs that should not be called on Root */
 	public makeLocallyVisible() {
 		assert(false, 0x8eb /* should not be called */);
+	}
+
+	public setChannelDirty(address: string) {
+		assert(false, "should not be called");
 	}
 
 	/**
@@ -2144,14 +2153,8 @@ export class ContainerRuntime
 		return this.consecutiveReconnects < this.maxConsecutiveReconnects;
 	}
 
-	private resetReconnectCount(message?: ISequencedDocumentMessage) {
-		// Chunked ops don't count towards making progress as they are sent
-		// in their own batches before the originating batch is sent.
-		// Therefore, receiving them while attempting to send the originating batch
-		// does not mean that the container is making any progress.
-		if (message?.type !== ContainerMessageType.ChunkedOp) {
-			this.consecutiveReconnects = 0;
-		}
+	private resetReconnectCount() {
+		this.consecutiveReconnects = 0;
 	}
 
 	private replayPendingStates() {
@@ -2407,12 +2410,17 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
+			// See commit that added this assert for more details.
+			// These calls should be made for all but chunked ops:
+			// 1) this.pendingStateManager.processPendingLocalMessage() below
+			// 2) this.resetReconnectCount() below
+			assert(
+				message.type !== ContainerMessageType.ChunkedOp,
+				"we should never get here with chunked ops",
+			);
+
 			let localOpMetadata: unknown;
-			if (
-				local &&
-				messageWithContext.modernRuntimeMessage &&
-				message.type !== ContainerMessageType.ChunkedOp
-			) {
+			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
 				);
@@ -2434,7 +2442,7 @@ export class ContainerRuntime
 				// If we have processed a local op, this means that the container is
 				// making progress and we can reset the counter for how many times
 				// we have consecutively replayed the pending states
-				this.resetReconnectCount(message);
+				this.resetReconnectCount();
 			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
@@ -2490,6 +2498,9 @@ export class ContainerRuntime
 				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
+				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
+				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
+				assert(false, "should not even get here");
 			case ContainerMessageType.Rejoin:
 				break;
 			default: {
@@ -2720,14 +2731,14 @@ export class ContainerRuntime
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.channelCollection.createDetachedDataStoreCore(pkg, loadingGroupId);
+		return this.channelCollection.createDetachedDataStore(pkg, loadingGroupId);
 	}
 
 	public async createDataStore(
 		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
-		const context = this.channelCollection._createFluidDataStoreContext(
+		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
 			undefined, // props
 			loadingGroupId,
@@ -2747,7 +2758,7 @@ export class ContainerRuntime
 		pkg: Readonly<string | string[]>,
 		props?: any,
 	): Promise<IDataStore> {
-		const context = this.channelCollection._createFluidDataStoreContext(
+		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
 			props,
 		);
@@ -2810,6 +2821,7 @@ export class ContainerRuntime
 				}
 				break;
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.GC: {
 				return false;
 			}
@@ -3043,24 +3055,6 @@ export class ContainerRuntime
 
 		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(usedRoutes);
 		this.channelCollection.updateUsedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * This is called to update objects whose routes are unused.
-	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-		this.channelCollection.updateUnusedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * @deprecated Replaced by deleteSweepReadyNodes.
-	 */
-	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
-		throw new Error("deleteUnusedRoutes should not be called");
 	}
 
 	/**

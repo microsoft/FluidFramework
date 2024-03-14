@@ -19,14 +19,10 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { Interval, ISerializableInterval } from "./intervals/index.js";
-import {
-	IntervalCollection,
-	IIntervalCollection,
-	IntervalCollectionValueType,
-} from "./intervalCollection.js";
-import { DefaultMap, IMapOperation } from "./defaultMap.js";
+import { IIntervalCollection, IntervalCollectionValueType } from "./intervalCollection.js";
+import { IntervalCollectionMap, IMapOperation } from "./intervalCollectionMap.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IMapMessageLocalMetadata } from "./defaultMapInterfaces.js";
+import { IMapMessageLocalMetadata } from "./intervalCollectionMapInterfaces.js";
 
 const snapshotFileName = "header";
 
@@ -114,7 +110,7 @@ export class SharedIntervalCollection
 	}
 
 	public readonly [Symbol.toStringTag]: string = "SharedIntervalCollection";
-	private readonly intervalCollections: DefaultMap<IntervalCollection<Interval>>;
+	private readonly intervalCollections: IntervalCollectionMap<Interval>;
 
 	/**
 	 * Constructs a new shared SharedIntervalCollection. If the object is non-local an id and service interfaces will
@@ -122,7 +118,7 @@ export class SharedIntervalCollection
 	 */
 	constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes) {
 		super(id, runtime, attributes, "fluid_sharedIntervalCollection_");
-		this.intervalCollections = new DefaultMap(
+		this.intervalCollections = new IntervalCollectionMap(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),

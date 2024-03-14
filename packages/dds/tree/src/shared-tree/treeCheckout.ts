@@ -25,6 +25,7 @@ import {
 	JsonableTree,
 	RevisionTagCodec,
 	DeltaVisitor,
+	CommitMetadata,
 } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
@@ -64,7 +65,11 @@ export interface CheckoutEvents {
 	 *
 	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	newRevertible(revertible: Revertible): void;
+
+	/**
+	 * {@inheritdoc TreeViewEvents.commitApplied}
+	 */
+	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
 
 	/**
 	 * Fired when a revertible is either reverted or discarded.
@@ -376,8 +381,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("newRevertible", (revertible) => {
-			this.events.emit("newRevertible", revertible);
+		branch.on("commitApplied", (data, getRevertible) => {
+			this.events.emit("commitApplied", data, getRevertible);
 		});
 		branch.on("revertibleDisposed", (revertible, revision) => {
 			// We do not expose the revision in this API

@@ -6,7 +6,7 @@ import { Command } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
-import { Context } from "@fluidframework/build-tools";
+import { Context } from "../library";
 
 import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
