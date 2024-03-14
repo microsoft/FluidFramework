@@ -10,8 +10,19 @@
  */
 
 import base64js from "base64-js";
-import { generateRandomUInt32Array } from "../platform-dependent";
 const UINT_32HASH_PRIME = 16777619;
+
+/**
+ * Create an array with random uint32 values
+ *
+ * @param {number} length - size of a new array
+ * @return {number[]} - an array with random values
+ */
+function generateRandomUInt32Array(length: number) {
+	const array = new Uint32Array(length);
+	globalThis.crypto.getRandomValues(array);
+	return array;
+}
 
 /**
  * Fast high quality 32 bit RNG for consistent GUID.

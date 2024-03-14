@@ -4458,9 +4458,6 @@ importers:
       sinon: 17.0.1
       typescript: 5.1.6
 
-  experimental/PropertyDDS/packages/property-common/platform-dependent:
-    specifiers: {}
-
   experimental/PropertyDDS/packages/property-dds:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
