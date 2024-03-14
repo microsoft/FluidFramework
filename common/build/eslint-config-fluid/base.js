@@ -153,7 +153,7 @@ module.exports = {
 			},
 		],
 		"import/no-unused-modules": "error",
-		"import/order": "error",
+		"import/order": "off",
 
 		// eslint-plugin-unicorn
 		"unicorn/better-regex": "error",
