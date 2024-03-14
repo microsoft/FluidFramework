@@ -9,7 +9,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
-import { IDetachedBlobStorage } from "./index.js";
+import { IDetachedBlobStorage } from "./loader.js";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
 
 /**
