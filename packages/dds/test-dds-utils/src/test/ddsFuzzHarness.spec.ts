@@ -7,43 +7,43 @@ import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import execa from "execa";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	MockContainerRuntimeFactoryForReconnection,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils";
+import execa from "execa";
+import { type Client, hasStashData } from "../clientLoading.js";
 import type {
 	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
-	DDSFuzzTestState,
-	DDSFuzzSuiteOptions,
-	DDSFuzzModel,
-	Synchronize,
 	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+	Synchronize,
 	TriggerRebase,
 } from "../ddsFuzzHarness.js";
 import {
 	defaultDDSFuzzSuiteOptions,
+	mixinAttach,
 	mixinClientSelection,
 	mixinNewClient,
+	mixinRebase,
 	mixinReconnect,
+	mixinStashedClient,
 	mixinSynchronization,
 	runTestForSeed,
-	mixinRebase,
-	mixinAttach,
-	mixinStashedClient,
 } from "../ddsFuzzHarness.js";
-import { hasStashData, type Client } from "../clientLoading.js";
+import { _dirname } from "./dirname.cjs";
 import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
 import { baseModel, isNoopOp } from "./sharedNothing.js";
-import { _dirname } from "./dirname.cjs";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 

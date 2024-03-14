@@ -7,16 +7,16 @@
 
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ReferencePosition } from "../referencePositions.js";
+import { SlidingPreference, setValidateRefCount } from "../localReference.js";
 import { ReferenceType } from "../ops.js";
-import { setValidateRefCount, SlidingPreference } from "../localReference.js";
+import { ReferencePosition } from "../referencePositions.js";
 import {
+	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
+	doOverRanges,
+	generateClientNames,
 	removeRange,
 	runMergeTreeOperationRunner,
-	generateClientNames,
-	IConfigRange,
-	doOverRanges,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";

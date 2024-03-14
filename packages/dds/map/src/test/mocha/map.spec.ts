@@ -4,23 +4,23 @@
  */
 
 import { strict as assert } from "node:assert";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
-	IMapSetOperation,
-	IMapDeleteOperation,
-	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapKeyEditLocalOpMetadata,
+	IMapSetOperation,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { MapFactory, SharedMap } from "../../map.js";
