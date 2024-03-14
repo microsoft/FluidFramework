@@ -45,6 +45,11 @@ export abstract class LeafTask extends Task {
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
 
+	// For task that needs to override the actual command to execute
+	protected get executionCommand() {
+		return this.command;
+	}
+
 	constructor(
 		node: BuildPackage,
 		command: string,
@@ -206,7 +211,7 @@ export abstract class LeafTask extends Task {
 		if (workerPool && this.useWorker) {
 			const workerResult = await workerPool.runOnWorker(
 				this.executable,
-				this.command,
+				this.executionCommand,
 				this.node.pkg.directory,
 			);
 			if (workerResult.code === 0 || !workerResult.error) {
@@ -217,7 +222,7 @@ export abstract class LeafTask extends Task {
 							: {
 									name: "Worker error",
 									message: "Worker error",
-									cmd: this.command,
+									cmd: this.executionCommand,
 									code: workerResult.code,
 							  },
 					stdout: workerResult.stdout ?? "",
@@ -245,10 +250,10 @@ export abstract class LeafTask extends Task {
 	}
 
 	private async execCommand(): Promise<ExecAsyncResult> {
-		if (this.command === "") {
+		if (this.executionCommand === "") {
 			return { error: null, stdout: "", stderr: "" };
 		}
-		return execAsync(this.command, {
+		return execAsync(this.executionCommand, {
 			cwd: this.node.pkg.directory,
 			env: {
 				...process.env,
