@@ -4568,7 +4568,6 @@ importers:
 
   experimental/PropertyDDS/packages/property-inspector-table:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@babel/core': ^7.13.0
       '@fluid-experimental/property-binder': workspace:~
       '@fluid-experimental/property-changeset': workspace:~
@@ -4653,7 +4652,6 @@ importers:
       react-virtualized-auto-sizer: 1.0.7_sfoxds7t5ydpegc3knd667wn6m
       require-from-string: 2.0.2
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@babel/core': 7.23.3
       '@fluid-experimental/property-binder': link:../property-binder
       '@fluid-experimental/property-changeset': link:../property-changeset
