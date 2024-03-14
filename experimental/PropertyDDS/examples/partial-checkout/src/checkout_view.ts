@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export async function renderCheckoutView(div: HTMLDivElement): Promise<string[] | undefined> {
 	const params = new URLSearchParams(window.location.search);
 

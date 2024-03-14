@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { singleJsonCursor } from "../../domains/index.js";
 import { rootFieldKey, UpPath } from "../../core/index.js";
 import { ITreeCheckout } from "../../shared-tree/index.js";

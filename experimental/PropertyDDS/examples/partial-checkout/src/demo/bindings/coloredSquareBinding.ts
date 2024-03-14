@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { DataBinding } from "@fluid-experimental/property-binder";
 import { Square } from "../views/square.js";
 
