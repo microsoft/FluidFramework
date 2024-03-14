@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @rushstack/no-new-null */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
-/* eslint-disable @rushstack/no-new-null */
 import { IEvent, IEventProvider, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
