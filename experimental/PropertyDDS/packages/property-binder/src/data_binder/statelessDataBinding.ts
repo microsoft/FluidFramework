@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Defines the base class for a stateless data binding. A stateless data binding is created once
  * by the client, but is called back for onPreModify, onModify etc. for all instances of a type.

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as assert from "assert";
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
