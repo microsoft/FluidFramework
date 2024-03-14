@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
-
 import { EOL as newline } from "os";
 
 import { Handler, readFile, writeFile } from "../common";
