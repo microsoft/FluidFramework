@@ -4,13 +4,13 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
+import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import { IDetachedBlobStorage } from "./index.js";
+import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
 
 /**
  * The default state a newly created detached container will have.
