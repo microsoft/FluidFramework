@@ -6,47 +6,11 @@
 import { strict as assert } from "assert";
 import { CompatKind } from "../../compatOptions.cjs";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+import { baseVersionForMinCompat } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
-	const testCases = [
-		// [ baseVersion, minVersion, compatVersion, expectedResult ]
-		// if expectedResult is true means that we will filter a test that uses minVersion
-		// for that specific baseVersion and compatVersion.
-
-		// Previous Releases
-		["2.0.0-internal.8.0.0", "2.0.0-internal.8.0.0", -1, true],
-		["2.0.0-internal.8.0.0", "2.0.0-internal.8.0.0", -2, true],
-		["2.0.0-internal.8.0.0", "2.0.0-internal.7.0.0", -1, false],
-		["2.0.0-internal.8.0.0", "2.0.0-internal.6.0.0", -2, false],
-		["2.0.0-internal.8.0.0", "2.0.0-internal.5.0.0", -3, false],
-		["2.0.0-rc.1.0.0", "2.0.0-rc.1.0.0", -1, true],
-		["2.0.0-rc.1.0.0", "2.0.0-rc.1.0.0", -2, true],
-		["2.0.0-rc.1.0.0", "2.0.0-internal.8.0.0", -1, false],
-		["2.0.0-rc.1.0.0", "2.0.0-internal.7.0.0", -1, false],
-		["2.0.0-rc.1.0.0", "2.0.0-internal.6.0.0", -1, false],
-		// Current Release
-		["2.0.0-rc.2.0.0", "2.0.0-rc.2.0.0", -1, true],
-		["2.0.0-rc.2.0.0", "2.0.0-rc.2.0.0", -2, true],
-		["2.0.0-rc.2.0.0", "2.0.0-rc.2.0.0", -3, true],
-		["2.0.0-rc.2.0.0", "2.0.0-rc.1.0.0", -1, false],
-		["2.0.0-rc.2.0.0", "2.0.0-rc.1.0.0", -2, true],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.8.0.0", -1, false],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.8.0.0", -2, false],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.8.0.0", -3, true],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.7.0.0", -1, false],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.7.0.0", -2, false],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.7.0.0", -3, false],
-		["2.0.0-rc.2.0.0", "2.0.0-internal.7.0.0", -4, true],
-		["2.0.0-rc.2.0.0", "1.3.7", -1, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -2, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -3, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -4, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -5, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -6, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -7, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -8, false],
-		["2.0.0-rc.2.0.0", "1.3.7", -9, false],
-	];
+	const numCompatVersions = 9;
+	const oldVersion = "1.3.7";
 	// for cross compat unit testing
 	const greaterVersion = "2.0.0-rc.1.0.0";
 	const lowerVersion = "1.3.7";
@@ -55,11 +19,15 @@ describe("Minimum Compat Version", () => {
 		const invalidString = "invalid string";
 		assert.throws(
 			() =>
-				isCompatVersionBelowMinVersion(invalidString, {
-					name: `test`,
-					kind: CompatKind.None,
-					compatVersion: "2.0.0-internal.8.0.0",
-				}),
+				isCompatVersionBelowMinVersion(
+					invalidString,
+					{
+						name: `test`,
+						kind: CompatKind.None,
+						compatVersion: "2.0.0-internal.8.0.0",
+					},
+					baseVersionForMinCompat,
+				),
 			(error: Error) => {
 				return (
 					error.message?.startsWith(
@@ -71,65 +39,102 @@ describe("Minimum Compat Version", () => {
 		);
 	});
 
-	testCases.forEach((testCase) => {
-		const baseVersion = testCase[0] as string;
-		const minVersion = testCase[1] as string;
-		const compatVersion = testCase[2] as number;
-		const expectedResult = testCase[3] as boolean;
-		it(`Should return ${expectedResult} when baseVersion: ${baseVersion} minVersion: ${minVersion} compatVersion: ${compatVersion}`, () => {
+	// Making sure all previous versions get filtered.
+	for (let i = 1; i < numCompatVersions; i++) {
+		it(`compatVersion N-${i} < ${baseVersionForMinCompat}`, () => {
 			assert.strictEqual(
 				isCompatVersionBelowMinVersion(
-					minVersion,
-					{ name: "test", kind: "None", compatVersion },
-					baseVersion,
+					baseVersionForMinCompat,
+					{
+						name: `test`,
+						kind: CompatKind.None,
+						compatVersion: -i,
+					},
+					baseVersionForMinCompat,
 				),
-				expectedResult,
+				true,
+				`N-${i} version is not lower than min version: ${baseVersionForMinCompat}`,
 			);
 		});
-	});
+	}
+
+	// Making sure compatConfigs with old min compat don't get filtered.
+	for (let i = 1; i < numCompatVersions; i++) {
+		it(`compatVersion N-${i} > ${oldVersion}`, () => {
+			assert.strictEqual(
+				isCompatVersionBelowMinVersion(
+					oldVersion,
+					{
+						name: `test`,
+						kind: CompatKind.None,
+						compatVersion: -i,
+					},
+					baseVersionForMinCompat,
+				),
+				false,
+				`N-${i} version: is not lower than min version: ${oldVersion}`,
+			);
+		});
+	}
 
 	it("cross compat. filters out if loadVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(greaterVersion, {
-				name: "test",
-				kind: CompatKind.CrossVersion,
-				compatVersion: greaterVersion,
-				loadVersion: lowerVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				greaterVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossVersion,
+					compatVersion: greaterVersion,
+					loadVersion: lowerVersion,
+				},
+				baseVersionForMinCompat,
+			),
 			true,
 		);
 	});
 
 	it("cross compat. filters out if compatVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(greaterVersion, {
-				name: "test",
-				kind: CompatKind.CrossVersion,
-				compatVersion: lowerVersion,
-				loadVersion: greaterVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				greaterVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossVersion,
+					compatVersion: lowerVersion,
+					loadVersion: greaterVersion,
+				},
+				baseVersionForMinCompat,
+			),
 			true,
 		);
 	});
 
 	it("cross compat. does not filter out valid versions", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(lowerVersion, {
-				name: "test",
-				kind: CompatKind.CrossVersion,
-				compatVersion: greaterVersion,
-				loadVersion: lowerVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				lowerVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossVersion,
+					compatVersion: greaterVersion,
+					loadVersion: lowerVersion,
+				},
+				baseVersionForMinCompat,
+			),
 			false,
 			`fails with minVersion: ${lowerVersion} compatversion: ${greaterVersion} loadVersion: ${lowerVersion}`,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(lowerVersion, {
-				name: "test",
-				kind: CompatKind.CrossVersion,
-				compatVersion: lowerVersion,
-				loadVersion: greaterVersion,
-			}),
+			isCompatVersionBelowMinVersion(
+				lowerVersion,
+				{
+					name: "test",
+					kind: CompatKind.CrossVersion,
+					compatVersion: lowerVersion,
+					loadVersion: greaterVersion,
+				},
+				baseVersionForMinCompat,
+			),
 			false,
 			`fails with minVersion: ${lowerVersion} compatversion: ${lowerVersion} loadVersion: ${greaterVersion}`,
 		);

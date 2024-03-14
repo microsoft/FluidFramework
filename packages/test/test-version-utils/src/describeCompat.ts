@@ -17,7 +17,7 @@ import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { testBaseVersion } from "./baseVersion.js";
+import { baseVersionForMinCompat, testBaseVersion } from "./baseVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -48,7 +48,10 @@ function createCompatSuite(
 			configs = configs.filter((value) => compatFilter.includes(value.kind));
 		}
 		for (const config of configs) {
-			if (minVersion && isCompatVersionBelowMinVersion(minVersion, config)) {
+			if (
+				minVersion &&
+				isCompatVersionBelowMinVersion(minVersion, config, baseVersionForMinCompat)
+			) {
 				// skip current config if compat version is below min version supported for test suite
 				continue;
 			}

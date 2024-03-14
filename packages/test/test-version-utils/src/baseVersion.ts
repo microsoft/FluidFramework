@@ -40,6 +40,13 @@ export const baseVersion = resolveVersion(
 );
 
 /**
+ * Base version used for N min compat versions calculations. Decoupled from baseVersion or codeVersion to avoid
+ * running with issues while bumping a new version or releasing.
+ *
+ * @internal
+ */
+export const baseVersionForMinCompat = "2.0.0-rc.2.0.0";
+/**
  * The problem with just using the code version, is that the current version in the test is actually 0.0.0-xyz-test
  * we want to tell the test to use 0.0.0-xyz-test as the current version. If we are asking for an N-1 version, that
  * value needs to be different. I.e. the current head is at 2.0.0-internal.6.2.0, then N-1 is 2.0.0-internal.5.x.y.

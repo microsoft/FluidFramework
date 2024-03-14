@@ -246,7 +246,7 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 export function isCompatVersionBelowMinVersion(
 	minVersion: string,
 	config: CompatConfig,
-	base?: string,
+	base: string,
 ) {
 	let lowerVersion: string | number = config.compatVersion;
 	// For CrossVersion there are 2 versions being tested. Get the lower one.
@@ -256,7 +256,7 @@ export function isCompatVersionBelowMinVersion(
 				? (config.loadVersion as string)
 				: config.compatVersion;
 	}
-	const compatVersion = getRequestedVersion(base ?? testBaseVersion(lowerVersion), lowerVersion);
+	const compatVersion = getRequestedVersion(base, lowerVersion);
 	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
