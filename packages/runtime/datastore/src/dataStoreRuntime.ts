@@ -21,6 +21,7 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
+	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
@@ -71,6 +72,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { v4 as uuid } from "uuid";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
 	LocalChannelContext,
@@ -172,7 +174,7 @@ export class FluidDataStoreRuntime
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
 	// store becomes visible.
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
+	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -524,7 +526,7 @@ export class FluidDataStoreRuntime
 		 * If this channel is already waiting to be made visible, do nothing. This can happen during attachGraph() when
 		 * a channel's graph is attached. It calls bindToContext on the shared object which will end up back here.
 		 */
-		if (this.pendingHandlesToMakeVisible.has(channel.handle)) {
+		if (this.pendingHandlesToMakeVisible.has(toFluidHandleInternal(channel.handle))) {
 			return;
 		}
 
@@ -573,10 +575,10 @@ export class FluidDataStoreRuntime
 	public bind(handle: IFluidHandle): void {
 		// If visible, attach the incoming handle's graph. Else, this will be done when we become visible.
 		if (this.visibilityState !== VisibilityState.NotVisible) {
-			handle.attachGraph();
+			toFluidHandleInternal(handle).attachGraph();
 			return;
 		}
-		this.pendingHandlesToMakeVisible.add(handle);
+		this.pendingHandlesToMakeVisible.add(toFluidHandleInternal(handle));
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
@@ -809,7 +811,10 @@ export class FluidDataStoreRuntime
 		// ContainerRuntime is newer, it will actually be a no-op since then the ContainerRuntime
 		// will be the one to call addedGCOutboundReference directly.
 		// But on the flip side, if the ContainerRuntime is older, then it's important we still call this.
-		this.dataStoreContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+		this.dataStoreContext.addedGCOutboundReference?.(
+			toFluidHandleInternal(srcHandle),
+			toFluidHandleInternal(outboundHandle),
+		);
 	}
 
 	/**
@@ -975,7 +980,7 @@ export class FluidDataStoreRuntime
 			return;
 		}
 
-		channel.handle.attachGraph();
+		toFluidHandleInternal(channel.handle).attachGraph();
 
 		assert(this.isAttached, 0x182 /* "Data store should be attached to attach the channel." */);
 		assert(

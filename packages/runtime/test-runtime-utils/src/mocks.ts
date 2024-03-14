@@ -710,7 +710,8 @@ export class MockFluidDataStoreRuntime
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
-		this.entryPoint = overrides?.entryPoint ?? new MockHandle(null, "", "");
+		this.entryPoint =
+			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", "");
 		this.id = overrides?.id ?? uuid();
 		this.logger = createChildLogger({
 			logger: overrides?.logger,

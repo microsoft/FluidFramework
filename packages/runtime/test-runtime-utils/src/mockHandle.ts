@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { fluidHandleSymbol, toFluidHandleErased } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
 
 /**
  * Mock implementation of IFluidHandle.
  * @alpha
  */
-export class MockHandle<T> implements IFluidHandle {
+export class MockHandle<T> implements IFluidHandleInternal<T> {
 	private graphAttachState: AttachState = AttachState.Detached;
 
-	public get IFluidHandle(): IFluidHandle {
+	public get IFluidHandle(): IFluidHandleInternal {
 		return this;
 	}
 	public get isAttached(): boolean {
@@ -26,7 +27,11 @@ export class MockHandle<T> implements IFluidHandle {
 		public readonly absolutePath: string = `/${path}`,
 	) {}
 
-	public async get(): Promise<any> {
+	public get [fluidHandleSymbol](): IFluidHandleErased<T> {
+		return toFluidHandleErased(this);
+	}
+
+	public async get(): Promise<T> {
 		return this.value;
 	}
 	public attachGraph(): void {

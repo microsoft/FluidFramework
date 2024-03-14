@@ -3,15 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleErased,
+	IFluidHandleInternal,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	FluidObject,
+	fluidHandleSymbol,
+	toFluidHandleErased,
+} from "@fluidframework/core-interfaces";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
  * @alpha
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
+export class FluidObjectHandle<T extends FluidObject = FluidObject>
+	implements IFluidHandleInternal
+{
+	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.absolutePath}
@@ -21,7 +33,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
 	 */
-	public get IFluidHandle(): IFluidHandle {
+	public get IFluidHandle(): IFluidHandleInternal<unknown> {
 		return this;
 	}
 
@@ -72,6 +84,10 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
+	public get [fluidHandleSymbol](): IFluidHandleErased<FluidObject & IFluidLoadable> {
+		return toFluidHandleErased(this);
+	}
+
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.get}
 	 */
@@ -99,7 +115,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
 	 */
-	public bind(handle: IFluidHandle) {
+	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.
 		if (this.visible) {
 			handle.attachGraph();

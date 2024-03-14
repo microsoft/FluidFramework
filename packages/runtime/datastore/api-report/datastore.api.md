@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -18,6 +19,9 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IFluidHandleErased } from '@fluidframework/core-interfaces';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
@@ -128,13 +132,15 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 }
 
 // @alpha
-export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandleInternal {
+    // (undocumented)
+    get [fluidHandleSymbol](): IFluidHandleErased<FluidObject & IFluidLoadable>;
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     readonly absolutePath: string;
     attachGraph(): void;
-    bind(handle: IFluidHandle): void;
+    bind(handle: IFluidHandleInternal): void;
     get(): Promise<any>;
-    get IFluidHandle(): IFluidHandle;
+    get IFluidHandle(): IFluidHandleInternal<unknown>;
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;
