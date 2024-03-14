@@ -19,6 +19,8 @@ import {
 	useTableColumnSizing_unstable,
 	TableBody,
 } from "@fluentui/react-components";
+// Allow use of unstable API
+// eslint-disable-next-line import/no-internal-modules
 import { InfoLabel } from "@fluentui/react-components/unstable";
 import {
 	PlugConnected20Regular,

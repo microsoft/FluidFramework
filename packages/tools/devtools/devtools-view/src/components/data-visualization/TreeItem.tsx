@@ -8,6 +8,8 @@ import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
 	TreeItemLayout as FluentTreeItemLayout,
+	// Allow use of unstable API
+	// eslint-disable-next-line import/no-internal-modules
 } from "@fluentui/react-components/unstable";
 
 /**
