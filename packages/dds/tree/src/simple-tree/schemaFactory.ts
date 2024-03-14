@@ -16,6 +16,7 @@ import {
 	FlexMapNodeSchema,
 	FlexFieldNodeSchema,
 	isFluidHandle,
+	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { leaf } from "../domains/index.js";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
