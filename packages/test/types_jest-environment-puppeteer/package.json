@@ -13,7 +13,19 @@
 	"author": "Microsoft and contributors",
 	"main": "",
 	"types": "index.d.ts",
+	"scripts": {
+		"check:biome": "biome check .",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"prettier": "prettier --check .",
+		"prettier:fix": "prettier --write ."
+	},
 	"devDependencies": {
-		"jest-environment-puppeteer": "^9.0.2"
+		"@biomejs/biome": "^1.6.1",
+		"@fluidframework/build-tools": "^0.34.0",
+		"jest-environment-puppeteer": "^9.0.2",
+		"prettier": "~3.0.3"
 	}
 }
