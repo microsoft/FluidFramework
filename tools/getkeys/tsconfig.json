@@ -1,6 +1,3 @@
-/*!
- * Adding this file to kick off exec lint script for js-only package
- */
 {
 	"compilerOptions": {
 		"strictNullChecks": true,

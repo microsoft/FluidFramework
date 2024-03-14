@@ -1,8 +1,3 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
-
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json
 {
 	"name": "AutoFluid",

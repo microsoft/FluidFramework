@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview The PropertyElement is a helper class that abstracts an element in the property set tree,
  * whether it is a specific property, or an element of a primitive collections (array/map). It allows code to be

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";

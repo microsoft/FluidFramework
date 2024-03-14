@@ -1,9 +1,9 @@
-#!/usr/bin/env node
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+#!/usr/bin/env node
 import * as path from "path";
 import { default as Axios } from "axios";
 import winston from "winston";

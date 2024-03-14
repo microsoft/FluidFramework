@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ITelemetryBaseLogger,
 	FluidObject,
@@ -1803,7 +1804,7 @@ export class ContainerRuntime
 	}
 
 	public setChannelDirty(address: string) {
-		assert(false, "should not be called");
+		assert(false, 0x909 /* should not be called */);
 	}
 
 	/**

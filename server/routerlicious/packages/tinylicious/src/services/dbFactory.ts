@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IDbFactory } from "@fluidframework/server-services-core";
 
 import { Provider } from "nconf";
