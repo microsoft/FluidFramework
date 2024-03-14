@@ -4,7 +4,6 @@
  */
 
 import child_process from "child_process";
-import commander from "commander";
 import {
 	AzureClient,
 	// eslint-disable-next-line import/no-deprecated
@@ -17,7 +16,7 @@ import {
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-
+import commander from "commander";
 import { v4 as uuid } from "uuid";
 
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
