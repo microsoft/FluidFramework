@@ -72,7 +72,7 @@ describe("Minimum Compat Version", () => {
 					baseVersionForMinCompat,
 				),
 				false,
-				`N-${i} version: is not lower than min version: ${oldVersion}`,
+				`N-${i} version: is lower than min version: ${oldVersion}`,
 			);
 		});
 	}
