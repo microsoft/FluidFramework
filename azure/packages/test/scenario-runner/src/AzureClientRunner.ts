@@ -1,7 +1,7 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AzureClient } from "@fluidframework/azure-client";
