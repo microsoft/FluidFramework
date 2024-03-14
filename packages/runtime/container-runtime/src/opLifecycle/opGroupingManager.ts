@@ -28,6 +28,10 @@ function isGroupContents(opContents: any): opContents is IGroupedBatchMessageCon
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
+export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
+	return isGroupContents(op) || isGroupContents(op.contents);
+}
+
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 	readonly opCountThreshold: number;
@@ -96,11 +100,16 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents)) {
+		let messages: IGroupedMessage[] = [];
+		// ! Important to check "op.contents" first
+		if (isGroupContents(op.contents)) {
+			messages = op.contents.contents;
+		} else if (isGroupContents(op)) {
+			messages = op.contents;
+		} else {
 			return [op];
 		}
 
-		const messages = op.contents.contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,

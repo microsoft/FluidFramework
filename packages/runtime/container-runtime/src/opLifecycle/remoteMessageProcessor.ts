@@ -12,8 +12,8 @@ import {
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { OpDecompressor } from "./opDecompressor.js";
-import { OpGroupingManager } from "./opGroupingManager.js";
-import { OpSplitter } from "./opSplitter.js";
+import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
+import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
 /**
  * Stateful class for processing incoming remote messages as the virtualization measures are unwrapped,
@@ -49,61 +49,49 @@ export class RemoteMessageProcessor {
 	 * a singleton array [remoteMessageCopy] is returned
 	 */
 	public process(
-		remoteMessageCopy: ISequencedDocumentMessage,
+		remoteMessage: ISequencedDocumentMessage,
 	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
-		const result: InboundSequencedContainerRuntimeMessageOrSystemMessage[] = [];
+		let message = remoteMessage;
+		ensureContentsDeserialized(message);
 
-		ensureContentsDeserialized(remoteMessageCopy);
-
-		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(remoteMessageCopy)) {
-			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
-
-			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
-				// unpack and unchunk the ungrouped message in place
-				unpackRuntimeMessage(ungroupedMessage2);
-				const chunkProcessingResult =
-					this.opSplitter.processRemoteMessage(ungroupedMessage2);
-				ungroupedMessage2 = chunkProcessingResult.message;
-
-				if (chunkProcessingResult.state !== "Processed") {
-					// If the message is not chunked or if the splitter is still rebuilding the original message,
-					// there is no need to continue processing
-					result.push(
-						ungroupedMessage2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
-					);
-					continue;
-				}
-
-				// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-				for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
-					ungroupedMessage2,
-				)) {
-					const decompressionAfterChunking = this.opDecompressor.processMessage(
-						ungroupedMessageAfterChunking,
-					);
-
-					for (const ungroupedMessageAfterChunking2 of this.opGroupingManager.ungroupOp(
-						decompressionAfterChunking.message,
-					)) {
-						if (decompressionAfterChunking.state === "Skipped") {
-							// After chunking, if the original message was not compressed,
-							// there is no need to continue processing
-							result.push(
-								ungroupedMessageAfterChunking2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
-							);
-							continue;
-						}
-
-						// The message needs to be unpacked after chunking + decompression
-						unpack(ungroupedMessageAfterChunking2);
-						result.push(ungroupedMessageAfterChunking2);
-					}
-				}
-			}
+		// Checking for compression needs to happen before unpacking the message
+		if (this.opDecompressor.isCompressedMessage(message)) {
+			this.opDecompressor.decompressAndStore(message);
 		}
 
-		return result;
+		// When using compression, the trailing messages will have "undefined" content
+		if (message.contents !== undefined) {
+			unpackRuntimeMessage(message);
+		}
+
+		if (isChunkedMessage(message)) {
+			const chunkProcessingResult = this.opSplitter.processChunk(message);
+			// Move on if current chunk is not the last chunk
+			if (!chunkProcessingResult.isFinalChunk) {
+				return [];
+			}
+			message = chunkProcessingResult.message;
+			this.opDecompressor.decompressAndStore(message);
+		}
+
+		// Need to unpack after unrolling
+		const needToUnpack = this.opDecompressor.currentlyUnrolling;
+		if (this.opDecompressor.currentlyUnrolling) {
+			message = this.opDecompressor.unroll(message);
+		}
+
+		if (isGroupedBatch(message)) {
+			return this.opGroupingManager.ungroupOp(message).map((el) => {
+				// We always need to unpack an ungrouped message
+				unpack(el);
+				return el as InboundSequencedContainerRuntimeMessageOrSystemMessage;
+			});
+		}
+
+		if (needToUnpack) {
+			unpack(message);
+		}
+		return [message as InboundSequencedContainerRuntimeMessageOrSystemMessage];
 	}
 }
 

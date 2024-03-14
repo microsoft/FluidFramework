@@ -10,7 +10,13 @@ import { ContainerMessageType } from "@fluidframework/container-runtime-previous
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { BatchMessage, IChunkedOp, OpSplitter, splitOp } from "../../opLifecycle/index.js";
+import {
+	BatchMessage,
+	IChunkedOp,
+	OpSplitter,
+	splitOp,
+	isChunkedMessage,
+} from "../../opLifecycle/index.js";
 import { CompressionAlgorithms } from "../../containerRuntime.js";
 
 describe("OpSplitter", () => {
@@ -46,23 +52,23 @@ describe("OpSplitter", () => {
 			mockLogger,
 		);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks1[0]).state, "Accepted");
-		assert.equal(opSplitter.processRemoteMessage(chunks2[0]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks1[0]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(chunks2[0]).isFinalChunk, false);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks1[1]).state, "Accepted");
-		assert.equal(opSplitter.processRemoteMessage(chunks2[1]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks1[1]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(chunks2[1]).isFinalChunk, false);
 
-		const chunks1LastResult = opSplitter.processRemoteMessage(chunks1[2]);
+		const chunks1LastResult = opSplitter.processChunk(chunks1[2]);
 		// The last chunk will reconstruct the original message
-		assert.equal(chunks1LastResult.state, "Processed");
+		assert.equal(chunks1LastResult.isFinalChunk, true);
 		assertSameMessage(chunks1LastResult.message, op1);
 		assert.equal(opSplitter.chunks.size, 1);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks2[2]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks2[2]).isFinalChunk, false);
 
-		const chunks2LastResult = opSplitter.processRemoteMessage(chunks2[3]);
+		const chunks2LastResult = opSplitter.processChunk(chunks2[3]);
 		// The last chunk will reconstruct the original message
-		assert.equal(chunks2LastResult.state, "Processed");
+		assert.equal(chunks2LastResult.isFinalChunk, true);
 		assertSameMessage(chunks2LastResult.message, op2);
 
 		assert.equal(opSplitter.chunks.size, 0);
@@ -81,26 +87,26 @@ describe("OpSplitter", () => {
 			mockLogger,
 		);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks1[0]).state, "Accepted");
-		assert.equal(opSplitter.processRemoteMessage(chunks2[0]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks1[0]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(chunks2[0]).isFinalChunk, false);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks1[1]).state, "Accepted");
-		assert.equal(opSplitter.processRemoteMessage(chunks2[1]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks1[1]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(chunks2[1]).isFinalChunk, false);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks1[2]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks1[2]).isFinalChunk, false);
 
-		const chunks1LastResult = opSplitter.processRemoteMessage(chunks1[3]);
+		const chunks1LastResult = opSplitter.processChunk(chunks1[3]);
 		// The last chunk will reconstruct the original message
-		assert.equal(chunks1LastResult.state, "Processed");
+		assert.equal(chunks1LastResult.isFinalChunk, true);
 		assertSameMessage(chunks1LastResult.message, op1);
 		assert.equal(opSplitter.chunks.size, 1);
 
-		assert.equal(opSplitter.processRemoteMessage(chunks2[2]).state, "Accepted");
-		assert.equal(opSplitter.processRemoteMessage(chunks2[3]).state, "Accepted");
+		assert.equal(opSplitter.processChunk(chunks2[2]).isFinalChunk, false);
+		assert.equal(opSplitter.processChunk(chunks2[3]).isFinalChunk, false);
 
-		const chunks2LastResult = opSplitter.processRemoteMessage(chunks2[4]);
+		const chunks2LastResult = opSplitter.processChunk(chunks2[4]);
 		// The last chunk will reconstruct the original message
-		assert.equal(chunks2LastResult.state, "Processed");
+		assert.equal(chunks2LastResult.isFinalChunk, true);
 		assertSameMessage(chunks2LastResult.message, op2);
 
 		assert.equal(opSplitter.chunks.size, 0);
@@ -116,8 +122,8 @@ describe("OpSplitter", () => {
 			maxBatchSizeInBytes,
 			mockLogger,
 		);
-		opSplitter.processRemoteMessage(chunks[0]);
-		opSplitter.processRemoteMessage(chunks[1]);
+		opSplitter.processChunk(chunks[0]);
+		opSplitter.processChunk(chunks[1]);
 
 		const otherOpSplitter = new OpSplitter(
 			Array.from(opSplitter.chunks),
@@ -128,8 +134,11 @@ describe("OpSplitter", () => {
 		);
 		opSplitter.clearPartialChunks("testClient");
 
-		otherOpSplitter.processRemoteMessage(chunks[2]);
-		assertSameMessage(otherOpSplitter.processRemoteMessage(chunks[3]).message, op);
+		otherOpSplitter.processChunk(chunks[2]);
+
+		const processResult = otherOpSplitter.processChunk(chunks[3]);
+		assert.equal(processResult.isFinalChunk, true);
+		assertSameMessage(processResult.message, op);
 	});
 
 	it("Clear chunks", () => {
@@ -144,7 +153,7 @@ describe("OpSplitter", () => {
 			maxBatchSizeInBytes,
 			mockLogger,
 		);
-		opSplitter.processRemoteMessage(chunks[0]);
+		opSplitter.processChunk(chunks[0]);
 
 		assert.equal(opSplitter.chunks.size, 1);
 		opSplitter.clearPartialChunks("noClient");
@@ -165,7 +174,7 @@ describe("OpSplitter", () => {
 			maxBatchSizeInBytes,
 			mockLogger,
 		);
-		assert.throws(() => opSplitter.processRemoteMessage(chunks[2]));
+		assert.throws(() => opSplitter.processChunk(chunks[2]));
 	});
 
 	it("Don't accept non-chunked ops", () => {
@@ -181,10 +190,8 @@ describe("OpSplitter", () => {
 			mockLogger,
 		);
 		for (const op of chunks) {
-			assert.deepStrictEqual(opSplitter.processRemoteMessage(op), {
-				message: op,
-				state: "Skipped",
-			});
+			assert.deepStrictEqual(isChunkedMessage(op), false);
+			assert.throws(() => opSplitter.processChunk(op));
 		}
 	});
 

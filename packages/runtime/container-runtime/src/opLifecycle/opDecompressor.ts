@@ -11,7 +11,6 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "../containerRuntime.js";
 import { IBatchMetadata } from "../metadata.js";
-import { IMessageProcessingResult } from "./definitions.js";
 
 /**
  * Compression makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -38,100 +37,7 @@ export class OpDecompressor {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
 	}
 
-	public processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-		assert(
-			message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
-			0x511 /* Only lz4 compression is supported */,
-		);
-
-		if (
-			(message.metadata as IBatchMetadata | undefined)?.batch === true &&
-			this.isCompressed(message)
-		) {
-			// Beginning of a compressed batch
-			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
-			this.activeBatch = true;
-
-			const contents = IsoBuffer.from(
-				(message.contents as IPackedContentsContents).packedContents,
-				"base64",
-			);
-			const decompressedMessage = decompress(contents);
-			const intoString = Uint8ArrayToString(decompressedMessage);
-			const asObj = JSON.parse(intoString);
-			this.rootMessageContents = asObj;
-
-			return {
-				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-				state: "Accepted",
-			};
-		}
-
-		if (
-			this.rootMessageContents !== undefined &&
-			(message.metadata as IBatchMetadata | undefined)?.batch === undefined &&
-			this.activeBatch
-		) {
-			assert(message.contents === undefined, 0x512 /* Expecting empty message */);
-
-			// Continuation of compressed batch
-			return {
-				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-				state: "Accepted",
-			};
-		}
-
-		if (
-			this.rootMessageContents !== undefined &&
-			(message.metadata as IBatchMetadata | undefined)?.batch === false
-		) {
-			// End of compressed batch
-			const returnMessage = newMessage(
-				message,
-				this.rootMessageContents[this.processedCount++],
-			);
-
-			this.activeBatch = false;
-			this.rootMessageContents = undefined;
-			this.processedCount = 0;
-
-			return {
-				message: returnMessage,
-				state: "Processed",
-			};
-		}
-
-		if (
-			(message.metadata as IBatchMetadata | undefined)?.batch === undefined &&
-			this.isCompressed(message)
-		) {
-			// Single compressed message
-			assert(
-				this.activeBatch === false,
-				0x4ba /* shouldn't receive compressed message in middle of a batch */,
-			);
-
-			const contents = IsoBuffer.from(
-				(message.contents as IPackedContentsContents).packedContents,
-				"base64",
-			);
-			const decompressedMessage = decompress(contents);
-			const intoString = new TextDecoder().decode(decompressedMessage);
-			const asObj = JSON.parse(intoString);
-
-			return {
-				message: newMessage(message, asObj[0]),
-				state: "Processed",
-			};
-		}
-
-		return {
-			message,
-			state: "Skipped",
-		};
-	}
-
-	private isCompressed(message: ISequencedDocumentMessage) {
+	public isCompressedMessage(message: ISequencedDocumentMessage): boolean {
 		if (message.compression === CompressionAlgorithms.lz4) {
 			return true;
 		}
@@ -174,6 +80,70 @@ export class OpDecompressor {
 
 		return false;
 	}
+
+	public get currentlyUnrolling() {
+		return this.activeBatch;
+	}
+
+	private isSingleMessageBatch = false;
+	public decompressAndStore(message: ISequencedDocumentMessage): void {
+		assert(
+			message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
+			0x511 /* Only lz4 compression is supported */,
+		);
+		assert(this.isCompressedMessage(message), "provided message should be compressed");
+
+		assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
+		this.activeBatch = true;
+
+		const batchMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
+		if (batchMetadata === undefined) {
+			this.isSingleMessageBatch = true;
+		} else {
+			assert(batchMetadata === true, "invalid batch metadata");
+		}
+
+		const contents = IsoBuffer.from(
+			(message.contents as IPackedContentsContents).packedContents,
+			"base64",
+		);
+		const decompressedMessage = decompress(contents);
+		const intoString = Uint8ArrayToString(decompressedMessage);
+		const asObj = JSON.parse(intoString);
+		this.rootMessageContents = asObj;
+	}
+
+	public unroll(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
+		assert(this.currentlyUnrolling, "not currently unrolling");
+		assert(this.rootMessageContents !== undefined, "missing rootMessageContents");
+		assert(this.rootMessageContents.length > this.processedCount, "no more content to unroll");
+
+		const batchMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
+
+		if (batchMetadata === false || this.isSingleMessageBatch) {
+			// End of compressed batch
+			const returnMessage = newMessage(
+				message,
+				this.rootMessageContents[this.processedCount],
+			);
+
+			this.activeBatch = false;
+			this.isSingleMessageBatch = false;
+			this.rootMessageContents = undefined;
+			this.processedCount = 0;
+
+			return returnMessage;
+		} else if (batchMetadata === true) {
+			// Start of compressed batch
+			return newMessage(message, this.rootMessageContents[this.processedCount++]);
+		} else {
+			assert(batchMetadata === undefined, "invalid batch metadata");
+			assert(message.contents === undefined, 0x512 /* Expecting empty message */);
+
+			// Continuation of compressed batch
+			return newMessage(message, this.rootMessageContents[this.processedCount++]);
+		}
+	}
 }
 
 // We should not be mutating the input message nor its metadata
@@ -186,5 +156,8 @@ const newMessage = (
 	compression: undefined,
 	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-	metadata: { ...(originalMessage.metadata as any) },
+	metadata:
+		originalMessage.metadata === undefined
+			? undefined
+			: { ...(originalMessage.metadata as any) },
 });
