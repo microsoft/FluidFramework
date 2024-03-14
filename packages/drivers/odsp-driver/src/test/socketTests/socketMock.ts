@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";
-import { pkgVersion as driverVersion } from "../../packageVersion.js";
+import { v4 as uuid } from "uuid";
 import { IOdspSocketError } from "../../contracts.js";
+import { pkgVersion as driverVersion } from "../../packageVersion.js";
 
 export interface SocketMockEvents extends IEvent {
 	(event: "disconnect", listener: (reason?: IAnyDriverError, details?: unknown) => void): void;

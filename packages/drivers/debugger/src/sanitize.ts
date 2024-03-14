@@ -19,8 +19,8 @@
  */
 
 import fs from "fs";
-import process from "process";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import process from "process";
 import { Sanitizer } from "./sanitizer.js";
 
 function printUsage() {
