@@ -42,6 +42,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import * as semver from "semver";
 
 /**
  * @internal
@@ -295,17 +296,21 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 	// Theoretically it should be fine to use config for apis.containerRuntimeForLoading?.version.
 	// If it's higher then apis.containerRuntime, then unknown to lower version of apis.containerRuntime
 	// would be ignored.
-	// 
+	//
 	// But TestObjectProviderWithVersionedLoad.createLoader() implementation is dumb - it resets this.useCreateApi
 	// on first call and thus uses apis.containerRuntimeForLoading for any container created after.
 	// Many use non-first container instance to send ops, so that screws things up.
 	//
 	// As result, we absolutly need to use the min between two versions!
+	const versionForCreating = apis.containerRuntime?.version;
+	assert(versionForCreating !== undefined, "versionForCreating");
 	const versionForLoading = apis.containerRuntimeForLoading?.version;
 	assert(versionForLoading !== undefined, "versionForLoading");
-	const versionForCreating = apis.containerRuntime?.version;
-	assert(versionForCreating !== undefined, "versionForLoading");
-	const minVersion =  versionForLoading.localeCompare(versionForCreating) < 0 ? versionForLoading : versionForCreating;
+
+	const minVersion =
+		semver.compare(versionForCreating, versionForLoading) < 0
+			? versionForCreating
+			: versionForLoading;
 
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
