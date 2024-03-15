@@ -14,8 +14,9 @@ module.exports = {
 	parserOptions: {
 		project: [
 			"./tsconfig.json",
-			"./src/test/tsconfig.json",
-			"./src/screenshot-tests/tsconfig.json",
+			"./src/test/jest/tsconfig.json",
+			"./src/test/screenshot/tsconfig.json",
+			"./src/test/utils/tsconfig.json",
 		],
 	},
 	rules: {
@@ -38,8 +39,8 @@ module.exports = {
 	},
 	overrides: [
 		{
-			// Overrides for test files
-			files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
+			// Overrides for jest test files
+			files: ["src/test/jest/**"],
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
@@ -48,7 +49,7 @@ module.exports = {
 			},
 
 			// Overrides for screenshot tests
-			files: ["src/screenshot-tests/**"],
+			files: ["src/test/screenshot/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
 				"import/no-default-export": "off",

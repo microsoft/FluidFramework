@@ -8,10 +8,10 @@ import React from "react";
 
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
-import { MockMessageRelay } from "../test/MockMessageRelay.js";
-import { MessageRelayContext } from "../MessageRelayContext.js";
-import { LoggerContext } from "../TelemetryUtils.js";
-import { getFluentUIThemeToUse } from "../ThemeHelper.js";
+import { MockMessageRelay } from "../utils/MockMessageRelay.js";
+import { MessageRelayContext } from "../../MessageRelayContext.js";
+import { LoggerContext } from "../../TelemetryUtils.js";
+import { getFluentUIThemeToUse } from "../../ThemeHelper.js";
 
 /**
  * {@link TestContexts} input props.

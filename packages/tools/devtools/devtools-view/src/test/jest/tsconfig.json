@@ -1,0 +1,19 @@
+{
+	"extends": "../../../../../../../common/build/build-common/tsconfig.test.json",
+	"include": ["./**/*"],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../../dist/test/jest",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"types": [],
+	},
+	"references": [
+		{
+			"path": "../../../tsconfig.json",
+		},
+		{
+			"path": "../utils/tsconfig.json",
+		},
+	],
+}

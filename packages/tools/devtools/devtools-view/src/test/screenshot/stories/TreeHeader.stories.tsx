@@ -4,27 +4,31 @@
  */
 
 // PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
-import { Waiting } from "../../components/Waiting.js";
+import { TreeHeader } from "../../../components/data-visualization/TreeHeader.js";
 import { testContextDecorator } from "../ScreenshotTestUtilities.js";
 
 export default {
-	title: "Waiting",
-	component: Waiting,
+	title: "TreeHeader",
+	component: TreeHeader,
 	decorators: [testContextDecorator],
 };
 
 /**
- * {@link Waiting} with no label provided.
+ * {@link TreeHeader} with no metadata.
  */
-export const DefaultLabel = {
-	args: {},
+export const Simple = {
+	args: {
+		label: "Hello world!",
+	},
 };
 
 /**
- * {@link Waiting} with a custom label provided.
+ * {@link TreeHeader} with metadata and inline text.
  */
-export const CustomLabel = {
+export const Complex = {
 	args: {
-		label: "Test label 😀",
+		label: "foo",
+		metadata: "Bar",
+		inlineValue: "BAZ",
 	},
 };
