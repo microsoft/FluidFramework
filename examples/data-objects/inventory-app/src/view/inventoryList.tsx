@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
 import { Tree } from "@fluidframework/tree";
+import * as React from "react";
 import { Inventory } from "../schema.js";
 import { Counter } from "./counter.js";
 

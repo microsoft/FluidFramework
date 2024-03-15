@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
 	IMergeTreeTextHelper,
 	IRelativePosition,
@@ -11,10 +12,9 @@ import {
 	Marker,
 	PropertySet,
 	ReferenceType,
-	refHasTileLabel,
 	TextSegment,
+	refHasTileLabel,
 } from "@fluidframework/merge-tree";
-import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { SharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";
 

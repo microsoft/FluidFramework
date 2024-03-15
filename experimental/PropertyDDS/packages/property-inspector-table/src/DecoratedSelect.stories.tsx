@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import {
@@ -10,9 +11,9 @@ import {
 	DecoratedSelectOptionsType,
 	IDecoratedSelectOptionType,
 } from "./DecoratedSelect";
-import * as TableIcons from "./icons";
 import { InspectorDecorator } from "./InspectorDecorator";
 import { TypeIcon } from "./TypeIcon";
+import * as TableIcons from "./icons";
 
 storiesOf("DecoratedSelect", module)
 	.addDecorator(InspectorDecorator)

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ContainerMessageType } from "../messageTypes.js";
 import { IBatch } from "./definitions.js";
 

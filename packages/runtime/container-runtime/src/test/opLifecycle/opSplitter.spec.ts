@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import * as crypto from "crypto";
 import { strict as assert } from "assert";
+import * as crypto from "crypto";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	BatchMessage,

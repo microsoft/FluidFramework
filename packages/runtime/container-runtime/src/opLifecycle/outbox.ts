@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	createChildMonitoringContext,
 	GenericError,
 	MonitoringContext,
 	UsageError,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
 import { ContainerMessageType } from "../messageTypes.js";
+import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	BatchManager,
 	BatchSequenceNumbers,

@@ -4,19 +4,19 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
-	type IChannelFactory,
 	type IChannelAttributes,
+	type IChannelFactory,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
 import { CounterFactory } from "./counterFactory.js";
 import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";

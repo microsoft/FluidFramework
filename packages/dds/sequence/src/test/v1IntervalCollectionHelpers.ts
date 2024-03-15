@@ -4,32 +4,32 @@
  */
 
 import {
-	IFluidDataStoreRuntime,
+	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
-	IChannelAttributes,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { Client } from "@fluidframework/merge-tree";
+import {
+	ISerializedIntervalCollectionV2,
+	IntervalCollection,
+	LocalIntervalCollection,
+	makeOpsMap,
+} from "../intervalCollection.js";
 import { IntervalCollectionMap } from "../intervalCollectionMap.js";
 import {
 	IIntervalCollectionFactory,
-	IValueOpEmitter,
-	IIntervalCollectionType,
 	IIntervalCollectionOperation,
+	IIntervalCollectionType,
+	IValueOpEmitter,
 } from "../intervalCollectionMapInterfaces.js";
 import {
-	IntervalCollection,
-	ISerializedIntervalCollectionV2,
-	makeOpsMap,
-	LocalIntervalCollection,
-} from "../intervalCollection.js";
-import {
+	IIntervalHelpers,
 	ISerializableInterval,
 	ISerializedInterval,
-	SequenceInterval,
-	IIntervalHelpers,
-	createSequenceInterval,
 	IntervalOpType,
+	SequenceInterval,
+	createSequenceInterval,
 } from "../intervals/index.js";
 import { pkgVersion } from "../packageVersion.js";
 import { SharedString } from "../sharedString.js";

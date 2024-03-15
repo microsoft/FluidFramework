@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
+import React from "react";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 

@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import { rootFieldKey } from "../../core/index.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
 import {
 	NodeFromSchema,
 	SchemaFactory,
@@ -11,8 +13,6 @@ import {
 	TreeConfiguration,
 	TreeNode,
 } from "../../simple-tree/index.js";
-import { rootFieldKey } from "../../core/index.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
 import { getView } from "../utils.js";
 import { hydrate } from "./utils.js";
 

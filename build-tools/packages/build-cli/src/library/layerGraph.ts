@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import assert from "node:assert";
 import { EOL as newline } from "node:os";
 import * as path from "node:path";

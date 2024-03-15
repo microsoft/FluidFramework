@@ -4,10 +4,8 @@
  */
 
 import { IIdCompressor } from "@fluidframework/id-compressor";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
-import { brand, Populated } from "../../../util/index.js";
 import { ChangeAtomId } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CellMark, DetachIdOverrideType } from "../../../feature-libraries/sequence-field/index.js";
 import {
@@ -17,6 +15,8 @@ import {
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
+import { Populated, brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 
 export type PopulatedMark<TNodeChange = TestChange> = Populated<
 	CellMark<Populated<MarkEffect>, TNodeChange>

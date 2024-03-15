@@ -10,14 +10,14 @@ import { MergeTree } from "./mergeTree.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
-	compareNumbers,
 	IMergeBlock,
 	IMergeNode,
 	IMoveInfo,
 	IRemovalInfo,
 	ISegment,
-	toMoveInfo,
+	compareNumbers,
 	seqLTE,
+	toMoveInfo,
 	toRemovalInfo,
 } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated

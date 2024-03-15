@@ -4,25 +4,25 @@
  */
 
 import assert from "assert";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes.js";
 import {
-	appendToMergeTreeDeltaRevertibles,
 	MergeTreeDeltaRevertible,
 	MergeTreeWithRevert,
+	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import {
-	removeRange,
-	generateOperationMessagesForClients,
-	applyMessages,
 	annotateRange,
+	applyMessages,
 	doOverRanges,
+	generateOperationMessagesForClients,
+	removeRange,
 } from "./mergeTreeOperationRunner.js";
 import { createRevertDriver } from "./testClient.js";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 const defaultOptions = {
 	initialOps: 5,

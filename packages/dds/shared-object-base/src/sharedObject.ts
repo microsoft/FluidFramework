@@ -3,38 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-	DataProcessingError,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { FluidSerializer, IFluidSerializer } from "./serializer.js";
+import {
+	DataProcessingError,
+	EventEmitterWithErrorHandling,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	createChildLogger,
+	loggerToMonitoringContext,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import { SharedObjectHandle } from "./handle.js";
+import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";

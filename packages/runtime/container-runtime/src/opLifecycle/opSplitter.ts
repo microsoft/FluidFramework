@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { IBatchMessage } from "@fluidframework/container-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	createChildLogger,
 	DataCorruptionError,
+	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";

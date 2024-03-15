@@ -9,12 +9,12 @@ import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
-import { brand } from "../../util/index.js";
 import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { InsertableContent } from "../../simple-tree/proxies.js";
+// eslint-disable-next-line import/no-internal-modules
+import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
+import { brand } from "../../util/index.js";
 
 describe("toMapTree", () => {
 	it("string", () => {

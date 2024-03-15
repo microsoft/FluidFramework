@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Provides the contextual information for the onModify callbacks.
  */
 
-import { DataBinding } from "./dataBinding.js";
-import { BaseProperty } from "@fluid-experimental/property-properties";
-import { BaseContext } from "./baseContext.js";
-import { PropertyElement } from "../internal/propertyElement.js";
 import { SerializedChangeSet, Utils } from "@fluid-experimental/property-changeset";
+import { BaseProperty } from "@fluid-experimental/property-properties";
+import { PropertyElement } from "../internal/propertyElement.js";
+import { BaseContext } from "./baseContext.js";
+import { DataBinding } from "./dataBinding.js";
 
 /**
  * Provides the contextual information for the onModify callbacks.
