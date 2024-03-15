@@ -7,7 +7,7 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { PropertyTreeInstantiationFactory, type IPropertyTree } from "./dataObject.js";
+import { type IPropertyTree, PropertyTreeInstantiationFactory } from "./dataObject.js";
 
 /**
  * The data model for our application.
