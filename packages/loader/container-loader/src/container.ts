@@ -122,6 +122,7 @@ import {
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
 	getProtocolSnapshotTree,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,

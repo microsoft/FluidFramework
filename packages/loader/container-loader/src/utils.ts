@@ -5,14 +5,14 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { IDocumentAttributes, ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import { IPendingDetachedContainerState } from "./container.js";
