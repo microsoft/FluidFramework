@@ -4,8 +4,8 @@
  */
 
 import { type IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { type IStampedContents, type IOpContents } from './types.js';
 import { type IMigrationOp } from './migrationShim.js';
+import { type IOpContents, type IStampedContents } from './types.js';
 
 /**
  * Checks if two channel attributes objects match.
