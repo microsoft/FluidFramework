@@ -234,6 +234,7 @@ describeCompat("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
 
 		const configs = {
 			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs": tombstoneTimeoutMs,
+			// NOTE: These are the configs used for Declarative Model (Azure/Odsp Client) to support v1/v2 collaboartion compatibility
 			"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
 			"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
 			"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
