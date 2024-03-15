@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Element as HastElement, Text as HastText } from "hast";
+import type { Element as HastElement, Root as HastRoot, Text as HastText } from "hast";
 import { h } from "hastscript";
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
 import type { TransformationConfig } from "./configuration/index.js";
@@ -20,17 +20,23 @@ import {
  *
  * @alpha
  */
-export function documentToHtml(document: DocumentNode, config: TransformationConfig): HastElement {
+export function documentToHtml(document: DocumentNode, config: TransformationConfig): HastRoot {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
-	return h(
-		"html",
+	return h(undefined, [
 		{
-			lang: config.language ?? "en",
+			type: "doctype",
 		},
-		[h("head", [h("meta", { charset: "utf8" })]), h("body", transformedChildren)],
-	);
+		h(
+			"html",
+			{
+				lang: config.language ?? "en",
+			},
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
+			[h("head", [h("meta", { charset: "utf-8" })]), h("body", transformedChildren)],
+		),
+	]);
 
 	// TODO: what to do with front-matter?
 }
