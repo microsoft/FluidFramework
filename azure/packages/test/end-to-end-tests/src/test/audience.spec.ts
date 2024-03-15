@@ -165,10 +165,6 @@ describe("Fluid audience", () => {
 	 * to resolve original member, and the original member should be able to observe the read-only member.
 	 */
 	it("can find read-only partner member", async function () {
-		if (process.env.TEST_READ !== "true") {
-			// As of 2024-03-12, read-only mode does not work for signals and audience
-			this.skip();
-		}
 		const { container, services } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
@@ -258,10 +254,6 @@ describe("Fluid audience", () => {
 	 * the original read-only partner should observe memberAdded event and have correct partner count.
 	 */
 	it("can observe member leaving and joining in read-only mode", async function () {
-		if (process.env.TEST_READ !== "true") {
-			// As of 2024-03-12, read-only mode does not work for signals and audience
-			this.skip();
-		}
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
