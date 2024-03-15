@@ -44,7 +44,7 @@ import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
+import { getClientIds, initializeProtocol, isCheckpointQuorumValid, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -189,15 +189,24 @@ export class ScribeLambdaFactory
 			throw error;
 		}
 
-		if (document.scribe === undefined || document.scribe === null) {
+		const useDefaultCheckpointForNewDocument =
+			document.scribe === undefined || document.scribe === null;
+		const checkpointIsBlank = document.scribe === "";
+		const checkpointQuorumIsValid = isCheckpointQuorumValid(document.scribe);
+		const useLatestSummaryCheckpointForExistingDocument =
+			checkpointIsBlank || !checkpointQuorumIsValid;
+
+		if (useDefaultCheckpointForNewDocument) {
 			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
 			// both to be safe. Empty sring denotes a cache that was cleared due to a service summary
 			const message = "New document. Setting empty scribe checkpoint";
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
 			lastCheckpoint = DefaultScribe;
-		} else if (document.scribe === "") {
-			const message = "Existing document. Fetching checkpoint from summary";
+		} else if (useLatestSummaryCheckpointForExistingDocument) {
+			const message = `Existing document${
+				!checkpointIsBlank && !checkpointQuorumIsValid ? " with invalid quorum members" : ""
+			}. Fetching checkpoint from summary`;
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
 			if (!latestSummary.fromSummary) {
@@ -205,6 +214,12 @@ export class ScribeLambdaFactory
 				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
 				lastCheckpoint = DefaultScribe;
 			} else {
+				if (!isCheckpointQuorumValid(latestSummary.scribe)) {
+					Lumberjack.error(
+						"Quorum from summary is invalid. Continuing.",
+						lumberProperties,
+					);
+				}
 				lastCheckpoint = JSON.parse(latestSummary.scribe);
 				opMessages = latestSummary.messages;
 				// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.

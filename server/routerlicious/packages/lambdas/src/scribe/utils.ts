@@ -8,11 +8,13 @@ import {
 	IDocumentMessage,
 	IDocumentSystemMessage,
 	IProtocolState,
+	IUser,
 } from "@fluidframework/protocol-definitions";
 import {
 	IProducer,
 	IRawOperationMessage,
 	RawOperationType,
+	type IScribe,
 } from "@fluidframework/server-services-core";
 
 export const initializeProtocol = (protocolState: IProtocolState): ProtocolOpHandler =>
@@ -69,4 +71,25 @@ export const isLocalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly
  */
 export const isGlobalCheckpoint = (noActiveClients: boolean, globalCheckpointOnly: boolean) => {
 	return noActiveClients || globalCheckpointOnly;
+};
+
+/**
+ * Whether the quorum members represented in the checkpoint's protocol state are valid.
+ */
+export const isCheckpointQuorumValid = (stringifiedCheckpoint: string): boolean => {
+	if (!stringifiedCheckpoint) {
+		return false;
+	}
+	const checkpoint: IScribe = JSON.parse(stringifiedCheckpoint);
+	if (checkpoint.protocolState.members.length === 0) {
+		return true;
+	}
+	for (const [, sequencedClient] of checkpoint.protocolState.members) {
+		const user: IUser = sequencedClient.client.user;
+		// User information was scrubbed.
+		if (!user.id) {
+			return false;
+		}
+	}
+	return true;
 };
