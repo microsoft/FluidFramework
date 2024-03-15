@@ -330,7 +330,7 @@ export class ModularChangeFamily
 		]);
 
 		return makeModularChangeset(
-			this.pruneFieldMap(composedFields),
+			this.pruneFieldMap(composedFields, composedNodeChanges),
 			composedNodeChanges,
 			idState.maxId,
 			revInfos,
@@ -765,7 +765,7 @@ export class ModularChangeFamily
 		}
 
 		return makeModularChangeset(
-			this.pruneFieldMap(rebasedFields),
+			this.pruneFieldMap(rebasedFields, rebasedNodes),
 			rebasedNodes,
 			idState.maxId,
 			change.revisions,
@@ -948,39 +948,51 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	private pruneFieldMap(changeset: FieldChangeMap): FieldChangeMap | undefined {
-		// XXX
-		return changeset;
+	private pruneFieldMap(
+		changeset: FieldChangeMap,
+		nodeMap: ChangeAtomIdMap<NodeChangeset>,
+	): FieldChangeMap | undefined {
+		const prunedChangeset: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of changeset) {
+			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
 
-		// const prunedChangeset: FieldChangeMap = new Map();
-		// for (const [field, fieldChange] of changeset) {
-		// 	const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
+			const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (nodeId) =>
+				this.pruneNodeChange(nodeId, nodeMap),
+			);
 
-		// 	const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (node) =>
-		// 		this.pruneNodeChange(node),
-		// 	);
+			if (!handler.isEmpty(prunedFieldChangeset)) {
+				prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
+			}
+		}
 
-		// 	if (!handler.isEmpty(prunedFieldChangeset)) {
-		// 		prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
-		// 	}
-		// }
-
-		// return prunedChangeset.size > 0 ? prunedChangeset : undefined;
+		return prunedChangeset.size > 0 ? prunedChangeset : undefined;
 	}
 
-	// private pruneNodeChange(changeset: NodeChangeset): NodeChangeset | undefined {
-	// 	const prunedFields =
-	// 		changeset.fieldChanges !== undefined
-	// 			? this.pruneFieldMap(changeset.fieldChanges)
-	// 			: undefined;
+	private pruneNodeChange(
+		nodeId: NodeId,
+		nodeMap: ChangeAtomIdMap<NodeChangeset>,
+	): NodeId | undefined {
+		const changeset = tryGetFromNestedMap(nodeMap, nodeId.revision, nodeId.localId);
+		assert(changeset !== undefined, "Unknown node ID");
 
-	// 	const prunedChange = { ...changeset, fieldChanges: prunedFields };
-	// 	if (prunedChange.fieldChanges === undefined) {
-	// 		delete prunedChange.fieldChanges;
-	// 	}
+		const prunedFields =
+			changeset.fieldChanges !== undefined
+				? this.pruneFieldMap(changeset.fieldChanges, nodeMap)
+				: undefined;
 
-	// 	return isEmptyNodeChangeset(prunedChange) ? undefined : prunedChange;
-	// }
+		const prunedChange = { ...changeset, fieldChanges: prunedFields };
+		if (prunedChange.fieldChanges === undefined) {
+			delete prunedChange.fieldChanges;
+		}
+
+		if (isEmptyNodeChangeset(prunedChange)) {
+			deleteFromNestedMap(nodeMap, nodeId.revision, nodeId.localId);
+			return undefined;
+		} else {
+			setInNestedMap(nodeMap, nodeId.revision, nodeId.localId, prunedChange);
+			return nodeId;
+		}
+	}
 
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver);
