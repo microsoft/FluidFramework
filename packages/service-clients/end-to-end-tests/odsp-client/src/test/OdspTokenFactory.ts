@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
 import {
 	IClientConfig,
@@ -10,8 +13,6 @@ import {
 	getFetchTokenUrl,
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 import { IOdspCredentials } from "./OdspClientFactory.js";
 
