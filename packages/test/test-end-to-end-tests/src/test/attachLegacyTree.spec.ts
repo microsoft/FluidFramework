@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { BuildNode, Change, SharedTree, StablePlace, TraitLabel } from "@fluid-experimental/tree";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -12,6 +11,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 
 class TestDataObject extends DataObject {
 	public get _context() {

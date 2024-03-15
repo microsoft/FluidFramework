@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	TestFluidObjectFactory,
-	timeoutPromise,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
 	ICodeDetailsLoader,
 	IContainer,
@@ -16,9 +12,13 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+	TestFluidObjectFactory,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 
 describe("Audience correctness", () => {
 	const mapId = "mapKey";

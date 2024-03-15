@@ -4,9 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
@@ -14,13 +21,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**

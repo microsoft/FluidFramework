@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 import { CompatKind } from "../../compatOptions.cjs";
+import { testBaseVersion } from "../baseVersion.js";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 import { pkgVersion } from "../packageVersion.js";
 import { getRequestedVersion } from "../versionUtils.js";
-import { testBaseVersion } from "../baseVersion.js";
 
 function transformVersion(version: string): string {
 	const regex = /(\d+)\.(\d+)\.(\d+)-dev-(\w+)\.(\d+)\.(\d+)\.(\d+)\.\d+/;

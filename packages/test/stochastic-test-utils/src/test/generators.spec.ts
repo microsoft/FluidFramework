@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import {
+	ExitBehavior,
 	asyncGeneratorFromArray,
 	chain,
 	chainAsync,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
-	ExitBehavior,
 	generatorFromArray,
 	interleave,
 	interleaveAsync,
@@ -21,7 +21,7 @@ import {
 } from "../generators";
 import { makeRandom } from "../random";
 import { AsyncGenerator, Generator, IRandom, done } from "../types";
-import { chiSquaredCriticalValues, computeChiSquared, Counter } from "./utils";
+import { Counter, chiSquaredCriticalValues, computeChiSquared } from "./utils";
 
 function assertGeneratorProduces<T>(generator: Generator<T, void>, results: T[]): void {
 	const actual: T[] = [];

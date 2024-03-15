@@ -30,14 +30,14 @@ import * as sequence from "@fluidframework/sequence";
 import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
 
+import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 // ContainerRuntime and Data Runtime API
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import * as sequenceDeprecated from "@fluid-experimental/sequence-deprecated";
-import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion.js";

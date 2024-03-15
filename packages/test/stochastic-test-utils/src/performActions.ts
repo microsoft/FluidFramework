@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs, writeFileSync, mkdirSync } from "fs";
+import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
+import { combineReducers, combineReducersAsync } from "./combineReducers";
 import {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Reducer,
 	SaveInfo,
+	done,
 } from "./types";
-import { combineReducers, combineReducersAsync } from "./combineReducers";
 
 /**
  * Performs random actions on a set of clients.
