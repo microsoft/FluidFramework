@@ -6,18 +6,11 @@
 import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
+import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
-import {
-	backGroundGrayColor,
-	borderGrayColor,
-	colorWhite,
-	iconMarginRight,
-	unit,
-} from "./constants";
 import {
 	DecoratedSelect,
 	DecoratedSelectGroupedOptionsType,
@@ -30,6 +23,13 @@ import { ErrorTooltip } from "./ErrorTooltip";
 import { IInspectorRow } from "./InspectorTableTypes";
 import { SvgIcon } from "./SVGIcon";
 import { TypeIcon } from "./TypeIcon";
+import {
+	backGroundGrayColor,
+	borderGrayColor,
+	colorWhite,
+	iconMarginRight,
+	unit,
+} from "./constants";
 
 const useStyles = makeStyles(
 	{
