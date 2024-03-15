@@ -967,6 +967,7 @@ importers:
   examples/benchmarks/bubblebench/baseline:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -1014,6 +1015,7 @@ importers:
       react: 17.0.2
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1045,6 +1047,7 @@ importers:
 
   examples/benchmarks/bubblebench/common:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/tree': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -1086,6 +1089,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       use-resize-observer: 7.1.0_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -1108,6 +1112,7 @@ importers:
 
   examples/benchmarks/bubblebench/editable-shared-tree:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -1158,6 +1163,7 @@ importers:
       '@fluidframework/tree': link:../../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1189,6 +1195,7 @@ importers:
 
   examples/benchmarks/bubblebench/ot:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -1238,6 +1245,7 @@ importers:
       ot-json1: 1.0.2
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1268,6 +1276,7 @@ importers:
 
   examples/benchmarks/bubblebench/sharedtree:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -1315,6 +1324,7 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1345,6 +1355,7 @@ importers:
 
   examples/benchmarks/odspsnapshotfetch-perftestapp:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -1390,6 +1401,7 @@ importers:
       express: 4.18.2
       webpack-dev-server: 4.6.0_wvskkfkvbt5crqa4uyjlq44kiy
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1418,6 +1430,7 @@ importers:
 
   examples/benchmarks/tablebench:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
@@ -1460,6 +1473,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-tools/benchmark': 0.48.0
       '@fluidframework/build-common': 2.0.3
@@ -1487,6 +1501,7 @@ importers:
 
   examples/client-logger/app-insights-logger:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluidframework/app-insights-logger': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -1546,6 +1561,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
