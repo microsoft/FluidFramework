@@ -4571,14 +4571,7 @@ importers:
       typescript: 5.1.6
 
   experimental/PropertyDDS/packages/property-common/platform-dependent:
-    specifiers:
-      '@biomejs/biome': ^1.6.1
-      '@fluidframework/build-tools': ^0.34.0
-      prettier: ~3.0.3
-    devDependencies:
-      '@biomejs/biome': 1.6.1
-      '@fluidframework/build-tools': 0.34.0
-      prettier: 3.0.3
+    specifiers: {}
 
   experimental/PropertyDDS/packages/property-dds:
     specifiers:
