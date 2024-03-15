@@ -552,7 +552,6 @@ export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocum
 // @public
 export class ParagraphNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
     constructor(children: DocumentationNode[]);
-    static combine(...nodes: ParagraphNode[]): ParagraphNode;
     static createFromPlainText(text: string): ParagraphNode;
     static readonly Empty: ParagraphNode;
     get singleLine(): false;
