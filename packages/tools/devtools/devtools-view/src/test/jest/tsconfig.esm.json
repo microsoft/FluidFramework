@@ -1,0 +1,18 @@
+{
+	// This config must be used in a "type": "module" environment. (Use fluid-tsc module.)
+	"extends": "../../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"include": ["./**/*"],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../../lib/test/jest",
+		"types": [],
+	},
+	"references": [
+		{
+			"path": "../../../tsconfig.esm.json",
+		},
+		{
+			"path": "../utils/tsconfig.esm.json",
+		},
+	],
+}

@@ -36,8 +36,10 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
-		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest:cjs",
-		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.json",
+		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest",
+		"build:test:jest": "concurrently npm:build:test:jest:cjs npm:build:test:jest:esm",
+		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.cjs.json",
+		"build:test:jest:esm": "fluid-tsc module --project ./src/test/jest/tsconfig.esm.json",
 		"build:test:mocha": "fluid-tsc module --project ./src/test/screenshot/tsconfig.json",
 		"build:test:utils": "concurrently npm:build:test:utils:cjs npm:build:test:utils:esm",
 		"build:test:utils:cjs": "fluid-tsc commonjs --project ./src/test/utils/tsconfig.cjs.json",
@@ -57,7 +59,9 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "concurrently npm:test:jest npm:test:mocha",
 		"test:coverage": "npm run test:jest:coverage",
-		"test:jest": "jest",
+		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
+		"test:jest:cjs": "jest --roots ./dist",
+		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:mocha:fail": "mocha lib/test/screenshot/Screenshot.test.js --delay --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
@@ -158,6 +162,10 @@
 			"build:test:jest:cjs": [
 				"...",
 				"build:test:utils:cjs"
+			],
+			"build:test:jest:esm": [
+				"...",
+				"build:test:utils:esm"
 			],
 			"build:test:mocha": [
 				"...",

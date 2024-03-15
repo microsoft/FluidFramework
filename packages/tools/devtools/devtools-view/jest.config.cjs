@@ -5,7 +5,7 @@
 
 module.exports = {
 	preset: "ts-jest",
-	// Run jest against pre-built CommonJS javascript.
+	// Run jest against pre-built JavaScript.
 	// 1. ts-jest does not handle Node16 config and use of .cts files sufficiently. It
 	//    is possible to run directly against the TypeScript source (<rootDir>/src),
 	//    if tsconfig is changed to CommonJs+Bundler.
@@ -21,9 +21,11 @@ module.exports = {
 	// B. Replace ts-jest with babel.
 	//
 	// It is good to run against the pre-built source as we know that we are testing exactly the
-	// production source. Testing against ESM would be preferred. So option A has merit even if
-	// other things come along.
-	roots: ["<rootDir>/dist"],
+	// production source. Option A would allow dynamic test source and exact production results.
+	// Testing against ESM is currently preferred and what is configured here.
+	// From command line however, roots will be set to ./dist until fluentui has proper ESM support
+	// in their dual-emit packages (see https://github.com/microsoft/fluentui/issues/30778).
+	roots: ["<rootDir>/lib"],
 	reporters: [
 		"default",
 		[
@@ -35,11 +37,11 @@ module.exports = {
 		],
 	],
 	transform: {
-		// uncomment when attempting run against TypeScript source:
+		// Uncomment when attempting run against TypeScript source:
 		// "^.+\\.c?tsx?$": [
 		// 	"ts-jest",
 		// 	{
-		// 		tsconfig: "src/test/jest/tsconfig.json",
+		// 		tsconfig: "src/test/jest/tsconfig.esm.json",
 		// 	},
 		// ],
 	},
@@ -47,11 +49,12 @@ module.exports = {
 	// Change `roots` to select between those.
 	testRegex: "test/jest/.*\\.test\\.[jt]sx?$",
 	testPathIgnorePatterns: ["/node_modules/"],
-	moduleNameMapper: {
-		// Remove explicit .(c)js from local paths to allow jest to find the .ts* files
-		"^(\\.{1,2}/.*)\\.c?js$": "$1",
-	},
+	// Uncomment when attempting run against TypeScript source:
+	// moduleNameMapper: {
+	// 	// Remove explicit .(c)js from local paths to allow jest to find the .ts* files
+	// 	"^(\\.{1,2}/.*)\\.c?js$": "$1",
+	// },
 	moduleFileExtensions: ["ts", "tsx", "cts", "mts", "js", "cjs", "mjs", "jsx", "json", "node"],
-	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/", "/dist/test/"],
+	coveragePathIgnorePatterns: ["/node_modules/", "/src/test/", "/dist/test/", "/lib/test/"],
 	testEnvironment: "jsdom",
 };

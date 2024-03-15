@@ -8,15 +8,8 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-// @testing-library/user-event is CommonJs and better imported in an affirmed CJS module (.cts)
-// but ts-jest has not addressed https://github.com/kulshekhar/ts-jest/issues/3996 transpiling
-// .cts files AND fluentui does not have proper ESM support in their dual-emit packages (see
-// https://github.com/microsoft/fluentui/issues/30778). So just expect this is transpiled in
-// CJS context which doesn't require explicit .cts file.
-// eslint-disable-next-line import/no-named-as-default
-import userEvent from "@testing-library/user-event";
-
 import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../../components/index.js";
+import { userEvent } from "./userEvent.cjs";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {

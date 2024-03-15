@@ -14,7 +14,7 @@ module.exports = {
 	parserOptions: {
 		project: [
 			"./tsconfig.esm.json",
-			"./src/test/jest/tsconfig.json",
+			"./src/test/jest/tsconfig.esm.json",
 			"./src/test/screenshot/tsconfig.json",
 			"./src/test/utils/tsconfig.esm.json",
 		],
