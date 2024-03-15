@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
+import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
-import { LocalPersistentCache } from "../odspCache";
-import { EpochTracker } from "../epochTracker";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { mockFetchOk } from "./mockFetch";
+import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils";
+import { EpochTracker } from "../epochTracker.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { mockFetchOk } from "./mockFetch.js";
 
-const createUtLocalCache = () => new LocalPersistentCache(2000);
-const createUtEpochTracker = (fileEntry, logger) =>
-	new EpochTracker(createUtLocalCache(), fileEntry, logger);
+const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache(2000);
+const createUtEpochTracker = (fileEntry: IFileEntry, logger: ITelemetryBaseLogger): EpochTracker =>
+	new EpochTracker(createUtLocalCache(), fileEntry, logger as ITelemetryLoggerExt);
 
 describe("DeltaStorageService", () => {
 	/*
@@ -34,7 +35,7 @@ describe("DeltaStorageService", () => {
 		driveId,
 		itemId,
 		odspResolvedUrl: true,
-	} as any as IOdspResolvedUrl;
+	} as unknown as IOdspResolvedUrl;
 	const fileEntry = { docId: "docId", resolvedUrl };
 
 	it("Should build the correct sharepoint delta url with auth", async () => {
@@ -52,7 +53,7 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("Get Returns Response With Op Envelope", () => {
-		const expectedDeltaFeedResponse: any = {
+		const expectedDeltaFeedResponse = {
 			value: [
 				{
 					op: {
@@ -131,7 +132,7 @@ describe("DeltaStorageService", () => {
 	});
 
 	describe("Get Returns Response With Op Envelope", () => {
-		const expectedDeltaFeedResponse: any = {
+		const expectedDeltaFeedResponse = {
 			value: [
 				{
 					clientId: "present-place",
@@ -243,7 +244,10 @@ describe("DeltaStorageService", () => {
 				async (from, to) => getCached(from, to),
 				(from, to) => [],
 				(ops) => {},
-				() => ({ isFirstSnapshotFromNetwork: false }) as any as OdspDocumentStorageService,
+				() =>
+					({
+						isFirstSnapshotFromNetwork: false,
+					}) as unknown as OdspDocumentStorageService,
 			);
 
 			const messages = odspDeltaStorageServiceWithCache.fetchMessages(1, undefined);

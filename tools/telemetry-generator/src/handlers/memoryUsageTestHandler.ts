@@ -12,6 +12,7 @@ module.exports = function handler(fileData, logger) {
 
 	fileData.tests.forEach((testData) => {
 		logger.send({
+			namespace: "FFEngineering", // Transfer the telemetry associated with tests performance measurement to namespace "FFEngineering"
 			category: "performance",
 			eventName: "Benchmark",
 			benchmarkType: "MemoryUsage",

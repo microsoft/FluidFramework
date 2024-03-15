@@ -6,29 +6,29 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import * as api from "@fluidframework/driver-definitions";
-import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
+import { NetworkErrorBasic, RateLimiter, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import io from "socket.io-client";
-import { PerformanceEvent, wrapError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { RouterliciousErrorTypes } from "./errorUtils";
+import { ICache } from "./cache";
+import { INormalizedWholeSnapshot } from "./contracts";
+import { ISnapshotTreeVersion } from "./definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
+import { DocumentStorageService } from "./documentStorageService";
+import { RouterliciousErrorTypes } from "./errorUtils";
+import { GitManager } from "./gitManager";
+import { Historian } from "./historian";
 import { NullBlobStorageService } from "./nullBlobStorageService";
-import { ITokenProvider } from "./tokens";
+import { pkgVersion as driverVersion } from "./packageVersion";
+import { IRouterliciousDriverPolicies } from "./policies";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	TokenFetcher,
 } from "./restWrapper";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { GitManager } from "./gitManager";
-import { Historian } from "./historian";
 import { RestWrapper } from "./restWrapperBase";
-import { INormalizedWholeSnapshot } from "./contracts";
+import { ITokenProvider } from "./tokens";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.

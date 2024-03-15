@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals expect  */
 
 import {
 	catchConsoleErrors,
-	hadConsoleError,
 	clearConsoleError,
 	countConsoleMessages,
 	endCountConsoleMessages,
+	hadConsoleError,
 } from "./catchConsoleError";
 
 describe("General stuff", function () {

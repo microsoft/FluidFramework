@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/bundle-size-tools",
-	"version": "0.34.0",
+	"version": "0.35.0",
 	"description": "Utility for analyzing bundle size regressions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,16 +25,17 @@
 		"build:compile": "concurrently npm:tsc npm:build:copy",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "npm run format:biome",
+		"format:biome": "biome check --apply .",
+		"lint": "npm run eslint",
+		"lint:fix": "npm run eslint:fix",
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"tsc": "tsc"
 	},
@@ -48,15 +49,14 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^3.2.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/msgpack-lite": "^0.1.8",
 		"@types/node": "^18.18.6",
 		"@types/pako": "^2.0.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.51.0",
-		"prettier": "~3.0.3",
+		"eslint": "~8.55.0",
 		"rimraf": "^4.4.1"
 	}
 }

@@ -43,6 +43,7 @@ declare function get_current_InterfaceDeclaration_ContainerSchema():
 declare function use_old_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<old.ContainerSchema>): void;
 use_old_InterfaceDeclaration_ContainerSchema(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerSchema());
 
 /*
@@ -293,7 +294,7 @@ use_old_TypeAliasDeclaration_InitialObjects(
 declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
     TypeOnly<old.LoadableObjectClass<any>>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<current.LoadableObjectClass<any>>): void;
+    use: TypeOnly<current.LoadableObjectClass>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClass(
     get_old_TypeAliasDeclaration_LoadableObjectClass());
 
@@ -303,7 +304,7 @@ use_current_TypeAliasDeclaration_LoadableObjectClass(
 * "TypeAliasDeclaration_LoadableObjectClass": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_LoadableObjectClass():
-    TypeOnly<current.LoadableObjectClass<any>>;
+    TypeOnly<current.LoadableObjectClass>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectClass(
     use: TypeOnly<old.LoadableObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_LoadableObjectClass(
@@ -432,26 +433,26 @@ use_old_TypeAliasDeclaration_Myself(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_SharedObjectClass():
     TypeOnly<old.SharedObjectClass<any>>;
-declare function use_current_TypeAliasDeclaration_SharedObjectClass(
+declare function use_current_RemovedTypeAliasDeclaration_SharedObjectClass(
     use: TypeOnly<current.SharedObjectClass<any>>): void;
-use_current_TypeAliasDeclaration_SharedObjectClass(
+use_current_RemovedTypeAliasDeclaration_SharedObjectClass(
     get_old_TypeAliasDeclaration_SharedObjectClass());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SharedObjectClass": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SharedObjectClass": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SharedObjectClass():
+declare function get_current_RemovedTypeAliasDeclaration_SharedObjectClass():
     TypeOnly<current.SharedObjectClass<any>>;
 declare function use_old_TypeAliasDeclaration_SharedObjectClass(
     use: TypeOnly<old.SharedObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_SharedObjectClass(
-    get_current_TypeAliasDeclaration_SharedObjectClass());
+    get_current_RemovedTypeAliasDeclaration_SharedObjectClass());
 
 /*
 * Validate forward compat by using old type in place of current type

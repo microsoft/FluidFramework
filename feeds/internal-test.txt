@@ -14,7 +14,7 @@
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
 @fluid-private/stochastic-test-utils
-@fluidframework/mocha-test-setup
+@fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
@@ -30,7 +30,6 @@
 @fluid-private/test-loader-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
-@fluidframework/view-interfaces
 @fluidframework/undo-redo
 @fluidframework/synthesize
 @fluidframework/request-handler
@@ -75,7 +74,6 @@ fluid-framework
 @fluidframework/core-interfaces
 @fluidframework/container-definitions
 @fluid-internal/client-utils
-@fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects
 @fluid-experimental/tree

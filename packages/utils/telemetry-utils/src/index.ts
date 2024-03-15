@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export {
 	createChildMonitoringContext,
 	MonitoringContext,
@@ -64,7 +65,6 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
-	TelemetryNullLogger,
 } from "./logger.js";
 export { MockLogger } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";

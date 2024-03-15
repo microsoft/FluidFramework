@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "3.5.0",
+	"version": "5.2.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,7 +20,7 @@
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"print-config": "concurrently \"npm:print-config:*\" && npm run cleanup-printed-configs",
 		"print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
-		"print-config:minimal": "eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
+		"print-config:minimal": "eslint --config ./minimal-deprecated.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
 		"print-config:react": "eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json",
 		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
 		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
@@ -28,6 +28,7 @@
 		"test": "echo TODO: add tests"
 	},
 	"dependencies": {
+		"@fluid-internal/eslint-plugin-fluid": "^0.1.1",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/eslint-patch": "~1.4.0",
 		"@rushstack/eslint-plugin": "~0.13.0",
@@ -50,7 +51,7 @@
 		"@fluid-tools/markdown-magic": "file:../../../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"concurrently": "^8.2.1",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",

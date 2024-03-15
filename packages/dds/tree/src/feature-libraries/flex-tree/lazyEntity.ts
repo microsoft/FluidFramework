@@ -5,11 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	TreeNavigationResult,
 } from "../../core/index.js";
-import { disposeSymbol, IDisposable } from "../../util/index.js";
+import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
 
@@ -41,8 +41,8 @@ export const anchorSymbol = Symbol("anchor");
  * TODO: provide a non implementation dependent way to leverage this optimization.
  */
 export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
-	assert(entity instanceof LazyEntity, "unexpected implementation");
-	assert(!entity[isFreedSymbol](), "Use after free");
+	assert(entity instanceof LazyEntity, 0x8c9 /* unexpected implementation */);
+	assert(!entity[isFreedSymbol](), 0x8ca /* Use after free */);
 }
 
 /**

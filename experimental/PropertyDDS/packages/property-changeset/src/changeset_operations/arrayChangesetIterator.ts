@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Iterator to iterate over array ChangeSets
  */
 
-import isNumber from "lodash/isNumber";
-import isString from "lodash/isString";
+import isNumber from "lodash/isNumber.js";
+import isString from "lodash/isString.js";
 
 // @ts-ignore
 import { constants } from "@fluid-experimental/property-common";
 
-import { SerializedChangeSet } from "../changeset";
-import { ArrayIteratorOperationTypes } from "./operationTypes";
+import { SerializedChangeSet } from "../changeset.js";
+import { ArrayIteratorOperationTypes } from "./operationTypes.js";
 
 const { MSG } = constants;
 

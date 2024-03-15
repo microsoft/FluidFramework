@@ -19,5 +19,12 @@
 		width: 15px;
 		height: 15px;
 		margin-right: 1rem;
+		
+	}
+}
+
+@media screen and (-ms-high-contrast: white-on-black) {
+	.connect-links a img {
+		filter: invert(99%) sepia(4%) saturate(1700%) hue-rotate(269deg) brightness(114%) contrast(80%);
 	}
 }

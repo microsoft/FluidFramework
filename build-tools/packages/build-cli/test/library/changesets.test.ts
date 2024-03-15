@@ -2,11 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert, expect } from "chai";
 import { pathExistsSync } from "fs-extra";
 import path from "node:path";
 
-import { flattenChangesets, groupByPackage, loadChangesets } from "../../src/library/changesets";
+import {
+	flattenChangesets,
+	groupByPackage,
+	loadChangesets,
+} from "../../src/library/changesets";
 
 const changesetsPath = path.resolve(__dirname, "../data");
 assert.isTrue(pathExistsSync(changesetsPath));

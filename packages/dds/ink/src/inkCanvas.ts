@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IColor, IInk, IInkPoint, IInkStroke, IPen, IStylusOperation } from "./interfaces";
+import { IColor, IInk, IInkPoint, IInkStroke, IPen, IStylusOperation } from "./interfaces.js";
 
 interface IPoint {
 	x: number;

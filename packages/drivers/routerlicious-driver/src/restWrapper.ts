@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
+import {
+	CorrelationIdHeaderName,
+	DriverVersionHeaderName,
+	RestLessClient,
+	getAuthorizationTokenFromCredentials,
+} from "@fluidframework/server-services-client";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
-import { GenericNetworkError, NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
-import {
-	CorrelationIdHeaderName,
-	DriverVersionHeaderName,
-	getAuthorizationTokenFromCredentials,
-	RestLessClient,
-} from "@fluidframework/server-services-client";
-import fetch from "cross-fetch";
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
+import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
-import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { QueryStringType, RestWrapper } from "./restWrapperBase";
+import { ITokenProvider, ITokenResponse } from "./tokens";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
@@ -49,7 +49,7 @@ const axiosRequestConfigToFetchRequestConfig = (
 export interface IR11sResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	requestUrl: string;
 }
 
@@ -91,7 +91,7 @@ export function getPropsToLogFromResponse(headers: {
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
-	const additionalProps: ITelemetryProperties = {
+	const additionalProps: ITelemetryBaseProperties = {
 		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {

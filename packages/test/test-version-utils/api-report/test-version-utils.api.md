@@ -13,12 +13,13 @@ import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
 import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
-import { ITelemetryGenericEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
 import { ITestObjectProvider } from '@fluidframework/test-utils';
 import { Loader } from '@fluidframework/container-loader';
@@ -79,7 +80,10 @@ export const DataRuntimeApi: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
         SharedDirectory: typeof map.SharedDirectory;
-        SharedMap: typeof map.SharedMap;
+        SharedMap: {
+            getFactory(): IChannelFactory<map.ISharedMap>;
+            create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedMap;
+        };
         SharedMatrix: typeof matrix.SharedMatrix;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
@@ -212,7 +216,7 @@ export type DocumentTypeInfo = DocumentMapInfo | DocumentMultipleDataStoresInfo 
 export const ensurePackageInstalled: (baseVersion: string, version: number | string, force: boolean) => Promise<InstalledPackage | undefined>;
 
 // @internal (undocumented)
-export type ExpectedEvents = ITelemetryGenericEvent[] | Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
+export type ExpectedEvents = ITelemetryGenericEventExt[] | Partial<Record<TestDriverTypes, ITelemetryGenericEventExt[]>>;
 
 // @internal (undocumented)
 export type ExpectsTest = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) => Mocha.Test;

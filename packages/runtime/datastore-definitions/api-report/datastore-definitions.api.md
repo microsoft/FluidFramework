@@ -4,26 +4,26 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/container-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
-import { IQuorumClients } from '@fluidframework/protocol-definitions';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/core-interfaces';
+import type { AttachState } from '@fluidframework/container-definitions';
+import type { FluidObject } from '@fluidframework/core-interfaces';
+import type { IAudience } from '@fluidframework/container-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { IEvent } from '@fluidframework/core-interfaces';
+import type { IEventProvider } from '@fluidframework/core-interfaces';
+import type { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
+import type { IQuorumClients } from '@fluidframework/protocol-definitions';
+import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITelemetryContext } from '@fluidframework/runtime-definitions';
 
 // @public (undocumented)
 export interface IChannel extends IFluidLoadable {
@@ -45,10 +45,10 @@ export interface IChannelAttributes {
 }
 
 // @public
-export interface IChannelFactory {
+export interface IChannelFactory<out TChannel extends IFluidLoadable = IFluidLoadable> {
     readonly attributes: IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): IChannel;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<IChannel>;
+    create(runtime: IFluidDataStoreRuntime, id: string): TChannel & IChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TChannel & IChannel>;
     readonly type: string;
 }
 
@@ -80,7 +80,7 @@ export interface IDeltaConnection {
 
 // @public
 export interface IDeltaHandler {
-    applyStashedOp(message: any): unknown;
+    applyStashedOp(message: any): void;
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
     reSubmit(message: any, localOpMetadata: unknown): void;
     rollback?(message: any, localOpMetadata: unknown): void;
@@ -89,6 +89,7 @@ export interface IDeltaHandler {
 
 // @public
 export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRuntimeEvents>, IDisposable {
+    addChannel(channel: IChannel): void;
     readonly attachState: AttachState;
     bindChannel(channel: IChannel): void;
     // (undocumented)
@@ -112,7 +113,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)

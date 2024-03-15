@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory, SharedTree } from "@fluidframework/tree";
@@ -15,8 +16,8 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
 import { ConnectionState } from "@fluidframework/container-loader";
-import { AzureClient } from "../AzureClient";
-import { type AzureLocalConnectionConfig } from "../interfaces";
+import { AzureClient } from "../AzureClient.js";
+import { type AzureLocalConnectionConfig } from "../interfaces.js";
 
 function createAzureClient(scopes?: ScopeType[]): AzureClient {
 	const connectionProperties: AzureLocalConnectionConfig = {

@@ -6,62 +6,62 @@
 import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
-	ChangeFamily,
-	EditBuilder,
-	ChangeRebaser,
-	FieldKindIdentifier,
-	FieldKey,
-	UpPath,
-	TaggedChange,
-	RevisionTag,
-	tagChange,
-	makeAnonChange,
-	ChangeFamilyEditor,
-	FieldUpPath,
-	ChangesetLocalId,
-	isEmptyFieldChanges,
-	RevisionMetadataSource,
-	RevisionInfo,
-	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
-	makeDetachedNodeId,
-	emptyDelta,
-	DeltaFieldMap,
-	DeltaFieldChanges,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeRebaser,
+	ChangesetLocalId,
+	CursorLocationType,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
-	DeltaRoot,
 	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	mapCursorField,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaRoot,
+	EditBuilder,
+	FieldKey,
+	FieldKindIdentifier,
+	FieldUpPath,
 	ITreeCursorSynchronous,
-	CursorLocationType,
+	RevisionInfo,
+	RevisionMetadataSource,
+	RevisionTag,
+	RevisionTagCodec,
+	TaggedChange,
+	UpPath,
+	emptyDelta,
+	isEmptyFieldChanges,
+	makeAnonChange,
+	makeDetachedNodeId,
+	mapCursorField,
+	revisionMetadataSourceFromInfo,
+	tagChange,
 } from "../../core/index.js";
 import {
+	IdAllocationState,
+	IdAllocator,
+	Mutable,
 	brand,
 	deleteFromNestedMap,
 	fail,
 	forEachInNestedMap,
 	getOrAddInMap,
-	IdAllocationState,
-	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	Mutable,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import {
+	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
-	defaultChunkPolicy,
-	FieldBatchCodec,
 	chunkTree,
+	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	CrossFieldManager,
@@ -79,6 +79,7 @@ import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
+import { makeV0Codec } from "./modularChangeCodecs.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -86,7 +87,6 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 } from "./modularChangeTypes.js";
-import { makeV0Codec } from "./modularChangeCodecs.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -247,7 +247,10 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
 				const context = crossFieldTable.fieldToContext.get(fieldChange);
-				assert(context !== undefined, "Should have context for every invalidated field");
+				assert(
+					context !== undefined,
+					0x8cc /* Should have context for every invalidated field */,
+				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
 				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
@@ -284,7 +287,10 @@ export class ModularChangeFamily
 			}
 		}
 
-		const { allBuilds, allDestroys } = composeBuildsAndDestroys([change1, change2]);
+		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers([
+			change1,
+			change2,
+		]);
 
 		return makeModularChangeset(
 			this.pruneFieldMap(composedFields),
@@ -293,6 +299,7 @@ export class ModularChangeFamily
 			undefined,
 			allBuilds,
 			allDestroys,
+			allRefreshers,
 		);
 	}
 
@@ -436,6 +443,7 @@ export class ModularChangeFamily
 
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
+			isRollback,
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -459,6 +467,7 @@ export class ModularChangeFamily
 				).rebaser.invert(
 					tagChange(originalFieldChange, revision),
 					(nodeChangeset) => nodeChangeset,
+					isRollback,
 					genId,
 					newCrossFieldManager(crossFieldTable, fieldChange),
 					revisionMetadata,
@@ -496,6 +505,7 @@ export class ModularChangeFamily
 
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
+		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
@@ -514,10 +524,12 @@ export class ModularChangeFamily
 				(childChanges) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
+						isRollback,
 						genId,
 						crossFieldTable,
 						revisionMetadata,
 					),
+				isRollback,
 				genId,
 				manager,
 				revisionMetadata,
@@ -540,6 +552,7 @@ export class ModularChangeFamily
 
 	private invertNodeChange(
 		change: TaggedChange<NodeChangeset>,
+		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
@@ -549,6 +562,7 @@ export class ModularChangeFamily
 		if (change.change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
+				isRollback,
 				genId,
 				crossFieldTable,
 				revisionMetadata,
@@ -652,6 +666,7 @@ export class ModularChangeFamily
 			constraintState.violationCount,
 			change.builds,
 			change.destroys,
+			change.refreshers,
 		);
 	}
 
@@ -876,9 +891,10 @@ export class ModularChangeFamily
 	}
 }
 
-function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
+function composeBuildsDestroysAndRefreshers(changes: TaggedChange<ModularChangeset>[]) {
 	const allBuilds: ChangeAtomIdMap<TreeChunk> = new Map();
 	const allDestroys: ChangeAtomIdMap<number> = new Map();
+	const allRefreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 	for (const taggedChange of changes) {
 		const revision = revisionFromTaggedChange(taggedChange);
 		const change = taggedChange.change;
@@ -947,8 +963,12 @@ function composeBuildsAndDestroys(changes: TaggedChange<ModularChangeset>[]) {
 				}
 			}
 		}
+		// add all refreshers while preferring earlier ones
+		if (change.refreshers) {
+			populateNestedMap(change.refreshers, allRefreshers, false);
+		}
 	}
-	return { allBuilds, allDestroys };
+	return { allBuilds, allDestroys, allRefreshers };
 }
 
 function invertBuilds(
@@ -1010,43 +1030,38 @@ function* relevantRemovedRootsFromFields(
 }
 
 /**
- * Adds any builds missing from the provided change that are relevant to the change.
- * This function enforces that all relevant removed roots have a corresponding build.
+ * Adds any refreshers missing from the provided change that are relevant to the change and
+ * removes any refreshers from the provided change that are not relevant to the change.
+ * This function enforces that all relevant removed roots have a corresponding build or refresher.
  *
- * @param change - The change with potentially missing builds. Not mutated by this function.
+ * @param change - The change that possibly has missing or superfluous refreshers. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
-export function addMissingBuilds(
+export function updateRefreshers(
 	change: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
-	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
+	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
-		const node = getDetachedNode(root);
-
-		// if the detached node could not be found, it should exist in the original builds map
-		if (node === undefined) {
-			assert(change.change.builds !== undefined, "detached node should exist");
+		if (change.change.builds !== undefined) {
+			// if the root exists in the original builds map, it does not need to be added as a refresher
 			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
-			assert(original !== undefined, "detached node should exist");
-		} else {
-			setInNestedMap(builds, root.major, root.minor, node);
+			if (original !== undefined) {
+				continue;
+			}
 		}
+
+		const node = getDetachedNode(root);
+		assert(node !== undefined, 0x8cd /* detached node should exist */);
+		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
-	if (builds.size === 0) {
-		return change.change;
-	}
-
-	if (change.change.builds !== undefined) {
-		populateNestedMap(change.change.builds, builds, true);
-	}
-
-	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
+	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } =
+		change.change;
 	return makeModularChangeset(
 		fieldChanges,
 		maxId,
@@ -1054,59 +1069,7 @@ export function addMissingBuilds(
 		constraintViolationCount,
 		builds,
 		destroys,
-	);
-}
-
-/**
- * Removes any builds from the provided change that are not relevant to the change.
- * Calls {@link relevantRemovedRoots} to determine which builds are relevant.
- *
- * @param change - The change with potentially superfluous builds. Not mutated by this function.
- * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
- * Can be retrieved by calling {@link relevantRemovedRoots}.
- * @returns a {@link ModularChangeset} with only builds relevant to the change.
- */
-export function filterSuperfluousBuilds(
-	change: TaggedChange<ModularChangeset>,
-	removedRoots: Iterable<DeltaDetachedNodeId>,
-): ModularChangeset {
-	const builds: ChangeAtomIdMap<TreeChunk> = new Map();
-	if (change.change.builds !== undefined) {
-		populateNestedMap(change.change.builds, builds, true);
-	}
-
-	const rootSets = new Map<RevisionTag | undefined, Set<number>>();
-	for (const { major, minor } of removedRoots) {
-		const rootsSet = getOrAddInMap(rootSets, major, new Set());
-		rootsSet.add(minor);
-	}
-
-	for (const [revision, innerMap] of builds.entries()) {
-		const rootSet = rootSets.get(revision);
-		if (rootSet !== undefined) {
-			for (const id of innerMap.keys()) {
-				if (!rootSet.has(id)) {
-					innerMap.delete(id);
-				}
-			}
-
-			if (innerMap.size === 0) {
-				builds.delete(revision);
-			}
-		} else {
-			// if this revision does not exist in the relevant removed roots, delete it from the builds
-			builds.delete(revision);
-		}
-	}
-
-	const { fieldChanges, maxId, revisions, constraintViolationCount, destroys } = change.change;
-	return makeModularChangeset(
-		fieldChanges,
-		maxId,
-		revisions,
-		constraintViolationCount,
-		builds.size > 0 ? builds : undefined,
-		destroys,
+		refreshers,
 	);
 }
 
@@ -1132,19 +1095,7 @@ export function intoDelta(
 		rootDelta.fields = fieldDeltas;
 	}
 	if (change.builds && change.builds.size > 0) {
-		const builds: DeltaDetachedNodeBuild[] = [];
-		forEachInNestedMap(change.builds, (chunk, major, minor) => {
-			if (chunk.topLevelLength > 0) {
-				const trees = mapCursorField(chunk.cursor(), (c) =>
-					cursorForMapTreeNode(mapTreeFromCursor(c)),
-				);
-				builds.push({
-					id: makeDetachedNodeId(major ?? revision, minor),
-					trees,
-				});
-			}
-		});
-		rootDelta.build = builds;
+		rootDelta.build = copyDetachedNodes(change.builds, revision);
 	}
 	if (change.destroys !== undefined && change.destroys.size > 0) {
 		const destroys: DeltaDetachedNodeDestruction[] = [];
@@ -1156,7 +1107,26 @@ export function intoDelta(
 		});
 		rootDelta.destroy = destroys;
 	}
+	if (change.refreshers && change.refreshers.size > 0) {
+		rootDelta.refreshers = copyDetachedNodes(change.refreshers, revision);
+	}
 	return rootDelta;
+}
+
+function copyDetachedNodes(detachedNodes: ChangeAtomIdMap<TreeChunk>, revision?: RevisionTag) {
+	const copiedDetachedNodes: DeltaDetachedNodeBuild[] = [];
+	forEachInNestedMap(detachedNodes, (chunk, major, minor) => {
+		if (chunk.topLevelLength > 0) {
+			const trees = mapCursorField(chunk.cursor(), (c) =>
+				cursorForMapTreeNode(mapTreeFromCursor(c)),
+			);
+			copiedDetachedNodes.push({
+				id: makeDetachedNodeId(major ?? revision, minor),
+				trees,
+			});
+		}
+	});
+	return copiedDetachedNodes.length > 0 ? copiedDetachedNodes : undefined;
 }
 
 /**
@@ -1437,6 +1407,7 @@ function makeModularChangeset(
 	constraintViolationCount: number | undefined = undefined,
 	builds?: ChangeAtomIdMap<TreeChunk>,
 	destroys?: ChangeAtomIdMap<number>,
+	refreshers?: ChangeAtomIdMap<TreeChunk>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes ?? new Map() };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -1453,6 +1424,9 @@ function makeModularChangeset(
 	}
 	if (destroys !== undefined && destroys.size > 0) {
 		changeset.destroys = destroys;
+	}
+	if (refreshers !== undefined && refreshers.size > 0) {
+		changeset.refreshers = refreshers;
 	}
 	return changeset;
 }

@@ -49,10 +49,6 @@
 				"packages": ["@fluidframework/driver-utils"],
 				"deps": ["Protocol-Utils", "Driver-Definitions", "Telemetry-Utils", "Core-Utils"]
 			},
-			"Framework-Utils": {
-				"packages": ["@fluidframework/view-interfaces"],
-				"deps": ["Core-Interfaces"]
-			},
 			"Other-Utils": {
 				"dot": false,
 				"packages": ["@fluidframework/odsp-doclib-utils"],
@@ -97,7 +93,7 @@
 					"experimental/PropertyDDS/packages/",
 					"packages/framework/"
 				],
-				"deps": ["Framework-Utils", "Loader", "Runtime", "Client-Utils"]
+				"deps": ["Loader", "Runtime", "Client-Utils"]
 			},
 			"Examples": {
 				"dot": false,

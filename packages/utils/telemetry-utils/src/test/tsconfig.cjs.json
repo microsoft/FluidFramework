@@ -1,17 +1,12 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
+	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"types": ["mocha", "node"],
-		"declaration": false,
-		"declarationMap": false,
-		"skipLibCheck": true,
 	},
-	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.cjs.json",
 		},
 	],
 }

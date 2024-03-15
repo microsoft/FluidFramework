@@ -6,10 +6,10 @@
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
+	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,
 	ICompressionStorageConfig,
-	DefaultCompressionStorageConfig,
-} from "./compression";
+} from "./compression/index.js";
 
 /**
  * This method optionally applies compression to the given document service factory. The compression

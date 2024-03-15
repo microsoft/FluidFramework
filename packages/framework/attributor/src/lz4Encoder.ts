@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { compress, decompress } from "lz4js";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { type Jsonable } from "@fluidframework/datastore-definitions";
-import { type Encoder } from "./encoders";
+import { compress, decompress } from "lz4js";
+import { type Encoder } from "./encoders.js";
 
 // TODO: document this
 // eslint-disable-next-line jsdoc/require-description

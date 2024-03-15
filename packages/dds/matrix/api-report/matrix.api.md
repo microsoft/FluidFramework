@@ -9,6 +9,8 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IEvent } from '@fluidframework/core-interfaces';
+import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -31,8 +33,22 @@ export interface IRevertible {
     revert(): void;
 }
 
+// @alpha (undocumented)
+export interface ISharedMatrix<T = any> extends IEventProvider<ISharedMatrixEvents<T>>, IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
+    // (undocumented)
+    insertCols(colStart: number, count: number): void;
+    // (undocumented)
+    insertRows(rowStart: number, count: number): void;
+    // (undocumented)
+    openUndo(consumer: IUndoConsumer): void;
+    // (undocumented)
+    removeCols(colStart: number, count: number): void;
+    // (undocumented)
+    removeRows(rowStart: number, count: number): void;
+}
+
 // @alpha
-export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
+export interface ISharedMatrixEvents<T> extends IEvent {
     (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, conflictingValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): void;
 }
 
@@ -46,15 +62,13 @@ export interface IUndoConsumer {
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 // @alpha
-export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
+export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> & ISharedObjectEvents> implements ISharedMatrix<T> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean);
-    // (undocumented)
-    protected applyStashedOp(content: unknown): void;
+    protected applyStashedOp(_content: unknown): void;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)
     get colCount(): number;
-    // (undocumented)
     static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedMatrix<T>;
     // (undocumented)
     protected didAttach(): void;
@@ -70,7 +84,6 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     insertRows(rowStart: number, count: number): void;
     // (undocumented)
     isSetCellConflictResolutionPolicyFWW(): boolean;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     get matrixProducer(): IMatrixProducer<MatrixItem<T>>;
@@ -82,7 +95,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     openMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): IMatrixReader<MatrixItem<T>>;
     openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
-    protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processCore(msg: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: IFluidSerializer): void;
     // (undocumented)
     removeCols(colStart: number, count: number): void;
@@ -116,8 +129,7 @@ export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): IChannel;
-    // (undocumented)
+    create(document: IFluidDataStoreRuntime, id: string): SharedMatrix;
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
     // (undocumented)
     static Type: string;

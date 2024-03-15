@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import { type IUser } from "@fluidframework/protocol-definitions";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions";
-import { Attributor } from "../attributor";
+import { Attributor } from "../attributor.js";
 
 describe("Attributor", () => {
 	it("can retrieve user information from its initial entries", () => {

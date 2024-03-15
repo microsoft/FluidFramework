@@ -2,21 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // eslint-disable-next-line import/no-unassigned-import
 import "@hig/fonts/build/ArtifaktElement.css";
 import Button from "@material-ui/core/Button";
-import { createStyles, Theme, withStyles } from "@material-ui/core/styles";
+import { Theme, createStyles, withStyles } from "@material-ui/core/styles";
 import Skeleton from "react-loading-skeleton";
 
 import classNames from "classnames";
 import debounce from "lodash.debounce";
 import React, { createRef } from "react";
 import BaseTable, { SortOrder } from "react-base-table";
-import { ModalConsumer } from "./ModalManager";
 // eslint-disable-next-line import/no-unassigned-import
 import "react-base-table/styles.css";
-import { InspectorMessages, minRows } from "./constants";
-import { computeIconSize, Empty } from "./Empty";
+import { Empty, computeIconSize } from "./Empty";
 import { ExpiryModal } from "./ExpiryModal";
 import { InspectorTableFooter } from "./InspectorTableFooter";
 import { InspectorTableHeader } from "./InspectorTableHeader";
@@ -24,19 +23,21 @@ import {
 	IColumns,
 	IDataGetterParameter,
 	IInspectorSearchCallback,
+	IInspectorSearchControls,
 	IInspectorSearchMatch,
 	IInspectorSearchMatchMap,
 	IInspectorTableProps,
 	IInspectorTableState,
-	SearchResult,
-	IToTableRowsOptions,
-	IInspectorSearchControls,
 	IRowData,
+	IToTableRowsOptions,
+	SearchResult,
 } from "./InspectorTableTypes";
-import { search, showNextResult } from "./utils";
-import { getReferenceValue, getDefaultPropertyTableProps } from "./propertyInspectorUtils";
-import { ThemedSkeleton as themedSkeleton } from "./ThemedSkeleton";
+import { ModalConsumer } from "./ModalManager";
 import { NewDataRow } from "./NewDataRow";
+import { ThemedSkeleton as themedSkeleton } from "./ThemedSkeleton";
+import { InspectorMessages, minRows } from "./constants";
+import { getDefaultPropertyTableProps, getReferenceValue } from "./propertyInspectorUtils";
+import { search, showNextResult } from "./utils";
 
 // @TODO Figure out why SortOrder is not resolved as value after updating the table version
 enum TableSortOrder {

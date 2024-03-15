@@ -3,44 +3,45 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-	DataProcessingError,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { FluidSerializer, IFluidSerializer } from "./serializer";
-import { SharedObjectHandle } from "./handle";
-import { SummarySerializer } from "./summarySerializer";
-import { ISharedObject, ISharedObjectEvents } from "./types";
+import {
+	DataProcessingError,
+	EventEmitterWithErrorHandling,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	createChildLogger,
+	loggerToMonitoringContext,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+import { SharedObjectHandle } from "./handle.js";
+import { FluidSerializer, IFluidSerializer } from "./serializer.js";
+import { SummarySerializer } from "./summarySerializer.js";
+import { ISharedObject, ISharedObjectEvents } from "./types.js";
+import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Base class from which all shared objects derive.
- * @public
+ * @alpha
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
@@ -143,7 +144,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			this.logger,
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
-			new Map<string, ITelemetryProperties>([
+			new Map<string, ITelemetryBaseProperties>([
 				["local", { localOp: true }],
 				["remote", { localOp: false }],
 			]),
@@ -359,8 +360,14 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	protected abstract onDisconnect();
 
 	/**
+	 * The serializer to serialize / parse handles.
+	 */
+	protected abstract get serializer(): IFluidSerializer;
+
+	/**
 	 * Submits a message by the local client to the runtime.
-	 * @param content - Content of the message
+	 * @param content - Content of the message. Note: handles contained in the
+	 * message object should not be encoded in any way
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
@@ -369,7 +376,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata);
+			this.services!.deltaConnection.submit(
+				makeHandlesSerializable(content, this.serializer, this.handle),
+				localOpMetadata,
+			);
 		}
 	}
 
@@ -451,7 +461,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {
-				this.process(message, local, localOpMetadata);
+				this.process(
+					{ ...message, contents: parseHandles(message.contents, this.serializer) },
+					local,
+					localOpMetadata,
+				);
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
@@ -459,8 +473,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			reSubmit: (content: any, localOpMetadata: unknown) => {
 				this.reSubmit(content, localOpMetadata);
 			},
-			applyStashedOp: (content: any): unknown => {
-				return this.applyStashedOp(content);
+			applyStashedOp: (content: any): void => {
+				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
@@ -537,21 +551,23 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	}
 
 	/**
-	 * Apply changes from an op just as if a local client has made the change,
+	 * Apply changes from the provided op content just as if a local client has made the change,
 	 * including submitting the op. Used when rehydrating an attached container
-	 * with pending changes. This prepares the SharedObject for seeing an ACK
-	 * for the op or resubmitting the op upon reconnection.
-	 * @param content - Contents of a stashed op.
-	 * @returns Should return void.
+	 * with pending changes. The rehydration process replays all remote ops
+	 * and applies stashed ops after the remote op with a sequence number
+	 * that matches that of the stashed op is applied. This ensures
+	 * stashed ops are applied at the same state they were originally created.
 	 *
-	 * @privateRemarks
-	 * This interface is undergoing changes. Right now it support both the old
-	 * flow, where just local metadata is returned, and a more ergonomic flow
-	 * where operations are applied just like local edits, including
-	 * submission of the op if attached. Soon the old flow will be removed
-	 * and only the new flow will be supported.
+	 * It is possible that stashed ops have been sent in the past, and will be found when
+	 * the shared object catches up with remotes ops.
+	 * So this prepares the SharedObject for seeing potentially seeing the ACK.
+	 * If no matching remote op is found, all the applied stashed ops will go
+	 * through the normal resubmit flow upon reconnection, which allows the dds
+	 * to rebase them to the latest state, and then resubmit them.
+	 *
+	 * @param content - Contents of a stashed op.
 	 */
-	protected abstract applyStashedOp(content: any): unknown;
+	protected abstract applyStashedOp(content: any): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
@@ -596,7 +612,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
- * @public
+ * @alpha
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,

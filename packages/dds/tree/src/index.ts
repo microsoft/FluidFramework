@@ -83,12 +83,15 @@ export {
 	TreeAdapter,
 	MapTree,
 	Revertible,
-	RevertibleKind,
+	CommitKind,
 	RevertibleStatus,
-	RevertibleResult,
+	CommitMetadata,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
 } from "./core/index.js";
 
 export {
@@ -253,6 +256,8 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	Tree,
+	TreeApi,
 } from "./shared-tree/index.js";
 
 export {
@@ -267,8 +272,8 @@ export {
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
-	Tree,
-	TreeApi,
+	type ScopedSchemaName,
+	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
@@ -293,6 +298,23 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	SchemaIncompatible,
+
+	// experimental @beta APIs:
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -303,6 +325,7 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
+	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
 export { SharedTree, TreeFactory } from "./treeFactory.js";
 

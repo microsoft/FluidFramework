@@ -8,8 +8,8 @@ import MenuItem from "@material-ui/core/MenuItem";
 import Select, { SelectProps } from "@material-ui/core/Select";
 import * as React from "react";
 import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
-import { Utils } from "../typeUtils";
 import { getPropertyValue } from "../propertyInspectorUtils";
+import { Utils } from "../typeUtils";
 
 type ValType = string | number | boolean;
 

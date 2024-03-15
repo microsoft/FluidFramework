@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import { v4 as uuid } from "uuid";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter";
-import { IPendingDetachedContainerState } from "./container";
+import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+import { IPendingDetachedContainerState } from "./container.js";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -45,11 +44,10 @@ export interface IParsedUrl {
 	 */
 	query: string;
 	/**
-	 * Null means do not use snapshots, undefined means load latest snapshot
-	 * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
-	 * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
+	 * Undefined means load latest snapshot, otherwise it's version ID passed to IDocumentStorageService.getVersions()
+	 * to figure out what snapshot to use.
 	 */
-	version: string | null | undefined;
+	version: string | undefined;
 }
 
 /**
@@ -62,7 +60,7 @@ export interface IParsedUrl {
  * @internal
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
-	const parsed = parse(url, true);
+	const parsed = new URL(url);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
 	}
@@ -70,7 +68,13 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
 	return match?.length === 3
-		? { id: match[1], path: match[2], query, version: parsed.query.version as string }
+		? {
+				id: match[1],
+				path: match[2],
+				query,
+				// URLSearchParams returns null if the param is not provided.
+				version: parsed.searchParams.get("version") ?? undefined,
+		  }
 		: undefined;
 }
 
@@ -180,7 +184,7 @@ export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 ): { tree: ISnapshotTree; blobs: ISerializableBlobContents } => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
-		"Protocol and App summary trees should be present",
+		0x8e6 /* Protocol and App summary trees should be present */,
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
 	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
