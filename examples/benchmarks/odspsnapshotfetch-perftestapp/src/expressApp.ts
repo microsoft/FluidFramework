@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
+import { type IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	OdspTokenConfig,
+	OdspTokenManager,
+	getMicrosoftConfiguration,
+	odspTokensCache,
+} from "@fluidframework/tool-utils";
 import express, { type Response } from "express";
+import webpack from "webpack";
 import webpackDevMiddleware from "webpack-dev-middleware";
 import webpackHotMiddleware from "webpack-hot-middleware";
-import webpack from "webpack";
-import {
-	getMicrosoftConfiguration,
-	OdspTokenManager,
-	odspTokensCache,
-	OdspTokenConfig,
-} from "@fluidframework/tool-utils";
-import { getServer, type IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
-import { assert } from "@fluidframework/core-utils";
 import config from "../webpack.config.cjs";
 import { _dirname } from "./dirname.cjs";
 

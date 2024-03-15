@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Some internal utils functions
  */
@@ -19,13 +20,13 @@ import {
 	Utils,
 	SerializedChangeSet,
 } from "@fluid-experimental/property-changeset";
-import { ModificationContext } from "./modificationContext";
-import { getOrInsertDefaultInNestedObjects } from "../external/utils/nestedObjectHelpers";
-import { DataBinderHandle } from "../internal/dataBinderHandle";
-import { RESOLVE_NEVER, RESOLVE_ALWAYS } from "../internal/constants";
-import { DataBinding, PropertyElement } from "..";
-import { DataBindingTree, NodeType } from "./dataBindingTree";
-import { BaseContext } from "./baseContext";
+import { ModificationContext } from "./modificationContext.js";
+import { getOrInsertDefaultInNestedObjects } from "../external/utils/nestedObjectHelpers.js";
+import { DataBinderHandle } from "../internal/dataBinderHandle.js";
+import { RESOLVE_NEVER, RESOLVE_ALWAYS } from "../internal/constants.js";
+import { DataBinding, PropertyElement } from "../index.js";
+import { DataBindingTree, NodeType } from "./dataBindingTree.js";
+import { BaseContext } from "./baseContext.js";
 
 export type RecursiveCallback = (
 	in_propertyElement: PropertyElement,

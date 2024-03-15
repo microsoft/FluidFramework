@@ -4,35 +4,35 @@
  */
 
 import { strict as assert } from "assert";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import {
 	Anchor,
 	AnchorNode,
 	AnchorSet,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DeltaVisitor,
 	DetachedField,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	FieldKey,
+	FieldUpPath,
 	JsonableTree,
 	PathVisitor,
+	PlaceUpPath,
+	ProtoNodes,
+	RangeUpPath,
 	UpPath,
 	anchorSlot,
 	clonePath,
+	getDetachedFieldContainingPath,
 	keyAsDetachedField,
 	rootFieldKey,
-	DetachedRangeUpPath,
-	RangeUpPath,
-	PlaceUpPath,
-	DetachedPlaceUpPath,
-	DeltaVisitor,
-	getDetachedFieldContainingPath,
-	FieldUpPath,
-	DeltaMark,
-	DeltaFieldChanges,
-	ProtoNodes,
-	DeltaFieldMap,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils.js";
-import { leaf } from "../../domains/index.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");

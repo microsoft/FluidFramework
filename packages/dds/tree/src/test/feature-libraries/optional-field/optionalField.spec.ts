@@ -5,29 +5,31 @@
 
 import { strict as assert } from "assert";
 import {
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	FieldKey,
+	TaggedChange,
+	makeAnonChange,
+	makeDetachedNodeId,
+	tagChange,
+	tagRollbackInverse,
+} from "../../../core/index.js";
+import {
 	CrossFieldManager,
 	NodeChangeset,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
-	makeAnonChange,
-	TaggedChange,
-	tagChange,
-	tagRollbackInverse,
-	makeDetachedNodeId,
-	FieldKey,
-	DeltaFieldChanges,
-	DeltaFieldMap,
-} from "../../../core/index.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
-import {
+	OptionalChangeset,
 	optionalChangeHandler,
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
-	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	assertFieldChangesEqual,
 	defaultRevInfosFromChanges,
@@ -35,12 +37,10 @@ import {
 	mintRevisionTag,
 } from "../../utils.js";
 import { changesetForChild, fooKey } from "../fieldKindTestUtils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { Change, assertEqual } from "./optionalFieldUtils.js";
-import { testSnapshots } from "./optionalFieldSnapshots.test.js";
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
+import { testSnapshots } from "./optionalFieldSnapshots.test.js";
+import { Change, assertEqual } from "./optionalFieldUtils.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

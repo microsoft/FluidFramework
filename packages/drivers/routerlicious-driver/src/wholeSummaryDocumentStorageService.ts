@@ -3,19 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {
 	IDocumentStorageService,
-	ISummaryContext,
 	IDocumentStorageServicePolicies,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -24,19 +18,25 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
+import { GitManager } from "./gitManager";
 import { IRouterliciousDriverPolicies } from "./policies";
+import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
+import { IR11sResponse } from "./restWrapper";
+import { ISummaryUploadManager } from "./storageContracts";
 import {
 	convertSnapshotAndBlobsToSummaryTree,
 	evalBlobsAndTrees,
 	validateBlobsAndTrees,
 } from "./treeUtils";
-import { GitManager } from "./gitManager";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
-import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
 
 const latestSnapshotId: string = "latest";
 

@@ -3,25 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { IDBPDatabase } from "idb";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IPersistedCache,
 	ICacheEntry,
 	IFileEntry,
+	IPersistedCache,
 	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { scheduleIdleTask } from "./scheduleIdleTask.js";
+import { IDBPDatabase } from "idb";
 import {
-	getFluidCacheIndexedDbInstance,
 	FluidCacheDBSchema,
 	FluidDriverObjectStoreName,
+	getFluidCacheIndexedDbInstance,
 	getKeyForCacheEntry,
 } from "./FluidCacheIndexedDb.js";
 import {
@@ -30,6 +29,7 @@ import {
 	FluidCacheGenericEvent,
 } from "./fluidCacheTelemetry.js";
 import { pkgVersion } from "./packageVersion.js";
+import { scheduleIdleTask } from "./scheduleIdleTask.js";
 
 // Some browsers have a usageDetails property that will tell you more detailed information
 // on how the storage is being used

@@ -5,11 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import {
-	onForkTransitive,
-	SharedTreeBranch,
-	SharedTreeBranchChange,
-} from "../../shared-tree-core/index.js";
+import { noopValidator } from "../../codec/index.js";
 import {
 	CommitKind,
 	GraphCommit,
@@ -21,13 +17,17 @@ import {
 	rootFieldKey,
 } from "../../core/index.js";
 import {
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
-	DefaultChangeFamily,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
+import {
+	SharedTreeBranch,
+	SharedTreeBranchChange,
+	onForkTransitive,
+} from "../../shared-tree-core/index.js";
 import { brand, fail } from "../../util/index.js";
-import { noopValidator } from "../../codec/index.js";
 import {
 	createTestUndoRedoStacks,
 	failCodec,

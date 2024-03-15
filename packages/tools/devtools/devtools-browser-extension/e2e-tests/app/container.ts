@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { SharedString } from "@fluidframework/sequence";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";

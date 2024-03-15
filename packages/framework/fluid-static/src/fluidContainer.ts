@@ -2,21 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	AttachState,
+	type ConnectionState,
+	type IContainer,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import {
 	type IEvent,
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
-	AttachState,
-	type IContainer,
-	type ICriticalContainerError,
-	type ConnectionState,
-} from "@fluidframework/container-definitions";
 import type {
-	ContainerSchema,
 	ContainerAttachProps,
+	ContainerSchema,
 	IRootDataObject,
 	LoadableObjectClass,
 } from "./types.js";

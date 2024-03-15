@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType } from "../../index.js";
 import { BatchMessage, IBatch, OpGroupingManager } from "../../opLifecycle/index.js";
 
