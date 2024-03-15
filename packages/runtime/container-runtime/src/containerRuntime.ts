@@ -162,10 +162,10 @@ import {
 	IdCompressorMode,
 	IDocumentSchemaCurrent,
 	IDocumentSchema,
-	currentDocumentVersionSchema,
 	CompressionAlgorithms,
-	documentSchemaSupportedConfigs,
-	DocumentSchemaValueType,
+	checkRuntimeCompatibility,
+	ICompressionSchema,
+	computeCurrentDocumentSchema,
 } from "./summary/index.js";
 import { formExponentialFn, Throttler } from "./throttler.js";
 import {
@@ -372,23 +372,8 @@ export interface ISummaryRuntimeOptions {
 	initialSummarizerDelayMs?: number;
 }
 
-/**
- * Options for op compression.
- * @alpha
- */
-export interface ICompressionRuntimeOptions {
-	/**
-	 * The value the batch's content size must exceed for the batch to be compressed.
-	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
-	 */
-	readonly minimumBatchSizeInBytes: number;
-
-	/**
-	 * The compression algorithm that will be used to compress the op.
-	 * By default the value is `lz4` which is the only compression algorithm currently supported.
-	 */
-	readonly compressionAlgorithm: CompressionAlgorithms;
-}
+/** @alpha */
+export type ICompressionRuntimeOptions = ICompressionSchema;
 
 /**
  * Options for container runtime.
@@ -588,93 +573,6 @@ export enum RuntimeMessage {
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
-}
-
-function validateDocumentSchemaProperty(
-	value: string | boolean | undefined,
-	allowedValues: DocumentSchemaValueType[],
-) {
-	if (value === undefined) {
-		return true;
-	}
-	const type = typeof value;
-
-	if (
-		(type !== "string" && type !== "boolean") ||
-		allowedValues === undefined ||
-		!allowedValues.includes(value)
-	) {
-		return false;
-	}
-	return true;
-}
-
-function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
-	// Back-compat - we can't do anything about legacy documents.
-	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
-	// do not run into compat problems.
-	if (documentSchema === undefined) {
-		return;
-	}
-
-	let unknownProperty: string | undefined;
-
-	for (const [name, value] of Object.entries(documentSchema)) {
-		const allowedValues = documentSchemaSupportedConfigs[name];
-		if (Array.isArray(value)) {
-			for (const v of value) {
-				if (!validateDocumentSchemaProperty(v, allowedValues)) {
-					unknownProperty = name;
-				}
-			}
-		} else {
-			if (!validateDocumentSchemaProperty(value, allowedValues)) {
-				unknownProperty = name;
-			}
-		}
-	}
-
-	if (documentSchema.version !== currentDocumentVersionSchema || unknownProperty !== undefined) {
-		const nameInfo =
-			unknownProperty === undefined
-				? ""
-				: `: Property ${unknownProperty} = ${documentSchema[unknownProperty]}`;
-		throw new Error(`document can't be opened with current version of the code${nameInfo}`);
-	}
-}
-
-function isSameDocumentSchemaValues(v1: DocumentSchemaValueType, v2: DocumentSchemaValueType) {
-	if (!Array.isArray(v2) || !Array.isArray(v1)) {
-		return v1 === v2;
-	}
-	if (v1.length !== v2.length) {
-		return false;
-	}
-	for (let i = 0; i < v1.length; i++) {
-		if (v1[i] !== v2[i]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-function diffDocumentSchemas(oldSchema: IDocumentSchemaCurrent, newSchema: IDocumentSchemaCurrent) {
-	const diff: Partial<IDocumentSchema> = {};
-
-	// If there is a version change in schema, then use full schema definition, do not attempt to do any comparison.
-	if (newSchema.version !== oldSchema.version) {
-		return newSchema;
-	}
-
-	for (const [name, value] of Object.entries(newSchema)) {
-		if (!isSameDocumentSchemaValues(oldSchema[name], value)) {
-			diff[name] = value;
-			// version should be always there!
-			diff.version = newSchema.version;
-		}
-	}
-
-	return diff.version !== undefined ? diff : undefined;
 }
 
 /**
@@ -1399,44 +1297,13 @@ export class ContainerRuntime
 				  }
 				: runtimeOptions.compressionOptions;
 
-		const compressionAlgorithm =
-			compressionOptions.minimumBatchSizeInBytes === Number.POSITIVE_INFINITY
-				? undefined
-				: compressionOptions.compressionAlgorithm;
-
-		const oldDocumentSchema: IDocumentSchemaCurrent = (this.metadata
-			?.documentSchema as IDocumentSchemaCurrent) ?? {
-			version: currentDocumentVersionSchema,
-		};
-
-		const compressionSchemas: CompressionAlgorithms[] =
-			oldDocumentSchema.compressionAlgorithms ?? [];
-		if (
-			compressionAlgorithm !== undefined &&
-			!compressionSchemas.includes(compressionAlgorithm)
-		) {
-			compressionSchemas.push(compressionAlgorithm);
-		}
-
-		this.documentSchema = {
-			version: currentDocumentVersionSchema,
-			compressionAlgorithms: compressionSchemas,
-			chunkingEnabled: true,
-			idCompressorMode: this.idCompressorMode === "off" ? undefined : this.idCompressorMode,
-			opGroupingEnabled:
-				oldDocumentSchema.opGroupingEnabled ?? this.groupedBatchingEnabled
-					? true
-					: undefined,
-		};
-
-		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
-		checkRuntimeCompatibility(this.documentSchema as IDocumentSchema);
-
-		// If it's a new file, there is no need to advertise schema, it will be written into the document on document creation.
-		const diffSchema = !existing ?
-			undefined :
-			diffDocumentSchemas(oldDocumentSchema, this.documentSchema);
-		assert(Object.keys(oldDocumentSchema).length === 1 || diffSchema === undefined, "temp test");
+		this.documentSchema = computeCurrentDocumentSchema(
+			existing,
+			this.metadata?.documentSchema,
+			compressionOptions,
+			this.idCompressorMode,
+			this.groupedBatchingEnabled,
+		);
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);

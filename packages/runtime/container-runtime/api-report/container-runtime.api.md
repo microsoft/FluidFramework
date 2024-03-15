@@ -649,8 +649,11 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
+// @alpha (undocumented)
+export type ICompressionRuntimeOptions = ICompressionSchema;
+
 // @alpha
-export interface ICompressionRuntimeOptions {
+export interface ICompressionSchema {
     readonly compressionAlgorithm: CompressionAlgorithms;
     readonly minimumBatchSizeInBytes: number;
 }

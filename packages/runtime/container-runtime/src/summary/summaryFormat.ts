@@ -20,6 +20,7 @@ import {
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { IGCMetadata } from "../gc/index.js";
+import { IDocumentSchema } from "./documentSchema.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -84,85 +85,6 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
 	return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
-
-/**
- * ID Compressor mode.
- * "on" - compressor is On. It's loaded as part of container load. This mode is sticky - once on, compressor is On for all
- * sessions for a given document. This results in IContainerRuntime.idCompressor to be always available.
- * "delayed" - ID compressor bundle is loaded only on establishing of first delta connection, i.e. it does not impact boot of cotnainer.
- * In such mode IContainerRuntime.idCompressor is not made available (unless previous sessions of same document had it "On").
- * The only thing that is available is IContainerRuntime.generateDocumentUniqueId() that provides opportunistically short IDs.
- * "off" - ID compressor is not laoded (unless it is "on" due to previous session for same document having it "on").
- * While IContainerRuntime.generateDocumentUniqueId() is available, it will produce long IDs that are do not compress well.
- *
- * @alpha
- */
-export type IdCompressorMode = "on" | "delayed" | "off";
-
-/**
- * Available compression algorithms for op compression.
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
-/** @alpha */
-export type DocumentSchemaValueType = string | boolean | string[] | undefined;
-
-/**
- * Document schema information.
- *
- * Used by runtime to make a call if it can understand document schema.
- * If it can't, it should not continue with document and immidiatly fail, preventing random (cryptic) failures
- * down the road and potentially corrupting documents.
- * For now this structure and appropriate interpretation / behavior is focused only on runtime features.
- * In the future that could be interpolated to more areas, including DDSs used, and even possibly - application
- * schema.
- *
- * In most cases values preserved in the document will not dictate if such features should be enabled in a given session.
- * I.e. if compression is mentioned in document schema, this means that runtime version that opens such file must know
- * how to interpret such ops, but does not need to actually use compression itself. That said, some options could be
- * sticky, i.e. influece feature selection for all runtimes openning a document. ID compression is one such example.
- * Currently there is no mechanism to remove feature from this property bag, i.e. once compression was used, even if it's
- * dissbled (through feature gate or code deployment), all existing documents that used compression will continue to fail
- * if opened by clients who do not support compression.
- *
- * For now we are limitting it to just plain properties, and only really simple types, but that can be changed in the future.
- *
- * @alpha
- */
-export interface IDocumentSchema extends Record<string, DocumentSchemaValueType> {
-	// version that describes how data is stored in this structure.
-	// If runtime sees a version it does not understand, it should immidiatly fail and not
-	// attempt to interpret any further dafa.
-	version: string;
-}
-
-/**
- * Current version known properties that define document schema
- */
-export const currentDocumentVersionSchema = "1.0";
-
-export interface IDocumentSchemaCurrent {
-	version: typeof currentDocumentVersionSchema;
-
-	// Should any of IGCRuntimeOptions be here?
-	// Should sessionExpiryTimeoutMs be here?
-
-	compressionAlgorithms?: CompressionAlgorithms[];
-	chunkingEnabled?: true;
-	idCompressorMode?: IdCompressorMode;
-	opGroupingEnabled?: true;
-}
-
-export const documentSchemaSupportedConfigs: Record<string, (string | boolean)[]> = {
-	version: [currentDocumentVersionSchema],
-	compressionAlgorithms: [CompressionAlgorithms.lz4],
-	chunkingEnabled: [true],
-	idCompressorMode: ["on", "delayed"],
-	opGroupingEnabled: [true],
-};
 
 /**
  * @alpha

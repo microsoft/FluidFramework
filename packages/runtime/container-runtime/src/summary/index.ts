@@ -98,14 +98,19 @@ export {
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
+} from "./summaryFormat.js";
+export {
 	IdCompressorMode,
 	IDocumentSchemaCurrent,
 	IDocumentSchema,
 	currentDocumentVersionSchema,
 	CompressionAlgorithms,
-	documentSchemaSupportedConfigs,
+	ICompressionSchema,
 	DocumentSchemaValueType,
-} from "./summaryFormat.js";
+	checkRuntimeCompatibility,
+	diffDocumentSchemas,
+	computeCurrentDocumentSchema,
+} from "./documentSchema.js";
 export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
 export {
 	IConnectedEvents,
