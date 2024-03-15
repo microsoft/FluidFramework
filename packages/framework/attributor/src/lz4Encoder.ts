@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { compress, decompress } from "lz4js";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { type Jsonable } from "@fluidframework/datastore-definitions";
+import { compress, decompress } from "lz4js";
 import { type Encoder } from "./encoders.js";
 
 // TODO: document this

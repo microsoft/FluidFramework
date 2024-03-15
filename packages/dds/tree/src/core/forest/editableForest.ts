@@ -7,14 +7,14 @@ import { assert } from "@fluidframework/core-utils";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import {
-	DetachedField,
 	Anchor,
-	ITreeCursorSynchronous,
-	DeltaVisitor,
-	applyDelta,
-	makeDetachedFieldIndex,
-	deltaForRootInitialization,
 	DeltaRoot,
+	DeltaVisitor,
+	DetachedField,
+	ITreeCursorSynchronous,
+	applyDelta,
+	deltaForRootInitialization,
+	makeDetachedFieldIndex,
 } from "../tree/index.js";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
 

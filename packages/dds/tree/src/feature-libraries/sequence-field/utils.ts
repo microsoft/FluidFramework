@@ -11,43 +11,43 @@ import {
 	RevisionTag,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import { brand, fail, getFromRangeMap, Mutable, RangeMap } from "../../util/index.js";
+import { Mutable, RangeMap, brand, fail, getFromRangeMap } from "../../util/index.js";
 import {
-	addCrossFieldQuery,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	addCrossFieldQuery,
 	getIntention,
 	setInCrossFieldMap,
 } from "../modular-schema/index.js";
+import { DetachIdOverrideType } from "./format.js";
+import {
+	CellRename,
+	DetachOfRemovedNodes,
+	EmptyInputCellMark,
+	MoveMarkEffect,
+} from "./helperTypes.js";
 import {
 	Attach,
+	AttachAndDetach,
+	CellId,
+	CellMark,
+	Changeset,
 	Detach,
+	DetachFields,
 	HasRevisionTag,
+	IdRange,
 	Insert,
 	LineageEvent,
 	Mark,
+	MarkEffect,
+	MoveId,
 	MoveIn,
 	MoveOut,
 	NoopMark,
-	Changeset,
-	MoveId,
-	Remove,
 	NoopMarkType,
-	CellId,
-	CellMark,
-	AttachAndDetach,
-	MarkEffect,
-	DetachFields,
-	IdRange,
+	Remove,
 } from "./types.js";
-import {
-	EmptyInputCellMark,
-	MoveMarkEffect,
-	DetachOfRemovedNodes,
-	CellRename,
-} from "./helperTypes.js";
-import { DetachIdOverrideType } from "./format.js";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;

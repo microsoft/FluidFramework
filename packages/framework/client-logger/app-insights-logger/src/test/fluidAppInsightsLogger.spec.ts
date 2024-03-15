@@ -9,9 +9,9 @@ import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicatio
 import type Sinon from "sinon";
 import { assert as sinonAssert, spy } from "sinon";
 import {
-	createLogger,
-	type TelemetryFilter,
 	type FluidAppInsightsLoggerConfig,
+	type TelemetryFilter,
+	createLogger,
 } from "../fluidAppInsightsLogger.js";
 
 describe("FluidAppInsightsLogger", () => {

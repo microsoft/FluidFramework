@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";

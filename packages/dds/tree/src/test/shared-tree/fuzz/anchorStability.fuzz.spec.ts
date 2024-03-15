@@ -4,37 +4,37 @@
  */
 
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value } from "../../../core/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import { Anchor, UpPath, Value } from "../../../core/index.js";
 import {
 	cursorsFromContextualData,
 	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
+	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
+	RevertibleSharedTreeView,
 	createAnchors,
-	validateAnchors,
+	deterministicIdCompressorFactory,
+	failureDirectory,
 	fuzzNode,
 	fuzzSchema,
-	failureDirectory,
-	RevertibleSharedTreeView,
-	deterministicIdCompressorFactory,
+	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 

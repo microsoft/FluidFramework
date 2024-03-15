@@ -4,37 +4,37 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { OptionalChangeset } from "../optional-field/index.js";
 import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
+	ChangeEncodingContext,
 	ChangeFamily,
-	ChangeRebaser,
-	UpPath,
 	ChangeFamilyEditor,
+	ChangeRebaser,
+	ChangesetLocalId,
+	CursorLocationType,
+	DeltaDetachedNodeId,
+	DeltaRoot,
 	FieldUpPath,
+	ITreeCursorSynchronous,
+	RevisionTagCodec,
+	TaggedChange,
+	UpPath,
 	compareFieldUpPaths,
 	topDownPath,
-	TaggedChange,
-	DeltaRoot,
-	ChangesetLocalId,
-	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	CursorLocationType,
-	ITreeCursorSynchronous,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import { FieldBatchCodec } from "../chunked-forest/index.js";
 import {
-	ModularChangeFamily,
-	ModularEditBuilder,
+	EditDescription,
 	FieldChangeset,
-	ModularChangeset,
 	FieldEditDescription,
+	ModularChangeFamily,
+	ModularChangeset,
+	ModularEditBuilder,
 	intoDelta as intoModularDelta,
 	relevantRemovedRoots as relevantModularRemovedRoots,
-	EditDescription,
 } from "../modular-schema/index.js";
-import { FieldBatchCodec } from "../chunked-forest/index.js";
+import { OptionalChangeset } from "../optional-field/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 

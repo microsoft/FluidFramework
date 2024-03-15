@@ -6,18 +6,18 @@
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 import {
-	makeAnonChange,
+	ChangeEncodingContext,
 	FieldKey,
-	tagChange,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
-	RevisionMetadataSource,
-	ChangeEncodingContext,
+	makeAnonChange,
+	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
-import { TestChange } from "./testChange.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
+import { TestChange } from "./testChange.js";
 import { deepFreeze, mintRevisionTag } from "./utils.js";
 
 describe("TestChange", () => {
