@@ -583,9 +583,11 @@ function createArrayNodeProxy(
 		Object.create(arrayNodePrototype, {
 			length: {
 				get(this: TreeArrayNode) {
-					return getSequenceField(this).length;
+					fail("Proxy should intercept length");
 				},
-				set() {},
+				set() {
+					fail("Proxy should intercept length");
+				},
 				enumerable: false,
 				configurable: false,
 			},
@@ -600,6 +602,10 @@ function createArrayNodeProxy(
 			const maybeIndex = asIndex(key, field.length);
 
 			if (maybeIndex === undefined) {
+				if (key === "length") {
+					return field.length;
+				}
+
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatch, key, proxy) as unknown;
@@ -641,7 +647,17 @@ function createArrayNodeProxy(
 
 			// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
 			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
-			return Array.from({ length: field.length }, (_, index) => `${index}`).concat("length");
+			const keys: (string | symbol)[] = Array.from(
+				{ length: field.length },
+				(_, index) => `${index}`,
+			);
+
+			if (allowAdditionalProperties) {
+				keys.push(...Reflect.ownKeys(target));
+			} else {
+				keys.push("length");
+			}
+			return keys;
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -663,7 +679,7 @@ function createArrayNodeProxy(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'length' must be a simple
 				// value property (as opposed to using getter) and be declared writable / non-configurable.
 				return {
-					value: getSequenceField(proxy).length,
+					value: field.length,
 					writable: true,
 					enumerable: false,
 					configurable: false,

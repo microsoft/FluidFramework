@@ -163,9 +163,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
-		// Setup JS Object API:
-		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
-		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 	}
 

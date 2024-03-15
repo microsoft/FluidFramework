@@ -25,7 +25,6 @@ import {
 	createNodeProxy,
 	createRawNodeProxy,
 	getClassSchema,
-	getSequenceField,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
@@ -42,7 +41,6 @@ import {
 	NodeKind,
 	ObjectFromSchemaRecord,
 	TreeMapNode,
-	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
@@ -667,14 +665,21 @@ export class SchemaFactory<
 			allowedTypes,
 			implicitlyConstructable,
 		) {
-			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
-			public get length(): number {
-				return getSequenceField(this as unknown as TreeArrayNode).length;
-			}
 			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 
 				const proxyTarget = customizable ? this : undefined;
+
+				if (customizable) {
+					// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
+					// This should not get used as the proxy should intercept all use.
+					Object.defineProperty(this, "length", {
+						value: NaN,
+						writable: true,
+						enumerable: false,
+						configurable: false,
+					});
+				}
 
 				if (isFlexTreeNode(input)) {
 					return createNodeProxy(input, customizable, proxyTarget) as schema;
@@ -693,7 +698,7 @@ export class SchemaFactory<
 		// Setup array functionality
 		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
-		return schema as unknown as TreeNodeSchemaClass<
+		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,

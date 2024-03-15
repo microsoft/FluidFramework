@@ -160,11 +160,63 @@ describe("SharedTreeObject", () => {
 	});
 });
 
-describe("SharedTreeList", () => {
+describe("ArrayNode Proxy", () => {
+	const schemaFactory = new SchemaFactory("test");
+
+	const StructurallyNamedNumberArray = schemaFactory.array(schemaFactory.number);
+
+	class NumberArray extends schemaFactory.array("NumberArray", schemaFactory.number) {}
+
+	class CustomizedArray extends schemaFactory.array("CustomArray", schemaFactory.number) {
+		public extra = "foo";
+	}
+
+	it("ownKeys", () => {
+		assert.deepEqual(Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [])), ["length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [])), ["length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [])), ["length", "extra"]);
+
+		assert.deepEqual(Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [5])), [
+			"0",
+			"length",
+		]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [5])), ["0", "length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [5])), ["0", "length", "extra"]);
+	});
+
+	it("length", () => {
+		assert.equal(hydrate(StructurallyNamedNumberArray, []).length, 0);
+		assert.equal(hydrate(StructurallyNamedNumberArray, [1, 2, 3]).length, 3);
+		assert.deepEqual(
+			Reflect.getOwnPropertyDescriptor(hydrate(StructurallyNamedNumberArray, [5]), "length"),
+			Reflect.getOwnPropertyDescriptor([5], "length"),
+		);
+
+		assert.equal(hydrate(NumberArray, []).length, 0);
+		assert.equal(hydrate(NumberArray, [1, 2, 3]).length, 3);
+		assert.deepEqual(
+			Reflect.getOwnPropertyDescriptor(hydrate(NumberArray, [5]), "length"),
+			Reflect.getOwnPropertyDescriptor([5], "length"),
+		);
+	});
+
+	it("Json stringify", () => {
+		// JSON.stringify uses ownKeys and getOwnPropertyDescriptor
+
+		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [])), "[]");
+		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [1, 2, 3])), "[1,2,3]");
+		assert.equal(JSON.stringify(hydrate(NumberArray, [])), "{}");
+		assert.equal(JSON.stringify(hydrate(NumberArray, [1, 2, 3])), `{"0":1,"1":2,"2":3}`);
+
+		assert.equal(
+			JSON.stringify(hydrate(CustomizedArray, [1, 2, 3])),
+			`{"0":1,"1":2,"2":3,"extra":"foo"}`,
+		);
+	});
+
 	describe("inserting nodes created by factory", () => {
-		const _ = new SchemaFactory("test");
-		const obj = _.object("Obj", { id: _.string });
-		const schema = _.array(obj);
+		const obj = schemaFactory.object("Obj", { id: schemaFactory.string });
+		const schema = schemaFactory.array(obj);
 
 		it("insertAtStart()", () => {
 			const root = hydrate(schema, [{ id: "B" }]);
