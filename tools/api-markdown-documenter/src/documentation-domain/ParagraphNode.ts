@@ -8,7 +8,6 @@ import {
 	type MultiLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { LineBreakNode } from "./LineBreakNode.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -68,29 +67,5 @@ export class ParagraphNode
 	 */
 	public static createFromPlainText(text: string): ParagraphNode {
 		return new ParagraphNode(createNodesFromPlainText(text));
-	}
-
-	/**
-	 * Combines the contents of 1 or more {@link ParagraphNode}s into a single node.
-	 */
-	public static combine(...nodes: ParagraphNode[]): ParagraphNode {
-		if (nodes.length === 0) {
-			return ParagraphNode.Empty;
-		}
-
-		if (nodes.length === 1) {
-			return nodes[0];
-		}
-
-		const children: DocumentationNode[] = [];
-		for (let i = 0; i < nodes.length; i++) {
-			children.push(...nodes[i].children);
-			// Ensure adjacent paragraphs' contents are separated by a line break
-			if (i < nodes.length - 1) {
-				children.push(LineBreakNode.Singleton);
-			}
-		}
-
-		return new ParagraphNode(children);
 	}
 }
