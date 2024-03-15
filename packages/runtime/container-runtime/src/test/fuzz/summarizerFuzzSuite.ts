@@ -8,25 +8,25 @@
 import { strict as assert } from "assert";
 import { mkdirSync, readFileSync } from "fs";
 import path from "path";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	BaseFuzzTestState,
-	createFuzzDescribe,
-	defaultOptions,
 	AsyncGenerator,
+	AsyncReducer,
+	BaseFuzzTestState,
 	SaveInfo,
 	asyncGeneratorFromArray,
+	createFuzzDescribe,
+	defaultOptions,
 	makeRandom,
 	performFuzzActionsAsync,
-	AsyncReducer,
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
 	IMockContainerRuntimeForSummarizerOptions,
 	MockContainerRuntimeFactoryForSummarizer,
 	MockContainerRuntimeForSummarizer,
 } from "./summarizerFuzzMocks.js";
-import type { SummarizerOperation } from "./fuzzUtils.js";
 
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;

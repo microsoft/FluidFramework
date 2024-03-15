@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
-	PerformanceEvent,
 	LoggingError,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 
 import {
 	assert,
@@ -17,22 +17,22 @@ import {
 	IPromiseTimerResult,
 	Timer,
 } from "@fluidframework/core-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
-import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IAckSummaryResult,
-	INackSummaryResult,
 	IBroadcastSummaryResult,
-	ISummarizeResults,
-	ISummarizeHeuristicData,
+	INackSummaryResult,
+	IRefreshSummaryAckOptions,
 	ISubmitSummaryOptions,
+	ISummarizeHeuristicData,
+	ISummarizeResults,
+	ISummaryCancellationToken,
+	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
-	ISummaryCancellationToken,
 	SummaryGeneratorTelemetry,
-	SubmitSummaryFailureData,
-	IRefreshSummaryAckOptions,
 } from "./summarizerTypes.js";
 import { IClientSummaryWatcher } from "./summaryCollection.js";
 
