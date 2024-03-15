@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import type { ExtractedContext } from "@fluid-experimental/property-changeset";
 
 import * as _ from "underscore";
-import { getLocalOrRemoteSchema } from "../data_binder/internalUtils";
-import { DataBinder, DataBinding } from "..";
-import { ExtractedContext } from "@fluid-experimental/property-changeset/dist/helpers/typeidHelper";
+import { getLocalOrRemoteSchema } from "../data_binder/internalUtils.js";
+import { DataBinder, DataBinding } from "../index.js";
 
 export interface ActivationInfo {
 	dataBinder: DataBinder;

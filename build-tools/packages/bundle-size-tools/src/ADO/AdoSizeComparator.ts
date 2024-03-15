@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { WebApi } from "azure-devops-node-api";
 import { BuildResult, BuildStatus } from "azure-devops-node-api/interfaces/BuildInterfaces";
 import JSZip from "jszip";
@@ -85,7 +86,9 @@ export class ADOSizeComparator {
 	 * @returns The size comparison result with formatted message and raw data.  In case
 	 * of failure, the message contains the error message and the raw data will be undefined.
 	 */
-	public async createSizeComparisonMessage(tagWaiting: boolean): Promise<BundleComparisonResult> {
+	public async createSizeComparisonMessage(
+		tagWaiting: boolean,
+	): Promise<BundleComparisonResult> {
 		let baselineCommit: string | undefined = getBaselineCommit();
 		console.log(`The baseline commit for this PR is ${baselineCommit}`);
 

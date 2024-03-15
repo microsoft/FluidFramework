@@ -2,35 +2,36 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 
-import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
 import {
-	rootFieldKey,
-	UpPath,
-	moveToDetachedField,
+	AnchorNode,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
+	EmptyKey,
 	FieldUpPath,
 	PathVisitor,
-	DetachedRangeUpPath,
-	RangeUpPath,
-	DetachedPlaceUpPath,
 	PlaceUpPath,
-	AnchorNode,
-	EmptyKey,
 	ProtoNodes,
+	RangeUpPath,
 	TreeNavigationResult,
+	UpPath,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../../core/index.js";
+import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import { ITreeCheckout } from "../../shared-tree/index.js";
 import { JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
+	createTestUndoRedoStacks,
+	expectJsonTree,
+	insert,
 	makeTreeFromJson,
 	remove,
-	insert,
-	expectJsonTree,
-	createTestUndoRedoStacks,
 } from "../utils.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -1764,7 +1765,7 @@ describe("Editing", () => {
 			);
 		});
 
-		it.skip("concurrent cycle creating move", () => {
+		it("concurrent cycle creating move", () => {
 			const tree = makeTreeFromJson([["foo"], ["bar"]]);
 			const tree2 = tree.fork();
 
@@ -1789,8 +1790,6 @@ describe("Editing", () => {
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
-
-			// This fails because the trees disagree on who detached the content
 			expectJsonTree([tree, tree2], []);
 		});
 
@@ -2368,8 +2367,7 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
-		// TODO:AB6664 - fix and re-enable the fuzz seed
-		it.skip("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
+		it("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
 			const tree = makeTreeFromJson([1]);
 			const fork = tree.fork();
 

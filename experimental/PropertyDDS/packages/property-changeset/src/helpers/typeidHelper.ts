@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Helper functions to work with typeid strings
  */
 
 // @ts-ignore
 import { constants } from "@fluid-experimental/property-common";
-import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema";
+import { TemplateSchema as templateSchemaJson, NativeTypes } from "../templateSchema.js";
 
 const { MSG } = constants;
 

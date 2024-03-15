@@ -12,30 +12,31 @@
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";
-import sinon from "sinon";
-import { v4 as uuid } from "uuid";
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger.js";
+import sinon from "sinon";
+import { v4 as uuid } from "uuid";
 import {
-	LoggingError,
-	isTaggedTelemetryPropertyValue,
-	normalizeError,
 	IFluidErrorAnnotations,
-	wrapError,
-	wrapErrorAndLog,
+	LoggingError,
 	extractLogSafeErrorProperties,
 	isExternalError,
+	isTaggedTelemetryPropertyValue,
+	normalizeError,
+	wrapError,
+	wrapErrorAndLog,
 } from "../errorLogging.js";
 import {
-	hasErrorInstanceId,
 	IFluidErrorBase,
+	hasErrorInstanceId,
 	isFluidError,
 	isValidLegacyError,
 } from "../fluidErrorBase.js";
+import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
+import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
 
 describe("Error Logging", () => {
 	describe("TelemetryLogger.prepareErrorObject", () => {
@@ -337,53 +338,79 @@ describe("Error Logging", () => {
 			assert.strictEqual(props.foo, undefined, "foo should have been omitted");
 			assert.strictEqual(props.bar, "normal", "bar should not be omitted");
 		});
-		it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, overwrites", () => {
+		it("addTelemetryProperties - adds to object, returned from getTelemetryProperties, doesn't overwrite", () => {
 			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
 			(loggingError as any).p1 = "should not be overwritten";
 			loggingError.addTelemetryProperties({
 				p1: "ignored",
 				p4: 4,
-				p5: { value: 5, tag: "CodeArtifact" },
+				p5: true,
+				p6: { value: 5, tag: "CodeArtifact" },
+				p7: ["a", "b", "c"],
+				p8: [1, 2, 3],
+				p9: [true, true, false],
+				p10: { one: "1" },
+				p11: undefined,
+				p12: { value: ["1", 2, true], tag: "CodeArtifact" },
 			});
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "should not be overwritten");
 			assert.strictEqual(props.p4, 4);
-			assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
+			assert.strictEqual(props.p5, true);
+			assert.deepStrictEqual(props.p6, { value: 5, tag: "CodeArtifact" });
+			assert.strictEqual(props.p7, '["a","b","c"]');
+			assert.strictEqual(props.p8, "[1,2,3]");
+			assert.strictEqual(props.p9, "[true,true,false]");
+			assert.strictEqual(props.p10, `{"one":"1"}`);
+			assert.strictEqual(props.p11, undefined);
+			assert.deepStrictEqual(props.p12, { value: `["1",2,true]`, tag: "CodeArtifact" });
 			const errorAsAny = loggingError as any;
 			assert.strictEqual(errorAsAny.p1, "should not be overwritten");
 			assert.strictEqual(errorAsAny.p4, 4);
-			assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: "CodeArtifact" });
+			assert.strictEqual(errorAsAny.p5, true);
+			assert.deepStrictEqual(errorAsAny.p6, { value: 5, tag: "CodeArtifact" });
+			assert.deepStrictEqual(errorAsAny.p7, ["a", "b", "c"]);
+			assert.deepStrictEqual(errorAsAny.p8, [1, 2, 3]);
+			assert.deepStrictEqual(errorAsAny.p9, [true, true, false]);
+			assert.deepStrictEqual(errorAsAny.p10, { one: "1" });
+			assert.strictEqual(errorAsAny.p11, undefined);
+			assert.deepStrictEqual(errorAsAny.p12, { value: ["1", 2, true], tag: "CodeArtifact" });
 		});
 		it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
 			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
 			loggingError.addTelemetryProperties({ p1: "should be overwritten" });
 			const errorAsAny = loggingError as any;
+			// Things that could be set with addTelemetryProperties
 			errorAsAny.p1 = "one";
 			errorAsAny.p4 = 4;
-			errorAsAny.p5 = { value: 5, tag: "CodeArtifact" };
+			errorAsAny.p5 = true;
+			errorAsAny.p6 = { value: 5, tag: "CodeArtifact" };
 			errorAsAny.userData6 = { value: 5, tag: "UserData" };
+			errorAsAny.p7 = ["a", "b", "c"];
+			errorAsAny.p8 = [1, 2, 3];
+			errorAsAny.p9 = [true, true, false];
+			errorAsAny.p10 = { one: "1" };
+			errorAsAny.p11 = undefined;
+			errorAsAny.p12 = { value: ["1", 2, true], tag: "CodeArtifact" };
+			// Things that can't be set with addTelemetryProperties
+			errorAsAny.p13 = null; // Null
+			errorAsAny.p14 = ["a", "b", "c", null]; // Array with nulls
+			errorAsAny.p15 = [[1, 2]]; // Nested array
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "one");
 			assert.strictEqual(props.p4, 4);
-			assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
+			assert.strictEqual(props.p5, true);
+			assert.deepStrictEqual(props.p6, { value: 5, tag: "CodeArtifact" });
 			assert.deepStrictEqual(props.userData6, { value: 5, tag: "UserData" });
-		});
-		it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
-			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
-			const errorAsAny = loggingError as any;
-			errorAsAny.p1 = { one: 1 };
-			errorAsAny.p4 = null;
-			errorAsAny.p5 = ["a", "b", "c", 1, true, undefined];
-			errorAsAny.p6 = ["a", "b", "c", null];
-			errorAsAny.p7 = { value: null, tag: "tag" };
-			errorAsAny.p8 = { value: errorAsAny.p5, tag: "tag" };
-			const props = loggingError.getTelemetryProperties();
-			assert.strictEqual(props.p1, "REDACTED (arbitrary object)");
-			assert.strictEqual(props.p4, "REDACTED (arbitrary object)");
-			assert.strictEqual(props.p5, `["a","b","c",1,true,null]`);
-			assert.strictEqual(props.p6, "REDACTED (arbitrary object)");
-			assert.deepStrictEqual(props.p7, { value: "REDACTED (arbitrary object)", tag: "tag" });
-			assert.deepStrictEqual(props.p8, { value: props.p5, tag: "tag" });
+			assert.strictEqual(props.p7, `["a","b","c"]`);
+			assert.strictEqual(props.p8, `[1,2,3]`);
+			assert.strictEqual(props.p9, `[true,true,false]`);
+			assert.strictEqual(props.p10, `{"one":"1"}`);
+			assert.strictEqual(props.p11, undefined);
+			assert.deepStrictEqual(props.p12, { value: `["1",2,true]`, tag: "CodeArtifact" });
+			assert.strictEqual(props.p13, "null");
+			assert.strictEqual(props.p14, `["a","b","c",null]`);
+			assert.strictEqual(props.p15, "[[1,2]]");
 		});
 		it("addTelemetryProperties - Does not overwrite base class Error fields (untagged)", () => {
 			const loggingError = new LoggingError("myMessage");
@@ -645,7 +672,7 @@ class TestFluidError implements IFluidErrorBase {
 		return {};
 	}
 
-	addTelemetryProperties(props: ITelemetryBaseProperties): void {
+	addTelemetryProperties(props: ITelemetryPropertiesExt): void {
 		throw new Error("Not Implemented - Expected to be Stubbed via Sinon");
 	}
 

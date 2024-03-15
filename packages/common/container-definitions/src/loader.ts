@@ -4,11 +4,12 @@
  */
 
 import type {
-	IRequest,
 	FluidObject,
 	IEvent,
 	IEventProvider,
+	IRequest,
 } from "@fluidframework/core-interfaces";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import type {
 	IClient,
 	IClientDetails,
@@ -18,17 +19,16 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { IAudience } from "./audience";
-import type { IDeltaManager, ReadOnlyInfo } from "./deltas";
-import type { ICriticalContainerError, ContainerWarning } from "./error";
-import type { IFluidModule } from "./fluidModule";
-import type { AttachState } from "./runtime";
+import type { IAudience } from "./audience.js";
+import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";
+import type { ContainerWarning, ICriticalContainerError } from "./error.js";
+import type { IFluidModule } from "./fluidModule.js";
 import type {
 	IFluidCodeDetails,
 	IFluidPackage,
 	IProvideFluidCodeDetailsComparer,
-} from "./fluidPackage";
+} from "./fluidPackage.js";
+import type { AttachState } from "./runtime.js";
 
 /**
  * Encapsulates a module entry point with corresponding code details.

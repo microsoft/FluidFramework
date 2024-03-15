@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	AttachState,
 	type IContainer,
@@ -123,7 +124,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer<TContainerSchema extends ContainerSchema>(
+	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
@@ -341,7 +342,7 @@ export class AzureClient {
 		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
 		assert(
 			rootDataObject.IRootDataObject !== undefined,
-			"entryPoint must be of type IRootDataObject",
+			0x90a /* entryPoint must be of type IRootDataObject */,
 		);
 		return rootDataObject.IRootDataObject;
 	}

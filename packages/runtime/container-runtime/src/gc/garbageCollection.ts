@@ -684,8 +684,8 @@ export class GarbageCollector implements IGarbageCollector {
 		 */
 
 		if (this.configs.testMode) {
-			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted.
-			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
+			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted immediately.
+			this.runtime.deleteSweepReadyNodes(gcResult.deletedNodeIds);
 			return;
 		}
 

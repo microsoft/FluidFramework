@@ -4,7 +4,6 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
 import {
@@ -13,14 +12,15 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
 	toInstrumentedOdspTokenFetcher,
-} from "./odspUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils";
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { runWithRetry as runWithRetryForCoherencyAndServiceReadOnlyErrors } from "./retryUtils.js";
 
 // Store cached responses for the lifetime of web session as file link remains the same for given file item
 const fileLinkCache = new Map<string, Promise<string>>();

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type BrandVariants,
 	createLightTheme,
@@ -22,9 +23,12 @@ import {
 	type IFluidDevtools,
 	initializeDevtools,
 } from "@fluidframework/devtools-core";
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { type SharedCounter } from "@fluidframework/counter";
-import { type SessionStorageModelLoader } from "@fluid-example/example-utils";
+import {
+	CollaborativeTextArea,
+	type SessionStorageModelLoader,
+	SharedStringHelper,
+} from "@fluid-example/example-utils";
 import { type SharedMatrix } from "@fluidframework/matrix";
 import { type SharedString } from "@fluidframework/sequence";
 import {

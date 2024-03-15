@@ -14,15 +14,13 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
-	RuntimeHeaders,
-	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
+	RuntimeHeaderData,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
@@ -34,7 +32,13 @@ export {
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-export { detectOutboundReferences } from "./dataStores.js";
+export {
+	detectOutboundReferences,
+	RuntimeHeaders,
+	ChannelCollectionFactory,
+	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
+} from "./channelCollection.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -93,22 +97,19 @@ export {
 	SummaryStage,
 	IRetriableFailureResult,
 	ISummarizeEventProps,
+	IdCompressorMode,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-
-// Re-exports for backwards compatibility.
-// Will be removed in the future.
+export { ChannelCollection } from "./channelCollection.js";
 export {
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	assertIsStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	generateStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	isStableId,
-} from "@fluidframework/id-compressor";
+	IFluidDataStoreContextInternal,
+	ISnapshotDetails,
+	LocalFluidDataStoreContext,
+	LocalFluidDataStoreContextBase,
+	FluidDataStoreContext,
+	IFluidDataStoreContextProps,
+	ILocalFluidDataStoreContextProps,
+	ILocalDetachedFluidDataStoreContextProps,
+	IFluidDataStoreContextEvents,
+} from "./dataStoreContext.js";
+export { DataStoreContexts } from "./dataStoreContexts.js";

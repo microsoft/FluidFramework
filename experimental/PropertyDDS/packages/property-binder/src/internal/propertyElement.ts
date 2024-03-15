@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview The PropertyElement is a helper class that abstracts an element in the property set tree,
  * whether it is a specific property, or an element of a primitive collections (array/map). It allows code to be
  * written with less special cases when it comes to primitive collections.
  */
-import { RESOLVE_NEVER, RESOLVE_ALWAYS } from "./constants";
+import { RESOLVE_NEVER, RESOLVE_ALWAYS } from "./constants.js";
 
 import { BaseProperty, REFERENCE_RESOLUTION_TYPE } from "@fluid-experimental/property-properties";
 import { PathHelper, TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { isCollection, isReferenceProperty } from "./typeGuards";
+import { isCollection, isReferenceProperty } from "./typeGuards.js";
 
 export declare type Property = BaseProperty | undefined;
 

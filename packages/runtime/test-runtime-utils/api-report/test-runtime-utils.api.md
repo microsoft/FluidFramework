@@ -88,9 +88,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     tenantKey: string,
     user: IInsecureUser,
     scopes?: ScopeType[] | undefined);
-    // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
-    // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
@@ -346,11 +344,17 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // @deprecated (undocumented)
     createProps?: any;
     // (undocumented)
+    deleteChildSummarizerNode(id: string): void;
+    // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
+    // (undocumented)
+    readonly gcThrowOnTombstoneUsage = false;
+    // (undocumented)
+    readonly gcTombstoneEnforcementAllowed = false;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -411,6 +415,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     });
     // (undocumented)
     get absolutePath(): string;
+    // (undocumented)
+    addChannel(channel: IChannel): void;
     // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)

@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { unlinkSync } from "fs";
 import path from "path";
 
 import { IFluidBuildConfig, IFluidRepoPackageEntry } from "../../common/fluidRepo";
-import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile } from "../common";
 
 const lockFilePattern = /.*?package-lock\.json$/i;
@@ -62,9 +63,7 @@ export const handlers: Handler[] = [
 					return true;
 				});
 				if (containsBadUrl) {
-					return `A private registry URL is in lock file: ${file}:\n${results.join(
-						"\n",
-					)}`;
+					return `A private registry URL is in lock file: ${file}:\n${results.join("\n")}`;
 				}
 			}
 			return;
@@ -86,7 +85,7 @@ export const handlers: Handler[] = [
 		name: "extraneous-lockfiles",
 		match: lockFilePattern,
 		handler: async (file, root) => {
-			const manifest = getFluidBuildConfig(root);
+			const manifest = loadFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
 			if (path.basename(file) === "package-lock.json") {
@@ -98,7 +97,7 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file, root) => {
-			const manifest = getFluidBuildConfig(root);
+			const manifest = loadFluidBuildConfig(root);
 			const knownPaths: string[] = getKnownPaths(manifest);
 
 			if (path.basename(file) === "package-lock.json") {

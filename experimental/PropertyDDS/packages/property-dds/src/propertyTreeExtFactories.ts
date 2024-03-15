@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
@@ -19,8 +20,8 @@ import {
 	ISnapshotSummary,
 	SharedPropertyTree,
 	SharedPropertyTreeOptions,
-} from "./propertyTree";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
+} from "./propertyTree.js";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
 
 /**
  * @internal

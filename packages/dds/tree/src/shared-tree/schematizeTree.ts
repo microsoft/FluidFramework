@@ -7,19 +7,19 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AllowedUpdateType,
 	Compatibility,
-	TreeStoredSchema,
 	ITreeCursorSynchronous,
-	schemaDataIsEmpty,
+	TreeStoredSchema,
 	rootFieldKey,
+	schemaDataIsEmpty,
 } from "../core/index.js";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
-	allowsRepoSuperset,
-	FlexTreeSchema,
 	FlexFieldSchema,
-	ViewSchema,
+	FlexTreeSchema,
 	InsertableFlexField,
+	ViewSchema,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
 	intoStoredSchema,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";
@@ -139,8 +139,8 @@ export function evaluateUpdate(
 		return UpdateType.Incompatible;
 	}
 
-	assert(compatibility.write === Compatibility.Incompatible, "unexpected case");
-	assert(compatibility.read === Compatibility.Compatible, "unexpected case");
+	assert(compatibility.write === Compatibility.Incompatible, 0x8bd /* unexpected case */);
+	assert(compatibility.read === Compatibility.Compatible, 0x8be /* unexpected case */);
 
 	// eslint-disable-next-line no-bitwise
 	return allowedSchemaModifications & AllowedUpdateType.SchemaCompatible

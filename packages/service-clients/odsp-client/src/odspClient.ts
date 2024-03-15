@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { v4 as uuid } from "uuid";
 import {
 	AttachState,
@@ -82,8 +83,10 @@ export class OdspClient {
 		this.urlResolver = new OdspDriverUrlResolver();
 	}
 
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -100,14 +103,14 @@ export class OdspClient {
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	public async getContainer(
+	public async getContainer<T extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -124,7 +127,7 @@ export class OdspClient {
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
