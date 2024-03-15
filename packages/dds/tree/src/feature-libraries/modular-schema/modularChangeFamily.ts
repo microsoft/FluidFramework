@@ -238,51 +238,22 @@ export class ModularChangeFamily
 		);
 
 		const composedNodeChanges: ChangeAtomIdMap<NodeChangeset> = new Map();
-		const handledNodeIds: NestedSet<RevisionTag, ChangesetLocalId> = new Map();
-		forEachInNestedMap(change1.change.nodeChanges, (nodeChangeset1, revision, localId) => {
-			const id2 = tryGetFromNestedMap(crossFieldTable.nodeMappings, revision, localId);
-
-			let nodeChangeset2: NodeChangeset | undefined;
-			if (id2 !== undefined) {
-				addToNestedSet(handledNodeIds, id2.revision, id2.localId);
-				nodeChangeset2 = tryGetFromNestedMap(
-					change2.change.nodeChanges,
-					id2.revision,
-					id2.localId,
-				);
-			}
-
-			const composedNodeChangeset = this.composeNodeChanges(
-				nodeChangeset1,
-				revision,
-				nodeChangeset2,
-				id2?.revision,
+		for (const [taggedId1, taggedId2] of crossFieldTable.nodeIdPairs) {
+			this.composeNodesById(
+				change1.change.nodeChanges,
+				change2.change.nodeChanges,
+				composedNodeChanges,
+				taggedId1?.change,
+				taggedId1?.revision,
+				taggedId2?.change,
+				taggedId2?.revision,
 				genId,
 				crossFieldTable,
 				revisionMetadata,
 			);
+		}
 
-			setInNestedMap(composedNodeChanges, revision, localId, composedNodeChangeset);
-		});
-
-		forEachInNestedMap(change2.change.nodeChanges, (nodeChangeset2, revision, localId) => {
-			if (!nestedSetContains(handledNodeIds, revision, localId)) {
-				setInNestedMap(
-					composedNodeChanges,
-					revision,
-					localId,
-					this.composeNodeChanges(
-						undefined,
-						undefined,
-						nodeChangeset2,
-						revision,
-						genId,
-						crossFieldTable,
-						revisionMetadata,
-					),
-				);
-			}
-		});
+		crossFieldTable.nodeIdPairs.length = 0;
 
 		while (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
@@ -294,19 +265,33 @@ export class ModularChangeFamily
 
 				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
 				const composeNodes = (
-					node1: NodeId | undefined,
-					node2: NodeId | undefined,
+					child1: NodeId | undefined,
+					child2: NodeId | undefined,
 				): NodeId => {
-					if (node1 !== undefined && node2 !== undefined) {
-						setInNestedMap(
-							crossFieldTable.nodeMappings,
-							node1.revision,
-							node1.localId,
-							node2,
-						);
-					}
+					if (
+						child2 !== undefined &&
+						!nestedSetContains(crossFieldTable.nodeIds, child2.revision, child2.localId)
+					) {
+						const taggedId1 =
+							child1 !== undefined
+								? tagChange(child1, fieldChange1.revision)
+								: undefined;
 
-					return node1 ?? node2 ?? fail("Should be a non-undefined node ID");
+						const taggedId2 =
+							child2 !== undefined
+								? tagChange(child2, fieldChange2.revision)
+								: undefined;
+
+						crossFieldTable.nodeIdPairs.push([taggedId1, taggedId2]);
+						if (child1 !== undefined && child2 !== undefined) {
+							addToNestedSet(
+								crossFieldTable.nodeIds,
+								child2.revision,
+								child2.localId,
+							);
+						}
+					}
+					return child1 ?? child2 ?? fail("Should have compose two undefined nodes");
 				};
 
 				const amendedChange = rebaser.compose(
@@ -318,6 +303,24 @@ export class ModularChangeFamily
 					revisionMetadata,
 				);
 				composedChange.change = brand(amendedChange);
+
+				// Process any newly discovered nodes.
+				for (const [taggedId1, taggedId2] of crossFieldTable.nodeIdPairs) {
+					this.composeNodesById(
+						change1.change.nodeChanges,
+						change2.change.nodeChanges,
+						composedNodeChanges,
+						taggedId1?.change,
+						taggedId1?.revision,
+						taggedId2?.change,
+						taggedId2?.revision,
+						genId,
+						crossFieldTable,
+						revisionMetadata,
+					);
+				}
+
+				crossFieldTable.nodeIdPairs.length = 0;
 			}
 		}
 
@@ -381,16 +384,21 @@ export class ModularChangeFamily
 				taggedChange1,
 				taggedChange2,
 				(child1, child2) => {
-					if (child1 !== undefined && child2 !== undefined) {
-						setInNestedMap(
-							crossFieldTable.nodeMappings,
-							child1.revision,
-							child1.localId,
-							child2,
-						);
-					}
+					const taggedId1 =
+						child1 !== undefined
+							? tagChange(child1, taggedChange1.revision)
+							: undefined;
 
-					return child1 ?? child2 ?? fail("");
+					const taggedId2 =
+						child2 !== undefined
+							? tagChange(child2, taggedChange2.revision)
+							: undefined;
+
+					crossFieldTable.nodeIdPairs.push([taggedId1, taggedId2]);
+					if (child1 !== undefined && child2 !== undefined) {
+						addToNestedSet(crossFieldTable.nodeIds, child2.revision, child2.localId);
+					}
+					return child1 ?? child2 ?? fail("Should have compose two undefined nodes");
 				},
 				genId,
 				manager,
@@ -416,6 +424,44 @@ export class ModularChangeFamily
 		}
 
 		return composedFields;
+	}
+
+	private composeNodesById(
+		nodeChanges1: ChangeAtomIdMap<NodeChangeset>,
+		nodeChanges2: ChangeAtomIdMap<NodeChangeset>,
+		composedNodeChanges: ChangeAtomIdMap<NodeChangeset>,
+		id1: NodeId | undefined,
+		revision1: RevisionTag | undefined,
+		id2: NodeId | undefined,
+		revision2: RevisionTag | undefined,
+		idAllocator: IdAllocator,
+		crossFieldTable: ComposeTable,
+		revisionMetadata: RevisionMetadataSource,
+	): void {
+		const nodeChangeset1 =
+			id1 !== undefined
+				? tryGetFromNestedMap(nodeChanges1, id1.revision, id1.localId) ??
+				  fail("Unknown node ID")
+				: {};
+
+		const nodeChangeset2 =
+			id2 !== undefined
+				? tryGetFromNestedMap(nodeChanges2, id2.revision, id2.localId) ??
+				  fail("Unknown node ID")
+				: {};
+
+		const composedNodeChangeset = this.composeNodeChanges(
+			nodeChangeset1,
+			revision1,
+			nodeChangeset2,
+			revision2,
+			idAllocator,
+			crossFieldTable,
+			revisionMetadata,
+		);
+
+		const nodeId = id1 ?? id2 ?? fail("Should not compose two undefined node IDs");
+		setInNestedMap(composedNodeChanges, nodeId.revision, nodeId.localId, composedNodeChangeset);
 	}
 
 	private composeNodeChanges(
@@ -448,8 +494,6 @@ export class ModularChangeFamily
 			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
-		const key = composeCacheKeyFromNodeChangesets(change1, change2);
-		crossFieldTable.nodeCache.set(key, composedNodeChange);
 		return composedNodeChange;
 	}
 
@@ -1375,8 +1419,8 @@ function newComposeTable(): ComposeTable {
 	return {
 		...newCrossFieldTable<FieldChange>(),
 		fieldToContext: new Map(),
-		nodeCache: new Map(),
-		nodeMappings: new Map(),
+		nodeIds: new Map(),
+		nodeIdPairs: [],
 	};
 }
 
@@ -1387,11 +1431,11 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	fieldToContext: Map<FieldChange, ComposeFieldContext>;
 
 	/**
-	 * Maps from an input changeset for a node (from change2 if it has one) to the cached composition of the changesets for that node.
+	 * The set of node IDs from the second changeset which have been encountered.
 	 */
-	nodeCache: Map<NodeChangeset, NodeChangeset>;
+	nodeIds: NestedSet<RevisionTag, ChangesetLocalId>;
 
-	nodeMappings: ChangeAtomIdMap<NodeId>;
+	nodeIdPairs: [TaggedChange<NodeId> | undefined, TaggedChange<NodeId> | undefined][];
 }
 
 interface ComposeFieldContext {
@@ -1408,18 +1452,6 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 		dstDependents: new Map(),
 		invalidatedFields: new Set(),
 	};
-}
-
-function composeCacheKeyFromNodeChangesets(
-	change1: NodeChangeset | undefined,
-	change2: NodeChangeset | undefined,
-): NodeChangeset {
-	// Note that it is important that the key is `change2 ?? change1` and not `change1 ?? change2`.
-	// If the first changeset moves this node, the change handler may not have seen the second changeset's
-	// changes for this node on its first pass.
-	// In that case we will have cached an entry the call to `compose(change1, undefined)`, and we must make sure
-	// not to reuse the cached entry if a subsequent pass calls `compose(change1, change2)`.
-	return change2 ?? change1 ?? fail("Should not compose two undefined changesets");
 }
 
 /**

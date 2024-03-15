@@ -346,7 +346,7 @@ describe("ModularChangeFamily integration", () => {
 			const remove = makeAnonChange(removeD);
 
 			const composed = family.compose([moves, remove]);
-			const composedDelta = intoDelta(makeAnonChange(composed), fieldKinds);
+			const composedDelta = normalizeDelta(intoDelta(makeAnonChange(composed), fieldKinds));
 
 			const nodeAChanges: DeltaFieldMap = new Map([
 				[fieldB, { local: [{ count: 1, attach: { minor: 1 } }] }],
@@ -374,9 +374,9 @@ describe("ModularChangeFamily integration", () => {
 				],
 			};
 
-			const expectedDelta: DeltaRoot = {
+			const expectedDelta: DeltaRoot = normalizeDelta({
 				fields: new Map([[fieldA, fieldAChanges]]),
-			};
+			});
 
 			assertDeltaEqual(composedDelta, expectedDelta);
 		});
