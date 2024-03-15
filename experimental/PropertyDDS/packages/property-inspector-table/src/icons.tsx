@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type * as React from "react";
+import * as React from "react";
 import type { IInspectorRow } from "./InspectorTableTypes.js";
 import { SvgIcon } from "./SVGIcon.js";
 import { iconHeight, iconWidth } from "./constants.js";

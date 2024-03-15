@@ -5,7 +5,7 @@
 
 import type { ContainerProperty, SetProperty } from "@fluid-experimental/property-properties";
 import { PropertyProxy, type ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
-import type * as React from "react";
+import * as React from "react";
 import type { IEditableValueCellProps } from "./InspectorTableTypes.js";
 import { StringView, typeToViewMap } from "./PropertyViews/index.js";
 import { Utils } from "./typeUtils.js";

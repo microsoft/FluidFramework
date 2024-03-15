@@ -5,7 +5,7 @@
 
 import { type WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
-import type * as React from "react";
+import * as React from "react";
 import { Field } from "./Field.js";
 import type { IEditableValueCellProps } from "./InspectorTableTypes.js";
 import { TooltipedField } from "./TooltipedField.js";

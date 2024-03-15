@@ -4,7 +4,7 @@
  */
 
 import { storiesOf } from "@storybook/react";
-import type * as React from "react";
+import * as React from "react";
 import {
 	DecoratedSelect,
 	type DecoratedSelectGroupedOptionsType,
