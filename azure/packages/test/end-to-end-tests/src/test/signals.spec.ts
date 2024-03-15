@@ -99,7 +99,7 @@ describe("Fluid Signals", () => {
 		}
 
 		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container?.once("connected", () => resolve()), {
+			await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
 				errorMsg: "container connect() timeout",
 			});
@@ -176,7 +176,10 @@ describe("Fluid Signals", () => {
 			// As of 2024-03-12, read-only mode does not work for signals and audience
 			this.skip();
 		}
-		const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
+		const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
+			undefined,
+			user1,
+		);
 		const { signaler: readSignaler } = await getOrCreateSignalerContainer(
 			containerId,
 			user2,
@@ -199,7 +202,7 @@ describe("Fluid Signals", () => {
 		const signalPayload1 = { test: "payload" };
 		const listenerPromises1 = [
 			createSignalListenerPromise(
-				signaler,
+				writeSignaler,
 				signalName,
 				signalPayload1,
 				"Write client listening for read client signal",
@@ -238,13 +241,13 @@ describe("Fluid Signals", () => {
 				"Read client 2 listening for write client signal",
 			),
 			createSignalListenerPromise(
-				signaler,
+				writeSignaler,
 				signalName,
 				signalPayload2,
 				"Write client listening for its own signal",
 			),
 		];
-		signaler.submitSignal(signalName, signalPayload2);
+		writeSignaler.submitSignal(signalName, signalPayload2);
 		await assert.doesNotReject(
 			Promise.all(listenerPromises2),
 			"Listening clients should receive signals from write clients.",
