@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Element as HastElement, Root as HastRoot, Text as HastText } from "hast";
+import type { Root as HastRoot, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
 import type { TransformationConfig } from "./configuration/index.js";
@@ -50,7 +50,7 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 export function documentationNodeToHtml(
 	node: DocumentationNode,
 	context: TransformationContext,
-): HastElement | HastText {
+): HastNodes {
 	if (context.transformations[node.type] === undefined) {
 		throw new Error(
 			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,
@@ -68,6 +68,6 @@ export function documentationNodeToHtml(
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
 	context: TransformationContext,
-): (HastElement | HastText)[] {
+): HastNodes[] {
 	return nodes.map((node) => documentationNodeToHtml(node, context));
 }

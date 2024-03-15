@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Element as HastElement, Text as HastText } from "hast";
+import type { Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 import {
 	DocumentationNodeType,
@@ -66,7 +66,7 @@ export interface Transformations {
 	[documentationNodeKind: string]: (
 		node: DocumentationNode,
 		context: TransformationContext,
-	) => HastElement | HastText;
+	) => HastNodes;
 }
 
 const hastLineBreak = h("br");

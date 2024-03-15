@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { Element as HastElement, Text as HastText } from "hast";
+import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 import type { SectionNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -20,7 +20,7 @@ import { documentationNodeToHtml, documentationNodesToHtml } from "../ToHtml.js"
  * such that heading levels increase appropriately through nested sections.
  */
 export function transformSection(node: SectionNode, context: TransformationContext): HastElement {
-	const transformedChildren: (HastElement | HastText)[] = [];
+	const transformedChildren: HastNodes[] = [];
 	if (node.heading !== undefined) {
 		transformedChildren.push(documentationNodeToHtml(node.heading, context));
 	}

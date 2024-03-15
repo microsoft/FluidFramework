@@ -28,7 +28,14 @@ export function renderDocument(document: DocumentNode, config: RenderConfigurati
 		logger,
 	});
 
-	return toHtml(hastTree, { closeSelfClosing: true });
+	return toHtml(hastTree, {
+		// This is required to handle "escaped" contents coming from the TSDoc.
+		// These include things like embedded HTML and Markdown.
+		allowDangerousHtml: true,
+
+		// Self-closed tags reduce output size.
+		closeSelfClosing: true,
+	});
 }
 
 /**
