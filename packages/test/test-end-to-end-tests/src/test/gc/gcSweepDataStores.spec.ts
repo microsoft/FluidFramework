@@ -225,7 +225,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async () => {
 	};
 };
 
-describeCompat.only("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
+describeCompat("V1/V2 compat", "FullCompat", (getTestObjectProvider) => {
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		if (provider.driver.type !== "local") {
