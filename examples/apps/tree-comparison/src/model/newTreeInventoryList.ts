@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Tree,
-	TreeConfiguration,
-	SchemaFactory,
-	SharedTree,
-	NodeFromSchema,
-	type ISharedTree,
-} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	type ISharedTree,
+	NodeFromSchema,
+	SchemaFactory,
+	SharedTree,
+	Tree,
+	TreeConfiguration,
+} from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
