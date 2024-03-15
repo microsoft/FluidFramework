@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Tree,
-	TreeConfiguration,
-	SchemaFactory,
-	SharedTree,
-	NodeFromSchema,
-	type ITree,
-} from "@fluidframework/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	type ITree,
+	NodeFromSchema,
+	SchemaFactory,
+	SharedTree,
+	Tree,
+	TreeConfiguration,
+} from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -101,6 +101,9 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 }
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
+	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this {
+		throw new Error("Method not implemented.");
+	}
 	private _sharedTree: ITree | undefined;
 	private get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {

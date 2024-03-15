@@ -7,45 +7,45 @@ import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IFluidErrorBase,
-	MonitoringContext,
-	normalizeError,
-} from "@fluidframework/telemetry-utils";
-import {
 	IDocumentDeltaConnection,
-	IResolvedUrl,
 	IDocumentServicePolicies,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	HostStoragePolicy,
+	type IOdspError,
+	IOdspResolvedUrl,
+	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	TokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	HostStoragePolicy,
-	InstrumentedStorageTokenFetcher,
-	ISocketStorageDiscovery,
-	OdspErrorTypes,
-	type IOdspError,
-} from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
+	IFluidErrorBase,
+	MonitoringContext,
+	normalizeError,
+} from "@fluidframework/telemetry-utils";
+import { policyLabelsUpdatesSignalType } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
 import { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
+	TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
-	TokenFetchOptionsEx,
 } from "./odspUtils.js";
-import { fetchJoinSession } from "./vroom.js";
-import { EpochTracker } from "./epochTracker.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { policyLabelsUpdatesSignalType } from "./contracts.js";
+import { fetchJoinSession } from "./vroom.js";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection

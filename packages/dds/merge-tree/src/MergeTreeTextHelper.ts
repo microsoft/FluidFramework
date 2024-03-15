@@ -4,8 +4,8 @@
  */
 
 import { IIntegerRange } from "./client.js";
-import { ISegment } from "./mergeTreeNodes.js";
 import { MergeTree } from "./mergeTree.js";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 

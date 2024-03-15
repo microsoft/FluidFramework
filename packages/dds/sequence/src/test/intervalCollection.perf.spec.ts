@@ -5,14 +5,14 @@
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
 import { IIntervalCollection } from "../intervalCollection.js";
-import { SequenceInterval } from "../intervals/index.js";
 import {
 	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
 } from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).

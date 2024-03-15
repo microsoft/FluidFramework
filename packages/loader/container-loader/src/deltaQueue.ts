@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import Deque from "double-ended-queue";
 
 export interface IDeltaQueueWriter<T> {

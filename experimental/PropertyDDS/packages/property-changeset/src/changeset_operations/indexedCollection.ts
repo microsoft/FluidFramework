@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Helper functions and classes to work with ChangeSets with indexed collections (sets and maps)
  */

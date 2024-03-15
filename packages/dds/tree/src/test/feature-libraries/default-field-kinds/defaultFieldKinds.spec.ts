@@ -4,11 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import {
-	FieldChangeHandler,
-	NodeChangeset,
-	CrossFieldManager,
-} from "../../../feature-libraries/index.js";
+import { makeAnonChange, tagChange } from "../../../core/index.js";
 import {
 	ValueFieldEditor,
 	valueChangeHandler,
@@ -16,16 +12,20 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { makeAnonChange, tagChange } from "../../../core/index.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
-import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+import {
+	CrossFieldManager,
+	FieldChangeHandler,
+	NodeChangeset,
+} from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field/index.js";
+import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import { defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Change, assertEqual, assertTaggedEqual } from "../optional-field/optionalFieldUtils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

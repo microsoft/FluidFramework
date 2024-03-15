@@ -9,9 +9,9 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { pkgVersion } from "./packageVersion.js";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
 import { ITree } from "./simple-tree/index.js";
-import { pkgVersion } from "./packageVersion.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
