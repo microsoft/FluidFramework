@@ -4,18 +4,18 @@
  */
 import { strict as assert } from "node:assert";
 
+import { Signaler } from "@fluid-experimental/data-objects";
 import {
 	AzureClient,
-	ScopeType,
 	type AzureContainerServices,
 	type AzureUser,
+	ScopeType,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { Signaler } from "@fluid-experimental/data-objects";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConnectionState } from "@fluidframework/container-loader";
 import { createAzureClient } from "./AzureClientFactory";
 import { configProvider } from "./utils";
 

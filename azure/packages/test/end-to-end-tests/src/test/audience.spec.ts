@@ -7,13 +7,13 @@ import { strict as assert } from "node:assert";
 
 import { AzureClient, ScopeType } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConnectionState } from "@fluidframework/container-loader";
 import { createAzureClient } from "./AzureClientFactory";
-import { waitForMember, configProvider } from "./utils";
+import { configProvider, waitForMember } from "./utils";
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
