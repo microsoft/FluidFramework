@@ -10,7 +10,7 @@ importers:
 
   .:
     specifiers:
-      '@biomejs/biome': ^1.5.3
+      '@biomejs/biome': ^1.6.1
       '@commitlint/cli': ^17.6.6
       '@commitlint/config-conventional': ^17.6.6
       '@commitlint/cz-commitlint': ^17.5.0
@@ -29,13 +29,12 @@ importers:
       cz-customizable: ^7.0.0
       eslint: ~8.55.0
       inquirer: ^8.2.5
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       run-script-os: ^1.1.6
       syncpack: ^9.8.6
       typescript: ~5.1.6
     devDependencies:
-      '@biomejs/biome': 1.5.3
+      '@biomejs/biome': 1.6.1
       '@commitlint/cli': 17.6.6
       '@commitlint/config-conventional': 17.6.6
       '@commitlint/cz-commitlint': 17.5.0_i4x6owxztfhigiiqlxwntt4k24
@@ -54,7 +53,6 @@ importers:
       cz-customizable: 7.0.0
       eslint: 8.55.0
       inquirer: 8.2.5
-      prettier: 3.2.5
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -257,7 +255,6 @@ importers:
       lodash.isequal: ^4.5.0
       mocha: ^10.2.0
       picomatch: ^2.3.1
-      prettier: ~3.2.4
       replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
@@ -312,7 +309,6 @@ importers:
       concurrently: 8.2.1
       eslint: 8.55.0
       mocha: 10.2.0
-      prettier: 3.2.5
 
   packages/bundle-size-tools:
     specifiers:
@@ -329,7 +325,6 @@ importers:
       jszip: ^3.10.1
       msgpack-lite: ^0.1.26
       pako: ^2.1.0
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       typescript: ~5.1.6
       webpack: ^5.88.1
@@ -350,7 +345,6 @@ importers:
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.55.0
-      prettier: 3.2.5
       rimraf: 4.4.1
 
   packages/readme-command:
@@ -373,7 +367,6 @@ importers:
       eslint-config-oclif-typescript: ^3.0.8
       eslint-config-prettier: ~9.0.0
       oclif: ^4.0.3
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       semver: ^7.5.4
       ts-node: ^10.9.1
@@ -400,7 +393,6 @@ importers:
       eslint-config-oclif: 5.0.0_eslint@8.55.0
       eslint-config-oclif-typescript: 3.0.8_bpztyfltmpuv6lhsgzfwtmxhte
       eslint-config-prettier: 9.0.0_eslint@8.55.0
-      prettier: 3.2.5
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -436,7 +428,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.29.4
       oclif: ^4.0.3
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       semver: ^7.5.4
       table: ^6.8.1
@@ -475,7 +466,6 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       oclif: 4.0.3_ta3rswuxkuwpr666lgto7lkv44
-      prettier: 3.2.5
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -515,24 +505,24 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@biomejs/biome/1.5.3:
-    resolution: {integrity: sha512-yvZCa/g3akwTaAQ7PCwPWDCkZs3Qa5ONg/fgOUT9e6wAWsPftCjLQFPXBeGxPK30yZSSpgEmRCfpGTmVbUjGgg==}
+  /@biomejs/biome/1.6.1:
+    resolution: {integrity: sha512-SILQvA2S0XeaOuu1bivv6fQmMo7zMfr2xqDEN+Sz78pGbAKZnGmg0emsXjQWoBY/RVm9kPCgX+aGEpZZTYaM7w==}
     engines: {node: '>=14.*'}
     hasBin: true
     requiresBuild: true
     optionalDependencies:
-      '@biomejs/cli-darwin-arm64': 1.5.3
-      '@biomejs/cli-darwin-x64': 1.5.3
-      '@biomejs/cli-linux-arm64': 1.5.3
-      '@biomejs/cli-linux-arm64-musl': 1.5.3
-      '@biomejs/cli-linux-x64': 1.5.3
-      '@biomejs/cli-linux-x64-musl': 1.5.3
-      '@biomejs/cli-win32-arm64': 1.5.3
-      '@biomejs/cli-win32-x64': 1.5.3
+      '@biomejs/cli-darwin-arm64': 1.6.1
+      '@biomejs/cli-darwin-x64': 1.6.1
+      '@biomejs/cli-linux-arm64': 1.6.1
+      '@biomejs/cli-linux-arm64-musl': 1.6.1
+      '@biomejs/cli-linux-x64': 1.6.1
+      '@biomejs/cli-linux-x64-musl': 1.6.1
+      '@biomejs/cli-win32-arm64': 1.6.1
+      '@biomejs/cli-win32-x64': 1.6.1
     dev: true
 
-  /@biomejs/cli-darwin-arm64/1.5.3:
-    resolution: {integrity: sha512-ImU7mh1HghEDyqNmxEZBoMPr8SxekkZuYcs+gynKlNW+TALQs7swkERiBLkG9NR0K1B3/2uVzlvYowXrmlW8hw==}
+  /@biomejs/cli-darwin-arm64/1.6.1:
+    resolution: {integrity: sha512-KlvY00iB9T/vFi4m/GXxEyYkYnYy6aw06uapzUIIdiMMj7I/pmZu7CsZlzWdekVD0j+SsQbxdZMsb0wPhnRSsg==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [darwin]
@@ -540,8 +530,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-darwin-x64/1.5.3:
-    resolution: {integrity: sha512-vCdASqYnlpq/swErH7FD6nrFz0czFtK4k/iLgj0/+VmZVjineFPgevOb+Sr9vz0tk0GfdQO60bSpI74zU8M9Dw==}
+  /@biomejs/cli-darwin-x64/1.6.1:
+    resolution: {integrity: sha512-jP4E8TXaQX5e3nvRJSzB+qicZrdIDCrjR0sSb1DaDTx4JPZH5WXq/BlTqAyWi3IijM+IYMjWqAAK4kOHsSCzxw==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [darwin]
@@ -549,8 +539,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-arm64-musl/1.5.3:
-    resolution: {integrity: sha512-DYuMizUYUBYfS0IHGjDrOP1RGipqWfMGEvNEJ398zdtmCKLXaUvTimiox5dvx4X15mBK5M2m8wgWUgOP1giUpQ==}
+  /@biomejs/cli-linux-arm64-musl/1.6.1:
+    resolution: {integrity: sha512-YdkDgFecdHJg7PJxAMaZIixVWGB6St4yH08BHagO0fEhNNiY8cAKEVo2mcXlsnEiTMpeSEAY9VxLUrVT3IVxpw==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [linux]
@@ -558,8 +548,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-arm64/1.5.3:
-    resolution: {integrity: sha512-cupBQv0sNF1OKqBfx7EDWMSsKwRrBUZfjXawT4s6hKV6ALq7p0QzWlxr/sDmbKMLOaLQtw2Qgu/77N9rm+f9Rg==}
+  /@biomejs/cli-linux-arm64/1.6.1:
+    resolution: {integrity: sha512-nxD1UyX3bWSl/RSKlib/JsOmt+652/9yieogdSC/UTLgVCZYOF7u8L/LK7kAa0Y4nA8zSPavAQTgko7mHC2ObA==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [linux]
@@ -567,8 +557,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-x64-musl/1.5.3:
-    resolution: {integrity: sha512-UUHiAnlDqr2Y/LpvshBFhUYMWkl2/Jn+bi3U6jKuav0qWbbBKU/ByHgR4+NBxpKBYoCtWxhnmatfH1bpPIuZMw==}
+  /@biomejs/cli-linux-x64-musl/1.6.1:
+    resolution: {integrity: sha512-aSISIDmxq04NNy7tm4x9rBk2vH0ub2VDIE4outEmdC2LBtEJoINiphlZagx/FvjbsqUfygent9QUSn0oREnAXg==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [linux]
@@ -576,8 +566,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-x64/1.5.3:
-    resolution: {integrity: sha512-YQrSArQvcv4FYsk7Q91Yv4uuu5F8hJyORVcv3zsjCLGkjIjx2RhjYLpTL733SNL7v33GmOlZY0eFR1ko38tuUw==}
+  /@biomejs/cli-linux-x64/1.6.1:
+    resolution: {integrity: sha512-BYAzenlMF3QdngjNFw9QVBXKGNzeecqwF3pwDgUGEvU7OJpn1/lyVkJVxYPtVGRNdjQ9e6l/s8NjKuBpW/ZR4Q==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [linux]
@@ -585,8 +575,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-win32-arm64/1.5.3:
-    resolution: {integrity: sha512-HxatYH7vf/kX9nrD+pDYuV2GI9GV8EFo6cfKkahAecTuZLPxryHx1WEfJthp5eNsE0+09STGkKIKjirP0ufaZA==}
+  /@biomejs/cli-win32-arm64/1.6.1:
+    resolution: {integrity: sha512-/eCHQKZ1kEawUpkSuXq4urtxMsD1P1678OPG3zNKt3ru16AqqspLdO3jzBe3k74xCPYnQ36e9Yqc97Mo0qgPtg==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [win32]
@@ -594,8 +584,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-win32-x64/1.5.3:
-    resolution: {integrity: sha512-fMvbSouZEASU7mZH8SIJSANDm5OqsjgtVXlbUqxwed6BP7uuHRSs396Aqwh2+VoW8fwTpp6ybIUoC9FrzB0kyA==}
+  /@biomejs/cli-win32-x64/1.6.1:
+    resolution: {integrity: sha512-5TUZbzBwnDLFxLVGEPsorNi6eC2Gt+z4Oei9Qvq0M/4c4/mjZ96ABgwao/tMxf4ZBr/qyy2YdvF+gX9Rc+xC0A==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [win32]
@@ -9043,6 +9033,7 @@ packages:
     resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
     engines: {node: '>=14'}
     hasBin: true
+    dev: false
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
 import {
@@ -12,14 +13,14 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import {
-	sequenceIntervalHelpers,
 	IntervalType,
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
+	sequenceIntervalHelpers,
 } from "../intervals/index.js";
 import { SharedString } from "../sharedString.js";
-import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
+import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 
 /**
  * @public

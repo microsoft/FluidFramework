@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import {

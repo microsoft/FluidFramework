@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SemverMap, UpgradeType } from "../internal/semvermap";
-import { getLocalOrRemoteSchema } from "./internalUtils";
+import { SemverMap, UpgradeType } from "../internal/semvermap.js";
+import { getLocalOrRemoteSchema } from "./internalUtils.js";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { DataBindingDefinition } from "./dataBinder";
+import { DataBindingDefinition } from "./dataBinder.js";
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 
 /**

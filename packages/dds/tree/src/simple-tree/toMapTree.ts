@@ -12,24 +12,24 @@ import { EmptyKey, type FieldKey, type MapTree } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../domains/leafDomain.js";
 import {
+	type AllowedTypeSet,
+	Any,
+	type CursorWithNode,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	FlexTreeSchema,
+	LeafNodeSchema,
+	Multiplicity,
 	allowsValue,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	type CursorWithNode,
-	isFluidHandle,
-	Multiplicity,
-	type FlexTreeNodeSchema,
-	FlexTreeSchema,
-	type AllowedTypeSet,
-	FlexFieldSchema,
-	Any,
-	FlexFieldNodeSchema,
-	isTreeValue,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
 	getAllowedTypes,
+	isFluidHandle,
+	isTreeValue,
 	typeNameSymbol,
-	FlexObjectNodeSchema,
 } from "../feature-libraries/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";
@@ -416,7 +416,7 @@ function shallowCompatibilityTest(
 		throw Error("Expected inserted value to be a map");
 	}
 
-	assert(schema instanceof FlexObjectNodeSchema, "Expected object schema");
+	assert(schema instanceof FlexObjectNodeSchema, 0x906 /* Expected object schema */);
 
 	// TODO: Improve type inference by making this logic more thorough. Handle at least:
 	// * Types which are strict subsets of other types in the same polymorphic union

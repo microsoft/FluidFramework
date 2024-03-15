@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { Mutable } from "../../util/index.js";
 import {
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeRename,
@@ -15,18 +14,19 @@ import {
 	areEqualChangeAtomIds,
 	makeDetachedNodeId,
 } from "../../core/index.js";
+import { Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
 import { MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
+	getDetachOutputId,
 	getEndpoint,
 	getInputCellId,
 	getOutputCellId,
 	isAttachAndDetachEffect,
-	getDetachOutputId,
 } from "./utils.js";
-import { isMoveIn, isMoveOut } from "./moveEffectTable.js";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => DeltaFieldMap;
 

@@ -5,20 +5,20 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
+	CursorLocationType,
+	DetachedField,
+	IForestSubscription,
+	ITreeCursor,
+	ITreeCursorSynchronous,
+	JsonableTree,
+	aboveRootPlaceholder,
+	detachedFieldAsKey,
 	genericTreeKeys,
 	getGenericTreeField,
-	JsonableTree,
-	ITreeCursor,
-	CursorLocationType,
 	mapCursorField,
-	ITreeCursorSynchronous,
-	setGenericTreeField,
-	IForestSubscription,
 	moveToDetachedField,
-	aboveRootPlaceholder,
-	DetachedField,
 	rootField,
-	detachedFieldAsKey,
+	setGenericTreeField,
 } from "../core/index.js";
 import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./treeCursorUtils.js";
 

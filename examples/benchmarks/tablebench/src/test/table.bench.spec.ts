@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { NodeFromSchema, SharedTree, type ITree } from "@fluidframework/tree";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions";
-import { generateTable, Table } from "../index.js";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { type ITree, NodeFromSchema, SharedTree } from "@fluidframework/tree";
+import { Table, generateTable } from "../index.js";
 import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
 const numRows = isInPerformanceTestingMode ? 10000 : 100;
