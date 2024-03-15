@@ -25,7 +25,6 @@ import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
 import path from "node:path";
-import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
 
 import { DependencyUpdateType } from "./bump";
@@ -509,8 +508,6 @@ export async function setVersion(
 				options,
 			],
 			["pnpm", ["-r", "run", "build:genver"], options],
-			["pnpm", ["-r", "run", "--workspace-concurrency=1", "format:packageJson"], options],
-			["pnpm", ["-w", "run", "format:packageJson"], options],
 		);
 	} else {
 		options = {
@@ -552,21 +549,11 @@ export async function setVersion(
 	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const [lernaJson, prettierConfig] = await Promise.all([
-		readJson(lernaPath),
-		resolvePrettierConfig(lernaPath),
-	]);
+	const lernaJson = await readJson(lernaPath);
 
-	if (prettierConfig !== null) {
-		prettierConfig.filepath = lernaPath;
-	}
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	lernaJson.version = translatedVersion.version;
-	const output = await prettier(
-		JSON.stringify(lernaJson),
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- the nullish-coalescing form looks strange; this is clearer
-		prettierConfig === null ? undefined : prettierConfig,
-	);
+	const output = JSON.stringify(lernaJson);
 	await writeFile(lernaPath, output);
 
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
@@ -622,6 +609,17 @@ export async function setVersion(
 			/* updateWithinSameReleaseGroup */ true,
 			/* writeChanges */ true,
 		);
+	}
+
+	try {
+		// TODO: The shell option should not need to be true. AB#4067
+		const results = await execa("pnpm", ["run", "format"], options);
+		if (results.all !== undefined) {
+			log?.verbose(results.all);
+		}
+	} catch (error: unknown) {
+		log?.errorLog(`Error running command: pnpm run format\n${error}`);
+		throw error;
 	}
 }
 
