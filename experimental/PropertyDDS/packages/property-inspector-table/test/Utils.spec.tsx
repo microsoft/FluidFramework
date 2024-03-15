@@ -280,8 +280,8 @@ describe("InspectorTable", () => {
 			const testId = "Point3D";
 			// We add a second one to check there is no interference
 			const expanded = getExpandedMap([
-				`${initId}/${testId}`,
-				`${initId}/CoordinateSystem3D`,
+				initId + "/" + testId,
+				initId + "/CoordinateSystem3D",
 			]);
 			fillExpanded(expanded, rows, props);
 			const pointRow = findRow(testId, rows);
@@ -290,7 +290,7 @@ describe("InspectorTable", () => {
 
 		it("should work with maps", () => {
 			const testId = "NonPrimitiveCollections";
-			const expanded = getExpandedMap([`/${testId}`, `/${testId}/map`]);
+			const expanded = getExpandedMap(["/" + testId, "/" + testId + "/map"]);
 			fillExpanded(expanded, rows, props);
 			const map = findRow("map", findRow(testId, rows).children!);
 			expect(map.children!.length).toEqual(workspace.get([testId, "map"]).getIds().length);
@@ -300,7 +300,7 @@ describe("InspectorTable", () => {
 
 		it("should work with arrays", () => {
 			const testId = "NonPrimitiveCollections";
-			const expanded = [`/${testId}`, `/${testId}/array`];
+			const expanded = ["/" + testId, "/" + testId + "/array"];
 			fillExpanded(getExpandedMap(expanded), rows, props);
 			const array = findRow("array", findRow(testId, rows).children!);
 			expect(array.children!.length).toEqual(workspace.get([testId, "array"]).length);
@@ -310,7 +310,7 @@ describe("InspectorTable", () => {
 
 		it("should work with set", () => {
 			const testId = "NonPrimitiveCollections";
-			const expanded = [`/${testId}`, `/${testId}/set`];
+			const expanded = ["/" + testId, "/" + testId + "/set"];
 			fillExpanded(getExpandedMap(expanded), rows, props);
 			const set = findRow("set", findRow(testId, rows).children!)!;
 			expect(set.children!.length).toEqual(workspace.get([testId, "set"]).getIds().length);
@@ -319,10 +319,10 @@ describe("InspectorTable", () => {
 		it("should work with set and other collections expanded", () => {
 			const testId = "ReferenceCollections";
 			const expanded = [
-				`/${testId}`,
-				`/${testId}/arrayOfReferences`,
-				`/${testId}/arrayOfReferences/1`,
-				`/${testId}/arrayOfReferences/17`,
+				"/" + testId,
+				"/" + testId + "/arrayOfReferences",
+				"/" + testId + "/arrayOfReferences/1",
+				"/" + testId + "/arrayOfReferences/17",
 			];
 			fillExpanded(getExpandedMap(expanded), rows, props);
 			const set = findRow("arrayOfReferences", findRow(testId, rows).children!);
@@ -351,7 +351,7 @@ describe("InspectorTable", () => {
 			);
 		});
 
-		it("should work for properties at the root on the name column", async () => {
+		it("should work for properties at the root on the name column", () => {
 			return getAllMatchesFromRows(
 				"ReferenceCollections",
 				rows,
@@ -386,13 +386,16 @@ describe("InspectorTable", () => {
 			);
 		});
 
-		it("should work based on dataGetter", async () => {
+		it("should work based on dataGetter", () => {
 			const customDummyChild = { ...dummyChild };
 			customDummyChild.context = "cd";
 
 			const data = [
 				customDummyChild,
-				{ ...customDummyChild, id: "dd", children: [{ ...customDummyChild, id: "ddd" }] },
+				Object.assign({}, customDummyChild, {
+					id: "dd",
+					children: [{ ...customDummyChild, id: "ddd" }],
+				}),
 			];
 
 			return getAllMatchesFromRows(
@@ -404,12 +407,12 @@ describe("InspectorTable", () => {
 				toTableRowOptions,
 			).then((result) => {
 				expect(result.matches.length).toEqual(6);
-				expect(result.matchesMap.d[0]).toEqual(true);
-				expect(result.matchesMap.d[1]).toEqual(true);
+				expect(result.matchesMap["d"][0]).toEqual(true);
+				expect(result.matchesMap["d"][1]).toEqual(true);
 			});
 		});
 
-		it("should work when results appears both in the name and value column", async () => {
+		it("should work when results appears both in the name and value column", () => {
 			return getAllMatchesFromRows(
 				uniqueIdentifier,
 				rows,
@@ -424,7 +427,7 @@ describe("InspectorTable", () => {
 			});
 		});
 
-		it("should return the correct number of results", async () => {
+		it("should return the correct number of results", () => {
 			return getAllMatchesFromRows(
 				"X",
 				rows,
@@ -525,9 +528,9 @@ describe("InspectorTable", () => {
 			);
 		});
 
-		it("should work when other items were expanded by user", async () => {
+		it("should work when other items were expanded by user", () => {
 			const testId = "CoordinateSystem3D";
-			const expanded = getExpandedMap([`/${testId}`]);
+			const expanded = getExpandedMap(["/" + testId]);
 			return getAllMatchesFromRows(
 				"enum",
 				rows,
@@ -567,7 +570,7 @@ describe("InspectorTable", () => {
 			);
 		});
 
-		it("should not expand current result", async () => {
+		it("should not expand current result", () => {
 			return getAllMatchesFromRows(
 				"y",
 				rows,
@@ -649,9 +652,9 @@ describe("InspectorTable", () => {
 			const expectedString = `NonPrimitiveCollections/map/outlier/axisX`;
 			const idSeparator = "/";
 			const sanitizer = [
-				{ searchFor: /\./g, replaceWith: idSeparator },
-				{ searchFor: /\[/g, replaceWith: idSeparator },
-				{ searchFor: /]/g, replaceWith: "" },
+				{ searchFor: /[.]/g, replaceWith: idSeparator },
+				{ searchFor: /[\[]/g, replaceWith: idSeparator },
+				{ searchFor: /[\]]/g, replaceWith: "" },
 			];
 			expect(sanitizePath(untransformedString, sanitizer)).toEqual(expectedString);
 		});

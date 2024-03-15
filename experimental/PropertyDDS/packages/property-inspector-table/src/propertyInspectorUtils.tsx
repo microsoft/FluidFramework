@@ -241,7 +241,7 @@ export const toTableRows = (
 	{ data, id = "" }: IInspectorRow,
 	props: IToTableRowsProps,
 	options: Partial<IToTableRowsOptions> = {},
-	pathPrefix = "",
+	pathPrefix: string = "",
 ): IInspectorRow[] => {
 	if (!data) {
 		return [];
@@ -635,7 +635,7 @@ export const fillExpanded = (
 	innerRows: IInspectorRow[],
 	props: IToTableRowsProps,
 	toTableRowsOptions?: IToTableRowsOptions,
-	pathPrefix = "",
+	pathPrefix: string = "",
 ) => {
 	for (const row of innerRows) {
 		if (row.id in expanded) {

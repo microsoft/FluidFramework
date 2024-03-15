@@ -522,7 +522,7 @@ class InspectorTable<
 			);
 		};
 
-		const getEmptyPanel = (repoIsExpired = false) => {
+		const getEmptyPanel = (repoIsExpired: boolean = false) => {
 			const modalEnabled = !!repositoryUrn && !!currentUrn && !isV1Urn;
 			return repoIsExpired ? (
 				<Empty

@@ -25,7 +25,7 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
 			case "array": {
 				// TODO: Temporary workaround, as enum arrays currently are not considered primitive.
 				if (Utils.isEnumArrayProperty(rowData.parent!)) {
-					(rowData.parent! as any).set(Number.parseInt(rowData.name, 10), val);
+					(rowData.parent! as any).set(parseInt(rowData.name, 10), val);
 				} else {
 					proxiedParent[rowData.name] = val;
 				}
