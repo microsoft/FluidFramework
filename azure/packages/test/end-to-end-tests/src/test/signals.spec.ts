@@ -61,11 +61,12 @@ describe("Fluid Signals", () => {
 		name: "test-user-name-2",
 	};
 
-	afterEach(() => {
-		connectedContainers.forEach((container) => {
+	afterEach(async () => {
+		[...connectedContainers].forEach((container) => {
 			container.disconnect();
 			container.dispose();
 		});
+		connectedContainers.splice(0, connectedContainers.length);
 	});
 
 	const getOrCreateSignalerContainer = async (
