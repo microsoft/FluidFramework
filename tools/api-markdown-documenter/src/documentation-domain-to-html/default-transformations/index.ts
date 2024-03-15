@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-export { transformBlockQuote } from "./TransformBlockQuote.js";
-export { transformCodeSpan } from "./TransformCodeSpan.js";
-export { transformFencedCodeBlock } from "./TransformFencedCodeBlock.js";
-export { transformHeading } from "./TransformHeading.js";
-export { transformSection as transformHierarchicalSection } from "./TransformSection.js";
-export { transformLink } from "./TransformLink.js";
-export { transformOrderedList } from "./TransformOrderedList.js";
-export { transformParagraph } from "./TransformParagraph.js";
-export { transformPlainText } from "./TransformPlainText.js";
-export { transformSpan } from "./TransformSpan.js";
-export { transformTableCell } from "./TransformTableCell.js";
-export { transformTableRow } from "./TransformTableRow.js";
-export { transformTable } from "./TransformTable.js";
-export { transformUnorderedList } from "./TransformUnorderedList.js";
+export { transformBlockQuote } from "./BlockQuoteToHtml.js";
+export { transformCodeSpan } from "./CodeSpanToHtml.js";
+export { transformFencedCodeBlock } from "./FencedCodeBlockToHtml.js";
+export { transformHeading } from "./HeadingToHtml.js";
+export { transformSection as transformHierarchicalSection } from "./SectionToHtml.js";
+export { transformLink } from "./LinkToHtml.js";
+export { transformOrderedList } from "./OrderedListToHtml.js";
+export { transformParagraph } from "./ParagraphToHtml.js";
+export { transformPlainText } from "./PlainTextToHtml.js";
+export { transformSpan } from "./SpanToHtml.js";
+export { transformTableCell } from "./TableCellToHtml.js";
+export { transformTableRow } from "./TableRowToHtml.js";
+export { transformTable } from "./TableToHtml.js";
+export { transformUnorderedList } from "./UnorderedListToHtml.js";
