@@ -11213,6 +11213,7 @@ importers:
   packages/utils/odsp-doclib-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -11252,6 +11253,7 @@ importers:
       isomorphic-fetch: 3.0.0
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -11276,6 +11278,7 @@ importers:
   packages/utils/telemetry-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -11315,6 +11318,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -11343,6 +11347,7 @@ importers:
   packages/utils/tool-utils:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -11383,6 +11388,7 @@ importers:
       proper-lockfile: 4.1.2
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
