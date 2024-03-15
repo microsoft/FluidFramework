@@ -99,6 +99,12 @@ export {
 	wrapSummaryInChannelsTree,
 	idCompressorBlobName,
 	IdCompressorMode,
+	IDocumentSchemaCurrent,
+	IDocumentSchema,
+	currentDocumentVersionSchema,
+	CompressionAlgorithms,
+	documentSchemaSupportedConfigs,
+	DocumentSchemaValueType,
 } from "./summaryFormat.js";
 export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
 export {

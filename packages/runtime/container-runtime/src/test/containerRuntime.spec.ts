@@ -57,7 +57,6 @@ import {
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ChannelCollection } from "../channelCollection.js";
 import {
-	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
@@ -74,7 +73,11 @@ import {
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
-import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
+import {
+	ISummaryCancellationToken,
+	neverCancelledSummaryToken,
+	CompressionAlgorithms,
+} from "../summary/index.js";
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,

@@ -388,6 +388,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
 
 // @alpha (undocumented)
+export type DocumentSchemaValueType = string | boolean | string[] | undefined;
+
+// @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly alreadyEnqueued?: undefined;
 }) | (ISummarizeResults & {
@@ -672,7 +675,8 @@ export interface IContainerRuntimeMessageCompatDetails {
 // @alpha (undocumented)
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly disableIsolatedChannels?: true;
-    readonly idCompressorMode?: IdCompressorMode;
+    // (undocumented)
+    readonly documentSchema?: IDocumentSchema;
     readonly message: ISummaryMetadataMessage | undefined;
     // (undocumented)
     readonly summaryFormatVersion: 1;
@@ -704,6 +708,12 @@ export interface ICreateContainerMetadata {
 
 // @alpha
 export type IdCompressorMode = "on" | "delayed" | "off";
+
+// @alpha
+export interface IDocumentSchema extends Record<string, DocumentSchemaValueType> {
+    // (undocumented)
+    version: string;
+}
 
 // @alpha
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {

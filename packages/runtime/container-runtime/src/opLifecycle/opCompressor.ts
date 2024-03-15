@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { compress } from "lz4js";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "../containerRuntime.js";
+import { CompressionAlgorithms } from "../summary/index.js";
 import { estimateSocketSize } from "./batchManager.js";
 import { IBatch, BatchMessage } from "./definitions.js";
 

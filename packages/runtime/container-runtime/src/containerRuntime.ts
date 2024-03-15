@@ -160,6 +160,12 @@ import {
 	ISummarizer,
 	rootHasIsolatedChannels,
 	IdCompressorMode,
+	IDocumentSchemaCurrent,
+	IDocumentSchema,
+	currentDocumentVersionSchema,
+	CompressionAlgorithms,
+	documentSchemaSupportedConfigs,
+	DocumentSchemaValueType,
 } from "./summary/index.js";
 import { formExponentialFn, Throttler } from "./throttler.js";
 import {
@@ -497,14 +503,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 };
 
 /**
- * Available compression algorithms for op compression.
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
-/**
  * @deprecated
  * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
@@ -590,6 +588,93 @@ export enum RuntimeMessage {
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
+}
+
+function validateDocumentSchemaProperty(
+	value: string | boolean | undefined,
+	allowedValues: DocumentSchemaValueType[],
+) {
+	if (value === undefined) {
+		return true;
+	}
+	const type = typeof value;
+
+	if (
+		(type !== "string" && type !== "boolean") ||
+		allowedValues === undefined ||
+		!allowedValues.includes(value)
+	) {
+		return false;
+	}
+	return true;
+}
+
+function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
+	// Back-compat - we can't do anything about legacy documents.
+	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
+	// do not run into compat problems.
+	if (documentSchema === undefined) {
+		return;
+	}
+
+	let unknownProperty: string | undefined;
+
+	for (const [name, value] of Object.entries(documentSchema)) {
+		const allowedValues = documentSchemaSupportedConfigs[name];
+		if (Array.isArray(value)) {
+			for (const v of value) {
+				if (!validateDocumentSchemaProperty(v, allowedValues)) {
+					unknownProperty = name;
+				}
+			}
+		} else {
+			if (!validateDocumentSchemaProperty(value, allowedValues)) {
+				unknownProperty = name;
+			}
+		}
+	}
+
+	if (documentSchema.version !== currentDocumentVersionSchema || unknownProperty !== undefined) {
+		const nameInfo =
+			unknownProperty === undefined
+				? ""
+				: `: Property ${unknownProperty} = ${documentSchema[unknownProperty]}`;
+		throw new Error(`document can't be opened with current version of the code${nameInfo}`);
+	}
+}
+
+function isSameDocumentSchemaValues(v1: DocumentSchemaValueType, v2: DocumentSchemaValueType) {
+	if (!Array.isArray(v2) || !Array.isArray(v1)) {
+		return v1 === v2;
+	}
+	if (v1.length !== v2.length) {
+		return false;
+	}
+	for (let i = 0; i < v1.length; i++) {
+		if (v1[i] !== v2[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function diffDocumentSchemas(oldSchema: IDocumentSchemaCurrent, newSchema: IDocumentSchemaCurrent) {
+	const diff: Partial<IDocumentSchema> = {};
+
+	// If there is a version change in schema, then use full schema definition, do not attempt to do any comparison.
+	if (newSchema.version !== oldSchema.version) {
+		return newSchema;
+	}
+
+	for (const [name, value] of Object.entries(newSchema)) {
+		if (!isSameDocumentSchemaValues(oldSchema[name], value)) {
+			diff[name] = value;
+			// version should be always there!
+			diff.version = newSchema.version;
+		}
+	}
+
+	return diff.version !== undefined ? diff : undefined;
 }
 
 /**
@@ -801,6 +886,10 @@ export class ContainerRuntime
 				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 			]);
 
+		// Once we loaded metadata, immidiatly validate compatibility
+		checkRuntimeCompatibility(metadata?.documentSchema);
+		const documentSchema = metadata?.documentSchema as IDocumentSchemaCurrent;
+
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
 			context.baseSnapshot?.trees[blobsTreeName],
@@ -853,7 +942,7 @@ export class ContainerRuntime
 			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
 			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
-			idCompressorMode = metadata?.idCompressorMode ?? "off";
+			idCompressorMode = documentSchema?.idCompressorMode ?? "off";
 		} else {
 			// FG overwrite
 			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
@@ -997,6 +1086,8 @@ export class ContainerRuntime
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.registry;
 	}
+
+	private readonly documentSchema: IDocumentSchemaCurrent;
 
 	private readonly _getAttachState: () => AttachState;
 	public get attachState(): AttachState {
@@ -1292,6 +1383,61 @@ export class ContainerRuntime
 			supportedFeatures,
 		} = context;
 
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "ContainerRuntime",
+		});
+
+		const disableCompression = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.CompressionDisabled",
+		);
+		const compressionOptions =
+			disableCompression === true
+				? {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+				  }
+				: runtimeOptions.compressionOptions;
+
+		const compressionAlgorithm =
+			compressionOptions.minimumBatchSizeInBytes === Number.POSITIVE_INFINITY
+				? undefined
+				: compressionOptions.compressionAlgorithm;
+
+		const oldDocumentSchema: IDocumentSchemaCurrent = (this.metadata
+			?.documentSchema as IDocumentSchemaCurrent) ?? {
+			version: currentDocumentVersionSchema,
+		};
+
+		const compressionSchemas: CompressionAlgorithms[] =
+			oldDocumentSchema.compressionAlgorithms ?? [];
+		if (
+			compressionAlgorithm !== undefined &&
+			!compressionSchemas.includes(compressionAlgorithm)
+		) {
+			compressionSchemas.push(compressionAlgorithm);
+		}
+
+		this.documentSchema = {
+			version: currentDocumentVersionSchema,
+			compressionAlgorithms: compressionSchemas,
+			chunkingEnabled: true,
+			idCompressorMode: this.idCompressorMode === "off" ? undefined : this.idCompressorMode,
+			opGroupingEnabled:
+				oldDocumentSchema.opGroupingEnabled ?? this.groupedBatchingEnabled
+					? true
+					: undefined,
+		};
+
+		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
+		checkRuntimeCompatibility(this.documentSchema as IDocumentSchema);
+
+		// If it's a new file, there is no need to advertise schema, it will be written into the document on document creation.
+		const diffSchema = !existing ?
+			undefined :
+			diffDocumentSchemas(oldDocumentSchema, this.documentSchema);
+		assert(Object.keys(oldDocumentSchema).length === 1 || diffSchema === undefined, "temp test");
+
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
 
@@ -1328,11 +1474,6 @@ export class ContainerRuntime
 		this.disposeFn = disposeFn ?? closeFn;
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
-
-		this.mc = createChildMonitoringContext({
-			logger: this.logger,
-			namespace: "ContainerRuntime",
-		});
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1579,17 +1720,6 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		const disableCompression = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionDisabled",
-		);
-		const compressionOptions =
-			disableCompression === true
-				? {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-				  }
-				: runtimeOptions.compressionOptions;
-
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
@@ -1743,7 +1873,7 @@ export class ContainerRuntime
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
-			idCompressorModeMetadata: metadata?.idCompressorMode,
+			idCompressorModeMetadata: metadata?.documentSchema?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				disableCompression,
@@ -2070,7 +2200,8 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorMode: this.idCompressorMode,
+
+			documentSchema: this.documentSchema as IDocumentSchema,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}

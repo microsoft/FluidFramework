@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { BatchMessage, IChunkedOp, OpSplitter, splitOp } from "../../opLifecycle/index.js";
-import { CompressionAlgorithms } from "../../containerRuntime.js";
+import { CompressionAlgorithms } from "../../summary/index.js";
 
 describe("OpSplitter", () => {
 	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];

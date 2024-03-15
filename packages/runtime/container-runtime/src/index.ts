@@ -19,7 +19,6 @@ export {
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
-	CompressionAlgorithms,
 	RuntimeHeaderData,
 } from "./containerRuntime.js";
 export {
@@ -98,6 +97,9 @@ export {
 	IRetriableFailureResult,
 	ISummarizeEventProps,
 	IdCompressorMode,
+	CompressionAlgorithms,
+	IDocumentSchema,
+	DocumentSchemaValueType,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

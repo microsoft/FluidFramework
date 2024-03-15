@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "../containerRuntime.js";
+import { CompressionAlgorithms } from "../summary/index.js";
 import { IBatchMetadata } from "../metadata.js";
 import { IMessageProcessingResult } from "./definitions.js";
 
