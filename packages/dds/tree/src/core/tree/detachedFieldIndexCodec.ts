@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import { rangeMapToFlatList, unflattenToRangeMap } from "../../util/index.js";
 import {
 	EncodedRootsForRevision,
 	Format,
@@ -65,7 +66,9 @@ export function makeDetachedNodeToFieldCodec(
 			const rootsForRevisions: EncodedRootsForRevision[] = [];
 			for (const [major, innerMap] of data.data) {
 				const encodedRevision = majorCodec.encode(major);
-				const rootRanges: RootRanges = [...innerMap];
+				// need to convert the rangemap to array of elements here
+				const rootRanges: RootRanges = rangeMapToFlatList(innerMap);
+				// const rootRanges: RootRanges = [...innerMap];
 				if (rootRanges.length === 1) {
 					const rootsForRevision: EncodedRootsForRevision = [
 						encodedRevision,
@@ -88,11 +91,18 @@ export function makeDetachedNodeToFieldCodec(
 		decode: (parsed: Format): DetachedFieldSummaryData => {
 			const map = new Map();
 			for (const rootsForRevision of parsed.data) {
-				const innerMap = new Map<number, ForestRootId>(
+				// need to convert the array of data to rangemap here
+				const innerMap = unflattenToRangeMap<ForestRootId>(
 					rootsForRevision.length === 2
 						? rootsForRevision[1]
 						: [[rootsForRevision[1], rootsForRevision[2]]],
 				);
+				/*
+				const innerMap = new Map<number, ForestRootId>(
+					rootsForRevision.length === 2
+						? rootsForRevision[1]
+						: [[rootsForRevision[1], rootsForRevision[2]]],
+				); */
 				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
 			}
 			return {

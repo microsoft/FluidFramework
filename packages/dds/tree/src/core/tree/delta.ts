@@ -175,6 +175,25 @@ export interface DetachedNodeRangeId {
 /**
  * @internal
  */
+export function convertToRangeId(
+	id?: DetachedNodeId | DetachedNodeRangeId,
+): DetachedNodeRangeId | undefined {
+	if (id === undefined) {
+		return undefined;
+	}
+	if (!instanceOfRangeId(id)) {
+		return { major: id.major, minor: { start: id.minor, length: 1 } };
+	}
+	return id;
+}
+
+function instanceOfRangeId(id: any): id is DetachedNodeRangeId {
+	return typeof id.minor === "object" && "start" in id.minor && "length" in id.minor;
+}
+
+/**
+ * @internal
+ */
 export type FieldMap = ReadonlyMap<FieldKey, FieldChanges>;
 
 /**

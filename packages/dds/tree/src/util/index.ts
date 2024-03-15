@@ -118,6 +118,8 @@ export {
 	RangeQueryResult,
 	setInRangeMap,
 	deleteFromRangeMap,
+	rangeMapToFlatList,
+	unflattenToRangeMap,
 } from "./rangeMap.js";
 
 export {
@@ -135,4 +137,5 @@ export {
 	setInNestedRangeMap,
 	populateNestedRangeMap,
 	deleteFromNestedRangeMap,
+	rangeToList,
 } from "./nestedRangeMap.js";

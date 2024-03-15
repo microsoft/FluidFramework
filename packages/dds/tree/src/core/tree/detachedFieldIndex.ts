@@ -164,12 +164,15 @@ export class DetachedFieldIndex {
 		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
 	} */
 
-	public tryGetEntry(id: Delta.DetachedNodeRangeId): ForestRootId | undefined {
+	public tryGetEntry(
+		id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId,
+	): ForestRootId | undefined {
+		const rangeId = Delta.convertToRangeId(id) as Delta.DetachedNodeRangeId;
 		return tryGetFromNestedRangeMap(
 			this.detachedNodeToField,
-			id.major,
-			id.minor.start,
-			id.minor.length,
+			rangeId.major,
+			rangeId.minor.start,
+			rangeId.minor.length,
 		)?.value;
 	}
 
@@ -177,7 +180,7 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Fails if no such id is known to the index.
 	 */
-	public getEntry(id: Delta.DetachedNodeRangeId): ForestRootId | undefined {
+	public getEntry(id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): ForestRootId {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
@@ -188,12 +191,13 @@ export class DetachedFieldIndex {
 	// 	return key;
 	// }
 
-	public deleteEntry(nodeId: Delta.DetachedNodeRangeId): void {
+	public deleteEntry(id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): void {
+		const rangeId = Delta.convertToRangeId(id) as Delta.DetachedNodeRangeId;
 		const found = deleteFromNestedRangeMap(
 			this.detachedNodeToField,
-			nodeId.major,
-			nodeId.minor.start,
-			nodeId.minor.length,
+			rangeId.major,
+			rangeId.minor.start,
+			rangeId.minor.length,
 		);
 		assert(found, 0x7ab /* Unable to delete unknown entry */);
 	}
@@ -205,25 +209,25 @@ export class DetachedFieldIndex {
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
-	public createEntry(nodeRangeId?: Delta.DetachedNodeRangeId): ForestRootId {
-		// TODO: need to find a function to support finding overlap in rangeMap, seems already exist?
-		const count = nodeRangeId?.minor.length ?? 1;
+	public createEntry(id?: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): ForestRootId {
+		const rangeId = Delta.convertToRangeId(id);
+		const count = rangeId?.minor.length ?? 1;
 		const root = this.rootIdAllocator.allocate(count);
 		// const root = this.rootIdAllocator.allocate(nodeRangeId?.major, (nodeRangeId?.minor.start ?? 0) as ChangesetLocalId, nodeRangeId?.minor.length);
-		if (nodeRangeId !== undefined) {
+		if (rangeId !== undefined) {
 			assert(
 				tryGetFromNestedRangeMap(
 					this.detachedNodeToField,
-					nodeRangeId.major,
-					nodeRangeId.minor.start,
+					rangeId.major,
+					rangeId.minor.start,
 					count,
 				) === undefined,
 				0x7ce /* Detached node ID already exists in index */,
 			);
 			setInNestedRangeMap(
 				this.detachedNodeToField,
-				nodeRangeId.major,
-				nodeRangeId.minor.start,
+				rangeId.major,
+				rangeId.minor.start,
 				count,
 				root,
 			);
@@ -248,16 +252,7 @@ export class DetachedFieldIndex {
 	// 	return root;
 	// }
 
-	/*
 	public encode(): JsonCompatibleReadOnly {
-		return this.codec.encode({
-			data: this.detachedNodeToField,
-			maxId: this.rootIdAllocator.getMaxId(),
-		}) as JsonCompatibleReadOnly;
-	} */
-
-	public encode(): JsonCompatibleReadOnly {
-		// TODO: need to change the format of DetachedFieldSummaryData
 		return this.codec.encode({
 			data: this.detachedNodeToField,
 			maxId: this.rootIdAllocator.getMaxId(),

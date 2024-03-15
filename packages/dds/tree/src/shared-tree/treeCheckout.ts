@@ -477,7 +477,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {
 		const trees: [string | number | undefined, number, JsonableTree][] = [];
 		const cursor = this.forest.allocateCursor();
-		for (const { id, root } of this.removedRoots.entries()) {
+		for (const { rangeId, root } of this.removedRoots.entries()) {
 			const parentField = this.removedRoots.toFieldKey(root);
 			this.forest.moveCursorToPath(
 				{ parent: undefined, parentField, parentIndex: 0 },
@@ -486,10 +486,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			const tree = jsonableTreeFromCursor(cursor);
 			if (tree !== undefined) {
 				// This method is used for tree consistency comparison.
-				const { major, minor } = id;
+				const { major, minor } = rangeId;
 				const finalizedMajor =
 					major !== undefined ? this.revisionTagCodec.encode(major) : major;
-				trees.push([finalizedMajor, minor, tree]);
+				// TODO
+				for (
+					let finalizedMinor = minor.start;
+					finalizedMinor < minor.start + minor.length;
+					finalizedMinor++
+				) {
+					trees.push([finalizedMajor, finalizedMinor, tree]);
+				}
 			}
 		}
 		cursor.free();

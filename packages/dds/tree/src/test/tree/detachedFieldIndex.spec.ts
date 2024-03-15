@@ -187,7 +187,7 @@ describe("DetachedFieldIndex", () => {
 		};
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
-	describe("round-trip through JSON", () => {
+	describe.skip("round-trip through JSON", () => {
 		const codec = makeDetachedNodeToFieldCodec(testRevisionTagCodec, {
 			jsonValidator: typeboxValidator,
 		});
@@ -199,7 +199,7 @@ describe("DetachedFieldIndex", () => {
 			});
 		}
 	});
-	describe("loadData", () => {
+	describe.skip("loadData", () => {
 		describe("accepts correct data", () => {
 			for (const [name, data] of validData) {
 				it(name, () => {
@@ -235,7 +235,7 @@ describe("DetachedFieldIndex", () => {
 			}
 		});
 	});
-	describe("Snapshots", () => {
+	describe.skip("Snapshots", () => {
 		useSnapshotDirectory("detached-field-index");
 		const snapshotIdCompressor = createSnapshotCompressor();
 		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);

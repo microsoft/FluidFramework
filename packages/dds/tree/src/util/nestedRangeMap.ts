@@ -64,3 +64,13 @@ export function deleteFromNestedRangeMap<K, V>(
 	const innerMap = getOrAddInMap(map, key, []);
 	return deleteFromRangeMap(innerMap, start, length);
 }
+
+export function rangeToList(range: IRange): number[] {
+	const result: number[] = [];
+
+	for (let i = range.start; i < range.start + range.length; i++) {
+		result.push(i);
+	}
+
+	return result;
+}

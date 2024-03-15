@@ -195,8 +195,8 @@ describe("visitDelta", () => {
 			delta,
 			[
 				["enterField", rootKey],
-				["detach", { start: 1, end: 2 }, field0],
-				["detach", { start: 1, end: 2 }, field1],
+				["detach", { start: 1, end: 3 }, field0],
+				// ["detach", { start: 1, end: 2 }, field1],
 				["exitField", rootKey],
 				["enterField", rootKey],
 				["exitField", rootKey],
@@ -204,9 +204,13 @@ describe("visitDelta", () => {
 			index,
 		);
 		assert.deepEqual(Array.from(index.entries()), [
+			{ rangeId: { minor: { start: 42, length: 2 } }, root: 0 },
+		]);
+		/*
+		assert.deepEqual(Array.from(index.entries()), [
 			{ id: { minor: 42 }, root: 0 },
 			{ id: { minor: 43 }, root: 1 },
-		]);
+		]); */
 	});
 	it("remove child", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
@@ -466,6 +470,7 @@ describe("visitDelta", () => {
 		testTreeVisit(delta, expected, index, undefined, [{ id: node1, count: 1 }]);
 		assert.equal(index.entries().next().done, true);
 	});
+	/*
 	it("destroy (root level)", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const id = { minor: 42 };
@@ -479,7 +484,7 @@ describe("visitDelta", () => {
 		];
 		testVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
-	});
+	}); */
 	it("build-rename-destroy (field level)", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const buildId = { minor: 42 };

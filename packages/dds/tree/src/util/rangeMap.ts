@@ -228,3 +228,42 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 	}
 	return true;
 }
+
+/**
+ * Converts a range map to a flat list of triplets
+ */
+export function rangeMapToFlatList<T>(map: RangeMap<T>): [number, T][] {
+	const result: [number, T][] = [];
+	for (const entry of map) {
+		// const { start, length, value } = entry;
+		for (let i = entry.start; i < entry.start + entry.length; i++) {
+			result.push([i, entry.value]);
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Converts a flat list of triplets to a range map
+ */
+export function unflattenToRangeMap<T>(flattenedList: [number, T][]): RangeMap<T> {
+	const map: RangeMap<T> = [];
+
+	for (const [key, value] of flattenedList) {
+		let lastEntry = map.length === 0 ? undefined : map[map.length - 1];
+
+		if (
+			lastEntry === undefined ||
+			lastEntry.value !== value ||
+			lastEntry.start + lastEntry.length !== key
+		) {
+			lastEntry = { start: key, length: 1, value };
+			map.push(lastEntry);
+		} else {
+			lastEntry.length++;
+		}
+	}
+
+	return map;
+}

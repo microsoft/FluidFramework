@@ -377,6 +377,15 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (isDetachMark(mark)) {
+				const rangeId = Delta.convertToRangeId(mark.detach) as Delta.DetachedNodeRangeId;
+				rangeId.minor.length = mark.count;
+				const root = config.detachedFieldIndex.createEntry(rangeId);
+				if (mark.fields !== undefined) {
+					config.attachPassRoots.set(root, mark.fields);
+				}
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.detach({ start: index, end: index + mark.count }, field);
+				/*
 				for (let i = 0; i < mark.count; i += 1) {
 					const root = config.detachedFieldIndex.createEntry(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -387,7 +396,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					}
 					const field = config.detachedFieldIndex.toFieldKey(root);
 					visitor.detach({ start: index, end: index + 1 }, field);
-				}
+				} */
 			} else if (!isAttachMark(mark)) {
 				index += mark.count;
 			}
@@ -437,6 +446,34 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 		let index = 0;
 		for (const mark of delta.local) {
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
+				const attachRangeId = Delta.convertToRangeId(
+					mark.attach,
+				) as Delta.DetachedNodeRangeId;
+				const sourceRoot = config.detachedFieldIndex.getEntry(attachRangeId);
+				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
+				if (isReplaceMark(mark)) {
+					const rootDestination = config.detachedFieldIndex.createEntry(attachRangeId);
+					const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
+					visitor.replace(
+						sourceField,
+						{ start: index, end: index + mark.count },
+						destinationField,
+					);
+					// We may need to do a second pass on the detached nodes
+					if (mark.fields !== undefined) {
+						config.attachPassRoots.set(rootDestination, mark.fields);
+					}
+				} else {
+					// This a simple attach
+					visitor.attach(sourceField, mark.count, index);
+				}
+				config.detachedFieldIndex.deleteEntry(attachRangeId);
+				const fields = config.attachPassRoots.get(sourceRoot);
+				if (fields !== undefined) {
+					config.attachPassRoots.delete(sourceRoot);
+					visitNode(index, fields, visitor, config);
+				}
+				/*
 				for (let i = 0; i < mark.count; i += 1) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const offsetAttachId = offsetDetachId(mark.attach!, i);
@@ -469,7 +506,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						config.attachPassRoots.delete(sourceRoot);
 						visitNode(offsetIndex, fields, visitor, config);
 					}
-				}
+				} */
 			} else if (!isDetachMark(mark) && mark.fields !== undefined) {
 				visitNode(index, mark.fields, visitor, config);
 			}
