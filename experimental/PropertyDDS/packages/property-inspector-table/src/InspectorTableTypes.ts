@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
+import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 
 import { BaseTableProps, SortOrder } from "react-base-table";
 import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";

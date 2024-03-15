@@ -7,8 +7,8 @@ import { WithStyles } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import { withStyles } from "@material-ui/core/styles";
 import * as React from "react";
-import { ErrorPopup } from "./ErrorPopup";
 import { IDeleteModalTextParameters } from "./DeleteModalTextParameters";
+import { ErrorPopup } from "./ErrorPopup";
 import { InspectorModal } from "./InspectorModal";
 
 const styles = () => ({

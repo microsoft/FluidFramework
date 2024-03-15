@@ -7,12 +7,12 @@
 /* eslint-disable require-jsdoc */
 /* globals expect */
 import { DataBinder } from "../data_binder/dataBinder";
-import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 import { catchConsoleErrors } from "./catchConsoleError";
+import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 
-import { DataBinding } from "../data_binder/dataBinding";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { UpgradeType } from "..";
+import { DataBinding } from "../data_binder/dataBinding";
 
 const versions = [
 	"test1:mytype-0.0.9",
