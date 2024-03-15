@@ -4,7 +4,7 @@
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"rootDir": "src",
-		"outDir": "lib",
+		"outDir": "- - invalid - -",
 		// @fluentui packages raise tsc errors.
 		"skipLibCheck": true,
 	},

@@ -8,10 +8,10 @@
 	},
 	"references": [
 		{
-			"path": "../../../tsconfig.json",
+			"path": "../../../tsconfig.esm.json",
 		},
 		{
-			"path": "../utils/tsconfig.json",
+			"path": "../utils/tsconfig.esm.json",
 		},
 	],
 }

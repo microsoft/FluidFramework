@@ -1,4 +1,5 @@
 {
+	// This config must be used in a "type": "module" environment. (Use fluid-tsc module.)
 	"extends": "../../../../../../../common/build/build-common/tsconfig.node16.json",
 	"include": ["./**/*"],
 	"compilerOptions": {

@@ -13,10 +13,10 @@ module.exports = {
 	],
 	parserOptions: {
 		project: [
-			"./tsconfig.json",
+			"./tsconfig.esm.json",
 			"./src/test/jest/tsconfig.json",
 			"./src/test/screenshot/tsconfig.json",
-			"./src/test/utils/tsconfig.json",
+			"./src/test/utils/tsconfig.esm.json",
 		],
 	},
 	rules: {
