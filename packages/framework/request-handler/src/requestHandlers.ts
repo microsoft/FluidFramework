@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type IResponse } from "@fluidframework/core-interfaces";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type IResponse } from "@fluidframework/core-interfaces";
 import { type RequestParser } from "@fluidframework/runtime-utils";
 
 /**

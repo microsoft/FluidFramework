@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import { IPendingDetachedContainerState } from "./container.js";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.

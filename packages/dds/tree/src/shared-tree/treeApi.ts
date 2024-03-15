@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../util/index.js";
 import { Context } from "../feature-libraries/index.js";
-import { TreeNode, TreeNodeApi, TreeView, treeNodeApi, getFlexNode } from "../simple-tree/index.js";
+import { TreeNode, TreeNodeApi, TreeView, getFlexNode, treeNodeApi } from "../simple-tree/index.js";
+import { fail } from "../util/index.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";

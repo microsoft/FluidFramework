@@ -8,7 +8,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { IVectorConsumer } from "@tiny-calc/nano";
 import { Handle, isHandleValid } from "./handletable.js";
-import { PermutationVector, PermutationSegment } from "./permutationvector.js";
+import { PermutationSegment, PermutationVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 
 /**

@@ -4,11 +4,11 @@
  */
 
 import {
-	RBNode,
 	IRBAugmentation,
 	IRBMatcher,
-	RedBlackTree,
+	RBNode,
 	RBNodeActions,
+	RedBlackTree,
 } from "@fluidframework/merge-tree";
 import { IInterval } from "./intervals/index.js";
 

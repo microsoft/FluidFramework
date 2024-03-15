@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import { FieldKinds } from "../../../feature-libraries/index.js";
-import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
-import { flexTreeWithContent } from "../../utils.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { flexTreeWithContent } from "../../utils.js";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
