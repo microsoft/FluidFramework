@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { Divider } from "@fluentui/react-components";
 import {
 	AudienceSummary,
 	GetAudienceSummary,
-	handleIncomingMessage,
 	type HasContainerKey,
 	type IDevtoolsMessage,
 	type InboundHandlers,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import { type IClient } from "@fluidframework/protocol-definitions";
+import React from "react";
 import { useMessageRelay } from "../MessageRelayContext";
-import { AudienceStateTable } from "./AudienceStateTable";
 import { AudienceHistoryTable } from "./AudienceHistoryTable";
+import { AudienceStateTable } from "./AudienceStateTable";
 import { Waiting } from "./Waiting";
 
 // TODOs:
