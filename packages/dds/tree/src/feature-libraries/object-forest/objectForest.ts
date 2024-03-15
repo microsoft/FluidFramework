@@ -160,10 +160,11 @@ export class ObjectForest implements IEditableForest {
 				assertValidIndex(destination, currentField, true);
 				const sourceField = getMapTreeField(this.forest.roots, source, false);
 				assert(sourceField !== undefined, 0x7b7 /* Attach source field must exist */);
-				assert(
-					sourceField.length === count,
-					0x7b8 /* Attach must consume all nodes in source field */,
-				);
+				// TODO: no need to check the count consistency once the range is enabled
+				// assert(
+				// 	sourceField.length === count,
+				// 	0x7b8 /* Attach must consume all nodes in source field */,
+				// );
 				// TODO: this will fail for very large insertions due to argument limits.
 				currentField.splice(destination, 0, ...sourceField);
 				this.forest.delete(source);

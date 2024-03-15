@@ -119,7 +119,8 @@ export class DetachedFieldIndex {
 				for (const entry of innerCurrent) {
 					// TODO: need to think of updating rangeEntry
 					assert(
-						getFromRangeMap(innerCurrent, entry.start, entry.length) === undefined,
+						getFromRangeMap(innerCurrent, entry.start, entry.length)?.value ===
+							undefined,
 						0x7a9 /* Collision during index update */,
 					);
 					setInRangeMap(innerUpdated, entry.start, entry.length, entry.value);
@@ -221,7 +222,7 @@ export class DetachedFieldIndex {
 					rangeId.major,
 					rangeId.minor.start,
 					count,
-				) === undefined,
+				)?.value === undefined,
 				0x7ce /* Detached node ID already exists in index */,
 			);
 			setInNestedRangeMap(

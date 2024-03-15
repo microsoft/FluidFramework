@@ -452,7 +452,10 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				const sourceRoot = config.detachedFieldIndex.getEntry(attachRangeId);
 				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 				if (isReplaceMark(mark)) {
-					const rootDestination = config.detachedFieldIndex.createEntry(attachRangeId);
+					const detachedRangeId = Delta.convertToRangeId(
+						mark.detach,
+					) as Delta.DetachedNodeRangeId;
+					const rootDestination = config.detachedFieldIndex.createEntry(detachedRangeId);
 					const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
 					visitor.replace(
 						sourceField,
