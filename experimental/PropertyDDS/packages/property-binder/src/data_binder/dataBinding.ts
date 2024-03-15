@@ -2,6 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import {
+	ArrayChangeSetIterator,
+	PathHelper,
+	TypeIdHelper,
+	Utils,
+} from "@fluid-experimental/property-changeset";
 /**
  * @fileoverview Defines the base DataBinding that all DataBindings should inherit from.
  */
@@ -10,40 +17,34 @@ import {
 	PropertyFactory,
 	ReferenceProperty,
 } from "@fluid-experimental/property-properties";
-import {
-	PathHelper,
-	TypeIdHelper,
-	ArrayChangeSetIterator,
-	Utils,
-} from "@fluid-experimental/property-changeset";
 
 import _ from "lodash";
-import { ModificationContext } from "./modificationContext.js";
-import { RemovalContext } from "./removalContext.js";
 import {
-	getOrInsertDefaultInNestedObjects,
 	getInNestedObjects,
+	getOrInsertDefaultInNestedObjects,
 } from "../external/utils/nestedObjectHelpers.js";
-import {
-	escapeTokenizedPathForMap,
-	unescapeTokenizedStringForMap,
-	initializeReferencePropertyTableNode,
-	invokeCallbacks,
-	deferCallback,
-	isDataBindingRegistered,
-	installForEachPrototypeMember,
-	getOrCreateMemberOnPrototype,
-	createHandle,
-	invokeWithProperty,
-	invokeWithCollectionProperty,
-	createRegistrationFunction,
-} from "./internalUtils.js";
-import { concatTokenizedPath } from "./dataBindingTree.js";
-import { RESOLVE_NEVER, RESOLVE_ALWAYS, RESOLVE_NO_LEAFS } from "../internal/constants.js";
-import { PropertyElement } from "../internal/propertyElement.js";
 import { DataBinder, DataBinderHandle, IRegisterOnPathOptions } from "../index.js";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants.js";
+import { PropertyElement } from "../internal/propertyElement.js";
 import { isCollection, isReferenceProperty } from "../internal/typeGuards.js";
 import { IRegisterOnPropertyOptions } from "./IRegisterOnPropertyOptions.js";
+import { concatTokenizedPath } from "./dataBindingTree.js";
+import {
+	createHandle,
+	createRegistrationFunction,
+	deferCallback,
+	escapeTokenizedPathForMap,
+	getOrCreateMemberOnPrototype,
+	initializeReferencePropertyTableNode,
+	installForEachPrototypeMember,
+	invokeCallbacks,
+	invokeWithCollectionProperty,
+	invokeWithProperty,
+	isDataBindingRegistered,
+	unescapeTokenizedStringForMap,
+} from "./internalUtils.js";
+import { ModificationContext } from "./modificationContext.js";
+import { RemovalContext } from "./removalContext.js";
 
 /**
  * _globalVisitIndex is to avoid callbacks being called twice. This works around bugs in getChangesToTokenizedPaths

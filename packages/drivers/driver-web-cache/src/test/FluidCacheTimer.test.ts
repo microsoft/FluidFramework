@@ -5,12 +5,12 @@
 
 /* eslint-disable @typescript-eslint/dot-notation */
 
-import { openDB } from "idb";
+import { delay } from "@fluidframework/core-utils";
 import { ICacheEntry } from "@fluidframework/odsp-driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { delay } from "@fluidframework/core-utils";
-import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
+import { openDB } from "idb";
 import { FluidCache } from "../FluidCache.js";
+import { FluidDriverCacheDBName } from "../FluidCacheIndexedDb.js";
 
 // eslint-disable-next-line import/no-unassigned-import, @typescript-eslint/no-require-imports, import/no-internal-modules
 require("fake-indexeddb/auto");

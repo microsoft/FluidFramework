@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const context = require.context("./", false, /\.svg$/i);
 
 // keys() returns all possible matching targets within "./" that don't include sub-directories and have an svg extension.

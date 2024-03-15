@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
 import {
 	type DataObject,

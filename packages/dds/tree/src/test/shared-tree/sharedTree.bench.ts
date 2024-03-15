@@ -2,39 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import {
-	benchmark,
 	BenchmarkTimer,
 	BenchmarkType,
+	benchmark,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
+import { rootFieldKey } from "../../core/index.js";
+import { singleJsonCursor } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
-	jsonableTreeFromCursor,
+	TreeCompressionStrategy,
 	cursorForTypedData,
 	cursorForTypedTreeData,
-	TreeCompressionStrategy,
+	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { singleJsonCursor } from "../../domains/index.js";
-import {
-	insert,
-	TestTreeProviderLite,
-	toJsonableTree,
-	flexTreeViewWithContent,
-	checkoutWithContent,
-} from "../utils.js";
 import { FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
-import { rootFieldKey } from "../../core/index.js";
 import {
-	deepPath,
-	deepSchema,
 	JSDeepTree,
 	JSWideTree,
+	deepPath,
+	deepSchema,
 	localFieldKey,
 	makeDeepContent,
 	makeJsDeepTree,
-	makeWideContentWithEndValue,
 	makeJsWideTreeWithEndValue,
+	makeWideContentWithEndValue,
 	readDeepCursorTree,
 	readDeepEditableTree,
 	readDeepTreeAsJSObject,
@@ -44,8 +40,13 @@ import {
 	wideRootSchema,
 	wideSchema,
 } from "../scalableTestTrees.js";
-// eslint-disable-next-line import/no-internal-modules
-import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
+import {
+	TestTreeProviderLite,
+	checkoutWithContent,
+	flexTreeViewWithContent,
+	insert,
+	toJsonableTree,
+} from "../utils.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [

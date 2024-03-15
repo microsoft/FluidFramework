@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * @fileoverview Helper function to check whether a changeset is empty
  */
 
-import isEmpty from "lodash/isEmpty.js";
 import has from "lodash/has.js";
+import isEmpty from "lodash/isEmpty.js";
 import isObject from "lodash/isObject.js";
 
 import { SerializedChangeSet } from "../changeset.js";

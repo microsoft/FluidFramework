@@ -3,50 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import Deque from "double-ended-queue";
+import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IEventThisPlaceHolder, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelAttributes,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	Client,
+	IJSONSegment,
+	IMergeTreeOp,
+	type LocalReferencePosition,
+	MergeTreeDeltaType,
+	ReferenceType,
+	SegmentGroup,
+} from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
-import {
-	MergeTreeDeltaType,
-	IMergeTreeOp,
-	SegmentGroup,
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	IJSONSegment,
-	ReferenceType,
-	type LocalReferencePosition,
-} from "@fluidframework/merge-tree";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
-import { SparseArray2D } from "./sparsearray2d.js";
-import { SharedMatrixFactory } from "./runtime.js";
+import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import Deque from "double-ended-queue";
 import { Handle, isHandleValid } from "./handletable.js";
-import { deserializeBlob } from "./serialization.js";
+import {
+	ISetOp,
+	MatrixItem,
+	MatrixOp,
+	MatrixSetOrVectorOp,
+	SnapshotPath,
+	VectorOp,
+} from "./ops.js";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
+import { SharedMatrixFactory } from "./runtime.js";
+import { deserializeBlob } from "./serialization.js";
+import { SparseArray2D } from "./sparsearray2d.js";
 import { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
-import {
-	MatrixOp,
-	MatrixItem,
-	SnapshotPath,
-	ISetOp,
-	VectorOp,
-	MatrixSetOrVectorOp,
-} from "./ops.js";
 
 interface ISetOpMetadata {
 	rowHandle: Handle;

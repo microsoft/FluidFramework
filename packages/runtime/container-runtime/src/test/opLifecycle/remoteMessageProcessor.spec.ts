@@ -8,6 +8,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions";
+import { ContainerMessageType } from "../../index.js";
 import {
 	IMessageProcessingResult,
 	OpDecompressor,
@@ -18,7 +19,6 @@ import {
 	type IBatch,
 	OpCompressor,
 } from "../../opLifecycle/index.js";
-import { ContainerMessageType } from "../../index.js";
 
 describe("RemoteMessageProcessor", () => {
 	const stamp = (
