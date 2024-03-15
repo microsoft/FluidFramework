@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createContainerAndExecute, exportFile } from "../exportFile";
 import { getSnapshotFileContent } from "../utils";
+import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
 /* eslint-disable import/no-internal-modules */
 import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
 import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader";
-import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
 /* eslint-enable import/no-internal-modules */
 
 describe("exportFile", () => {

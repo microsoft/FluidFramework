@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
-import { PostChannel, type IChannelConfiguration, type IXHROverride } from "@microsoft/1ds-post-js";
 import {
-	type ITelemetryBaseLogger,
 	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
 	isTelemetryOptInEnabled,
 } from "@fluid-internal/devtools-view";
 import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
+import { type IChannelConfiguration, type IXHROverride, PostChannel } from "@microsoft/1ds-post-js";
 import { v4 as uuidv4 } from "uuid";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
