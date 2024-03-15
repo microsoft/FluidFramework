@@ -102,7 +102,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this {
-		throw new Error("Method not implemented.");
+		return super.on(event, listener);
 	}
 	private _sharedTree: ITree | undefined;
 	private get sharedTree(): ITree {
