@@ -3,9 +3,7 @@
 	"extends": ["../../../biome.json"],
 	"files": {
 		"ignoreUnknown": true,
-		"ignore": [
-			"content/**"
-		],
+		"ignore": ["content/**"],
 		"maxSize": 2097152
 	},
 	"organizeImports": {
