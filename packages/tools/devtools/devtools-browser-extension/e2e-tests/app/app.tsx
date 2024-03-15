@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
-import {
-	type ContainerKey,
-	createDevtoolsLogger,
-	initializeDevtools,
-} from "@fluidframework/devtools-core";
 import {
 	CollaborativeTextArea,
 	SessionStorageModelLoader,
 	SharedStringHelper,
 	StaticCodeLoader,
 } from "@fluid-example/example-utils";
+import {
+	type ContainerKey,
+	createDevtoolsLogger,
+	initializeDevtools,
+} from "@fluidframework/devtools-core";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { CollaborativeTextContainerRuntimeFactory, ICollaborativeTextAppModel } from "./container";
 

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { AppView } from "@fluid-example/bubblebench-common";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
 import { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench.js";

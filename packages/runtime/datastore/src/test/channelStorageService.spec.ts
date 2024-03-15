@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ChannelStorageService } from "../channelStorageService.js";
 
 describe("ChannelStorageService", () => {

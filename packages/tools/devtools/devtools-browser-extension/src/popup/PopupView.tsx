@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
 	DevtoolsFeatures,
 	GetDevtoolsFeatures,
@@ -11,6 +10,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
+import React from "react";
 import { type BackgroundConnection } from "../BackgroundConnection";
 
 // The recipient of the sent message is running on the same machine, just in a different process.

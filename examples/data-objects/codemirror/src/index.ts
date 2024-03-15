@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import {
+	IFluidMountableViewEntryPoint,
+	MountableView,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import {
-	getDataStoreEntryPoint,
-	IFluidMountableViewEntryPoint,
-	MountableView,
-} from "@fluid-example/example-utils";
 
 import React from "react";
 
