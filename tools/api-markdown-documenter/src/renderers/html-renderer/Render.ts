@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { toHtml } from "hast-util-to-html";
 import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
-import { DocumentWriter } from "../DocumentWriter.js";
+import { documentToHtml } from "../../documentation-domain-to-html/index.js";
+import type { DocumentWriter } from "../DocumentWriter.js";
 import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
-import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
+import { type RenderContext } from "./RenderContext.js";
 
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
@@ -17,47 +19,16 @@ import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
  * @alpha
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
-	const { customRenderers, language, startingHeadingLevel } = config;
+	const { language, startingHeadingLevel, logger } = config;
 
-	const writer = DocumentWriter.create();
-	const renderContext = getContextWithDefaults({
-		headingLevel: startingHeadingLevel,
-		customRenderers,
+	const hastTree = documentToHtml(document, {
+		customTransformations: undefined, // TODO
+		language,
+		startingHeadingLevel,
+		logger,
 	});
 
-	// Write top-level metadata
-	writer.writeLine("<!DOCTYPE html>");
-	writer.writeLine(`<html lang="${language ?? "en"}">`);
-	writer.increaseIndent();
-	writer.writeLine("<head>");
-	writer.increaseIndent();
-	writer.writeLine('<meta charset="utf-8" />');
-	writer.decreaseIndent();
-	writer.writeLine("</head>");
-
-	// Write contents under the document body
-	writer.writeLine(`<body>`);
-	writer.increaseIndent();
-	renderNodes(document.children, writer, renderContext);
-	writer.ensureNewLine();
-	writer.decreaseIndent();
-	writer.writeLine(`</body>`);
-
-	writer.decreaseIndent();
-	writer.writeLine("</html>");
-
-	// Trim any leading and trailing whitespace
-	let renderedDocument = writer.getText().trim();
-
-	if (document.frontMatter !== undefined) {
-		// Join body contents with front-matter.
-		renderedDocument = [document.frontMatter, renderedDocument].join("\n");
-	}
-
-	// Ensure file ends with a single newline.
-	renderedDocument = [renderedDocument, ""].join("\n");
-
-	return renderedDocument;
+	return toHtml(hastTree, { closeSelfClosing: true });
 }
 
 /**
