@@ -10,64 +10,64 @@ import {
 	RevisionTag,
 	TaggedChange,
 } from "../../core/index.js";
-import { brand, fail, IdAllocator } from "../../util/index.js";
+import { IdAllocator, brand, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	NoopMarkType,
-	CellId,
-	NoopMark,
-	CellMark,
-	Detach,
-	MoveId,
-	MarkEffect,
-} from "./types.js";
+import { CellOrderingMethod, sequenceConfig } from "./config.js";
+import { EmptyInputCellMark, MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	getMoveEffect,
-	setMoveEffect,
-	MoveEffectTable,
 	MoveEffect,
-	isMoveIn,
-	isMoveOut,
-	getMoveIn,
+	MoveEffectTable,
 	getCrossFieldTargetFromMove,
+	getMoveEffect,
+	getMoveIn,
+	isMoveIn,
 	isMoveMark,
+	isMoveOut,
+	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	isNoopMark,
-	getOffsetInCellRange,
-	areOutputCellsEmpty,
-	areInputCellsEmpty,
-	compareLineages,
-	isDetach,
-	markHasCellEffect,
-	withNodeChange,
-	withRevision,
-	markEmptiesCells,
-	isNewAttach,
-	getInputCellId,
-	isAttach,
-	getOutputCellId,
-	markFillsCells,
-	extractMarkEffect,
-	getEndpoint,
+	CellId,
+	CellMark,
+	Changeset,
+	Detach,
+	Mark,
+	MarkEffect,
+	MarkList,
+	MoveId,
+	NoopMark,
+	NoopMarkType,
+} from "./types.js";
+import {
+	CellOrder,
 	areEqualCellIds,
-	normalizeCellRename,
+	areInputCellsEmpty,
+	areOutputCellsEmpty,
 	asAttachAndDetach,
-	isImpactfulCellRename,
-	settleMark,
-	compareCellsFromSameRevision,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
-	CellOrder,
+	compareCellsFromSameRevision,
+	compareLineages,
+	extractMarkEffect,
+	getEndpoint,
+	getInputCellId,
+	getOffsetInCellRange,
+	getOutputCellId,
+	isAttach,
 	isAttachAndDetachEffect,
+	isDetach,
+	isImpactfulCellRename,
+	isNewAttach,
+	isNoopMark,
+	markEmptiesCells,
+	markFillsCells,
+	markHasCellEffect,
+	normalizeCellRename,
+	settleMark,
+	withNodeChange,
+	withRevision,
 } from "./utils.js";
-import { EmptyInputCellMark } from "./helperTypes.js";
-import { CellOrderingMethod, sequenceConfig } from "./config.js";
 
 /**
  * @internal
@@ -214,6 +214,13 @@ function composeMarksIgnoreChild<TNodeChange>(
 		const newAttachAndDetach = asAttachAndDetach(newMark);
 		const newDetachRevision = newAttachAndDetach.detach.revision;
 		if (markEmptiesCells(baseMark)) {
+			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
+			// so we are just left with the detach portion of the AttachAndDetach.
+			const newDetach: CellMark<Detach, TNodeChange> = {
+				...newAttachAndDetach.detach,
+				count: baseMark.count,
+			};
+
 			if (isMoveIn(newAttachAndDetach.attach) && isMoveOut(newAttachAndDetach.detach)) {
 				assert(isMoveOut(baseMark), 0x808 /* Unexpected mark type */);
 
@@ -235,14 +242,20 @@ function composeMarksIgnoreChild<TNodeChange>(
 					baseMark.count,
 					{ revision: newDetachRevision, localId: newAttachAndDetach.detach.id },
 				);
+
+				const newEndpoint = getNewEndpoint(
+					moveEffects,
+					CrossFieldTarget.Source,
+					baseMark.revision,
+					baseMark.id,
+					baseMark.count,
+				);
+
+				if (newEndpoint !== undefined) {
+					changeFinalEndpoint(newDetach as MoveMarkEffect, newEndpoint);
+				}
 			}
 
-			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
-			// so we are just left with the detach portion of the AttachAndDetach.
-			const newDetach: CellMark<Detach, TNodeChange> = {
-				...newAttachAndDetach.detach,
-				count: baseMark.count,
-			};
 			return newDetach;
 		}
 
@@ -608,7 +621,7 @@ export class ComposeQueue<T> {
 		);
 
 		if (movedChanges !== undefined) {
-			assert(newMark.changes === undefined, "Unexpected node changeset collision");
+			assert(newMark.changes === undefined, 0x8da /* Unexpected node changeset collision */);
 			newMark = withNodeChange(newMark, movedChanges as T);
 		}
 
@@ -623,7 +636,7 @@ export class ComposeQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			"Cannot peek length unless both mark queues are non-empty",
+			0x8db /* Cannot peek length unless both mark queues are non-empty */,
 		);
 
 		return Math.min(newMark.count, baseMark.count);
@@ -825,13 +838,17 @@ function withUpdatedEndpoint<TMark extends MarkEffect>(
 	}
 
 	const output = { ...mark };
-	if (areEqualCellIds(finalDest, { revision: markRevision, localId: mark.id })) {
-		delete output.finalEndpoint;
-	} else {
-		output.finalEndpoint = finalDest;
-	}
+	changeFinalEndpoint(output, finalDest);
 
 	return output;
+}
+
+function changeFinalEndpoint(mark: MoveMarkEffect, endpoint: ChangeAtomId) {
+	if (areEqualCellIds(endpoint, { revision: mark.revision, localId: mark.id })) {
+		delete mark.finalEndpoint;
+	} else {
+		mark.finalEndpoint = endpoint;
+	}
 }
 
 function getNewEndpoint(

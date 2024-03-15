@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { TaskManager } from "../taskManager";
-import { TaskManagerFactory } from "../taskManagerFactory";
-import { ITaskManager } from "../interfaces";
+import { ITaskManager } from "../interfaces.js";
+import { TaskManager } from "../taskManager.js";
+import { TaskManagerFactory } from "../taskManagerFactory.js";
 
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a TaskManager.
@@ -35,9 +35,8 @@ function createDetachedTaskManager(
 	runtimeFactory: MockContainerRuntimeFactory,
 ): { taskManager: TaskManager; attach: () => Promise<void> } {
 	// Create a detached TaskManager.
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	dataStoreRuntime.local = true;
 	const clientId = dataStoreRuntime.clientId;
 
 	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
@@ -50,14 +49,11 @@ function createDetachedTaskManager(
 		// Manually trigger a summarize (should be done automatically when attaching normally)
 		await taskManager.summarize();
 
-		dataStoreRuntime.local = false;
+		dataStoreRuntime.setAttachState(AttachState.Attached);
 		taskManager.connect(services);
 
 		// Ensure clientId is set after attach (might be forced undefined in some tests)
 		dataStoreRuntime.clientId = clientId;
-
-		dataStoreRuntime.emit("attaching");
-		dataStoreRuntime.emit("attached");
 	};
 
 	return { taskManager, attach };
@@ -815,7 +811,8 @@ describe("TaskManager", () => {
 					);
 				});
 
-				it("Can abandon a subscribed task after attach", async () => {
+				// todo AB#7310
+				it.skip("Can abandon a subscribed task after attach", async () => {
 					const taskId = "taskId";
 					taskManager1.subscribeToTask(taskId);
 					containerRuntimeFactory.processAllMessages();

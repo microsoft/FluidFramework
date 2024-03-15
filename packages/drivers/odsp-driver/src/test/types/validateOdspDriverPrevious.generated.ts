@@ -515,6 +515,7 @@ declare function get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink():
 declare function use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
     use: TypeOnly<current.OdspDriverUrlResolverForShareLink>): void;
 use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink());
 
 /*

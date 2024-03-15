@@ -17,7 +17,7 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
+import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import {
 	type ITree,
 	SharedTree,
@@ -132,7 +132,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	// V1 of the registry -----------------------------------------

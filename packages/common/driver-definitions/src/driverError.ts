@@ -5,7 +5,7 @@
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
-import type { IResolvedUrl } from "./urlResolver";
+import type { IResolvedUrl } from "./urlResolver.js";
 
 // Omit `dataCorruptionError` and `dataProcessingError` from the list of values inherited from FluidErrorTypes
 const { dataCorruptionError, dataProcessingError, ...FluidErrorTypesExceptDataTypes } =
@@ -106,6 +106,7 @@ export const DriverErrorTypes = {
 	outOfStorageError: "outOfStorageError",
 } as const;
 /**
+ * {@inheritDoc (DriverErrorTypes:variable)}
  * @public
  */
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];

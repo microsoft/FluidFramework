@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import fs from "fs";
 import path from "path";
 import * as JSON5 from "json5";
@@ -13,7 +14,7 @@ import {
 } from "../../common/fluidTaskDefinitions";
 import { getEsLintConfigFilePath } from "../../common/taskUtils";
 import { FluidRepo } from "../../common/fluidRepo";
-import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig } from "../../common/fluidUtils";
 import * as TscUtils from "../../common/tscUtils";
 import { Handler, readFile } from "../common";
 
@@ -26,7 +27,8 @@ const getFluidBuildTasksTscIgnore = (root: string) => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray = getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray =
+			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -39,7 +41,7 @@ const getFluidBuildTasksIgnoreDependencies = (root: string) => {
 	let ignore = fluidBuildTasksTscIgnoreDependenciesCache.get(rootDir);
 	if (ignore === undefined) {
 		const ignoreArray =
-			getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDependencies;
+			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDependencies;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreDependenciesCache.set(rootDir, ignore);
 	}
@@ -52,7 +54,7 @@ const getFluidBuildTasksIgnoreDevDependencies = (root: string) => {
 	let ignore = fluidBuildTasksTscIgnoreDevDependenciesCache.get(rootDir);
 	if (ignore === undefined) {
 		const ignoreArray =
-			getFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDevDependencies;
+			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreDevDependencies;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreDevDependenciesCache.set(rootDir, ignore);
 	}
@@ -66,7 +68,7 @@ function getFluidPackageMap(root: string) {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = new FluidRepo(rootDir);
+		const repo = FluidRepo.create(rootDir);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -83,7 +85,10 @@ function getFluidPackageMap(root: string) {
  */
 function findScript(json: PackageJson, command: string) {
 	// Multiple scripts can have the same command, we want to find the best one.
-	let bestScript: { rank: number; script: string | undefined } = { rank: 0, script: undefined };
+	let bestScript: { rank: number; script: string | undefined } = {
+		rank: 0,
+		script: undefined,
+	};
 	for (const script in json.scripts) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const scriptCommands = json.scripts[script]!.split("&&");
@@ -121,6 +126,28 @@ function findTscMultiScript(json: PackageJson, config: string) {
 
 		if (scriptCommand.startsWith("tsc-multi") && scriptCommand.includes(config)) {
 			return script;
+		}
+	}
+}
+
+/**
+ * Find the script name for the fluid-tsc command in a package.json
+ *
+ * @param json - the package.json content to search script in
+ * @param project - the tsc project to check for; `undefined` checks for unspecified project
+ * @returns  first script name found to match the command
+ *
+ * @remarks
+ */
+function findFluidTscScript(json: PackageJson, project: string | undefined) {
+	for (const script in json.scripts) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const scriptCommand = json.scripts[script]!;
+
+		if (scriptCommand.startsWith("fluid-tsc")) {
+			if (project ? scriptCommand.includes(project) : !scriptCommand.includes("--project")) {
+				return script;
+			}
 		}
 	}
 }
@@ -192,10 +219,12 @@ function findTscScripts(json: PackageJson, project: string) {
 	}
 	if (project === "./tsconfig.json") {
 		addIfDefined(findScript(json, "tsc"));
+		addIfDefined(findFluidTscScript(json, undefined));
 		addIfDefined(findTscMultiScript(json, "tsc-multi.cjs.json"));
 		addIfDefined(findTscMultiScript(json, "tsc-multi.node16.cjs.json"));
 	}
 	addIfDefined(findScript(json, `tsc --project ${project}`));
+	addIfDefined(findFluidTscScript(json, project));
 	addIfDefined(findTscMultiScript(json, project));
 	return tscScripts.length > 0 ? tscScripts : undefined;
 }
@@ -290,7 +319,7 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: string[],
 ) {
-	const rootConfig = getFluidBuildConfig(root);
+	const rootConfig = loadFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	const seenDep = new Set<string>();
@@ -337,12 +366,7 @@ function checkTaskDeps(
 	const missingTaskDependencies = taskDeps
 		.filter(
 			(taskDep) =>
-				!hasTaskDependency(
-					root,
-					json,
-					taskName,
-					Array.isArray(taskDep) ? taskDep : [taskDep],
-				),
+				!hasTaskDependency(root, json, taskName, Array.isArray(taskDep) ? taskDep : [taskDep]),
 		)
 		.map((dep) => (Array.isArray(dep) ? dep.join(" or ") : dep));
 
@@ -461,7 +485,7 @@ function getTscCommandDependencies(
 		// simultaneously). So we add the referenced projects as dependencies.
 		for (const ref of configJson.references) {
 			let refConfigPath = path.join(configFilePath, ref.path);
-			const fileInfo = fs.statSync(configFilePath);
+			const fileInfo = fs.statSync(refConfigPath);
 			if (fileInfo.isDirectory()) {
 				refConfigPath = path.join(refConfigPath, "tsconfig.json");
 			}
@@ -474,9 +498,7 @@ function getTscCommandDependencies(
 			// that builds the referenced project is listed as a dependency.
 			const referencedScript = findTscScripts(json, refConfigPath);
 			if (referencedScript === undefined) {
-				throw new Error(
-					`Unable to find tsc script for referenced project ${refConfigPath}`,
-				);
+				throw new Error(`Unable to find tsc script for referenced project ${refConfigPath}`);
 			}
 			deps.push(referencedScript);
 		}
@@ -628,7 +650,7 @@ function shouldProcessScriptForTsc(
 	return (
 		// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
 		// is when the whole command is "tsc".
-		(command.startsWith("tsc ") || command === "tsc") &&
+		(command.startsWith("tsc ") || command === "tsc" || command.startsWith("fluid-tsc ")) &&
 		// tsc --watch tasks are long-running processes and don't need the standard task deps
 		!command.includes("--watch") &&
 		!tasksToIgnore.has(script)

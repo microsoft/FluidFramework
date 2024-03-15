@@ -2,27 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 import {
-	tokens,
+	Table,
 	TableBody,
 	TableCell,
-	TableRow,
-	Table,
 	TableHeader,
 	TableHeaderCell,
+	TableRow,
+	tokens,
 } from "@fluentui/react-components";
 import {
-	Clock12Regular,
-	PlugConnected20Regular,
 	AlertBadgeRegular,
-	PlugDisconnected20Regular,
-	ErrorCircle20Regular,
-	Warning20Regular,
 	Attach20Regular,
+	Clock12Regular,
+	ErrorCircle20Regular,
 	LockClosed20Filled,
+	PlugConnected20Regular,
+	PlugDisconnected20Regular,
+	Warning20Regular,
 } from "@fluentui/react-icons";
 import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core";
+import React from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper";
 import { LabelCellLayout } from "./utility-components";

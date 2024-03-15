@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	RevisionTag,
-	EncodedRevisionTag,
-	ChangeAtomId,
-	EncodedChangeAtomId,
-	ChangeEncodingContext,
-} from "../core/index.js";
 import { IJsonCodec } from "../codec/index.js";
+import {
+	ChangeAtomId,
+	ChangeEncodingContext,
+	EncodedChangeAtomId,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../core/index.js";
 
 export function makeChangeAtomIdCodec(
 	revisionTagCodec: IJsonCodec<

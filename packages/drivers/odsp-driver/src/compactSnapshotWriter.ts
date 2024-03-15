@@ -5,28 +5,28 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IBlob,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { snapshotMinReadVersion } from "./compactSnapshotParser";
-import { TreeBuilderSerializer } from "./WriteBufferUtils";
+import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
+import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
 import {
+	NodeCore,
 	addBoolProperty,
+	addDictionaryStringProperty,
 	addNumberProperty,
 	addStringProperty,
-	addDictionaryStringProperty,
-	NodeCore,
-} from "./zipItDataRepresentationUtils";
+} from "./zipItDataRepresentationUtils.js";
 
 /**
  * Writes header section of the snapshot.
  * @param node - snapshot node to serialize to
  * @param latestSequenceNumber - latest seq number of the container.
  */
-function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number) {
+function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number): void {
 	addStringProperty(node, "mrv", snapshotMinReadVersion);
 	addStringProperty(node, "cv", snapshotMinReadVersion);
 	addNumberProperty(node, "lsn", latestSequenceNumber);
@@ -37,7 +37,7 @@ function writeSnapshotProps(node: NodeCore, latestSequenceNumber: number) {
  * @param snapshotNode - node to serialize to.
  * @param blobs - blobs that is being serialized
  */
-function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>) {
+function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | ArrayBuffer>): void {
 	snapshotNode.addDictionaryString("blobs");
 	const blobsNode = snapshotNode.addNode("list");
 	for (const [storageBlobId, blob] of blobs) {
@@ -48,7 +48,7 @@ function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | Ar
 			blobNode.addBlob(new Uint8Array(blob));
 		} else {
 			blobNode.addBlob(
-				new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf-8")),
+				new Uint8Array(stringToBuffer(blob.contents, blob.encoding ?? "utf8")),
 			);
 		}
 	}
@@ -59,13 +59,13 @@ function writeBlobsSection(snapshotNode: NodeCore, blobs: Map<string, IBlob | Ar
  * @param snapshotNode - tree node to serialize to
  * @param snapshotTree - snapshot tree that is being serialized
  */
-function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree) {
+function writeTreeSection(snapshotNode: NodeCore, snapshotTree: ISnapshotTree): void {
 	snapshotNode.addDictionaryString("treeNodes");
 	const treesNode = snapshotNode.addNode("list");
 	writeTreeSectionCore(treesNode, snapshotTree);
 }
 
-function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) {
+function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree): void {
 	for (const [path, value] of Object.entries(snapshotTree.trees)) {
 		const treeNode = treesNode.addNode();
 		// Many leaf nodes in the tree have same names like "content", "body", "header"
@@ -81,8 +81,12 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
 			const childNode = treeNode.addNode("list");
 			writeTreeSectionCore(childNode, value);
 		}
-		if (snapshotTree.groupId) {
+		if (snapshotTree.groupId !== undefined) {
 			addDictionaryStringProperty(treeNode, "groupId", snapshotTree.groupId);
+		}
+
+		if (snapshotTree.omitted !== undefined) {
+			addBoolProperty(treeNode, "omitted", snapshotTree.omitted);
 		}
 	}
 
@@ -106,7 +110,7 @@ function writeSnapshotSection(
 	rootNode: NodeCore,
 	snapshotTree: ISnapshotTree,
 	snapshotSequenceNumber: number,
-) {
+): void {
 	rootNode.addDictionaryString("snapshot");
 	const snapshotNode = rootNode.addNode();
 
@@ -125,7 +129,7 @@ function writeSnapshotSection(
  * @param rootNode - node to serialize to.
  * @param ops - ops that is being serialized
  */
-function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
+function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]): void {
 	let firstSequenceNumber: number | undefined;
 	if (ops.length > 0) {
 		firstSequenceNumber = ops[0].sequenceNumber;
@@ -136,9 +140,9 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
 		addNumberProperty(opsNode, "firstSequenceNumber", firstSequenceNumber);
 		opsNode.addDictionaryString("deltas");
 		const deltaNode = opsNode.addNode("list");
-		ops.forEach((op) => {
+		for (const op of ops) {
 			deltaNode.addString(JSON.stringify(op));
-		});
+		}
 	}
 }
 

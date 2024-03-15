@@ -2,23 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as fs from "node:fs";
 import path from "node:path";
 
 import * as yaml from "js-yaml";
 import { v4 as uuid } from "uuid";
 
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 
-import { ITelemetryLogger } from "@fluidframework/core-interfaces";
-import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner";
-import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
-import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
-import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
-import { NestedMapRunner, NestedMapRunnerConfig } from "./NestedMapRunner";
-import { IRunner } from "./interface";
-import { getLogger } from "./logger";
-import { getScenarioRunnerTelemetryEventMap } from "./utils";
+import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner.js";
+import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner.js";
+import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner.js";
+import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner.js";
+import { NestedMapRunner, NestedMapRunnerConfig } from "./NestedMapRunner.js";
+import { IRunner } from "./interface.js";
+import { getLogger } from "./logger.js";
+import { getScenarioRunnerTelemetryEventMap } from "./utils.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap();
 
@@ -114,7 +114,7 @@ export class TestOrchestrator {
 		return success;
 	}
 
-	private async execRun(logger: ITelemetryLogger): Promise<boolean> {
+	private async execRun(logger: ITelemetryLoggerExt): Promise<boolean> {
 		if (!this.doc) {
 			throw new Error("Invalid config.");
 		}
@@ -219,7 +219,7 @@ export class TestOrchestrator {
 	private async runStage(
 		runner: IRunner,
 		stage: IStage,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): Promise<unknown> {
 		// Initial status
 		const initStatus = runner.getStatus();

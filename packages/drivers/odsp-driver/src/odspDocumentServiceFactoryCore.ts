@@ -3,51 +3,51 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
-	TokenFetchOptions,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
-	IPersistedCache,
 	HostStoragePolicy,
 	IFileEntry,
 	IOdspUrlParts,
-	SharingLinkScope,
-	SharingLinkRole,
+	IPersistedCache,
+	IRelaySessionAwareDriverFactory,
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
-	IRelaySessionAwareDriverFactory,
+	OdspResourceTokenFetchOptions,
+	SharingLinkRole,
+	SharingLinkScope,
+	TokenFetchOptions,
+	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
 import {
 	INonPersistentCache,
 	IPrefetchSnapshotContents,
 	LocalPersistentCache,
 	NonPersistentCache,
-} from "./odspCache";
-import { createOdspCacheAndTracker, ICacheAndTracker } from "./epochTracker";
-import { OdspDocumentService } from "./odspDocumentService";
+} from "./odspCache.js";
+import { OdspDocumentService } from "./odspDocumentService.js";
 import {
-	INewFileInfo,
-	getOdspResolvedUrl,
-	createOdspLogger,
-	toInstrumentedOdspTokenFetcher,
 	IExistingFileInfo,
-	isNewFileInfo,
+	INewFileInfo,
+	createOdspLogger,
 	getJoinSessionCacheKey,
-} from "./odspUtils";
+	getOdspResolvedUrl,
+	isNewFileInfo,
+	toInstrumentedOdspTokenFetcher,
+} from "./odspUtils.js";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -67,7 +67,8 @@ export class OdspDocumentServiceFactoryCore
 		return this.nonPersistentCache.snapshotPrefetchResultCache;
 	}
 
-	public get IRelaySessionAwareDriverFactory() {
+	// TODO: return `IRelaySessionAwareDriverFactory` instead of `this` (breaking change)
+	public get IRelaySessionAwareDriverFactory(): this {
 		return this;
 	}
 
@@ -93,7 +94,7 @@ export class OdspDocumentServiceFactoryCore
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
+		const odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
@@ -150,6 +151,7 @@ export class OdspDocumentServiceFactoryCore
 			fileEntry,
 			odspLogger,
 			clientIsSummarizer,
+			this.hostPolicy,
 		);
 
 		return PerformanceEvent.timedExecAsync(
@@ -187,7 +189,7 @@ export class OdspDocumentServiceFactoryCore
 						);
 						throw error;
 					});
-				odspResolvedUrl = isNewFileInfo(fileInfo)
+				const _odspResolvedUrl = isNewFileInfo(fileInfo)
 					? await module.createNewFluidFile(
 							getStorageToken,
 							fileInfo,
@@ -214,13 +216,13 @@ export class OdspDocumentServiceFactoryCore
 							odspResolvedUrl.isClpCompliantApp,
 					  );
 				const docService = this.createDocumentServiceCore(
-					odspResolvedUrl,
+					_odspResolvedUrl,
 					odspLogger,
 					cacheAndTracker,
 					clientIsSummarizer,
 				);
 				event.end({
-					docId: odspResolvedUrl.hashedDocumentId,
+					docId: _odspResolvedUrl.hashedDocumentId,
 				});
 				return docService;
 			},
@@ -269,28 +271,31 @@ export class OdspDocumentServiceFactoryCore
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: ITelemetryLogger,
+		odspLogger: ITelemetryBaseLogger,
 		cacheAndTrackerArg?: ICacheAndTracker,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
+		const extLogger = createChildLogger({ logger: odspLogger });
 		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
+
 		const cacheAndTracker =
 			cacheAndTrackerArg ??
 			createOdspCacheAndTracker(
 				this.persistedCache,
 				this.nonPersistentCache,
 				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
-				odspLogger,
+				extLogger,
 				clientIsSummarizer,
+				this.hostPolicy,
 			);
 
 		const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
-			odspLogger,
+			extLogger,
 			resolvedUrlData,
 			this.getStorageToken,
 			true /* throwOnNullToken */,
@@ -299,9 +304,9 @@ export class OdspDocumentServiceFactoryCore
 		const webSocketTokenFetcher =
 			this.getWebsocketToken === undefined
 				? undefined
-				: async (options: TokenFetchOptions) =>
+				: async (options: TokenFetchOptions): Promise<string | null> =>
 						toInstrumentedOdspTokenFetcher(
-							odspLogger,
+							extLogger,
 							resolvedUrlData,
 							this.getWebsocketToken!,
 							false /* throwOnNullToken */,
@@ -311,7 +316,7 @@ export class OdspDocumentServiceFactoryCore
 			resolvedUrl,
 			storageTokenFetcher,
 			webSocketTokenFetcher,
-			odspLogger,
+			extLogger,
 			cacheAndTracker.cache,
 			this.hostPolicy,
 			cacheAndTracker.epochTracker,
@@ -335,9 +340,11 @@ function getSharingLinkParams(
 		const createLinkRole = searchParams.get("createLinkRole");
 		if (createLinkScope && SharingLinkScope[createLinkScope]) {
 			createShareLinkParam = {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				scope: SharingLinkScope[createLinkScope],
 				...(createLinkRole && SharingLinkRole[createLinkRole]
-					? { role: SharingLinkRole[createLinkRole] }
+					? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					  { role: SharingLinkRole[createLinkRole] }
 					: {}),
 			};
 		}

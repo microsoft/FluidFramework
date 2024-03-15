@@ -5,26 +5,26 @@
 
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { expect } from 'chai';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
 	describeFuzz,
 	makeRandom,
-	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
+	takeAsync as take,
 } from '@fluid-private/stochastic-test-utils';
+import { expect } from 'chai';
+import { fail } from '../../Common.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTree } from '../../SharedTree.js';
+import { WriteFormat } from '../../persisted-types/index.js';
 import {
 	setUpLocalServerTestSharedTree,
 	testDocumentsPathBase,
 	withContainerOffline,
-} from '../utilities/TestUtilities';
-import { WriteFormat } from '../../persisted-types';
-import { fail } from '../../Common';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { SharedTree } from '../../SharedTree';
-import { FuzzTestState, EditGenerationConfig, Operation, FuzzChange } from './Types';
-import { makeOpGenerator } from './Generators';
+} from '../utilities/TestUtilities.js';
+import { makeOpGenerator } from './Generators.js';
+import { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from './Types.js';
 
 const directory = join(testDocumentsPathBase, 'fuzz-tests');
 

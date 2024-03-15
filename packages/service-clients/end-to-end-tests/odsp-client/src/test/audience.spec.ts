@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
 import { OdspClient } from "@fluid-experimental/odsp-client";
@@ -12,8 +13,8 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createOdspClient, IOdspLoginCredentials } from "./OdspClientFactory";
-import { waitForMember } from "./utils";
+import { createOdspClient, IOdspLoginCredentials } from "./OdspClientFactory.js";
+import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // jest.config.cjs
 module.exports = {
 	globals: {
@@ -37,6 +38,8 @@ module.exports = {
 	// A map from regular expressions to module names that allow to stub out resources with a single module
 	moduleNameMapper: {
 		"\\.(css|less)$": "identity-obj-proxy",
+		// Force module sinon to resolve with the CJS entry point, because Jest does not support package.json.exports. Somewhat similar issue: https://github.com/uuidjs/uuid/issues/451
+		"^sinon$": "<rootDir>/node_modules/sinon/lib/sinon.js",
 		// '\\.svg$': '<rootDir>/__mocks__/svgrMock.js'
 	},
 

@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
-import { assert } from '@fluidframework/core-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { assert } from '@fluidframework/core-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
-import { Definition, NodeId } from '../Identifiers';
-import { getChangeNodeFromView } from '../SerializationUtilities';
-import { noop } from '../Common';
+import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
+import { expect } from 'chai';
+import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
+import { noop } from '../Common.js';
 import {
+	PlaceValidationResult,
+	RangeValidationResultKind,
 	convertTreeNodes,
 	deepCompareNodes,
 	internalizeBuildNode,
-	PlaceValidationResult,
-	RangeValidationResultKind,
 	validateStablePlace,
 	validateStableRange,
 	walkTree,
-} from '../EditUtilities';
-import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types';
-import { BuildNode, BuildTreeNode } from '../ChangeTypes';
-import { comparePayloads } from '../PayloadUtilities';
-import { refreshTestTree } from './utilities/TestUtilities';
+} from '../EditUtilities.js';
+import { Definition, NodeId } from '../Identifiers.js';
+import { comparePayloads } from '../PayloadUtilities.js';
+import { getChangeNodeFromView } from '../SerializationUtilities.js';
+import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
+import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('EditUtilities', () => {
 	const testTree = refreshTestTree(undefined, undefined, /* expensiveValidation: */ true);

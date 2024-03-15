@@ -3,48 +3,47 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 import { BTree } from '@tylerbu/sorted-btree-es6';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import {
-	hasLength,
+	Mutable,
 	assertNotUndefined,
+	assertWithMessage,
 	compareFiniteNumbers,
 	compareFiniteNumbersReversed,
 	compareMaps,
 	compareStrings,
 	fail,
 	getOrCreate,
-	Mutable,
+	hasLength,
 	setPropertyIfDefined,
-	assertWithMessage,
-} from '../Common';
+} from '../Common.js';
 import {
-	LocalCompressedId,
+	AttributionId,
+	CompressedId,
 	FinalCompressedId,
-	SessionSpaceCompressedId,
-	StableId,
+	LocalCompressedId,
 	OpSpaceCompressedId,
 	SessionId,
-	CompressedId,
+	SessionSpaceCompressedId,
+	StableId,
 	UuidString,
-	AttributionId,
-} from '../Identifiers';
-import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtilities';
-import { AppendOnlySortedMap } from './AppendOnlySortedMap';
-import { getIds } from './IdRange';
+} from '../Identifiers.js';
+import { assertIsStableId, assertIsUuidString, isStableId } from '../UuidUtilities.js';
+import { AppendOnlySortedMap } from './AppendOnlySortedMap.js';
+import { getIds } from './IdRange.js';
 import {
-	numericUuidEquals,
+	NumericUuid,
+	ensureSessionUuid,
 	getPositiveDelta,
 	incrementUuid,
+	numericUuidEquals,
 	numericUuidFromStableId,
-	NumericUuid,
 	stableIdFromNumericUuid,
-	ensureSessionUuid,
-} from './NumericUuid';
+} from './NumericUuid.js';
+import { SessionIdNormalizer } from './SessionIdNormalizer.js';
 import type {
 	IdCreationRange,
 	SerializedCluster,
@@ -56,8 +55,7 @@ import type {
 	SerializedSessionData,
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
-} from './persisted-types';
-import { SessionIdNormalizer } from './SessionIdNormalizer';
+} from './persisted-types/index.js';
 
 /**
  * A cluster of final (sequenced via consensus), sequentially allocated compressed IDs.

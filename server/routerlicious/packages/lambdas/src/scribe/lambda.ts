@@ -94,6 +94,8 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private globalCheckpointOnly: boolean;
 
+	private lastCheckpointInsertedNumber = 0;
+
 	constructor(
 		protected readonly context: IContext,
 		protected tenantId: string,
@@ -114,6 +116,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly isEphemeralContainer: boolean,
 		private readonly localCheckpointEnabled: boolean,
+		private readonly maxPendingCheckpointMessagesLength: number,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -177,11 +180,9 @@ export class ScribeLambda implements IPartitionLambda {
 				}
 
 				// Ensure protocol handler sequence numbers are monotonically increasing
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
 					// unexpected sequence number. if a pending message reader is available, ask for those ops
 					if (this.pendingMessageReader !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 						const from = lastProtocolHandlerSequenceNumber + 1;
 						const to = value.operation.sequenceNumber - 1;
 						const additionalPendingMessages =
@@ -616,6 +617,8 @@ export class ScribeLambda implements IPartitionLambda {
 			sequenceNumber: this.sequenceNumber,
 			validParentSummaries: this.validParentSummaries,
 			isCorrupt: this.isDocumentCorrupt,
+			protocolHead: this.protocolHead,
+			checkpointTimestamp: Date.now(),
 		};
 		return checkpoint;
 	}
@@ -679,7 +682,9 @@ export class ScribeLambda implements IPartitionLambda {
 	}
 
 	private async writeCheckpoint(checkpoint: IScribe) {
-		const inserts = this.pendingCheckpointMessages.toArray();
+		const inserts = this.pendingCheckpointMessages
+			.toArray()
+			.filter((pcm) => pcm.operation.sequenceNumber > this.lastCheckpointInsertedNumber);
 		await this.checkpointManager.write(
 			checkpoint,
 			this.protocolHead,
@@ -689,14 +694,20 @@ export class ScribeLambda implements IPartitionLambda {
 			this.isDocumentCorrupt,
 		);
 		if (inserts.length > 0) {
-			// Since we are storing logTails with every summary, we need to make sure that messages are either in DB
-			// or in memory. In other words, we can only remove messages from memory once there is a copy in the DB
-			const lastInsertedSeqNumber = inserts[inserts.length - 1].operation.sequenceNumber;
+			// pending checkpoint message is still useful during a session to reduce db/alfred call to fetch ops:
+			// 1. For client summary, we can cap these pending ops to the last protocol head
+			// 2. For service summary, given the logtail is appended and protocol head not advance, we should still keep these
+			//    pending ops to reduce db/alfred call to fetch ops, but should cap to a maxtlogtail limit to avoid memory leak.;
+			this.lastCheckpointInsertedNumber =
+				inserts[inserts.length - 1].operation.sequenceNumber;
+			const cappedNumber = Math.max(
+				this.protocolHead,
+				this.lastCheckpointInsertedNumber - this.maxPendingCheckpointMessagesLength,
+			);
 			while (
 				this.pendingCheckpointMessages.length > 0 &&
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingCheckpointMessages.peekFront()!.operation.sequenceNumber <=
-					lastInsertedSeqNumber
+				this.pendingCheckpointMessages.peekFront()!.operation.sequenceNumber <= cappedNumber
 			) {
 				this.pendingCheckpointMessages.removeFront();
 			}

@@ -9,28 +9,15 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
-import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
-import {
-	ITree,
-	ImplicitFieldSchema,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "./simple-tree/index.js";
 import { pkgVersion } from "./packageVersion.js";
+import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
+import { ITree } from "./simple-tree/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
  * @internal
  */
-export class TreeFactory implements IChannelFactory {
+export class TreeFactory implements IChannelFactory<ITree> {
 	public readonly type: string;
 	public readonly attributes: IChannelAttributes;
 
@@ -66,71 +53,18 @@ export class TreeFactory implements IChannelFactory {
  * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
  * of objects, arrays, and other data types.
  *
+ * @remarks
+ * This implements {@link @fluidframework/fluid-static#SharedObjectClass}.
+ * @privateRemarks
+ * Due to the dependency structure and the placement of that interface SharedObjectClass,
+ * this interface implementation can not be recorded in the type here.
  * @public
  */
-export class SharedTree implements ITree {
-	// The IFluidContainer ContainerSchema currently requires a constructable class that
-	// implements the union of IChannel and the interface to be returned to the user.
-	//
-	// Temporarily, we provide one until the following work items is addressed:
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
-
-	public static getFactory(): IChannelFactory {
+export const SharedTree = {
+	/**
+	 * Gets the factory this factory is a wrapper for.
+	 */
+	getFactory(): IChannelFactory<ITree> {
 		return new TreeFactory({});
-	}
-
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>> {
-		return this.useFactory();
-	}
-
-	private useFactory(): never {
-		throw new Error("Use factory to create instance.");
-	}
-
-	public get id(): string {
-		return this.useFactory();
-	}
-
-	public get attributes(): IChannelAttributes {
-		return this.useFactory();
-	}
-
-	public get handle(): IFluidHandle {
-		return this.useFactory();
-	}
-
-	public get IFluidLoadable(): IFluidLoadable {
-		return this.useFactory();
-	}
-
-	public getAttachSummary(
-		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
-	): ISummaryTreeWithStats {
-		return this.useFactory();
-	}
-
-	public async summarize(
-		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-	): Promise<ISummaryTreeWithStats> {
-		return this.useFactory();
-	}
-
-	public isAttached(): boolean {
-		return this.useFactory();
-	}
-
-	public connect(services: IChannelServices): void {
-		return this.useFactory();
-	}
-
-	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
-		return this.useFactory();
-	}
-}
+	},
+};

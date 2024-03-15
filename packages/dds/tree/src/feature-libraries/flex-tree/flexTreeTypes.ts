@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
 import { FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
 import { Assume, FlattenKeys } from "../../util/index.js";
-import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
-import {
-	FlexFieldSchema,
-	LazyItem,
-	FlexTreeNodeSchema,
-	FlexAllowedTypes,
-	FlexFieldNodeSchema,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	Any,
-	FlexObjectNodeFields,
-	FlexListToUnion,
-	FlexList,
-} from "../typed-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
-import { EditableTreeEvents } from "./treeEvents.js";
+import { LocalNodeKey, StableNodeKey } from "../node-key/index.js";
+import { AllowedTypesToFlexInsertableTree, InsertableFlexField } from "../schema-aware/index.js";
+import {
+	Any,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexList,
+	FlexListToUnion,
+	FlexMapNodeSchema,
+	FlexObjectNodeFields,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	LazyItem,
+	LeafNodeSchema,
+} from "../typed-schema/index.js";
 import { FlexTreeContext } from "./context.js";
+import { EditableTreeEvents } from "./treeEvents.js";
 
 /**
  * Indicates that an object is a flex tree.

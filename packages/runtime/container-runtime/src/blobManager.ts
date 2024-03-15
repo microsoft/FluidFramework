@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
+import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	IContainerRuntime,
+	IContainerRuntimeEvents,
+} from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -12,34 +18,28 @@ import {
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
-	createResponseError,
-	generateHandleContextPath,
-	responseToException,
-	SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { bufferToString, stringToBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IContainerRuntime,
-	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
-	createChildMonitoringContext,
-	GenericError,
-	LoggingError,
-	MonitoringContext,
-	PerformanceEvent,
-	wrapError,
-} from "@fluidframework/telemetry-utils";
-import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import {
+	SummaryTreeBuilder,
+	createResponseError,
+	generateHandleContextPath,
+	responseToException,
+} from "@fluidframework/runtime-utils";
+import {
+	GenericError,
+	LoggingError,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+	wrapError,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
-import { IBlobMetadata } from "./metadata";
+import { IBlobMetadata } from "./metadata.js";
 
 /**
  * This class represents blob (long string)
@@ -724,14 +724,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 		}
 		return gcData;
-	}
-
-	/**
-	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
-	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]): void {
-		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
 	/**

@@ -1,5 +1,13 @@
 # @fluidframework/server-services-client
 
+## 4.0.0
+
+### Major Changes
+
+-   RestWrapper querystring types narrowed ([#19624](https://github.com/microsoft/FluidFramework/issues/19624)) [41ac3dbecf](https://github.com/microsoft/FluidFramework/commits/41ac3dbecf4325384231fb2e67ef64bd40a47c4a)
+
+    The acceptable values for the querystrings passed to RestWrapper must be string | number | boolean (previously accepted unknown). Other values cannot be successfully stringified and so should be avoided.
+
 ## 3.0.0
 
 ### Major Changes

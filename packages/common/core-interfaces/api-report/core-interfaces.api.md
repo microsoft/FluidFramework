@@ -404,14 +404,6 @@ export interface ISignalEnvelope {
     };
 }
 
-// @internal @deprecated (undocumented)
-export interface ITaggedTelemetryPropertyType {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryEventPropertyType;
-}
-
 // @public
 export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
@@ -429,40 +421,8 @@ export interface ITelemetryBaseLogger {
 }
 
 // @public
-export type ITelemetryBaseProperties = ITelemetryProperties;
-
-// @public @deprecated
-export interface ITelemetryErrorEvent extends ITelemetryProperties {
-    // (undocumented)
-    eventName: string;
-}
-
-// @public @deprecated
-export interface ITelemetryGenericEvent extends ITelemetryProperties {
-    // (undocumented)
-    category?: TelemetryEventCategory;
-    // (undocumented)
-    eventName: string;
-}
-
-// @public @deprecated
-export interface ITelemetryLogger extends ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any, logLevel?: typeof LogLevel.verbose | typeof LogLevel.default): void;
-}
-
-// @public @deprecated
-export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
-    // (undocumented)
-    duration?: number;
-}
-
-// @public @deprecated
-export interface ITelemetryProperties {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 // @alpha
@@ -500,14 +460,8 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @alpha
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
-
-// @public @deprecated
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-// @public @deprecated
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;

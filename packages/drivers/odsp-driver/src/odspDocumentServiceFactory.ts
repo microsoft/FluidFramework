@@ -5,14 +5,14 @@
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
+	HostStoragePolicy,
+	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	IPersistedCache,
-	HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
-import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 // eslint-disable-next-line import/no-internal-modules
-import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory";
+import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
+import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -31,6 +31,11 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 }
 
 /**
+ * Creates a factory instance for creating a sharepoint document service from a provided snapshot.
+ *
+ * @remarks Use if you don't want to connect to any kind of external/internal storages and want to provide
+ * content directly.
+ *
  * @alpha
  */
 export function createLocalOdspDocumentServiceFactory(

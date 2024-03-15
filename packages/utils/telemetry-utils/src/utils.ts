@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { loggerToMonitoringContext } from "./config";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes";
+import { loggerToMonitoringContext } from "./config.js";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * An object that contains a callback used in conjunction with the {@link createSampledLogger} utility function to provide custom logic for sampling events.

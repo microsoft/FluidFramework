@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export {
 	createChildMonitoringContext,
 	MonitoringContext,
@@ -10,7 +11,7 @@ export {
 	IConfigProvider,
 	loggerToMonitoringContext,
 	wrapConfigProviderWithDefaults,
-} from "./config";
+} from "./config.js";
 export {
 	DataCorruptionError,
 	DataProcessingError,
@@ -18,7 +19,7 @@ export {
 	GenericError,
 	UsageError,
 	validatePrecondition,
-} from "./error";
+} from "./error.js";
 export {
 	extractLogSafeErrorProperties,
 	generateErrorWithStack,
@@ -34,20 +35,20 @@ export {
 	overwriteStack,
 	wrapError,
 	wrapErrorAndLog,
-} from "./errorLogging";
-export { EventEmitterWithErrorHandling } from "./eventEmitterWithErrorHandling";
+} from "./errorLogging.js";
+export { EventEmitterWithErrorHandling } from "./eventEmitterWithErrorHandling.js";
 export {
 	connectedEventName,
 	disconnectedEventName,
 	raiseConnectedEvent,
 	safeRaiseEvent,
-} from "./events";
+} from "./events.js";
 export {
 	hasErrorInstanceId,
 	IFluidErrorBase,
 	isFluidError,
 	isValidLegacyError,
-} from "./fluidErrorBase";
+} from "./fluidErrorBase.js";
 export {
 	eventNamespaceSeparator,
 	createChildLogger,
@@ -64,12 +65,11 @@ export {
 	tagCodeArtifacts,
 	TelemetryDataTag,
 	TelemetryEventPropertyTypes,
-	TelemetryNullLogger,
-} from "./logger";
-export { MockLogger } from "./mockLogger";
-export { ThresholdCounter } from "./thresholdCounter";
-export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
-export { createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils";
+} from "./logger.js";
+export { MockLogger } from "./mockLogger.js";
+export { ThresholdCounter } from "./thresholdCounter.js";
+export { SampledTelemetryHelper } from "./sampledTelemetryHelper.js";
+export { createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils.js";
 export {
 	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
@@ -80,4 +80,4 @@ export {
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
-} from "./telemetryTypes";
+} from "./telemetryTypes.js";

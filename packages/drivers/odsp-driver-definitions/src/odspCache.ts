@@ -3,7 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { type FiveDaysMs, IResolvedUrl } from "@fluidframework/driver-definitions";
+
+/**
+ * Must be less than IDocumentStorageServicePolicies.maximumCacheDurationMs policy of 5 days.
+ * That policy is the outward expression and this value is the implementation - using a larger value
+ * would violate that statement of the driver's behavior.
+ * Other parts of the system (such as Garbage Collection) depend on that policy being properly implemented.
+ *
+ * @internal
+ */
+export const maximumCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
 /**
  * Describes what kind of content is stored in cache entry.

@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
-export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "./errors";
+export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorTypes } from "./errors.js";
 export {
 	HostStoragePolicy,
 	ICollabSessionOptions,
 	IOpsCachingPolicy,
 	ISnapshotOptions,
-} from "./factory";
+} from "./factory.js";
 export {
 	CacheContentType,
+	maximumCacheDurationMs,
 	getKeyForCacheEntry,
 	ICacheEntry,
 	IEntry,
 	IFileEntry,
 	IPersistedCache,
 	snapshotKey,
-} from "./odspCache";
+} from "./odspCache.js";
 export {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -27,7 +28,7 @@ export {
 	ShareLinkInfoType,
 	SharingLinkRole,
 	SharingLinkScope,
-} from "./resolvedUrl";
+} from "./resolvedUrl.js";
 export {
 	IdentityType,
 	InstrumentedStorageTokenFetcher,
@@ -37,9 +38,9 @@ export {
 	TokenFetchOptions,
 	tokenFromResponse,
 	TokenResponse,
-} from "./tokenFetch";
+} from "./tokenFetch.js";
 export {
 	IProvideSessionAwareDriverFactory,
 	IRelaySessionAwareDriverFactory,
 	ISocketStorageDiscovery,
-} from "./sessionProvider";
+} from "./sessionProvider.js";

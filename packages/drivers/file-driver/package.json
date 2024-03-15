@@ -11,27 +11,63 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "commonjs",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/file-driver-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/file-driver-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -41,20 +77,21 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-231454",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/replay-driver": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "^0.33.0",
+		"@biomejs/biome": "^1.6.1",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.33.0",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.0.0-internal.8.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
@@ -64,7 +101,8 @@
 			"build:docs": {
 				"dependsOn": [
 					"...",
-					"api-extractor:commonjs"
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
 				],
 				"script": false
 			},

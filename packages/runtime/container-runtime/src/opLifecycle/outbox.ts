@@ -3,27 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	createChildMonitoringContext,
 	GenericError,
 	MonitoringContext,
 	UsageError,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager";
+import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { ContainerMessageType } from "../messageTypes.js";
+import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
 	estimateSocketSize,
 	sequenceNumbersMatch,
-} from "./batchManager";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
-import { OpCompressor } from "./opCompressor";
-import { OpGroupingManager } from "./opGroupingManager";
-import { OpSplitter } from "./opSplitter";
+} from "./batchManager.js";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import { OpCompressor } from "./opCompressor.js";
+import { OpGroupingManager } from "./opGroupingManager.js";
+import { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;
@@ -119,7 +120,12 @@ export class Outbox {
 	}
 
 	public get messageCount(): number {
-		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+		return (
+			this.attachFlowBatch.length +
+			this.mainBatch.length +
+			this.blobAttachBatch.length +
+			this.idAllocationBatch.length
+		);
 	}
 
 	public get isEmpty(): boolean {
@@ -136,10 +142,12 @@ export class Outbox {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
+		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
 		assert(
 			this.params.config.disablePartialFlush ||
 				(sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums) &&
-					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums)),
+					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums) &&
+					sequenceNumbersMatch(mainBatchSeqNums, idAllocSeqNums)),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -148,7 +156,8 @@ export class Outbox {
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
 			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers) &&
+			sequenceNumbersMatch(idAllocSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -178,12 +187,20 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
+		assert(
+			message.type !== ContainerMessageType.IdAllocation,
+			0x8f8 /* Allocation message submitted to mainBatch. */,
+		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
+		assert(
+			message.type === ContainerMessageType.Attach,
+			0x8f9 /* Non attach message submitted to attachFlowBatch. */,
+		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -215,6 +232,10 @@ export class Outbox {
 	}
 
 	public submitBlobAttach(message: BatchMessage) {
+		assert(
+			message.type === ContainerMessageType.BlobAttach,
+			0x8fa /* Non blobAttach message submitted to blobAttachBatch. */,
+		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -233,6 +254,10 @@ export class Outbox {
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
+		assert(
+			message.type === ContainerMessageType.IdAllocation,
+			0x8fb /* Non allocation message submitted to idAllocationBatch. */,
+		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -315,8 +340,13 @@ export class Outbox {
 			return;
 		}
 
-		const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
-		this.sendBatch(processedBatch);
+		// Did we disconnect?
+		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
+		if (this.params.shouldSend()) {
+			const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
+			this.sendBatch(processedBatch);
+		}
 
 		this.persistBatch(rawBatch.content);
 	}
@@ -404,10 +434,7 @@ export class Outbox {
 	 */
 	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
-
-		// Did we disconnect in the middle of turn-based batch?
-		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-		if (length === 0 || !this.params.shouldSend()) {
+		if (length === 0) {
 			return;
 		}
 

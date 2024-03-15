@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import React from "react";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.
@@ -56,6 +56,13 @@ export class ConsoleVerboseLogger implements ITelemetryBaseLogger {
  * Key for the local storage entry that stores the usage telemetry opt-in setting.
  */
 const telemetryOptInKey: string = "fluid:devtools:telemetry:optIn";
+
+/**
+ * Callback function that indicates if the user has opted in to report telemetry
+ * @returns boolean representing whether telemetry collection is enabled
+ * @internal
+ */
+export const isTelemetryOptInEnabled = (): boolean => getStorageValue(telemetryOptInKey);
 
 /**
  * Hook for getting and setting the usage telemetry opt-in setting, backed by brower's local storage.

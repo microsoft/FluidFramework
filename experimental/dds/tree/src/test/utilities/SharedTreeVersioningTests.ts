@@ -4,32 +4,32 @@
  */
 
 import { strict as assert } from 'assert';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { LoaderHeader } from '@fluidframework/container-definitions';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
-import { StableRange, StablePlace, BuildNode, Change } from '../../ChangeTypes';
-import { Mutable } from '../../Common';
-import { EditLog } from '../../EditLog';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities';
-import { SharedTreeDiagnosticEvent } from '../../EventTypes';
-import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers';
-import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types';
-import { SharedTree } from '../../SharedTree';
-import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { nilUuid } from '../../UuidUtilities';
-import { applyTestEdits } from '../Summary.tests';
-import { buildLeaf } from './TestNode';
+import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { Mutable } from '../../Common.js';
+import { EditLog } from '../../EditLog.js';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
+import { SharedTreeDiagnosticEvent } from '../../EventTypes.js';
+import { NodeId, StableNodeId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { nilUuid } from '../../UuidUtilities.js';
+import { SharedTreeOpType, SharedTreeUpdateOp, TreeNodeSequence, WriteFormat } from '../../persisted-types/index.js';
+import { applyTestEdits } from '../Summary.tests.js';
+import { buildLeaf } from './TestNode.js';
 import {
+	SharedTreeTestingComponents,
+	SharedTreeTestingOptions,
 	applyNoop,
 	setUpLocalServerTestSharedTree,
 	setUpTestTree,
-	SharedTreeTestingComponents,
-	SharedTreeTestingOptions,
 	spyOnSubmittedOps,
 	testTrait,
 	waitForSummary,
-} from './TestUtilities';
+} from './TestUtilities.js';
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
 	const versions: WriteFormat[] = [];
@@ -421,13 +421,6 @@ export function runSharedTreeVersioningTests(
 				}
 			}
 			expect(tree1.equals(tree2)).to.be.true;
-
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(1);
-			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
-			);
 		});
 
 		it('interns strings correctly after upgrading from 0.0.2', async () => {
@@ -501,13 +494,6 @@ export function runSharedTreeVersioningTests(
 			expect(tree.getWriteFormat()).to.equal(WriteFormat.v0_1_1);
 			expect(tree.attributeNodeId(nodeId)).to.equal(attributionId);
 			expect(tree2.attributeNodeId(tree2.convertToNodeId(stableNodeId))).to.equal(attributionId);
-
-			// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
-			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-			expect(events.unexpectedErrors.length).to.equal(1);
-			expect(events.unexpectedErrors[0].eventName).to.equal(
-				'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
-			);
 		});
 
 		describe('telemetry', () => {

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { decompress } from "lz4js";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
 import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "../containerRuntime";
-import { IBatchMetadata } from "../metadata";
-import { IMessageProcessingResult } from "./definitions";
+import { assert } from "@fluidframework/core-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { decompress } from "lz4js";
+import { CompressionAlgorithms } from "../containerRuntime.js";
+import { IBatchMetadata } from "../metadata.js";
+import { IMessageProcessingResult } from "./definitions.js";
 
 /**
  * Compression makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.

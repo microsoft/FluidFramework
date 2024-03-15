@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import fs from "fs";
 import path from "path";
 import {
@@ -59,7 +60,8 @@ function getAssertMessageParams(sourceFile: SourceFile): Node[] {
 
 export const handler: Handler = {
 	name: "assert-short-codes",
-	match: /^(packages|experimental|(common\/lib\/common-utils)|(server\/routerlicious\/packages\/protocol-base)).*\/tsconfig\.json/i,
+	match:
+		/^(packages|experimental|(common\/lib\/common-utils)|(server\/routerlicious\/packages\/protocol-base)).*\/tsconfig\.json/i,
 	handler: async (tsconfigPath) => {
 		if (tsconfigPath.includes("test")) {
 			return;
@@ -116,10 +118,8 @@ export const handler: Handler = {
 							// way. If we clean up the assert comments that have them, this code could go away.
 							const shouldRemoveSurroundingQuotes = (input: string): boolean => {
 								return (
-									(input.startsWith('"') &&
-										input.indexOf('"', 1) === input.length - 1) ||
-									(input.startsWith("`") &&
-										input.indexOf("`", 1) === input.length - 1)
+									(input.startsWith('"') && input.indexOf('"', 1) === input.length - 1) ||
+									(input.startsWith("`") && input.indexOf("`", 1) === input.length - 1)
 								);
 							};
 
@@ -157,9 +157,7 @@ export const handler: Handler = {
 		if (templateErrors.length !== 0) {
 			errorMessages.push(
 				`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
-					`Use a string literal instead.\n${templateErrors
-						.map(getCallsiteString)
-						.join("\n")}`,
+					`Use a string literal instead.\n${templateErrors.map(getCallsiteString).join("\n")}`,
 			);
 		}
 		if (otherErrors.length !== 0) {
@@ -179,8 +177,7 @@ export const handler: Handler = {
 		function isStringLiteral(msg: Node): msg is StringLiteral | NoSubstitutionTemplateLiteral {
 			const kind = msg.getKind();
 			return (
-				kind === SyntaxKind.StringLiteral ||
-				kind == SyntaxKind.NoSubstitutionTemplateLiteral
+				kind === SyntaxKind.StringLiteral || kind == SyntaxKind.NoSubstitutionTemplateLiteral
 			);
 		}
 

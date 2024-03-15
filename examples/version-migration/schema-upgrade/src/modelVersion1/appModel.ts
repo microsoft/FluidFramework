@@ -10,9 +10,9 @@ import { ConnectionState } from "@fluidframework/container-loader";
 
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type {
+	IInventoryList,
 	IInventoryListAppModel,
 	IInventoryListAppModelEvents,
-	IInventoryList,
 } from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.

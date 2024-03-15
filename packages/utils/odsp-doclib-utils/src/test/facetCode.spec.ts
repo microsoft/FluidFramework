@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { parseFacetCodes, tryParseErrorResponse } from "../odspErrorUtils";
+import { parseFacetCodes, tryParseErrorResponse } from "../odspErrorUtils.js";
 
 describe("parseFacetCodes", () => {
 	it("can parse regular error", () => {

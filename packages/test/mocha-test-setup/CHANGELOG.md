@@ -1,4 +1,12 @@
-# @fluidframework/mocha-test-setup
+# @fluid-internal/mocha-test-setup
+
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   @fluidframework/mocha-test-setup moved to @fluid-internal/mocha-test-setup ([#19759](https://github.com/microsoft/FluidFramework/issues/19759)) [d530594684](https://github.com/microsoft/FluidFramework/commits/d530594684e074caa3c1899fdf332d3a3208969f)
+
+    The mocha-test-setup package is intended to aid in testing internal to the FluidFramework repo, and should not be used outside of the repo.
 
 ## 2.0.0-rc.1.0.0
 

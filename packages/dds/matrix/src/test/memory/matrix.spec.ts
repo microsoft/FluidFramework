@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { SharedMatrix, SharedMatrixFactory } from "../..";
+import { SharedMatrix, SharedMatrixFactory } from "../../index.js";
 
 function createLocalMatrix(id: string) {
 	return new SharedMatrix(

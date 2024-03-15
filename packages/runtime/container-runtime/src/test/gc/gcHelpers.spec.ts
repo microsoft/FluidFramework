@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { GCFeatureMatrix } from "../../gc";
 // eslint-disable-next-line import/no-internal-modules
-import { shouldAllowGcSweep } from "../../gc/gcHelpers";
+import { shouldAllowGcSweep } from "../../gc/gcHelpers.js";
+import { GCFeatureMatrix } from "../../gc/index.js";
 
 describe("Garbage Collection Helpers Tests", () => {
 	describe("[TEMP] shouldAllowGcTombstoneEnforcement - Show behavior change as it's replaced by shouldAllowGcSweep", () => {

@@ -4,7 +4,6 @@
  */
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -14,12 +13,13 @@ import {
 	done,
 	makeRandom,
 } from '@fluid-private/stochastic-test-utils';
-import { Side, TraitMap, WriteFormat } from '../../persisted-types';
-import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
-import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';
-import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers';
-import { fail } from '../../Common';
-import { rangeFromStableRange } from '../../TreeViewUtilities';
+import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { fail } from '../../Common.js';
+import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView.js';
+import { rangeFromStableRange } from '../../TreeViewUtilities.js';
+import { Side, TraitMap, WriteFormat } from '../../persisted-types/index.js';
 import {
 	EditGenerationConfig,
 	FuzzChange,
@@ -33,7 +33,7 @@ import {
 	OperationGenerationConfig,
 	TreeContext,
 	TreeLeave,
-} from './Types';
+} from './Types.js';
 
 const defaultJoinConfig: Required<JoinGenerationConfig> = {
 	maximumActiveCollaborators: 10,

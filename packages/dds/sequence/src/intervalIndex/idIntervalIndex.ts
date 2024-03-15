@@ -4,10 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISerializableInterval } from "../intervals";
-import { IntervalIndex } from "./intervalIndex";
-
-const reservedIntervalIdKey = "intervalId";
+import { reservedIntervalIdKey } from "../intervalCollection.js";
+import { ISerializableInterval } from "../intervals/index.js";
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @internal

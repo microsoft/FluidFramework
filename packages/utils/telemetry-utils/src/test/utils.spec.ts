@@ -9,10 +9,10 @@ import {
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
-import { IEventSampler, createSampledLogger } from "../utils";
-import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger";
-import { mixinMonitoringContext } from "../config";
-import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes";
+import { mixinMonitoringContext } from "../config.js";
+import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
+import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";
+import { IEventSampler, createSampledLogger } from "../utils.js";
 
 describe("tagData", () => {
 	it("tagData with data", () => {

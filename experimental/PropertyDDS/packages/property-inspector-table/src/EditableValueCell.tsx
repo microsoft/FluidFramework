@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+
+import { WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { iconMarginRight, iconWidth, InspectorMessages, unit } from "./constants";
 import { Field } from "./Field";
 import { IEditableValueCellProps } from "./InspectorTableTypes";
 import { TooltipedField } from "./TooltipedField";
+import { InspectorMessages, iconMarginRight, iconWidth, unit } from "./constants";
 
 const styles = () =>
 	createStyles({

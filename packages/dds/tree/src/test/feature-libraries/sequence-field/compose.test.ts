@@ -4,21 +4,21 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { mintRevisionTag } from "../../utils.js";
 import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionInfo,
 	RevisionTag,
+	TreeNodeSchemaIdentifier,
 	makeAnonChange,
 	tagChange,
-	TreeNodeSchemaIdentifier,
 	tagRollbackInverse,
-	ChangesetLocalId,
-	ChangeAtomId,
-	RevisionInfo,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset, cases } from "./testEdits.js";
 import {
 	areComposable,
 	assertChangesetsEqual,
@@ -1206,6 +1206,53 @@ export function testCompose() {
 					);
 					assertChangesetsEqual(composed, expected);
 				}
+			}));
+
+		it("move1 ○ [return1, move2, move3]", () =>
+			withConfig(() => {
+				const move1 = tagChange(Change.move(3, 1, 2), tag1);
+				const return1 = tagRollbackInverse(
+					Change.return(2, 1, 4, {
+						revision: tag1,
+						localId: brand(0),
+					}),
+					tag2,
+					tag1,
+				);
+				const move2 = tagChange(Change.move(3, 1, 1), tag3);
+				const move3 = tagChange(Change.move(1, 1, 0), tag4);
+				const part2 = shallowCompose([return1, move2, move3]);
+
+				const composed = shallowCompose(
+					[move1, makeAnonChange(part2)],
+					[
+						{ revision: tag1 },
+						{ revision: tag2, rollbackOf: tag1 },
+						{ revision: tag3 },
+						{ revision: tag4 },
+					],
+				);
+
+				const moveId1: ChangeAtomId = { revision: tag3, localId: brand(0) };
+				const moveId2: ChangeAtomId = { revision: tag4, localId: brand(0) };
+
+				const [moveOut1, moveIn1] = Mark.move(1, moveId1);
+				moveOut1.finalEndpoint = moveId2;
+
+				const [moveOut2, moveIn2] = Mark.move(1, moveId2);
+				moveIn2.finalEndpoint = moveId1;
+
+				const expected = [
+					moveIn2,
+					Mark.skip(1),
+					Mark.attachAndDetach(moveIn1, moveOut2),
+					Mark.skip(1),
+					Mark.tomb(tag1, brand(0)),
+					Mark.skip(1),
+					moveOut1,
+				];
+
+				assertChangesetsEqual(composed, expected);
 			}));
 
 		it("[move1, move2] ○ [return2, move3]", () =>

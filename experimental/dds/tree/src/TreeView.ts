@@ -4,10 +4,10 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { copyPropertyIfDefined, fail } from './Common';
-import { NodeId, TraitLabel } from './Identifiers';
-import { Delta, Forest, isParentedForestNode } from './Forest';
-import { NodeData, Side } from './persisted-types';
+import { copyPropertyIfDefined, fail } from './Common.js';
+import { Delta, Forest, isParentedForestNode } from './Forest.js';
+import { NodeId, TraitLabel } from './Identifiers.js';
+import { NodeData, Side } from './persisted-types/index.js';
 
 /**
  * Specifies the location of a trait (a labeled sequence of nodes) within the tree.
@@ -318,6 +318,5 @@ export abstract class TreeView {
 }
 
 function getIndex(side: Side, index: TraitNodeIndex): PlaceIndex {
-	// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 	return (side + index) as PlaceIndex;
 }

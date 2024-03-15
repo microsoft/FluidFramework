@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { type ContainerStateChangeKind } from "./Container";
+import { type ContainerStateChangeKind } from "./Container.js";
 
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the devtools.
