@@ -194,14 +194,16 @@ describe("Fluid audience", () => {
 			"test-user-id-2",
 			"test-user-name-2",
 			undefined,
-			undefined,
+			configProvider({
+				"Fluid.Container.ForceReadConnection": true,
+			}),
 			[ScopeType.DocRead],
 		);
-		const { container: container2, services: partnerServices } =
+		const { container: partnerContainer, services: partnerServices } =
 			await partnerClient.getContainer(containerId, schema);
 
-		if (container2.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise((resolve) => container2.once("connected", () => resolve()), {
+		if (partnerContainer.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
 				durationMs: connectTimeoutMs,
 				errorMsg: "container connect() timeout",
 			});
@@ -211,6 +213,15 @@ describe("Fluid audience", () => {
 		const partnerSelf = await waitForMember(partnerServices.audience, "test-user-id-2");
 		assert.notStrictEqual(partnerSelf, undefined, "We should have partner at this point.");
 
+		const originalSelfSeenByPartner = await waitForMember(
+			partnerServices.audience,
+			"test-user-id-1",
+		);
+		assert.notStrictEqual(
+			originalSelfSeenByPartner,
+			undefined,
+			"Partner should see original at this point.",
+		);
 		const partnerMembers = partnerServices.audience.getMembers();
 		assert.strictEqual(partnerMembers.size, 2, "Partner should see two members at this point.");
 
@@ -265,15 +276,25 @@ describe("Fluid audience", () => {
 			"test-user-id-2",
 			"test-user-name-2",
 			undefined,
-			undefined,
+			configProvider({
+				"Fluid.Container.ForceReadConnection": true,
+			}),
 			[ScopeType.DocRead],
 		);
-		const { services: partnerServices } = await partnerClient.getContainer(containerId, schema);
+		const { container: partnerContainer, services: partnerServices } =
+			await partnerClient.getContainer(containerId, schema);
 
+		if (partnerContainer.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partnerSelf = await waitForMember(partnerServices.audience, "test-user-id-2");
 		assert.notStrictEqual(partnerSelf, undefined, "We should have partner at this point.");
 
+		await waitForMember(partnerServices.audience, "test-user-id-1");
 		let members = partnerServices.audience.getMembers();
 		assert.strictEqual(members.size, 2, "We should have two members at this point.");
 
@@ -300,13 +321,20 @@ describe("Fluid audience", () => {
 			"test-user-id-3",
 			"test-user-name-3",
 			undefined,
-			undefined,
+			configProvider({
+				"Fluid.Container.ForceReadConnection": true,
+			}),
 			[ScopeType.DocRead],
 		);
-		const { services: partnerServices2 } = await partnerClient2.getContainer(
-			containerId,
-			schema,
-		);
+		const { container: partnerContainer2, services: partnerServices2 } =
+			await partnerClient2.getContainer(containerId, schema);
+
+		if (partnerContainer2.connectionState !== ConnectionState.Connected) {
+			await timeoutPromise((resolve) => partnerContainer.once("connected", () => resolve()), {
+				durationMs: connectTimeoutMs,
+				errorMsg: "container connect() timeout",
+			});
+		}
 
 		/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 		const partnerSelf2 = await waitForMember(partnerServices2.audience, "test-user-id-3");

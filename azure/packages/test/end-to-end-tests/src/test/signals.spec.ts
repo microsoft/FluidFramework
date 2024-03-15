@@ -46,6 +46,7 @@ async function createSignalListenerPromise<T>(
 }
 
 describe("Fluid Signals", () => {
+	const connectedContainers: IFluidContainer[] = [];
 	const connectTimeoutMs = 10_000;
 	const user1: AzureUser = {
 		id: "test-user-id-1",
@@ -59,6 +60,13 @@ describe("Fluid Signals", () => {
 		id: "test-user-id-1",
 		name: "test-user-name-2",
 	};
+
+	afterEach(() => {
+		connectedContainers.forEach((container) => {
+			container.disconnect();
+			container.dispose();
+		});
+	});
 
 	const getOrCreateSignalerContainer = async (
 		id: string | undefined,
@@ -95,6 +103,7 @@ describe("Fluid Signals", () => {
 				errorMsg: "container connect() timeout",
 			});
 		}
+		connectedContainers.push(container);
 
 		assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 		assert.strictEqual(
@@ -170,13 +179,17 @@ describe("Fluid Signals", () => {
 		const { signaler: readSignaler } = await getOrCreateSignalerContainer(
 			containerId,
 			user2,
-			undefined,
+			configProvider({
+				"Fluid.Container.ForceReadConnection": true,
+			}),
 			[ScopeType.DocRead],
 		);
 		const { signaler: readSignaler2 } = await getOrCreateSignalerContainer(
 			containerId,
 			user3,
-			undefined,
+			configProvider({
+				"Fluid.Container.ForceReadConnection": true,
+			}),
 			[ScopeType.DocRead],
 		);
 

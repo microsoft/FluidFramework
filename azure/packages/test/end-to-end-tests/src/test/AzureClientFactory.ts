@@ -53,7 +53,7 @@ export function createAzureClient(
 		  }
 		: {
 				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
-				endpoint: "http://localhost:7071",
+				endpoint: "http://localhost:7070",
 				type: "local",
 		  };
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
