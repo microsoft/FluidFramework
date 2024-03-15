@@ -36,8 +36,8 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest",
-		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
+		"build:test": "npm run build:test:utils && npm run build:test:mocha && npm run build:test:jest:cjs",
+		"build:test:jest:cjs": "fluid-tsc commonjs --project ./src/test/jest/tsconfig.json",
 		"build:test:mocha": "tsc --project ./src/test/screenshot/tsconfig.json",
 		"build:test:utils": "concurrently npm:build:test:utils:cjs npm:build:test:utils:esm",
 		"build:test:utils:cjs": "fluid-tsc commonjs --project ./src/test/utils/tsconfig.cjs.json",
@@ -155,7 +155,7 @@
 				],
 				"script": false
 			},
-			"build:test:jest": [
+			"build:test:jest:cjs": [
 				"...",
 				"build:test:utils:cjs"
 			],

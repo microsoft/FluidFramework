@@ -1,19 +1,18 @@
 {
-	"extends": "../../../../../../../common/build/build-common/tsconfig.test.json",
+	// This config must be used in a "type": "commonjs" environment. (Use fluid-tsc commonjs.)
+	"extends": "../../../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../../dist/test/jest",
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
 		"types": [],
 	},
 	"references": [
 		{
-			"path": "../../../tsconfig.json",
+			"path": "../../../tsconfig.cjs.json",
 		},
 		{
-			"path": "../utils/tsconfig.json",
+			"path": "../utils/tsconfig.cjs.json",
 		},
 	],
 }
