@@ -6,9 +6,10 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
+
+/* eslint-disable import/no-internal-modules */
 import { CSVFileLogger } from "../logger/csvFileLogger";
 import { IFileLogger } from "../logger/fileLogger";
-/* eslint-disable import/no-internal-modules */
 import { JSONFileLogger } from "../logger/jsonFileLogger";
 /* eslint-enable import/no-internal-modules */
 
