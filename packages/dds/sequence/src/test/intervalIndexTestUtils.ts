@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import { v4 as uuid } from "uuid";
 import { Interval } from "../intervals/index.js";
 
 const reservedIntervalIdKey = "intervalId";

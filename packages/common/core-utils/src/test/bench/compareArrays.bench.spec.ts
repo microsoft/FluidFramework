@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { compareArrays } from "@fluidframework/core-utils";
 
 const a4 = Array.from({ length: 4 }).fill(0);

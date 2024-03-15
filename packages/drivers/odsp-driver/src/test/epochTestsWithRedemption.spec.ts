@@ -5,22 +5,22 @@
 
 import { strict as assert } from "node:assert";
 import { Deferred } from "@fluidframework/core-utils";
-import { MockLogger, type IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import {
-	OdspErrorTypes,
-	IOdspResolvedUrl,
 	IEntry,
+	IOdspResolvedUrl,
+	OdspErrorTypes,
 	snapshotKey,
 } from "@fluidframework/odsp-driver-definitions";
+import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { EpochTrackerWithRedemption } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
-	mockFetchSingle,
-	mockFetchMultiple,
-	okResponse,
-	notFound,
 	MockResponse,
+	mockFetchMultiple,
+	mockFetchSingle,
+	notFound,
+	okResponse,
 } from "./mockFetch.js";
 
 class DeferralWithCallback extends Deferred<void> {

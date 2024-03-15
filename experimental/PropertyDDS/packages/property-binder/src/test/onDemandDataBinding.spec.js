@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 /* globals sinon, expect  */
 /* eslint spaced-comment: 0 */
 /*
@@ -13,26 +14,25 @@
  *
  */
 import _ from "lodash";
-import { DataBinding } from "../data_binder/dataBinding";
 import { DataBinder } from "../data_binder/dataBinder";
+import { DataBinding } from "../data_binder/dataBinding";
 import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
-import {
-	registerTestTemplates,
-	ParentTemplate,
-	ChildTemplate,
-	InheritedChildTemplate,
-	PrimitiveChildrenTemplate,
-	ReferenceParentTemplate,
-} from "./testTemplates";
-import {
-	ParentDataBinding,
-	ChildDataBinding,
-	PrimitiveChildrenDataBinding,
-	InheritedChildDataBinding,
-} from "./testDataBindings";
 import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import {
+	ChildDataBinding,
+	InheritedChildDataBinding,
+	ParentDataBinding,
+	PrimitiveChildrenDataBinding,
+} from "./testDataBindings";
+import {
+	ChildTemplate,
+	InheritedChildTemplate,
+	ParentTemplate,
+	PrimitiveChildrenTemplate,
+	ReferenceParentTemplate,
+	registerTestTemplates,
+} from "./testTemplates";
 
 describe("on demand DataBindings", function () {
 	var dataBinder, workspace;

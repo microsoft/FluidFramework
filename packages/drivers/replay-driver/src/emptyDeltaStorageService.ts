@@ -4,8 +4,8 @@
  */
 
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { emptyMessageStream } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 export class EmptyDeltaStorageService implements IDocumentDeltaStorageService {
 	/**

@@ -8,16 +8,7 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IClient,
-	ICreateBlobResponse,
-	ISnapshotTree,
-	ISummaryBlob,
-	ISummaryHandle,
-	ISummaryTree,
-	IVersion,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	FetchSource,
 	IDocumentDeltaConnection,
@@ -31,11 +22,20 @@ import {
 	IResolvedUrl,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	applyStorageCompression,
+	IClient,
+	ICreateBlobResponse,
+	ISnapshotTree,
+	ISummaryBlob,
+	ISummaryHandle,
+	ISummaryTree,
+	IVersion,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import {
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	applyStorageCompression,
 	blobHeadersBlobName,
 } from "../adapters/index.js";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";

@@ -5,13 +5,13 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import * as fs from "fs";
 import assert from "assert";
+import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { createGroupOp } from "../opBuilder.js";
-import { TestClient } from "./testClient.js";
+import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
 import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 
 describe("MergeTree.Client", () => {

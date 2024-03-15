@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { SubSequence } from "../../sharedSequence.js";
 
 describe("SharedSequence memory usage", () => {

@@ -5,12 +5,12 @@
 
 import { WithStyles } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import { withStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import { withStyles } from "@material-ui/core/styles";
 import * as React from "react";
+import { ErrorPopup } from "./ErrorPopup";
 import { FloatingLabelTextField } from "./FloatingLabelTextField";
 import { InspectorModal } from "./InspectorModal";
-import { ErrorPopup } from "./ErrorPopup";
 import { SvgIcon } from "./SVGIcon";
 
 const styles = () => ({

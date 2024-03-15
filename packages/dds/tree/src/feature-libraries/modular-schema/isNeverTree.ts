@@ -4,15 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../../util/index.js";
 import {
-	TreeNodeStoredSchema,
-	TreeFieldStoredSchema,
-	TreeStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
 } from "../../core/index.js";
+import { fail } from "../../util/index.js";
 import { Multiplicity } from "../multiplicity.js";
 import { FullSchemaPolicy } from "./fieldKind.js";
 

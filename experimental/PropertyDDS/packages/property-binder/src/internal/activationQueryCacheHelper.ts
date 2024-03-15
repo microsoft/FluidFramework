@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import type { ExtractedContext } from "@fluid-experimental/property-changeset";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 
 import * as _ from "underscore";
 import { getLocalOrRemoteSchema } from "../data_binder/internalUtils.js";

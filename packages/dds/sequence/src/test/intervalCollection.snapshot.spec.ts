@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection.js";
+import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
 import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 async function loadSharedString(

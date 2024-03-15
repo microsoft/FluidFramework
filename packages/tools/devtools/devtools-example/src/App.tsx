@@ -5,41 +5,41 @@
 
 import {
 	type BrandVariants,
-	createLightTheme,
 	FluentProvider,
-	makeStyles,
-	shorthands,
 	Spinner,
 	Text,
 	type Theme,
+	createLightTheme,
+	makeStyles,
+	shorthands,
 } from "@fluentui/react-components";
 import React from "react";
 
-import {
-	type ContainerKey,
-	createDevtoolsLogger,
-	type HasContainerKey,
-	type IDevtoolsLogger,
-	type IFluidDevtools,
-	initializeDevtools,
-} from "@fluidframework/devtools-core";
-import { type SharedCounter } from "@fluidframework/counter";
 import {
 	CollaborativeTextArea,
 	type SessionStorageModelLoader,
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
+import { type SharedCounter } from "@fluidframework/counter";
+import {
+	type ContainerKey,
+	type HasContainerKey,
+	type IDevtoolsLogger,
+	type IFluidDevtools,
+	createDevtoolsLogger,
+	initializeDevtools,
+} from "@fluidframework/devtools-core";
 import { type SharedMatrix } from "@fluidframework/matrix";
 import { type SharedString } from "@fluidframework/sequence";
 import {
 	type ContainerInfo,
-	createLoader,
 	createContainer,
+	createLoader,
 	loadExistingContainer,
 } from "./ClientUtilities";
-import { CounterWidget, EmojiGrid } from "./widgets";
 import { type IAppModel } from "./Container";
 import { type AppData } from "./FluidObject";
+import { CounterWidget, EmojiGrid } from "./widgets";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";

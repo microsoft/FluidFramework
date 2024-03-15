@@ -4,10 +4,10 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
 import { PropertySet } from "./properties.js";
-import { ISegment } from "./mergeTreeNodes.js";
 
 /**
  * @alpha

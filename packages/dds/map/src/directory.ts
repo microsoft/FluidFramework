@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { RedBlackTree } from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	SharedObject,
 	ValueType,
 	parseHandles,
 } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import path from "path-browserify";
-import { RedBlackTree } from "@fluidframework/merge-tree";
 import {
 	IDirectory,
 	IDirectoryEvents,

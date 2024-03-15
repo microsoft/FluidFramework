@@ -8,8 +8,8 @@ import { DataBinder } from "../data_binder/dataBinder";
 
 import { catchConsoleErrors } from "./catchConsoleError";
 
-import { DataBinding } from "../data_binder/dataBinding";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { DataBinding } from "../data_binder/dataBinding";
 import { ActivationQueryCacheHelper } from "../internal/activationQueryCacheHelper";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 

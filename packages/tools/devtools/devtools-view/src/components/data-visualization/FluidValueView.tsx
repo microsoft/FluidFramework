@@ -10,8 +10,8 @@ import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
 import { EditableView } from "./EditableView";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeItem } from "./TreeItem";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link ValueView} input props.
