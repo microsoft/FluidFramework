@@ -344,7 +344,7 @@ export class Outbox {
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
 			const processedBatch = this.compressBatch(
-				shouldGroup ? rawBatch : this.params.groupingManager.groupBatch(rawBatch),
+				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 			);
 			this.sendBatch(processedBatch);
 		}
