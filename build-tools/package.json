@@ -28,6 +28,7 @@
 		"commit": "git-cz",
 		"format": "npm run format:biome",
 		"format:biome": "biome check --apply .",
+		"format:packageJson": "biome check --apply package.json && biome check --apply lerna.json",
 		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list --no-private -g build-tools --feed internal-dev --outFile feeds/internal-dev.txt",

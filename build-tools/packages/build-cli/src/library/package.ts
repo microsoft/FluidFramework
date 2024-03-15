@@ -509,6 +509,8 @@ export async function setVersion(
 				options,
 			],
 			["pnpm", ["-r", "run", "build:genver"], options],
+			["pnpm", ["-r", "run", "format:packageJson"], options],
+			["pnpm", ["-w", "run", "format:packageJson"], options],
 		);
 	} else {
 		options = {
