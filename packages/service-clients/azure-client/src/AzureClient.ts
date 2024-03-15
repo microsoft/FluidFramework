@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	AttachState,
 	type IContainer,
@@ -321,7 +322,7 @@ export class AzureClient {
 		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
 		assert(
 			rootDataObject.IRootDataObject !== undefined,
-			"entryPoint must be of type IRootDataObject",
+			0x90a /* entryPoint must be of type IRootDataObject */,
 		);
 		return rootDataObject.IRootDataObject;
 	}

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
 import { Client, PropertyAction, RedBlackTree } from "@fluidframework/merge-tree";
@@ -11,10 +12,10 @@ import {
 	IntervalType,
 	SequenceInterval,
 	sequenceIntervalHelpers,
-} from "../intervals";
-import { SharedString } from "../sharedString";
-import { IntervalIndex } from "./intervalIndex";
-import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils";
+} from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
+import { IntervalIndex } from "./intervalIndex.js";
+import { HasComparisonOverride, compareOverrideables, forceCompare } from "./intervalIndexUtils.js";
 
 /**
  * Collection of intervals.

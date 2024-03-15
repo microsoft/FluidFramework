@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
-	IMapSetOperation,
-	IMapDeleteOperation,
-	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapKeyEditLocalOpMetadata,
+	IMapSetOperation,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
-import { MapFactory, AttributableMap } from "../../map.js";
+import { AttributableMap, MapFactory } from "../../map.js";
 import { IMapOperation } from "../../mapKernel.js";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): TestMap {
@@ -369,7 +369,9 @@ describe("Map", () => {
 			 * when it gets a remote op with the same key, it ignores it as it has a pending set with the same key.
 			 */
 			it("should correctly process a set operation sent in local state", async () => {
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
+					attachState: AttachState.Detached,
+				});
 				const map1 = new TestMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
 
 				// Set a key in local state.
@@ -380,8 +382,7 @@ describe("Map", () => {
 				// Load a new SharedMap in connected state from the snapshot of the first one.
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = MockSharedObjectServices.createFromSummary(
 					map1.getAttachSummary().summary,
 				);
@@ -392,8 +393,7 @@ describe("Map", () => {
 
 				// Now connect the first SharedMap
 				dataStoreRuntime1.setAttachState(AttachState.Attached);
-				const containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),

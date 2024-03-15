@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOp } from "../ops.js";
-import { TextSegment } from "../textSegment.js";
+import { IMergeTreeOptions } from "../index.js";
 import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
-import { matchProperties, PropertySet } from "../properties.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes.js";
-import { IMergeTreeOptions } from "../index.js";
+import { IMergeTreeOp } from "../ops.js";
+import { PropertySet, matchProperties } from "../properties.js";
+import { TextSegment } from "../textSegment.js";
 import { TestClient } from "./testClient.js";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
@@ -60,10 +60,12 @@ export function createClientsAtInitialState<
 	...clientIds: TClientName[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {
 	const setup = (c: TestClient) => {
-		c.insertTextLocal(0, opts.initialState);
-		while (c.getText().includes("-")) {
-			const index = c.getText().indexOf("-");
-			c.removeRangeLocal(index, index + 1);
+		if (opts.initialState.length > 0) {
+			c.insertTextLocal(0, opts.initialState);
+			while (c.getText().includes("-")) {
+				const index = c.getText().indexOf("-");
+				c.removeRangeLocal(index, index + 1);
+			}
 		}
 	};
 	const all: TestClient[] = [];

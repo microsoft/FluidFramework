@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
-	createDDSFuzzSuite,
-	DDSFuzzTestState,
 	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
-import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators.js";
+import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";

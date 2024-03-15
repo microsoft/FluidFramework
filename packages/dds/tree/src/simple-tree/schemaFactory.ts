@@ -5,30 +5,30 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { leaf } from "../domains/index.js";
 import {
-	FlexTreeNode,
+	FlexFieldNodeSchema,
 	LeafNodeSchema as FlexLeafNodeSchema,
-	isFlexTreeNode,
+	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNode,
+	isFlexTreeNode,
+	isFluidHandle,
 	isLazy,
 	markEager,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	isFluidHandle,
+	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { leaf } from "../domains/index.js";
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
+	arrayNodePrototypeProperties,
 	createNodeProxy,
 	createRawNodeProxy,
 	getClassSchema,
 	getSequenceField,
-	arrayNodePrototypeProperties,
-	mapStaticDispatchMap,
 	isTreeNode,
+	mapStaticDispatchMap,
 } from "./proxies.js";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -49,8 +49,9 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode } from "./types.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -68,7 +69,12 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	public readonly kind = NodeKind.Leaf;
 	public readonly info: T["info"];
 	public readonly implicitlyConstructable = true as const;
-	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
+	public create(data: TreeValue<T["info"]> | FlexTreeNode): TreeValue<T["info"]> {
+		if (isFlexTreeNode(data)) {
+			const value = data.value;
+			assert(valueSchemaAllows(this.info, value), "invalid value");
+			return value;
+		}
 		return data;
 	}
 
@@ -413,7 +419,8 @@ export class SchemaFactory<
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true
+		true,
+		T
 	>;
 
 	/**
@@ -434,7 +441,8 @@ export class SchemaFactory<
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true
+		true,
+		T
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
@@ -445,7 +453,8 @@ export class SchemaFactory<
 		NodeKind.Map,
 		TreeMapNode<T>,
 		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-		true
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -465,7 +474,8 @@ export class SchemaFactory<
 				NodeKind.Map,
 				TreeMapNode<T>,
 				Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-				true
+				true,
+				T
 			>;
 		}
 		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -523,7 +533,8 @@ export class SchemaFactory<
 			NodeKind.Map,
 			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
-			ImplicitlyConstructable
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 
@@ -567,7 +578,8 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	/**
@@ -590,7 +602,8 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	public array<const T extends ImplicitAllowedTypes>(
@@ -601,7 +614,8 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -613,7 +627,8 @@ export class SchemaFactory<
 				NodeKind.Array,
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				true
+				true,
+				T
 			>;
 		}
 		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -683,7 +698,8 @@ export class SchemaFactory<
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 

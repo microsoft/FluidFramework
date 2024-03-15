@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as childProcess from "node:child_process";
 import * as path from "node:path";
 import { existsSync } from "node:fs";

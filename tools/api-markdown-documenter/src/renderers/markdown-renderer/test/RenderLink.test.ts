@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { LinkNode, PlainTextNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { LinkNode, PlainTextNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("Link Markdown rendering tests", () => {
 	it("Can render a simple LinkNode", () => {

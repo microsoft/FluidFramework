@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";
@@ -93,31 +93,6 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
  * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-	/**
-	 * Create a new shared map.
-	 * @param runtime - The data store runtime that the new shared map belongs to.
-	 * @param id - Optional name of the shared map.
-	 * @returns Newly created shared map.
-	 *
-	 * @example
-	 * To create a `SharedMap`, call the static create method:
-	 *
-	 * ```typescript
-	 * const myMap = SharedMap.create(this.runtime, id);
-	 * ```
-	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
-		return runtime.createChannel(id, MapFactory.Type) as SharedMap;
-	}
-
-	/**
-	 * Get a factory for SharedMap to register with the data store.
-	 * @returns A factory that creates SharedMaps and loads them from storage.
-	 */
-	public static getFactory(): IChannelFactory<ISharedMap> {
-		return new MapFactory();
-	}
-
 	/**
 	 * String representation for the class.
 	 */

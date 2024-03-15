@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Resizable } from "re-resizable";
 import React from "react";
 import ReactDOM from "react-dom";

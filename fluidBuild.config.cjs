@@ -107,7 +107,7 @@ module.exports = {
 			script: false,
 		},
 		"format": {
-			dependsOn: ["format:prettier", "format:biome"],
+			dependsOn: ["prettier:fix", "format:prettier", "format:biome"],
 			script: false,
 		},
 		"check:biome": [],
@@ -215,7 +215,6 @@ module.exports = {
 				// These files all require a node shebang at the top of the file.
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
@@ -253,8 +252,8 @@ module.exports = {
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
-				// These packages use biome for formatting
-				"build-tools/",
+				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				".*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
@@ -344,6 +343,7 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 
 				// Tools packages that are not library packages
+				"^azure/packages/azure-local-service/",
 				"^packages/tools/fetch-tool/",
 				"^tools/test-tools/",
 

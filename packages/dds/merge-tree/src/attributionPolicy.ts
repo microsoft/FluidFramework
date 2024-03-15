@@ -4,11 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { AttributionPolicy } from "./mergeTree.js";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { AttributionCollection } from "./attributionCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
+import { AttributionPolicy } from "./mergeTree.js";
 import {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -17,7 +18,6 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "./ops.js";
-import { AttributionCollection } from "./attributionCollection.js";
 
 // Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
 // This is because the base callbacks don't always have enough information to infer whether the op being

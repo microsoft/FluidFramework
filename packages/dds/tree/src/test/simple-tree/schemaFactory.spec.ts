@@ -5,10 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../../simple-tree/proxies.js";
+import {
+	SchemaFactory,
+	schemaFromValue,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaFactory.js";
 import {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
@@ -16,15 +23,8 @@ import {
 	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
-import {
-	SchemaFactory,
-	schemaFromValue,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
-// eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { hydrate } from "./utils.js";
 
 {

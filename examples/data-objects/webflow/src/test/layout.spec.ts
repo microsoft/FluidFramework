@@ -5,14 +5,16 @@
 
 // eslint-disable-next-line import/no-unassigned-import
 import "jsdom-global/register.js";
-window.performance.mark ??= () => undefined as PerformanceMark;
-window.performance.measure ??= () => undefined as PerformanceMeasure;
+
+// 'jsdom-global' does not polyfill mark() and measure().  We stub them ourselves.
+window.performance.mark ??= () => undefined as unknown as PerformanceMark;
+window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 
 import { strict as assert } from "assert";
-import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { htmlFormatter } from "../index.js";
+import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { FlowDocument } from "../document/index.js";
+import { htmlFormatter } from "../index.js";
 import { Layout } from "../view/layout.js";
 
 interface ISnapshotNode {
@@ -58,8 +60,11 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 
 	afterEach(() => {
 		layout.remove();
-		layout = undefined;
-		root = undefined;
+
+		// Out of paranoia, force setting to 'undefined' to ensure that 'layout' and 'root'
+		// are re-created between tests.
+		layout = undefined as any;
+		root = undefined as any;
 	});
 
 	const getHTML = () => root.innerHTML;

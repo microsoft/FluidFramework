@@ -3,25 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import {
-	ISummaryTree,
-	ISnapshotTree,
-	SummaryType,
-	IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils";
-import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import { IPendingDetachedContainerState } from "./container.js";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -190,7 +185,7 @@ export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 ): { tree: ISnapshotTree; blobs: ISerializableBlobContents } => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
-		"Protocol and App summary trees should be present",
+		0x8e6 /* Protocol and App summary trees should be present */,
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
 	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
