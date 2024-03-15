@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { ContainerMessageType } from "../../index.js";
 import {
 	IMessageProcessingResult,
 	OpDecompressor,
@@ -13,7 +14,6 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
-import { ContainerMessageType } from "../../index.js";
 
 describe("RemoteMessageProcessor", () => {
 	const stamp = (

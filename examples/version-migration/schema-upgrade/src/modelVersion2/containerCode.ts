@@ -5,8 +5,8 @@
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
 import {
-	ModelContainerRuntimeFactory,
 	MigrationToolInstantiationFactory,
+	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";

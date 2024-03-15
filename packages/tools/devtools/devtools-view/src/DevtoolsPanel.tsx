@@ -5,8 +5,8 @@
 
 import React from "react";
 
-import { type IMessageRelay } from "@fluidframework/devtools-core";
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type IMessageRelay } from "@fluidframework/devtools-core";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
 

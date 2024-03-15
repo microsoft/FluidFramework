@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { SharedString } from "@fluidframework/sequence";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { SharedString } from "@fluidframework/sequence";
 
 export interface ICollaborativeTextAppModel {
 	readonly collaborativeText: CollaborativeText;
