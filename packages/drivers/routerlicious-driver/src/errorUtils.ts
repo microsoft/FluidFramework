@@ -5,14 +5,14 @@
 
 import {
 	DriverError,
-	IDriverErrorBase,
 	DriverErrorTypes,
+	IDriverErrorBase,
 } from "@fluidframework/driver-definitions";
 import {
-	NonRetryableError,
-	GenericNetworkError,
-	createGenericNetworkError,
 	AuthorizationError,
+	GenericNetworkError,
+	NonRetryableError,
+	createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { pkgVersion as driverVersion } from "./packageVersion";
