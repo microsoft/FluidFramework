@@ -50,8 +50,8 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { MapFactory } from "./map.js";
 import { ISharedMap } from "./interfaces.js";
+import { MapFactory } from "./map.js";
 
 /**
  * {@inheritDoc ISharedMap}

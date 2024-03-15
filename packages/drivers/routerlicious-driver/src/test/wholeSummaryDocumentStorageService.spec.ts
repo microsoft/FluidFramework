@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { SummaryType, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
-import { IR11sResponse } from "../restWrapper";
 import {
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotBlob,
 	IWholeFlatSnapshotTreeEntry,
 } from "../contracts";
+import { IR11sResponse } from "../restWrapper";
+import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
 
 /* Blobs contained within source snapshot tree returned by git manager */
 const summaryBlobs: IWholeFlatSnapshotBlob[] = [

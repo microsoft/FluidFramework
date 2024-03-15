@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { notificationContext } from "./NotificationsViewer";
 
 const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {

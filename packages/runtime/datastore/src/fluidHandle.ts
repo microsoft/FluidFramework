@@ -9,8 +9,8 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import {
-	IFluidHandleContext,
 	FluidObject,
+	IFluidHandleContext,
 	fluidHandleSymbol,
 	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";

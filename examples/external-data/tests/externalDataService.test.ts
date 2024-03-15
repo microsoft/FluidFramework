@@ -15,10 +15,10 @@ import { delay } from "@fluidframework/core-utils";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import {
 	ExternalDataSource,
-	initializeExternalDataService,
 	MockWebhook,
+	initializeExternalDataService,
 } from "../src/mock-external-data-service/index.js";
-import { assertValidTaskData, ITaskData } from "../src/model-interface/index.js";
+import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 import { closeServer } from "./utilities.js";
 
 const externalTaskListId = "task-list-1";

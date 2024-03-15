@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { fluidHandleSymbol, toFluidHandleErased } from "@fluidframework/core-interfaces";
-import type {
-	IFluidHandleContext,
-	IFluidHandleErased,
-	IFluidHandleInternal,
-} from "@fluidframework/core-interfaces";
+import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	IContainerRuntime,
+	IContainerRuntimeEvents,
+} from "@fluidframework/container-runtime-definitions";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -17,31 +18,25 @@ import {
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
-	createResponseError,
-	generateHandleContextPath,
-	responseToException,
-	SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils";
-import { assert, Deferred } from "@fluidframework/core-utils";
-import { bufferToString, stringToBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IContainerRuntime,
-	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
-	createChildMonitoringContext,
-	GenericError,
-	LoggingError,
-	MonitoringContext,
-	PerformanceEvent,
-	wrapError,
-} from "@fluidframework/telemetry-utils";
-import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import {
+	SummaryTreeBuilder,
+	createResponseError,
+	generateHandleContextPath,
+	responseToException,
+} from "@fluidframework/runtime-utils";
+import {
+	GenericError,
+	LoggingError,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+	wrapError,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import { IBlobMetadata } from "./metadata.js";

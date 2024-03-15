@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol, toFluidHandleErased } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import { fluidHandleSymbol, toFluidHandleErased } from "@fluidframework/core-interfaces";
 import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
 
 /**

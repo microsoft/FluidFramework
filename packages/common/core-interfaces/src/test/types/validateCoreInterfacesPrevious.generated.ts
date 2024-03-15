@@ -480,26 +480,26 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidHandle": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IFluidHandle": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidHandle():
     TypeOnly<typeof old.IFluidHandle>;
-declare function use_current_VariableDeclaration_IFluidHandle(
+declare function use_current_RemovedVariableDeclaration_IFluidHandle(
     use: TypeOnly<typeof current.IFluidHandle>): void;
-use_current_VariableDeclaration_IFluidHandle(
+use_current_RemovedVariableDeclaration_IFluidHandle(
     get_old_VariableDeclaration_IFluidHandle());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidHandle": {"backCompat": false}
+* "RemovedVariableDeclaration_IFluidHandle": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IFluidHandle():
+declare function get_current_RemovedVariableDeclaration_IFluidHandle():
     TypeOnly<typeof current.IFluidHandle>;
 declare function use_old_VariableDeclaration_IFluidHandle(
     use: TypeOnly<typeof old.IFluidHandle>): void;
 use_old_VariableDeclaration_IFluidHandle(
-    get_current_VariableDeclaration_IFluidHandle());
+    get_current_RemovedVariableDeclaration_IFluidHandle());
 
 /*
 * Validate forward compat by using old type in place of current type

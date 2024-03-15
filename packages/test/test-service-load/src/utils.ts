@@ -30,15 +30,15 @@ import {
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
-import { createFluidExport, ILoadTest } from "./loadTestDataStore.js";
+import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
 	getOptionOverride,
-} from "./optionsMatrix.js";
-import { pkgName, pkgVersion } from "./packageVersion.js";
-import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+} from "./optionsMatrix";
+import { pkgName, pkgVersion } from "./packageVersion";
+import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 

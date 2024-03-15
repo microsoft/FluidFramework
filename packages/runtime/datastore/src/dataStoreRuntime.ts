@@ -4,17 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	DataProcessingError,
-	ITelemetryLoggerExt,
-	generateStack,
-	LoggingError,
-	MonitoringContext,
-	raiseConnectedEvent,
-	createChildMonitoringContext,
-	tagCodeArtifacts,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
+import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -23,64 +13,74 @@ import {
 	IResponse,
 	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
+import {
+	IChannel,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
+} from "@fluidframework/datastore-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
+	IQuorumClients,
 	ISequencedDocumentMessage,
-	SummaryType,
 	ISummaryBlob,
 	ISummaryTree,
-	IQuorumClients,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
-	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
-	VisibilityState,
 	ITelemetryContext,
+	VisibilityState,
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
-	convertSnapshotTreeToSummaryTree,
-	convertSummaryTreeToITree,
-	generateHandleContextPath,
+	GCDataBuilder,
 	RequestParser,
 	SummaryTreeBuilder,
+	addBlobToSummary,
+	convertSnapshotTreeToSummaryTree,
+	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
-	exceptionToResponse,
-	GCDataBuilder,
-	unpackChildNodesUsedRoutes,
-	addBlobToSummary,
-	processAttachMessageGCData,
 	encodeCompactIdToString,
+	exceptionToResponse,
+	generateHandleContextPath,
+	processAttachMessageGCData,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
-	IChannel,
-	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeEvents,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+	DataProcessingError,
+	ITelemetryLoggerExt,
+	LoggingError,
+	MonitoringContext,
+	UsageError,
+	createChildMonitoringContext,
+	generateStack,
+	raiseConnectedEvent,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import { FluidObjectHandle } from "./fluidHandle.js";
 import {
 	LocalChannelContext,
 	LocalChannelContextBase,
 	RehydratedLocalChannelContext,
 } from "./localChannelContext.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
-import { FluidObjectHandle } from "./fluidHandle.js";
 
 /**
  * @alpha

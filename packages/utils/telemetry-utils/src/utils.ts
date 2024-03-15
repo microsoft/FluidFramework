@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { loggerToMonitoringContext } from "./config.js";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";

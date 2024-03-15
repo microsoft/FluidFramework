@@ -5,9 +5,9 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { pkgVersion } from "./packageVersion.js";

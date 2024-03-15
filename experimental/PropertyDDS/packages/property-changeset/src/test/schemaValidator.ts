@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /**
  * Basic implementation of part of the PropertyFactory needed to run test on validation.
  */
 
-import { TemplateValidator, type PropertySchema } from "../templateValidator.js";
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
+import { type PropertySchema, TemplateValidator } from "../templateValidator.js";
 import type { SchemaValidationResult } from "../validationResultBuilder.js";
 
 export class SchemaValidator {

@@ -10,7 +10,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../components";
+import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../components";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {

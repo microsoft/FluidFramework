@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { type Brand, type Erased, brandErased, fromErased } from "./brand.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
-import { type Erased, type Brand, fromErased, brandErased } from "./brand.js";
 
 /**
  * @public

@@ -89,6 +89,9 @@ export {
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
 } from "./core/index.js";
 
 export {

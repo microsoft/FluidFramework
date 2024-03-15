@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IValueChanged } from "@fluidframework/map";
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
 const xKey = "x";
 const yKey = "y";
