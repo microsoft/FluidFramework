@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Handler, readFile, writeFile } from "../common";
+import { Handler, readFile, writeFile } from "./common";
 
 export const handler: Handler = {
 	name: "fluid-case",
 	match: /(^|\/)[^/]+\.([jt]s?|html|md|json)$/i,
-	handler: async (file) => {
+	handler: async (file: string): Promise<string | undefined> => {
 		const content = readFile(file);
 		// search for Fluid Framework
 		if (content.search(/[Ff]luid framework/) !== -1) {
@@ -19,7 +19,7 @@ export const handler: Handler = {
 			return `'fluid' needs to be capitalized in prose`;
 		}
 	},
-	resolver: (file) => {
+	resolver: (file: string): { resolved: boolean; message?: string } => {
 		const content = readFile(file);
 		const newContent = content.replace(/([a-z]) fluid ([a-z])/g, "$1 Fluid $2");
 		writeFile(file, newContent.replace(/[Ff]luid framework/g, "Fluid Framework"));

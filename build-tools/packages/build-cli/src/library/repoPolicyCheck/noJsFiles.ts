@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Handler } from "../common";
+import { Handler } from "./common";
 
 /**
  * A policy handler that checks for JavaScript source files that just use the .js file extension. Such files may be
@@ -15,7 +15,7 @@ import { Handler } from "../common";
 export const handler: Handler = {
 	name: "no-js-file-extensions",
 	match: /(^|\/)[^/]+\.js$/i,
-	handler: async (file) => {
+	handler: async (file: string): Promise<string | undefined> => {
 		// Any match is considered a failure.
 		return `${file}: JavaScript files should have a .cjs or .mjs file extension based on the module format of the file. Rename the file accordingly.`;
 	},
