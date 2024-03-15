@@ -18,7 +18,6 @@ import {
 	iconHeight,
 	iconHoverColor,
 	iconWidth,
-	Omit,
 } from "./constants.js";
 
 export interface ISearchBoxProps extends Omit<React.HTMLProps<HTMLInputElement>, "value"> {

@@ -29,6 +29,8 @@ import type {
 	IInspectorTableProps,
 	IInspectorTableState,
 	IRowData,
+	IToTableRowsOptions,
+	SearchResult,
 } from "./InspectorTableTypes.js";
 import { ModalConsumer } from "./ModalManager.js";
 import { NewDataRow } from "./NewDataRow.js";

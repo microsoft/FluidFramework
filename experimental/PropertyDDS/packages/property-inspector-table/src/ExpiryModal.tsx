@@ -11,8 +11,7 @@ import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import { type Theme, makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import type {
 	IExpiryInfo,

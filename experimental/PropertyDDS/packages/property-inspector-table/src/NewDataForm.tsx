@@ -9,8 +9,7 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {
 	DecoratedSelect,

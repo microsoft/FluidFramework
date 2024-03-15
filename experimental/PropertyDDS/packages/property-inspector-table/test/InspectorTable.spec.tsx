@@ -11,7 +11,7 @@ import {
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { Tooltip } from "@material-ui/core";
 import type { ReactWrapper } from "enzyme";
-import type React from "react";
+import React from "react";
 import { useFakeTimers } from "sinon";
 import { Empty } from "../src/Empty.js";
 import type { IDataGetterParameter } from "../src/InspectorTableTypes.js";
