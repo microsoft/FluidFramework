@@ -13,8 +13,9 @@
 			"**/_api-extractor-temp/**",
 			"**/test/snapshots/content/**",
 			"**/localOdspSnapshots/**",
+			"**/_package.json",
 			"**/biome.jsonc",
-			"**/_package.json"
+			"**/oclif.manifest.json"
 		],
 		"maxSize": 2097152
 	},
