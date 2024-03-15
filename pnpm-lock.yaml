@@ -2045,23 +2045,16 @@ importers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/multiview-coordinate-model': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@types/node': ^18.19.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluid-example/multiview-coordinate-model': link:../coordinate-model
@@ -2070,71 +2063,44 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/constellation-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/multiview-slider-coordinate-view': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluid-example/multiview-slider-coordinate-view': link:../slider-coordinate-view
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/container:
     specifiers:
@@ -2237,42 +2203,28 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@types/node': ^18.19.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/interface:
     specifiers:
@@ -2282,185 +2234,111 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../../utils/example-utils
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/plot-coordinate-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/slider-coordinate-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/triangle-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/prosemirror:
     specifiers:
@@ -8688,6 +8566,7 @@ importers:
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
+      '@fluid-private/test-pairwise-generator': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8754,6 +8633,7 @@ importers:
       '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-private/test-pairwise-generator': link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
