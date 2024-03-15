@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import execa from "execa";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
@@ -18,6 +17,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
+import execa from "execa";
 import { type Client, hasStashData } from "../clientLoading.js";
 import type {
 	BaseOperation,
@@ -44,31 +44,6 @@ import {
 import { _dirname } from "./dirname.cjs";
 import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
 import { baseModel, isNoopOp } from "./sharedNothing.js";
-
-//* REVERT THIS once the build passes w/o it
-class Counter<T> {
-	private readonly choiceToCount = new Map<T, number>();
-
-	public increment(value: T): void {
-		this.choiceToCount.set(value, this.get(value) + 1);
-	}
-
-	public get(value: T): number {
-		return this.choiceToCount.get(value) ?? 0;
-	}
-
-	public entries(): Iterable<[T, number]> {
-		return this.choiceToCount.entries();
-	}
-
-	public values(): Iterable<T> {
-		return this.choiceToCount.keys();
-	}
-
-	public counts(): Iterable<number> {
-		return this.choiceToCount.values();
-	}
-}
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
