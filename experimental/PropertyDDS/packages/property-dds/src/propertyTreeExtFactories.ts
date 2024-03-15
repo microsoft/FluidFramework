@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
@@ -11,7 +13,6 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { compress, decompress } from "lz4js";
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { deflate, inflate } from "pako";
 import {
 	IPropertyTreeConfig,
