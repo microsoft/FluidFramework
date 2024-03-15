@@ -122,6 +122,7 @@ export {
 	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	NodeId,
 } from "./modular-schema/index.js";
 
 export { Multiplicity } from "./multiplicity.js";
