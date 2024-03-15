@@ -10,13 +10,13 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType } from "../../index.js";
 import {
+	type BatchMessage,
+	type IBatch,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
-	type IBatch,
-	type BatchMessage,
 } from "../../opLifecycle/index.js";
 
 describe("RemoteMessageProcessor", () => {

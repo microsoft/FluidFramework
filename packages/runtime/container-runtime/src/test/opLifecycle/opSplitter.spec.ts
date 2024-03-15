@@ -11,14 +11,14 @@ import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { CompressionAlgorithms } from "../../containerRuntime.js";
 import {
 	BatchMessage,
 	IChunkedOp,
 	OpSplitter,
-	splitOp,
 	isChunkedMessage,
+	splitOp,
 } from "../../opLifecycle/index.js";
-import { CompressionAlgorithms } from "../../containerRuntime.js";
 
 describe("OpSplitter", () => {
 	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];
