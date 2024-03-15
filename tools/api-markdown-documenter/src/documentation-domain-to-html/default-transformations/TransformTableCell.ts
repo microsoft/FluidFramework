@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TableCellKind, type TableCellNode } from "../../../documentation-domain/index.js";
-import type { RenderContext } from "../RenderContext.js";
-import { renderContentsUnderTag } from "../Utilities.js";
+import type { Element as HastElement } from "hast";
+import { TableCellKind, type TableCellNode } from "../../documentation-domain/index.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
+import type { TransformationContext } from "../TransformationContext.js";
 
 /**
  * Transform a {@link TableCellNode} to HTML.
@@ -12,11 +13,13 @@ import { renderContentsUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformTableCell(node: TableCellNode, context: TransformationContext): void {
-	renderContentsUnderTag(
+export function transformTableCell(
+	node: TableCellNode,
+	context: TransformationContext,
+): HastElement {
+	return transformChildrenUnderTag(
+		{ name: node.cellKind === TableCellKind.Header ? "th" : "td" },
 		node.children,
-		node.cellKind === TableCellKind.Header ? "th" : "td",
-		writer,
 		context,
 	);
 }

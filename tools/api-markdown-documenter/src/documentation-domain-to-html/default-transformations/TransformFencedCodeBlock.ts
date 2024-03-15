@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { FencedCodeBlockNode } from "../../../documentation-domain/index.js";
-import type { RenderContext } from "../RenderContext.js";
-import { renderContentsUnderTag } from "../Utilities.js";
+import type { Element as HastElement } from "hast";
+import type { FencedCodeBlockNode } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Transform a {@link FencedCodeBlockNode} to HTML.
@@ -15,6 +16,7 @@ import { renderContentsUnderTag } from "../Utilities.js";
 export function transformFencedCodeBlock(
 	node: FencedCodeBlockNode,
 	context: TransformationContext,
-): void {
-	renderContentsUnderTag(node.children, "code", writer, context);
+): HastElement {
+	// Note that HTML <code> tags don't support language attributes, so we don't pass anything through here.
+	return transformChildrenUnderTag({ name: "code" }, node.children, context);
 }

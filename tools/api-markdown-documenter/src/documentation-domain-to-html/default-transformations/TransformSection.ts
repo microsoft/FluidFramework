@@ -2,9 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { SectionNode } from "../../../documentation-domain/index.js";
-import { renderNode, renderNodes } from "../Render.js";
-import type { RenderContext } from "../RenderContext.js";
+import type { Element as HastElement, Text as HastText } from "hast";
+import { h } from "hastscript";
+import type { SectionNode } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
+import { documentationNodeToHtml } from "../ToHtml.js";
 
 /**
  * Transform a {@link SectionNode} to HTML.
@@ -17,41 +20,18 @@ import type { RenderContext } from "../RenderContext.js";
  * Automatically increases the context's {@link RenderContext.headingLevel}, when rendering child contents,
  * such that heading levels increase appropriately through nested sections.
  */
-export function transformSection(node: SectionNode, context: TransformationContext): void {
-	const prettyFormatting = context.prettyFormatting !== false;
-
-	if (prettyFormatting) {
-		writer.ensureNewLine(); // Ensure line break before section tag
-	}
-
-	writer.write("<section>");
-
-	if (prettyFormatting) {
-		writer.ensureNewLine();
-		writer.increaseIndent();
-	}
-
-	// Render section heading, if one was provided.
+export function transformSection(node: SectionNode, context: TransformationContext): HastElement {
+	const transformedChildren: (HastElement | HastText)[] = [];
 	if (node.heading !== undefined) {
-		renderNode(node.heading, writer, context);
-		if (prettyFormatting) {
-			writer.ensureNewLine(); // Ensure line break after heading element
-		}
+		transformedChildren.push(documentationNodeToHtml(node.heading, context));
 	}
 
-	renderNodes(node.children, writer, {
-		...context,
-		headingLevel: context.headingLevel + 1, // Increment heading level for child content
-	});
+	transformedChildren.push(
+		transformChildrenUnderTag({ name: "section" }, node.children, {
+			...context,
+			headingLevel: context.headingLevel + 1, // Increment heading level for child content
+		}),
+	);
 
-	if (prettyFormatting) {
-		writer.ensureNewLine();
-		writer.decreaseIndent();
-	}
-
-	writer.write("</section>");
-
-	if (prettyFormatting) {
-		writer.ensureNewLine(); // Ensure line break after section tag
-	}
+	return h("section", transformedChildren);
 }

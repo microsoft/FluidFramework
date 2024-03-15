@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Node as HastNode } from "hast";
+import type { Element as HastElement, Text as HastText } from "hast";
 import { h } from "hastscript";
 import {
 	DocumentationNodeType,
@@ -24,9 +24,14 @@ import {
 	type UnorderedListNode,
 } from "../../documentation-domain/index.js";
 import {
+	transformBlockQuote,
+	transformCodeSpan,
+	transformFencedCodeBlock,
 	transformHeading,
 	transformHierarchicalSection,
+	transformLink,
 	transformOrderedList,
+	transformParagraph,
 	transformPlainText,
 	transformSpan,
 	transformTable,
@@ -35,10 +40,9 @@ import {
 	transformUnorderedList,
 } from "../default-transformations/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
- * contexturation for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
+ * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
  * specified by {@link DocumentationNode."type"}.
  *
  * @remarks
@@ -62,7 +66,7 @@ export interface Transformations {
 	[documentationNodeKind: string]: (
 		node: DocumentationNode,
 		context: TransformationContext,
-	) => HastNode;
+	) => HastElement | HastText;
 }
 
 const hastLineBreak = h("br");
@@ -75,46 +79,30 @@ const hastHorizontalRule = h("hr");
  */
 export const defaultTransformations: Transformations = {
 	[DocumentationNodeType.BlockQuote]: (node, context) =>
-		transformChildrenUnderTag(
-			{ name: "blockquote" },
-			(node as BlockQuoteNode).children,
-			context,
-		),
+		transformBlockQuote(node as BlockQuoteNode, context),
 	[DocumentationNodeType.CodeSpan]: (node, context) =>
-		transformChildrenUnderTag({ name: "code" }, (node as CodeSpanNode).children, context),
-	// Note that HTML <code> tags don't support language attributes, so we don't pass anything through here.
+		transformCodeSpan(node as CodeSpanNode, context),
 	[DocumentationNodeType.FencedCode]: (node, context) =>
-		transformChildrenUnderTag(
-			{ name: "code" },
-			(node as FencedCodeBlockNode).children,
-			context,
-		),
+		transformFencedCodeBlock(node as FencedCodeBlockNode, context),
 	[DocumentationNodeType.Heading]: (node, context) =>
 		transformHeading(node as HeadingNode, context),
 	[DocumentationNodeType.LineBreak]: () => hastLineBreak,
-	[DocumentationNodeType.Link]: (node, context) =>
-		transformChildrenUnderTag(
-			{ name: "a", attributes: { href: (node as LinkNode).target } },
-			(node as LinkNode).children,
-			context,
-		),
-	[DocumentationNodeType.Section]: (node, context): HastNode =>
+	[DocumentationNodeType.Link]: (node, context) => transformLink(node as LinkNode, context),
+	[DocumentationNodeType.Section]: (node, context) =>
 		transformHierarchicalSection(node as SectionNode, context),
-	[DocumentationNodeType.HorizontalRule]: (): HastNode => hastHorizontalRule,
-	[DocumentationNodeType.OrderedList]: (node, context): HastNode =>
+	[DocumentationNodeType.HorizontalRule]: () => hastHorizontalRule,
+	[DocumentationNodeType.OrderedList]: (node, context) =>
 		transformOrderedList(node as OrderedListNode, context),
-	[DocumentationNodeType.Paragraph]: (node, context): HastNode =>
-		transformChildrenUnderTag({ name: "p" }, (node as ParagraphNode).children, context),
-	[DocumentationNodeType.PlainText]: (node, context): HastNode =>
+	[DocumentationNodeType.Paragraph]: (node, context) =>
+		transformParagraph(node as ParagraphNode, context),
+	[DocumentationNodeType.PlainText]: (node, context) =>
 		transformPlainText(node as PlainTextNode, context),
-	[DocumentationNodeType.Span]: (node, context): HastNode =>
-		transformSpan(node as SpanNode, context),
-	[DocumentationNodeType.Table]: (node, context): HastNode =>
-		transformTable(node as TableNode, context),
-	[DocumentationNodeType.TableCell]: (node, context): HastNode =>
+	[DocumentationNodeType.Span]: (node, context) => transformSpan(node as SpanNode, context),
+	[DocumentationNodeType.Table]: (node, context) => transformTable(node as TableNode, context),
+	[DocumentationNodeType.TableCell]: (node, context) =>
 		transformTableCell(node as TableCellNode, context),
-	[DocumentationNodeType.TableRow]: (node, context): HastNode =>
+	[DocumentationNodeType.TableRow]: (node, context) =>
 		transformTableRow(node as TableRowNode, context),
-	[DocumentationNodeType.UnorderedList]: (node, context): HastNode =>
+	[DocumentationNodeType.UnorderedList]: (node, context) =>
 		transformUnorderedList(node as UnorderedListNode, context),
 };

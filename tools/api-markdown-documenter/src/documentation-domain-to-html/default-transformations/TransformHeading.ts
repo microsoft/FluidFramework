@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { Node as HastNode, Element as HastElement } from "hast";
+import type { Element as HastElement } from "hast";
 import { h } from "hastscript";
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -28,7 +28,7 @@ const maxHeadingLevel = 6;
 export function transformHeading(
 	headingNode: HeadingNode,
 	context: TransformationContext,
-): HastNode {
+): HastElement {
 	const { headingLevel } = context;
 
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
@@ -41,11 +41,15 @@ export function transformHeading(
 			context,
 		);
 	} else {
-		const elements: HastElement[] = [];
+		const transformedChildren: HastElement[] = [];
 		if (headingNode.id !== undefined) {
-			elements.push(createAnchor(headingNode.id));
+			transformedChildren.push(createAnchor(headingNode.id));
 		}
-		elements.push(transformChildrenUnderTag({ name: "b" }, headingNode.children, context));
-		return h(undefined, elements);
+		transformedChildren.push(
+			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),
+		);
+
+		// Wrap the 2 child elements in a fragment
+		return h("", transformedChildren);
 	}
 }

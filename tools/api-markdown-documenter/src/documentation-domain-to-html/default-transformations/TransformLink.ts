@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { LinkNode } from "../../../documentation-domain/index.js";
-import { renderNodes } from "../Render.js";
-import type { RenderContext } from "../RenderContext.js";
+import type { Element as HastElement } from "hast";
+import type { LinkNode } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Transforms a {@link LinkNode} to HTML.
@@ -12,10 +13,10 @@ import type { RenderContext } from "../RenderContext.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformLink(node: LinkNode, context: TransformationContext): void {
-	// Note: we don't bother introducing style nesting for code spans.
-	// This policy is arbitrary and could be changed if there is reason to.
-	writer.write(`<a href='${node.target}'>`);
-	renderNodes(node.children, writer, context);
-	writer.write("</a>");
+export function transformLink(node: LinkNode, context: TransformationContext): HastElement {
+	return transformChildrenUnderTag(
+		{ name: "a", attributes: { href: node.target } },
+		node.children,
+		context,
+	);
 }

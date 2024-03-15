@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 import type { Element as HastElement } from "hast";
-import { h } from "hastscript";
 import type { BlockQuoteNode } from "../../index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import { documentationNodesToHtml } from "../ToHtml.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Transform a {@link BlockQuoteNode} to HTML.
@@ -18,5 +17,5 @@ export function transformBlockQuote(
 	node: BlockQuoteNode,
 	context: TransformationContext,
 ): HastElement {
-	return h("blockquote", documentationNodesToHtml(node.children, context));
+	return transformChildrenUnderTag({ name: "blockquote" }, node.children, context);
 }

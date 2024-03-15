@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { TableNode } from "../../../documentation-domain/index.js";
-import type { RenderContext } from "../RenderContext.js";
-import { renderContentsUnderTag } from "../Utilities.js";
+import type { Element as HastElement } from "hast";
+import { h } from "hastscript";
+import type { TableNode } from "../../documentation-domain/index.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
+import type { TransformationContext } from "../TransformationContext.js";
 
 /**
  * Transform a {@link TableNode} to HTML.
@@ -14,38 +16,14 @@ import { renderContentsUnderTag } from "../Utilities.js";
  *
  * @remarks Will render as HTML when in an HTML context, or within another table context.
  */
-export function transformTable(node: TableNode, context: TransformationContext): void {
-	const prettyFormatting = context.prettyFormatting !== false;
-
-	if (prettyFormatting) {
-		writer.ensureNewLine(); // Ensure line break before table tag
-	}
-
-	writer.write("<table>");
-
-	if (prettyFormatting) {
-		writer.ensureNewLine();
-		writer.increaseIndent();
-	}
-
-	// Write header row if one was specified
+export function transformTable(node: TableNode, context: TransformationContext): HastElement {
+	const transformedChildren: HastElement[] = [];
 	if (node.headerRow !== undefined) {
-		renderContentsUnderTag([node.headerRow], "thead", writer, context);
+		transformedChildren.push(
+			transformChildrenUnderTag({ name: "thead" }, [node.headerRow], context),
+		);
 	}
+	transformedChildren.push(transformChildrenUnderTag({ name: "tbody" }, node.children, context));
 
-	// Write child contents under `tbody` element if the table has any
-	if (node.hasChildren) {
-		renderContentsUnderTag(node.children, "tbody", writer, context);
-	}
-
-	if (prettyFormatting) {
-		writer.ensureNewLine();
-		writer.decreaseIndent();
-	}
-
-	writer.write("</table>");
-
-	if (prettyFormatting) {
-		writer.ensureNewLine(); // Ensure line break before table tag
-	}
+	return h("table", transformedChildren);
 }
