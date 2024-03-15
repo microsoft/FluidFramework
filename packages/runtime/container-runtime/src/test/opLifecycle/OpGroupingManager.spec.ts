@@ -11,7 +11,11 @@ import { BatchMessage, IBatch, OpGroupingManager } from "../../opLifecycle/index
 
 describe("OpGroupingManager", () => {
 	const mockLogger = new MockLogger();
-	const createBatch = (length: number, hasReentrantOps?: boolean, opHasMetadata: boolean = false): IBatch => ({
+	const createBatch = (
+		length: number,
+		hasReentrantOps?: boolean,
+		opHasMetadata: boolean = false,
+	): IBatch => ({
 		...messagesToBatch(new Array(length).fill(createMessage(opHasMetadata))),
 		hasReentrantOps,
 	});

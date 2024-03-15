@@ -113,21 +113,28 @@ describe("RemoteMessageProcessor", () => {
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
-		compressionAndChunking?: {
-			chunking: boolean;
-		};
+		/** chunking cannot happen without compression */
+		compressionAndChunking:
+			| {
+					compression: false;
+					chunking: false;
+			  }
+			| {
+					compression: true;
+					chunking: boolean;
+			  };
 		grouping: boolean;
 	}>({
-		compressionAndChunking: [undefined, { chunking: false }, { chunking: true }],
+		compressionAndChunking: [
+			{ compression: false, chunking: false },
+			{ compression: true, chunking: false },
+			{ compression: true, chunking: true },
+		],
 		grouping: [true, false],
 	});
 
 	messageGenerationOptions.forEach((option) => {
-		it(`Correctly processes incoming messages: compression [${
-			option.compressionAndChunking !== undefined
-		}] chunking [${option.compressionAndChunking?.chunking === true}] grouping [${
-			option.grouping
-		}]`, () => {
+		it(`Correctly processes incoming messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
 				referenceSequenceNumber: Infinity,
@@ -154,7 +161,7 @@ describe("RemoteMessageProcessor", () => {
 			}
 
 			const outboundMessages: IBatchMessage[] = [];
-			if (option.compressionAndChunking !== undefined) {
+			if (option.compressionAndChunking.compression) {
 				const compressor = new OpCompressor(mockLogger);
 				batch = compressor.compressBatch(batch);
 

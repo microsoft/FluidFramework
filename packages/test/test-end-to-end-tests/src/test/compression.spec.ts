@@ -106,35 +106,40 @@ const compressionSuite = (getProvider) => {
 		});
 
 		const messageGenerationOptions = generatePairwiseOptions<{
-			compressionAndChunking?: {
-				chunking: boolean;
-			};
+			/** chunking cannot happen without compression */
+			compressionAndChunking:
+				| {
+						compression: false;
+						chunking: false;
+				  }
+				| {
+						compression: true;
+						chunking: boolean;
+				  };
 			grouping: boolean;
 		}>({
-			compressionAndChunking: [undefined, { chunking: false }, { chunking: true }],
+			compressionAndChunking: [
+				{ compression: false, chunking: false },
+				{ compression: true, chunking: false },
+				{ compression: true, chunking: true },
+			],
 			grouping: [true, false],
 		});
 
 		messageGenerationOptions.forEach((option) => {
-			it(`Correctly processes messages: compression [${
-				option.compressionAndChunking !== undefined
-			}] chunking [${option.compressionAndChunking?.chunking === true}] grouping [${
-				option.grouping
-			}]`, async function () {
+			it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
 				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}
 				await setupContainers({
-					compressionOptions:
-						option.compressionAndChunking === undefined
-							? undefined
-							: {
-									minimumBatchSizeInBytes: 10,
-									compressionAlgorithm: CompressionAlgorithms.lz4,
-							  },
-					chunkSizeInBytes:
-						option.compressionAndChunking?.chunking !== true ? undefined : 100,
+					compressionOptions: option.compressionAndChunking.compression
+						? {
+								minimumBatchSizeInBytes: 10,
+								compressionAlgorithm: CompressionAlgorithms.lz4,
+						  }
+						: undefined,
+					chunkSizeInBytes: option.compressionAndChunking.chunking ? 100 : undefined,
 					enableGroupedBatching: option.grouping,
 				});
 				const values = [
