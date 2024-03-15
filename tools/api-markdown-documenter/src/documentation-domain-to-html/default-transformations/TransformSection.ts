@@ -6,8 +6,7 @@ import type { Element as HastElement, Text as HastText } from "hast";
 import { h } from "hastscript";
 import type { SectionNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
-import { documentationNodeToHtml } from "../ToHtml.js";
+import { documentationNodeToHtml, documentationNodesToHtml } from "../ToHtml.js";
 
 /**
  * Transform a {@link SectionNode} to HTML.
@@ -27,7 +26,7 @@ export function transformSection(node: SectionNode, context: TransformationConte
 	}
 
 	transformedChildren.push(
-		transformChildrenUnderTag({ name: "section" }, node.children, {
+		...documentationNodesToHtml(node.children, {
 			...context,
 			headingLevel: context.headingLevel + 1, // Increment heading level for child content
 		}),
