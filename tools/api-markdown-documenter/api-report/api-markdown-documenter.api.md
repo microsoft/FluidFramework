@@ -258,6 +258,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
+    // @deprecated
     frontMatter?: string | ((documentItem: ApiItem) => string | undefined);
     getFileNameForItem?: (apiItem: ApiItem) => string;
     getHeadingTextForItem?: (apiItem: ApiItem) => string;
@@ -288,6 +289,7 @@ export interface DocumentNodeProps {
     readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
+    // @deprecated
     readonly frontMatter?: string;
 }
 

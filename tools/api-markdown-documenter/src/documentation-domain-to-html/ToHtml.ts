@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// Required in order to register the `raw` type with the `hast` ecosystem.
+// eslint-disable-next-line import/no-extraneous-dependencies, import/no-unassigned-import
+import "hast-util-raw";
+
 import type { Root as HastRoot, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
@@ -24,10 +28,18 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
-	return h(undefined, [
-		{
-			type: "doctype",
-		},
+	const rootBodyContents: HastNodes[] = [];
+	if (document.frontMatter !== undefined) {
+		// TODO: remove once front-matter support has been removed
+		rootBodyContents.push({
+			type: "raw",
+			value: `${document.frontMatter}\n`,
+		});
+	}
+	rootBodyContents.push({
+		type: "doctype",
+	});
+	rootBodyContents.push(
 		h(
 			"html",
 			{
@@ -36,9 +48,9 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case
 			[h("head", [h("meta", { charset: "utf-8" })]), h("body", transformedChildren)],
 		),
-	]);
+	);
 
-	// TODO: what to do with front-matter?
+	return h(undefined, rootBodyContents);
 }
 
 /**
