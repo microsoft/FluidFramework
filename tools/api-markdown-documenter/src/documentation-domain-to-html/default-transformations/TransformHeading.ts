@@ -1,0 +1,51 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import type { Node as HastNode, Element as HastElement } from "hast";
+import { h } from "hastscript";
+import type { HeadingNode } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
+import { createAnchor, transformChildrenUnderTag } from "../Utilities.js";
+
+/**
+ * Maximum heading level supported by most systems.
+ *
+ * @remarks This corresponds with the max HTML heading level.
+ */
+const maxHeadingLevel = 6;
+
+/**
+ * Transforms a {@link HeadingNode} to HTML.
+ *
+ * @param node - The node to render.
+ * @param context - See {@link TransformationContext}.
+ *
+ * @remarks
+ *
+ * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
+ */
+export function transformHeading(
+	headingNode: HeadingNode,
+	context: TransformationContext,
+): HastNode {
+	const { headingLevel } = context;
+
+	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
+	// bold text, with an accompanying anchor to ensure we can still link to the text.
+	const transformAsHeadingElement = headingLevel <= maxHeadingLevel;
+	if (transformAsHeadingElement) {
+		return transformChildrenUnderTag(
+			{ name: `h${headingLevel}` },
+			headingNode.children,
+			context,
+		);
+	} else {
+		const elements: HastElement[] = [];
+		if (headingNode.id !== undefined) {
+			elements.push(createAnchor(headingNode.id));
+		}
+		elements.push(transformChildrenUnderTag({ name: "b" }, headingNode.children, context));
+		return h(undefined, elements);
+	}
+}

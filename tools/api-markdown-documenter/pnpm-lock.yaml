@@ -33,6 +33,7 @@ importers:
       eslint-plugin-chai-friendly: ^0.7.2
       good-fences: ^1.2.0
       hast-util-to-html: ^9.0.0
+      hastscript: ^9.0.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.1.0
       mocha-multi-reporters: ^1.5.1
@@ -46,6 +47,7 @@ importers:
       '@rushstack/node-core-library': 3.55.2_@types+node@18.15.11
       chalk: 4.1.2
       hast-util-to-html: 9.0.0
+      hastscript: 9.0.0
     devDependencies:
       '@fluid-tools/markdown-magic': file:../markdown-magic_@types+node@18.15.11
       '@fluidframework/build-common': 2.0.3
@@ -3557,6 +3559,16 @@ packages:
 
   /hastscript/8.0.0:
     resolution: {integrity: sha512-dMOtzCEd3ABUeSIISmrETiKuyydk1w0pa+gE/uormcTpSYuaNJPbX1NU3JLyscSLjwAQM8bWMhhIlnCqnRvDTw==}
+    dependencies:
+      '@types/hast': 3.0.4
+      comma-separated-tokens: 2.0.3
+      hast-util-parse-selector: 4.0.0
+      property-information: 6.4.1
+      space-separated-tokens: 2.0.2
+    dev: false
+
+  /hastscript/9.0.0:
+    resolution: {integrity: sha512-jzaLBGavEDKHrc5EfFImKN7nZKKBdSLIdGvCwDZ9TfzbF2ffXiov8CKE445L2Z1Ek2t/m4SKQ2j6Ipv7NyUolw==}
     dependencies:
       '@types/hast': 3.0.4
       comma-separated-tokens: 2.0.3
