@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
-import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
-import * as React from "react";
+import type { ContainerProperty, SetProperty } from "@fluid-experimental/property-properties";
+import { PropertyProxy, type ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
+import type * as React from "react";
+import type { IEditableValueCellProps } from "./InspectorTableTypes.js";
 import { StringView, typeToViewMap } from "./PropertyViews/index.js";
 import { Utils } from "./typeUtils.js";
-import { IEditableValueCellProps } from "./InspectorTableTypes.js";
 
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
 	const { rowData } = props;
@@ -25,7 +25,7 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
 			case "array": {
 				// TODO: Temporary workaround, as enum arrays currently are not considered primitive.
 				if (Utils.isEnumArrayProperty(rowData.parent!)) {
-					(rowData.parent! as any).set(parseInt(rowData.name, 10), val);
+					(rowData.parent! as any).set(Number.parseInt(rowData.name, 10), val);
 				} else {
 					proxiedParent[rowData.name] = val;
 				}

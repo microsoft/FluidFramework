@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles } from "@material-ui/core/styles";
 import Tooltip, { TooltipProps } from "@material-ui/core/Tooltip";
+import { makeStyles } from "@material-ui/core/styles";
 import React from "react";
 import { colorBlack } from "./constants.js";
 

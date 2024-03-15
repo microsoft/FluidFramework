@@ -7,24 +7,23 @@ import { forEachProperty } from "@fluid-experimental/property-binder";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import {
 	BaseProperty,
-	ContainerProperty,
-	MapProperty,
+	type ContainerProperty,
+	type MapProperty,
 	PropertyFactory,
-	ReferenceArrayProperty,
-	ReferenceMapProperty,
-	ReferenceProperty,
+	type ReferenceArrayProperty,
+	type ReferenceMapProperty,
+	type ReferenceProperty,
 } from "@fluid-experimental/property-properties";
-import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
+import { type BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
+import { createStyles, withStyles } from "@material-ui/core";
 import Tooltip from "@material-ui/core/Tooltip";
 import memoize from "memoize-one";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
-import { createStyles, withStyles } from "@material-ui/core";
+import { EditReferencePath } from "./EditReferencePath.js";
 import { EditableValueCell } from "./EditableValueCell.js";
-import { TypeColumn } from "./TypeColumn.js";
-import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants.js";
 import { HashCalculator } from "./HashCalculator.js";
-import {
+import type {
 	ColumnRendererType,
 	IExpandedMap,
 	IInspectorRow,
@@ -35,11 +34,12 @@ import {
 	SearchResult,
 } from "./InspectorTableTypes.js";
 import { NameCell } from "./NameCell.js";
-import { Utils } from "./typeUtils.js";
-import { ThemedSkeleton } from "./ThemedSkeleton.js";
 import { NewDataForm } from "./NewDataForm.js";
-import { EditReferencePath } from "./EditReferencePath.js";
+import { ThemedSkeleton } from "./ThemedSkeleton.js";
+import { TypeColumn } from "./TypeColumn.js";
+import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants.js";
 import { getDefaultInspectorTableIcons } from "./icons.js";
+import { Utils } from "./typeUtils.js";
 
 const {
 	isEnumProperty,
@@ -241,7 +241,7 @@ export const toTableRows = (
 	{ data, id = "" }: IInspectorRow,
 	props: IToTableRowsProps,
 	options: Partial<IToTableRowsOptions> = {},
-	pathPrefix: string = "",
+	pathPrefix = "",
 ): IInspectorRow[] => {
 	if (!data) {
 		return [];
@@ -635,7 +635,7 @@ export const fillExpanded = (
 	innerRows: IInspectorRow[],
 	props: IToTableRowsProps,
 	toTableRowsOptions?: IToTableRowsOptions,
-	pathPrefix: string = "",
+	pathPrefix = "",
 ) => {
 	for (const row of innerRows) {
 		if (row.id in expanded) {

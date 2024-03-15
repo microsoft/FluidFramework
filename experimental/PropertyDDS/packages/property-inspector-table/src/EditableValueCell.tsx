@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import { type WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
-import * as React from "react";
-import { iconMarginRight, iconWidth, InspectorMessages, unit } from "./constants.js";
+import type * as React from "react";
 import { Field } from "./Field.js";
-import { IEditableValueCellProps } from "./InspectorTableTypes.js";
+import type { IEditableValueCellProps } from "./InspectorTableTypes.js";
 import { TooltipedField } from "./TooltipedField.js";
+import { InspectorMessages, iconMarginRight, iconWidth, unit } from "./constants.js";
 
 const styles = () =>
 	createStyles({

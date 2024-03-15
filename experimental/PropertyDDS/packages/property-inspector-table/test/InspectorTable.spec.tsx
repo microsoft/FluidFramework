@@ -4,21 +4,21 @@
  */
 
 import {
-	ArrayProperty,
-	NodeProperty,
+	type ArrayProperty,
+	type NodeProperty,
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { Tooltip } from "@material-ui/core";
-import { ReactWrapper } from "enzyme";
-import React from "react";
+import type { ReactWrapper } from "enzyme";
+import type React from "react";
 import { useFakeTimers } from "sinon";
-import { InspectorMessages } from "../src/constants.js";
 import { Empty } from "../src/Empty.js";
-import { IDataGetterParameter } from "../src/InspectorTableTypes.js";
+import type { IDataGetterParameter } from "../src/InspectorTableTypes.js";
 import { NameCell } from "../src/NameCell.js";
 import { fetchRegisteredTemplates } from "../src/PropertyDataCreationHandlers.js";
 import { BooleanView, EnumView, NumberView, StringView } from "../src/PropertyViews/index.js";
+import { InspectorMessages } from "../src/constants.js";
 import {
 	coordinateSystem3DSchema,
 	enumUnoDosTresSchema,
@@ -219,7 +219,7 @@ describe("InspectorTable", () => {
 			wrapper.update();
 			// We found the first match and do not highlight anything else
 			expect(wrapper.find('NameCell[className^="InspectorTable-match"]').length).toEqual(0);
-			let firstMatch = wrapper.find('NameCell[className^="InspectorTable-currentMatch"]');
+			const firstMatch = wrapper.find('NameCell[className^="InspectorTable-currentMatch"]');
 			expect(firstMatch.length).toEqual(1);
 
 			// Initiate search of next result. The first result is now a match, but not the current one anymore.
@@ -231,7 +231,7 @@ describe("InspectorTable", () => {
 			clock.runAll();
 			wrapper.update();
 			expect(wrapper.find('NameCell[className^="InspectorTable-match"]').length).toEqual(1);
-			let secondMatch = wrapper.find('NameCell[className^="InspectorTable-currentMatch"]');
+			const secondMatch = wrapper.find('NameCell[className^="InspectorTable-currentMatch"]');
 			expect(secondMatch.length).toEqual(1);
 			expect(secondMatch).not.toEqual(firstMatch);
 		});
@@ -390,7 +390,7 @@ describe("InspectorTable", () => {
 		it("should overwrite dataGetter", () => {
 			const wrapper = mountInspectorTable(rootProxy, {
 				dataGetter: (parameters: IDataGetterParameter) => {
-					const text = "Row" + parameters.rowIndex + "Col" + parameters.columnIndex;
+					const text = `Row${parameters.rowIndex}Col${parameters.columnIndex}`;
 					return <div id={text}>{text}</div>;
 				},
 			});
@@ -405,7 +405,7 @@ describe("InspectorTable", () => {
 		it("should not overwrite null dataGetter", () => {
 			const wrapper = mountInspectorTable(rootProxy, {
 				dataGetter: (parameters: IDataGetterParameter) => {
-					const text = "Row" + parameters.rowIndex + "Col" + parameters.columnIndex;
+					const text = `Row${parameters.rowIndex}Col${parameters.columnIndex}`;
 					return parameters.rowIndex === 0 ? null : <div id={text}>{text}</div>;
 				},
 			});
@@ -437,10 +437,10 @@ describe("InspectorTable", () => {
 
 		/**
 		 * This function is test the dropdown options in the inspectortable property creation.
-		 * @param newDataForm             React wrapper for the form.
-		 * @param parentTypeId            Property typeid of the parent.
-		 * @param expectedNumberOfTypes   Number of property types expected in dropdown.
-		 * @param expectedContexts        Array of strings containing context values expected in the dropdown.
+		 * @param newDataForm - React wrapper for the form.
+		 * @param parentTypeId - Property typeid of the parent.
+		 * @param expectedNumberOfTypes - Number of property types expected in dropdown.
+		 * @param expectedContexts - Array of strings containing context values expected in the dropdown.
 		 */
 		const checkDropDown = (
 			newDataForm,
@@ -533,27 +533,23 @@ describe("InspectorTable", () => {
 					"Reference",
 					"NodeProperty",
 				];
-				const propsTemplatesObj = fetchRegisteredTemplates()[0][1] as Array<{
+				const propsTemplatesObj = fetchRegisteredTemplates()[0][1] as {
 					value: string;
 					label: string;
-				}>;
+				}[];
 				const propsTemplates = propsTemplatesObj.map((x) => x.value);
 				expect(propsTemplates).toEqual(expect.arrayContaining(knownProps));
 			});
 			describe("property creation at root", () => {
 				const propsTemplates = fetchRegisteredTemplates();
-				(propsTemplates[0][1] as Array<{ value: string; label: string }>).forEach(
-					(prop) => {
-						it(`should work for ${prop.label} creation`, () => {
-							wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
-							findAndClick(wrapper);
-							addProperty(wrapper, prop.label, "single", "test");
-							expect(workspace.getEntriesReadOnly().test.getTypeid()).toEqual(
-								prop.value,
-							);
-						});
-					},
-				);
+				(propsTemplates[0][1] as { value: string; label: string }[]).forEach((prop) => {
+					it(`should work for ${prop.label} creation`, () => {
+						wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
+						findAndClick(wrapper);
+						addProperty(wrapper, prop.label, "single", "test");
+						expect(workspace.getEntriesReadOnly().test.getTypeid()).toEqual(prop.value);
+					});
+				});
 				it(`should not allow to create property with the same name`, () => {
 					const mProp = propsTemplates[0][1][0] as { value: string; label: string };
 					wrapper = mountInspectorTable(rootProxy, {}, { attachTo: domNode });
@@ -956,17 +952,17 @@ describe("InspectorTable", () => {
 					Bool: { initialValue: [false], newValue: true, is64: false },
 					Int64: {
 						initialValue: [0],
-						newValue: Number.MAX_SAFE_INTEGER + "0",
+						newValue: `${Number.MAX_SAFE_INTEGER}0`,
 						is64: true,
 					},
 					String: {
 						initialValue: ["something"],
-						newValue: Number.MAX_SAFE_INTEGER + "0",
+						newValue: `${Number.MAX_SAFE_INTEGER}0`,
 						is64: false,
 					},
 					Uint64: {
 						initialValue: [0],
-						newValue: Number.MAX_SAFE_INTEGER + "0",
+						newValue: `${Number.MAX_SAFE_INTEGER}0`,
 						is64: true,
 					},
 				},
@@ -974,25 +970,25 @@ describe("InspectorTable", () => {
 					Bool: { initialValue: { ["test"]: false }, newValue: true, is64: false },
 					Int64: {
 						initialValue: { ["test"]: 0 },
-						newValue: Number.MAX_SAFE_INTEGER + "0",
+						newValue: `${Number.MAX_SAFE_INTEGER}0`,
 						is64: true,
 					},
 					String: {
 						initialValue: { ["test"]: "something" },
-						newValue: Number.MAX_SAFE_INTEGER + "0",
+						newValue: `${Number.MAX_SAFE_INTEGER}0`,
 						is64: false,
 					},
 					Uint64: {
 						initialValue: { ["test"]: 0 },
-						newValue: Number.MAX_SAFE_INTEGER + "0",
+						newValue: `${Number.MAX_SAFE_INTEGER}0`,
 						is64: true,
 					},
 				},
 				single: {
 					Bool: { newValue: true, is64: false },
-					Int64: { newValue: Number.MAX_SAFE_INTEGER + "0", is64: true },
-					String: { newValue: Number.MAX_SAFE_INTEGER + "0", is64: false },
-					Uint64: { newValue: Number.MAX_SAFE_INTEGER + "0", is64: true },
+					Int64: { newValue: `${Number.MAX_SAFE_INTEGER}0`, is64: true },
+					String: { newValue: `${Number.MAX_SAFE_INTEGER}0`, is64: false },
+					Uint64: { newValue: `${Number.MAX_SAFE_INTEGER}0`, is64: true },
 				},
 			};
 			const testWithContext = (context, collectionPath?, collectionKey?) => {
@@ -1069,7 +1065,7 @@ describe("InspectorTable", () => {
 					});
 				});
 			}
-			const inlineEnumSchema = (context: string = "single") => ({
+			const inlineEnumSchema = (context = "single") => ({
 				properties: [
 					{
 						context,
@@ -1184,7 +1180,7 @@ describe("InspectorTable", () => {
 						"ref",
 						PropertyFactory.create("Reference", ...referenceTests[key].args),
 					);
-					const newValue = Math.random() + "";
+					const newValue = `${Math.random()}`;
 					mountExpandUpdateCollection(newValue, "ref", referenceTests[key].collectionKey);
 					expect(workspace.get("String").value).toEqual(newValue);
 				});
@@ -1193,14 +1189,14 @@ describe("InspectorTable", () => {
 	});
 
 	describe("EditableValueCell", () => {
-		type sampleTestMapType = {
+		interface sampleTestMapType {
 			[key: string]: {
 				view: React.FunctionComponent<any>;
 				searchRef: string;
 				typeidOverride?: string;
 				args: any[];
 			};
-		};
+		}
 
 		const sampleTestMap: sampleTestMapType = {
 			Bool: { view: BooleanView, searchRef: "Switch", args: ["single"] },

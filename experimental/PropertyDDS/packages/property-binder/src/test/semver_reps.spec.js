@@ -7,10 +7,10 @@
 /* globals should, expect */
 /* eslint-disable require-jsdoc */
 
-import { registerTestTemplates } from "./testTemplates";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { DataBinder, UpgradeType } from "../index";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { registerTestTemplates } from "./testTemplates";
 class VersionedRepresentation100 {}
 class VersionedRepresentation101 {}
 class VersionedRepresentation120 {}

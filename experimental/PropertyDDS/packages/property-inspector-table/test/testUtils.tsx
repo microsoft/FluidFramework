@@ -4,7 +4,7 @@
  */
 
 import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
-import { mount, MountRendererProps } from "enzyme";
+import { MountRendererProps, mount } from "enzyme";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import { EditableValueCell } from "../src/EditableValueCell.js";

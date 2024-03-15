@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { WithStyles } from "@material-ui/core";
+import type { WithStyles } from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import { withStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import { withStyles } from "@material-ui/core/styles";
 import * as React from "react";
+import { ErrorPopup } from "./ErrorPopup.js";
 import { FloatingLabelTextField } from "./FloatingLabelTextField.js";
 import { InspectorModal } from "./InspectorModal.js";
-import { ErrorPopup } from "./ErrorPopup.js";
 import { SvgIcon } from "./SVGIcon.js";
 
 const styles = () => ({

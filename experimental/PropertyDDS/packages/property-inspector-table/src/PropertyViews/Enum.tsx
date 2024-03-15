@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty, EnumArrayProperty } from "@fluid-experimental/property-properties";
+import type { ContainerProperty, EnumArrayProperty } from "@fluid-experimental/property-properties";
 import MenuItem from "@material-ui/core/MenuItem";
-import Select, { SelectProps } from "@material-ui/core/Select";
-import * as React from "react";
-import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes.js";
-import { Utils } from "../typeUtils.js";
+import Select, { type SelectProps } from "@material-ui/core/Select";
+import type * as React from "react";
+import type { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes.js";
 import { getPropertyValue } from "../propertyInspectorUtils.js";
+import { Utils } from "../typeUtils.js";
 
 type ValType = string | number | boolean;
 

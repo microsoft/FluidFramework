@@ -34,11 +34,12 @@ import { DataBinderHandle } from "../internal/dataBinderHandle.js";
 import { PropertyElement } from "../internal/propertyElement.js";
 import { SemverMap, UpgradeType } from "../internal/semvermap.js";
 import { StatelessDataBindingWrapper } from "../internal/statelessDataBindingWrapper.js";
+import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions.js";
 import { CallbackOptions, DataBinding } from "./dataBinding.js";
 import { DataBindingRegistry } from "./dataBindingRegistry.js";
-import { ArrayNode, concatTokenizedPath, DataBindingTree, NodeType } from "./dataBindingTree.js";
-import { IDefineDataBindingOptions } from "./IDefineDataBindingOptions.js";
+import { ArrayNode, DataBindingTree, NodeType, concatTokenizedPath } from "./dataBindingTree.js";
 import {
+	RecursiveCallback,
 	assertOperation,
 	deferCallback,
 	forEachProperty,
@@ -46,7 +47,6 @@ import {
 	isPrimitiveCollection,
 	makeCallbackOncePerChangeSet,
 	minimalRootPaths,
-	RecursiveCallback,
 	recursivelyVisitHierarchy,
 	visitTypeHierarchy,
 } from "./internalUtils.js";

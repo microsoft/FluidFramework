@@ -5,15 +5,15 @@
 
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	BaseProperty,
 	MapProperty,
+	PropertyFactory,
 	ReferenceMapProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "./propertyProxy";
 import { PropertyProxyErrors } from "./errors";
-import { forceType, Utilities } from "./utilities";
+import { PropertyProxy } from "./propertyProxy";
+import { Utilities, forceType } from "./utilities";
 
 /**
  * The function returns an iterator for {@link external:MapProperty MapProperty}.

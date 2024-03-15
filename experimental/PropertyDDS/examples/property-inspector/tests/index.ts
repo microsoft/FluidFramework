@@ -8,7 +8,7 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import { renderApp } from "../src/inspector.js";
 import {
 	PropertyTreeContainerRuntimeFactory,
-	IPropertyTreeAppModel,
+	type IPropertyTreeAppModel,
 } from "../src/containerCode.js";
 
 /**

@@ -4,13 +4,13 @@
  */
 
 import Button from "@material-ui/core/Button";
-import { makeStyles, Theme } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
+import { type Theme, makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React from "react";
+import { ErrorPopup } from "./ErrorPopup.js";
 import { LoadingButton } from "./LoadingButton.js";
 import { SvgIcon } from "./SVGIcon.js";
-import { ErrorPopup } from "./ErrorPopup.js";
 import { iconHeight, iconWidth } from "./constants.js";
 
 const useStyles = makeStyles(

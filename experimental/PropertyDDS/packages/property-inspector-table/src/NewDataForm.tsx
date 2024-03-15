@@ -3,14 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import { type ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import InputAdornment from "@material-ui/core/InputAdornment";
-import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
+import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
+import {
+	DecoratedSelect,
+	type DecoratedSelectGroupedOptionsType,
+	type DecoratedSelectOptionsType,
+	type DecoratedSelectValueType,
+	type IDecoratedSelectOptionType,
+} from "./DecoratedSelect.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { ErrorTooltip } from "./ErrorTooltip.js";
+import type { IInspectorRow } from "./InspectorTableTypes.js";
+import { SvgIcon } from "./SVGIcon.js";
+import { TypeIcon } from "./TypeIcon.js";
 import {
 	backGroundGrayColor,
 	borderGrayColor,
@@ -18,18 +31,6 @@ import {
 	iconMarginRight,
 	unit,
 } from "./constants.js";
-import {
-	DecoratedSelect,
-	DecoratedSelectGroupedOptionsType,
-	DecoratedSelectOptionsType,
-	DecoratedSelectValueType,
-	IDecoratedSelectOptionType,
-} from "./DecoratedSelect.js";
-import { ErrorPopup } from "./ErrorPopup.js";
-import { ErrorTooltip } from "./ErrorTooltip.js";
-import { IInspectorRow } from "./InspectorTableTypes.js";
-import { SvgIcon } from "./SVGIcon.js";
-import { TypeIcon } from "./TypeIcon.js";
 
 const useStyles = makeStyles(
 	{

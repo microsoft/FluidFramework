@@ -8,11 +8,11 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import { makeStyles } from "@material-ui/styles";
 import * as React from "react";
+import { DeleteModal, type IDeleteOptions } from "./DeleteModal.js";
+import type { IDeleteModalTextParameters } from "./DeleteModalTextParameters.js";
 import { ModalConsumer } from "./ModalManager.js";
 import { SvgIcon } from "./SVGIcon.js";
-import { DeleteModal, IDeleteOptions } from "./DeleteModal.js";
-import { IDeleteModalTextParameters } from "./DeleteModalTextParameters.js";
-import { IShareOptions, ShareModal } from "./ShareModal.js";
+import { type IShareOptions, ShareModal } from "./ShareModal.js";
 
 export interface ICopyOptions {
 	/**

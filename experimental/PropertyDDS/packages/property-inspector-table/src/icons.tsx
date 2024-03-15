@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import type * as React from "react";
+import type { IInspectorRow } from "./InspectorTableTypes.js";
 import { SvgIcon } from "./SVGIcon.js";
 import { iconHeight, iconWidth } from "./constants.js";
-import { IInspectorRow } from "./InspectorTableTypes.js";
 
 const typeIdToColor = {
 	Bool: "#9FC966",

@@ -7,10 +7,10 @@
 
 import {
 	catchConsoleErrors,
-	hadConsoleError,
 	clearConsoleError,
 	countConsoleMessages,
 	endCountConsoleMessages,
+	hadConsoleError,
 } from "./catchConsoleError";
 
 describe("General stuff", function () {

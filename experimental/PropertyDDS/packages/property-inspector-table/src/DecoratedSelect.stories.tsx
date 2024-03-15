@@ -4,16 +4,16 @@
  */
 
 import { storiesOf } from "@storybook/react";
-import * as React from "react";
+import type * as React from "react";
 import {
 	DecoratedSelect,
-	DecoratedSelectGroupedOptionsType,
-	DecoratedSelectOptionsType,
-	IDecoratedSelectOptionType,
+	type DecoratedSelectGroupedOptionsType,
+	type DecoratedSelectOptionsType,
+	type IDecoratedSelectOptionType,
 } from "./DecoratedSelect.js";
-import * as TableIcons from "./icons.js";
 import { InspectorDecorator } from "./InspectorDecorator.js";
 import { TypeIcon } from "./TypeIcon.js";
+import * as TableIcons from "./icons.js";
 
 storiesOf("DecoratedSelect", module)
 	.addDecorator(InspectorDecorator)
