@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createSharedMapWithInterception } from "../map/index.js";
 
 describe("Shared Map with Interception", () => {

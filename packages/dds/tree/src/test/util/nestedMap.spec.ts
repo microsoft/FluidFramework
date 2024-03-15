@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 import {
+	NestedMap,
+	SizedNestedMap,
 	deleteFromNestedMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
-	NestedMap,
 	populateNestedMap,
 	setInNestedMap,
-	SizedNestedMap,
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";

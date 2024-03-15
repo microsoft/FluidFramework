@@ -6,9 +6,9 @@
 // eslint-disable-next-line import/no-internal-modules
 import {
 	ImplicitFieldSchema,
+	InsertableTreeFieldFromImplicitField,
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
-	InsertableTreeFieldFromImplicitField,
 	toFlexConfig,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules

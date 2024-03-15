@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { INormalizedWholeSnapshot, IWholeFlatSnapshot, IWholeFlatSnapshotTree } from "./contracts";
 
 /**
