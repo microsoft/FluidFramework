@@ -27,7 +27,7 @@ import { DataBinder } from "@fluid-experimental/property-binder";
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import AutoSizer from "react-virtualized-auto-sizer";
 
-import { theme } from "./theme";
+import { theme } from "./theme.js";
 
 const useStyles = makeStyles(
 	{

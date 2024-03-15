@@ -5,8 +5,11 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { renderApp } from "../src/inspector";
-import { PropertyTreeContainerRuntimeFactory, IPropertyTreeAppModel } from "../src/containerCode";
+import { renderApp } from "../src/inspector.js";
+import {
+	PropertyTreeContainerRuntimeFactory,
+	IPropertyTreeAppModel,
+} from "../src/containerCode.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
