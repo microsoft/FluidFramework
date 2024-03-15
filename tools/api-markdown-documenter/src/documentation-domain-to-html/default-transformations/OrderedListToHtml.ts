@@ -14,7 +14,7 @@ import { transformListChildren } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformOrderedList(
+export function orderedListToHtml(
 	node: OrderedListNode,
 	context: TransformationContext,
 ): HastElement {

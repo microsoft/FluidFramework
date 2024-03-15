@@ -16,7 +16,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  *
  * @remarks Will render as HTML when in an HTML context, or within another table context.
  */
-export function transformTable(node: TableNode, context: TransformationContext): HastElement {
+export function tableToHtml(node: TableNode, context: TransformationContext): HastElement {
 	const transformedChildren: HastElement[] = [];
 	if (node.headerRow !== undefined) {
 		transformedChildren.push(

@@ -13,7 +13,7 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformLink(node: LinkNode, context: TransformationContext): HastElement {
+export function linkToHtml(node: LinkNode, context: TransformationContext): HastElement {
 	return transformChildrenUnderTag(
 		{ name: "a", attributes: { href: node.target } },
 		node.children,

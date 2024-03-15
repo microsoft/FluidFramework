@@ -13,7 +13,7 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformFencedCodeBlock(
+export function fencedCodeBlockToHtml(
 	node: FencedCodeBlockNode,
 	context: TransformationContext,
 ): HastElement {

@@ -16,7 +16,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * @example Markdown
  *
  * ```md
- * \`\`\`typescrpt
+ * \`\`\`typescript
  * const foo = "bar";
  * \`\`\`
  * ```

@@ -13,7 +13,7 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformBlockQuote(
+export function blockQuoteToHtml(
 	node: BlockQuoteNode,
 	context: TransformationContext,
 ): HastElement {

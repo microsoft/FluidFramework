@@ -13,9 +13,6 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformParagraph(
-	node: ParagraphNode,
-	context: TransformationContext,
-): HastElement {
+export function paragraphToHtml(node: ParagraphNode, context: TransformationContext): HastElement {
 	return transformChildrenUnderTag({ name: "p" }, node.children, context);
 }

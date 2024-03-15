@@ -22,7 +22,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformPlainText(node: PlainTextNode, context: TransformationContext): HastNodes {
+export function plainTextToHtml(node: PlainTextNode, context: TransformationContext): HastNodes {
 	// TODO: how to handle formatting? Do we drop formatting down to plain text like we do in markdown?
 	// Presumably bold, etc. can impact formatting of list bullets, etc.? Maybe not?
 

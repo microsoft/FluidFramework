@@ -13,6 +13,6 @@ import { transformChildrenUnderTag } from "../Utilities.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformCodeSpan(node: CodeSpanNode, context: TransformationContext): HastElement {
+export function codeSpanToHtml(node: CodeSpanNode, context: TransformationContext): HastElement {
 	return transformChildrenUnderTag({ name: "code" }, node.children, context);
 }

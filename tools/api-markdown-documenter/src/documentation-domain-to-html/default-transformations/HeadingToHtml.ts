@@ -25,7 +25,7 @@ const maxHeadingLevel = 6;
  *
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  */
-export function transformHeading(
+export function headingToHtml(
 	headingNode: HeadingNode,
 	context: TransformationContext,
 ): HastElement {

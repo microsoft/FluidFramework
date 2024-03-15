@@ -15,6 +15,6 @@ const tableRowTag: HtmlTag = { name: "tr" };
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function transformTableRow(node: TableRowNode, context: TransformationContext): HastElement {
+export function tableRowToHtml(node: TableRowNode, context: TransformationContext): HastElement {
 	return transformChildrenUnderTag(tableRowTag, node.children, context);
 }
