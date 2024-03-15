@@ -1568,6 +1568,7 @@ importers:
 
   examples/data-objects/canvas:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluid-experimental/ink': workspace:~
@@ -1611,6 +1612,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1645,6 +1647,7 @@ importers:
 
   examples/data-objects/clicker:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1689,6 +1692,7 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1720,6 +1724,7 @@ importers:
 
   examples/data-objects/codemirror:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1771,6 +1776,7 @@ importers:
       codemirror: 5.65.16
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1793,6 +1799,7 @@ importers:
 
   examples/data-objects/diceroller:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1830,6 +1837,7 @@ importers:
       '@fluidframework/map': link:../../../packages/dds/map
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1860,6 +1868,7 @@ importers:
 
   examples/data-objects/inventory-app:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1902,6 +1911,7 @@ importers:
       '@fluidframework/tree': link:../../../packages/dds/tree
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -1933,6 +1943,7 @@ importers:
 
   examples/data-objects/monaco:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -1974,6 +1985,7 @@ importers:
       monaco-editor: 0.30.1
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
@@ -2000,6 +2012,7 @@ importers:
 
   examples/data-objects/multiview/constellation-model:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/multiview-coordinate-model': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -2026,6 +2039,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2043,6 +2057,7 @@ importers:
 
   examples/data-objects/multiview/constellation-view:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/multiview-slider-coordinate-view': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -2070,6 +2085,7 @@ importers:
       '@fluid-example/multiview-slider-coordinate-view': link:../slider-coordinate-view
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2092,6 +2108,7 @@ importers:
 
   examples/data-objects/multiview/container:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/multiview-constellation-model': workspace:~
       '@fluid-example/multiview-constellation-view': workspace:~
@@ -2154,6 +2171,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2187,6 +2205,7 @@ importers:
 
   examples/data-objects/multiview/coordinate-model:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2209,6 +2228,7 @@ importers:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2226,6 +2246,7 @@ importers:
 
   examples/data-objects/multiview/interface:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -2246,6 +2267,7 @@ importers:
     dependencies:
       '@fluid-example/example-utils': link:../../../utils/example-utils
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2265,6 +2287,7 @@ importers:
 
   examples/data-objects/multiview/plot-coordinate-view:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2290,6 +2313,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2312,6 +2336,7 @@ importers:
 
   examples/data-objects/multiview/slider-coordinate-view:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2337,6 +2362,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2359,6 +2385,7 @@ importers:
 
   examples/data-objects/multiview/triangle-view:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2384,6 +2411,7 @@ importers:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2406,6 +2434,7 @@ importers:
 
   examples/data-objects/prosemirror:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2482,6 +2511,7 @@ importers:
       prosemirror-view: 1.32.4
       react: 17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2507,6 +2537,7 @@ importers:
 
   examples/data-objects/smde:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2558,6 +2589,7 @@ importers:
       react: 17.0.2
       simplemde: 1.11.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
@@ -2579,6 +2611,7 @@ importers:
   examples/data-objects/table-document:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-version-utils': workspace:~
@@ -2624,6 +2657,7 @@ importers:
       debug: 4.3.4
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/test-version-utils': link:../../../packages/test/test-version-utils
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -2649,6 +2683,7 @@ importers:
 
   examples/data-objects/todo:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -2702,6 +2737,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
@@ -2736,6 +2772,7 @@ importers:
 
   examples/data-objects/webflow:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -2802,6 +2839,7 @@ importers:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/test-version-utils': link:../../../packages/test/test-version-utils
