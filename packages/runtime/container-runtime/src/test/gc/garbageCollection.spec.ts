@@ -4,65 +4,65 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers, spy } from "sinon";
 import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { Timer } from "@fluidframework/core-utils";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	gcBlobPrefix,
-	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	gcDeletedBlobKey,
 	channelsTreeName,
+	gcBlobPrefix,
+	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
+	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	mixinMonitoringContext,
 	MonitoringContext,
-	tagCodeArtifacts,
 	createChildLogger,
+	mixinMonitoringContext,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { Timer } from "@fluidframework/core-utils";
+import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
 import {
-	concatGarbageCollectionStates,
-	GarbageCollector,
 	GCNodeType,
 	GCSummaryStateTracker,
+	GCTelemetryTracker,
+	GCVersion,
+	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
+	GarbageCollector,
+	IGCMetadata,
+	IGCStats,
+	IGCSummaryTrackingData,
 	IGarbageCollectionNodeData,
+	IGarbageCollectionRuntime,
+	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
-	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
-	IGCMetadata,
-	IGCSummaryTrackingData,
-	defaultSessionExpiryDurationMs,
-	oneDayMs,
-	GCVersion,
-	stableGCVersion,
-	IGarbageCollectionSnapshotData,
-	UnreferencedStateTracker,
 	UnreferencedState,
+	UnreferencedStateTracker,
+	concatGarbageCollectionStates,
+	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
-	GarbageCollectionMessage,
-	GarbageCollectionMessageType,
-	GCTelemetryTracker,
-	IGCStats,
+	oneDayMs,
+	stableGCVersion,
 } from "../../gc/index.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import { pkgVersion } from "../../packageVersion.js";
 import {
-	dataStoreAttributesBlobName,
 	IContainerRuntimeMetadata,
+	dataStoreAttributesBlobName,
 	metadataBlobName,
 } from "../../summary/index.js";
-import { pkgVersion } from "../../packageVersion.js";
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;
