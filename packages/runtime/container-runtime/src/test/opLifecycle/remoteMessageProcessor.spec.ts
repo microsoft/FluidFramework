@@ -4,20 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType } from "../../index.js";
 import {
+	type BatchMessage,
+	type IBatch,
 	IMessageProcessingResult,
+	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
-	type BatchMessage,
-	type IBatch,
-	OpCompressor,
 } from "../../opLifecycle/index.js";
 
 describe("RemoteMessageProcessor", () => {
