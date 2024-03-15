@@ -1,22 +1,10 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"root": ".",
-		"useIgnoreFile": true
-	},
+	"extends": ["../../../biome.json"],
 	"files": {
 		"ignoreUnknown": true,
 		"ignore": [
-			"**/*.generated.*",
-			"**/_api-extractor-temp/**",
-			"**/test/snapshots/content/**",
-			"**/localOdspSnapshots/**",
-			"**/_package.json",
-			"**/biome.jsonc",
-			"**/oclif.manifest.json",
-			"packages/test/snapshots/content/**"
+			"content/**"
 		],
 		"maxSize": 2097152
 	},
