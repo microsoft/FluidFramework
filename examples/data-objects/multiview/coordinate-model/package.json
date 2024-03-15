@@ -44,6 +44,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.6.1",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"eslint": "~8.55.0",
