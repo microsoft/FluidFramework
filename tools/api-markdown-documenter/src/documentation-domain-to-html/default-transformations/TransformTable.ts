@@ -23,7 +23,11 @@ export function transformTable(node: TableNode, context: TransformationContext):
 			transformChildrenUnderTag({ name: "thead" }, [node.headerRow], context),
 		);
 	}
-	transformedChildren.push(transformChildrenUnderTag({ name: "tbody" }, node.children, context));
+	if (node.children.length > 0) {
+		transformedChildren.push(
+			transformChildrenUnderTag({ name: "tbody" }, node.children, context),
+		);
+	}
 
 	return h("table", transformedChildren);
 }
