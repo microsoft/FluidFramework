@@ -34,6 +34,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { IFluidParentContext } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
@@ -402,7 +403,7 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
 export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidDataStoreContextEvents> implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable {
     constructor(props: IFluidDataStoreContextProps, existing: boolean, isLocalDataStore: boolean, makeLocallyVisibleFn: () => void);
     // @deprecated (undocumented)
-    addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
+    addedGCOutboundReference(srcHandle: IFluidHandleInternal, outboundHandle: IFluidHandleInternal): void;
     addedGCOutboundRoute(fromPath: string, toPath: string): void;
     // (undocumented)
     applyStashedOp(contents: any): Promise<unknown>;

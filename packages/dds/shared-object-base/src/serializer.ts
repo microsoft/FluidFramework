@@ -6,7 +6,13 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+	fluidHandleSymbol,
+	toFluidHandleInternal,
+} from "@fluidframework/core-interfaces";
 import { generateHandleContextPath, isSerializedHandle } from "@fluidframework/runtime-utils";
 import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
@@ -104,8 +110,9 @@ export class FluidSerializer implements IFluidSerializer {
 			: input;
 	}
 
-	public stringify(input: any, bind: IFluidHandle) {
-		return JSON.stringify(input, (key, value) => this.encodeValue(value, bind));
+	public stringify(input: unknown, bind: IFluidHandle) {
+		const bindInternal = toFluidHandleInternal(bind);
+		return JSON.stringify(input, (key, value) => this.encodeValue(value, bindInternal));
 	}
 
 	// Parses the serialized data - context must match the context with which the JSON was stringified
@@ -115,12 +122,11 @@ export class FluidSerializer implements IFluidSerializer {
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: any, bind: IFluidHandle) => {
-		// Detect if 'value' is an IFluidHandle.
-		const handle = value?.IFluidHandle;
-
+	private readonly encodeValue = (value: any, bind: IFluidHandleInternal) => {
 		// If 'value' is an IFluidHandle return its encoded form.
-		return handle !== undefined ? this.serializeHandle(handle, bind) : value;
+		return fluidHandleSymbol in value
+			? this.serializeHandle(toFluidHandleInternal(value), bind)
+			: value;
 	};
 
 	// If the given 'value' is an encoded IFluidHandle, returns the decoded IFluidHandle.
@@ -190,7 +196,7 @@ export class FluidSerializer implements IFluidSerializer {
 		return clone ?? input;
 	}
 
-	protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle) {
+	protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal) {
 		bind.bind(handle);
 		return {
 			type: "__fluid_handle__",

@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IFluidHandleErased,
-	IFluidHandleInternal,
-	IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -21,7 +17,7 @@ import { generateHandleContextPath } from "@fluidframework/runtime-utils";
  * @alpha
  */
 export class FluidObjectHandle<T extends FluidObject = FluidObject>
-	implements IFluidHandleInternal
+	implements IFluidHandleInternal<T>
 {
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
@@ -33,7 +29,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject>
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
 	 */
-	public get IFluidHandle(): IFluidHandleInternal<unknown> {
+	public get IFluidHandle(): IFluidHandleInternal {
 		return this;
 	}
 
@@ -84,7 +80,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject>
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
-	public get [fluidHandleSymbol](): IFluidHandleErased<FluidObject & IFluidLoadable> {
+	public get [fluidHandleSymbol](): IFluidHandleErased<T> {
 		return toFluidHandleErased(this);
 	}
 

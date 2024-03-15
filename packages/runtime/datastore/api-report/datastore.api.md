@@ -21,7 +21,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IFluidHandleErased } from '@fluidframework/core-interfaces';
 import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
-import type { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
@@ -132,15 +131,15 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
 }
 
 // @alpha
-export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandleInternal {
+export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandleInternal<T> {
     // (undocumented)
-    get [fluidHandleSymbol](): IFluidHandleErased<FluidObject & IFluidLoadable>;
+    get [fluidHandleSymbol](): IFluidHandleErased<T>;
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     readonly absolutePath: string;
     attachGraph(): void;
     bind(handle: IFluidHandleInternal): void;
     get(): Promise<any>;
-    get IFluidHandle(): IFluidHandleInternal<unknown>;
+    get IFluidHandle(): IFluidHandleInternal;
     get isAttached(): boolean;
     // (undocumented)
     readonly path: string;

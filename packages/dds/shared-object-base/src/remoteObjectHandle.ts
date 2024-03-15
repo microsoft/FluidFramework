@@ -6,9 +6,12 @@
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
 	FluidObject,
-	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleErased,
+	type IFluidHandleInternal,
 	IRequest,
+	fluidHandleSymbol,
+	toFluidHandleErased,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { responseToException } from "@fluidframework/runtime-utils";
@@ -20,11 +23,11 @@ import { responseToException } from "@fluidframework/runtime-utils";
  * custom objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the
  * IFluidHandle can be retrieved by calling `get` on it.
  */
-export class RemoteFluidObjectHandle implements IFluidHandle {
+export class RemoteFluidObjectHandle implements IFluidHandleInternal<FluidObject> {
 	public get IFluidHandleContext() {
 		return this;
 	}
-	public get IFluidHandle() {
+	public get IFluidHandle(): IFluidHandleInternal {
 		return this;
 	}
 
@@ -46,7 +49,11 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 		);
 	}
 
-	public async get(): Promise<any> {
+	public get [fluidHandleSymbol](): IFluidHandleErased<FluidObject> {
+		return toFluidHandleErased(this);
+	}
+
+	public async get(): Promise<FluidObject> {
 		if (this.objectP === undefined) {
 			// Add `viaHandle` header to distinguish from requests from non-handle paths.
 			const request: IRequest = {
@@ -70,7 +77,7 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 		return;
 	}
 
-	public bind(handle: IFluidHandle): void {
+	public bind(handle: IFluidHandleInternal): void {
 		handle.attachGraph();
 	}
 }

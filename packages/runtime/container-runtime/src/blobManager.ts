@@ -9,7 +9,13 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandleContext,
+	type IFluidHandleErased,
+	type IFluidHandleInternal,
+	fluidHandleSymbol,
+	toFluidHandleErased,
+} from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
