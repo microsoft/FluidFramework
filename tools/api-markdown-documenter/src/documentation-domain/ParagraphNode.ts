@@ -8,6 +8,7 @@ import {
 	type MultiLineDocumentationNode,
 } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { LineBreakNode } from "./LineBreakNode.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -82,8 +83,12 @@ export class ParagraphNode
 		}
 
 		const children: DocumentationNode[] = [];
-		for (const node of nodes) {
-			children.push(...node.children);
+		for (let i = 0; i < nodes.length; i++) {
+			children.push(...nodes[i].children);
+			// Ensure adjacent paragraphs' contents are separated by a line break
+			if (i < nodes.length - 1) {
+				children.push(LineBreakNode.Singleton);
+			}
 		}
 
 		return new ParagraphNode(children);
