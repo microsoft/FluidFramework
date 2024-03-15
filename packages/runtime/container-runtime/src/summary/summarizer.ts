@@ -3,37 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
 import {
-	ITelemetryLoggerExt,
-	createChildLogger,
 	IFluidErrorBase,
+	ITelemetryLoggerExt,
 	LoggingError,
 	UsageError,
+	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime.js";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
-import { SummaryCollection } from "./summaryCollection.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
+import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import {
+	EnqueueSummarizeResult,
 	IConnectableRuntime,
-	ISummarizer,
+	IEnqueueSummarizeOptions,
+	IOnDemandSummarizeOptions,
+	ISummarizeEventProps,
 	ISummarizeHeuristicData,
+	ISummarizeResults,
+	ISummarizer,
+	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	SummarizerStopReason,
-	IOnDemandSummarizeOptions,
-	ISummarizeResults,
-	IEnqueueSummarizeOptions,
-	EnqueueSummarizeResult,
-	ISummarizerEvents,
-	ISummarizeEventProps,
 } from "./summarizerTypes.js";
-import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
+import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
 
 const summarizingError = "summarizingError";
