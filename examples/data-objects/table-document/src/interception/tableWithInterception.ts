@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { ITable, TableDocumentItem } from "../table.js";
+import { PropertySet } from "@fluidframework/sequence";
 import { TableDocument } from "../document.js";
+import { ITable, TableDocumentItem } from "../table.js";
 
 /**
  * Does the following:
