@@ -4,8 +4,9 @@
  */
 
 import { ISegment } from "@fluidframework/sequence";
-import { emptyObject } from "./index.js";
 import { areStringsEquivalent } from "./string.js";
+
+import { emptyObject } from "./index.js";
 
 export interface IHTMLAttributes {
 	src?: string;
