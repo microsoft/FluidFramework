@@ -6,19 +6,19 @@
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import { fail, requireAssignableTo } from "../../util/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../default-schema/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
 import { Multiplicity } from "../multiplicity.js";
-import {
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	allowedTypesIsAny,
-	SchemaCollection,
-	FlexMapNodeSchema,
-	LeafNodeSchema,
-	FlexFieldNodeSchema,
-	FlexObjectNodeSchema,
-} from "./typedTreeSchema.js";
 import { normalizeFlexListEager } from "./flexList.js";
+import {
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	LeafNodeSchema,
+	SchemaCollection,
+	allowedTypesIsAny,
+} from "./typedTreeSchema.js";
 import { Sourced } from "./view.js";
 
 // TODO: tests for this file

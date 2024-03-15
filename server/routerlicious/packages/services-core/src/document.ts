@@ -148,6 +148,12 @@ export interface IScribe {
 
 	// Is document corrupted?
 	isCorrupt: boolean;
+
+	// Last summary sequence number
+	protocolHead: number | undefined;
+
+	// Time checkpoint was created
+	checkpointTimestamp: number | undefined;
 }
 
 /**

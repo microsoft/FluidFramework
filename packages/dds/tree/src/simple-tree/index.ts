@@ -31,10 +31,10 @@ export {
 	ObjectFromSchemaRecord,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
+export { getFlexNode } from "./flexNode.js";
+export { treeNodeApi, TreeNodeApi, TreeNodeEvents } from "./treeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
 export {
-	SchemaFactoryRecursive,
 	ObjectFromSchemaRecordUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
@@ -47,7 +47,8 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
-} from "./schemaFactoryRecursive.js";
+} from "./typesUnsafe.js";
+export { SchemaFactoryRecursive, ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
 export { getProxyForField } from "./proxies.js";
 
 export {

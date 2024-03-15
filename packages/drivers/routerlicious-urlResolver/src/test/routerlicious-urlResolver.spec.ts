@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { Provider } from "nconf";
-import { RouterliciousUrlResolver } from "../urlResolver";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { Provider } from "../nconf.cjs";
+import { RouterliciousUrlResolver } from "../urlResolver.js";
 
 describe("Routerlicious Url Resolver", () => {
 	const token = "dummy";

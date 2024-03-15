@@ -4,12 +4,12 @@
  */
 
 import type {
-	EditId,
 	Definition,
+	DetachedSequenceId,
+	EditId,
 	NodeId,
 	StableNodeId,
 	TraitLabel,
-	DetachedSequenceId,
 	UuidString,
 } from '../Identifiers.js';
 

@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+import { SchemaBuilder, leaf, nodeKeyField, nodeKeySchema } from "../../../domains/index.js";
 import {
-	createMockNodeKeyManager,
-	StableNodeKey,
 	LocalNodeKey,
-	nodeKeyFieldKey,
 	NodeKeyManager,
+	StableNodeKey,
+	createMockNodeKeyManager,
+	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-import { leaf, nodeKeyField, nodeKeySchema, SchemaBuilder } from "../../../domains/index.js";
 import { flexTreeWithContent } from "../../utils.js";
 
 const builder = new SchemaBuilder({

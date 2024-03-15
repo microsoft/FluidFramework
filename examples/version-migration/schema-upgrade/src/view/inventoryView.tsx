@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
+import { CollaborativeInput } from "@fluid-example/example-utils";
 
 import React, { useEffect, useRef, useState } from "react";
 

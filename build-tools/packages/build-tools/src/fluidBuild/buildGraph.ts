@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
 import * as semver from "semver";
@@ -518,7 +519,8 @@ export class BuildGraph {
 	}
 
 	public async build(timer?: Timer): Promise<BuildResult> {
-		// TODO: This function can only be called once
+		// This function must only be called once here at the beginning of the build.
+		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
