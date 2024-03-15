@@ -113,6 +113,7 @@ import {
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
 	runSingle,
+	getDocumentAttributes,
 } from "./utils.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
@@ -1584,7 +1585,7 @@ export class Container
 			this.service?.policies?.supportGetSnapshotApi,
 		);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTree,
 		);
@@ -1814,7 +1815,7 @@ export class Container
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
 			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
-		const attributes = await this.getDocumentAttributes(
+		const attributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,
 		);
@@ -1844,28 +1845,6 @@ export class Container
 		);
 
 		this.setLoaded();
-	}
-
-	private async getDocumentAttributes(
-		storage: IDocumentStorageService,
-		tree: ISnapshotTree | undefined,
-	): Promise<IDocumentAttributes> {
-		if (tree === undefined) {
-			return {
-				minimumSequenceNumber: 0,
-				sequenceNumber: 0,
-			};
-		}
-
-		// Backward compatibility: old docs would have ".attributes" instead of "attributes"
-		const attributesHash =
-			".protocol" in tree.trees
-				? tree.trees[".protocol"].blobs.attributes
-				: tree.blobs[".attributes"];
-
-		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-		return attributes;
 	}
 
 	private async initializeProtocolStateFromSnapshot(
