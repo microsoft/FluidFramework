@@ -19,15 +19,11 @@ describe("Minimum Compat Version", () => {
 		const invalidString = "invalid string";
 		assert.throws(
 			() =>
-				isCompatVersionBelowMinVersion(
-					invalidString,
-					{
-						name: `test`,
-						kind: CompatKind.None,
-						compatVersion: "2.0.0-internal.8.0.0",
-					},
-					baseVersionForMinCompat,
-				),
+				isCompatVersionBelowMinVersion(invalidString, {
+					name: `test`,
+					kind: CompatKind.None,
+					compatVersion: "2.0.0-internal.8.0.0",
+				}),
 			(error: Error) => {
 				return (
 					error.message?.startsWith(
@@ -43,15 +39,11 @@ describe("Minimum Compat Version", () => {
 	for (let i = 1; i < numCompatVersions; i++) {
 		it(`compatVersion N-${i} < ${baseVersionForMinCompat}`, () => {
 			assert.strictEqual(
-				isCompatVersionBelowMinVersion(
-					baseVersionForMinCompat,
-					{
-						name: `test`,
-						kind: CompatKind.None,
-						compatVersion: -i,
-					},
-					baseVersionForMinCompat,
-				),
+				isCompatVersionBelowMinVersion(baseVersionForMinCompat, {
+					name: `test`,
+					kind: CompatKind.None,
+					compatVersion: -i,
+				}),
 				true,
 				`N-${i} version is not lower than min version: ${baseVersionForMinCompat}`,
 			);
@@ -62,15 +54,11 @@ describe("Minimum Compat Version", () => {
 	for (let i = 1; i < numCompatVersions; i++) {
 		it(`compatVersion N-${i} > ${oldVersion}`, () => {
 			assert.strictEqual(
-				isCompatVersionBelowMinVersion(
-					oldVersion,
-					{
-						name: `test`,
-						kind: CompatKind.None,
-						compatVersion: -i,
-					},
-					baseVersionForMinCompat,
-				),
+				isCompatVersionBelowMinVersion(oldVersion, {
+					name: `test`,
+					kind: CompatKind.None,
+					compatVersion: -i,
+				}),
 				false,
 				`N-${i} version: is lower than min version: ${oldVersion}`,
 			);
@@ -79,62 +67,46 @@ describe("Minimum Compat Version", () => {
 
 	it("cross compat. filters out if loadVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(
-				greaterVersion,
-				{
-					name: "test",
-					kind: CompatKind.CrossVersion,
-					compatVersion: greaterVersion,
-					loadVersion: lowerVersion,
-				},
-				baseVersionForMinCompat,
-			),
+			isCompatVersionBelowMinVersion(greaterVersion, {
+				name: "test",
+				kind: CompatKind.CrossVersion,
+				compatVersion: greaterVersion,
+				loadVersion: lowerVersion,
+			}),
 			true,
 		);
 	});
 
 	it("cross compat. filters out if compatVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(
-				greaterVersion,
-				{
-					name: "test",
-					kind: CompatKind.CrossVersion,
-					compatVersion: lowerVersion,
-					loadVersion: greaterVersion,
-				},
-				baseVersionForMinCompat,
-			),
+			isCompatVersionBelowMinVersion(greaterVersion, {
+				name: "test",
+				kind: CompatKind.CrossVersion,
+				compatVersion: lowerVersion,
+				loadVersion: greaterVersion,
+			}),
 			true,
 		);
 	});
 
 	it("cross compat. does not filter out valid versions", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(
-				lowerVersion,
-				{
-					name: "test",
-					kind: CompatKind.CrossVersion,
-					compatVersion: greaterVersion,
-					loadVersion: lowerVersion,
-				},
-				baseVersionForMinCompat,
-			),
+			isCompatVersionBelowMinVersion(lowerVersion, {
+				name: "test",
+				kind: CompatKind.CrossVersion,
+				compatVersion: greaterVersion,
+				loadVersion: lowerVersion,
+			}),
 			false,
 			`fails with minVersion: ${lowerVersion} compatversion: ${greaterVersion} loadVersion: ${lowerVersion}`,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(
-				lowerVersion,
-				{
-					name: "test",
-					kind: CompatKind.CrossVersion,
-					compatVersion: lowerVersion,
-					loadVersion: greaterVersion,
-				},
-				baseVersionForMinCompat,
-			),
+			isCompatVersionBelowMinVersion(lowerVersion, {
+				name: "test",
+				kind: CompatKind.CrossVersion,
+				compatVersion: lowerVersion,
+				loadVersion: greaterVersion,
+			}),
 			false,
 			`fails with minVersion: ${lowerVersion} compatversion: ${lowerVersion} loadVersion: ${greaterVersion}`,
 		);
