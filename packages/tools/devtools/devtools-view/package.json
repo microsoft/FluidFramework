@@ -63,8 +63,8 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
 		"test:jest:cjs": "jest --roots ./dist",
-		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
 		"test:jest:coverage": "jest --coverage --ci",
+		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
 		"test:mocha:fail": "mocha lib/test/screenshot/Screenshot.test.js --delay --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
@@ -172,6 +172,13 @@
 			],
 			"build:test:mocha": [
 				"...",
+				"build:test:utils:esm"
+			],
+			"eslint": [
+				"tsc",
+				"build:esnext",
+				"build:test:jest:esm",
+				"build:test:mocha",
 				"build:test:utils:esm"
 			]
 		}
