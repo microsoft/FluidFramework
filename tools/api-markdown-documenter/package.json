@@ -103,7 +103,6 @@
 		"eslint-plugin-chai-expect": "^3.0.0",
 		"eslint-plugin-chai-friendly": "^0.7.2",
 		"good-fences": "^1.2.0",
-		"hast-util-from-html": "^2.0.1",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.1.0",
 		"mocha-multi-reporters": "^1.5.1",

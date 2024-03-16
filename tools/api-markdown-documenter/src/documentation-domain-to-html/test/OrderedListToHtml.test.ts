@@ -19,11 +19,7 @@ describe("OrderedListNode HTML rendering tests", () => {
 
 		const input = OrderedListNode.createFromPlainTextEntries([text1, text2, text3]);
 
-		const expected = h("ol", [
-			h("li", { type: "text", value: text1 }),
-			h("li", { type: "text", value: text2 }),
-			h("li", { type: "text", value: text3 }),
-		]);
+		const expected = h("ol", [h("li", text1), h("li", text2), h("li", text3)]);
 
 		assertTransformation(input, expected);
 	});

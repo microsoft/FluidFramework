@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { h } from "hastscript";
 import {
 	TableBodyCellNode,
 	TableBodyRowNode,
@@ -9,11 +10,11 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain/index.js";
-import { assertExpectedHtml } from "./Utilities.js";
+import { assertTransformation } from "./Utilities.js";
 
 describe("Table HTML rendering tests", () => {
 	it("Empty table", () => {
-		assertExpectedHtml(TableNode.Empty, "<table />");
+		assertTransformation(TableNode.Empty, h("table"));
 	});
 
 	it("Simple table without header", () => {
@@ -29,33 +30,13 @@ describe("Table HTML rendering tests", () => {
 			]),
 		]);
 
-		const expected = [
-			"<table>",
-			"<tbody>",
-			"<tr>",
-			"<td>",
-			"Cell 1A",
-			"</td>",
-			"<td>",
-			"Cell 1B",
-			"</td>",
-			"<td>",
-			"Cell 1C",
-			"</td>",
-			"</tr>",
-			"<tr>",
-			"<td>",
-			"Cell 2A",
-			"</td>",
-			"<td>",
-			"Cell 2B",
-			"</td>",
-			"</tr>",
-			"</tbody>",
-			"</table>",
-		].join("");
-
-		assertExpectedHtml(input, expected);
+		const expected = h("table", [
+			h("tbody", [
+				h("tr", [h("td", "Cell 1A"), h("td", "Cell 1B"), h("td", "Cell 1C")]),
+				h("tr", [h("td", "Cell 2A"), h("td", "Cell 2B")]),
+			]),
+		]);
+		assertTransformation(input, expected);
 	});
 
 	it("Simple table with header", () => {
@@ -78,45 +59,14 @@ describe("Table HTML rendering tests", () => {
 			]),
 		);
 
-		const expected = [
-			"<table>",
-			"<thead>",
-			"<tr>",
-			"<th>",
-			"Header A",
-			"</th>",
-			"<th>",
-			"Header B",
-			"</th>",
-			"<th>",
-			"Header C",
-			"</th>",
-			"</tr>",
-			"</thead>",
-			"<tbody>",
-			"<tr>",
-			"<td>",
-			"Cell 1A",
-			"</td>",
-			"<td>",
-			"Cell 1B",
-			"</td>",
-			"</tr>",
-			"<tr>",
-			"<td>",
-			"Cell 2A",
-			"</td>",
-			"<td>",
-			"Cell 2B",
-			"</td>",
-			"<td>",
-			"Cell 2C",
-			"</td>",
-			"</tr>",
-			"</tbody>",
-			"</table>",
-		].join("");
+		const expected = h("table", [
+			h("thead", [h("tr", [h("th", "Header A"), h("th", "Header B"), h("th", "Header C")])]),
+			h("tbody", [
+				h("tr", [h("td", "Cell 1A"), h("td", "Cell 1B")]),
+				h("tr", [h("td", "Cell 2A"), h("td", "Cell 2B"), h("td", "Cell 2C")]),
+			]),
+		]);
 
-		assertExpectedHtml(input, expected);
+		assertTransformation(input, expected);
 	});
 });

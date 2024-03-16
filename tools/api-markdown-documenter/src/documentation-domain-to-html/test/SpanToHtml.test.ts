@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { h } from "hastscript";
 import {
 	LineBreakNode,
 	PlainTextNode,
 	SpanNode,
 	type TextFormatting,
 } from "../../documentation-domain/index.js";
-import { assertExpectedHtml } from "./Utilities.js";
+import { assertTransformation } from "./Utilities.js";
 
 describe("Span HTML rendering tests", () => {
 	it("Empty span", () => {
-		assertExpectedHtml(SpanNode.Empty, "<span />");
+		assertTransformation(SpanNode.Empty, h("span"));
 	});
 
 	it("Simple span", () => {
@@ -21,8 +22,10 @@ describe("Span HTML rendering tests", () => {
 		const text2 = "This is more text!";
 		const node1 = new PlainTextNode(text1);
 		const node2 = new PlainTextNode(text2);
+
 		const span = new SpanNode([node1, node2]);
-		assertExpectedHtml(span, `<span>${text1}${text2}</span>`);
+		const expected = h("span", [text1, text2]);
+		assertTransformation(span, expected);
 	});
 
 	it("Formatted span", () => {
@@ -35,8 +38,10 @@ describe("Span HTML rendering tests", () => {
 		const node1 = new PlainTextNode(text1);
 		const node2 = LineBreakNode.Singleton;
 		const node3 = new PlainTextNode(text2);
+
 		const span = new SpanNode([node1, node2, node3], formatting);
-		assertExpectedHtml(span, `<span><b><i>${text1}<br>${text2}</i></b></span>`);
+		const expected = h("span", [h("b", [h("i", [text1, h("br"), text2])])]);
+		assertTransformation(span, expected);
 	});
 
 	it("Nested spans with formatting", () => {
@@ -45,6 +50,7 @@ describe("Span HTML rendering tests", () => {
 		const node1 = new PlainTextNode(text1);
 		const node2 = LineBreakNode.Singleton;
 		const node3 = new PlainTextNode(text2);
+
 		const span = new SpanNode(
 			[
 				node1,
@@ -55,9 +61,9 @@ describe("Span HTML rendering tests", () => {
 			],
 			{ strikethrough: true },
 		);
-		assertExpectedHtml(
-			span,
-			`<span><s>${text1}<span><b><i><br>${text2}</i></b></span></s></span>`,
-		);
+		const expected = h("span", [
+			h("s", [text1, h("span", [h("b", [h("i", [h("br"), text2])])])]),
+		]);
+		assertTransformation(span, expected);
 	});
 });

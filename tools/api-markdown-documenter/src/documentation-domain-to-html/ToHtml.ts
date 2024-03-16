@@ -30,7 +30,6 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
 	const rootBodyContents: HastNodes[] = [];
 	if (document.frontMatter !== undefined) {
-		// TODO: remove once front-matter support has been removed
 		rootBodyContents.push({
 			type: "raw",
 			value: `${document.frontMatter}\n`,
