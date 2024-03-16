@@ -53,22 +53,27 @@ import type { TransformationContext } from "../TransformationContext.js";
  *
  * @alpha
  */
-// Prefer index signature for documentation.
+// Prefer index signature for documentation, since it allows documenting the key name.
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface Transformations {
 	/**
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
 	 * for that kind of node.
-	 *
-	 * @param node - The `DocumentationNode` to render.
-	 * @param context - Transformation contexturation, including custom transformation implementations.
 	 */
-	[documentationNodeKind: string]: (
-		node: DocumentationNode,
-		context: TransformationContext,
-	) => HastNodes;
+	[documentationNodeKind: string]: Transformation;
 }
 
+/**
+ * Transformation from a {@link DocumentationNode} to a {@link https://github.com/syntax-tree/hast | HTML syntax tree}.
+ *
+ * @param node - The input node to be transformed.
+ * @param context - Transformation context, including custom transformation implementations.
+ *
+ * @alpha
+ */
+export type Transformation = (node: DocumentationNode, context: TransformationContext) => HastNodes;
+
+// Constants used in transformations below as an allocation optimization.
 const hastLineBreak = h("br");
 const hastHorizontalRule = h("hr");
 

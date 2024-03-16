@@ -30,8 +30,10 @@ import { DocSection } from '@microsoft/tsdoc';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
+import type { Nodes } from 'hast';
 import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
+import type { Root } from 'hast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
@@ -213,6 +215,12 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly type: string;
 }
 
+// @alpha
+export function documentationNodesToHtml(nodes: DocumentationNode[], context: ToHtmlContext): Nodes[];
+
+// @alpha
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
+
 // @public
 export enum DocumentationNodeType {
     BlockQuote = "BlockQuote",
@@ -292,6 +300,9 @@ export interface DocumentNodeProps {
     // @deprecated
     readonly frontMatter?: string;
 }
+
+// @alpha
+export function documentToHtml(document: DocumentNode, config: ToHtmlConfig): Root;
 
 // @public
 export interface DocumentWriter {
@@ -701,6 +712,27 @@ export interface TextFormatting {
     readonly bold?: true;
     readonly italic?: true;
     readonly strikethrough?: true;
+}
+
+// @alpha
+export interface ToHtmlConfig extends ConfigurationBase {
+    readonly customTransformations?: ToHtmlTransformations;
+    readonly language?: string;
+    readonly startingHeadingLevel?: number;
+}
+
+// @alpha
+export interface ToHtmlContext extends ConfigurationBase {
+    headingLevel: number;
+    readonly transformations: ToHtmlTransformations;
+}
+
+// @alpha
+export type ToHtmlTransformation = (node: DocumentationNode, context: ToHtmlContext) => Nodes;
+
+// @alpha
+export interface ToHtmlTransformations {
+    [documentationNodeKind: string]: ToHtmlTransformation;
 }
 
 // @public

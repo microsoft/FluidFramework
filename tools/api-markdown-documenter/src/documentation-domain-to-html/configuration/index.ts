@@ -4,4 +4,8 @@
  */
 
 export { getConfigurationWithDefaults, type TransformationConfig } from "./Configuration.js";
-export { defaultTransformations, type Transformations } from "./Transformation.js";
+export {
+	defaultTransformations,
+	type Transformation,
+	type Transformations,
+} from "./Transformation.js";
