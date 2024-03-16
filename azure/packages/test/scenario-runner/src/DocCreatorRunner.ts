@@ -5,18 +5,18 @@
 
 import { ChildProcess } from "child_process";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidContainer } from "@fluidframework/fluid-static";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger } from "./logger.js";
 import {
 	createAzureClient,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils.js";
-import { getLogger } from "./logger.js";
-import { ScenarioRunner } from "./ScenarioRunner.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("DocCreator");
 

@@ -4,10 +4,10 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { registerSchemas } from "@fluid-example/schemas";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 
-import { PropertyTreeContainerRuntimeFactory, IPropertyTreeAppModel } from "./containerCode";
+import { IPropertyTreeAppModel, PropertyTreeContainerRuntimeFactory } from "./containerCode";
 import { renderApp } from "./inspector";
 
 /**

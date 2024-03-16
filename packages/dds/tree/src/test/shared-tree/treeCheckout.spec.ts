@@ -5,21 +5,6 @@
 
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
-import { leaf } from "../../domains/index.js";
-import {
-	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	emptyJsonSequenceConfig,
-	insert,
-	jsonSequenceRootSchema,
-	flexTreeViewWithContent,
-	checkoutWithContent,
-	validateTreeContent,
-	numberSequenceRootSchema,
-	schematizeFlexTree,
-	stringSequenceRootSchema,
-} from "../utils.js";
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -32,6 +17,7 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	ContextuallyTypedNodeData,
 	FieldKinds,
@@ -40,6 +26,20 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
+import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import {
+	TestTreeProviderLite,
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	emptyJsonSequenceConfig,
+	flexTreeViewWithContent,
+	insert,
+	jsonSequenceRootSchema,
+	numberSequenceRootSchema,
+	schematizeFlexTree,
+	stringSequenceRootSchema,
+	validateTreeContent,
+} from "../utils.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,

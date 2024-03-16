@@ -10,7 +10,7 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";
 
-import { registryEntries, dataObjectRegistry } from "./dataObjectRegistry.js";
+import { dataObjectRegistry, registryEntries } from "./dataObjectRegistry.js";
 
 /**
  * Interface for the data object grid data object.

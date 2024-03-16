@@ -7,8 +7,8 @@ import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import {
-	getPopulateFunctionWithSerializedBranchData,
 	MockWorkspace,
+	getPopulateFunctionWithSerializedBranchData,
 	populateWorkspace,
 } from "../test/common";
 import { InspectorDecorator } from "./InspectorDecorator";

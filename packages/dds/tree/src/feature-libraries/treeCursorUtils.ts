@@ -5,18 +5,18 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	FieldKey,
-	TreeType,
-	UpPath,
 	CursorLocationType,
-	ITreeCursorSynchronous,
-	Value,
-	FieldUpPath,
-	PathRootPrefix,
 	CursorMarker,
 	DetachedField,
-	rootField,
+	FieldKey,
+	FieldUpPath,
+	ITreeCursorSynchronous,
+	PathRootPrefix,
+	TreeType,
+	UpPath,
+	Value,
 	detachedFieldAsKey,
+	rootField,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
 

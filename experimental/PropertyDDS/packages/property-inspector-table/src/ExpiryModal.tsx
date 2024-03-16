@@ -9,16 +9,16 @@ import FormControl from "@material-ui/core/FormControl";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Radio from "@material-ui/core/Radio";
 import RadioGroup from "@material-ui/core/RadioGroup";
-import { makeStyles, Theme } from "@material-ui/core/styles";
+import { Theme, makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 
 import { IExpiryInfo, IExpiryState, IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
-import { LoadingButton } from "./LoadingButton";
 import { CustomChip } from "./CustomChip";
 import { ErrorPopup } from "./ErrorPopup";
-import { backGroundGrayColor, textDarkColor } from "./constants";
 import { InspectorModal } from "./InspectorModal";
+import { LoadingButton } from "./LoadingButton";
+import { backGroundGrayColor, textDarkColor } from "./constants";
 
 const useStyles = makeStyles(
 	(theme: Theme) => ({

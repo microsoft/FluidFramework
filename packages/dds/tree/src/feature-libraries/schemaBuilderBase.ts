@@ -6,27 +6,27 @@
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeNodeSchemaIdentifier } from "../core/index.js";
 import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util/index.js";
+import { defaultSchemaPolicy } from "./default-schema/index.js";
+import { FlexFieldKind } from "./modular-schema/index.js";
 import {
+	Any,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexList,
+	FlexMapFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	SchemaCollection,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
+	TreeNodeSchemaBase,
+	Unenforced,
 	aggregateSchemaLibraries,
 	schemaLintDefault,
-	FlexAllowedTypes,
-	FlexTreeNodeSchema,
-	FlexFieldSchema,
-	FlexTreeSchema,
-	FlexList,
-	Unenforced,
-	Any,
-	FlexMapFieldSchema,
-	SchemaCollection,
-	FlexObjectNodeSchema,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	TreeNodeSchemaBase,
 } from "./typed-schema/index.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
-import { defaultSchemaPolicy } from "./default-schema/index.js";
 
 /**
  * Configuration for a SchemaBuilder.

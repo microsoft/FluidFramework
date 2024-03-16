@@ -9,8 +9,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/navigation.js";
 
-import { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 import { FieldUpPath, UpPath } from "../../../core/index.js";
+import { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
 
 /**
  * Simpler version of visitIterableTree, but uses more memory.

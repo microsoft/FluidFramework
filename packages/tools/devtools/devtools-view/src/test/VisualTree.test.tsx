@@ -5,22 +5,22 @@
 
 import React from "react";
 
+import {
+	DataVisualization,
+	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
+	type FluidUnknownObjectNode,
+	GetDataVisualization,
+	type IDevtoolsMessage,
+	type UnknownObjectNode,
+	VisualNodeKind,
+} from "@fluidframework/devtools-core";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-	type IDevtoolsMessage,
-	GetDataVisualization,
-	DataVisualization,
-	type FluidObjectValueNode,
-	type FluidObjectTreeNode,
-	type FluidUnknownObjectNode,
-	type UnknownObjectNode,
-	VisualNodeKind,
-} from "@fluidframework/devtools-core";
-import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components";
 import { MessageRelayContext } from "../MessageRelayContext";
+import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../components";
 import { MockMessageRelay } from "./MockMessageRelay";
 
 const testContainerKey = "test-container-key";

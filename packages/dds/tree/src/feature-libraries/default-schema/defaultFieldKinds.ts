@@ -4,30 +4,30 @@
  */
 
 import {
-	FieldKindIdentifier,
-	forbiddenFieldKindIdentifier,
 	ChangesetLocalId,
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
+	FieldKindIdentifier,
+	forbiddenFieldKindIdentifier,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
-	FlexFieldKind,
-	allowsTreeSchemaIdentifierSuperset,
-	ToDelta,
 	FieldChangeHandler,
 	FieldEditor,
-	referenceFreeFieldChangeRebaser,
 	FieldKindWithEditor,
+	FlexFieldKind,
+	ToDelta,
+	allowsTreeSchemaIdentifierSuperset,
+	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
-import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+import { Multiplicity } from "../multiplicity.js";
 import {
-	noChangeCodecFamily,
 	OptionalChangeset,
+	noChangeCodecFamily,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
-import { Multiplicity } from "../multiplicity.js";
+import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.

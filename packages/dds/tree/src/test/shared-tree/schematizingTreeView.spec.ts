@@ -14,21 +14,21 @@ import {
 	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
 
+import { leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UpdateType } from "../../shared-tree/schematizeTree.js";
 import {
 	SchematizeError,
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../simple-tree/index.js";
-import { brand, disposeSymbol } from "../../util/index.js";
-import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { UpdateType } from "../../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { brand, disposeSymbol } from "../../util/index.js";
+import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);

@@ -6,15 +6,16 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { LazyPromise } from "@fluidframework/core-utils";
 import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandleContext,
+	ITelemetryBaseLogger,
 	Tagged,
 	TelemetryBaseEventPropertyType,
-	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { LazyPromise } from "@fluidframework/core-utils";
+import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IBlob,
@@ -23,48 +24,47 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	CreateChildSummarizerNodeFn,
+	CreateSummarizerNodeSource,
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	IFluidParentContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
-	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 	channelsTreeName,
-	IFluidDataStoreChannel,
-	IFluidParentContext,
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
-	isFluidError,
 	MockLogger,
 	TelemetryDataTag,
 	createChildLogger,
+	isFluidError,
 } from "@fluidframework/telemetry-utils";
 import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
 
 import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
+import { ContainerRuntime } from "../containerRuntime.js";
+import { channelToDataStore } from "../dataStore.js";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext.js";
-import { ContainerRuntime } from "../containerRuntime.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
-	createRootSummarizerNodeWithGC,
-	dataStoreAttributesBlobName,
 	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
+	createRootSummarizerNodeWithGC,
+	dataStoreAttributesBlobName,
 	summarizerClientType,
 } from "../summary/index.js";
-import { channelToDataStore } from "../dataStore.js";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
