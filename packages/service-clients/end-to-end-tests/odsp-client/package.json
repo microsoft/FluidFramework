@@ -70,12 +70,10 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/sinon": "^17.0.3",
-		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~3.0.3",
 		"sinon": "^17.0.1",
 		"uuid": "^9.0.0"
 	},
