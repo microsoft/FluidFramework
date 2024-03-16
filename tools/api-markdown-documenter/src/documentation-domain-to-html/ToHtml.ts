@@ -4,7 +4,7 @@
  */
 
 // Required in order to register the `raw` type with the `hast` ecosystem.
-// eslint-disable-next-line import/no-extraneous-dependencies, import/no-unassigned-import
+// eslint-disable-next-line import/no-unassigned-import
 import "hast-util-raw";
 
 import type { Root as HastRoot, Nodes as HastNodes } from "hast";
