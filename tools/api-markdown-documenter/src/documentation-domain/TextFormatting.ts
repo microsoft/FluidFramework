@@ -14,19 +14,19 @@ export interface TextFormatting {
 	 *
 	 * @defaultValue Inherit
 	 */
-	readonly italic?: boolean;
+	readonly italic?: true;
 
 	/**
 	 * Whether or not the text should be rendered in bold.
 	 *
 	 * @defaultValue Inherit
 	 */
-	readonly bold?: boolean;
+	readonly bold?: true;
 
 	/**
 	 * Whether or not the text should be rendered with a strikethrough.
 	 *
 	 * @defaultValue Inherit
 	 */
-	readonly strikethrough?: boolean;
+	readonly strikethrough?: true;
 }
