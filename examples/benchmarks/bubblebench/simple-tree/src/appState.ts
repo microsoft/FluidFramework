@@ -9,20 +9,26 @@ import {
 	type IBubble,
 	type ITreeClient,
 } from "@fluid-example/bubblebench-common";
-import { Client, type Bubble, type Clients } from "./schema.js";
+import type { TreeView } from "@fluidframework/tree";
+import { Client, type App, type Bubble } from "./schema.js";
 
 export class AppState implements IAppState {
 	readonly localClient: Client;
+	// private readonly root: App;
 
 	constructor(
-		private readonly clientsSequence: Clients,
+		// private readonly clientsSequence: Clients,
+		private readonly tree: TreeView<App>,
 		public width: number,
 		public height: number,
 		numBubbles: number,
 	) {
-		clientsSequence.insertAtEnd(this.createInitialClientNode(numBubbles) as unknown as Client);
+		// this.root = tree.root;
+		this.tree.root.clients.insertAtEnd(
+			this.createInitialClientNode(numBubbles) as unknown as Client,
+		);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const lastClient = clientsSequence.at(clientsSequence.length - 1)!;
+		const lastClient = this.tree.root.clients.at(this.tree.root.clients.length - 1)!;
 		this.localClient = lastClient;
 
 		console.log(
@@ -50,7 +56,7 @@ export class AppState implements IAppState {
 	}
 
 	public get clients() {
-		return [...this.clientsSequence];
+		return [...this.tree.root.clients];
 	}
 
 	public setSize(width?: number, height?: number) {

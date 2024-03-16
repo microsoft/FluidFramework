@@ -13,7 +13,7 @@ process.env["PORT"] = mappedPort;
 module.exports = {
 	preset: "jest-puppeteer",
 	globals: {
-		PATH: `http://localhost:${mappedPort}`,
+		PATH: `http://localhost:${mappedPort}/manualAttach`,
 	},
 	testMatch: ["**/?(*.)+(spec|test).[t]s"],
 	testPathIgnorePatterns: ["/node_modules/", "dist"],

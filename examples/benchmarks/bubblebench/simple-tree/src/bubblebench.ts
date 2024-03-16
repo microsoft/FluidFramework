@@ -15,7 +15,7 @@ const treeKey = "treeKey";
  * @internal
  */
 export class Bubblebench extends DataObject {
-	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
+	public static readonly Name = "@fluid-example/bubblebench-simpletree";
 
 	private view: TreeView<App> | undefined;
 	private _appState: AppState | undefined;
@@ -38,7 +38,8 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			this.tree.root.clients,
+			// this.tree.root.clients,
+			this.tree,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,
