@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { Element as HastElement } from "hast";
+import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
@@ -25,18 +25,20 @@ const maxHeadingLevel = 6;
  *
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  */
-export function headingToHtml(
-	headingNode: HeadingNode,
-	context: TransformationContext,
-): HastElement {
+export function headingToHtml(headingNode: HeadingNode, context: TransformationContext): HastNodes {
 	const { headingLevel } = context;
 
 	// HTML only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
 	// bold text, with an accompanying anchor to ensure we can still link to the text.
 	const transformAsHeadingElement = headingLevel <= maxHeadingLevel;
 	if (transformAsHeadingElement) {
+		const attributes: Record<string, string> = {};
+		if (headingNode.id !== undefined) {
+			attributes.id = headingNode.id;
+		}
+
 		return transformChildrenUnderTag(
-			{ name: `h${headingLevel}` },
+			{ name: `h${headingLevel}`, attributes },
 			headingNode.children,
 			context,
 		);
@@ -50,6 +52,6 @@ export function headingToHtml(
 		);
 
 		// Wrap the 2 child elements in a fragment
-		return h("", transformedChildren);
+		return h(undefined, transformedChildren);
 	}
 }
