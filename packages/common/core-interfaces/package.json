@@ -150,6 +150,17 @@
 			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IFluidHandle": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IProvideFluidHandle": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IProvideFluidLoadable": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

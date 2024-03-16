@@ -19,7 +19,7 @@ import type { Covariant, isAny } from "./typeCheck.js";
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
  * @internal
  */
-export type Brand<ValueType, Name extends string | ErasedType> = ValueType &
+export type Brand<ValueType, Name extends unknown | ErasedType> = ValueType &
 	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Name>;
 
 /**

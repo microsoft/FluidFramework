@@ -48,6 +48,14 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
 }
 
 /**
+ * @public
+ * @privateRemarks
+ * This really should be deprecated and alpha, but since its a merged export with the public interface,
+ * it can't have its own docs or different tags.
+ */
+export const IFluidHandle = "IFluidHandle";
+
+/**
  * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
  * @alpha
  */
@@ -55,7 +63,7 @@ export interface IProvideFluidHandle {
 	/**
 	 * @deprecated {@link IFluidHandleInternal} and {@link IFluidHandleInternal} should be identified should be identified using the {@link fluidHandleSymbol} symbol.
 	 */
-	readonly IFluidHandle: IFluidHandleInternal;
+	readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
 /**
@@ -111,7 +119,7 @@ export interface IFluidHandle<out T = unknown> {
 	get(): Promise<T>;
 
 	/**
-	 * Symbol used to mark an object as a {@link IFluidHandle}.
+	 * Symbol used to mark an object as a {@link (IFluidHandle:interface)}.
 	 * @privateRemarks
 	 * Used to recover {@link IFluidHandleInternal}, see {@link toInternal}.
 	 */

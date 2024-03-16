@@ -286,6 +286,9 @@ export interface IFluidCodeDetailsConfig {
     readonly [key: string]: string;
 }
 
+// @public (undocumented)
+export const IFluidHandle = "IFluidHandle";
+
 // @public
 export interface IFluidHandle<out T = unknown> {
     readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
@@ -376,7 +379,7 @@ export interface IProvideFluidCodeDetailsComparer {
 // @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
     // @deprecated (undocumented)
-    readonly IFluidHandle: IFluidHandleInternal;
+    readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
 // @public (undocumented)

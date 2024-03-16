@@ -40,11 +40,11 @@ export type {
 	IProvideFluidHandleContext,
 	IProvideFluidHandle,
 	IFluidHandleInternal,
-	IFluidHandle,
 	IFluidHandleErased,
 } from "./handles.js";
 export {
 	IFluidHandleContext,
+	IFluidHandle,
 	fluidHandleSymbol,
 	toFluidHandleInternal,
 	toFluidHandleErased,

@@ -17,6 +17,7 @@ import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
@@ -39,12 +40,12 @@ export class FluidSerializer implements IFluidSerializer {
     // (undocumented)
     parse(input: string): any;
     // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
+    protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
         type: string;
         url: string;
     };
     // (undocumented)
-    stringify(input: any, bind: IFluidHandle): string;
+    stringify(input: unknown, bind: IFluidHandle): string;
 }
 
 // @public (undocumented)
@@ -134,7 +135,7 @@ export class SummarySerializer extends FluidSerializer {
     // (undocumented)
     getSerializedRoutes(): string[];
     // (undocumented)
-    protected serializeHandle(handle: IFluidHandle, bind: IFluidHandle): {
+    protected serializeHandle(handle: IFluidHandleInternal, bind: IFluidHandleInternal): {
         type: string;
         url: string;
     };

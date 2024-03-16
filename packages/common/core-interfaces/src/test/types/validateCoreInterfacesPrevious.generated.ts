@@ -480,26 +480,26 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IFluidHandle": {"forwardCompat": false}
+* "VariableDeclaration_IFluidHandle": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_IFluidHandle():
     TypeOnly<typeof old.IFluidHandle>;
-declare function use_current_RemovedVariableDeclaration_IFluidHandle(
+declare function use_current_VariableDeclaration_IFluidHandle(
     use: TypeOnly<typeof current.IFluidHandle>): void;
-use_current_RemovedVariableDeclaration_IFluidHandle(
+use_current_VariableDeclaration_IFluidHandle(
     get_old_VariableDeclaration_IFluidHandle());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IFluidHandle": {"backCompat": false}
+* "VariableDeclaration_IFluidHandle": {"backCompat": false}
 */
-declare function get_current_RemovedVariableDeclaration_IFluidHandle():
+declare function get_current_VariableDeclaration_IFluidHandle():
     TypeOnly<typeof current.IFluidHandle>;
 declare function use_old_VariableDeclaration_IFluidHandle(
     use: TypeOnly<typeof old.IFluidHandle>): void;
 use_old_VariableDeclaration_IFluidHandle(
-    get_current_RemovedVariableDeclaration_IFluidHandle());
+    get_current_VariableDeclaration_IFluidHandle());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -511,6 +511,7 @@ declare function get_old_InterfaceDeclaration_IFluidHandle():
 declare function use_current_InterfaceDeclaration_IFluidHandle(
     use: TypeOnly<current.IFluidHandle>): void;
 use_current_InterfaceDeclaration_IFluidHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidHandle());
 
 /*
@@ -523,6 +524,7 @@ declare function get_current_InterfaceDeclaration_IFluidHandle():
 declare function use_old_InterfaceDeclaration_IFluidHandle(
     use: TypeOnly<old.IFluidHandle>): void;
 use_old_InterfaceDeclaration_IFluidHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidHandle());
 
 /*
@@ -799,6 +801,7 @@ declare function get_old_InterfaceDeclaration_IProvideFluidHandle():
 declare function use_current_InterfaceDeclaration_IProvideFluidHandle(
     use: TypeOnly<current.IProvideFluidHandle>): void;
 use_current_InterfaceDeclaration_IProvideFluidHandle(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidHandle());
 
 /*
@@ -847,6 +850,7 @@ declare function get_old_InterfaceDeclaration_IProvideFluidLoadable():
 declare function use_current_InterfaceDeclaration_IProvideFluidLoadable(
     use: TypeOnly<current.IProvideFluidLoadable>): void;
 use_current_InterfaceDeclaration_IProvideFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideFluidLoadable());
 
 /*
@@ -859,6 +863,7 @@ declare function get_current_InterfaceDeclaration_IProvideFluidLoadable():
 declare function use_old_InterfaceDeclaration_IProvideFluidLoadable(
     use: TypeOnly<old.IProvideFluidLoadable>): void;
 use_old_InterfaceDeclaration_IProvideFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideFluidLoadable());
 
 /*

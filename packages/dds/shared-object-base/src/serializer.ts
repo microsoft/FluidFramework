@@ -122,10 +122,10 @@ export class FluidSerializer implements IFluidSerializer {
 
 	// If the given 'value' is an IFluidHandle, returns the encoded IFluidHandle.
 	// Otherwise returns the original 'value'.  Used by 'encode()' and 'stringify()'.
-	private readonly encodeValue = (value: any, bind: IFluidHandleInternal) => {
+	private readonly encodeValue = (value: unknown, bind: IFluidHandleInternal) => {
 		// If 'value' is an IFluidHandle return its encoded form.
-		return fluidHandleSymbol in value
-			? this.serializeHandle(toFluidHandleInternal(value), bind)
+		return typeof value === "object" && value !== null && fluidHandleSymbol in value
+			? this.serializeHandle(value as IFluidHandleInternal, bind)
 			: value;
 	};
 
