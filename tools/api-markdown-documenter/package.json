@@ -77,9 +77,7 @@
 		"@rushstack/node-core-library": "^3.55.2",
 		"chalk": "^4.1.2",
 		"hast-util-raw": "^9.0.2",
-		"hast-util-to-html": "^9.0.0",
-		"hastscript": "^9.0.0",
-		"mdast-util-to-hast": "^11.3.0"
+		"hastscript": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
