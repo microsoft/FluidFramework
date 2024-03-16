@@ -6,7 +6,7 @@
 
 import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
-import { readFile } from "fs-extra";
+import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
 import { Project } from "ts-morph";
@@ -52,6 +52,10 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const { tsconfig, data, onlyInternal, organize } = this.flags;
+
+		if (!existsSync(tsconfig)) {
+			this.error(`Can't find config file: ${tsconfig}`, { exit: 0 });
+		}
 		const dataFilePath = data ?? path.join(__dirname, "../../../data/rawApiLevels.jsonc");
 		const apiLevelData = await loadData(dataFilePath);
 		await updateImports(tsconfig, apiLevelData, onlyInternal, organize, this.logger);
