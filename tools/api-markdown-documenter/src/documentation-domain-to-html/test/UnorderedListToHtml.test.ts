@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { h } from "hastscript";
 import { UnorderedListNode } from "../../documentation-domain/index.js";
-import { assertExpectedHtml } from "./Utilities.js";
+import { assertTransformation } from "./Utilities.js";
 
 describe("UnorderedListNode HTML rendering tests", () => {
 	it("Empty list", () => {
-		assertExpectedHtml(UnorderedListNode.Empty, "<ul />");
+		assertTransformation(UnorderedListNode.Empty, h("ul"));
 	});
 
 	it("Simple list", () => {
@@ -18,6 +19,12 @@ describe("UnorderedListNode HTML rendering tests", () => {
 
 		const input = UnorderedListNode.createFromPlainTextEntries([text1, text2, text3]);
 
-		assertExpectedHtml(input, `<ul><li>${text1}</li><li>${text2}</li><li>${text3}</li></ul>`);
+		const expected = h("ul", [
+			h("li", { type: "text", value: text1 }),
+			h("li", { type: "text", value: text2 }),
+			h("li", { type: "text", value: text3 }),
+		]);
+
+		assertTransformation(input, expected);
 	});
 });
