@@ -8,8 +8,8 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../../components/index.js";
-import { userEvent } from "./userEvent.cjs";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {
