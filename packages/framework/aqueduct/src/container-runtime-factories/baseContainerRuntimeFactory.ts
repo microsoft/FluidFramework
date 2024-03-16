@@ -4,12 +4,12 @@
  */
 
 import { type IContainerContext } from "@fluidframework/container-definitions";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ContainerRuntime,
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+} from "@fluidframework/container-runtime/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import {

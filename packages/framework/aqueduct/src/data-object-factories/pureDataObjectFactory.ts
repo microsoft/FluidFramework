@@ -1,11 +1,11 @@
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
@@ -32,8 +32,6 @@ import {
 	type FluidObjectSymbolProvider,
 	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
-
-import { assert } from "@fluidframework/core-utils";
 import {
 	type DataObjectTypes,
 	type IDataObjectProps,
