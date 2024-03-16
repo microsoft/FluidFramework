@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ChangeSet, SerializedChangeSet } from "./changeset.js";
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator.js";
 import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper.js";

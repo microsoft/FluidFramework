@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
@@ -11,6 +10,7 @@ import {
 	// Allow use of unstable API
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluentui/react-components/unstable";
+import React from "react";
 
 /**
  * Input to {@link TreeItem}

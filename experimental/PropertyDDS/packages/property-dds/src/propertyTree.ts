@@ -12,18 +12,18 @@ import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 
 import {
 	ChangeSet,
@@ -32,13 +32,13 @@ import {
 } from "@fluid-experimental/property-changeset";
 
 import {
-	PropertyFactory,
 	BaseProperty,
 	NodeProperty,
+	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 
-import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**

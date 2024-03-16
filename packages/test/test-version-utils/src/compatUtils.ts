@@ -220,6 +220,10 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		);
 	};
 	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		if (containerOptions?.forceUseCreateVersion === true) {
+			return createContainerFactoryFn(containerOptions);
+		}
+
 		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
 		assert(
 			apis.containerRuntimeForLoading !== undefined,

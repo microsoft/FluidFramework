@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { Body1, Body1Strong, Link, Subtitle1, makeStyles } from "@fluentui/react-components";
 import {
-	handleIncomingMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	TelemetryEvent,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
+import React from "react";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import { insertText } from "./testUtils.js";

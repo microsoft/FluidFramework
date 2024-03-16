@@ -5,21 +5,21 @@
 
 import React from "react";
 
-// eslint-disable-next-line import/no-unassigned-import
-import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
 import {
-	type IDevtoolsMessage,
-	GetDataVisualization,
 	DataVisualization,
-	type FluidObjectValueNode,
 	type FluidObjectTreeNode,
+	type FluidObjectValueNode,
 	type FluidUnknownObjectNode,
+	GetDataVisualization,
+	type IDevtoolsMessage,
 	type UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluidframework/devtools-core";
-import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../../components/index.js";
+// eslint-disable-next-line import/no-unassigned-import
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
 import { MessageRelayContext } from "../../MessageRelayContext.js";
+import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../../components/index.js";
 import { MockMessageRelay } from "../utils/index.js";
 import { userEvent } from "./userEvent.cjs";
 

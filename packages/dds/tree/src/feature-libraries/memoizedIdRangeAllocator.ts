@@ -5,12 +5,12 @@
 
 import { ChangesetLocalId, RevisionTag } from "../core/index.js";
 import {
-	RangeMap,
-	getOrAddEmptyToMap,
-	getFirstEntryFromRangeMap,
-	setInRangeMap,
 	Mutable,
+	RangeMap,
 	brand,
+	getFirstEntryFromRangeMap,
+	getOrAddEmptyToMap,
+	setInRangeMap,
 } from "../util/index.js";
 
 /**

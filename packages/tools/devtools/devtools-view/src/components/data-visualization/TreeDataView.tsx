@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 
 import { type HasContainerKey, VisualNodeKind } from "@fluidframework/devtools-core";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { FluidHandleView } from "./FluidHandleView.js";
-import { TreeView } from "./TreeView.js";
 import { FluidTreeView } from "./FluidTreeView.js";
-import { ValueView } from "./ValueView.js";
 import { FluidValueView } from "./FluidValueView.js";
-import { UnknownFluidObjectView } from "./UnknownFluidObjectView.js";
+import { TreeView } from "./TreeView.js";
 import { UnknownDataView } from "./UnknownDataView.js";
+import { UnknownFluidObjectView } from "./UnknownFluidObjectView.js";
+import { ValueView } from "./ValueView.js";
 
 /**
  * {@link TreeDataView} input props.

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
 

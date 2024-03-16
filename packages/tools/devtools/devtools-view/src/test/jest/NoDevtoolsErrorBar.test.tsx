@@ -8,7 +8,7 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../../components/index.js";
+import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../../components/index.js";
 import { userEvent } from "./userEvent.cjs";
 
 describe("NoDevtoolsErrorBar component tests", () => {

@@ -5,13 +5,13 @@
 
 import {
 	Divider,
-	makeStyles,
 	type SelectTabData,
 	type SelectTabEvent,
-	shorthands,
 	Tab,
 	TabList,
 	type TabValue,
+	makeStyles,
+	shorthands,
 } from "@fluentui/react-components";
 import {
 	type ContainerDevtoolsFeatureFlags,
@@ -24,8 +24,8 @@ import {
 } from "@fluidframework/devtools-core";
 import React from "react";
 
-import { useMessageRelay } from "../MessageRelayContext.js";
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
+import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { AudienceView } from "./AudienceView.js";
 import { ContainerHistoryView } from "./ContainerHistoryView.js";

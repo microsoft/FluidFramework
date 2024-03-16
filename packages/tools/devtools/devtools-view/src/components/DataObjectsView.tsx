@@ -2,24 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 // Allow use of unstable API
 // eslint-disable-next-line import/no-internal-modules
 import { Tree as FluentTree } from "@fluentui/react-components/unstable";
+import React from "react";
 
 import {
-	RootDataVisualizations,
 	GetRootDataVisualizations,
-	handleIncomingMessage,
 	type HasContainerKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
+	RootDataVisualizations,
 	type RootHandleNode,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
-import { TreeDataView } from "./data-visualization/index.js";
 import { Waiting } from "./Waiting.js";
+import { TreeDataView } from "./data-visualization/index.js";
 
 const loggingContext = "INLINE(VIEW)";
 
