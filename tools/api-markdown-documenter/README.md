@@ -167,6 +167,11 @@ If you would like to add rendering support for a custom `Documentation Domain` n
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
 
+## ToHtml Transformation
+
+This library now includes preview APIs for transforming `Documentation Domain` trees to HTML syntax trees using [hast](https://github.com/syntax-tree/hast).
+The main entry-point for this functionality is `documentToHtml`.
+
 ## HtmlRenderer
 
 This library now includes preview APIs for HTML rendering.
