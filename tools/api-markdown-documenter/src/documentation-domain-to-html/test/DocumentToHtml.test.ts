@@ -15,7 +15,7 @@ import {
 } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
-describe.only("Document HTML rendering tests", () => {
+describe("Document HTML rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
 			children: [
