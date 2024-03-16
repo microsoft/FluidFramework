@@ -9205,6 +9205,7 @@ importers:
       '@types/sinon': ^17.0.3
       '@types/uuid': ^9.0.2
       c8: ^8.0.1
+      cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
@@ -9249,6 +9250,7 @@ importers:
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      cross-env: 7.0.3
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
