@@ -7,7 +7,7 @@ import { h } from "hastscript";
 import { HeadingNode } from "../../documentation-domain/index.js";
 import { assertTransformation } from "./Utilities.js";
 
-describe.only("HeadingNode -> Html", () => {
+describe("HeadingNode -> Html", () => {
 	it("With ID", () => {
 		const input = HeadingNode.createFromPlainText("Foo", "foo-id");
 		const expected = h("h1", { id: "foo-id" }, "Foo");
