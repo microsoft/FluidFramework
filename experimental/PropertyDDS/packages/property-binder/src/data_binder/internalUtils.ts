@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @fileoverview Some internal utils functions
- */
-import _ from "lodash";
+import {
+	ArrayChangeSetIterator,
+	PathHelper,
+	SerializedChangeSet,
+	TypeIdHelper,
+	Utils,
+} from "@fluid-experimental/property-changeset";
 import {
 	BaseProperty,
 	ContainerProperty,
 	PropertyFactory,
 	PropertyTemplate,
 } from "@fluid-experimental/property-properties";
-import {
-	PathHelper,
-	TypeIdHelper,
-	ArrayChangeSetIterator,
-	Utils,
-	SerializedChangeSet,
-} from "@fluid-experimental/property-changeset";
-import { ModificationContext } from "./modificationContext.js";
+/**
+ * @fileoverview Some internal utils functions
+ */
+import _ from "lodash";
 import { getOrInsertDefaultInNestedObjects } from "../external/utils/nestedObjectHelpers.js";
-import { DataBinderHandle } from "../internal/dataBinderHandle.js";
-import { RESOLVE_NEVER, RESOLVE_ALWAYS } from "../internal/constants.js";
 import { DataBinding, PropertyElement } from "../index.js";
-import { DataBindingTree, NodeType } from "./dataBindingTree.js";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER } from "../internal/constants.js";
+import { DataBinderHandle } from "../internal/dataBinderHandle.js";
 import { BaseContext } from "./baseContext.js";
+import { DataBindingTree, NodeType } from "./dataBindingTree.js";
+import { ModificationContext } from "./modificationContext.js";
 
 export type RecursiveCallback = (
 	in_propertyElement: PropertyElement,

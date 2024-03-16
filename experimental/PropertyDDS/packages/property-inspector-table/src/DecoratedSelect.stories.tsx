@@ -11,9 +11,9 @@ import {
 	DecoratedSelectOptionsType,
 	IDecoratedSelectOptionType,
 } from "./DecoratedSelect";
-import * as TableIcons from "./icons";
 import { InspectorDecorator } from "./InspectorDecorator";
 import { TypeIcon } from "./TypeIcon";
+import * as TableIcons from "./icons";
 
 storiesOf("DecoratedSelect", module)
 	.addDecorator(InspectorDecorator)

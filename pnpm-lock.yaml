@@ -2045,23 +2045,16 @@ importers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/multiview-coordinate-model': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@types/node': ^18.19.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluid-example/multiview-coordinate-model': link:../coordinate-model
@@ -2070,71 +2063,44 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/constellation-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
       '@fluid-example/multiview-slider-coordinate-view': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluid-example/multiview-slider-coordinate-view': link:../slider-coordinate-view
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/container:
     specifiers:
@@ -2237,42 +2203,28 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@types/node': ^18.19.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/map': link:../../../../packages/dds/map
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/interface:
     specifiers:
@@ -2282,185 +2234,111 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../../utils/example-utils
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/plot-coordinate-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/slider-coordinate-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/multiview/triangle-view:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-example/multiview-coordinate-interface': workspace:~
-      '@fluid-example/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
       copyfiles: ^2.4.1
-      css-loader: ^1.0.0
       eslint: ~8.55.0
       prettier: ~3.0.3
       react: ^17.0.1
       rimraf: ^4.4.0
-      style-loader: ^1.0.0
-      ts-loader: ^9.3.0
       typescript: ~5.1.6
-      webpack: ^5.82.0
-      webpack-cli: ^4.9.2
-      webpack-dev-server: ~4.6.0
-      webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/multiview-coordinate-interface': link:../interface
       react: 17.0.2
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
-      '@types/react-dom': 17.0.25
       copyfiles: 2.4.1
-      css-loader: 1.0.1_webpack@5.89.0
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
-      webpack: 5.89.0_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_o3vqr5s7sd4b3hfy35jxofofzu
-      webpack-dev-server: 4.6.0_xufw7vsm4hgw2efzchq5tzqpge
-      webpack-merge: 5.10.0
 
   examples/data-objects/prosemirror:
     specifiers:
@@ -4180,6 +4058,7 @@ importers:
 
   experimental/PropertyDDS/examples/property-inspector:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/schemas': workspace:~
       '@fluid-experimental/property-binder': workspace:~
@@ -4282,6 +4161,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       react-virtualized-auto-sizer: 1.0.7_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@types/jest': 29.5.3
@@ -4313,6 +4193,7 @@ importers:
 
   experimental/PropertyDDS/examples/schemas:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
       eslint: ~8.55.0
@@ -4320,6 +4201,7 @@ importers:
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
       eslint: 8.55.0
@@ -4336,6 +4218,7 @@ importers:
       '@babel/plugin-transform-runtime': ^7.2.0
       '@babel/preset-env': ^7.2.0
       '@babel/runtime': ^7.13.7
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-dds': workspace:~
       '@fluid-experimental/property-properties': workspace:~
@@ -4386,6 +4269,7 @@ importers:
       '@babel/plugin-proposal-decorators': 7.23.3_@babel+core@7.23.3
       '@babel/plugin-transform-runtime': 7.23.4_@babel+core@7.23.3
       '@babel/preset-env': 7.23.3_@babel+core@7.23.3
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
@@ -4421,6 +4305,7 @@ importers:
   experimental/PropertyDDS/packages/property-changeset:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-common': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -4462,6 +4347,7 @@ importers:
       traverse: 0.6.6
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -4487,6 +4373,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-common:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
@@ -4534,6 +4421,7 @@ importers:
       semver: 7.5.4
       traverse: 0.6.6
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -4566,6 +4454,7 @@ importers:
   experimental/PropertyDDS/packages/property-dds:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
       '@fluid-experimental/property-properties': workspace:~
@@ -4637,6 +4526,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-experimental/property-common': link:../property-common
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluid-private/test-drivers': link:../../../../packages/test/test-drivers
@@ -4673,6 +4563,7 @@ importers:
   experimental/PropertyDDS/packages/property-inspector-table:
     specifiers:
       '@babel/core': ^7.13.0
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-binder': workspace:~
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-dds': workspace:~
@@ -4757,6 +4648,7 @@ importers:
       require-from-string: 2.0.2
     devDependencies:
       '@babel/core': 7.23.3
+      '@biomejs/biome': 1.6.1
       '@fluid-experimental/property-binder': link:../property-binder
       '@fluid-experimental/property-changeset': link:../property-changeset
       '@fluid-experimental/property-dds': link:../property-dds
@@ -4811,6 +4703,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-properties:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -4850,6 +4743,7 @@ importers:
       traverse: 0.6.6
       underscore: 1.13.6
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -4875,6 +4769,7 @@ importers:
       '@babel/core': ^7.13.0
       '@babel/plugin-transform-runtime': ^7.2.0
       '@babel/preset-env': ^7.2.0
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -4900,6 +4795,7 @@ importers:
       '@babel/core': 7.23.3
       '@babel/plugin-transform-runtime': 7.23.4_@babel+core@7.23.3
       '@babel/preset-env': 7.23.3_@babel+core@7.23.3
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -4919,10 +4815,12 @@ importers:
 
   experimental/PropertyDDS/packages/property-query:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluidframework/build-tools': ^0.34.0
       '@types/sinon': ^17.0.3
       ajv: ^8.12.0
       async: ^3.2.2
@@ -4960,8 +4858,10 @@ importers:
       semver: 7.5.4
       traverse: 0.6.6
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-experimental/property-properties': link:../property-properties
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
+      '@fluidframework/build-tools': 0.34.0
       '@types/sinon': 17.0.3
       chai: 4.3.10
       chai-as-promised: 7.1.1_chai@4.3.10
@@ -4978,6 +4878,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-properties': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5002,6 +4903,7 @@ importers:
       '@fluidframework/core-utils': link:../../../../packages/common/core-utils
       '@fluidframework/tree': link:../../../../packages/dds/tree
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
@@ -5020,6 +4922,7 @@ importers:
   experimental/dds/attributable-map:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/attributable-map-previous': npm:@fluid-experimental/attributable-map@2.0.0-internal.8.0.0
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -5069,6 +4972,7 @@ importers:
       path-browserify: 1.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-experimental/attributable-map-previous': /@fluid-experimental/attributable-map/2.0.0-internal.8.0.0
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
@@ -5099,6 +5003,7 @@ importers:
   experimental/dds/ot/ot:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -5138,6 +5043,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluid-private/test-dds-utils': link:../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common': 2.0.3
@@ -5164,6 +5070,7 @@ importers:
   experimental/dds/ot/sharejs/json1:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/ot': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
@@ -5201,6 +5108,7 @@ importers:
       ot-json1: 1.0.2
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../../packages/test/mocha-test-setup
       '@fluid-private/test-dds-utils': link:../../../../../packages/dds/test-dds-utils
       '@fluidframework/build-common': 2.0.3
@@ -5227,6 +5135,7 @@ importers:
   experimental/dds/sequence-deprecated:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/test-dds-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -5265,6 +5174,7 @@ importers:
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/test-dds-utils': link:../../../packages/dds/test-dds-utils
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
@@ -5292,6 +5202,7 @@ importers:
   experimental/dds/tree:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
@@ -5360,6 +5271,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-private/test-drivers': link:../../../packages/test/test-drivers
@@ -5397,6 +5309,7 @@ importers:
   experimental/framework/data-objects:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
@@ -5426,6 +5339,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -5442,6 +5356,7 @@ importers:
   experimental/framework/last-edited:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -5470,6 +5385,7 @@ importers:
       '@fluidframework/shared-summary-block': link:../../../packages/dds/shared-summary-block
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -8650,6 +8566,7 @@ importers:
       '@fluid-internal/client-utils': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-private/stochastic-test-utils': workspace:~
+      '@fluid-private/test-pairwise-generator': workspace:~
       '@fluid-tools/benchmark': ^0.48.0
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -8716,6 +8633,7 @@ importers:
       '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-private/test-pairwise-generator': link:../../test/test-pairwise-generator
       '@fluid-tools/benchmark': 0.48.0
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
