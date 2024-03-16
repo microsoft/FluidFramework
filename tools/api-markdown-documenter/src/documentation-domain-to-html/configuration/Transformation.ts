@@ -72,8 +72,6 @@ export interface Transformations {
 const hastLineBreak = h("br");
 const hastHorizontalRule = h("hr");
 
-// TODO: restore transformation modules even for simple ones. Makes testing a bit easier.
-
 /**
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */

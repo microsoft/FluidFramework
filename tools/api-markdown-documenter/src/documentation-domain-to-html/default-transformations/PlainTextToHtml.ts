@@ -23,17 +23,13 @@ import type { TransformationContext } from "../TransformationContext.js";
  * @param context - See {@link TransformationContext}.
  */
 export function plainTextToHtml(node: PlainTextNode, context: TransformationContext): HastNodes {
-	// TODO: how to handle formatting? Do we drop formatting down to plain text like we do in markdown?
-	// Presumably bold, etc. can impact formatting of list bullets, etc.? Maybe not?
-
 	// Any "escaped" text coming from the DocumentationDomain is intended to be passed through as raw text in the output.
 	// This allows things like embedded HTML and Markdown in TSDoc comments to be preserved in the output.
 	// We are leveraging the `hast-util-raw` plugin to handle this for us.
 	// If we encounter "escaped" text, we will emit it as a "raw" node.
 	// Otherwise, emit as standard text.
-
 	return {
-		type: node.escaped ? "raw" : "text", // TODO: document this
+		type: node.escaped ? "raw" : "text",
 		value: node.text,
 	};
 }

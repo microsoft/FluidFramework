@@ -9,15 +9,22 @@ import type { TransformationContext } from "./TransformationContext.js";
 import { documentationNodesToHtml } from "./ToHtml.js";
 
 /**
- * TODO
+ * An HTML tag and its (optional) attributes.
  */
 export interface HtmlTag {
+	/**
+	 * The name of the tag.
+	 */
 	name: string;
+
+	/**
+	 * The optional attributes.
+	 */
 	attributes?: Record<string, string>;
 }
 
 /**
- * TODO
+ * Transforms a series of child node, wrapping them in the specified tag with the specified attributes.
  */
 export function transformChildrenUnderTag(
 	tag: HtmlTag,
@@ -25,13 +32,6 @@ export function transformChildrenUnderTag(
 	context: TransformationContext,
 ): HastElement {
 	return h(tag.name, tag.attributes ?? {}, documentationNodesToHtml(children, context));
-}
-
-/**
- * TODO
- */
-export function createAnchor(name: string): HastElement {
-	return h("a", { name });
 }
 
 /**
