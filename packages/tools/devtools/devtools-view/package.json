@@ -163,17 +163,14 @@
 				"script": false
 			},
 			"build:test:jest:cjs": [
-				"^tsc",
 				"tsc",
 				"build:test:utils:cjs"
 			],
 			"build:test:jest:esm": [
-				"^tsc",
 				"build:esnext",
 				"build:test:utils:esm"
 			],
 			"build:test:mocha": [
-				"^tsc",
 				"build:esnext",
 				"build:test:utils:esm"
 			],
@@ -181,7 +178,8 @@
 				"^tsc"
 			],
 			"build:test:utils:esm": [
-				"^tsc"
+				"^tsc",
+				"^build:esnext"
 			],
 			"eslint": [
 				"tsc",
