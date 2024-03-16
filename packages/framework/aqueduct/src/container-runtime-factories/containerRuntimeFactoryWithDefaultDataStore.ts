@@ -2,19 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
-	type NamedFluidDataStoreRegistryEntries,
-	type IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
+	type ContainerRuntime,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
-	type IContainerRuntimeOptions,
-	type ContainerRuntime,
-} from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
+import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";

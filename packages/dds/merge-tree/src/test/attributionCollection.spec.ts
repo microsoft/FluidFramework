@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import {
-	createWeightedGenerator,
 	Generator,
 	IRandom,
+	createWeightedGenerator,
 	makeRandom,
 	performFuzzActions,
 	take,

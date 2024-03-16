@@ -5,17 +5,17 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
+import { IJsonCodec } from "../../../codec/index.js";
+import { ChangeEncodingContext } from "../../../core/index.js";
 import { NodeChangeset } from "../../../feature-libraries/index.js";
-import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
-import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import {
 	OptionalChangeset,
 	makeOptionalFieldCodecFamily,
 	optionalFieldEditor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { IJsonCodec } from "../../../codec/index.js";
-import { ChangeEncodingContext } from "../../../core/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import { changesetForChild } from "../fieldKindTestUtils.js";
 import { Change } from "./optionalFieldUtils.js";
 

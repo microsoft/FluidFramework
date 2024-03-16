@@ -11,8 +11,8 @@
 import { ValueSchema } from "../../core/index.js";
 
 import {
-	FlexAllowedTypes,
 	FieldKinds,
+	FlexAllowedTypes,
 	FlexFieldSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries/index.js";

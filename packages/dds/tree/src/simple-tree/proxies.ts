@@ -3,49 +3,49 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { brand, fail, isReadonlyArray } from "../util/index.js";
-import {
-	FlexAllowedTypes,
-	FlexFieldSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	FieldKinds,
-	FlexTreeFieldNode,
-	FlexTreeMapNode,
-	FlexTreeObjectNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeNode,
-	FlexTreeTypedField,
-	onNextChange,
-	typeNameSymbol,
-	isFluidHandle,
-	FlexTreeField,
-} from "../feature-libraries/index.js";
+import { assert } from "@fluidframework/core-utils";
 import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
 import {
-	type TreeNodeSchema as TreeNodeSchemaClass,
+	FieldKinds,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeField,
+	FlexTreeFieldNode,
+	FlexTreeMapNode,
+	FlexTreeNode,
+	FlexTreeNodeSchema,
+	FlexTreeObjectNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	FlexTreeTypedField,
+	isFluidHandle,
+	onNextChange,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsObjectNode,
+	typeNameSymbol,
+} from "../feature-libraries/index.js";
+import { brand, fail, isReadonlyArray } from "../util/index.js";
+import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "./flexNode.js";
+import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
+import {
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
+	type TreeNodeSchema as TreeNodeSchemaClass,
 } from "./schemaTypes.js";
-import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
-import { Unhydrated, TreeNode } from "./types.js";
-import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
-import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
+import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
@@ -125,23 +125,14 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	let output: TreeNode | TreeValue;
 	const classSchema = getClassSchema(schema);
-	if (classSchema !== undefined) {
-		if (typeof classSchema === "function") {
-			const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-			output = new simpleSchema(flexNode);
-		} else {
-			output = (schema as unknown as { create: (data: FlexTreeNode) => TreeNode }).create(
-				flexNode,
-			);
-		}
+	assert(classSchema !== undefined, "node without schema");
+	if (typeof classSchema === "function") {
+		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
+		return new simpleSchema(flexNode);
 	} else {
-		// Fallback to createNodeProxy if needed.
-		// TODO: maybe remove this fallback and error once migration to class based schema is done.
-		output = createNodeProxy(flexNode, false);
+		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
-	return output;
 }
 
 /**

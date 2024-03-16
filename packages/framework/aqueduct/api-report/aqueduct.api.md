@@ -5,15 +5,15 @@
 ```ts
 
 import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
-import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
+import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { IContainerRuntimeOptions } from '@fluidframework/container-runtime/internal';
+import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';

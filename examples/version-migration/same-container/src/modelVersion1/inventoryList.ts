@@ -4,10 +4,10 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
+import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
 

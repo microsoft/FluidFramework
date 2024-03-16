@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 import {
+	type Theme,
+	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
-	teamsHighContrastTheme,
-	type Theme,
 } from "@fluentui/react-components";
+import React from "react";
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";

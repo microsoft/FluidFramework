@@ -5,16 +5,16 @@
 
 import { FieldKey } from "../core/index.js";
 import {
+	Context,
 	FlexFieldSchema,
+	FlexTreeContext,
 	FlexTreeSchema,
 	FlexTreeTypedField,
-	FlexTreeContext,
 	NodeKeyManager,
 	getTreeContext,
-	Context,
 } from "../feature-libraries/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
-import { ITreeCheckoutFork, ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.

@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { SnapshotV1 } from "../snapshotV1.js";
-import { IMergeTreeOptions } from "../mergeTree.js";
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAttributionPolicyFactory,
 } from "../attributionPolicy.js";
-import { loadSnapshot, TestString } from "./snapshot.utils.js";
+import { IMergeTreeOptions } from "../mergeTree.js";
+import { SnapshotV1 } from "../snapshotV1.js";
+import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 	describe("from an empty initial state", () => {

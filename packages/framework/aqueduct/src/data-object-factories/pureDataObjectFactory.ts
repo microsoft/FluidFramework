@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { type IRequest, type FluidObject } from "@fluidframework/core-interfaces";
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
+import {
+	type IChannelFactory,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import {
 	type IContainerRuntimeBase,
 	type IDataStore,
@@ -17,14 +23,10 @@ import {
 	type IFluidDataStoreContextDetached,
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
+	type IProvideFluidDataStoreRegistry,
 	type NamedFluidDataStoreRegistryEntries,
 	type NamedFluidDataStoreRegistryEntry,
-	type IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import {
-	type IChannelFactory,
-	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
 import {
 	type AsyncFluidObjectProvider,
 	type FluidObjectSymbolProvider,
@@ -32,12 +34,10 @@ import {
 } from "@fluidframework/synthesize";
 
 import { assert } from "@fluidframework/core-utils";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
+	type DataObjectTypes,
 	type IDataObjectProps,
 	type PureDataObject,
-	type DataObjectTypes,
 } from "../data-objects/index.js";
 
 /**
