@@ -17,7 +17,16 @@ import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
 
 export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
-	return message.type === ContainerMessageType.ChunkedOp;
+	return isChunkedContents(message.contents);
+}
+
+interface IChunkedContents {
+	type: typeof ContainerMessageType.ChunkedOp;
+	contents: IChunkedOp;
+}
+
+function isChunkedContents(contents: any): contents is IChunkedContents {
+	return contents?.type === ContainerMessageType.ChunkedOp;
 }
 
 /**
@@ -171,12 +180,13 @@ export class OpSplitter {
 	}
 
 	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
-		assert(isChunkedMessage(message), "message not of type ChunkedOp");
+		assert(isChunkedContents(message.contents), "message not of type ChunkedOp");
+		const contents: IChunkedContents = message.contents;
 
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		const clientId = message.clientId as string;
-		const chunkedContent = message.contents as IChunkedOp;
+		const chunkedContent = contents.contents;
 		this.addChunk(clientId, chunkedContent, message);
 
 		if (chunkedContent.chunkId < chunkedContent.totalChunks) {
@@ -203,16 +213,14 @@ export class OpSplitter {
 	}
 }
 
-export interface INotFinalChunkResult {
-	readonly isFinalChunk: false;
-}
-
-export interface IFinalChunkResult {
-	readonly isFinalChunk: true;
-	readonly message: ISequencedDocumentMessage;
-}
-
-export type ProcessChunkResult = INotFinalChunkResult | IFinalChunkResult;
+type ProcessChunkResult =
+	| {
+			readonly isFinalChunk: false;
+	  }
+	| {
+			readonly isFinalChunk: true;
+			readonly message: ISequencedDocumentMessage;
+	  };
 
 const chunkToBatchMessage = (
 	chunk: IChunkedOp,

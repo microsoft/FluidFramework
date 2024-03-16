@@ -44,40 +44,43 @@ export class RemoteMessageProcessor {
 	 * depends on this object instance.
 	 * Note remoteMessageCopy.contents (and other object props) MUST not be modified,
 	 * but may be overwritten (as is the case with contents).
+	 * 
+	 * Incoming messages will always have compression, chunking, and grouped batching happen in a defined order and that order cannot be changed.
+	 * When processing these messages, the order is:
+	 * 1. If chunked, process the chunk and only continue if this is a final chunk
+	 * 2. If compressed, decompress the message and store for further unrolling of the decompressed content
+	 * 3. If grouped, ungroup the message
+	 * 
 	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
 	 * a singleton array [remoteMessageCopy] is returned
 	 */
 	public process(
-		remoteMessage: ISequencedDocumentMessage,
+		remoteMessageCopy: ISequencedDocumentMessage,
 	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
-		let message = remoteMessage;
+		let message = remoteMessageCopy;
 		ensureContentsDeserialized(message);
 
-		// Checking for compression needs to happen before unpacking the message
+		if (isChunkedMessage(message)) {
+			const chunkProcessingResult = this.opSplitter.processChunk(message);
+			// Only continue further if current chunk is the final chunk
+			if (!chunkProcessingResult.isFinalChunk) {
+				return [];
+			}
+			// This message will always be compressed
+			message = chunkProcessingResult.message;
+		}
+
 		if (this.opDecompressor.isCompressedMessage(message)) {
 			this.opDecompressor.decompressAndStore(message);
 		}
 
-		// When using compression, the trailing messages will have "undefined" content
-		if (message.contents !== undefined) {
-			unpackRuntimeMessage(message);
-		}
-
-		if (isChunkedMessage(message)) {
-			const chunkProcessingResult = this.opSplitter.processChunk(message);
-			// Move on if current chunk is not the last chunk
-			if (!chunkProcessingResult.isFinalChunk) {
-				return [];
-			}
-			message = chunkProcessingResult.message;
-			this.opDecompressor.decompressAndStore(message);
-		}
-
-		// Need to unpack after unrolling
-		const needToUnpack = this.opDecompressor.currentlyUnrolling;
 		if (this.opDecompressor.currentlyUnrolling) {
 			message = this.opDecompressor.unroll(message);
+			// Need to unpack after unrolling if not a groupedBatch
+			if (!isGroupedBatch(message)) {
+				unpack(message);
+			}
 		}
 
 		if (isGroupedBatch(message)) {
@@ -88,9 +91,8 @@ export class RemoteMessageProcessor {
 			});
 		}
 
-		if (needToUnpack) {
-			unpack(message);
-		}
+		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
+		unpackRuntimeMessage(message);
 		return [message as InboundSequencedContainerRuntimeMessageOrSystemMessage];
 	}
 }

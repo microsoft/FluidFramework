@@ -29,7 +29,7 @@ function isGroupContents(opContents: any): opContents is IGroupedBatchMessageCon
 }
 
 export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
-	return isGroupContents(op) || isGroupContents(op.contents);
+	return isGroupContents(op.contents);
 }
 
 export interface OpGroupingManagerConfig {
@@ -100,29 +100,17 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		assert(isGroupedBatch(op), "can only ungroup a grouped batch");
-
-		let messages: IGroupedMessage[] = [];
-		// ! Important to check "op.contents" first
-		if (isGroupContents(op.contents)) {
-			messages = op.contents.contents;
-		} else if (isGroupContents(op)) {
-			messages = op.contents;
-		}
+		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		const contents: IGroupedBatchMessageContents = op.contents;
 
 		let fakeCsn = 1;
-		return messages.map((subMessage) => {
-			// We don't want to preserve the "groupedBatch" type in case this ungrouped message is accidentally passed back through
-			const { type: _, ...props } = op;
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return {
-				...props,
-				clientSequenceNumber: fakeCsn++,
-				contents: subMessage.contents,
-				metadata: subMessage.metadata,
-				compression: subMessage.compression,
-			} as ISequencedDocumentMessage;
-		});
+		return contents.contents.map((subMessage) => ({
+			...op,
+			clientSequenceNumber: fakeCsn++,
+			contents: subMessage.contents,
+			metadata: subMessage.metadata,
+			compression: subMessage.compression,
+		}));
 	}
 
 	public shouldGroup(batch: IBatch): boolean {

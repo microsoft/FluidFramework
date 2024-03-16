@@ -182,7 +182,10 @@ describe("OpSplitter", () => {
 		const chunks = wrapChunkedOps(
 			splitOp(generateChunkableOp(chunkSizeInBytes * 3), chunkSizeInBytes),
 			"testClient1",
-		).map((op) => ({ ...op, type: ContainerMessageType.FluidDataStoreOp }));
+		).map((op) => {
+			(op.contents as any).type = ContainerMessageType.FluidDataStoreOp;
+			return op;
+		});
 		const opSplitter = new OpSplitter(
 			[],
 			mockSubmitBatchFn,
@@ -470,9 +473,11 @@ describe("OpSplitter", () => {
 	const wrapChunkedOps = (ops: IChunkedOp[], clientId: string): ISequencedDocumentMessage[] =>
 		ops.map((op) => {
 			const result = {
-				contents: op,
+				contents: {
+					type: ContainerMessageType.ChunkedOp,
+					contents: op,
+				},
 				clientId,
-				type: ContainerMessageType.ChunkedOp,
 			};
 
 			return result as ISequencedDocumentMessage;

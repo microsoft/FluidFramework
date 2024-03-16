@@ -85,7 +85,13 @@ export class OpDecompressor {
 		return this.activeBatch;
 	}
 
+	/** Is the decompressed and stored batch only comprised of a single message */
 	private isSingleMessageBatch = false;
+
+	/**
+	 * Decompress the given compressed message and store it to be subsequently unrolled.
+	 * The stored message will be of type `any[]` where each element represents a message's `contents`
+	 */
 	public decompressAndStore(message: ISequencedDocumentMessage): void {
 		assert(
 			message.compression === undefined || message.compression === CompressionAlgorithms.lz4,
@@ -113,6 +119,10 @@ export class OpDecompressor {
 		this.rootMessageContents = asObj;
 	}
 
+	/**
+	 * Unroll the next message from the decompressed content provided to {@link decompressAndStore}
+	 * @returns the unrolled `ISequencedDocumentMessage`
+	 */
 	public unroll(message: ISequencedDocumentMessage): ISequencedDocumentMessage {
 		assert(this.currentlyUnrolling, "not currently unrolling");
 		assert(this.rootMessageContents !== undefined, "missing rootMessageContents");
