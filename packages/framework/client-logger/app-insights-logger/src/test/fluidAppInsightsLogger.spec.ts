@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
 import { assert as sinonAssert, spy } from "sinon";
 import {
-	createLogger,
-	type TelemetryFilter,
 	type FluidAppInsightsLoggerConfig,
+	type TelemetryFilter,
+	createLogger,
 } from "../fluidAppInsightsLogger.js";
 
 describe("FluidAppInsightsLogger", () => {

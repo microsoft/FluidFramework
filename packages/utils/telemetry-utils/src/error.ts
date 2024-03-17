@@ -5,8 +5,8 @@
 
 import {
 	FluidErrorTypes,
-	IGenericError,
 	IErrorBase,
+	IGenericError,
 	ITelemetryBaseProperties,
 	IUsageError,
 } from "@fluidframework/core-interfaces";

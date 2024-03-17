@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import React from "react";
 
 /**
  * Context that provides a logger for Devtools to generate usage telemetry internally.

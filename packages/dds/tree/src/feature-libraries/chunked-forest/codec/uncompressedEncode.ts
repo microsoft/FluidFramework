@@ -6,7 +6,7 @@
 import { ITreeCursorSynchronous, forEachField, forEachNode } from "../../../core/index.js";
 import { FluidSerializableReadOnly } from "../../valueUtilities.js";
 import { FieldBatch } from "./fieldBatch.js";
-import { version, EncodedTreeShape, EncodedNestedArray, EncodedFieldBatch } from "./format.js";
+import { EncodedFieldBatch, EncodedNestedArray, EncodedTreeShape, version } from "./format.js";
 import { ShapeIndex } from "./formatGeneric.js";
 
 /**

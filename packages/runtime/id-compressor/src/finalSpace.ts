@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IdCluster, clustersEqual, lastAllocatedFinal, lastFinalizedFinal } from "./sessions.js";
 import { FinalCompressedId } from "./identifiers.js";
+import { IdCluster, clustersEqual, lastAllocatedFinal, lastFinalizedFinal } from "./sessions.js";
 
 /**
  * All IDs that have been finalized (acked), grouped into clusters sorted by their base final IDs.

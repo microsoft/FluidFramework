@@ -1,16 +1,26 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.5.3/schema.json",
-	"files": {
-		"ignoreUnknown": true,
-		"ignore": ["**/_api-extractor-temp/**", "**/oclif.manifest.json", "**/_package.json"]
-	},
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
+		"root": ".",
 		"useIgnoreFile": true
 	},
+	"files": {
+		"ignoreUnknown": true,
+		"ignore": [
+			"**/*.generated.*",
+			"**/_api-extractor-temp/**",
+			"**/test/snapshots/content/**",
+			"**/localOdspSnapshots/**",
+			"**/_package.json",
+			"**/biome.jsonc",
+			"**/oclif.manifest.json"
+		],
+		"maxSize": 2097152
+	},
 	"organizeImports": {
-		"enabled": false
+		"enabled": true
 	},
 	"linter": {
 		"enabled": false,
@@ -19,7 +29,7 @@
 		}
 	},
 	"formatter": {
-		"enabled": true,
+		"enabled": false,
 		"formatWithErrors": true,
 		"indentStyle": "tab",
 		"lineWidth": 95,
@@ -43,11 +53,22 @@
 	},
 	"overrides": [
 		{
-			"include": [".vscode/**/*.json"],
+			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
 			"json": {
 				"parser": {
 					"allowComments": true,
 					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "all"
+				}
+			}
+		},
+		{
+			"include": ["**/package.json"],
+			"json": {
+				"formatter": {
+					"lineWidth": 80
 				}
 			}
 		}

@@ -2,33 +2,34 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
-	createIdCompressor,
-	deserializeIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SessionId,
+	createIdCompressor,
+	deserializeIdCompressor,
 } from "@fluidframework/id-compressor";
 import {
-	moveToDetachedField,
 	Anchor,
+	Revertible,
+	TreeNavigationResult,
 	UpPath,
 	Value,
 	clonePath,
 	forEachNodeInSubtree,
-	Revertible,
-	TreeNavigationResult,
+	moveToDetachedField,
 } from "../../../core/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
 	FlexTreeObjectNodeTyped,
 	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
-import { SharedTree, ITreeCheckout } from "../../../shared-tree/index.js";
-import { SchemaBuilder, leaf } from "../../../domains/index.js";
+import { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
 import { expectEqualPaths } from "../../utils.js";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });

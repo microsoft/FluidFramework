@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IEvent } from "@fluidframework/core-interfaces";
 import { Response } from "node-fetch";
-import { ITaskListData, ITaskData } from "../model-interface/index.js";
+import { ITaskData, ITaskListData } from "../model-interface/index.js";
 
 const taskList1: ITaskData = {
 	12: {

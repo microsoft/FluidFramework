@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { v4 as uuid } from "uuid";
 
 import {
 	AzureClient,
@@ -10,10 +9,11 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-
-import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { v4 as uuid } from "uuid";
+
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 /**

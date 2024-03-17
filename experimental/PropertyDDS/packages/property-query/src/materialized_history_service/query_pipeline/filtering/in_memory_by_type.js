@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const YIELD_EVERY_N = 1000;
 const PropertyUtils = require("@fluid-experimental/property-changeset").Utils;
 const PathHelper = require("@fluid-experimental/property-changeset").PathHelper;

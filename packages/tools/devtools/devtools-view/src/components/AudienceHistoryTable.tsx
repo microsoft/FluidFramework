@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import {
-	tokens,
+	Table,
 	TableBody,
 	TableCell,
-	TableRow,
-	Table,
 	TableHeader,
 	TableHeaderCell,
+	TableRow,
 	makeStyles,
+	tokens,
 } from "@fluentui/react-components";
 import {
-	DoorArrowLeftRegular,
-	Clock12Regular,
-	Person12Regular,
-	ArrowJoinRegular,
 	ArrowExitRegular,
+	ArrowJoinRegular,
+	Clock12Regular,
+	DoorArrowLeftRegular,
+	Person12Regular,
 } from "@fluentui/react-icons";
+import React from "react";
 
 import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { clientIdTooltipText } from "./TooltipTexts";
 import { type TransformedAudienceHistoryData } from "./AudienceView";
+import { clientIdTooltipText } from "./TooltipTexts";
 import { LabelCellLayout } from "./utility-components";
 
 const audienceStyles = makeStyles({

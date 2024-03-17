@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as child_process from "child_process";
 import fs from "fs";
 import { EOL as newline } from "os";

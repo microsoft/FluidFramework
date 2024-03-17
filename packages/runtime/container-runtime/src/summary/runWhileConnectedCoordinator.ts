@@ -5,9 +5,9 @@
 
 import { assert, Deferred } from "@fluidframework/core-utils";
 import {
-	SummarizerStopReason,
 	IConnectableRuntime,
 	ISummaryCancellationToken,
+	SummarizerStopReason,
 } from "./summarizerTypes.js";
 
 /**

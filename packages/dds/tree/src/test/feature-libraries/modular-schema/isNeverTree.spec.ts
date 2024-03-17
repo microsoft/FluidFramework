@@ -6,26 +6,26 @@
 import { strict as assert } from "assert";
 
 import {
+	FieldKindIdentifier,
+	MapNodeStoredSchema,
+	MutableTreeStoredSchema,
+	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeStoredSchemaRepository,
+	storedEmptyFieldSchema,
+} from "../../../core/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+/* eslint-disable-next-line import/no-internal-modules */
+import { allowsTreeSuperset } from "../../../feature-libraries/modular-schema/index.js";
+import {
 	isNeverField,
 	isNeverTree,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/isNeverTree.js";
-import {
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	storedEmptyFieldSchema,
-	FieldKindIdentifier,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	MutableTreeStoredSchema,
-	TreeStoredSchemaRepository,
-} from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
-/* eslint-disable-next-line import/no-internal-modules */
-import { allowsTreeSuperset } from "../../../feature-libraries/modular-schema/index.js";
 
 /**
  * Empty readonly map.
