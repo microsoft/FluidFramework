@@ -57,11 +57,11 @@ import {
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ChannelCollection } from "../channelCollection.js";
 import {
+	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
-	CompressionAlgorithms,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,

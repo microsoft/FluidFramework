@@ -27,9 +27,9 @@ import {
 	BatchSequenceNumbers,
 } from "../../opLifecycle/index.js";
 import {
+	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
 	makeLegacySendBatchFn,
-	CompressionAlgorithms,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
 

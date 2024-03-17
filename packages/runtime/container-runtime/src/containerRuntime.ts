@@ -378,13 +378,13 @@ export interface ICompressionRuntimeOptions {
 	 * The value the batch's content size must exceed for the batch to be compressed.
 	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
 	 */
-	minimumBatchSizeInBytes: number;
+	readonly minimumBatchSizeInBytes: number;
 
 	/**
 	 * The compression algorithm that will be used to compress the op.
 	 * By default the value is `lz4` which is the only compression algorithm currently supported.
 	 */
-	compressionAlgorithm: CompressionAlgorithms;
+	readonly compressionAlgorithm: CompressionAlgorithms;
 }
 
 /**
@@ -491,14 +491,6 @@ export interface RuntimeHeaderData {
 	allowInactive?: boolean;
 }
 
-/**
- * Available compression algorithms for op compression.
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
 /** Default values for Runtime Headers */
 export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
@@ -506,6 +498,14 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	allowTombstone: false,
 	allowInactive: false,
 };
+
+/**
+ * Available compression algorithms for op compression.
+ * @alpha
+ */
+export enum CompressionAlgorithms {
+	lz4 = "lz4",
+}
 
 /**
  * @deprecated
@@ -1323,19 +1323,16 @@ export class ContainerRuntime
 			namespace: "ContainerRuntime",
 		});
 
-		const compressionOptions: ICompressionRuntimeOptions = {
-			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-			compressionAlgorithm: CompressionAlgorithms.lz4,
-		};
-
 		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
 		// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
 		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
 		// compression.
-		if (this.documentSchema.compressionLz4) {
-			compressionOptions.minimumBatchSizeInBytes =
-				runtimeOptions.compressionOptions.minimumBatchSizeInBytes;
-		}
+		const compressionOptions: ICompressionRuntimeOptions = {
+			minimumBatchSizeInBytes: this.documentSchema.compressionLz4
+				? runtimeOptions.compressionOptions.minimumBatchSizeInBytes
+				: Number.POSITIVE_INFINITY,
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		};
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
