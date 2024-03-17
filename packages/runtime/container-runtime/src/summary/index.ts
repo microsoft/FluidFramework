@@ -109,7 +109,8 @@ export {
 	DocumentSchemaValueType,
 	checkRuntimeCompatibility,
 	diffDocumentSchemas,
-	computeCurrentDocumentSchema,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
 } from "./documentSchema.js";
 export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
 export {

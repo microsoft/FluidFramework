@@ -161,11 +161,10 @@ import {
 	rootHasIsolatedChannels,
 	IdCompressorMode,
 	IDocumentSchemaCurrent,
-	IDocumentSchema,
 	CompressionAlgorithms,
 	checkRuntimeCompatibility,
 	ICompressionSchema,
-	computeCurrentDocumentSchema,
+	DocumentsSchemaController,
 } from "./summary/index.js";
 import { formExponentialFn, Throttler } from "./throttler.js";
 import {
@@ -725,7 +724,7 @@ export class ContainerRuntime
 			existing,
 			requestHandler,
 			provideEntryPoint,
-			runtimeOptions = {},
+			runtimeOptions = {} satisfies IContainerRuntimeOptions,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
@@ -754,7 +753,7 @@ export class ContainerRuntime
 			flushMode = defaultFlushMode,
 			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor = "off",
+			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
@@ -785,8 +784,8 @@ export class ContainerRuntime
 			]);
 
 		// Once we loaded metadata, immidiatly validate compatibility
-		checkRuntimeCompatibility(metadata?.documentSchema);
 		const documentSchema = metadata?.documentSchema as IDocumentSchemaCurrent;
+		checkRuntimeCompatibility(documentSchema);
 
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
@@ -827,36 +826,6 @@ export class ContainerRuntime
 			}
 		}
 
-		// Enabling the IdCompressor is a one-way operation and we only want to
-		// allow new containers to turn it on
-		let idCompressorMode: IdCompressorMode;
-		if (existing) {
-			// This setting has to be sticky for correctness:
-			// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
-			//    how to process compressor ops
-			// 2) if it's ON, then all sessions should load compressor right away
-			// 3) Same logic applies for "delayed" mode
-			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
-			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
-			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
-			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
-			idCompressorMode = documentSchema?.idCompressorMode ?? "off";
-		} else {
-			// FG overwrite
-			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
-			switch (enabled) {
-				case true:
-					idCompressorMode = "on";
-					break;
-				case false:
-					idCompressorMode = "off";
-					break;
-				default:
-					idCompressorMode = enableRuntimeIdCompressor;
-					break;
-			}
-		}
-
 		const createIdCompressorFn = async () => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
 				"@fluidframework/id-compressor"
@@ -894,6 +863,43 @@ export class ContainerRuntime
 			}
 		};
 
+		let idCompressorMode: IdCompressorMode;
+		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
+			case true:
+				idCompressorMode = "on";
+				break;
+			case false:
+				idCompressorMode = undefined;
+				break;
+			default:
+				idCompressorMode = enableRuntimeIdCompressor;
+				break;
+		}
+
+		const disableGroupedBatching = mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableGroupedBatching",
+		);
+		const disableCompression = mc.config.getBoolean(
+			"Fluid.ContainerRuntime.CompressionDisabled",
+		);
+
+		const groupedBatchingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
+
+		const documentSchemaController = new DocumentsSchemaController(
+			existing,
+			documentSchema,
+			disableCompression === true || compressionOptions.minimumBatchSizeInBytes === Infinity
+				? undefined
+				: compressionOptions.compressionAlgorithm,
+			idCompressorMode,
+			groupedBatchingEnabled,
+		);
+
+		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
+			disableGroupedBatching,
+			disableCompression,
+		};
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -909,7 +915,8 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
-				enableRuntimeIdCompressor,
+				// Requires<> drops undefined from IdCompressorType
+				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableOpReentryCheck,
 				enableGroupedBatching,
 			},
@@ -919,7 +926,8 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			context.storage,
 			createIdCompressorFn,
-			idCompressorMode,
+			documentSchemaController,
+			featureGatesForTelemetry,
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
@@ -985,11 +993,13 @@ export class ContainerRuntime
 		return this.registry;
 	}
 
-	private readonly documentSchema: IDocumentSchemaCurrent;
-
 	private readonly _getAttachState: () => AttachState;
 	public get attachState(): AttachState {
 		return this._getAttachState();
+	}
+
+	public get documentSchema() {
+		return this.documentsSchemaController.currentSchema;
 	}
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
@@ -1004,6 +1014,9 @@ export class ContainerRuntime
 	// In such case we have to process all ops, including those marked with saveOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
+	public get idCompressorMode() {
+		return this.documentSchema.idCompressorMode;
+	}
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
 	 */
@@ -1247,7 +1260,8 @@ export class ContainerRuntime
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
-		private readonly idCompressorMode: IdCompressorMode,
+		private readonly documentsSchemaController: DocumentsSchemaController,
+		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
@@ -1286,24 +1300,21 @@ export class ContainerRuntime
 			namespace: "ContainerRuntime",
 		});
 
-		const disableCompression = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionDisabled",
-		);
-		const compressionOptions =
-			disableCompression === true
-				? {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-				  }
-				: runtimeOptions.compressionOptions;
+		const compressionOptions: ICompressionSchema = {
+			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		};
 
-		this.documentSchema = computeCurrentDocumentSchema(
-			existing,
-			this.metadata?.documentSchema,
-			compressionOptions,
-			this.idCompressorMode,
-			this.groupedBatchingEnabled,
-		);
+		const algs = this.documentSchema.compressionAlgorithms;
+		if (algs !== undefined && algs.length !== 0) {
+			// If we support multiple algorithms in the future, then we would need to manage it here carefully.
+			// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
+			// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
+			// compression.
+			assert(algs[0] === CompressionAlgorithms.lz4, "no other algorithm supported yet");
+			compressionOptions.minimumBatchSizeInBytes =
+				runtimeOptions.compressionOptions.minimumBatchSizeInBytes;
+		}
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
@@ -1743,7 +1754,7 @@ export class ContainerRuntime
 			idCompressorModeMetadata: metadata?.documentSchema?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
-				disableCompression,
+				...featureGatesForTelemetry,
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
@@ -2068,7 +2079,7 @@ export class ContainerRuntime
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
 
-			documentSchema: this.documentSchema as IDocumentSchema,
+			documentSchema: this.documentSchema,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2211,7 +2222,12 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
-				assert(this.idCompressorMode !== "off", 0x8f1 /* ID compressor should be in use */);
+				assert(
+					this.idCompressorMode !== undefined,
+					0x8f1 /* ID compressor should be in use */,
+				);
+				return;
+			case ContainerMessageType.DocumentSchemaChange:
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -2270,6 +2286,10 @@ export class ContainerRuntime
 			});
 			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
 			return;
+		}
+
+		if (!connected) {
+			this.documentsSchemaController.onDisconnect();
 		}
 
 		// If there are stashed blobs in the pending state, we need to delay
@@ -2495,6 +2515,11 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
+				break;
+			case ContainerMessageType.DocumentSchemaChange:
+				this.documentsSchemaController.processDocumentSchemaOp(
+					messageWithContext.message.contents,
+				);
 				break;
 			default: {
 				// If we didn't necessarily expect a runtime message type, then no worries - just return
@@ -2815,6 +2840,7 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.IdAllocation:
+			case ContainerMessageType.DocumentSchemaChange:
 			case ContainerMessageType.GC: {
 				return false;
 			}
@@ -3677,7 +3703,7 @@ export class ContainerRuntime
 	private submit(
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
-		metadata: Record<string, unknown> | undefined = undefined,
+		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
 		this.verifyCanSubmitOps();
@@ -3686,6 +3712,12 @@ export class ContainerRuntime
 		assert(
 			this.attachState !== AttachState.Detached,
 			0x132 /* "sending ops in detached container" */,
+		);
+
+		assert(
+			metadata === undefined ||
+				containerRuntimeMessage.type === ContainerMessageType.BlobAttach,
+			"metadata",
 		);
 
 		const serializedContent = JSON.stringify(containerRuntimeMessage);
@@ -3717,6 +3749,7 @@ export class ContainerRuntime
 				this.outbox.submitIdAllocation(message);
 			} else {
 				this.submitIdAllocationOpIfNeeded();
+				this.documentsSchemaController.onMessageSent();
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:
@@ -3917,6 +3950,8 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.GC:
 				this.submit(message);
+				break;
+			case ContainerMessageType.DocumentSchemaChange:
 				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
@@ -4207,9 +4242,6 @@ export class ContainerRuntime
 	}
 
 	private get groupedBatchingEnabled(): boolean {
-		const killSwitch = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableGroupedBatching",
-		);
-		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
+		return this.documentSchema.opGroupingEnabled === true;
 	}
 }

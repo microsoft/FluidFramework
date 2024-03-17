@@ -16,7 +16,7 @@ import { assert } from "@fluidframework/core-utils";
  *
  * @alpha
  */
-export type IdCompressorMode = "on" | "delayed" | "off";
+export type IdCompressorMode = "on" | "delayed" | undefined;
 
 /**
  * Available compression algorithms for op compression.
@@ -35,13 +35,13 @@ export interface ICompressionSchema {
 	 * The value the batch's content size must exceed for the batch to be compressed.
 	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
 	 */
-	readonly minimumBatchSizeInBytes: number;
+	minimumBatchSizeInBytes: number;
 
 	/**
 	 * The compression algorithm that will be used to compress the op.
 	 * By default the value is `lz4` which is the only compression algorithm currently supported.
 	 */
-	readonly compressionAlgorithm: CompressionAlgorithms;
+	compressionAlgorithm: CompressionAlgorithms;
 }
 
 /** @alpha */
@@ -76,12 +76,24 @@ export interface IDocumentSchema extends Record<string, DocumentSchemaValueType>
 	version: string;
 }
 
+/** @alpha */
+export interface IDocumentSchemaChangeMessage {
+	/** @see ContainerRuntimeDocumentSchemaMessage */
+	data: string;
+}
+
 /**
  * Current version known properties that define document schema
+ * @alpha
  */
 export const currentDocumentVersionSchema = "1.0";
 
-export interface IDocumentSchemaCurrent {
+/**
+ * Current document schema.
+ * * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IDocumentSchemaCurrent = {
 	version: typeof currentDocumentVersionSchema;
 
 	// Should any of IGCRuntimeOptions be here?
@@ -91,7 +103,7 @@ export interface IDocumentSchemaCurrent {
 	chunkingEnabled?: true;
 	idCompressorMode?: IdCompressorMode;
 	opGroupingEnabled?: true;
-}
+};
 
 const documentSchemaSupportedConfigs: Record<string, (string | boolean)[]> = {
 	version: [currentDocumentVersionSchema],
@@ -191,44 +203,71 @@ export function diffDocumentSchemas(
 	return diff.version !== undefined ? diff : undefined;
 }
 
-export function computeCurrentDocumentSchema(
-	existing: boolean,
-	documentMetadataSchema: IDocumentSchema | undefined,
-	compressionOptions: ICompressionSchema,
-	idCompressorMode: IdCompressorMode,
-	groupedBatchingEnabled: boolean,
-) {
-	const compressionAlgorithm =
-		compressionOptions.minimumBatchSizeInBytes === Number.POSITIVE_INFINITY
-			? undefined
-			: compressionOptions.compressionAlgorithm;
+/** @alpha */
+export class DocumentsSchemaController {
+	public readonly currentSchema: IDocumentSchemaCurrent;
 
-	const oldDocumentSchema: IDocumentSchemaCurrent =
-		(documentMetadataSchema as IDocumentSchemaCurrent) ?? {
+	constructor(
+		existing: boolean,
+		public readonly documentMetadataSchema: IDocumentSchema | undefined,
+		compressionAlgorithm: CompressionAlgorithms | undefined,
+		idCompressorMode: IdCompressorMode,
+		groupedBatchingEnabled: boolean,
+	) {
+		const oldDocumentSchema: IDocumentSchemaCurrent =
+			(documentMetadataSchema as IDocumentSchemaCurrent) ?? {
+				version: currentDocumentVersionSchema,
+			};
+
+		// Enabling the IdCompressor is a one-way operation and we only want to
+		// allow new containers to turn it on
+		if (existing) {
+			// This setting has to be sticky for correctness:
+			// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
+			//    how to process compressor ops
+			// 2) if it's ON, then all sessions should load compressor right away
+			// 3) Same logic applies for "delayed" mode
+			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
+			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
+			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
+			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
+			idCompressorMode = (documentMetadataSchema as IDocumentSchemaCurrent)?.idCompressorMode;
+		}
+
+		const compressionSchemas: CompressionAlgorithms[] =
+			oldDocumentSchema.compressionAlgorithms ?? [];
+		if (
+			compressionAlgorithm !== undefined &&
+			!compressionSchemas.includes(compressionAlgorithm)
+		) {
+			compressionSchemas.push(compressionAlgorithm);
+		}
+
+		this.currentSchema = {
 			version: currentDocumentVersionSchema,
+			compressionAlgorithms: compressionSchemas,
+			chunkingEnabled: true,
+			idCompressorMode,
+			opGroupingEnabled:
+				oldDocumentSchema.opGroupingEnabled ?? groupedBatchingEnabled ? true : undefined,
 		};
 
-	const compressionSchemas: CompressionAlgorithms[] =
-		oldDocumentSchema.compressionAlgorithms ?? [];
-	if (compressionAlgorithm !== undefined && !compressionSchemas.includes(compressionAlgorithm)) {
-		compressionSchemas.push(compressionAlgorithm);
+		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
+		checkRuntimeCompatibility(this.currentSchema);
+
+		// If it's a new file, there is no need to advertise schema, it will be written into the document on document creation.
+		const diffSchema = !existing
+			? undefined
+			: diffDocumentSchemas(oldDocumentSchema, this.currentSchema);
+		assert(
+			Object.keys(oldDocumentSchema).length === 2 || diffSchema === undefined,
+			"temp test",
+		);
 	}
 
-	const newSchema = {
-		version: currentDocumentVersionSchema,
-		compressionAlgorithms: compressionSchemas,
-		chunkingEnabled: true,
-		idCompressorMode: idCompressorMode === "off" ? undefined : idCompressorMode,
-		opGroupingEnabled:
-			oldDocumentSchema.opGroupingEnabled ?? groupedBatchingEnabled ? true : undefined,
-	} satisfies IDocumentSchemaCurrent;
+	public onMessageSent() {}
 
-	// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
-	checkRuntimeCompatibility(newSchema as IDocumentSchema);
+	public processDocumentSchemaOp(message: IDocumentSchemaChangeMessage) {}
 
-	// If it's a new file, there is no need to advertise schema, it will be written into the document on document creation.
-	const diffSchema = !existing ? undefined : diffDocumentSchemas(oldDocumentSchema, newSchema);
-	assert(Object.keys(oldDocumentSchema).length === 1 || diffSchema === undefined, "temp test");
-
-	return newSchema;
+	public onDisconnect() {}
 }

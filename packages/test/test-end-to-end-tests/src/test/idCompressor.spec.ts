@@ -720,7 +720,7 @@ describeCompat("IdCompressor in detached container", "NoCompat", (getTestObjectP
 describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const disableConfig: ITestContainerConfig = {
-		runtimeOptions: { enableRuntimeIdCompressor: "off" },
+		runtimeOptions: { enableRuntimeIdCompressor: undefined },
 	};
 	const enabledConfig: ITestContainerConfig = {
 		runtimeOptions: { enableRuntimeIdCompressor: "on" },

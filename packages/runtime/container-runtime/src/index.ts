@@ -101,6 +101,10 @@ export {
 	IDocumentSchema,
 	DocumentSchemaValueType,
 	ICompressionSchema,
+	IDocumentSchemaCurrent,
+	currentDocumentVersionSchema,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";
