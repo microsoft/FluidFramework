@@ -38,7 +38,6 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			// this.tree.root.clients,
 			this.tree,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,

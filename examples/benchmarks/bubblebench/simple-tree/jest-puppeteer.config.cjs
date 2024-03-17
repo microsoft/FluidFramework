@@ -19,10 +19,4 @@ module.exports = {
 		// AB#7150: Remove this once we have fixed the tests.
 		headless: "shell",
 	},
-	/*
-	launch: {
-		dumpio: true, // output browser console to cmd line
-		slowMo: 500,
-		headless: false,
-	}, */
 };

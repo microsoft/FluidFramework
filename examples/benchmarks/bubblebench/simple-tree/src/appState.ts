@@ -14,16 +14,13 @@ import { Client, type App, type Bubble } from "./schema.js";
 
 export class AppState implements IAppState {
 	readonly localClient: Client;
-	// private readonly root: App;
 
 	constructor(
-		// private readonly clientsSequence: Clients,
 		private readonly tree: TreeView<App>,
 		public width: number,
 		public height: number,
 		numBubbles: number,
 	) {
-		// this.root = tree.root;
 		this.tree.root.clients.insertAtEnd(
 			this.createInitialClientNode(numBubbles) as unknown as Client,
 		);
