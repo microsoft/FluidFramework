@@ -107,8 +107,6 @@ export {
 	CompressionAlgorithms,
 	ICompressionSchema,
 	DocumentSchemaValueType,
-	checkRuntimeCompatibility,
-	diffDocumentSchemas,
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,
 } from "./documentSchema.js";

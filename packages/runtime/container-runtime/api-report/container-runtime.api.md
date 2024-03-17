@@ -23,6 +23,7 @@ import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentSchemaCurrent as IDocumentSchemaCurrent_2 } from './summary/documentSchema.js';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -253,7 +254,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    get documentSchema(): IDocumentSchemaCurrent;
+    get documentSchema(): IDocumentSchemaCurrent_2;
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -396,21 +397,21 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
 
 // @alpha (undocumented)
-export type DocumentSchemaValueType = string | boolean | string[] | undefined;
+export type DocumentSchemaValueType = string | boolean | number | string[] | undefined;
 
 // @alpha (undocumented)
 export class DocumentsSchemaController {
-    constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionAlgorithm: CompressionAlgorithms | undefined, idCompressorMode: IdCompressorMode, groupedBatchingEnabled: boolean);
+    constructor(legacyBehaviour: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionAlgorithm: CompressionAlgorithms | undefined, idCompressorModeArg: IdCompressorMode, groupedBatchingEnabled: boolean);
     // (undocumented)
-    readonly currentSchema: IDocumentSchemaCurrent;
-    // (undocumented)
-    readonly documentMetadataSchema: IDocumentSchema | undefined;
+    get currentSchema(): IDocumentSchemaCurrent;
     // (undocumented)
     onDisconnect(): void;
     // (undocumented)
-    onMessageSent(): void;
+    onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
     // (undocumented)
-    processDocumentSchemaOp(message: IDocumentSchemaChangeMessage): void;
+    processDocumentSchemaOp(message: IDocumentSchemaChangeMessage, local: boolean): void;
+    // (undocumented)
+    summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined;
 }
 
 // @alpha (undocumented)
@@ -738,18 +739,19 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
 // @alpha
 export interface IDocumentSchema extends Record<string, DocumentSchemaValueType> {
     // (undocumented)
+    refSeq: number;
+    // (undocumented)
     version: string;
 }
 
-// @alpha (undocumented)
-export interface IDocumentSchemaChangeMessage {
-    // (undocumented)
-    data: string;
-}
+// @alpha
+export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
 // @alpha
 export type IDocumentSchemaCurrent = {
     version: typeof currentDocumentVersionSchema;
+    refSeq: number;
+    legacyBehaviour: boolean;
     compressionAlgorithms?: CompressionAlgorithms[];
     chunkingEnabled?: true;
     idCompressorMode?: IdCompressorMode;

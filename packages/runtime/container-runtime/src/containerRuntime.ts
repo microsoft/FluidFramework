@@ -160,11 +160,10 @@ import {
 	ISummarizer,
 	rootHasIsolatedChannels,
 	IdCompressorMode,
-	IDocumentSchemaCurrent,
 	CompressionAlgorithms,
-	checkRuntimeCompatibility,
 	ICompressionSchema,
 	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
 } from "./summary/index.js";
 import { formExponentialFn, Throttler } from "./throttler.js";
 import {
@@ -783,10 +782,6 @@ export class ContainerRuntime
 				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
 			]);
 
-		// Once we loaded metadata, immidiatly validate compatibility
-		const documentSchema = metadata?.documentSchema as IDocumentSchemaCurrent;
-		checkRuntimeCompatibility(documentSchema);
-
 		// read snapshot blobs needed for BlobManager to load
 		const blobManagerSnapshot = await BlobManager.load(
 			context.baseSnapshot?.trees[blobsTreeName],
@@ -886,8 +881,9 @@ export class ContainerRuntime
 		const groupedBatchingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
 
 		const documentSchemaController = new DocumentsSchemaController(
+			true, // legacyBehavior
 			existing,
-			documentSchema,
+			metadata?.documentSchema,
 			disableCompression === true || compressionOptions.minimumBatchSizeInBytes === Infinity
 				? undefined
 				: compressionOptions.compressionAlgorithm,
@@ -2079,7 +2075,9 @@ export class ContainerRuntime
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
 
-			documentSchema: this.documentSchema,
+			documentSchema: this.documentsSchemaController.summarizeDocumentSchema(
+				this.deltaManager.lastSequenceNumber,
+			),
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2519,6 +2517,7 @@ export class ContainerRuntime
 			case ContainerMessageType.DocumentSchemaChange:
 				this.documentsSchemaController.processDocumentSchemaOp(
 					messageWithContext.message.contents,
+					messageWithContext.local,
 				);
 				break;
 			default: {
@@ -3749,7 +3748,9 @@ export class ContainerRuntime
 				this.outbox.submitIdAllocation(message);
 			} else {
 				this.submitIdAllocationOpIfNeeded();
-				this.documentsSchemaController.onMessageSent();
+				this.documentsSchemaController.onMessageSent(
+					(content: IDocumentSchemaChangeMessage) => this.outbox.submit(message),
+				);
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:
