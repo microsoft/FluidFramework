@@ -13,12 +13,12 @@ import { Tooltip } from "@material-ui/core";
 import { ReactWrapper } from "enzyme";
 import React from "react";
 import { useFakeTimers } from "sinon";
-import { InspectorMessages } from "../src/constants";
 import { Empty } from "../src/Empty";
 import { IDataGetterParameter } from "../src/InspectorTableTypes";
 import { NameCell } from "../src/NameCell";
 import { fetchRegisteredTemplates } from "../src/PropertyDataCreationHandlers";
 import { BooleanView, EnumView, NumberView, StringView } from "../src/PropertyViews";
+import { InspectorMessages } from "../src/constants";
 import {
 	coordinateSystem3DSchema,
 	enumUnoDosTresSchema,

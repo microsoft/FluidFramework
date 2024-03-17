@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DataBinding } from "./dataBinding.js";
-import { BaseProperty } from "@fluid-experimental/property-properties";
 import { SerializedChangeSet, Utils } from "@fluid-experimental/property-changeset";
+import { BaseProperty } from "@fluid-experimental/property-properties";
+import { DataBinding } from "./dataBinding.js";
 
 /**
  * Provides the abstract base class for all contexts passed to data binding callbacks.

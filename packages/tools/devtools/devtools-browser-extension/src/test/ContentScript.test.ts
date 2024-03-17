@@ -14,8 +14,8 @@ import {
 	devtoolsMessageSource,
 } from "@fluidframework/devtools-core";
 
-import { extensionViewMessageSource } from "../messaging";
 import { type Globals } from "../Globals";
+import { extensionViewMessageSource } from "../messaging";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 type Port = chrome.runtime.Port;

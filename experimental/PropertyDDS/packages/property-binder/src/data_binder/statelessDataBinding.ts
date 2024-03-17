@@ -8,9 +8,9 @@
  * by the client, but is called back for onPreModify, onModify etc. for all instances of a type.
  */
 
-import { DataBinding } from "./dataBinding.js";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 import { IStatelessDataBindingOptions } from "./IStatelessDataBindingOptions.js";
+import { DataBinding } from "./dataBinding.js";
 import { ModificationContext } from "./modificationContext.js";
 import { RemovalContext } from "./removalContext.js";
 

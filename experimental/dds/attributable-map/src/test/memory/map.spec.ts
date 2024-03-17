@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { MapFactory, AttributableMap } from "../../map.js";
+import { AttributableMap, MapFactory } from "../../map.js";
 
 function createLocalMap(id: string): AttributableMap {
 	const map: AttributableMap = new AttributableMap(

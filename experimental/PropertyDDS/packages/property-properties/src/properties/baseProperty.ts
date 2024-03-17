@@ -5,14 +5,14 @@
 
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 
-import _ from "lodash";
 import {
 	ChangeSet,
 	PathHelper,
 	SerializedChangeSet,
 	TypeIdHelper,
 } from "@fluid-experimental/property-changeset";
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
+import _ from "lodash";
 import { LazyLoadedProperties as Property } from "./lazyLoadedProperties";
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
