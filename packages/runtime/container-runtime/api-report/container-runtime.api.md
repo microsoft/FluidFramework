@@ -23,7 +23,6 @@ import { IDataStore } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentSchemaCurrent as IDocumentSchemaCurrent_2 } from './summary/documentSchema.js';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -231,7 +230,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         runSweep?: boolean;
         fullGC?: boolean;
     }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
-    protected compressorLoadInitiated: boolean;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -254,7 +252,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
-    get documentSchema(): IDocumentSchemaCurrent_2;
+    get documentSchema(): {
+        newBehavior?: true | undefined;
+        idCompressorMode?: IdCompressorMode;
+        opGroupingEnabled?: true | undefined;
+        compressionLz4?: true | undefined;
+    };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -295,6 +298,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     get isDirty(): boolean;
+    protected _loadIdCompressor: Promise<void> | undefined;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -311,6 +315,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     makeLocallyVisible(): void;
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
+    // (undocumented)
+    onSchemaChange(schema: IDocumentSchemaCurrent): void;
     // (undocumented)
     readonly options: Record<string | number, any>;
     orderSequentially<T>(callback: () => T): T;
@@ -397,19 +403,19 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
 
 // @alpha (undocumented)
-export type DocumentSchemaValueType = string | boolean | number | string[] | undefined;
+export type DocumentSchemaValueType = string | boolean | number | undefined;
 
 // @alpha
 export class DocumentsSchemaController {
-    constructor(legacyBehaviour: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionAlgorithm: CompressionAlgorithms | undefined, idCompressorModeArg: IdCompressorMode, groupedBatchingEnabled: boolean);
-    // (undocumented)
-    get currentSchema(): IDocumentSchemaCurrent;
+    constructor(newBehavior: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionLz4: boolean, idCompressorModeArg: IdCompressorMode, groupedBatchingEnabled: boolean, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     // (undocumented)
     onDisconnect(): void;
     // (undocumented)
     onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
     // (undocumented)
     processDocumentSchemaOp(message: IDocumentSchemaChangeMessage, local: boolean): void;
+    // (undocumented)
+    sessionSchema: IDocumentSchemaCurrent;
     // (undocumented)
     summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined;
 }
@@ -673,11 +679,8 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
-// @alpha (undocumented)
-export type ICompressionRuntimeOptions = ICompressionSchema;
-
 // @alpha
-export interface ICompressionSchema {
+export interface ICompressionRuntimeOptions {
     compressionAlgorithm: CompressionAlgorithms;
     minimumBatchSizeInBytes: number;
 }
@@ -737,9 +740,11 @@ export interface ICreateContainerMetadata {
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
 // @alpha
-export interface IDocumentSchema extends Record<string, DocumentSchemaValueType> {
+export interface IDocumentSchema {
     // (undocumented)
     refSeq: number;
+    // (undocumented)
+    runtime: Record<string, DocumentSchemaValueType>;
     // (undocumented)
     version: string;
 }
@@ -751,11 +756,12 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
 export type IDocumentSchemaCurrent = {
     version: typeof currentDocumentVersionSchema;
     refSeq: number;
-    legacyBehaviour: boolean;
-    compressionAlgorithms?: CompressionAlgorithms[];
-    chunkingEnabled?: true;
-    idCompressorMode?: IdCompressorMode;
-    opGroupingEnabled?: true;
+    runtime: {
+        newBehavior?: true;
+        idCompressorMode?: IdCompressorMode;
+        opGroupingEnabled?: true;
+        compressionLz4?: true;
+    };
 };
 
 // @alpha

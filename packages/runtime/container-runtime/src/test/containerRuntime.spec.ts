@@ -61,6 +61,7 @@ import {
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
+	CompressionAlgorithms,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -73,11 +74,7 @@ import {
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
-import {
-	ISummaryCancellationToken,
-	neverCancelledSummaryToken,
-	CompressionAlgorithms,
-} from "../summary/index.js";
+import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,

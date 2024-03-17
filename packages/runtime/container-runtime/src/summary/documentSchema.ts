@@ -19,34 +19,8 @@ import { DataCorruptionError } from "@fluidframework/telemetry-utils";
  */
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
-/**
- * Available compression algorithms for op compression.
- * @alpha
- */
-export enum CompressionAlgorithms {
-	lz4 = "lz4",
-}
-
-/**
- * Options for op compression.
- * @alpha
- */
-export interface ICompressionSchema {
-	/**
-	 * The value the batch's content size must exceed for the batch to be compressed.
-	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
-	 */
-	minimumBatchSizeInBytes: number;
-
-	/**
-	 * The compression algorithm that will be used to compress the op.
-	 * By default the value is `lz4` which is the only compression algorithm currently supported.
-	 */
-	compressionAlgorithm: CompressionAlgorithms;
-}
-
 /** @alpha */
-export type DocumentSchemaValueType = string | boolean | number | string[] | undefined;
+export type DocumentSchemaValueType = string | boolean | number | undefined;
 
 /**
  * Document schema information.
@@ -70,7 +44,7 @@ export type DocumentSchemaValueType = string | boolean | number | string[] | und
  *
  * @alpha
  */
-export interface IDocumentSchema extends Record<string, DocumentSchemaValueType> {
+export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
 	// If runtime sees a version it does not understand, it should immidiatly fail and not
 	// attempt to interpret any further dafa.
@@ -78,6 +52,8 @@ export interface IDocumentSchema extends Record<string, DocumentSchemaValueType>
 
 	// Sequence number when this schema became active.
 	refSeq: number;
+
+	runtime: Record<string, DocumentSchemaValueType>;
 }
 
 /**
@@ -105,52 +81,78 @@ export type IDocumentSchemaCurrent = {
 	version: typeof currentDocumentVersionSchema;
 	refSeq: number;
 
-	// Tells if client uses legacy behavior of changing schema.
-	// This means - changing schema without leveraging schema change ops.
-	legacyBehaviour: boolean;
+	runtime: {
+		// Tells if client uses legacy behavior of changing schema.
+		// - Legacy behavior - changing schema without leveraging schema change ops.
+		// - New behavior - changes in schema require ops and take into affect with delay.
+		newBehavior?: true;
 
-	// Should any of IGCRuntimeOptions be here?
-	// Should sessionExpiryTimeoutMs be here?
+		// Should any of IGCRuntimeOptions be here?
+		// Should sessionExpiryTimeoutMs be here?
 
-	compressionAlgorithms?: CompressionAlgorithms[];
-	chunkingEnabled?: true;
-	idCompressorMode?: IdCompressorMode;
-	opGroupingEnabled?: true;
+		idCompressorMode?: IdCompressorMode;
+		opGroupingEnabled?: true;
+		compressionLz4?: true;
+	};
 };
+
+interface IProperty<T = unknown> {
+	and: (t1: T, t2: T) => T;
+	or: (t1: T, t2: T) => T;
+	validate(t: unknown): boolean;
+}
+
+class TrueOrUndefined implements IProperty<true | undefined> {
+	public and(t1?: true, t2?: true) {
+		return t1 === true && t2 === true ? true : undefined;
+	}
+
+	public or(t1?: true, t2?: true) {
+		return t1 === true || t2 === true ? true : undefined;
+	}
+
+	public validate(t: unknown) {
+		return t === undefined || t === true;
+	}
+}
+
+class TrueOrUndefinedMax extends TrueOrUndefined {
+	public and(t1?: true, t2?: true) {
+		return this.or(t1, t2);
+	}
+}
+
+class MultiChoice implements IProperty<string | undefined> {
+	constructor(private readonly choices: string[]) {}
+
+	public and(t1?: string, t2?: string) {
+		if (t1 === undefined || t2 === undefined) {
+			return undefined;
+		}
+		return this.choices[Math.min(this.choices.indexOf(t1), this.choices.indexOf(t2))];
+	}
+
+	public or(t1?: string, t2?: string) {
+		if (t1 === undefined || t2 === undefined) {
+			return undefined;
+		}
+		return this.choices[Math.max(this.choices.indexOf(t1), this.choices.indexOf(t2))];
+	}
+
+	public validate(t: unknown) {
+		return t === undefined || (typeof t === "string" && this.choices.includes(t));
+	}
+}
 
 /**
  * Helper structure to valida if a schema is compatible with existing code.
  */
-const documentSchemaSupportedConfigs: Record<string, (string | boolean)[]> = {
-	version: [currentDocumentVersionSchema],
-	legacyBehaviour: [true, false],
-	compressionAlgorithms: [CompressionAlgorithms.lz4],
-	chunkingEnabled: [true],
-	idCompressorMode: ["on", "delayed"],
-	opGroupingEnabled: [true],
+const documentSchemaSupportedConfigs = {
+	newBehavior: new TrueOrUndefinedMax(), // once new behavior shows up, it's sticki
+	idCompressorMode: new MultiChoice(["on", "delayed"]),
+	opGroupingEnabled: new TrueOrUndefined(),
+	compressionLz4: new TrueOrUndefined(),
 };
-
-/**
- * Helper function to validat single property
- * @param value - value of the property
- * @param allowedValues - allowed values for this property.
- * @returns - false if validation fails, otherwise returns true
- */
-function validateDocumentSchemaProperty(
-	value: string | boolean | number | undefined,
-	allowedValues: DocumentSchemaValueType[],
-) {
-	switch (typeof value) {
-		case "string":
-		case "number":
-		case "boolean":
-		case "undefined":
-			break;
-		default:
-			return false;
-	}
-	return allowedValues.includes(value);
-}
 
 /**
  * Checks if a given schema is compatible with current code, i.e. if current code can understand all the features of that schema.
@@ -175,23 +177,16 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 
 	let unknownProperty: string | undefined;
 
-	for (const [name, value] of Object.entries(documentSchema)) {
-		const allowedValues = documentSchemaSupportedConfigs[name];
-		if (name === "refSeq") {
-			if (typeof value !== "number" || value < 0 || !Number.isInteger(value)) {
-				unknownProperty = name;
-			}
-		} else if (allowedValues === undefined) {
-			unknownProperty = name;
-		} else if (Array.isArray(value)) {
-			for (const v of value) {
-				if (!validateDocumentSchemaProperty(v, allowedValues)) {
-					unknownProperty = name;
-				}
-			}
-		} else {
-			if (!validateDocumentSchemaProperty(value, allowedValues)) {
-				unknownProperty = name;
+	const regSeq = documentSchema.refSeq;
+	if (typeof regSeq !== "number" || regSeq < 0 || !Number.isInteger(regSeq)) {
+		unknownProperty = "refSeq";
+	} else if (documentSchema.runtime === null || typeof documentSchema.runtime !== "object") {
+		unknownProperty = "runtime";
+	} else {
+		for (const [name, value] of Object.entries(documentSchema.runtime)) {
+			const validator = documentSchemaSupportedConfigs[name] as IProperty | undefined;
+			if (validator === undefined || !validator.validate(value)) {
+				unknownProperty = `runtime/${name}`;
 			}
 		}
 	}
@@ -201,9 +196,52 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 		throw new DataCorruptionError(msg, {
 			codeVersion: currentDocumentVersionSchema,
 			property: unknownProperty,
-			value: JSON.stringify(value),
+			value,
 		});
 	}
+}
+
+function and(sc1: IDocumentSchemaCurrent, sc2: IDocumentSchemaCurrent): IDocumentSchemaCurrent {
+	const runtime = {};
+	for (const key of new Set([...Object.keys(sc1.runtime), ...Object.keys(sc2.runtime)])) {
+		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).and(
+			sc1.runtime[key],
+			sc2.runtime[key],
+		);
+	}
+	return {
+		version: currentDocumentVersionSchema,
+		refSeq: sc1.refSeq,
+		runtime,
+	} as unknown as IDocumentSchemaCurrent;
+}
+
+function or(sc1: IDocumentSchemaCurrent, sc2: IDocumentSchemaCurrent): IDocumentSchemaCurrent {
+	const runtime = {};
+	for (const key of new Set([...Object.keys(sc1.runtime), ...Object.keys(sc2.runtime)])) {
+		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).or(
+			sc1.runtime[key],
+			sc2.runtime[key],
+		);
+	}
+	return {
+		version: currentDocumentVersionSchema,
+		refSeq: sc1.refSeq,
+		runtime,
+	} as unknown as IDocumentSchemaCurrent;
+}
+
+function same(sc1: IDocumentSchemaCurrent, sc2: IDocumentSchemaCurrent): boolean {
+	for (const key of new Set([...Object.keys(sc1.runtime), ...Object.keys(sc2.runtime)])) {
+		if (sc1.runtime[key] !== sc2.runtime[key]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function boolToProp(b: boolean) {
+	return b ? true : undefined;
 }
 
 /* eslint-disable jsdoc/check-indentation */
@@ -232,7 +270,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
  * clients who do not understand such feature will continue to fail to open such documents, as such documents very
  * likely contain data in a new format.
  *
- * Users of this class need to use DocumentsSchemaController.currentSchema to determine what features can be used.
+ * Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
  *
  * There are two modes this class can operate:
  * 1) Legacy mode. In such mode it does not issue any ops to change document schema. Any changes happen implicitly,
@@ -256,19 +294,29 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
  * @alpha
  */
 export class DocumentsSchemaController {
-	private legacyBehaviour: boolean;
-	private readonly futureSchema: IDocumentSchemaCurrent;
-	private oldDocumentSchema: IDocumentSchemaCurrent;
-	private sendOp = false;
-	private attemptToSendOps: boolean = true;
+	private newBehavior: boolean;
+	private sendOp = true;
 
-	public get currentSchema() {
-		return this.legacyBehaviour ? this.futureSchema : this.oldDocumentSchema;
-	}
+	// schema coming from document metadata (snapshot we loaded from)
+	private documentSchema: IDocumentSchemaCurrent;
+
+	// desired schema, based on feature gates / runtime options.
+	// This includes requests to enable to disable functionality
+	private readonly desiredSchema: IDocumentSchemaCurrent;
+
+	// OR() of document schema and desired schema. It enables all the features that are enabled in either of schemas.
+	private futureSchema: IDocumentSchemaCurrent | undefined;
+
+	// Current schema this session operates with.
+	// 1) Legacy mode: this is same as desired schema - all options that were requested to be on are on, and all options requested to be off are off.
+	// 2) Non-legacy mode: this is AND() of document schema and desired schema. Only options that are enabled in both are enabled here.
+	//    If there are any options that are not enabled in document schema, but are enabled in desired schema, then attempt to change schema
+	//    (and enable such options) will be made through the session.
+	public sessionSchema: IDocumentSchemaCurrent;
 
 	/**
 	 * Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
-	 * @param legacyBehaviour - Tells if schema changes are done implicitly (without ops - legacy behavior), or go through formal schema change ops process.
+	 * @param newBehavior - Tells if schema changes are done implicitly (without ops - legacy behavior), or go through formal schema change ops process.
 	 * @param existing - Is the document existing document, or a new doc.
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param compressionAlgorithm - desired compression algorith to use
@@ -276,28 +324,32 @@ export class DocumentsSchemaController {
 	 * @param groupedBatchingEnabled - true if it's desired to use op grouping.
 	 */
 	constructor(
-		legacyBehaviour: boolean,
+		newBehavior: boolean,
 		existing: boolean,
 		documentMetadataSchema: IDocumentSchema | undefined,
-		compressionAlgorithm: CompressionAlgorithms | undefined,
+		compressionLz4: boolean,
 		idCompressorModeArg: IdCompressorMode,
 		groupedBatchingEnabled: boolean,
+		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
-		this.oldDocumentSchema = (documentMetadataSchema as IDocumentSchemaCurrent) ?? {
-			version: currentDocumentVersionSchema,
-			// see comment in summarizeDocumentSchema() on why it has to stay zero
-			refSeq: 0,
-			// It probably does not matter that much that we put true for for existig documents.
-			// But logically, if it's existing document and it has no schema, then it was written by legacy client.
-			// If it's a new document, then we define it's legacy status.
-			legacyBehaviour: existing ? true : legacyBehaviour,
-		};
-
-		// Use legacy behavior only if both document and options tell us to use it.
-		// Otherwise it's no longer legacy time!
-		this.legacyBehaviour = this.oldDocumentSchema.legacyBehaviour && legacyBehaviour;
-
 		checkRuntimeCompatibility(documentMetadataSchema);
+
+		this.documentSchema =
+			(documentMetadataSchema as IDocumentSchemaCurrent) ??
+			({
+				version: currentDocumentVersionSchema,
+				// see comment in summarizeDocumentSchema() on why it has to stay zero
+				refSeq: 0,
+				// If it's existing document and it has no schema, then it was written by legacy client.
+				// If it's a new document, then we define it's legacy-related behaviors.
+				runtime: {
+					newBehavior: boolToProp(!existing && newBehavior),
+				},
+			} satisfies IDocumentSchemaCurrent);
+
+		// Use legacy behavior only if both document and options tell us to use legacy.
+		// Otherwise it's no longer legacy time!
+		this.newBehavior = this.documentSchema.runtime.newBehavior === true || newBehavior;
 
 		// Enabling the IdCompressor is a one-way operation and we only want to
 		// allow new containers to turn it on.
@@ -313,70 +365,77 @@ export class DocumentsSchemaController {
 		// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
 		const idCompressorMode = !existing
 			? idCompressorModeArg
-			: this.oldDocumentSchema.idCompressorMode;
+			: this.documentSchema.runtime.idCompressorMode;
 
-		const compressionSchemas: CompressionAlgorithms[] =
-			this.oldDocumentSchema.compressionAlgorithms ?? [];
-		if (
-			compressionAlgorithm !== undefined &&
-			!compressionSchemas.includes(compressionAlgorithm)
-		) {
-			compressionSchemas.push(compressionAlgorithm);
-		}
-
-		this.futureSchema = {
+		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
-			refSeq: this.oldDocumentSchema.refSeq,
-			legacyBehaviour: this.legacyBehaviour,
-			compressionAlgorithms: compressionSchemas,
-			chunkingEnabled: true,
-			idCompressorMode,
-			opGroupingEnabled:
-				this.oldDocumentSchema.opGroupingEnabled ?? groupedBatchingEnabled
-					? true
-					: undefined,
+			refSeq: this.documentSchema.refSeq,
+			runtime: {
+				newBehavior: boolToProp(newBehavior),
+				compressionLz4: boolToProp(compressionLz4),
+				idCompressorMode,
+				opGroupingEnabled: boolToProp(groupedBatchingEnabled),
+			},
 		};
 
-		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
-		checkRuntimeCompatibility(this.futureSchema);
+		if (!this.newBehavior || !existing) {
+			this.sessionSchema = this.desiredSchema;
+			assert(
+				boolToProp(this.newBehavior) === this.sessionSchema.runtime.newBehavior,
+				"newBehavior",
+			);
+			this.futureSchema = undefined;
+		} else {
+			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+			this.futureSchema = or(this.documentSchema, this.desiredSchema);
+			assert(this.sessionSchema.runtime.newBehavior === true, "legacy");
+			assert(this.futureSchema.runtime.newBehavior === true, "legacy");
+			if (same(this.documentSchema, this.futureSchema)) {
+				this.futureSchema = undefined;
+			}
+		}
 
-		// setup state relative to sending ops
-		this.onDisconnect();
+		// Validate that schema we are operating in is actually a schema we consider compatible with current runtime.
+		checkRuntimeCompatibility(this.sessionSchema);
+		checkRuntimeCompatibility(this.futureSchema);
 	}
 
 	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
 		// For legacy behavior, we can write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actualy impact clients operating in legacy mode.
-		// But it will help with transition out of legacy mode, as clients transitioning out of would be able to use all the
-		// features they are using today right away, without a need to go through schema transition (and thus for a session or
+		// But it will help with transition out of legacy mode, as clients transitioning out of it would be able to use all the
+		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
 		// two losing ability to use all the features)
 
-		const schema = this.currentSchema;
+		const schema = this.newBehavior ? this.documentSchema : this.desiredSchema;
 
 		// It's important to keep refSeq at zero in legacy mode, such that transition out of it is simple and we do not have
 		// race conditions. If we put any other number (including latest seq number), then we will have two clients
 		// (loading from two different summaries) with different numbers, and eventual consistency will be broken as schema
 		// change ops will be interpretted differently by those two clients.
-		assert(!this.legacyBehaviour || schema.refSeq === 0, "refSeq should be zero");
+		assert(this.newBehavior || schema.refSeq === 0, "refSeq should be zero");
 
 		return schema;
 	}
 
 	public onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void) {
-		if (this.sendOp) {
-			this.sendOp = false;
-			assert(!this.legacyBehaviour && !this.futureSchema.legacyBehaviour, "not legacy");
+		if (this.sendOp && this.futureSchema !== undefined) {
+			assert(
+				this.newBehavior && this.futureSchema.runtime.newBehavior === true,
+				"not legacy",
+			);
 			send({
 				...this.futureSchema,
-				refSeq: this.oldDocumentSchema.refSeq,
+				refSeq: this.documentSchema.refSeq,
 			});
 		}
+		this.sendOp = false;
 	}
 
 	public processDocumentSchemaOp(message: IDocumentSchemaChangeMessage, local: boolean) {
-		assert(!local || !this.legacyBehaviour, "not sending ops");
-		assert(message.refSeq >= this.oldDocumentSchema.refSeq, "");
-		if (message.refSeq !== this.oldDocumentSchema.refSeq) {
+		assert(!local || this.newBehavior, "not sending ops");
+		assert(message.refSeq >= this.documentSchema.refSeq, "");
+		if (message.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
 			return;
 		}
@@ -384,12 +443,13 @@ export class DocumentsSchemaController {
 		// Changes are in effect. Immidiatly check that this client understands these changes
 		checkRuntimeCompatibility(message);
 
-		this.oldDocumentSchema = message as IDocumentSchemaCurrent;
+		this.documentSchema = message as IDocumentSchemaCurrent;
+		this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 
 		// legacy behavior is automatically off for the document once someone sends a schema op -
 		// from now on it's fully controlled by ops.
 		// This is very important, as summarizeDocumentSchema() should use this new schema!
-		this.legacyBehaviour = false;
+		this.newBehavior = true;
 
 		// Stop attempting changing schema.
 		// If it was local op, then we succeeded and do not need to try again.
@@ -397,12 +457,13 @@ export class DocumentsSchemaController {
 		// We would need to recalculate this.futureSchema by mering changes that we just received.
 		// Avoid this complexity for now - a new client session (loading from new summary with these changes)
 		// will automatically do this recalculation and will figure out
-		this.attemptToSendOps = false;
-		this.sendOp = false;
+		this.futureSchema = undefined;
+
+		this.onSchemaChange(this.sessionSchema);
 	}
 
 	public onDisconnect() {
-		this.sendOp = !this.legacyBehaviour && this.attemptToSendOps;
+		this.sendOp = true;
 	}
 }
 

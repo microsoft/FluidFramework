@@ -5,7 +5,7 @@
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { CompressionAlgorithms } from "../summary/index.js";
+import { CompressionAlgorithms } from "../containerRuntime.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
 /**

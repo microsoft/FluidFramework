@@ -104,8 +104,6 @@ export {
 	IDocumentSchemaCurrent,
 	IDocumentSchema,
 	currentDocumentVersionSchema,
-	CompressionAlgorithms,
-	ICompressionSchema,
 	DocumentSchemaValueType,
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,

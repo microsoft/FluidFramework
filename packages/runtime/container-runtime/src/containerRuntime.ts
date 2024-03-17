@@ -160,10 +160,9 @@ import {
 	ISummarizer,
 	rootHasIsolatedChannels,
 	IdCompressorMode,
-	CompressionAlgorithms,
-	ICompressionSchema,
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,
+	type IDocumentSchemaCurrent,
 } from "./summary/index.js";
 import { formExponentialFn, Throttler } from "./throttler.js";
 import {
@@ -370,8 +369,23 @@ export interface ISummaryRuntimeOptions {
 	initialSummarizerDelayMs?: number;
 }
 
-/** @alpha */
-export type ICompressionRuntimeOptions = ICompressionSchema;
+/**
+ * Options for op compression.
+ * @alpha
+ */
+export interface ICompressionRuntimeOptions {
+	/**
+	 * The value the batch's content size must exceed for the batch to be compressed.
+	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
+	 */
+	minimumBatchSizeInBytes: number;
+
+	/**
+	 * The compression algorithm that will be used to compress the op.
+	 * By default the value is `lz4` which is the only compression algorithm currently supported.
+	 */
+	compressionAlgorithm: CompressionAlgorithms;
+}
 
 /**
  * Options for container runtime.
@@ -475,6 +489,14 @@ export interface RuntimeHeaderData {
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
 	allowInactive?: boolean;
+}
+
+/**
+ * Available compression algorithms for op compression.
+ * @alpha
+ */
+export enum CompressionAlgorithms {
+	lz4 = "lz4",
 }
 
 /** Default values for Runtime Headers */
@@ -877,18 +899,23 @@ export class ContainerRuntime
 		const disableCompression = mc.config.getBoolean(
 			"Fluid.ContainerRuntime.CompressionDisabled",
 		);
+		const compressionLz4 =
+			disableCompression !== true &&
+			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
+			compressionOptions.compressionAlgorithm === "lz4";
 
 		const groupedBatchingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
 
 		const documentSchemaController = new DocumentsSchemaController(
-			true, // legacyBehavior
+			false, // newBehavior
 			existing,
 			metadata?.documentSchema,
-			disableCompression === true || compressionOptions.minimumBatchSizeInBytes === Infinity
-				? undefined
-				: compressionOptions.compressionAlgorithm,
+			compressionLz4,
 			idCompressorMode,
 			groupedBatchingEnabled,
+			(schema) => {
+				runtime.onSchemaChange(schema);
+			},
 		);
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
@@ -995,7 +1022,7 @@ export class ContainerRuntime
 	}
 
 	public get documentSchema() {
-		return this.documentsSchemaController.currentSchema;
+		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
@@ -1034,7 +1061,7 @@ export class ContainerRuntime
 	 * True if we have ID compressor loading in-flight (async operation). Useful only for
 	 * this.idCompressorMode === "delayed" mode
 	 */
-	protected compressorLoadInitiated = false;
+	protected _loadIdCompressor: Promise<void> | undefined;
 
 	/**
 	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
@@ -1296,18 +1323,16 @@ export class ContainerRuntime
 			namespace: "ContainerRuntime",
 		});
 
-		const compressionOptions: ICompressionSchema = {
+		const compressionOptions: ICompressionRuntimeOptions = {
 			minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		};
 
-		const algs = this.documentSchema.compressionAlgorithms;
-		if (algs !== undefined && algs.length !== 0) {
-			// If we support multiple algorithms in the future, then we would need to manage it here carefully.
-			// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
-			// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
-			// compression.
-			assert(algs[0] === CompressionAlgorithms.lz4, "no other algorithm supported yet");
+		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
+		// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
+		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
+		// compression.
+		if (this.documentSchema.compressionLz4) {
 			compressionOptions.minimumBatchSizeInBytes =
 				runtimeOptions.compressionOptions.minimumBatchSizeInBytes;
 		}
@@ -1747,7 +1772,7 @@ export class ContainerRuntime
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
-			idCompressorModeMetadata: metadata?.documentSchema?.idCompressorMode,
+			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
@@ -1778,6 +1803,21 @@ export class ContainerRuntime
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+	}
+
+	public onSchemaChange(schema: IDocumentSchemaCurrent) {
+		// Most of the settings will be picked up only by new sessions (i.e. after reload).
+		// We can make it better in the future (i.e. start to use op compression right away), but for simplicity
+		// this is not done.
+		// But ID compressor is special. It's possible, that in future, we will remove "stickiness" of ID compressor setting
+		// and will allow to start using it. If that were to happen, we want to ensure that we do not break eventual consistency
+		// promises. To do so, we need to initialize id compressor right away.
+		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
+		// Anything else is too risky, and requires abillity to initialize ID compressor syncronously!
+		if (schema.runtime.idCompressorMode !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.loadIdCompressor();
+		}
 	}
 
 	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
@@ -2093,6 +2133,8 @@ export class ContainerRuntime
 		if (this._idCompressor) {
 			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
+		} else {
+			assert(this.idCompressorMode === undefined, "compressor should have been created");
 		}
 
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {
@@ -2262,10 +2304,9 @@ export class ContainerRuntime
 		}
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
-		if (connected && this.idCompressorMode === "delayed" && !this.compressorLoadInitiated) {
-			this.compressorLoadInitiated = true;
-			this.createIdCompressor()
+	private async loadIdCompressor() {
+		if (this.idCompressorMode !== undefined && this._loadIdCompressor === undefined) {
+			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
 					for (const range of this.pendingIdCompressorOps) {
@@ -2275,7 +2316,16 @@ export class ContainerRuntime
 				})
 				.catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+					throw error;
 				});
+		}
+		return this._loadIdCompressor;
+	}
+
+	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && this.idCompressorMode === "delayed") {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.loadIdCompressor();
 		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
@@ -2956,6 +3006,9 @@ export class ContainerRuntime
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
+
+		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
+		await this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {

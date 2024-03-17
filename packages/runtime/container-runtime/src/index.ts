@@ -20,6 +20,7 @@ export {
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	RuntimeHeaderData,
+	CompressionAlgorithms,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
@@ -97,10 +98,8 @@ export {
 	IRetriableFailureResult,
 	ISummarizeEventProps,
 	IdCompressorMode,
-	CompressionAlgorithms,
 	IDocumentSchema,
 	DocumentSchemaValueType,
-	ICompressionSchema,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,
 	DocumentsSchemaController,

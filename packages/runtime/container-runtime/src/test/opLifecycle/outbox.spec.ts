@@ -26,8 +26,11 @@ import {
 	Outbox,
 	BatchSequenceNumbers,
 } from "../../opLifecycle/index.js";
-import { CompressionAlgorithms } from "../../summary/index.js";
-import { ICompressionRuntimeOptions, makeLegacySendBatchFn } from "../../containerRuntime.js";
+import {
+	ICompressionRuntimeOptions,
+	makeLegacySendBatchFn,
+	CompressionAlgorithms,
+} from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
 
 describe("Outbox", () => {
