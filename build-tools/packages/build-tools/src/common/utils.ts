@@ -11,13 +11,18 @@ import * as path from "path";
 import * as util from "util";
 import { pathToFileURL } from "node:url";
 
+/**
+ *	An array of commands that are known to have subcommands and should be parsed as such
+ */
+const multiCommandExecutables = ["flub", "biome"];
+
 export function getExecutableFromCommand(command: string) {
 	let toReturn: string;
 	const commands = command.split(" ");
-	if (commands[0] === "flub") {
+	if (multiCommandExecutables.includes(commands[0])) {
 		// Find the first flag argument, and filter them out. Assumes flags come at the end of the command, and that all
-		// subsequent arguments are flags.
-		const flagsStartIndex = commands.findIndex((c) => c.startsWith("-"));
+		// subsequent arguments are flags. Also treat "." as a flag.
+		const flagsStartIndex = commands.findIndex((c) => c.startsWith("-") || c === ".");
 		toReturn = flagsStartIndex !== -1 ? commands.slice(0, flagsStartIndex).join(" ") : command;
 	} else {
 		toReturn = commands[0];

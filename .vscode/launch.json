@@ -36,6 +36,7 @@
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
+			// "args": [".", "--task", "format:biome"],
 			"args": [".", "--task", "build"],
 		},
 		{
