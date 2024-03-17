@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils";
 
 /**
  * ID Compressor mode.
@@ -58,7 +59,7 @@ export type DocumentSchemaValueType = string | boolean | number | string[] | und
  * schema.
  *
  * In most cases values preserved in the document will not dictate if such features should be enabled in a given session.
- * I.e. if compression is mentioned in document schema, this means that runtime version that opens such file must know
+ * I.e. if compression is mentioned in document schema, this means that runtime version that opens such document must know
  * how to interpret such ops, but does not need to actually use compression itself. That said, some options could be
  * sticky, i.e. influece feature selection for all runtimes openning a document. ID compression is one such example.
  * Currently there is no mechanism to remove feature from this property bag, i.e. once compression was used, even if it's
@@ -80,6 +81,7 @@ export interface IDocumentSchema extends Record<string, DocumentSchemaValueType>
 }
 
 /**
+ * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
  * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
  * regSeq of last known schema change (known to a client proposing schema change).
@@ -96,7 +98,7 @@ export const currentDocumentVersionSchema = "1.0";
 
 /**
  * Current document schema.
- * * @alpha
+ * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
@@ -116,6 +118,9 @@ export type IDocumentSchemaCurrent = {
 	opGroupingEnabled?: true;
 };
 
+/**
+ * Helper structure to valida if a schema is compatible with existing code.
+ */
 const documentSchemaSupportedConfigs: Record<string, (string | boolean)[]> = {
 	version: [currentDocumentVersionSchema],
 	legacyBehaviour: [true, false],
@@ -125,6 +130,12 @@ const documentSchemaSupportedConfigs: Record<string, (string | boolean)[]> = {
 	opGroupingEnabled: [true],
 };
 
+/**
+ * Helper function to validat single property
+ * @param value - value of the property
+ * @param allowedValues - allowed values for this property.
+ * @returns - false if validation fails, otherwise returns true
+ */
 function validateDocumentSchemaProperty(
 	value: string | boolean | number | undefined,
 	allowedValues: DocumentSchemaValueType[],
@@ -141,12 +152,25 @@ function validateDocumentSchemaProperty(
 	return allowedValues.includes(value);
 }
 
+/**
+ * Checks if a given schema is compatible with current code, i.e. if current code can understand all the features of that schema.
+ * If schema is not compatible with current code, it throws an exception.
+ * @param documentSchema - current schema
+ */
 function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
 	if (documentSchema === undefined) {
 		return;
+	}
+
+	const msg = "Document can't be opened with current version of the code";
+	if (documentSchema.version !== currentDocumentVersionSchema) {
+		throw new DataCorruptionError(msg, {
+			version: documentSchema.version,
+			codeVersion: currentDocumentVersionSchema,
+		});
 	}
 
 	let unknownProperty: string | undefined;
@@ -172,16 +196,65 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 		}
 	}
 
-	if (documentSchema.version !== currentDocumentVersionSchema || unknownProperty !== undefined) {
-		const nameInfo =
-			unknownProperty === undefined
-				? ""
-				: `: Property ${unknownProperty} = ${documentSchema[unknownProperty]}`;
-		throw new Error(`document can't be opened with current version of the code${nameInfo}`);
+	if (unknownProperty !== undefined) {
+		const value = documentSchema[unknownProperty];
+		throw new DataCorruptionError(msg, {
+			codeVersion: currentDocumentVersionSchema,
+			property: unknownProperty,
+			value: JSON.stringify(value),
+		});
 	}
 }
 
-/** @alpha */
+/* eslint-disable jsdoc/check-indentation */
+
+/**
+ * Controller of document schema.
+ *
+ * This class manages current document schema and transitions between document schemas.
+ * New features that modify document format have to be included in document schema definition.
+ * Usage of such features could only happen after document schema has been updated to reflect such feature.
+ *
+ * This formalaty allows clients that do not understand such features to fail right away when they observe
+ * document schema listing capabilities that such client does not understand.
+ * Old clients will fail in predictable way. This allows us to
+ * 1) Immidiatly see such issues and adjust if features are enabled too early, before changes have been saturated.
+ * 2) There is no way to get to 100% saturation with new code. Even if we have 99.99% saturation, there are
+ *    still 0.01% of clients who will fail. Failing early and predictably ensures they have no chance to limp along
+ *    and potentially corrupt the document. This is especially true for summarizer client, who could simply "undo"
+ *    changes it does not understands.
+ *
+ * It's importatant to note how it overlaps with feature gates and safe velocity.
+ * If new feature was in use, that resulted in a number of documents referencing such feature in document schema.
+ * But, developers (through code depployment or feature gates) could disable usage of such features.
+ * That will stop a process of further document schema changes (for documents that were not using such feature).
+ * And documents that already list such capability in their schema will continue to do so. Later ensures that old
+ * clients who do not understand such feature will continue to fail to open such documents, as such documents very
+ * likely contain data in a new format.
+ *
+ * Users of this class need to use DocumentsSchemaController.currentSchema to determine what features can be used.
+ *
+ * There are two modes this class can operate:
+ * 1) Legacy mode. In such mode it does not issue any ops to change document schema. Any changes happen implicitly,
+ *    right away, and new features are available right away
+ * 2) Non-legacy mode. In such mode any changes to schema require an op rountrip. This class will manage such transitions.
+ *    However code should assume that any new features that were not enabled in a given document will not be available
+ *    for a given session. That's because this session may never send any ops (including read-only documents). Or it may
+ *    fail to convert schema.
+ *    This class promises eventually movement forward. I.e. if new feature is allowed (let's say - through feature gates),
+ *    then eventually all documents that are modified will have that feature refleced in their schema. But it may require
+ *    multiple reloads / new sessions to get there.
+ *
+ * How schemas are changed (in non-legacy mode):
+ * If a client needs to change a schema, it will attempt to do so as part of normal ops sending process.
+ * Changes happen in CAS (Compare-and-swap) fashion, i.e. client tells current schema and schema it wants to change to.
+ * When a number of clients race to change a schema, then only one of them will win, all others will fail because they will
+ * reference old schema that is no longer in effect.
+ * Clients can retry, but current implementation is simply - they will not (and will rely on next session / reload to do
+ * recalc and decide if schema needs to be changed or not).
+ *
+ * @alpha
+ */
 export class DocumentsSchemaController {
 	private legacyBehaviour: boolean;
 	private readonly futureSchema: IDocumentSchemaCurrent;
@@ -193,6 +266,15 @@ export class DocumentsSchemaController {
 		return this.legacyBehaviour ? this.futureSchema : this.oldDocumentSchema;
 	}
 
+	/**
+	 * Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
+	 * @param legacyBehaviour - Tells if schema changes are done implicitly (without ops - legacy behavior), or go through formal schema change ops process.
+	 * @param existing - Is the document existing document, or a new doc.
+	 * @param documentMetadataSchema - current document's schema, if present.
+	 * @param compressionAlgorithm - desired compression algorith to use
+	 * @param idCompressorModeArg - desired ID compressor mode to use
+	 * @param groupedBatchingEnabled - true if it's desired to use op grouping.
+	 */
 	constructor(
 		legacyBehaviour: boolean,
 		existing: boolean,
@@ -205,9 +287,9 @@ export class DocumentsSchemaController {
 			version: currentDocumentVersionSchema,
 			// see comment in summarizeDocumentSchema() on why it has to stay zero
 			refSeq: 0,
-			// It probably does not matter that much that we put true for for existig files.
-			// But logically, if it's existing file and it has no schema, then it was written by legacy client.
-			// If it's a new file, then we define it's legacy status.
+			// It probably does not matter that much that we put true for for existig documents.
+			// But logically, if it's existing document and it has no schema, then it was written by legacy client.
+			// If it's a new document, then we define it's legacy status.
 			legacyBehaviour: existing ? true : legacyBehaviour,
 		};
 
@@ -225,8 +307,9 @@ export class DocumentsSchemaController {
 		// 2) if it's ON, then all sessions should load compressor right away
 		// 3) Same logic applies for "delayed" mode
 		// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
-		// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
-		// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
+		// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and
+		// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
+		// using compressor in future sessions.
 		// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
 		const idCompressorMode = !existing
 			? idCompressorModeArg
@@ -264,15 +347,16 @@ export class DocumentsSchemaController {
 	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
 		// For legacy behavior, we can write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actualy impact clients operating in legacy mode.
-		// But it will help with transition out of legacy mode, as clients transitioning out of would be able to use all the features they
-		// are using today right away, without a need to go through schema transition (and thus for a session or two losing ability to use all the features)
+		// But it will help with transition out of legacy mode, as clients transitioning out of would be able to use all the
+		// features they are using today right away, without a need to go through schema transition (and thus for a session or
+		// two losing ability to use all the features)
 
 		const schema = this.currentSchema;
 
 		// It's important to keep refSeq at zero in legacy mode, such that transition out of it is simple and we do not have
 		// race conditions. If we put any other number (including latest seq number), then we will have two clients
-		// (loading from two different summaries) with different numbers, and eventual consistency will be broken as schema change ops will be
-		//  interpretted differently by those two clients.
+		// (loading from two different summaries) with different numbers, and eventual consistency will be broken as schema
+		// change ops will be interpretted differently by those two clients.
 		assert(!this.legacyBehaviour || schema.refSeq === 0, "refSeq should be zero");
 
 		return schema;
@@ -302,7 +386,7 @@ export class DocumentsSchemaController {
 
 		this.oldDocumentSchema = message as IDocumentSchemaCurrent;
 
-		// legacy behavior is automatically off for the file once someone sends a schema op -
+		// legacy behavior is automatically off for the document once someone sends a schema op -
 		// from now on it's fully controlled by ops.
 		// This is very important, as summarizeDocumentSchema() should use this new schema!
 		this.legacyBehaviour = false;
@@ -321,3 +405,5 @@ export class DocumentsSchemaController {
 		this.sendOp = !this.legacyBehaviour && this.attemptToSendOps;
 	}
 }
+
+/* eslint-enable jsdoc/check-indentation */

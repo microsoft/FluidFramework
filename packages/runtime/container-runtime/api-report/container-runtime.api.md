@@ -399,7 +399,7 @@ export function detectOutboundReferences(address: string, contents: unknown, add
 // @alpha (undocumented)
 export type DocumentSchemaValueType = string | boolean | number | string[] | undefined;
 
-// @alpha (undocumented)
+// @alpha
 export class DocumentsSchemaController {
     constructor(legacyBehaviour: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionAlgorithm: CompressionAlgorithms | undefined, idCompressorModeArg: IdCompressorMode, groupedBatchingEnabled: boolean);
     // (undocumented)
