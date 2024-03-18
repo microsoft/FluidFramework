@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MonoRepoKind, isMonoRepoKind } from "@fluidframework/build-tools";
+
 import { Flags } from "@oclif/core";
 import sortPackageJson from "sort-package-json";
 import { table } from "table";
 
 import { BaseCommand } from "../base";
 import { releaseGroupFlag } from "../flags";
-import { PackageVersionList } from "../library";
+// eslint-disable-next-line import/no-deprecated
+import { PackageVersionList, MonoRepoKind, isMonoRepoKind } from "../library";
 
 /**
  * The root `info` command.
@@ -37,6 +38,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		const { flags } = this;
 		const context = await this.getContext();
 		let packages =
+			// eslint-disable-next-line import/no-deprecated
 			flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
 				? context.packagesInReleaseGroup(flags.releaseGroup)
 				: [...context.fullPackageMap.values()];
@@ -46,6 +48,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			packages = packages.filter((p) => p.packageJson.private !== true);
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		const tableData: (string | MonoRepoKind | undefined)[][] = [
 			["Release group", "Name", "Private", "Version"],
 		];

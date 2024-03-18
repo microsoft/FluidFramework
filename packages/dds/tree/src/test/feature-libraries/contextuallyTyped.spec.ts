@@ -105,11 +105,9 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const recursiveReference = () => nodeSchema;
-			builder.fixRecursiveReference(recursiveReference);
-			const nodeSchema = builder.object("node", {
+			const nodeSchema = builder.objectRecursive("node", {
 				foo: builder.required(leaf.string),
-				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
+				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));

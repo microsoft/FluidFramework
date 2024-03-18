@@ -307,8 +307,6 @@ export interface IGarbageCollectionRuntime {
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
 	/** After GC has run, called to notify the runtime of routes that are used in it. */
 	updateUsedRoutes(usedRoutes: readonly string[]): void;
-	/** After GC has run, called to notify the runtime of routes that are unused in it. */
-	updateUnusedRoutes(unusedRoutes: readonly string[]): void;
 	/**
 	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
 	 * should return the routes of nodes that were deleted.

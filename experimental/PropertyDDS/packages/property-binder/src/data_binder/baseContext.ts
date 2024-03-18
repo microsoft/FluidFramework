@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataBinding } from "./dataBinding";
+import { DataBinding } from "./dataBinding.js";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 import { SerializedChangeSet, Utils } from "@fluid-experimental/property-changeset";
 

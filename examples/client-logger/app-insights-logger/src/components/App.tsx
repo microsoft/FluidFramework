@@ -11,7 +11,11 @@ import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
 
-import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
+import {
+	ContainerInfo,
+	createFluidContainer,
+	loadExistingFluidContainer,
+} from "./ClientUtilities.js";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.

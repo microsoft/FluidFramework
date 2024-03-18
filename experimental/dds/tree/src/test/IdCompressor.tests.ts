@@ -1659,7 +1659,6 @@ describe('IdCompressor', () => {
 			network.deliverOperations(DestinationClient.All);
 			const id = network.getSequencedIdLog(Client.Client2)[0].id;
 			expect(isFinalId(id)).to.be.true;
-			// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 			const emptyId = (id + 1) as FinalCompressedId;
 			assert.throws(
 				() => network.getCompressor(Client.Client2).decompress(emptyId),

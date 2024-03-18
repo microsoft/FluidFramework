@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataBindingParams } from "./dataBinding";
+import { DataBindingParams } from "./dataBinding.js";
 
 /**
  * Definition of the options block for {@link StatelessDataBinding}

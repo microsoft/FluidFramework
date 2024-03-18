@@ -5,12 +5,7 @@
 
 import {
 	Brand,
-	Opaque,
-	ExtractFromOpaque,
 	brand,
-	brandOpaque,
-	extractFromOpaque,
-	BrandedType,
 	Erased,
 	fromErased,
 	brandErased,
@@ -23,45 +18,33 @@ import {
 	isAssignableTo,
 	requireTrue,
 	requireFalse,
-	isAny,
 } from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 
 export type T1 = Brand<number, "1">;
 export type T2 = Brand<number, "2">;
-export type T3 = Brand<{ test: number }, "2">;
 
 type Intersected = T1 & T2;
 type T1Constant = Brand<4, "1">;
 
-interface O1 extends Opaque<T1> {}
-interface O2 extends Opaque<T2> {}
-interface O3 extends Opaque<T3> {}
-
 type _check =
-	| requireTrue<areSafelyAssignable<ExtractFromOpaque<O1>, T1>>
-	| requireTrue<areSafelyAssignable<ExtractFromOpaque<O2>, T2>>
-	| requireTrue<areSafelyAssignable<ExtractFromOpaque<O3>, T3>>
 	// Check covariant ValueType
 	| requireTrue<isAssignableTo<T1Constant, T1>>
-	| requireFalse<isAssignableTo<O1, O2>>
 	| requireFalse<isAssignableTo<T1, T2>>
 	// Check multiple brands don't produce never.
 	| requireFalse<isAssignableTo<Intersected, never>>;
 
 const _branded: T1 = brand(0);
-const _opaque: O1 = brandOpaque<O1>(0);
+
+// Ensure optional fields can be assigned from brand.
+const _branded2: T1 | undefined = brand(0);
 
 // @ts-expect-error No type to infer: does not build.
-const _branded2 = brand(0);
+const _branded3 = brand(0);
 
-// @ts-expect-error No type to infer: does not build.
-const untypedOpaque = brandOpaque(0);
-
-// If somehow an untyped opaque handle is produced, make sure any does not leak out:
-const extracted = extractFromOpaque(0 as any as BrandedType<any, string>);
-type _check2 = requireFalse<isAny<typeof extracted>>;
+// @ts-expect-error Non-branded type does not build.
+const _branded4: number = brand(0);
 
 // Erased
 interface E4 extends Erased<"4"> {}
