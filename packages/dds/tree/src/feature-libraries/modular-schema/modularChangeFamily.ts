@@ -869,6 +869,8 @@ export class ModularChangeFamily
 							baseChild === undefined,
 							0x5b6 /* This field should not have any base changes */,
 						);
+
+						crossFieldTable.nodeIdPairs.push([child, undefined]);
 						return child;
 					},
 					genId,
