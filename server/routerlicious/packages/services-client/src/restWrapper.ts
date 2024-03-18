@@ -163,7 +163,7 @@ export class BasicRestWrapper extends RestWrapper {
 				.then((response) => {
 					resolve(response.data);
 				})
-				.catch((error: AxiosError) => {
+				.catch((error: AxiosError<any>) => {
 					if (error?.response?.status === statusCode) {
 						// Axios misinterpreted as error, return as successful response
 						resolve(error?.response?.data);
