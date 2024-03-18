@@ -20,6 +20,8 @@ import {
 	AliasResult,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
+	IDataStore,
+	IDataStoreCollection,
 	IEnvelope,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -34,8 +36,6 @@ import {
 	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
-	IDataStore,
-	IDataStoreCollection,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -57,8 +57,8 @@ import {
 	DataProcessingError,
 	LoggingError,
 	MonitoringContext,
-	createChildLogger,
 	UsageError,
+	createChildLogger,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
