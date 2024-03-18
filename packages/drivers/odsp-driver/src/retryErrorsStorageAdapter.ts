@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LoggingError, ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,8 +19,8 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { runWithRetry } from "./retryUtils";
+import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { runWithRetry } from "./retryUtils.js";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
 	private _disposed = false;

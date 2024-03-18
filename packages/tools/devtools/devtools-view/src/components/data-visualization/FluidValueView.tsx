@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 
 import type { FluidObjectValueNode, HasContainerKey } from "@fluidframework/devtools-core";
@@ -9,8 +10,8 @@ import { useContainerFeaturesContext } from "../../ContainerFeatureFlagHelper";
 import { EditableView } from "./EditableView";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeItem } from "./TreeItem";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link ValueView} input props.

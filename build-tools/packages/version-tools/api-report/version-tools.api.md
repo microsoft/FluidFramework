@@ -25,7 +25,11 @@ export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.Sem
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme;
 
 // @public
-export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string];
+export function fromInternalScheme(internalVersion: semver.SemVer | string, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): [
+publicVersion: semver.SemVer,
+internalVersion: semver.SemVer,
+prereleaseIndentifier: string
+];
 
 // @public
 export function fromVirtualPatchScheme(virtualPatchVersion: semver.SemVer | string): semver.SemVer;

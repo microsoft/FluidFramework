@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { FencedCodeBlockNode, PlainTextNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { FencedCodeBlockNode, PlainTextNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("FencedCodeBlock HTML rendering tests", () => {
 	it("Simple FencedCodeBlock", () => {

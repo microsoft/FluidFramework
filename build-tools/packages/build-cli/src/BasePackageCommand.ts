@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "@fluidframework/build-tools";
 import { ux, Command, Flags } from "@oclif/core";
 import async from "async";
@@ -156,6 +157,6 @@ function listNames(strings: string[] | undefined): string {
 	return strings === undefined
 		? ""
 		: strings.length > 10
-		? `${strings.length}`
-		: `${strings.length} (${strings.join(", ")})`;
+		  ? `${strings.length}`
+		  : `${strings.length} (${strings.join(", ")})`;
 }

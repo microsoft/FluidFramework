@@ -9,7 +9,7 @@ import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definit
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -37,7 +37,7 @@ describe("Document Dirty", () => {
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let containerRuntime: IContainerRuntime;
-	let sharedMap: SharedMap;
+	let sharedMap: ISharedMap;
 	let wasMarkedDirtyRuntimeCount: number;
 	let wasMarkedCleanRuntimeCount: number;
 	let wasMarkedDirtyContainerCount: number;
@@ -147,7 +147,7 @@ describe("Document Dirty", () => {
 			container = await createContainer();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
-			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.
@@ -546,7 +546,7 @@ describe("Document Dirty", () => {
 			container = await createDetachedContainer();
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
-			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+			sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
 
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.

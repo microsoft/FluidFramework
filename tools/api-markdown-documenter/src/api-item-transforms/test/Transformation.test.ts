@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as Path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
 	type ApiFunction,
@@ -33,15 +34,15 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 	UnorderedListNode,
-} from "../../documentation-domain";
-import { getHeadingForApiItem } from "../ApiItemTransformUtilities";
-import { apiItemToSections } from "../TransformApiItem";
+} from "../../documentation-domain/index.js";
+import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
+import { apiItemToSections } from "../TransformApiItem.js";
 import {
 	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
-} from "../configuration";
-import { betaWarningSpan, wrapInSection } from "../helpers";
-import { transformApiModel } from "../TransformApiModel";
+} from "../configuration/index.js";
+import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
+import { transformApiModel } from "../TransformApiModel.js";
 
 /**
  * Sample "default" configuration.
@@ -50,9 +51,10 @@ const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">
 	uriRoot: ".",
 };
 
-// Relative to dist/api-item-transforms/test
+// Relative to lib/api-item-transforms/test
+const dirname = Path.dirname(fileURLToPath(import.meta.url));
 const testDataDirectoryPath = Path.resolve(
-	__dirname,
+	dirname,
 	"..",
 	"..",
 	"..",

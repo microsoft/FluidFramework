@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const IndexKeyEncoder = require("../../src/utils/index_key_encoder");
 
 describe("Index key encoder", () => {

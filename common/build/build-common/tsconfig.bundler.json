@@ -1,0 +1,9 @@
+{
+	// This configuration should only be used when emitted code is only used with a bundler
+	// and never used in Node.js. Use tsconfig.node*.json if run under Node.js.
+	"extends": ["./tsconfig.base.json"],
+	"compilerOptions": {
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+	},
+}

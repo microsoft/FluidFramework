@@ -13,6 +13,7 @@ import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
 import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
@@ -79,7 +80,10 @@ export const DataRuntimeApi: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
         SharedDirectory: typeof map.SharedDirectory;
-        SharedMap: typeof map.SharedMap;
+        SharedMap: {
+            getFactory(): IChannelFactory<map.ISharedMap>;
+            create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedMap;
+        };
         SharedMatrix: typeof matrix.SharedMatrix;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;

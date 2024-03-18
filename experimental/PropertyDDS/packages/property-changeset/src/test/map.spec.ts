@@ -4,8 +4,8 @@
  */
 
 import { expect } from "chai";
-import { ChangeSet } from "../changeset";
-import { isEmptyChangeSet } from "../changeset_operations/isEmptyChangeset";
+import { ChangeSet } from "../changeset.js";
+import { isEmptyChangeSet } from "../changeset_operations/isEmptyChangeset.js";
 
 describe("Map rebase ChangeSets", function () {
 	it("Case 1", () => {
