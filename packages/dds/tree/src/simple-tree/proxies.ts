@@ -46,6 +46,7 @@ import {
 	TreeMapNode,
 	type TreeNodeSchema,
 	type TreeNodeSchema as TreeNodeSchemaClass,
+	type ImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import {
@@ -775,7 +776,9 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
-			const cursor = cursorFromNodeData(content, getClassSchemaOrFail(node.schema));
+
+			const classSchema = getClassSchemaOrFail(node.schema);
+			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
 			modifyChildren(
 				node,
 				(mapNode) => mapNode.set(key, cursor),
