@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-kafka-orderer",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"description": "Fluid ordering services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
