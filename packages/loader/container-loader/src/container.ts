@@ -1578,10 +1578,14 @@ export class Container
 		};
 
 		timings.phase2 = performance.now();
+
+		const supportGetSnapshotApi: boolean =
+			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
+				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
 		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
-			this.service?.policies?.supportGetSnapshotApi,
+			supportGetSnapshotApi,
 		);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
