@@ -2,6 +2,8 @@
 
 ## 0.14.0
 
+-   Added functionality for transforming Documentation Domain trees to [hast](https://github.com/syntax-tree/hast).
+    The main entrypoint for this is: `documentToHtml`.
 -   Updated the package to emit ESM only.
 -   Fixed a bug where [inline tags](https://tsdoc.org/pages/spec/tag_kinds/#inline-tags) (other than `{@link}` and `{@inheritDoc}`, which are handled specially by API-Extractor) were not handled and resulted in errors being logged to the console.
     Such tags are now handled in the following way:
