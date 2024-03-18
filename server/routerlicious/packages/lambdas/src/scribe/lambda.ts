@@ -289,6 +289,10 @@ export class ScribeLambda implements IPartitionLambda {
 												tenantId: this.tenantId,
 											},
 										});
+										Lumberjack.info(
+											summaryResult,
+											getLumberBaseProperties(this.documentId, this.tenantId),
+										);
 
 										let messages;
 										try {
@@ -622,8 +626,8 @@ export class ScribeLambda implements IPartitionLambda {
 						);
 					}
 					this.protocolHandler.processMessage(clonedMessage, false);
-					if (message.type === MessageType.ClientJoin && this.webhookManager) {
-						this.webhookManager.handleEvent(
+					if (message.type === MessageType.ClientJoin) {
+						this.webhookManager?.handleEvent(
 							CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
 							{
 								eventName: CollabSessionWebhookEvents.SESSION_CLIENT_JOIN,
@@ -646,7 +650,7 @@ export class ScribeLambda implements IPartitionLambda {
 						);
 					}
 					this.protocolHandler.processMessage(message, false);
-					if (message.type === MessageType.ClientLeave && this.webhookManager) {
+					if (message.type === MessageType.ClientLeave) {
 						this.webhookManager?.handleEvent(
 							CollabSessionWebhookEvents.SESSION_CLIENT_LEAVE,
 							{

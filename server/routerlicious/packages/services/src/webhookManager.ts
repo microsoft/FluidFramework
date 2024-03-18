@@ -4,7 +4,6 @@
  */
 
 import { IWebhookManager } from "@fluidframework/server-services-core";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import axios, { default as Axios } from "axios";
 
 /**
@@ -51,11 +50,11 @@ export class WebhookManager implements IWebhookManager {
 		for (const url of urlSubscriptions) {
 			const response = await axios.post(url, payload);
 			if (response.status !== 200) {
-				Lumberjack.warning(
+				console.warn(
 					`Did not receieve successful response from Client url: ${url} for event: ${event}`,
 				);
 			} else {
-				Lumberjack.info(
+				console.log(
 					`Successfully sent event payload response from Client url: ${url} for event: ${event}`,
 				);
 			}
@@ -74,11 +73,11 @@ export class WebhookManager implements IWebhookManager {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return e.content;
 				});
-			Lumberjack.info(`Fetched latest summary.`, { tenantId, requestUrl });
+
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return messages;
 		} catch (error: unknown) {
-			Lumberjack.error(`Error fetching latest summary.`, { tenantId });
+			console.log(`Error fetching latest summary.`);
 		}
 	}
 }
