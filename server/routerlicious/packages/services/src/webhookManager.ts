@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper, generateToken } from "@fluidframework/server-services-client";
 import { IWebhookManager, type ITenantManager } from "@fluidframework/server-services-core";
@@ -89,6 +90,10 @@ export class WebhookManager implements IWebhookManager {
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
 		const key = await this.tenantManager.getKey(tenantId);
+
+		const defaultQueryString = {
+			token: fromUtf8ToBase64(`${tenantId}`),
+		};
 		const getDefaultHeaders = () => {
 			const jwtToken = generateToken(tenantId, documentId, key, [ScopeType.DocRead]);
 			return {
@@ -98,7 +103,7 @@ export class WebhookManager implements IWebhookManager {
 
 		const restWrapper = new BasicRestWrapper(
 			this.internalHistorianUrl,
-			undefined /* defaultQueryString */,
+			defaultQueryString /* defaultQueryString */,
 			undefined /* maxBodyLength */,
 			undefined /* maxContentLength */,
 			getDefaultHeaders(),
