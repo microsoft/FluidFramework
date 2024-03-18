@@ -32,7 +32,8 @@ trigger:
   paths:
     include:
     - .prettierignore
-    - common/build/eslint-config-fluid # Required since api-markdown-documenter takes a `file:` dependency on this package
+    - common/build/build-common # Required due to references from config files
+    - common/build/eslint-config-fluid # Required since the package takes a `file:` dependency on this package
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml
@@ -56,7 +57,8 @@ pr:
   paths:
     include:
     - .prettierignore
-    - common/build/eslint-config-fluid # Required since api-markdown-documenter takes a `file:` dependency on this package
+    - common/build/build-common # Required due to references from config files
+    - common/build/eslint-config-fluid # Required since the package takes a `file:` dependency on this package
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml

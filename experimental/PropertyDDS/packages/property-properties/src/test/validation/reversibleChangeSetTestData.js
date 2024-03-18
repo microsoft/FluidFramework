@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint no-trailing-spaces: 0 */
 /* eslint comma-spacing: 0 */
 /* eslint quotes: 0 */

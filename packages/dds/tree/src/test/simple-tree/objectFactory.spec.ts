@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../simple-tree/proxies.js";
 import {
-	SchemaFactory,
-	treeNodeApi as Tree,
 	InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
+	SchemaFactory,
+	treeNodeApi as Tree,
 } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { extractFactoryContent } from "../../simple-tree/proxies.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/flexNode.js";

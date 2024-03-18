@@ -5,26 +5,26 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
 	AuthorizationError,
-	createGenericNetworkError,
 	DriverErrorTelemetryProps,
-	isOnline,
-	RetryableError,
+	FluidInvalidSchemaError,
 	NonRetryableError,
 	OnlineStatus,
-	FluidInvalidSchemaError,
+	RetryableError,
+	createGenericNetworkError,
+	isOnline,
 } from "@fluidframework/driver-utils";
 import {
-	OdspErrorTypes,
-	OdspError,
 	IOdspErrorAugmentations,
+	OdspError,
+	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions";
-import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
-import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
+import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 // odsp-doclib-utils and odsp-driver will always release together and share the same pkgVersion
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { parseAuthErrorClaims } from "./parseAuthErrorClaims.js";
+import { parseAuthErrorTenant } from "./parseAuthErrorTenant.js";
 
 // no response, or can't parse response
 /**

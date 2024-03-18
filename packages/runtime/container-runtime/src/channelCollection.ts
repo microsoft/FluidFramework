@@ -3,92 +3,92 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	ITelemetryBaseLogger,
+	FluidObject,
 	IDisposable,
 	IFluidHandle,
 	IRequest,
-	FluidObject,
 	IResponse,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { FluidObjectHandle } from "@fluidframework/datastore";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	AliasResult,
-	channelsTreeName,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
+	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
+	IFluidParentContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
-	IFluidParentContext,
-	InboundAttachMessage,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IFluidDataStoreFactory,
-	IFluidDataStoreContext,
+	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
-	IFluidDataStoreRegistry,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
+	GCDataBuilder,
+	RequestParser,
+	SummaryTreeBuilder,
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
-	GCDataBuilder,
+	encodeCompactIdToString,
 	isSerializedHandle,
 	processAttachMessageGCData,
 	responseToException,
-	SummaryTreeBuilder,
 	unpackChildNodesUsedRoutes,
-	RequestParser,
-	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils";
 import {
-	createChildMonitoringContext,
 	DataCorruptionError,
 	DataProcessingError,
-	extractSafePropertiesFromMessage,
 	LoggingError,
 	MonitoringContext,
-	tagCodeArtifacts,
 	createChildLogger,
+	createChildMonitoringContext,
+	extractSafePropertiesFromMessage,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
-import { DataStoreContexts } from "./dataStoreContexts.js";
-import { defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime.js";
-import {
-	FluidDataStoreContext,
-	RemoteFluidDataStoreContext,
-	LocalFluidDataStoreContext,
-	createAttributesBlob,
-	LocalDetachedFluidDataStoreContext,
-	IFluidDataStoreContextInternal,
-	ILocalDetachedFluidDataStoreContextProps,
-} from "./dataStoreContext.js";
-import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
+import { RuntimeHeaderData, defaultRuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,
 	channelToDataStore,
 	isDataStoreAliasMessage,
 } from "./dataStore.js";
 import {
+	FluidDataStoreContext,
+	IFluidDataStoreContextInternal,
+	ILocalDetachedFluidDataStoreContextProps,
+	LocalDetachedFluidDataStoreContext,
+	LocalFluidDataStoreContext,
+	RemoteFluidDataStoreContext,
+	createAttributesBlob,
+} from "./dataStoreContext.js";
+import { DataStoreContexts } from "./dataStoreContexts.js";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import {
 	GCNodeType,
 	detectOutboundRoutesViaDDSKey,
 	trimLeadingAndTrailingSlashes,
 } from "./gc/index.js";
+import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
+import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
 	IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
 } from "./summary/index.js";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 
 /**
  * Accepted header keys for requests coming to the runtime.
@@ -182,7 +182,7 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 			return context.getCreateChildSummarizerNodeFn?.(...args);
 		},
 		deleteChildSummarizerNode: (...args) => {
-			return context.deleteChildSummarizerNode?.(...args);
+			return context.deleteChildSummarizerNode(...args);
 		},
 		setChannelDirty: (address: string) => {
 			return context.setChannelDirty(address);
@@ -679,7 +679,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.reSubmitChannelOp(type, content, localOpMetadata);
 			default:
-				assert(false, "unknown op type");
+				assert(false, 0x907 /* unknown op type */);
 		}
 	}
 
@@ -730,7 +730,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.applyStashedChannelChannelOp(opContents.contents);
 			default:
-				assert(false, "unknon type of op");
+				assert(false, 0x908 /* unknon type of op */);
 		}
 	}
 
@@ -1191,25 +1191,15 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	/**
-	 * This is called to update objects whose routes are unused. The unused objects are deleted.
-	 * @param unusedRoutes - The routes that are unused in all data stores in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		for (const route of unusedRoutes) {
-			const pathParts = route.split("/");
-			// Delete data store only if its route (/datastoreId) is in unusedRoutes. We don't want to delete a data
-			// store based on its DDS being unused.
-			if (pathParts.length > 2) {
-				continue;
-			}
-			const dataStoreId = pathParts[1];
-			assert(this.contexts.has(dataStoreId), 0x2d7 /* No data store with specified id */);
-			// Delete the contexts of unused data stores.
-			this.contexts.delete(dataStoreId);
-			// Delete the summarizer node of the unused data stores.
-			this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
-		}
+	public deleteChild(dataStoreId: string) {
+		const dataStoreContext = this.contexts.get(dataStoreId);
+		assert(dataStoreContext !== undefined, 0x2d7 /* No data store with specified id */);
+
+		dataStoreContext.delete();
+		// Delete the contexts of unused data stores.
+		this.contexts.delete(dataStoreId);
+		// Delete the summarizer node of the unused data stores.
+		this.parentContext.deleteChildSummarizerNode(dataStoreId);
 	}
 
 	/**
@@ -1245,12 +1235,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				continue;
 			}
 
-			dataStoreContext.delete();
-
-			// Delete the contexts of sweep ready data stores.
-			this.contexts.delete(dataStoreId);
-			// Delete the summarizer node of the sweep ready data stores.
-			this.parentContext.deleteChildSummarizerNode?.(dataStoreId);
+			this.deleteChild(dataStoreId);
 		}
 		return Array.from(sweepReadyDataStoreRoutes);
 	}

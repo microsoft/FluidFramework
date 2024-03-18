@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { DirectoryFactory, SharedDirectory } from "../../directory.js";

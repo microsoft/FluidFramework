@@ -83,12 +83,15 @@ export {
 	TreeAdapter,
 	MapTree,
 	Revertible,
-	RevertibleKind,
+	CommitKind,
 	RevertibleStatus,
-	RevertibleResult,
+	CommitMetadata,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
 } from "./core/index.js";
 
 export {

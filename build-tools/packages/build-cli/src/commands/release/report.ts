@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "node:assert";
 import chalk from "chalk";
@@ -120,7 +121,6 @@ export abstract class ReleaseReportBaseCommand<
 	 */
 	protected async collectReleaseData(
 		context: Context,
-		// eslint-disable-next-line default-param-last
 		mode: ReleaseSelectionMode = this.defaultMode,
 		releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
 		includeDependencies = true,

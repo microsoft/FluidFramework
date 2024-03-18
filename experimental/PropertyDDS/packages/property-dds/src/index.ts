@@ -14,11 +14,11 @@ export {
 	SerializedChangeSet,
 	SharedPropertyTree,
 	SharedPropertyTreeOptions,
-} from "./propertyTree";
-export { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
+} from "./propertyTree.js";
+export { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt.js";
 export {
 	CompressedPropertyTreeFactory,
 	DeflatedPropertyTreeFactory,
 	LZ4PropertyTreeFactory,
-} from "./propertyTreeExtFactories";
-export { PropertyTreeFactory } from "./propertyTreeFactory";
+} from "./propertyTreeExtFactories.js";
+export { PropertyTreeFactory } from "./propertyTreeFactory.js";

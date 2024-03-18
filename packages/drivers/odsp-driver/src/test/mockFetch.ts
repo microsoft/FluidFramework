@@ -4,8 +4,8 @@
  */
 
 import assert from "node:assert";
-import { stub } from "sinon";
 import * as fetchModule from "node-fetch";
+import { stub } from "sinon";
 
 /**
  * Mock response returned by {@link createResponse}.

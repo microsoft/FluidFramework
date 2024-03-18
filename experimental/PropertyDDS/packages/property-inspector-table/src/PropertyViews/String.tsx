@@ -6,8 +6,8 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import TextField, { TextFieldProps } from "@material-ui/core/TextField";
 import * as React from "react";
-import { IEditableValueCellProps } from "../InspectorTableTypes";
-import { getPropertyValue } from "../propertyInspectorUtils";
+import { IEditableValueCellProps } from "../InspectorTableTypes.js";
+import { getPropertyValue } from "../propertyInspectorUtils.js";
 
 type StringProps = IEditableValueCellProps & {
 	onSubmit: (val: string, props: IEditableValueCellProps) => void;

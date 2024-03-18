@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 import { ChangesetLocalId } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { deepFreeze } from "../../utils.js";
 import { TestChange } from "../../testChange.js";
-import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
+import { deepFreeze } from "../../utils.js";
+import { MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const id: ChangesetLocalId = brand(0);
 

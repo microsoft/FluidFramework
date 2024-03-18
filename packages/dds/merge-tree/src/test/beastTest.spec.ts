@@ -11,11 +11,12 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
-import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import JsDiff from "diff";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
 	KeyComparer,
 	Property,
@@ -24,27 +25,26 @@ import {
 	SortedDictionary,
 } from "../collections/index.js";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
+import { MergeTree } from "../mergeTree.js";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	IJSONMarkerSegment,
 	IMergeNode,
 	ISegment,
-	reservedMarkerIdKey,
 	compareNumbers,
 	compareStrings,
+	reservedMarkerIdKey,
 } from "../mergeTreeNodes.js";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
+import { JsonSegmentSpecs } from "../snapshotChunks.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { IJSONTextSegment, TextSegment } from "../textSegment.js";
-import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions.js";
-import { MergeTree } from "../mergeTree.js";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
-import { JsonSegmentSpecs } from "../snapshotChunks.js";
-import { getStats, specToSegment, TestClient } from "./testClient.js";
+import { _dirname } from "./dirname.cjs";
+import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
-import { _dirname } from "./dirname.cjs";
 
 function LinearDictionary<TKey, TData>(
 	compareKeys: KeyComparer<TKey>,

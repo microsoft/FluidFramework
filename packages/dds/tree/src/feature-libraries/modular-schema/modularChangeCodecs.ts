@@ -3,20 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import {
-	ChangesetLocalId,
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-	ChangeAtomIdMap,
-} from "../../core/index.js";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
+import { TAnySchema } from "@sinclair/typebox";
 import {
 	ICodecOptions,
 	IJsonCodec,
@@ -24,18 +12,24 @@ import {
 	SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
+	ChangeAtomIdMap,
+	ChangeEncodingContext,
+	ChangesetLocalId,
+	EncodedRevisionTag,
+	FieldKey,
+	FieldKindIdentifier,
+	ITreeCursorSynchronous,
+	RevisionInfo,
+	RevisionTag,
+} from "../../core/index.js";
+import { JsonCompatibleReadOnly, Mutable, brand, fail } from "../../util/index.js";
+import {
 	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import {
-	FieldChangeMap,
-	FieldChangeset,
-	ModularChangeset,
-	NodeChangeset,
-} from "./modularChangeTypes.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
@@ -47,6 +41,12 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
+import {
+	FieldChangeMap,
+	FieldChangeset,
+	ModularChangeset,
+	NodeChangeset,
+} from "./modularChangeTypes.js";
 
 export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
