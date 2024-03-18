@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// To address the failure of one of the tests against ESM module, it was relocated to the test/commonjs folder. AB#7431
-
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { MapWithExpiration } from "../mapWithExpiration.js";
@@ -282,6 +280,22 @@ describe("MapWithExpiration", () => {
 				}
 			},
 		);
+
+		testForEachCases("Arrow functions don't pick up thisArg", (maps, thisArgs) => {
+			for (const thisArg of thisArgs) {
+				for (const map of maps) {
+					map.set(1, "one");
+					map.forEach(() => {
+						// In ESM the the 'this' value is 'undefined', but in CJS it is '{__esModule: true}'.
+						// Therefore, we exempt the test value 'undefined' from the below assertion.
+						assert(
+							this !== thisArg || this === undefined,
+							"Expected 'this' to be unchanged for arrow fn",
+						);
+					}, thisArg);
+				}
+			}
+		});
 	});
 
 	it("toString", () => {
