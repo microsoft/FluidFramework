@@ -24,8 +24,8 @@ import {
 	arrayNodePrototypeProperties,
 	createNodeProxy,
 	createRawNodeProxy,
-	getSimpleSchema,
 	getSequenceField,
+	getSimpleSchema,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
