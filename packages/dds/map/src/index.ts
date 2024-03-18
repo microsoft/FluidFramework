@@ -49,9 +49,9 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { MapFactory } from "./map.js";
-import { ISharedMap, ISharedDirectory } from "./interfaces.js";
 import { DirectoryFactory } from "./directory.js";
+import { ISharedDirectory, ISharedMap } from "./interfaces.js";
+import { MapFactory } from "./map.js";
 
 /**
  * {@inheritDoc ISharedMap}

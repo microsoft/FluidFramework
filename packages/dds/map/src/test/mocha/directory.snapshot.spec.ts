@@ -12,11 +12,12 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory } from "../../index.js";
+import { SharedDirectory } from "../../directory.js";
+import { DirectoryFactory, type ISharedDirectory } from "../../index.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 
-function serialize(directory: SharedDirectory): string {
+function serialize(directory: ISharedDirectory): string {
 	const summaryTree = directory.getAttachSummary().summary;
 	const snapshotTree = convertSummaryTreeToITree(summaryTree);
 	return JSON.stringify(snapshotTree, undefined, 1);
@@ -25,7 +26,7 @@ function serialize(directory: SharedDirectory): string {
 async function loadSharedDirectory(
 	id: string,
 	serializedSnapshot: string,
-): Promise<SharedDirectory> {
+): Promise<ISharedDirectory> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
