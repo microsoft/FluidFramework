@@ -54,7 +54,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^3.0.0",
-		"jsrsasign": "^10.5.25",
+		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -65,7 +65,7 @@
 		"@fluidframework/build-tools": "^0.28.0",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/jsrsasign": "^8.0.8",
+		"@types/jsrsasign": "^10.5.12",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",

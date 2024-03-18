@@ -69,7 +69,7 @@
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^2.0.1",
+		"@fluidframework/server-local-server": "^4.0.0",
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
