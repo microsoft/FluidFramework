@@ -30,7 +30,7 @@ import {
 	FluidObject,
 	IEvent,
 	IRequest,
-  type ISignalEnvelope,
+	type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
@@ -2321,8 +2321,7 @@ export class Container
 		this.emit("op", message);
 	}
 
-	// unknown should be removed once @alpha tag is removed from IContainerContext
-	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
+	private submitSignal(content: ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
