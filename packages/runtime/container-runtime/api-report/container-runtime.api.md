@@ -403,6 +403,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
 
 // @alpha (undocumented)
+export const disabledCompressionConfig: ICompressionRuntimeOptions;
+
+// @alpha (undocumented)
 export type DocumentSchemaValueType = string | boolean | number | undefined;
 
 // @alpha
@@ -718,6 +721,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly controlRuntimeSchema?: boolean;
     readonly enableGroupedBatching?: boolean;
     readonly enableOpReentryCheck?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;

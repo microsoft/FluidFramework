@@ -133,8 +133,11 @@ class MultiChoice implements IProperty<string | undefined> {
 	}
 
 	public or(t1?: string, t2?: string) {
-		if (t1 === undefined || t2 === undefined) {
-			return undefined;
+		if (t1 === undefined) {
+			return t2;
+		}
+		if (t2 === undefined) {
+			return t1;
 		}
 		return this.choices[Math.max(this.choices.indexOf(t1), this.choices.indexOf(t2))];
 	}
@@ -144,12 +147,19 @@ class MultiChoice implements IProperty<string | undefined> {
 	}
 }
 
+class IdCompressorProperty extends MultiChoice {
+	// document schema always wins!
+	public and(t1?: string, t2?: string) {
+		return t1;
+	}
+}
+
 /**
  * Helper structure to valida if a schema is compatible with existing code.
  */
 const documentSchemaSupportedConfigs = {
 	newBehavior: new TrueOrUndefinedMax(), // once new behavior shows up, it's sticky
-	idCompressorMode: new MultiChoice(["on", "delayed"]),
+	idCompressorMode: new IdCompressorProperty(["delayed", "on"]),
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 };

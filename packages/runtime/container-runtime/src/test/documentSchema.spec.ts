@@ -22,7 +22,7 @@ describe("Runtime", () => {
 	};
 
 	function createController(config: unknown) {
-		new DocumentsSchemaController(
+		return new DocumentsSchemaController(
 			true, // newBehavior
 			false, // existing,
 			config as IDocumentSchemaCurrent, // old schema,
@@ -37,6 +37,11 @@ describe("Runtime", () => {
 		assert.throws(() => {
 			createController(config);
 		}, "should throw on unknown property");
+
+		const controller = createController(validConfig);
+		assert.throws(() => {
+			controller.processDocumentSchemaOp(config as IDocumentSchemaCurrent, false /* local */);
+		});
 	}
 
 	// Validate first that config is indeed valid, such that all further tests are not tripping
@@ -210,6 +215,120 @@ describe("Runtime", () => {
 			...validConfig,
 			runtime: { ...validConfig.runtime, newBehavior: true },
 		});
+	});
+
+	it("AzureClient modes", () => {
+		/**
+		 * Start with no schema in a document.
+		 * There should be no ops sent.
+		 */
+		const controller = new DocumentsSchemaController(
+			true, // newBehavior
+			true, // existing,
+			undefined, // old schema,
+			false, // lz4
+			undefined, // idCompressionMode
+			false, // groupedBatching,
+			() => {
+				assert(false, "no changes!");
+			}, // onSchemaChange
+		);
+
+		controller.onMessageSent(() => {
+			assert(false, "no messages should be sent!");
+		});
+
+		/**
+		 * validate that we can summarize, load new client from that summary and it also will not send any ops
+		 */
+		const newSchema = controller.summarizeDocumentSchema(100);
+		const controller2 = new DocumentsSchemaController(
+			true, // newBehavior
+			true, // existing,
+			newSchema, // old schema,
+			false, // lz4
+			undefined, // idCompressionMode
+			false, // groupedBatching,
+			() => {
+				assert(false, "no changes!");
+			}, // onSchemaChange
+		);
+
+		controller2.onMessageSent(() => {
+			assert(false, "no messages should be sent!");
+		});
+
+		/**
+		 * Summarize from that new client and ensure we are getting exactly same summary, thus getting to same state.
+		 */
+		const newSchema2 = controller.summarizeDocumentSchema(100);
+		assert.deepEqual(newSchema, newSchema2, "got into stable state");
+
+		/**
+		 * Now let's see if we can change schema.
+		 */
+		let schemaChanged = false;
+		const controller3 = new DocumentsSchemaController(
+			true, // newBehavior
+			true, // existing,
+			newSchema, // old schema,
+			false, // lz4
+			"on", // idCompressionMode
+			false, // groupedBatching,
+			() => {
+				schemaChanged = true;
+			}, // onSchemaChange
+		);
+
+		// setting is not on yet
+		assert(controller3.sessionSchema.runtime.idCompressorMode === undefined);
+
+		let message: IDocumentSchemaCurrent | undefined;
+		controller3.onMessageSent((msg) => {
+			message = msg as IDocumentSchemaCurrent;
+			assert(message.runtime.idCompressorMode === "on");
+		});
+		assert(message !== undefined, "message sent");
+
+		controller3.processDocumentSchemaOp(message, true /* local */);
+		assert(schemaChanged, "schema changed");
+		assert(controller3.sessionSchema.runtime.idCompressorMode === "on");
+		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
+		assert(schema.runtime.idCompressorMode === "on", "now on");
+
+		controller3.onMessageSent(() => {
+			assert(false, "no more messages to send");
+		});
+
+		/**
+		 * Validate now that another client that was observing schema changes (not initiating them) will arrive to same state
+		 * This client will want to flip groupedBatching, but it will process someone else op first...
+		 */
+		schemaChanged = false;
+		const controller4 = new DocumentsSchemaController(
+			true, // newBehavior
+			true, // existing,
+			newSchema, // old schema,
+			false, // lz4
+			undefined, // idCompressionMode
+			true, // groupedBatching,
+			() => {
+				schemaChanged = true;
+			}, // onSchemaChange
+		);
+		controller4.processDocumentSchemaOp(message, false /* local */);
+		assert(schemaChanged, "schema changed");
+		assert(controller4.sessionSchema.runtime.idCompressorMode === "on");
+		controller4.onMessageSent(() => {
+			assert(
+				false,
+				"no messages should be sent - it lost a race and will not attempt to change file format.",
+			);
+		});
+
+		// Validate same summaries by two clients.
+		const schema2 = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
+		assert.deepEqual(schema, schema2, "same summaries");
 	});
 
 	it("Existing document with existing schema, changes required", () => {
