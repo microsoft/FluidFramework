@@ -12,12 +12,57 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/devtools-example-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/devtools-example-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./lib/devtools-example-beta.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/devtools-example-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/devtools-example-alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/devtools-example-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "fluid-build --task format .",
@@ -34,7 +79,7 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
-		"tsc": "tsc",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
 		"watch:devtools-view": "tsc --watch --project ../devtools-view/tsconfig.json --preserveWatchOutput",
@@ -72,23 +117,23 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@biomejs/biome": "^1.6.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
 		"@testing-library/dom": "^8.2.0",
 		"@testing-library/jest-dom": "^5.16.5",
 		"@testing-library/react": "^12.0.0",
 		"@testing-library/user-event": "^14.4.3",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:",
-		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/testing-library__jest-dom": "^5.14.5",
 		"concurrently": "^8.2.1",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-plugin-jest": "~27.4.2",
@@ -124,5 +169,6 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	}
+	},
+	"types": "dist/devtools-example-public.d.ts"
 }
