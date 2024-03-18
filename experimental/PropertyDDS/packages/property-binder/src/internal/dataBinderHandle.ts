@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DataBinding } from "../index.js";
 import { ModificationContext } from "../data_binder/modificationContext.js";
+import { DataBinding } from "../index.js";
 
 declare type DataBindingHandle = any; // TODO declare handle type
 declare type DestroyCallbackType = (handle: DataBindingHandle, userData: any) => any;

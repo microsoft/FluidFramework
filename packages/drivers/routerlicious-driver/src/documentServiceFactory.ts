@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import {
@@ -13,19 +14,18 @@ import {
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
+	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache, NullCache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 import { ISnapshotTreeVersion } from "./definitions.js";
@@ -40,7 +40,7 @@ import {
 } from "./restWrapper.js";
 import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
 import { ITokenProvider } from "./tokens.js";
-import { replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils.js";
+import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 

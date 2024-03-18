@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import nock from "nock";
+import { DefaultTokenProvider } from "../defaultTokenProvider.js";
+import { RouterliciousErrorTypes } from "../errorUtils.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
 } from "../restWrapper.js";
-import { RouterliciousErrorTypes } from "../errorUtils.js";
-import { DefaultTokenProvider } from "../defaultTokenProvider.js";
 import { ITokenResponse } from "../tokens.js";
 
 describe("RouterliciousDriverRestWrapper", () => {

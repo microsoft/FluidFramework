@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { PathHelper } from "@fluid-experimental/property-changeset";
+import { PATH_TOKENS_TYPE, TOKEN_TYPES_TYPE } from "@fluid-experimental/property-properties";
 /**
  * @fileoverview Defines a data structure for storing an DataBinding tree that mirrors a property set hierarchy with
  * DataBindings representing certain properties. Meant to handle the case where there are many properties but only some
@@ -10,8 +13,6 @@
  * TODO: this is getting a bit messy. Refactor to have a(n abstract) baseclass and proper derived classes
  */
 import _ from "underscore";
-import { PathHelper } from "@fluid-experimental/property-changeset";
-import { PATH_TOKENS_TYPE, TOKEN_TYPES_TYPE } from "@fluid-experimental/property-properties";
 import { DataBinding } from "./dataBinding.js";
 
 export type NodeType = DataBindingTree | ArrayNode | null | undefined;

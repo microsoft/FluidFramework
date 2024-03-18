@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Type, TSchema } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
-import { JsonCompatibleReadOnly } from "../util/index.js";
+import { TSchema, Type } from "@sinclair/typebox";
 import { EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
+import { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * The format of messages that SharedTree sends and receives.

@@ -6,10 +6,10 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
-	SummaryType,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryObject,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 

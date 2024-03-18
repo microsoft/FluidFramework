@@ -5,23 +5,23 @@
 
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	generateStack,
+	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	MonitoringContext,
+	generateStack,
 	tagCodeArtifacts,
-	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
 import {
-	GCNodeType,
-	UnreferencedState,
-	IGarbageCollectorConfigs,
-	disableTombstoneKey,
-	throwOnTombstoneUsageKey,
-	throwOnTombstoneLoadOverrideKey,
-	runSweepKey,
 	GCFeatureMatrix,
+	GCNodeType,
+	IGarbageCollectorConfigs,
+	UnreferencedState,
+	disableTombstoneKey,
+	runSweepKey,
+	throwOnTombstoneLoadOverrideKey,
+	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 

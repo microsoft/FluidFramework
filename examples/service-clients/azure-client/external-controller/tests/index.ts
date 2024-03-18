@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { SharedMap, type ISharedMap } from "fluid-framework";
+import { type ISharedMap, SharedMap } from "fluid-framework";
 
 import {
 	IContainer,
@@ -22,12 +22,12 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
-import { DiceRollerController } from "../src/controller.js";
-import { makeAppView } from "../src/view.js";
 import {
 	IFluidContainer,
 	createDOProviderContainerRuntimeFactory,
 } from "@fluidframework/fluid-static";
+import { DiceRollerController } from "../src/controller.js";
+import { makeAppView } from "../src/view.js";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided

@@ -7,7 +7,7 @@
 
 import { strict as assert } from "assert";
 import { Client } from "../client.js";
-import { createMap, matchProperties, PropertySet } from "../properties.js";
+import { PropertySet, createMap, matchProperties } from "../properties.js";
 import { TestClient } from "./testClient.js";
 
 function checkGetPropertiesAtPos(

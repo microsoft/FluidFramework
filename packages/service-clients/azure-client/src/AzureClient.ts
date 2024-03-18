@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	AttachState,
 	type IContainer,
@@ -15,10 +16,10 @@ import {
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	type ContainerSchema,
-	createDOProviderContainerRuntimeFactory,
-	createFluidContainer,
 	type IFluidContainer,
 	type IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
@@ -60,6 +61,29 @@ const azureClientFeatureGates = {
 };
 
 /**
+ * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
+ */
+const azureClientV1CompatFeatureGates = {
+	// Disable Garbage Collection
+	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
+	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
+	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
+};
+
+/**
+ * Wrap the config provider to fall back on the appropriate defaults for Azure Client.
+ * @param baseConfigProvider - The base config provider to wrap
+ * @returns A new config provider with the appropriate defaults applied underneath the given provider
+ */
+function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
+	const defaults = {
+		...azureClientFeatureGates,
+		...azureClientV1CompatFeatureGates,
+	};
+	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+}
+
+/**
  * AzureClient provides the ability to have a Fluid object backed by the Azure Fluid Relay or,
  * when running with local tenantId, have it be backed by a local Azure Fluid Relay instance.
  * @public
@@ -90,10 +114,7 @@ export class AzureClient {
 			origDocumentServiceFactory,
 			properties.summaryCompression,
 		);
-		this.configProvider = wrapConfigProviderWithDefaults(
-			properties.configProvider,
-			azureClientFeatureGates,
-		);
+		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
 	/**
@@ -321,7 +342,7 @@ export class AzureClient {
 		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
 		assert(
 			rootDataObject.IRootDataObject !== undefined,
-			"entryPoint must be of type IRootDataObject",
+			0x90a /* entryPoint must be of type IRootDataObject */,
 		);
 		return rootDataObject.IRootDataObject;
 	}

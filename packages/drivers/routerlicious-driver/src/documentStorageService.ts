@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ICache } from "./cache.js";
-import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
-import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
-import { GitManager } from "./gitManager.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
+import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;

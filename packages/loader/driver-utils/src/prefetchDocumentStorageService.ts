@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { LoaderCachingPolicy } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";

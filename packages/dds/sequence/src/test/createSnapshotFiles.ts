@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { generateStrings, LocationBase } from "./generateSharedStrings.js";
+import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
 for (const { snapshotPath, expected, snapshotIsNormalized } of generateStrings()) {
 	const summaryTree = expected.getAttachSummary().summary;

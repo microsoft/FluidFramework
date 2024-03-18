@@ -3,47 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/core-utils";
+import {
+	LocationRedirectionError,
+	NonRetryableError,
+	RateLimiter,
+	ThrottlingError,
+} from "@fluidframework/driver-utils";
+import {
+	type HostStoragePolicy,
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IOdspError,
+	IOdspErrorAugmentations,
+	IOdspResolvedUrl,
+	IPersistedCache,
+	OdspErrorTypes,
+	maximumCacheDurationMs,
+	snapshotKey,
+} from "@fluidframework/odsp-driver-definitions";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
-	normalizeError,
 	loggerToMonitoringContext,
+	normalizeError,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	ThrottlingError,
-	RateLimiter,
-	NonRetryableError,
-	LocationRedirectionError,
-} from "@fluidframework/driver-utils";
-import {
-	OdspErrorTypes,
-	snapshotKey,
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IPersistedCache,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-	maximumCacheDurationMs,
-	type HostStoragePolicy,
-} from "@fluidframework/odsp-driver-definitions";
-import {
+	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,
 	getOdspResolvedUrl,
-	IOdspResponse,
 } from "./odspUtils.js";
-import { IOdspCache, INonPersistentCache, IPersistedFileCache } from "./odspCache.js";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 
 /**
  * @alpha

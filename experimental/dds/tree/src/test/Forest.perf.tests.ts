@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from 'assert';
-import { benchmark, BenchmarkType, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from '@fluid-tools/benchmark';
 import { v4 } from 'uuid';
 
-import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
 import { Forest, ForestNode } from '../Forest.js';
+import { Definition, NodeId, TraitLabel } from '../Identifiers.js';
 import { RevisionView } from '../RevisionView.js';
-import { ChangeNode, Side } from '../persisted-types/index.js';
 import { TreeViewNode } from '../TreeView.js';
+import { ChangeNode, Side } from '../persisted-types/index.js';
 import { TestTree } from './utilities/TestNode.js';
 import { refreshTestTree } from './utilities/TestUtilities.js';
 

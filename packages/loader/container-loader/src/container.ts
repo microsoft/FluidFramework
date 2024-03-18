@@ -3,16 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { assert, unreachableCase, isPromiseLike } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import {
-	IEvent,
-	ITelemetryBaseProperties,
-	FluidObject,
-	LogLevel,
-	IRequest,
-} from "@fluidframework/core-interfaces";
 import {
 	AttachState,
 	ContainerWarning,
@@ -25,16 +16,24 @@ import {
 	ICriticalContainerError,
 	IDeltaManager,
 	IFluidCodeDetails,
-	IHostLoader,
-	IFluidModuleWithDetails,
-	IProvideRuntimeFactory,
-	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetailsComparer,
+	IFluidModuleWithDetails,
+	IGetPendingLocalStateProps,
+	IHostLoader,
+	IProvideFluidCodeDetailsComparer,
+	IProvideRuntimeFactory,
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
-	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
+import {
+	FluidObject,
+	IEvent,
+	IRequest,
+	ITelemetryBaseProperties,
+	LogLevel,
+} from "@fluidframework/core-interfaces";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -45,12 +44,12 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import {
-	readAndParse,
-	OnlineStatus,
-	isOnline,
-	isCombinedAppAndProtocolSummary,
 	MessageType2,
+	OnlineStatus,
+	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
+	isOnline,
+	readAndParse,
 	runWithRetry,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
@@ -74,58 +73,59 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	createChildLogger,
 	EventEmitterWithErrorHandling,
-	PerformanceEvent,
-	raiseConnectedEvent,
-	connectedEventName,
-	normalizeError,
-	MonitoringContext,
-	createChildMonitoringContext,
-	wrapError,
-	ITelemetryLoggerExt,
-	formatTick,
 	GenericError,
-	UsageError,
 	IFluidErrorBase,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
 	type TelemetryEventCategory,
+	UsageError,
+	connectedEventName,
+	createChildLogger,
+	createChildMonitoringContext,
+	formatTick,
+	normalizeError,
+	raiseConnectedEvent,
+	wrapError,
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
+import { v4 as uuid } from "uuid";
+import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
+import { ConnectionManager } from "./connectionManager.js";
+import { ConnectionState } from "./connectionState.js";
+import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
+import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
 import {
-	ReconnectMode,
-	IConnectionManagerFactoryArgs,
-	getPackageName,
 	IConnectionDetailsInternal,
+	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
+	ReconnectMode,
+	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
-import { pkgVersion } from "./packageVersion.js";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
-import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
-import {
-	ISnapshotTreeWithBlobContents,
-	combineAppAndProtocolSummary,
-	getProtocolSnapshotTree,
-	getSnapshotTreeAndBlobsFromSerializedContainer,
-	combineSnapshotTreeAndSnapshotBlobs,
-	getDetachedContainerStateFromSerializedContainer,
-	runSingle,
-} from "./utils.js";
-import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
-import { ConnectionManager } from "./connectionManager.js";
-import { ConnectionState } from "./connectionState.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	IProtocolHandler,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
-import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
+import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import { SerializedStateManager } from "./serializedStateManager.js";
+import {
+	ISnapshotTreeWithBlobContents,
+	combineAppAndProtocolSummary,
+	combineSnapshotTreeAndSnapshotBlobs,
+	getDetachedContainerStateFromSerializedContainer,
+	getProtocolSnapshotTree,
+	getSnapshotTreeAndBlobsFromSerializedContainer,
+	runSingle,
+} from "./utils.js";
 
 const detachedContainerRefSeqNumber = 0;
 
