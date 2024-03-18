@@ -291,6 +291,14 @@ function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): Normalized
 
 function getType(data: InsertableContent, allowedTypes: AllowedTypes): TreeNodeSchema {
 	const possibleTypes = getPossibleTypes(allowedTypes, data as ContextuallyTypedNodeData);
+	if (possibleTypes.length === 0) {
+		throw new UsageError(
+			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${JSON.stringify(
+				[...allowedTypes.map((schema) => evaluateLazy(schema).identifier)],
+				undefined,
+			)}.`,
+		);
+	}
 	assert(
 		possibleTypes.length !== 0,
 		0x84e /* data is incompatible with all types allowed by the schema */,
@@ -323,17 +331,18 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 	}
 }
 
+// TODO: deduplicate this with helper elsewhere
+function evaluateLazy(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
+	if (isLazy(value)) {
+		return (value as () => TreeNodeSchema)();
+	}
+	return value;
+}
+
 /**
  * @returns all types for which the data is schema-compatible.
  */
 export function getPossibleTypes(typeSet: AllowedTypes, data: ContextuallyTypedNodeData) {
-	function evaluateLazy(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
-		if (isLazy(value)) {
-			return (value as () => TreeNodeSchema)();
-		}
-		return value;
-	}
-
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const typeSetEntry of typeSet) {
 		const schema = evaluateLazy(typeSetEntry);
