@@ -823,7 +823,13 @@ export class ModularChangeFamily
 					baseChild !== undefined ? tagChange(baseChild, over.revision) : undefined;
 
 				crossFieldTable.nodeIdPairs.push([child, taggedBase]);
-				return child ?? baseChild;
+				return (
+					child ??
+					taggedAtomId(
+						baseChild ?? fail("Should not have two undefined node IDs"),
+						over.revision,
+					)
+				);
 			};
 
 			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
