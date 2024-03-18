@@ -259,7 +259,7 @@ describe("toMapTree", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const schema = schemaFactory.object("object", {
 			a: schemaFactory.string,
-			b: schemaFactory.number,
+			b: schemaFactory.optional(schemaFactory.number, { stableName: "stable-b" }), // Stable name should be used in output.
 			c: schemaFactory.boolean,
 			d: schemaFactory.optional(schemaFactory.number),
 		});
@@ -280,7 +280,10 @@ describe("toMapTree", () => {
 					brand("a"),
 					[{ type: stringSchemaIdentifier, value: "Hello world", fields: new Map() }],
 				],
-				[brand("b"), [{ type: numberSchemaIdentifier, value: 42, fields: new Map() }]],
+				[
+					brand("stable-b"),
+					[{ type: numberSchemaIdentifier, value: 42, fields: new Map() }],
+				],
 				[brand("c"), [{ type: booleanSchemaIdentifier, value: false, fields: new Map() }]],
 			]),
 		};
@@ -314,11 +317,14 @@ describe("toMapTree", () => {
 		});
 		const schema = schemaFactory.object("complex-object", {
 			a: schemaFactory.string,
-			b: schemaFactory.array("list", [
-				childObjectSchema,
-				schemaFactory.handle,
-				schemaFactory.null,
-			]),
+			b: schemaFactory.required(
+				schemaFactory.array("list", [
+					childObjectSchema,
+					schemaFactory.handle,
+					schemaFactory.null,
+				]),
+				{ stableName: "stable-b" },
+			),
 			c: schemaFactory.map("map", [
 				childObjectSchema,
 				schemaFactory.string,
@@ -353,7 +359,7 @@ describe("toMapTree", () => {
 					[{ type: stringSchemaIdentifier, value: "Hello world", fields: new Map() }],
 				],
 				[
-					brand("b"),
+					brand("stable-b"),
 					[
 						{
 							type: brand("test.list"),
