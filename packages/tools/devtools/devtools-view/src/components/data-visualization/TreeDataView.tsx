@@ -7,14 +7,14 @@ import React from "react";
 
 import { type HasContainerKey, VisualNodeKind } from "@fluidframework/devtools-core";
 
-import { type DataVisualizationTreeProps } from "./CommonInterfaces";
-import { FluidHandleView } from "./FluidHandleView";
-import { FluidTreeView } from "./FluidTreeView";
-import { FluidValueView } from "./FluidValueView";
-import { TreeView } from "./TreeView";
-import { UnknownDataView } from "./UnknownDataView";
-import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
-import { ValueView } from "./ValueView";
+import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
+import { FluidHandleView } from "./FluidHandleView.js";
+import { FluidTreeView } from "./FluidTreeView.js";
+import { FluidValueView } from "./FluidValueView.js";
+import { TreeView } from "./TreeView.js";
+import { UnknownDataView } from "./UnknownDataView.js";
+import { UnknownFluidObjectView } from "./UnknownFluidObjectView.js";
+import { ValueView } from "./ValueView.js";
 
 /**
  * {@link TreeDataView} input props.

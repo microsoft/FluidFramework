@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export type { LabelCellLayoutProps } from "./LabelCellLayout.js";
-export { LabelCellLayout } from "./LabelCellLayout.js";
+export { MockMessageRelay } from "./MockMessageRelay.js";
