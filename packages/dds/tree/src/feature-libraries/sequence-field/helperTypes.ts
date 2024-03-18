@@ -4,12 +4,12 @@
  */
 
 import {
-	CellId,
-	HasMarkFields,
-	Detach,
-	Mark,
-	CellMark,
 	AttachAndDetach,
+	CellId,
+	CellMark,
+	Detach,
+	HasMarkFields,
+	Mark,
 	MoveIn,
 	MoveOut,
 } from "./types.js";

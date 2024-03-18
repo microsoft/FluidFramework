@@ -4,26 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	IChannelStorageService,
 	type IChannelAttributes,
+	IChannelServices,
+	IChannelStorageService,
+	IDeltaConnection,
 	type IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeEvents,
-	IChannelServices,
-	IDeltaConnection,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	ISummaryTreeWithStats,
 	type IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { IFluidSerializer } from "../serializer";
-import { SharedObject } from "../sharedObject";
+import { IFluidSerializer } from "../serializer.js";
+import { SharedObject } from "../sharedObject.js";
 
 type Overridable<T> = T extends ((...args: any) => any) | string | number | undefined | []
 	? T

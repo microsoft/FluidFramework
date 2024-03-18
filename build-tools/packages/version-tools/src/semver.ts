@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as semver from "semver";
 
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
@@ -50,8 +51,8 @@ export function bumpRange(
 				bumpType === "current"
 					? originalNoPrerelease
 					: scheme === "virtualPatch"
-					? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
-					: semver.inc(originalNoPrerelease, bumpType);
+					  ? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
+					  : semver.inc(originalNoPrerelease, bumpType);
 			if (newVersion === null) {
 				throw new Error(`Failed to increment ${original}.`);
 			}

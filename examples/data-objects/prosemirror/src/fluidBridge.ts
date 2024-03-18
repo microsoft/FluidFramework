@@ -6,21 +6,21 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils";
-import { createInsertSegmentOp, IMergeTreeDeltaOp } from "@fluidframework/merge-tree";
+import { IMergeTreeDeltaOp, createInsertSegmentOp } from "@fluidframework/merge-tree";
 import {
-	SharedString,
-	SequenceDeltaEvent,
+	ISegment,
 	ISequenceDeltaRange,
 	Marker,
 	MergeTreeDeltaType,
 	ReferenceType,
-	reservedRangeLabelsKey,
+	SequenceDeltaEvent,
+	SharedString,
 	TextSegment,
-	ISegment,
+	reservedRangeLabelsKey,
 } from "@fluidframework/sequence";
 import {
-	Schema,
 	Fragment,
+	Schema,
 	Slice,
 	// Slice,
 } from "prosemirror-model";

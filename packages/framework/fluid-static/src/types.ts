@@ -21,18 +21,24 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
  * or `SharedObject`.
  * @public
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 /**
  * A class object of `DataObject` or `SharedObject`.
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
  * @public
+ *
+ * @privateRemarks
+ * There are some edge cases in TypeScript where the order of the members in a union matter.
+ * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
+ * In this case, its better to have the desired match and/or the simpler type first.
+ * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable> =
-	| DataObjectClass<T>
-	| SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+	| SharedObjectClass<T>
+	| DataObjectClass<T>;
 
 /**
  * A class that has a factory that can create a `DataObject` and a
@@ -46,15 +52,17 @@ export type DataObjectClass<T extends IFluidLoadable> = {
 } & LoadableObjectCtor<T>;
 
 /**
- * A class that has a factory that can create a DDSes (`SharedObject`s) and a
- * constructor that will return the type of the `DataObject`.
+ * A factory that produces a factory that can create a DDSes (`SharedObject`s).
  *
  * @typeParam T - The class of the `SharedObject`.
  * @public
  */
-export type SharedObjectClass<T extends IFluidLoadable> = {
-	readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
+export interface SharedObjectClass<T extends IFluidLoadable> {
+	/**
+	 * Gets the factory this factory is a wrapper for.
+	 */
+	readonly getFactory: () => IChannelFactory<T>;
+}
 
 /**
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
@@ -99,7 +107,7 @@ export interface ContainerSchema {
 	 * }
 	 * ```
 	 */
-	initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectClassRecord;
 
 	/**
 	 * Loadable objects that can be created after the initial {@link IFluidContainer | Container} creation.
@@ -111,8 +119,7 @@ export interface ContainerSchema {
 	 * For best practice it's recommended to define all the dynamic types you create even if they are
 	 * included via initialObjects.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	dynamicObjectTypes?: LoadableObjectClass<any>[];
+	readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
 }
 
 /**

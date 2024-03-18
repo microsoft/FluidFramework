@@ -17,15 +17,14 @@ import {
 	mapTaggedChange,
 } from "../core/index.js";
 import {
-	fieldKinds,
+	FieldBatchCodec,
 	ModularChangeFamily,
 	ModularChangeset,
-	FieldBatchCodec,
-	TreeCompressionStrategy,
-	addMissingRefreshers,
-	relevantRemovedRoots as defaultRelevantRemovedRoots,
 	TreeChunk,
-	filterSuperfluousRefreshers,
+	TreeCompressionStrategy,
+	relevantRemovedRoots as defaultRelevantRemovedRoots,
+	updateRefreshers as defaultUpdateRefreshers,
+	fieldKinds,
 } from "../feature-libraries/index.js";
 import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -268,16 +267,21 @@ export function updateRefreshers(
 	return mapDataChanges(change.change, (innerChange) => {
 		const taggedInnerChange = mapTaggedChange(change, innerChange);
 		const removedRoots = defaultRelevantRemovedRoots(taggedInnerChange);
-		// TODO: remove this filtering stage once modularAddMissingRefreshers removes old refreshers
-		const filtered = mapTaggedChange(
-			change,
-			filterSuperfluousRefreshers(taggedInnerChange, removedRoots),
-		);
 		if (isFirstDataChange) {
 			isFirstDataChange = false;
-			return addMissingRefreshers(filtered, monitoredDetachedNodes, removedRoots, false);
+			return defaultUpdateRefreshers(
+				taggedInnerChange,
+				monitoredDetachedNodes,
+				removedRoots,
+				false,
+			);
 		} else {
-			return addMissingRefreshers(filtered, filteredDetachedNodes, removedRoots, true);
+			return defaultUpdateRefreshers(
+				taggedInnerChange,
+				filteredDetachedNodes,
+				removedRoots,
+				true,
+			);
 		}
 	});
 }

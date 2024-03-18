@@ -12,24 +12,24 @@ import {
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
-import { brand, JsonCompatibleReadOnly } from "../util/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
-import { EditManagerSummarizer } from "./editManagerSummarizer.js";
+import { ICommitEnricher } from "./commitEnricher.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
-import { DecodedMessage } from "./messageTypes.js";
+import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
-import { ICommitEnricher } from "./commitEnricher.js";
+import { DecodedMessage } from "./messageTypes.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -226,6 +226,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				newRevision,
 				this.detachedRevision,
 			);
+			this.editManager.advanceMinimumSequenceNumber(newRevision);
 		}
 
 		// Don't submit the op if it is not attached
@@ -243,7 +244,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				schema: this.schemaAndPolicy ?? undefined,
 			},
 		);
-		this.submitLocalMessage(this.serializer.encode(message, this.handle));
+		this.submitLocalMessage(message);
 		this.onCommitSubmitted(enrichedCommit, isResubmit);
 	}
 
@@ -254,9 +255,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(contents, {});
+		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
+
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),

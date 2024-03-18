@@ -2,17 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -20,15 +22,6 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import {
-	EditManager,
-	ICommitEnricher,
-	SharedTreeCore,
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../../shared-tree-core/index.js";
 import {
 	AllowedUpdateType,
 	ChangeFamily,
@@ -36,6 +29,7 @@ import {
 	GraphCommit,
 	rootFieldKey,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
@@ -45,10 +39,17 @@ import {
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
-import { brand } from "../../util/index.js";
-import { SharedTreeTestFactory } from "../utils.js";
+import {
+	EditManager,
+	ICommitEnricher,
+	SharedTreeCore,
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../../shared-tree-core/index.js";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import { leaf } from "../../domains/index.js";
+import { brand } from "../../util/index.js";
+import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
 import { TestSharedTreeCore } from "./utils.js";
 
 describe("SharedTreeCore", () => {
@@ -171,11 +172,6 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("newRevertible", (revertible) => {
-			revertible.discard();
-		});
-
 		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
 		assert.equal(getTrunkLength(tree), 1);
@@ -221,11 +217,6 @@ describe("SharedTreeCore", () => {
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
-		});
-
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("newRevertible", (revertible) => {
-			revertible.discard();
 		});
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
@@ -318,12 +309,12 @@ describe("SharedTreeCore", () => {
 		const config = {
 			schema,
 			initialTree: undefined,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematizeInternal(config);
+		const view1 = schematizeFlexTree(tree1, config);
 		containerRuntimeFactory.processAllMessages();
-		const view2 = tree2.schematizeInternal(config);
+		const view2 = schematizeFlexTree(tree2, config);
 		const editable1 = view1.flexTree;
 		const editable2 = view2.flexTree;
 

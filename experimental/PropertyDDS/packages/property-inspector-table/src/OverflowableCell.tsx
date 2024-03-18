@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles, Tooltip } from "@material-ui/core";
+import { Tooltip, makeStyles } from "@material-ui/core";
 import * as React from "react";
 
 const useStyles = makeStyles(

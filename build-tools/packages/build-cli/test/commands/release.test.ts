@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { test } from "@oclif/test";
 
 import { FluidReleaseMachine } from "../../src/machines";
@@ -16,7 +17,8 @@ const machineStates = FluidReleaseMachine.states()
 
 describe("release command handles all states", () => {
 	for (const state of machineStates) {
-		test.stdout()
+		test
+			.stdout()
 			.command([
 				"release",
 				"--releaseGroup",

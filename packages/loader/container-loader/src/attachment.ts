@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils";
-import { ISerializableBlobContents } from "./containerStorageAdapter";
-import { IDetachedBlobStorage } from ".";
+import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { IDetachedBlobStorage } from "./loader.js";
+import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
 
 /**
  * The default state a newly created detached container will have.
@@ -65,10 +66,6 @@ export interface AttachingDataWithoutBlobs {
  */
 export interface AttachedData {
 	readonly state: AttachState.Attached;
-	readonly snapshot?: {
-		tree: ISnapshotTree;
-		blobs: ISerializableBlobContents;
-	};
 }
 
 /**
@@ -136,7 +133,9 @@ export interface AttachProcessProps {
  *
  * @param props - The data and services necessary to run the attachment process
  */
-export const runRetriableAttachProcess = async (props: AttachProcessProps): Promise<void> => {
+export const runRetriableAttachProcess = async (
+	props: AttachProcessProps,
+): Promise<{ tree: ISnapshotTree; blobs: ISerializableBlobContents } | undefined> => {
 	const {
 		detachedBlobStorage,
 		createOrGetStorageService,
@@ -195,7 +194,10 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 		);
 	}
 
-	assert(currentData.state === AttachState.Attaching, "must be attaching by this point");
+	assert(
+		currentData.state === AttachState.Attaching,
+		0x8e2 /* must be attaching by this point */,
+	);
 
 	if (currentData.blobs === "done") {
 		// done means outstanding blobs were uploaded.
@@ -208,12 +210,14 @@ export const runRetriableAttachProcess = async (props: AttachProcessProps): Prom
 		});
 	}
 
+	const snapshot = offlineLoadEnabled
+		? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
+		: undefined;
+
 	setAttachmentData(
 		(currentData = {
 			state: AttachState.Attached,
-			snapshot: offlineLoadEnabled
-				? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
-				: undefined,
 		}),
 	);
+	return snapshot;
 };

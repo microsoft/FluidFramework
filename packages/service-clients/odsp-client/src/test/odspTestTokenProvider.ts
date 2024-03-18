@@ -4,15 +4,15 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
 import {
 	IClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspTokenProvider } from "../token";
-import { OdspTestCredentials } from "./odspClient.spec";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { IOdspTokenProvider } from "../token.js";
+import { OdspTestCredentials } from "./odspClient.spec.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.

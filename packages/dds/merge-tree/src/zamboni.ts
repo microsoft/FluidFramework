@@ -5,9 +5,9 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { UnassignedSequenceNumber } from "./constants";
-import { MergeTree } from "./mergeTree";
-import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback";
+import { UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	IMergeBlock,
 	IMergeNode,
@@ -17,8 +17,8 @@ import {
 	seqLTE,
 	toMoveInfo,
 	toRemovalInfo,
-} from "./mergeTreeNodes";
-import { matchProperties } from "./properties";
+} from "./mergeTreeNodes.js";
+import { matchProperties } from "./properties.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: IMergeBlock) {

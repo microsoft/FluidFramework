@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceInterval, ReferencePosition } from "@fluidframework/sequence";
+import { ReferencePosition, SequenceInterval } from "@fluidframework/sequence";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
 

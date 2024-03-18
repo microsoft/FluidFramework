@@ -4,11 +4,11 @@
  */
 
 import {
-	RevisionTag,
-	IEditableForest,
-	DetachedFieldIndex,
-	tagChange,
 	DeltaDetachedNodeId,
+	DetachedFieldIndex,
+	IEditableForest,
+	RevisionTag,
+	tagChange,
 	visitDelta,
 } from "../core/index.js";
 import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";

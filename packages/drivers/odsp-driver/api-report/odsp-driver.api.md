@@ -26,8 +26,8 @@ import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISocketStorageDiscovery } from '@fluidframework/odsp-driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/core-utils';
@@ -43,7 +43,7 @@ export enum ClpCompliantAppHeader {
     isClpCompliantApp = "X-CLP-Compliant-App"
 }
 
-// @alpha (undocumented)
+// @alpha
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @alpha
@@ -57,7 +57,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 
 // @alpha
 export class EpochTracker implements IPersistedFileCache {
-    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
+    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined, hostPolicy?: HostStoragePolicy | undefined);
     // (undocumented)
     protected readonly cache: IPersistedCache;
     // (undocumented)
@@ -65,7 +65,7 @@ export class EpochTracker implements IPersistedFileCache {
     fetch(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<Response>>;
     fetchAndParseAsJSON<T>(url: string, fetchOptions: RequestInit, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<T>>;
     fetchArray(url: string, fetchOptions: {
-        [index: string]: any;
+        [index: string]: RequestInit;
     }, fetchType: FetchType, addInBody?: boolean, fetchReason?: string): Promise<IOdspResponse<ArrayBuffer>>;
     // (undocumented)
     protected readonly fileEntry: IFileEntry;
@@ -73,6 +73,8 @@ export class EpochTracker implements IPersistedFileCache {
     get fluidEpoch(): string | undefined;
     // (undocumented)
     get(entry: IEntry): Promise<any>;
+    // (undocumented)
+    protected readonly hostPolicy?: HostStoragePolicy | undefined;
     // (undocumented)
     protected readonly logger: ITelemetryLoggerExt;
     // (undocumented)
@@ -98,7 +100,7 @@ export type FetchTypeInternal = FetchType | "cache";
 // @internal
 export function getApiRoot(origin: string): string;
 
-// @alpha (undocumented)
+// @alpha
 export function getHashedDocumentId(driveId: string, itemId: string): Promise<string>;
 
 // @alpha
@@ -145,7 +147,7 @@ export interface IOdspResponse<T> {
     // (undocumented)
     headers: Map<string, string>;
     // (undocumented)
-    propsToLog: ITelemetryProperties;
+    propsToLog: ITelemetryBaseProperties;
 }
 
 // @alpha
@@ -196,7 +198,7 @@ export function isOdcOrigin(origin: string): boolean;
 // @internal
 export function isOdcUrl(url: string | URL): boolean;
 
-// @internal (undocumented)
+// @internal
 export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOdspResolvedUrl;
 
 // @internal
@@ -243,7 +245,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
-    // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
 }
 

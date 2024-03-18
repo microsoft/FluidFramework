@@ -5,24 +5,27 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
+import { IJsonCodec } from "../../../codec/index.js";
 import {
-	NodeChangeset,
-	GenericChangeset,
-	genericFieldKind,
-	CrossFieldManager,
-	MemoizedIdRangeAllocator,
-} from "../../../feature-libraries/index.js";
-import {
-	makeAnonChange,
-	FieldKey,
-	DeltaFieldMap,
-	DeltaFieldChanges,
 	ChangeEncodingContext,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	FieldKey,
+	makeAnonChange,
 } from "../../../core/index.js";
 import {
-	fakeIdAllocator,
-	brand,
+	CrossFieldManager,
+	GenericChangeset,
+	MemoizedIdRangeAllocator,
+	NodeChangeset,
+	genericFieldKind,
+} from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import {
 	JsonCompatibleReadOnly,
+	brand,
+	fakeIdAllocator,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
 import {
@@ -31,9 +34,6 @@ import {
 	makeEncodingTestSuite,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { IJsonCodec } from "../../../codec/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 
@@ -101,19 +101,6 @@ const childComposer = (
 		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(valueChange);
-};
-
-const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
-	const valueChange = valueChangeFromNodeChange(nodeChange);
-	const taggedChange = makeAnonChange(valueChange);
-	const inverse = valueHandler.rebaser.invert(
-		taggedChange,
-		unexpectedDelegate,
-		idAllocatorFromMaxId(),
-		crossFieldManager,
-		defaultRevisionMetadataFromChanges([taggedChange]),
-	);
-	return nodeChangeFromValueChange(inverse);
 };
 
 const childRebaser = (
@@ -363,7 +350,16 @@ describe("GenericField", () => {
 		const taggedChange = makeAnonChange(forward);
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
-			childInverter,
+			(nodeChange: NodeChangeset): NodeChangeset => {
+				if (nodeChange === nodeChange0To1) {
+					return nodeChange1To0;
+				}
+				if (nodeChange === nodeChange1To2) {
+					return nodeChange2To1;
+				}
+				assert.fail("Unexpected child change");
+			},
+			true,
 			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),

@@ -7,44 +7,45 @@ import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IFluidErrorBase,
-	MonitoringContext,
-	normalizeError,
-} from "@fluidframework/telemetry-utils";
-import {
 	IDocumentDeltaConnection,
-	IResolvedUrl,
 	IDocumentServicePolicies,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	HostStoragePolicy,
+	type IOdspError,
+	IOdspResolvedUrl,
+	ISocketStorageDiscovery,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	TokenFetchOptions,
+} from "@fluidframework/odsp-driver-definitions";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	HostStoragePolicy,
-	InstrumentedStorageTokenFetcher,
-	ISocketStorageDiscovery,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions";
-import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspCache } from "./odspCache";
-import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
+	IFluidErrorBase,
+	MonitoringContext,
+	normalizeError,
+} from "@fluidframework/telemetry-utils";
+import { policyLabelsUpdatesSignalType } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { IOdspCache } from "./odspCache.js";
+import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
+	TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
-	TokenFetchOptionsEx,
-} from "./odspUtils";
-import { fetchJoinSession } from "./vroom";
-import { EpochTracker } from "./epochTracker";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { policyLabelsUpdatesSignalType } from "./contracts";
+} from "./odspUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { fetchJoinSession } from "./vroom.js";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection
@@ -111,9 +112,11 @@ export class OdspDelayLoadedDeltaStream {
 		return this._relayServiceTenantAndSessionId;
 	}
 
-	/** Annotate the given error indicating which connection step failed */
+	/**
+	 * Annotate the given error indicating which connection step failed
+	 */
 	private annotateConnectionError(
-		error: any,
+		error: unknown,
 		failedConnectionStep: string,
 		separateTokenRequest: boolean,
 	): IFluidErrorBase {
@@ -141,10 +144,11 @@ export class OdspDelayLoadedDeltaStream {
 			// websocket token or whether it is returned with joinSession response payload
 			const requestWebsocketTokenFromJoinSession = this.getWebsocketToken === undefined;
 			const websocketTokenPromise = requestWebsocketTokenFromJoinSession
-				? Promise.resolve(null)
+				? // eslint-disable-next-line unicorn/no-null
+				  Promise.resolve(null)
 				: this.getWebsocketToken!(options);
 
-			const annotateAndRethrowConnectionError = (step: string) => (error: any) => {
+			const annotateAndRethrowConnectionError = (step: string) => (error: unknown) => {
 				throw this.annotateConnectionError(
 					error,
 					step,
@@ -162,6 +166,7 @@ export class OdspDelayLoadedDeltaStream {
 				websocketTokenPromise.catch(annotateAndRethrowConnectionError("getWebsocketToken")),
 			]);
 
+			// eslint-disable-next-line unicorn/no-null
 			const finalWebsocketToken = websocketToken ?? websocketEndpoint.socketToken ?? null;
 			if (finalWebsocketToken === null) {
 				throw this.annotateConnectionError(
@@ -195,13 +200,14 @@ export class OdspDelayLoadedDeltaStream {
 				this.signalHandler(connection.initialSignals);
 				// On disconnect with 401/403 error code, we can just clear the joinSession cache as we will again
 				// get the auth error on reconnecting and face latency.
-				connection.once("disconnect", (error: any) => {
+				connection.once("disconnect", (error: unknown) => {
 					// Clear the join session refresh timer so that it can be restarted on reconnection.
 					this.clearJoinSessionTimer();
 					if (
 						typeof error === "object" &&
 						error !== null &&
-						error.errorType === OdspErrorTypes.authorizationError
+						(error as Partial<IOdspError>).errorType ===
+							OdspErrorTypes.authorizationError
 					) {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
@@ -213,9 +219,13 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				this.clearJoinSessionTimer();
-				this.cache.sessionJoinCache.remove(this.joinSessionKey);
-
+				// Remove join session information from cache only if it is an error related to connect_document and not a socket related error.
+				// Otherwise keep it in cache so that this session can be re-used after disconnection.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+				if ((error as any).errorFrom === "connect_document_error") {
+					this.clearJoinSessionTimer();
+					this.cache.sessionJoinCache.remove(this.joinSessionKey);
+				}
 				const normalizedError = this.annotateConnectionError(
 					error,
 					"createDeltaConnection",
@@ -231,9 +241,9 @@ export class OdspDelayLoadedDeltaStream {
 		});
 	}
 
-	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
-		signals.forEach((signal: ISignalMessage) => {
+		for (const signal of signals) {
 			// Make sure it is not for a specific client as `PolicyLabelsUpdate` is meant for all clients.
 			if (signal.clientId === null) {
 				// We could have some issues/irregularities in parsing signals, so put it in try/catch block
@@ -241,17 +251,19 @@ export class OdspDelayLoadedDeltaStream {
 				let envelope: ISignalEnvelope | undefined;
 				try {
 					envelope = JSON.parse(signal.content as string) as ISignalEnvelope;
-				} catch (err) {}
+				} catch {
+					// Drop error
+				}
 				if (envelope?.contents?.type === policyLabelsUpdatesSignalType) {
 					this.emitMetaDataUpdateEvent({
 						sensitivityLabelsInfo: JSON.stringify(envelope.contents.content),
 					});
 				}
 			}
-		});
+		}
 	};
 
-	private clearJoinSessionTimer() {
+	private clearJoinSessionTimer(): void {
 		if (this.joinSessionRefreshTimer !== undefined) {
 			clearTimeout(this.joinSessionRefreshTimer);
 			this.joinSessionRefreshTimer = undefined;
@@ -262,10 +274,13 @@ export class OdspDelayLoadedDeltaStream {
 		delta: number,
 		requestSocketToken: boolean,
 		clientId: string | undefined,
-	) {
+	): Promise<void> {
 		if (this.joinSessionRefreshTimer !== undefined) {
 			this.clearJoinSessionTimer();
+			// TODO: use a stronger type
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			const originalStackTraceLimit = (Error as any).stackTraceLimit;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(Error as any).stackTraceLimit = 50;
 			this.mc.logger.sendTelemetryEvent(
 				{
@@ -273,6 +288,7 @@ export class OdspDelayLoadedDeltaStream {
 				},
 				new Error("DuplicateJoinSessionRefresh"),
 			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
 
@@ -300,7 +316,7 @@ export class OdspDelayLoadedDeltaStream {
 		options: TokenFetchOptionsEx,
 		isRefreshingJoinSession: boolean,
 		clientId?: string,
-	) {
+	): Promise<ISocketStorageDiscovery> {
 		// If this call is to refresh the join session for the current connection but we are already disconnected in
 		// the meantime or disconnected and then reconnected then do not make the call. However, we should not have
 		// come here if that is the case because timer should have been disposed, but due to race condition with the
@@ -327,16 +343,16 @@ export class OdspDelayLoadedDeltaStream {
 			requestSocketToken,
 			options,
 			isRefreshingJoinSession,
-		).catch((e) => {
-			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
-				for (const code of e.facetCodes) {
+		).catch((error) => {
+			if (hasFacetCodes(error) && error.facetCodes !== undefined) {
+				for (const code of error.facetCodes) {
 					switch (code) {
 						case "sessionForbidden":
 						case "sessionForbiddenOnPreservedFiles":
 						case "sessionForbiddenOnModerationEnabledLibrary":
 						case "sessionForbiddenOnRequireCheckout":
 						case "sessionForbiddenOnCheckoutFile":
-						case "sessionForbiddenOnInvisibleMinorVersion":
+						case "sessionForbiddenOnInvisibleMinorVersion": {
 							// This document can only be opened in storage-only mode.
 							// DeltaManager will recognize this error
 							// and load without a delta stream connection.
@@ -346,12 +362,14 @@ export class OdspDelayLoadedDeltaStream {
 								{ driverVersion },
 								code,
 							);
-						default:
+						}
+						default: {
 							continue;
+						}
 					}
 				}
 			}
-			throw e;
+			throw error;
 		});
 		this._relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
 		return response;
@@ -365,7 +383,10 @@ export class OdspDelayLoadedDeltaStream {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
 		);
-		const executeFetch = async () => {
+		const executeFetch = async (): Promise<{
+			entryTime: number;
+			joinSessionResponse: ISocketStorageDiscovery;
+		}> => {
 			const joinSessionResponse = await fetchJoinSession(
 				this.odspResolvedUrl,
 				"opStream/joinSession",
@@ -391,7 +412,11 @@ export class OdspDelayLoadedDeltaStream {
 			};
 		};
 
-		const getResponseAndRefreshAfterDeltaMs = async () => {
+		const getResponseAndRefreshAfterDeltaMs = async (): Promise<{
+			refreshAfterDeltaMs: number;
+			entryTime: number;
+			joinSessionResponse: ISocketStorageDiscovery;
+		}> => {
 			const _response = await this.cache.sessionJoinCache.addOrGet(
 				this.joinSessionKey,
 				executeFetch,
@@ -448,13 +473,13 @@ export class OdspDelayLoadedDeltaStream {
 		return response.joinSessionResponse;
 	}
 
-	private emitMetaDataUpdateEvent(metadata: Record<string, string>) {
+	private emitMetaDataUpdateEvent(metadata: Record<string, string>): void {
 		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
 			labels: unknown;
 			timestamp: number;
 		};
 		const time = label.timestamp;
-		assert(time > 0, "time should be positive");
+		assert(time > 0, 0x8e0 /* time should be positive */);
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
 			this.metadataUpdateHandler({
@@ -466,7 +491,7 @@ export class OdspDelayLoadedDeltaStream {
 	private calculateJoinSessionRefreshDelta(
 		responseFetchTime: number,
 		refreshSessionDurationSeconds: number,
-	) {
+	): number {
 		// 30 seconds is buffer time to refresh the session.
 		return responseFetchTime + (refreshSessionDurationSeconds * 1000 - 30000) - Date.now();
 	}
@@ -512,7 +537,7 @@ export class OdspDelayLoadedDeltaStream {
 		return connection;
 	}
 
-	public dispose(error?: any) {
+	public dispose(error?: unknown): void {
 		this.clearJoinSessionTimer();
 		this.currentConnection?.dispose();
 		this.currentConnection = undefined;

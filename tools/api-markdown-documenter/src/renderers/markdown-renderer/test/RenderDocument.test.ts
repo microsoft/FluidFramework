@@ -11,8 +11,8 @@ import {
 	PlainTextNode,
 	SectionNode,
 	SpanNode,
-} from "../../../documentation-domain";
-import { renderDocument } from "../Render";
+} from "../../../documentation-domain/index.js";
+import { renderDocument } from "../Render.js";
 
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const path = require("path");
 const BranchManager = require("../../src/materialized_history_service/branch_manager");
 const BTreeManager = require("../../src/materialized_history_service/btree_manager");
