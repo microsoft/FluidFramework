@@ -18,6 +18,7 @@ import {
 	TreeCompressionStrategy,
 	cursorForTypedData,
 	cursorForTypedTreeData,
+	intoStoredSchema,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import { FlexTreeView, SharedTreeFactory } from "../../shared-tree/index.js";
@@ -45,29 +46,32 @@ import {
 	checkoutWithContent,
 	flexTreeViewWithContent,
 	insert,
+	jsonSequenceRootSchema,
 	toJsonableTree,
 } from "../utils.js";
 
-// number of nodes in test for wide trees
+// Number of nodes in test for wide trees.
 const nodesCountWide = [
 	[1, BenchmarkType.Measurement],
 	[100, BenchmarkType.Perspective],
-	[500, BenchmarkType.Measurement],
+	[1000, BenchmarkType.Measurement],
+	[10000, BenchmarkType.Measurement],
 ];
-// number of nodes in test for deep trees
+// Number of nodes in test for deep trees.
+// TODO: We currently run into a "maximum call stack size exceeded" error if we increase the node count,
+// due to recursive calls when calling flexTreeViewWithContent, or calling assert.deepEqual.
+// To include tests with higher node counts, we will likely need to replace these parts of the code to be done iteratively.
 const nodesCountDeep = [
 	[1, BenchmarkType.Measurement],
 	[10, BenchmarkType.Perspective],
-	[100, BenchmarkType.Measurement],
+	[500, BenchmarkType.Measurement],
 ];
 
-// TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+	treeEncodeType: TreeCompressionStrategy.Compressed,
 });
 
-// TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
@@ -351,12 +355,11 @@ describe("SharedTree benchmarks", () => {
 
 						// Setup
 						const provider = new TestTreeProviderLite(1, factory);
-						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
+						tree.checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 						for (let i = 0; i < size; i++) {
 							insert(tree.checkout, i, "test");
 						}
-
 						// Measure
 						const before = state.timer.now();
 						provider.processMessages();
@@ -389,6 +392,9 @@ describe("SharedTree benchmarks", () => {
 
 						// Setup
 						const provider = new TestTreeProviderLite(nbPeers, factory);
+						provider.trees.map((tree): void => {
+							tree.checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+						});
 						for (let iCommit = 0; iCommit < nbCommits; iCommit++) {
 							for (let iPeer = 0; iPeer < nbPeers; iPeer++) {
 								const peer = provider.trees[iPeer];

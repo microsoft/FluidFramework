@@ -82,8 +82,23 @@ type JSWideTreeRoot2 = InsertableFlexField<typeof wideSchema.rootFieldSchema>;
 	type _check2 = requireAssignableTo<JSWideTree, JSWideTreeRoot2>;
 }
 
+/**
+ *
+ * Creates a {@link JSDeepTree} with the specified depth and value.
+ * @remarks
+ * This method is done iteratively to prevent exceeding max callstack for very deep trees.
+ */
 export function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
-	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
+	if (depth === 0) {
+		return leafValue;
+	}
+
+	let result: JSDeepTree | number = leafValue;
+	for (let i = 0; i < depth; i++) {
+		result = { foo: result };
+	}
+
+	return result;
 }
 
 export function makeDeepContent(
