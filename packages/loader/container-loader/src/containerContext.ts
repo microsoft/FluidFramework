@@ -85,8 +85,12 @@ export class ContainerContext implements IContainerContext {
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		// `unknown` should be removed once @alpha tag is removed from IContainerContext
-		// Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+
+		/**
+		 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
+		 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+		 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+		 */
 		public readonly submitSignalFn: (
 			content: unknown | ISignalEnvelope,
 			targetClientId?: string,

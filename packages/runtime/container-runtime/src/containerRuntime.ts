@@ -971,11 +971,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	// unknown should be removed once @alpha tag is removed from IContainerContext
-	private readonly submitSignalFn: (
-		content: unknown | ISignalEnvelope,
-		targetClientId?: string,
-	) => void;
+	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
