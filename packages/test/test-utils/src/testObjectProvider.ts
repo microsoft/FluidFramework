@@ -221,6 +221,9 @@ export interface ITestContainerConfig {
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
 
+	/** For Cross-Version compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
+	forceUseCreateVersion?: true;
+
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
 }
@@ -832,10 +835,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
+		forceUseCreateVersion?: true,
 	) {
+		const useCreateVersion = forceUseCreateVersion === true || this.useCreateApi;
 		if (this.useCreateApi) {
 			// After we create the first loader, we can set this.useCreateApi to false.
 			this.useCreateApi = false;
+		}
+		if (useCreateVersion) {
 			return this.createLoaderForCreating(packageEntries, loaderProps);
 		}
 		return this.createLoaderForLoading(packageEntries, loaderProps);
@@ -925,6 +932,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
+			testContainerConfig?.forceUseCreateVersion,
 		);
 	}
 
