@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Body1, Body1Strong, Button, Link, Subtitle1, makeStyles } from "@fluentui/react-components";
+import {
+	Body1,
+	Body1Strong,
+	Button,
+	Link,
+	Subtitle1,
+	makeStyles,
+} from "@fluentui/react-components";
 import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
@@ -100,7 +107,7 @@ export function OpLatencyView(): React.ReactElement {
 		setUnsampledTelemetry(newValue);
 		localStorage.setItem("Fluid.Telemetry.DisableSampling", String(newValue));
 	};
-	
+
 	React.useEffect(() => {
 		console.log("Unsampled Telemetry:", unsampledTelemetry);
 	}, [unsampledTelemetry]);
@@ -261,7 +268,7 @@ export function OpLatencyView(): React.ReactElement {
 				</>
 			)}
 			<Button size="small" onClick={toggleUnsampledTelemetry}>
-				{unsampledTelemetry ?  "Disable Unsampled Telemetry" :  "Enable Unsampled Telemetry"}
+				{unsampledTelemetry ? "Disable Unsampled Telemetry" : "Enable Unsampled Telemetry"}
 			</Button>
 		</div>
 	);
