@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-lambdas-driver",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"description": "Fluid server lambda driver components",
 	"homepage": "https://fluidframework.com",
 	"repository": {
