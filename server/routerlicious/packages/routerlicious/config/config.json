@@ -202,7 +202,7 @@
 		"restartOnCheckpointFailure": true,
 		"disableTransientTenantFiltering": true,
 		"maxLogtailLength": 2000,
-		"scrubUserDataInGlobalCheckpoints": true,
+		"scrubUserDataInGlobalCheckpoints": false,
 		"scrubUserDataInLocalCheckpoints": false,
 		"scrubUserDataInSummaries": false
 	},

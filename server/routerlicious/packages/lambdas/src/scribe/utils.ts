@@ -74,16 +74,14 @@ export const isGlobalCheckpoint = (noActiveClients: boolean, globalCheckpointOnl
 };
 
 /**
- * Whether the quorum members represented in the checkpoint's protocol state are valid.
+ * Whether the quorum members represented in the checkpoint's protocol state have had their user data scrubbed
+ * for privacy compliance.
  */
-export const isCheckpointQuorumValid = (stringifiedCheckpoint: string): boolean => {
+export const isCheckpointQuorumScrubbed = (stringifiedCheckpoint: string): boolean => {
 	if (!stringifiedCheckpoint) {
 		return false;
 	}
 	const checkpoint: IScribe = JSON.parse(stringifiedCheckpoint);
-	if (checkpoint.protocolState.members.length === 0) {
-		return true;
-	}
 	for (const [, sequencedClient] of checkpoint.protocolState.members) {
 		const user: IUser = sequencedClient.client.user;
 		// User information was scrubbed.

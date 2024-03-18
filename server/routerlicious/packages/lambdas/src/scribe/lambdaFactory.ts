@@ -44,7 +44,7 @@ import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { getClientIds, initializeProtocol, isCheckpointQuorumValid, sendToDeli } from "./utils";
+import { getClientIds, initializeProtocol, isCheckpointQuorumScrubbed, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -192,9 +192,9 @@ export class ScribeLambdaFactory
 		const useDefaultCheckpointForNewDocument =
 			document.scribe === undefined || document.scribe === null;
 		const checkpointIsBlank = document.scribe === "";
-		const checkpointQuorumIsValid = isCheckpointQuorumValid(document.scribe);
+		const checkpointQuorumIsScrubbed = isCheckpointQuorumScrubbed(document.scribe);
 		const useLatestSummaryCheckpointForExistingDocument =
-			checkpointIsBlank || !checkpointQuorumIsValid;
+			checkpointIsBlank || !checkpointQuorumIsScrubbed;
 
 		if (useDefaultCheckpointForNewDocument) {
 			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
@@ -205,7 +205,9 @@ export class ScribeLambdaFactory
 			lastCheckpoint = DefaultScribe;
 		} else if (useLatestSummaryCheckpointForExistingDocument) {
 			const message = `Existing document${
-				!checkpointIsBlank && !checkpointQuorumIsValid ? " with invalid quorum members" : ""
+				!checkpointIsBlank && !checkpointQuorumIsScrubbed
+					? " with invalid quorum members"
+					: ""
 			}. Fetching checkpoint from summary`;
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
@@ -214,7 +216,7 @@ export class ScribeLambdaFactory
 				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
 				lastCheckpoint = DefaultScribe;
 			} else {
-				if (!isCheckpointQuorumValid(latestSummary.scribe)) {
+				if (!isCheckpointQuorumScrubbed(latestSummary.scribe)) {
 					Lumberjack.error(
 						"Quorum from summary is invalid. Continuing.",
 						lumberProperties,
