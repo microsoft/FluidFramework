@@ -306,6 +306,7 @@ export class ScribeLambda implements IPartitionLambda {
 													this.documentId,
 													this.tenantId,
 												),
+												error,
 											);
 										}
 										try {
@@ -317,7 +318,7 @@ export class ScribeLambda implements IPartitionLambda {
 													tenantId: this.tenantId,
 													documentId: this.documentId,
 													summaryResult,
-													messages,
+													messages: messages ?? "No data found",
 												},
 											);
 										} catch (error) {

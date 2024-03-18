@@ -4,7 +4,7 @@
  */
 
 import { IWebhookManager } from "@fluidframework/server-services-core";
-import axios, { default as Axios } from "axios";
+import axios, { default as Axios, isAxiosError } from "axios";
 
 /**
  * Manages Webhooks and associated events
@@ -55,7 +55,7 @@ export class WebhookManager implements IWebhookManager {
 				);
 			} else {
 				console.log(
-					`Successfully sent event payload response from Client url: ${url} for event: ${event}`,
+					`Successfully send event payload response from Client url: ${url} for event: ${event}`,
 				);
 			}
 		}
@@ -66,6 +66,7 @@ export class WebhookManager implements IWebhookManager {
 
 		try {
 			const response = await Axios.get(requestUrl);
+			console.log(`RESPONSE RECEIVED`);
 			const messages = response.data.blobs
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				.filter((e) => e.content.includes("blobs") && e.content.includes("content"))
@@ -74,10 +75,26 @@ export class WebhookManager implements IWebhookManager {
 					return e.content;
 				});
 
+			console.log(
+				`HttpStatus: ${response.status}\nHttpStatusText: ${
+					response.statusText
+				}\nResponseData:\n${JSON.stringify(response.data)}`,
+			);
+			console.log(`messages:\n${messages}`);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return messages;
 		} catch (error: unknown) {
-			console.log(`Error fetching latest summary.`);
+			if (isAxiosError(error) && error.response) {
+				console.log(
+					`Axios error: ${error.config?.url}\nHttp status: ${
+						error.response.status
+					}\nHttp statusText: ${error.response.statusText}\nHttpHeader: ${JSON.stringify(
+						error.response.headers,
+					)}\nResponseData: ${JSON.stringify(error.response?.data)}`,
+				);
+			} else {
+				console.log(error);
+			}
 		}
 	}
 }
