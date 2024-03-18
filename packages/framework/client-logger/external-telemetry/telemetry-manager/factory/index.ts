@@ -16,6 +16,9 @@ export interface TelemetryManagerFactoryConfig {
 	};
 }
 
+/**
+ * This class helps simplify the creation of one or more telemetry managers.
+ */
 export class TelemetryManagerFactory {
 	static createTelemetryManagers(config: TelemetryManagerFactoryConfig): {
 		container?: ContainerTelemetryManager;

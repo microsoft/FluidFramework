@@ -1,1 +1,1 @@
-export { ContainerEventName } from "./containerEvents";
+export { ContainerTelemetryEventName } from "./containerTelemetry";

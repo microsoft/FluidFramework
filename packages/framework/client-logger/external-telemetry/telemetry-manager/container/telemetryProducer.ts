@@ -1,37 +1,42 @@
-import { IContainer } from "@fluidframework/container-definitions";
-import { ContainerEventName } from "./containerEvents";
-import { ContainerConnectedTelemetry, IContainerTelemetry } from "./containerTelemetry";
+import { IContainer, IContainerEvents } from "@fluidframework/container-definitions";
+import {
+	ContainerConnectedTelemetry,
+	ContainerTelemetryEventName,
+	IContainerTelemetry,
+} from "./containerTelemetry";
+import { ContainerSystemEventName } from "./containerSystemEvents";
 
+/**
+ * This class produces {@link IContainerTelemetry} from raw container system events {@link IContainerEvents}.
+ * The class contains different helper methods for simplifying and standardizing logic for adding additional information necessary
+ * to produce different {@link IContainerTelemetry}.
+ *
+ */
 export class ContainerEventTelemetryProducer {
-	private telemetryProducers = {
-		[ContainerEventName.CONNECTED]: {
-			produceTelemetry: (payload?: { clientId: string }): ContainerConnectedTelemetry => {
-				return {
-					eventName: ContainerEventName.CONNECTED,
-					containerId: payload?.clientId ?? this.getContainerId(),
-					documentId: this.getDocumentId(),
-				};
-			},
-		},
-	};
-
 	constructor(private container: IContainer) {}
 
 	public produceTelemetry(
-		eventName: ContainerEventName,
+		eventName: ContainerSystemEventName,
 		payload?: any,
 	): IContainerTelemetry | undefined {
-		const telemetryProducer = this.getProducer(eventName);
-		if (telemetryProducer) {
-			const telemetry = telemetryProducer.produceTelemetry(payload);
-			return telemetry;
+		switch (eventName) {
+			case ContainerSystemEventName.CONNECTED:
+				const telemetry = this.produceConnectedTelemetry(payload);
+				return telemetry;
+			default:
+				return undefined;
 		}
-		return undefined;
 	}
 
-	private getProducer(eventName: ContainerEventName): ContainerEventProducer | undefined {
-		return this.telemetryProducers[eventName];
-	}
+	private produceConnectedTelemetry = (payload?: {
+		clientId: string;
+	}): ContainerConnectedTelemetry => {
+		return {
+			eventName: ContainerTelemetryEventName.CONNECTED,
+			containerId: payload?.clientId ?? this.getContainerId(),
+			documentId: this.getDocumentId(),
+		};
+	};
 
 	private getContainerId(): string | undefined {
 		return this.container.clientId;
@@ -42,6 +47,6 @@ export class ContainerEventTelemetryProducer {
 	}
 }
 
-export interface ContainerEventProducer {
-	produceTelemetry(payload?: any): IContainerTelemetry;
+export interface ContainerTelemetryProducer {
+	(payload?: any): IContainerTelemetry;
 }
