@@ -16,10 +16,10 @@ import {
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	type ContainerSchema,
-	createDOProviderContainerRuntimeFactory,
-	createFluidContainer,
 	type IFluidContainer,
 	type IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";

@@ -3,28 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import {
 	AttachState,
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import {
 	type FluidObject,
 	type IConfigProviderBase,
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-	type ContainerSchema,
-	createDOProviderContainerRuntimeFactory,
-	IFluidContainer,
-	createFluidContainer,
-	IRootDataObject,
-	createServiceAudience,
 	ContainerAttachProps,
+	type ContainerSchema,
+	IFluidContainer,
+	IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import {
 	OdspDocumentServiceFactory,
@@ -39,11 +38,12 @@ import type {
 } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import {
 	OdspClientProps,
-	OdspContainerServices,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
+	OdspContainerServices,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
