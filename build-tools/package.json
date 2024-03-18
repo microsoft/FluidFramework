@@ -17,8 +17,7 @@
 		"build:fast": "fluid-build --worker",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
 		"check:biome": "biome check .",
-		"check:format": "npm run check:biome && npm run check:prettier",
-		"check:prettier": "prettier --check . --cache",
+		"check:format": "npm run check:biome",
 		"ci:build": "npm run build",
 		"ci:eslint": "fluid-build --task eslint",
 		"ci:test": "npm run test:mocha",
@@ -27,9 +26,8 @@
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
-		"format": "npm run format:biome && fluid-build --task format:prettier .",
+		"format": "npm run format:biome",
 		"format:biome": "biome check --apply .",
-		"format:prettier": "prettier --write . --cache",
 		"generate:packageList": "concurrently \"npm:generate:packageList:*\"",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
 		"generate:packageList:internal-dev": "flub list --no-private -g build-tools --feed internal-dev --outFile feeds/internal-dev.txt",
@@ -62,15 +60,11 @@
 		"exclude": [],
 		"include": [],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.5.3",
+		"@biomejs/biome": "^1.6.1",
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
@@ -89,7 +83,6 @@
 		"cz-customizable": "^7.0.0",
 		"eslint": "~8.55.0",
 		"inquirer": "^8.2.5",
-		"prettier": "~3.2.4",
 		"rimraf": "^4.4.1",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.6",
@@ -110,9 +103,7 @@
 			"allowedVersions": {
 				"eslint": "8.51.0"
 			},
-			"ignoreMissing": [
-				"@types/node"
-			]
+			"ignoreMissing": ["@types/node"]
 		},
 		"overrides": {
 			"json5@<1.0.2": "^1.0.2",

@@ -6,21 +6,21 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
 import { makeRandom } from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { expect } from 'chai';
 import { compareStrings } from '../Common.js';
-import {
-	numericUuidEquals,
-	createSessionId,
-	getPositiveDelta,
-	incrementUuid,
-	numericUuidFromStableId,
-	stableIdFromNumericUuid,
-	ensureSessionUuid,
-} from '../id-compressor/NumericUuid.js';
 import { StableId } from '../Identifiers.js';
 import { assertIsStableId, isStableId } from '../UuidUtilities.js';
+import {
+	createSessionId,
+	ensureSessionUuid,
+	getPositiveDelta,
+	incrementUuid,
+	numericUuidEquals,
+	numericUuidFromStableId,
+	stableIdFromNumericUuid,
+} from '../id-compressor/NumericUuid.js';
 import { integerToStableId } from './utilities/IdCompressorTestUtilities.js';
 
 describe('NumericUuid', () => {

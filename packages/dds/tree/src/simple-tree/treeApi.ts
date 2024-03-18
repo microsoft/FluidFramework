@@ -13,12 +13,12 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { TreeNode } from "./types.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { getOrCreateNodeProxy } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
+import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
+import { TreeNode } from "./types.js";
 import { getClassSchema } from "./classSchemaCaching.js";
 
 /**
@@ -30,7 +30,7 @@ import { getClassSchema } from "./classSchemaCaching.js";
  * https://github.com/microsoft/rushstack/issues/1958.
  * @public
  */
-export interface TreeApi {
+export interface TreeNodeApi {
 	/**
 	 * The schema information for this node.
 	 */
@@ -79,9 +79,8 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @public
  */
-export const nodeApi: TreeApi = {
+export const treeNodeApi: TreeNodeApi = {
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {

@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { CodeSpanNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNodes } from "../Render";
-import type { RenderContext } from "../RenderContext";
+import type { CodeSpanNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import { renderNodes } from "../Render.js";
+import type { RenderContext } from "../RenderContext.js";
 
 /**
  * Renders a {@link CodeSpanNode} as HTML.

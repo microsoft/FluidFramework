@@ -9,16 +9,20 @@ import { UsageError } from "@fluidframework/telemetry-utils";
 
 import { EmptyKey, type FieldKey, type MapTree, type TreeValue } from "../core/index.js";
 import {
-	allowsValue as flexSchemaAllowsValue,
+	type CursorWithNode,
+	FlexFieldNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	Multiplicity,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	type CursorWithNode,
 	isFluidHandle,
 	typeNameSymbol,
 	isTreeValue,
 	schemaIsLeaf,
 	type LazyItem,
 	isLazy,
+	allowsValue as flexSchemaAllowsValue,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";
@@ -438,8 +442,29 @@ function shallowCompatibilityTest(
 		return false;
 	}
 
-	// For now, consider all not explicitly typed objects shallow compatible.
-	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
+	if (schema instanceof FlexFieldNodeSchema) {
+		throw Error("Expected inserted value to be a list");
+	}
+	if (schema instanceof FlexMapNodeSchema) {
+		throw Error("Expected inserted value to be a map");
+	}
+
+	assert(schema instanceof FlexObjectNodeSchema, 0x906 /* Expected object schema */);
+
+	// TODO: Improve type inference by making this logic more thorough. Handle at least:
+	// * Types which are strict subsets of other types in the same polymorphic union
+	// * Types which have the same keys but different types for those keys in the polymorphic union
+	// * Types which have the same required fields but different optional fields and enough of those optional fields are populated to disambiguate
+
+	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
+
+	for (const [fieldKey, field] of schema.objectNodeFields.entries()) {
+		if (field.kind.multiplicity === Multiplicity.Single) {
+			if (data[fieldKey] === undefined) {
+				return false;
+			}
+		}
+	}
 
 	return true;
 }

@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { HorizontalRuleNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { HorizontalRuleNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 it("HorizontalRule HTML rendering test", () => {
 	expect(testRender(HorizontalRuleNode.Singleton)).to.equal("<hr>\n");

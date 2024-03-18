@@ -12,11 +12,11 @@ import {
 import { browser } from "../Globals";
 import {
 	type DevToolsInitAcknowledgement,
-	devToolsInitAcknowledgementType,
 	type DevToolsInitMessage,
+	devToolsInitAcknowledgementType,
 	devToolsInitMessageType,
-	extensionViewMessageSource,
 	extensionPopupMessageSource,
+	extensionViewMessageSource,
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";

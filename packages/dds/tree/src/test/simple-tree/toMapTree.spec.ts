@@ -489,11 +489,25 @@ describe("toMapTree", () => {
 
 	it("ambagious unions", () => {
 		const schemaFactory = new SchemaFactory("test");
-		const a = schemaFactory.object("a", {});
-		const b = schemaFactory.object("b", {});
-		const schema = [a, b];
+		const a = schemaFactory.object("a", { x: schemaFactory.string });
+		const b = schemaFactory.object("b", { x: schemaFactory.string });
+		const allowedTypes = [a, b];
 
-		assert.throws(() => nodeDataToMapTree({}, schema), /\["test.a","test.b"]/);
+		assert.throws(() => nodeDataToMapTree({}, allowedTypes), /\["test.a","test.b"]/);
+		assert.throws(
+			() => nodeDataToMapTree({ x: "hello" }, allowedTypes),
+			/\["test.a","test.b"]/,
+		);
+	});
+
+	it("unambagious unions", () => {
+		const schemaFactory = new SchemaFactory("test");
+		const a = schemaFactory.object("a", { a: schemaFactory.string, c: schemaFactory.string });
+		const b = schemaFactory.object("b", { b: schemaFactory.string, c: schemaFactory.string });
+		const allowedTypes = [a, b];
+
+		assert.doesNotThrow(() => nodeDataToMapTree({ a: "hello", c: "world" }, allowedTypes));
+		assert.doesNotThrow(() => nodeDataToMapTree({ b: "hello", c: "world" }, allowedTypes));
 	});
 
 	// Our data serialization format does not support certain numeric values.

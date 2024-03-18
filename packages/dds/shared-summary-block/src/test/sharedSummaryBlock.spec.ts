@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { ISharedSummaryBlock } from "../interfaces.js";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory.js";
 

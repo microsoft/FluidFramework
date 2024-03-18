@@ -4,27 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
-	GarbageCollector,
 	GCNodeType,
+	GarbageCollector,
+	IGCMetadata,
+	IGCStats,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
-	IGCMetadata,
 	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
 	oneDayMs,
 	stableGCVersion,
-	IGCStats,
-	defaultSweepGracePeriodMs,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
@@ -79,7 +79,6 @@ describe("Garbage Collection Stats", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes,
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,

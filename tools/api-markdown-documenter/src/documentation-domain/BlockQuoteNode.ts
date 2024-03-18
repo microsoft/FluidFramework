@@ -6,9 +6,9 @@ import {
 	type DocumentationNode,
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
-} from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { createNodesFromPlainText } from "./Utilities";
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * A quotation block.

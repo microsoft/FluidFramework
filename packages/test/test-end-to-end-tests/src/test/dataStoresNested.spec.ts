@@ -20,6 +20,7 @@ import {
 	ISummarizer,
 	SummaryCollection,
 	ChannelCollectionFactory,
+	ChannelCollection,
 } from "@fluidframework/container-runtime";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -32,12 +33,7 @@ import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
  * unified creation APIs for the nested datastores and the container runtime.
  */
 interface IDataStores extends IFluidDataStoreChannel {
-	_createFluidDataStoreContext(
-		pkg: string[],
-		id: string,
-		props?: any,
-		loadingGroupId?: string,
-	): unknown;
+	createDataStoreContext(pkg: string[], props?: any, loadingGroupId?: string): any;
 }
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
@@ -70,6 +66,8 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	const dataStoreFactory = new ChannelCollectionFactory(
 		[[testObjectFactory.type, Promise.resolve(testObjectFactory)]],
 		async (runtime: IFluidDataStoreChannel) => runtime,
+		(...args: ConstructorParameters<typeof ChannelCollection>) =>
+			new ChannelCollection(...args),
 	);
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -164,10 +162,11 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	it("Basic test", async () => {
 		const dataStores = await initialize();
 
-		const res1 = dataStores._createFluidDataStoreContext([testObjectFactory.type], "test");
-		const res2 = await (res1 as any).realize();
-		res2.makeVisibleAndAttachGraph();
-		const testObject1 = (await dataStores.request({ url: "/test" })).value as TestFluidObject;
+		const context = dataStores.createDataStoreContext([testObjectFactory.type]);
+		const url = `/${context.id}`;
+		const channel = await context.realize();
+		channel.makeVisibleAndAttachGraph();
+		const testObject1 = (await dataStores.request({ url })).value as TestFluidObject;
 		testObject1.root.set("testKey", 100);
 
 		await waitForSummary();
@@ -175,7 +174,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 		await provider.ensureSynchronized();
 
-		const testObject2 = (await dataStores2.request({ url: "/test" })).value as TestFluidObject;
+		const testObject2 = (await dataStores2.request({ url })).value as TestFluidObject;
 		const value = testObject2.root.get("testKey");
 		assert(value === 100, "same value");
 	});

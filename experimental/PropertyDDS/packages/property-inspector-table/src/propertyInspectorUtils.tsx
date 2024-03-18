@@ -7,24 +7,23 @@ import { forEachProperty } from "@fluid-experimental/property-binder";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import {
 	BaseProperty,
-	ContainerProperty,
-	MapProperty,
+	type ContainerProperty,
+	type MapProperty,
 	PropertyFactory,
-	ReferenceArrayProperty,
-	ReferenceMapProperty,
-	ReferenceProperty,
+	type ReferenceArrayProperty,
+	type ReferenceMapProperty,
+	type ReferenceProperty,
 } from "@fluid-experimental/property-properties";
-import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
+import { type BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
+import { createStyles, withStyles } from "@material-ui/core";
 import Tooltip from "@material-ui/core/Tooltip";
 import memoize from "memoize-one";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
-import { createStyles, withStyles } from "@material-ui/core";
-import { EditableValueCell } from "./EditableValueCell";
-import { TypeColumn } from "./TypeColumn";
-import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants";
-import { HashCalculator } from "./HashCalculator";
-import {
+import { EditReferencePath } from "./EditReferencePath.js";
+import { EditableValueCell } from "./EditableValueCell.js";
+import { HashCalculator } from "./HashCalculator.js";
+import type {
 	ColumnRendererType,
 	IExpandedMap,
 	IInspectorRow,
@@ -33,13 +32,14 @@ import {
 	IToTableRowsOptions,
 	IToTableRowsProps,
 	SearchResult,
-} from "./InspectorTableTypes";
-import { NameCell } from "./NameCell";
-import { Utils } from "./typeUtils";
-import { ThemedSkeleton } from "./ThemedSkeleton";
-import { NewDataForm } from "./NewDataForm";
-import { EditReferencePath } from "./EditReferencePath";
-import { getDefaultInspectorTableIcons } from "./icons";
+} from "./InspectorTableTypes.js";
+import { NameCell } from "./NameCell.js";
+import { NewDataForm } from "./NewDataForm.js";
+import { ThemedSkeleton } from "./ThemedSkeleton.js";
+import { TypeColumn } from "./TypeColumn.js";
+import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants.js";
+import { getDefaultInspectorTableIcons } from "./icons.js";
+import { Utils } from "./typeUtils.js";
 
 const {
 	isEnumProperty,

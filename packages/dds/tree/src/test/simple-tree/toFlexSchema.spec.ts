@@ -5,11 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
+import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
-import { brand } from "../../util/index.js";
 import { schemaIsObjectNode } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 
 describe("toFlexSchema", () => {
 	it("smoke test", () => {

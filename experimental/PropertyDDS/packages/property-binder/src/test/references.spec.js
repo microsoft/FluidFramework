@@ -10,33 +10,33 @@
 /* eslint-disable require-jsdoc */
 /* eslint max-nested-callbacks: ["warn", 5] */
 
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import _ from "lodash";
 import { DataBinder } from "../data_binder/dataBinder";
 import { DataBinding } from "../data_binder/dataBinding";
+import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
 import { ModificationContext } from "../data_binder/modificationContext";
+import { RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants";
+import { catchConsoleErrors } from "./catchConsoleError";
+import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 import {
-	registerTestTemplates,
-	ParentTemplate,
-	ChildTemplate,
-	PrimitiveChildrenTemplate,
+	ChildDataBinding,
+	DerivedDataBinding,
+	InheritedChildDataBinding,
+	ParentDataBinding,
+	PrimitiveChildrenDataBinding,
+} from "./testDataBindings";
+import {
 	ArrayContainerTemplate,
+	ChildTemplate,
+	DoubleReferenceParentTemplate,
 	MapContainerTemplate,
 	NodeContainerTemplate,
-	DoubleReferenceParentTemplate,
+	ParentTemplate,
+	PrimitiveChildrenTemplate,
 	ReferenceParentTemplate,
+	registerTestTemplates,
 } from "./testTemplates";
-import {
-	ParentDataBinding,
-	DerivedDataBinding,
-	ChildDataBinding,
-	PrimitiveChildrenDataBinding,
-	InheritedChildDataBinding,
-} from "./testDataBindings";
-import { catchConsoleErrors } from "./catchConsoleError";
-import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
-import { RESOLVE_NO_LEAFS, RESOLVE_NEVER } from "../internal/constants";
-import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
 
 describe("DataBinder", function () {
 	var workspace;

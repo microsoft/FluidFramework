@@ -2,25 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+
 import { Spinner } from "@fluentui/react-components";
+import React from "react";
 
 import {
 	DataVisualization,
+	type FluidObjectNode,
 	GetDataVisualization,
+	type HasContainerKey,
+	type HasFluidObjectId,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-	type HasContainerKey,
-	type HasFluidObjectId,
-	type FluidObjectNode,
 } from "@fluidframework/devtools-core";
 
 import { useMessageRelay } from "../../MessageRelayContext";
 import { type HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
-import { TreeItem } from "./TreeItem";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 const loggingContext = "EXTENSION(HandleView)";
 

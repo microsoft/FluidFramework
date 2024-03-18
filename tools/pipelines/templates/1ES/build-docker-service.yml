@@ -6,103 +6,103 @@
 parameters:
   - name: buildDirectory
     type: string
-  
+
   - name: containerName
     type: string
-  
+
   - name: pack
     type: boolean
     default: false
-  
+
   - name: lint
     type: boolean
     default: false
-  
+
   - name: test
     type: string
     default:
-  
+
   - name: docs
     type: boolean
     default: false
-  
+
   - name: containerBaseDir
     type: string
     default: /home/node/server
-  
+
   - name: buildNumberInPatch
     type: string
     default: true
-  
+
   - name: setVersion
     type: boolean
     default: true
-  
+
   - name: releaseKind
     type: string
     default: docker
-  
+
   - name: tagName
     type: string
     default:
-  
+
   - name: isReleaseGroup
     type: boolean
     default: false
-  
+
   - name: pool
     type: string
     default: Small-1ES
-  
+
   - name: buildToolsVersionToInstall
     type: string
     default: repo
-  
+
   - name: packageManager
     type: string
     default: npm
-  
+
   - name: packageManagerInstallCommand
     type: string
     default: 'npm ci --unsafe-perm'
-  
+
   # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
   # group
   - name: interdependencyRange
     type: string
     default: "^"
-  
+
   # A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
   # in a pipeline stage separate from the build stage.
   - name: checks
     type: object
     default: []
-  
+
   # Any additional build arguments to pass to the docker build command.
   - name: additionalBuildArguments
     type: string
     default: ""
-  
+
   # If the build is running for a test branch
   - name: testBuild
     type: boolean
     default: false
-  
+
   # Whether the docker image should be pushed to our internal Azure Container Registry
   - name: shouldPushDockerImage
     type: boolean
     default: false
-  
+
   # Whether the docker image should be released officially
   - name: shouldReleaseDockerImage
     type: boolean
     default: false
-  
+
   # Whether npm packages should be published
   - name: shouldPublishNpmPackages
     type: boolean
     default: false
-  
+
 trigger: none
 
 resources:
@@ -129,7 +129,10 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
-    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks. 
+      # Tentative workaround for the occasional Credscan failures
+      credscan:
+          batchSize: 4
+    # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
     customBuildTags:
@@ -161,15 +164,16 @@ extends:
           - name: containerTag
             value: $(containerRegistryUrl)/$(buildContainerName):$(containerTagSuffix)
           - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-            - name: latestContainerTagSuffix
-              value: latest
             - name: latestContainerTag
-              value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
-          - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
-            - name: latestContainerTagSuffix
-              value: next
+              value: $(containerRegistryUrl)/$(buildContainerName):latest
+          - ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/next') }}:
             - name: latestContainerTag
-              value: $(containerRegistryUrl)/$(buildContainerName):$(latestContainerTagSuffix)
+              value: $(containerRegistryUrl)/$(buildContainerName):next
+          - ${{ else }}:
+            # In this case we just want latestContainerTag defined so it gets replaced by ADO and Bash tasks don't
+            # complain about "command 'latestContainerTag' not found".
+            - name: latestContainerTag
+              value: ''
         # tag the git repo when we published the docker image if the releaseKind is docker,
         # otherwise tag with the publishing the packages (where the releaseKind is both or npm)
         - ${{ if ne(parameters.releaseKind, 'docker') }}:
@@ -187,7 +191,7 @@ extends:
           hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
           # The SKIPAUTOMATICIMAGESCAN field disables Component Governance Scanning for the Microsoft 1ES pipeline template.
-          # As of now, the underlying technology used by the 1ES pipeline template for scanning docker 
+          # As of now, the underlying technology used by the 1ES pipeline template for scanning docker
           # containers is maintained by Syft and it takes over 1.5 hours to complete scanning which is why we disabled it.
           # We'll need to keep this disabled until 1ES finds a solution for faster image scanning.
           SKIPAUTOMATICIMAGESCAN: true
@@ -480,16 +484,32 @@ extends:
         # TODO: move the image pushes to templateContext.outputs?
         # Push
         - ${{ if eq(parameters.shouldPushDockerImage, true) }}:
-          - task: 1ES.PushContainerImage@1
-            displayName: Docker Push - $(containerTag)
+          # Ugly workaround for the fact that 1ES.PushContainerImage deletes the local image after pushing it,
+          # so we can't have two sequential pushes of the same local image with different remote tags and thus we
+          # need to first run some logic to combine the potential remote tags we want to push into a single string.
+          - task: Bash@3
+            displayName: Generate final list of image tags to push
+            name: ComputeFinalTagList
             inputs:
-              image: $(containerTag)
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                # containerTag should always be pushed
+                FINAL_TAG_LIST=$(containerTag)
+
+                # If latestContainerTag is not empty, it needs to be pushed as well
+                if [ ! -z "$(latestContainerTag)" ] ; then
+                  FINAL_TAG_LIST=${FINAL_TAG_LIST},$(latestContainerTag)
+                fi
+
+                echo "Tags to push: $FINAL_TAG_LIST";
+                echo "##vso[task.setvariable variable=FinalTagList;isOutput=true]$FINAL_TAG_LIST"
+
           - task: 1ES.PushContainerImage@1
-            displayName: Docker Push - $(latestContainerTag)
-            condition: ne(variables.latestContainerTag, '')
+            displayName: Push docker image(s)
             inputs:
-              image: $(containerTag)
-              remoteImage: $(latestContainerTag)
+              localImage: $(containerTag)
+              remoteImage: $(ComputeFinalTagList.FinalTagList)
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.

@@ -2,25 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexTreeSchema,
-	FlexFieldSchema,
-	FlexFieldKind,
 	FieldKinds,
 	FlexAllowedTypes,
-	TreeNodeSchemaBase,
-	FlexTreeNodeSchema,
-	defaultSchemaPolicy,
-	FlexMapNodeSchema,
+	FlexFieldKind,
 	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	TreeNodeSchemaBase,
+	defaultSchemaPolicy,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { TreeNodeSchemaIdentifier } from "../core/index.js";
+import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -221,7 +222,6 @@ export function convertNodeSchema(
 				setFlexSchemaFromClassSchema(schema, out);
 			}
 		}
-		(out as any)[simpleSchemaSymbol] = schema;
 		return out;
 	};
 	schemaMap.set(brand(schema.identifier), { original: schema, toFlex });
@@ -244,5 +244,8 @@ export function setFlexSchemaFromClassSchema(
 	simple: TreeNodeSchema,
 	flex: TreeNodeSchemaBase,
 ): void {
+	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
+	assert(!(simpleSchemaSymbol in flex), "flex schema already marked");
 	(simple as any)[flexSchemaSymbol] = flex;
+	(flex as any)[simpleSchemaSymbol] = simple;
 }

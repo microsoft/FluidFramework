@@ -6,62 +6,62 @@
 import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
-	ChangeFamily,
-	EditBuilder,
-	ChangeRebaser,
-	FieldKindIdentifier,
-	FieldKey,
-	UpPath,
-	TaggedChange,
-	RevisionTag,
-	tagChange,
-	makeAnonChange,
-	ChangeFamilyEditor,
-	FieldUpPath,
-	ChangesetLocalId,
-	isEmptyFieldChanges,
-	RevisionMetadataSource,
-	RevisionInfo,
-	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
-	makeDetachedNodeId,
-	emptyDelta,
-	DeltaFieldMap,
-	DeltaFieldChanges,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeRebaser,
+	ChangesetLocalId,
+	CursorLocationType,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
-	DeltaRoot,
 	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	mapCursorField,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaRoot,
+	EditBuilder,
+	FieldKey,
+	FieldKindIdentifier,
+	FieldUpPath,
 	ITreeCursorSynchronous,
-	CursorLocationType,
+	RevisionInfo,
+	RevisionMetadataSource,
+	RevisionTag,
+	RevisionTagCodec,
+	TaggedChange,
+	UpPath,
+	emptyDelta,
+	isEmptyFieldChanges,
+	makeAnonChange,
+	makeDetachedNodeId,
+	mapCursorField,
+	revisionMetadataSourceFromInfo,
+	tagChange,
 } from "../../core/index.js";
 import {
+	IdAllocationState,
+	IdAllocator,
+	Mutable,
 	brand,
 	deleteFromNestedMap,
 	fail,
 	forEachInNestedMap,
 	getOrAddInMap,
-	IdAllocationState,
-	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	Mutable,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import {
+	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
-	defaultChunkPolicy,
-	FieldBatchCodec,
 	chunkTree,
+	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	CrossFieldManager,
@@ -79,6 +79,7 @@ import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
+import { makeV0Codec } from "./modularChangeCodecs.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -86,7 +87,6 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 } from "./modularChangeTypes.js";
-import { makeV0Codec } from "./modularChangeCodecs.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -247,7 +247,10 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
 				const context = crossFieldTable.fieldToContext.get(fieldChange);
-				assert(context !== undefined, "Should have context for every invalidated field");
+				assert(
+					context !== undefined,
+					0x8cc /* Should have context for every invalidated field */,
+				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
 				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
@@ -1053,7 +1056,7 @@ export function updateRefreshers(
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, "detached node should exist");
+		assert(node !== undefined, 0x8cd /* detached node should exist */);
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
