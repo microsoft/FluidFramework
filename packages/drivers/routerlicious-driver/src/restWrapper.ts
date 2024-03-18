@@ -18,9 +18,9 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
+import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
 import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { QueryStringType, RestWrapper } from "./restWrapperBase.js";

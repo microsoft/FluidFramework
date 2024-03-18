@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IR11sResponse } from "./restWrapper.js";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "./axios.cjs";
+import { IR11sResponse } from "./restWrapper.js";
 
 export abstract class RestWrapper {
 	constructor(
