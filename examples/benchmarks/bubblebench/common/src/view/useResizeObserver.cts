@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/no-empty-file
-describe("Bubblebench", () => {});
+export { default as useResizeObserver } from "use-resize-observer";
