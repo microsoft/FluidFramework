@@ -62,8 +62,7 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 }
 
 /**
- * Returns true if path 1 is above path2 in the file tree.
- *
+ * Returns true if path 1 is a parent path of path2 in the file tree.
  */
 function isPathAbove(path1: string, path2: string): boolean {
 	const relative = path.relative(path1, path2);
