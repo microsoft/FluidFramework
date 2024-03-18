@@ -11,6 +11,8 @@ import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/
 import { isTreeNode } from "../../simple-tree/proxies.js";
 import { hydrate, pretty } from "./utils.js";
 
+// TODO: add set tests with undefined values
+
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
 
@@ -173,13 +175,13 @@ describe("SharedTreeObject", () => {
 	});
 });
 
-describe.only("SharedTreeList", () => {
+describe("SharedTreeList", () => {
 	describe("inserting nodes created by factory", () => {
 		const _ = new SchemaFactory("test");
 		const obj = _.object("Obj", { id: _.string });
 		const schema = _.array(obj);
 
-		it.only("insertAtStart()", () => {
+		it("insertAtStart()", () => {
 			const root = hydrate(schema, [{ id: "B" }]);
 			assert.deepEqual(root, [{ id: "B" }]);
 			const newItem = new obj({ id: "A" });

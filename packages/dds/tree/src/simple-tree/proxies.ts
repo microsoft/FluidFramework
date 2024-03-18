@@ -381,7 +381,9 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(index, value);
 
 			const classSchema = getClassSchemaOrFail(sequenceNode.schema);
-			const cursor = cursorFromFieldData(content, classSchema);
+			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const cursor = cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema);
 
 			modifyChildren(
 				sequenceNode,
@@ -401,7 +403,9 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(0, value);
 
 			const classSchema = getClassSchemaOrFail(sequenceNode.schema);
-			const cursor = cursorFromFieldData(content, classSchema);
+			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const cursor = cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema);
 
 			modifyChildren(
 				sequenceNode,
@@ -422,7 +426,11 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 				this.length,
 				value,
 			);
-			const cursor = cursorFromFieldData(content, getClassSchemaOrFail(sequenceNode.schema));
+
+			const classSchema = getClassSchemaOrFail(sequenceNode.schema);
+			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const cursor = cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema);
 
 			modifyChildren(
 				sequenceNode,

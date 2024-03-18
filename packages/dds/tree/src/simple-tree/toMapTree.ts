@@ -61,20 +61,21 @@ export function cursorFromNodeData(
 	return cursorForMapTreeNode(mappedContent);
 }
 
-type InsertableTreeField = InsertableContent | undefined;
-
 // TODO: this path has an off-by-one issue in terms of layering.
 // Need  to investigate and understand the expected form of output here + unit tests for the field entrypoint.
 /**
- * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
+ * Transforms an input {@link InsertableContent} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  */
 export function cursorFromFieldData(
 	data: InsertableContent,
-	schema: TreeNodeSchema,
+	schema: ImplicitFieldSchema,
 ): CursorWithNode<MapTree> {
-	const mappedContent = nodeDataToMapTree(data, [schema]);
-	return cursorForMapTreeField(mappedContent === undefined ? [] : [mappedContent]);
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
+	const mappedContent = Array.isArray(data)
+		? arrayToMapTreeFields(data, normalizedFieldSchema.allowedTypes)
+		: [nodeDataToMapTree(data, normalizedFieldSchema.allowedTypes)];
+	return cursorForMapTreeField(mappedContent);
 }
 
 /**
@@ -118,27 +119,6 @@ export function nodeDataToMapTree(data: InsertableContent, nodeSchema: AllowedTy
 			}
 		}
 	}
-}
-
-/**
- * Transforms an input {@link TreeField} tree to a {@link MapTree}, unless the s.
- * @param data - The input tree to be converted.
- * @param allowedTypes - TODO
- * @param optionalField - TODO
- */
-export function fieldDataToMapTrees(
-	data: InsertableTreeField,
-	fieldSchema: NormalizedFieldSchema,
-): MapTree | undefined {
-	if (data === undefined) {
-		if (fieldSchema.kind === FieldKind.Required) {
-			fail("`undefined` provided for a required field.");
-		} else {
-			return undefined;
-		}
-	}
-
-	return nodeDataToMapTree(data, fieldSchema.allowedTypes);
 }
 
 function valueToMapTree(
@@ -197,40 +177,39 @@ function mapValueWithFallbacks(
 	}
 }
 
+function arrayToMapTreeFields(data: InsertableContent[], childSchema: AllowedTypes): MapTree[] {
+	const mappedData: MapTree[] = [];
+	for (const child of data) {
+		// We do not support undefined sequence entries.
+		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
+		let childWithFallback = child;
+		if (child === undefined) {
+			if (childSchema.includes(nullSchema)) {
+				childWithFallback = null;
+			} else {
+				throw new TypeError(`Received unsupported array entry value: ${child}.`);
+			}
+		}
+		const mappedChild = nodeDataToMapTree(childWithFallback, childSchema);
+		mappedData.push(mappedChild);
+	}
+
+	return mappedData;
+}
+
 function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTree {
 	const schema = getType(data, typeSet);
 	if (schema.kind !== NodeKind.Array) {
 		fail(`Provided array input is incompatible with schema "${schema.identifier}".`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
-	const childFieldSchema: NormalizedFieldSchema = {
-		kind: FieldKind.Required,
-		allowedTypes: allowedChildTypes,
-	};
+	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
-	const mappedChildren: MapTree[] = [];
-	for (const child of data) {
-		// We do not support undefined sequence entries.
-		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
-		let childWithFallback = child;
-		if (child === undefined) {
-			if (childFieldSchema.allowedTypes.includes(nullSchema)) {
-				childWithFallback = null;
-			} else {
-				throw new TypeError(`Received unsupported array entry value: ${child}.`);
-			}
-		}
-		const mappedChild = fieldDataToMapTrees(childWithFallback, childFieldSchema);
-		if (mappedChild !== undefined) {
-			mappedChildren.push(mappedChild);
-		}
-	}
-
-	const fieldsEntries: [FieldKey, MapTree[]][] =
-		mappedChildren.length === 0 ? [] : [[EmptyKey, mappedChildren]];
+	const mappedData = arrayToMapTreeFields(data, childSchema);
 
 	// Array node children are represented as a single field entry denoted with `EmptyKey`
+	const fieldsEntries: [FieldKey, MapTree[]][] =
+		mappedData.length === 0 ? [] : [[EmptyKey, mappedData]];
 	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
 
 	return {
@@ -245,11 +224,7 @@ function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedType
 		fail(`Provided map input is incompatible with schema "${schema.identifier}".`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
-	const childFieldSchema: NormalizedFieldSchema = {
-		kind: FieldKind.Required,
-		allowedTypes: allowedChildTypes,
-	};
+	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
@@ -257,10 +232,8 @@ function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedType
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const mappedField = fieldDataToMapTrees(value, childFieldSchema);
-			if (mappedField !== undefined) {
-				fields.set(brand(key), [mappedField]);
-			}
+			const mappedField = nodeDataToMapTree(value, childSchema);
+			fields.set(brand(key), [mappedField]);
 		}
 	}
 	return {
@@ -290,7 +263,7 @@ function objectToMapTree(
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, key);
-			const mappedChildTree = fieldDataToMapTrees(fieldValue, fieldSchema);
+			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypes);
 
 			if (mappedChildTree !== undefined) {
 				// If a stable name was provided, we will use it as the key in the output.
@@ -441,6 +414,22 @@ function shallowCompatibilityTest(
 	// Assume record-like object
 	if (schema.kind !== NodeKind.Object) {
 		return false;
+	}
+
+	const fields = schema.info as Record<string, ImplicitFieldSchema>;
+
+	// TODO: Improve type inference by making this logic more thorough. Handle at least:
+	// * Types which are strict subsets of other types in the same polymorphic union
+	// * Types which have the same keys but different types for those keys in the polymorphic union
+	// * Types which have the same required fields but different optional fields and enough of those optional fields are populated to disambiguate
+
+	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
+
+	for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
+		const normalizedFieldSchema = normalizeFieldSchema(fieldSchema);
+		if (data[fieldKey] === undefined && normalizedFieldSchema.kind === FieldKind.Required) {
+			return false;
+		}
 	}
 
 	return true;
