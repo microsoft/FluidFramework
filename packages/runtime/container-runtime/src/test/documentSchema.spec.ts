@@ -14,7 +14,7 @@ describe("Runtime", () => {
 		version: "1.0",
 		refSeq: 0,
 		runtime: {
-			// newBehavior: undefined,
+			// explicitSchemaControl: undefined,
 			compressionLz4: true,
 			idCompressorMode: "delayed",
 			// opGroupingEnabled: undefined,
@@ -23,7 +23,7 @@ describe("Runtime", () => {
 
 	function createController(config: unknown) {
 		return new DocumentsSchemaController(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			false, // existing,
 			config as IDocumentSchemaCurrent, // old schema,
 			true, // lz4
@@ -101,9 +101,9 @@ describe("Runtime", () => {
 		});
 	});
 
-	function testSimpleCases(newBehavior: boolean, existing: boolean) {
+	function testSimpleCases(explicitSchemaControl: boolean, existing: boolean) {
 		const controller = new DocumentsSchemaController(
-			newBehavior,
+			explicitSchemaControl,
 			existing, // existing,
 			undefined, // old schema,
 			true, // lz4
@@ -115,11 +115,11 @@ describe("Runtime", () => {
 		assert(controller.sessionSchema.refSeq === 0, "refSeq");
 		assert(controller.sessionSchema.version === "1.0", "version");
 		assert(
-			controller.sessionSchema.runtime.newBehavior === boolToProp(newBehavior),
-			"newBehavior",
+			controller.sessionSchema.runtime.explicitSchemaControl === boolToProp(explicitSchemaControl),
+			"explicitSchemaControl",
 		);
 
-		if (existing && newBehavior) {
+		if (existing && explicitSchemaControl) {
 			assert(controller.sessionSchema.runtime.compressionLz4 === undefined, "lz4");
 			assert(
 				controller.sessionSchema.runtime.idCompressorMode === undefined,
@@ -137,7 +137,7 @@ describe("Runtime", () => {
 			"opGroupingEnabled",
 		);
 
-		if (!existing || !newBehavior) {
+		if (!existing || !explicitSchemaControl) {
 			controller.onDisconnect();
 			controller.onMessageSent(() => {
 				assert(false, "no messages should be sent!");
@@ -148,7 +148,7 @@ describe("Runtime", () => {
 		const summarySchema = JSON.parse(
 			JSON.stringify(controller.summarizeDocumentSchema(100 /* refSeq */)),
 		);
-		if (!newBehavior) {
+		if (!explicitSchemaControl) {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
 		} else {
 			const expected = {
@@ -156,7 +156,7 @@ describe("Runtime", () => {
 				refSeq: 0,
 				runtime: {
 					// Existing files without any schema are considered to be in legacy mode.
-					newBehavior: boolToProp(!existing),
+					explicitSchemaControl: boolToProp(!existing),
 				},
 			};
 			assert.deepEqual(
@@ -172,29 +172,29 @@ describe("Runtime", () => {
 
 	it("Creation of new document", () => {
 		testSimpleCases(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			false, // existing
 		);
 		testSimpleCases(
-			false, // newBehavior
+			false, // explicitSchemaControl
 			false, // existing
 		);
 	});
 
 	it("Existing document, no schema", () => {
 		testSimpleCases(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			true, // existing
 		);
 		testSimpleCases(
-			false, // newBehavior
+			false, // explicitSchemaControl
 			true, // existing
 		);
 	});
 
 	function testExistingDocNoChangesInSchema(schema: IDocumentSchemaCurrent) {
 		const controller = new DocumentsSchemaController(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			true, // existing,
 			schema, // old schema,
 			true, // lz4
@@ -213,7 +213,7 @@ describe("Runtime", () => {
 		testExistingDocNoChangesInSchema(validConfig);
 		testExistingDocNoChangesInSchema({
 			...validConfig,
-			runtime: { ...validConfig.runtime, newBehavior: true },
+			runtime: { ...validConfig.runtime, explicitSchemaControl: true },
 		});
 	});
 
@@ -223,7 +223,7 @@ describe("Runtime", () => {
 		 * There should be no ops sent.
 		 */
 		const controller = new DocumentsSchemaController(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			true, // existing,
 			undefined, // old schema,
 			false, // lz4
@@ -243,7 +243,7 @@ describe("Runtime", () => {
 		 */
 		const newSchema = controller.summarizeDocumentSchema(100);
 		const controller2 = new DocumentsSchemaController(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			true, // existing,
 			newSchema, // old schema,
 			false, // lz4
@@ -269,7 +269,7 @@ describe("Runtime", () => {
 		 */
 		let schemaChanged = false;
 		const controller3 = new DocumentsSchemaController(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			true, // existing,
 			newSchema, // old schema,
 			false, // lz4
@@ -306,7 +306,7 @@ describe("Runtime", () => {
 		 */
 		schemaChanged = false;
 		const controller4 = new DocumentsSchemaController(
-			true, // newBehavior
+			true, // explicitSchemaControl
 			true, // existing,
 			newSchema, // old schema,
 			false, // lz4

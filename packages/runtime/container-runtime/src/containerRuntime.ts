@@ -476,7 +476,7 @@ export interface IContainerRuntimeOptions {
 	 * When this property is not set (or set to false), runtime operates in legacy mode, where new features (modifying document schema)
 	 * are engaged as they become available, without giving legacy clients any chance to fail predictably.
 	 */
-	readonly controlRuntimeSchema?: boolean;
+	readonly explicitSchemaControl?: boolean;
 }
 
 /**
@@ -794,7 +794,7 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
-			controlRuntimeSchema = false,
+			explicitSchemaControl = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -941,7 +941,7 @@ export class ContainerRuntime
 		const groupedBatchingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
 
 		const documentSchemaController = new DocumentsSchemaController(
-			controlRuntimeSchema, // newBehavior
+			explicitSchemaControl,
 			existing,
 			metadata?.documentSchema,
 			compressionLz4,
@@ -976,7 +976,7 @@ export class ContainerRuntime
 				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableOpReentryCheck,
 				enableGroupedBatching,
-				controlRuntimeSchema,
+				explicitSchemaControl,
 			},
 			containerScope,
 			logger,

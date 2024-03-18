@@ -239,7 +239,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				// 2) if client has 1.3 in production, it will require proper data migration story from old schema to new, and only after
 				//    it is safe to do so, i.e. application with FF 2.0 has been deployed and saturated in the market.
 				// enableRuntimeIdCompressor: "on",
-				controlRuntimeSchema: true,
+				explicitSchemaControl: true,
 				compressionOptions: disabledCompressionConfig,
 			},
 			provideEntryPoint,

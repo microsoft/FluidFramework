@@ -1570,7 +1570,7 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
-				controlRuntimeSchema: false,
+				explicitSchemaControl: false,
 			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
