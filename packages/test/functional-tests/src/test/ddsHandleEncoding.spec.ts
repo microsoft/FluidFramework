@@ -49,9 +49,8 @@ describe("DDS Handle Encoding", () => {
 	 * @returns The list of handles found in the given contents object
 	 */
 	function findAllHandles(contents: unknown) {
-		const envelope = { contents, address: "envelope" };
 		const handlesFound: string[] = [];
-		detectOutboundReferences(envelope, (from, to) => {
+		detectOutboundReferences("envelope", contents, (from, to) => {
 			handlesFound.push(to);
 		});
 		return handlesFound;

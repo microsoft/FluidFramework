@@ -2,21 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
 
-import {
-	Context,
-	loadFluidBuildConfig,
-	Handler,
-	policyHandlers,
-} from "@fluidframework/build-tools";
+import { loadFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
-import { Repository } from "../../library";
+import { Context, Repository } from "../../library";
 
 type policyAction = "handle" | "resolve" | "final";
 

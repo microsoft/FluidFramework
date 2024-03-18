@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as child_process from "child_process";
 import * as fs from "fs";
 import * as glob from "glob";
@@ -212,12 +213,6 @@ export function isSameFileOrDir(f1: string, f2: string) {
 	return isEqual(fs.lstatSync(n1), fs.lstatSync(n2));
 }
 
-export function fatal(error: string): never {
-	const e = new Error(error);
-	(e as any).fatal = true;
-	throw e;
-}
-
 /**
  * Execute a command. If there is an error, print error message and exit process
  *
@@ -228,7 +223,7 @@ export function fatal(error: string): never {
 export async function exec(cmd: string, dir: string, error: string, pipeStdIn?: string) {
 	const result = await execAsync(cmd, { cwd: dir }, pipeStdIn);
 	if (result.error) {
-		fatal(
+		throw new Error(
 			`ERROR: Unable to ${error}\nERROR: error during command ${cmd}\nERROR: ${result.error.message}`,
 		);
 	}

@@ -33,6 +33,19 @@ export enum AttachState {
 }
 
 // @public
+export enum CommitKind {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @public
+export interface CommitMetadata {
+    isLocal: boolean;
+    kind: CommitKind;
+}
+
+// @public
 export enum ConnectionState {
     CatchingUp = 1,
     Connected = 2,
@@ -305,6 +318,19 @@ export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
+// @public
+export interface Revertible {
+    release(): void;
+    revert(): void;
+    readonly status: RevertibleStatus;
+}
+
+// @public
+export enum RevertibleStatus {
+    Disposed = 1,
+    Valid = 0
+}
+
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> {
     constructor(scope: TScope);
@@ -470,6 +496,8 @@ export interface TreeView<in out TRoot> extends IDisposable {
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
     rootChanged(): void;
 }
 

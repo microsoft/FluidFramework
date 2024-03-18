@@ -5,15 +5,15 @@
 
 import Path from "node:path";
 
-import { decodeComponentId, type RPCs } from "@previewjs/api";
+import { type RPCs, decodeComponentId } from "@previewjs/api";
 import { createChromelessWorkspace } from "@previewjs/chromeless";
 import reactPlugin from "@previewjs/plugin-react";
 import { expect } from "chai";
 import chalk from "chalk";
-import { run } from "mocha";
 import { globby } from "globby";
+import { run } from "mocha";
 import { chromium } from "playwright";
-import { simpleGit, pathspec } from "simple-git";
+import { pathspec, simpleGit } from "simple-git";
 
 import { ThemeOption } from "../ThemeHelper";
 

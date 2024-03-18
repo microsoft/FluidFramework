@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { type ITree, SchemaFactory, TreeConfiguration, SharedTree } from "@fluidframework/tree";
-
+import { SharedString } from "@fluidframework/sequence";
+import { type ITree, SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */

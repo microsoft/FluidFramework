@@ -6,13 +6,13 @@
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import type {
-	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import type { IChannelAttributes } from "./storage.js";
 import type { IFluidDataStoreRuntime } from "./dataStoreRuntime.js";
+import type { IChannelAttributes } from "./storage.js";
 
 /**
  * @public

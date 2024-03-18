@@ -24,15 +24,13 @@
 		"build:compile": "npm run build:commonjs",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
-		"check:format": "npm run check:biome && npm run check:prettier",
-		"check:prettier": "prettier --check . --cache",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome && npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check --apply .",
-		"format:prettier": "prettier --write . --cache",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
@@ -72,7 +70,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/async": "^3.2.20",
 		"@types/fs-extra": "^8.1.2",
 		"@types/glob": "^7.2.0",
@@ -86,19 +84,14 @@
 		"@types/shelljs": "^0.8.12",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
-		"prettier": "~3.2.4"
+		"mocha": "^10.2.0"
 	},
 	"engines": {
 		"node": ">=14.17.0"
 	},
 	"pnpm": {
 		"updateConfig": {
-			"ignoreDependencies": [
-				"find-up",
-				"type-fest",
-				"typescript"
-			]
+			"ignoreDependencies": ["find-up", "type-fest", "typescript"]
 		}
 	}
 }

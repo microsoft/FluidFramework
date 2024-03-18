@@ -4,14 +4,14 @@
  */
 
 import {
+	IChannel,
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
-	type IChannel,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { type ISharedMatrix, SharedMatrix } from "./matrix.js";
 import { pkgVersion } from "./packageVersion.js";
-import { SharedMatrix, type ISharedMatrix } from "./matrix.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.

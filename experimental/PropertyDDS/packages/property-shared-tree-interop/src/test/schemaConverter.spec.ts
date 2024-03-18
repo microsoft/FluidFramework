@@ -4,24 +4,24 @@
  */
 
 import { strict as assert } from "assert";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	brand,
-	FieldKinds,
-	fail,
 	Any,
-	TreeNodeSchemaIdentifier,
-	FlexFieldSchema,
 	FieldKey,
+	FieldKinds,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	LeafNodeSchema,
+	TreeNodeSchemaIdentifier,
+	brand,
+	fail,
 	leaf,
 	schemaIsFieldNode,
 	schemaIsLeaf,
-	FlexObjectNodeSchema,
-	FlexMapNodeSchema,
-	LeafNodeSchema,
-	FlexFieldNodeSchema,
 } from "@fluidframework/tree/internal";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,
 	nodePropertyField,

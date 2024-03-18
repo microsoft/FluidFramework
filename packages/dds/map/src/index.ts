@@ -51,8 +51,8 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
-import { MapFactory } from "./map.js";
 import { ISharedMap } from "./interfaces.js";
+import { MapFactory } from "./map.js";
 
 /**
  * {@inheritDoc ISharedMap}
