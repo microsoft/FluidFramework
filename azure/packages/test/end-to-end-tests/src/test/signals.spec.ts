@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "node:assert";
 
-import { Signaler } from "@fluid-experimental/data-objects";
 import {
 	AzureClient,
 	type AzureContainerServices,
@@ -17,10 +16,11 @@ import { type ContainerSchema, type IFluidContainer } from "@fluidframework/flui
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { createAzureClient } from "./AzureClientFactory";
+import { SignalerTestDataObject } from "./TestDataObject";
 import { configProvider } from "./utils";
 
 async function createSignalListenerPromise<T>(
-	signaler: Signaler,
+	signaler: SignalerTestDataObject,
 	signalType: string,
 	expectedPayload: T,
 	name: string = "Signal",
@@ -62,10 +62,10 @@ describe("Fluid Signals", () => {
 	};
 
 	afterEach(async () => {
-		[...connectedContainers].forEach((container) => {
+		for (const container of connectedContainers) {
 			container.disconnect();
 			container.dispose();
-		});
+		}
 		connectedContainers.splice(0, connectedContainers.length);
 	});
 
@@ -76,7 +76,7 @@ describe("Fluid Signals", () => {
 		scopes?: ScopeType[],
 	): Promise<{
 		container: IFluidContainer;
-		signaler: Signaler;
+		signaler: SignalerTestDataObject;
 		services: AzureContainerServices;
 		client: AzureClient;
 		containerId: string;
@@ -84,7 +84,7 @@ describe("Fluid Signals", () => {
 		const client = createAzureClient(user.id, user.name, undefined, config, scopes);
 		const schema: ContainerSchema = {
 			initialObjects: {
-				signaler: Signaler,
+				signaler: SignalerTestDataObject,
 			},
 		};
 		let container: IFluidContainer;
@@ -113,7 +113,7 @@ describe("Fluid Signals", () => {
 			"Container is not attached after attach is called",
 		);
 
-		const signaler = container.initialObjects.signaler as Signaler;
+		const signaler = container.initialObjects.signaler as SignalerTestDataObject;
 		return {
 			client,
 			container,
@@ -172,10 +172,6 @@ describe("Fluid Signals", () => {
 	 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
 	 */
 	it("can send and receive read-only client signals", async function () {
-		if (process.env.TEST_READ !== "true") {
-			// As of 2024-03-12, read-only mode does not work for signals and audience
-			this.skip();
-		}
 		const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(
 			undefined,
 			user1,
