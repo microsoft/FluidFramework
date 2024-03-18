@@ -4,7 +4,7 @@
  */
 
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
-import { ITree, TreeEntry, ITreeEntry } from "@fluidframework/protocol-definitions";
+import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";

@@ -7,28 +7,28 @@
  * @fileoverview Serialized representation of the changes in a repository
  */
 
+import { copy as cloneDeep } from "fastest-json-copy";
+import each from "lodash/each.js";
+import extend from "lodash/extend.js";
+import isEmpty from "lodash/isEmpty.js";
 import isObject from "lodash/isObject.js";
 import isString from "lodash/isString.js";
-import { copy as cloneDeep } from "fastest-json-copy";
-import isEmpty from "lodash/isEmpty.js";
-import extend from "lodash/extend.js";
-import each from "lodash/each.js";
 
 // @ts-ignore
-import { ConsoleUtils, joinPaths, constants } from "@fluid-experimental/property-common";
+import { constants, ConsoleUtils, joinPaths } from "@fluid-experimental/property-common";
 
-import { TypeIdHelper } from "./helpers/typeidHelper.js";
 import { ChangeSetArrayFunctions } from "./changeset_operations/array.js";
+import { TypeIdHelper } from "./helpers/typeidHelper.js";
 
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator.js";
 import { ConflictType } from "./changeset_operations/changesetConflictTypes.js";
 // Add the indexed collection functions into the prototype of the ChangeSet
 import { ChangeSetIndexedCollectionFunctions } from "./changeset_operations/indexedCollection.js";
 import { isEmptyChangeSet } from "./changeset_operations/isEmptyChangeset.js";
-import { isReservedKeyword } from "./isReservedKeyword.js";
-import { Utils } from "./utils.js";
-import { TemplateValidator } from "./templateValidator.js";
 import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes.js";
+import { isReservedKeyword } from "./isReservedKeyword.js";
+import { TemplateValidator } from "./templateValidator.js";
+import { Utils } from "./utils.js";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 

@@ -7,127 +7,127 @@ import { strict as assert } from "assert";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { ISummarizer } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	ITestObjectProvider,
-	ChannelFactoryRegistry,
-	TestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	ITestFluidObject,
-	createSummarizer,
-	summarizeNow,
-	ITestContainerConfig,
-	SummaryInfo,
-} from "@fluidframework/test-utils";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import {
+	ChannelFactoryRegistry,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	SummaryInfo,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+	TestObjectProvider,
+	createSummarizer,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
-	ISharedTree,
-	ITreeCheckout,
-	SharedTreeFactory,
-	TreeContent,
-	CheckoutEvents,
-	createTreeCheckout,
-	SharedTree,
-	InitializeAndSchematizeConfiguration,
-	SharedTreeContentSnapshot,
-	CheckoutFlexTreeView,
-	TreeCheckout,
-} from "../shared-tree/index.js";
-import {
-	buildForest,
-	createMockNodeKeyManager,
-	FlexFieldSchema,
-	jsonableTreeFromFieldCursor,
-	mapTreeFromCursor,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
-	NodeKeyManager,
-	normalizeNewFieldContent,
-	FlexTreeTypedField,
-	jsonableTreeFromForest,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
-	ContextuallyTypedNodeData,
-	mapRootChanges,
-	intoStoredSchema,
-	cursorForMapTreeNode,
-	SchemaBuilderBase,
-	FieldKinds,
-	ViewSchema,
-	defaultSchemaPolicy,
-} from "../feature-libraries/index.js";
-import {
-	moveToDetachedField,
-	mapCursorField,
-	JsonableTree,
-	TreeStoredSchema,
-	rootFieldKey,
-	compareUpPaths,
-	UpPath,
-	clonePath,
-	ChangeFamilyEditor,
-	ChangeFamily,
-	TaggedChange,
-	FieldUpPath,
-	TreeStoredSchemaRepository,
-	initializeForest,
 	AllowedUpdateType,
-	IEditableForest,
-	DeltaVisitor,
-	DetachedFieldIndex,
 	AnnouncedVisitor,
-	applyDelta,
-	makeDetachedFieldIndex,
-	announceDelta,
-	FieldKey,
-	Revertible,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
-	RevisionInfo,
-	RevisionTag,
-	DeltaFieldChanges,
-	DeltaMark,
-	DeltaFieldMap,
-	DeltaRoot,
-	RevisionTagCodec,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	CommitKind,
+	CommitMetadata,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
-	CommitMetadata,
-	CommitKind,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DeltaRoot,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	FieldKey,
+	FieldUpPath,
+	IEditableForest,
+	JsonableTree,
+	Revertible,
+	RevisionInfo,
+	RevisionMetadataSource,
+	RevisionTag,
+	RevisionTagCodec,
+	TaggedChange,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	UpPath,
+	announceDelta,
+	applyDelta,
+	clonePath,
+	compareUpPaths,
+	initializeForest,
+	makeDetachedFieldIndex,
+	mapCursorField,
+	moveToDetachedField,
+	revisionMetadataSourceFromInfo,
+	rootFieldKey,
 } from "../core/index.js";
-import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorToJsonObject,
 	jsonRoot,
 	jsonSchema,
-	singleJsonCursor,
 	leaf,
+	singleJsonCursor,
 } from "../domains/index.js";
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
+import { typeboxValidator } from "../external-utilities/index.js";
+import {
+	ContextuallyTypedNodeData,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeTypedField,
+	NodeKeyManager,
+	SchemaBuilderBase,
+	ViewSchema,
+	buildForest,
+	createMockNodeKeyManager,
+	cursorForMapTreeNode,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	jsonableTreeFromFieldCursor,
+	jsonableTreeFromForest,
+	mapRootChanges,
+	mapTreeFromCursor,
+	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
+	normalizeNewFieldContent,
+} from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import {
+	CheckoutEvents,
+	CheckoutFlexTreeView,
+	ISharedTree,
+	ITreeCheckout,
+	InitializeAndSchematizeConfiguration,
+	SharedTree,
+	SharedTreeContentSnapshot,
+	SharedTreeFactory,
+	TreeCheckout,
+	TreeContent,
+	createTreeCheckout,
+} from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
 import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 
 // Testing utilities
 

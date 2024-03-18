@@ -7,51 +7,51 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
-	IIdCompressor,
-	IIdCompressorCore,
-	SerializedIdCompressorWithNoSession,
-} from "@fluidframework/id-compressor";
-import type {
-	BaseFuzzTestState,
 	AsyncGenerator,
-	IRandom,
 	AsyncReducer,
+	BaseFuzzTestState,
+	IRandom,
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	chainAsync,
-	createFuzzDescribe,
-	defaultOptions,
-	done,
 	ExitBehavior,
 	asyncGeneratorFromArray,
+	chainAsync,
+	createFuzzDescribe,
+	createWeightedAsyncGenerator,
+	defaultOptions,
+	done,
 	interleaveAsync,
 	makeRandom,
 	performFuzzActionsAsync,
 	saveOpsToFile,
 	takeAsync,
-	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { unreachableCase } from "@fluidframework/core-utils";
+import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import type {
+	IIdCompressor,
+	IIdCompressorCore,
+	SerializedIdCompressorWithNoSession,
+} from "@fluidframework/id-compressor";
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
+	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	MockContainerRuntimeFactoryForReconnection,
 } from "@fluidframework/test-runtime-utils";
-import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import type { MinimizationTransform } from "./minification.js";
-import { FuzzTestMinimizer } from "./minification.js";
 import {
-	hasStashData,
 	type Client,
 	type ClientLoadData,
 	type ClientWithStashData,
 	createLoadData,
+	hasStashData,
 } from "./clientLoading.js";
+import type { MinimizationTransform } from "./minification.js";
+import { FuzzTestMinimizer } from "./minification.js";
 
 const isOperationType = <O extends BaseOperation>(type: O["type"], op: BaseOperation): op is O =>
 	op.type === type;

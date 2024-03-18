@@ -14,18 +14,18 @@ import {
 	makeChangeAtomId,
 } from "../../../core/index.js";
 import {
-	RegisterId,
-	OptionalChangeset,
-	RegisterMap,
 	Move,
+	OptionalChangeset,
+	RegisterId,
+	RegisterMap,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { Mutable, brand } from "../../../util/index.js";
 import {
 	ChildChange,
 	Replace,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
+import { Mutable, brand } from "../../../util/index.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 

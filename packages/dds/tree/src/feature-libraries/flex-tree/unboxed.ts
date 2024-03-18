@@ -4,8 +4,8 @@
  */
 
 import { ITreeSubscriptionCursor, inCursorNode } from "../../core/index.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
 import { FieldKinds } from "../default-schema/index.js";
+import { FlexFieldKind } from "../modular-schema/index.js";
 import {
 	FlexAllowedTypes,
 	FlexFieldSchema,
@@ -19,8 +19,8 @@ import {
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
 } from "./flexTreeTypes.js";
-import { makeTree } from "./lazyNode.js";
 import { makeField } from "./lazyField.js";
+import { makeTree } from "./lazyNode.js";
 
 /**
  * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.

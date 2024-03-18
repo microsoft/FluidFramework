@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { type IEvent, type FluidObject } from "@fluidframework/core-interfaces";
-import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type FluidObject, type IEvent } from "@fluidframework/core-interfaces";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 
 /**
  * This type is used as the base generic input to DataObject and PureDataObject.

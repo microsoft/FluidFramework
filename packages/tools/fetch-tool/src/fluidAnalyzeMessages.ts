@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import {
+	ContainerMessageType,
+	IChunkedOp,
+	unpackRuntimeMessage,
+} from "@fluidframework/container-runtime";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { DataStoreMessageType } from "@fluidframework/datastore";
 import {
 	ISequencedDocumentMessage,
 	ISummaryAck,
@@ -13,12 +19,6 @@ import {
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
-import {
-	IChunkedOp,
-	ContainerMessageType,
-	unpackRuntimeMessage,
-} from "@fluidframework/container-runtime";
-import { DataStoreMessageType } from "@fluidframework/datastore";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";

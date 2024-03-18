@@ -14,6 +14,16 @@ import {
 import { leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
+	Chunker,
+	defaultChunkPolicy,
+	tryShapeFromSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
 	Context,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -29,19 +39,9 @@ import {
 	makeFieldBatchCodec,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeShape, UniformChunk } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import { ForestType } from "../../../shared-tree/index.js";
-import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
 import { brand } from "../../../util/index.js";
-import {
-	Chunker,
-	defaultChunkPolicy,
-	tryShapeFromSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import { flexTreeViewWithContent, numberSequenceRootSchema } from "../../utils.js";
 
 const options = {
 	jsonValidator: typeboxValidator,

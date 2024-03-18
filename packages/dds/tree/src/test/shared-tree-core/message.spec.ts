@@ -4,12 +4,12 @@
  */
 
 import { makeCodecFamily } from "../../codec/index.js";
+import { ChangeEncodingContext } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeMessageCodec } from "../../shared-tree-core/messageCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { DecodedMessage } from "../../shared-tree-core/messageTypes.js";
-import { ChangeEncodingContext } from "../../core/index.js";
 import { TestChange } from "../testChange.js";
 import {
 	EncodingTestData,

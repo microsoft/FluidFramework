@@ -4,11 +4,11 @@
  */
 
 import {
-	ISummaryTree,
-	SummaryType,
-	ISummaryBlob,
 	ICommittedProposal,
 	IDocumentAttributes,
+	ISummaryBlob,
+	ISummaryTree,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 
 /**

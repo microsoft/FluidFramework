@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@fluidframework/container-loader";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
 import { AzureClient } from "@fluidframework/azure-client";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
 
+import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";
+import { getLogger, loggerP } from "./logger.js";
 import {
 	FluidSummarizerTelemetryEventNames,
 	createAzureClient,
@@ -19,8 +21,6 @@ import {
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils.js";
-import { getLogger, loggerP } from "./logger.js";
-import { ScenarioRunner } from "./ScenarioRunner.js";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 

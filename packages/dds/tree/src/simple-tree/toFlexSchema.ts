@@ -5,31 +5,30 @@
 
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	FlexTreeSchema,
-	FlexFieldSchema,
-	FlexFieldKind,
 	FieldKinds,
 	FlexAllowedTypes,
-	TreeNodeSchemaBase,
-	FlexTreeNodeSchema,
-	defaultSchemaPolicy,
-	FlexMapNodeSchema,
+	FlexFieldKind,
 	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	TreeNodeSchemaBase,
+	defaultSchemaPolicy,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import { TreeContent } from "../shared-tree/index.js";
+import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	InsertableContent,
 	extractFactoryContent,
 	getSimpleSchema,
 	simpleSchemaSymbol,
 } from "./proxies.js";
-import { cursorFromNodeData } from "./toMapTree.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -39,6 +38,7 @@ import {
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes.js";
+import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
 
 /**

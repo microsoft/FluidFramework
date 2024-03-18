@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import {
 	Adapters,
 	EmptyKey,
 	FieldKey,
-	TreeNodeStoredSchema,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
 	TreeTypeSet,
 	ValueSchema,
-	TreeStoredSchema,
-	StoredSchemaCollection,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
 } from "../../core/index.js";
 import {
+	Assume,
 	MakeNominal,
 	Named,
-	requireAssignableTo,
 	compareSets,
-	oneFromSet,
-	Assume,
 	mapIterable,
+	oneFromSet,
+	requireAssignableTo,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
