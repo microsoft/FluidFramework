@@ -101,7 +101,6 @@ importers:
       '@fluidframework/protocol-definitions': ^3.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-services-client': ^4.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -134,7 +133,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/server-services-client': 4.0.0
       '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       axios: 1.6.2
     devDependencies:
