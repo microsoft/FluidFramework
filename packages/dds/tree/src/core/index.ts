@@ -184,6 +184,7 @@ export {
 	RevisionInfo,
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
+	taggedAtomId,
 } from "./rebase/index.js";
 
 export {

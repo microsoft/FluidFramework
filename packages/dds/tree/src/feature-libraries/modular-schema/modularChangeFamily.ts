@@ -37,6 +37,7 @@ import {
 	mapCursorField,
 	ITreeCursorSynchronous,
 	CursorLocationType,
+	taggedAtomId,
 } from "../../core/index.js";
 import {
 	addToNestedSet,
@@ -728,7 +729,11 @@ export class ModularChangeFamily
 
 			if (rebasedNode !== undefined) {
 				const nodeId =
-					newId ?? taggedBaseId?.change ?? fail("Should not have two undefined IDs");
+					newId ??
+					taggedAtomId(
+						taggedBaseId?.change ?? fail("Should not have two undefined IDs"),
+						taggedBaseId?.revision,
+					);
 
 				setInNestedMap(rebasedNodes, nodeId.revision, nodeId.localId, rebasedNode);
 			}

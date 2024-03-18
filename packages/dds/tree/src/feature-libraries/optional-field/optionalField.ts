@@ -16,6 +16,7 @@ import {
 	areEqualChangeAtomIds,
 	ChangeAtomIdMap,
 	makeChangeAtomId,
+	taggedAtomId,
 } from "../../core/index.js";
 import {
 	Mutable,
@@ -531,10 +532,6 @@ function taggedOptRegister(
 	revision: RevisionTag | undefined,
 ): RegisterId | undefined {
 	return id !== undefined ? taggedRegister(id, revision) : undefined;
-}
-
-export function taggedAtomId(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	return makeChangeAtomId(id.localId, id.revision ?? revision);
 }
 
 export function taggedOptAtomId(
