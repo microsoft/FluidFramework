@@ -4,8 +4,8 @@
  */
 
 // PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
-import { AudienceHistoryTable } from "../../components/AudienceHistoryTable";
-import { testContextDecorator } from "../ScreenshotTestUtilities";
+import { AudienceHistoryTable } from "../../../components/AudienceHistoryTable.js";
+import { testContextDecorator } from "../ScreenshotTestUtilities.js";
 
 export default {
 	title: "AudienceHistoryTable",
