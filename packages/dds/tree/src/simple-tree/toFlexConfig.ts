@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../util/index.js";
 import type { ITreeCursorSynchronous } from "../core/index.js";
 import type { TreeContent } from "../shared-tree/index.js";
+import { fail } from "../util/index.js";
 import { type InsertableContent, extractFactoryContent } from "./proxies.js";
-import { cursorFromNodeData } from "./toMapTree.js";
 import {
 	FieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
-import { TreeConfiguration } from "./tree.js";
 import { toFlexSchema } from "./toFlexSchema.js";
+import { cursorFromNodeData } from "./toMapTree.js";
+import { TreeConfiguration } from "./tree.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.

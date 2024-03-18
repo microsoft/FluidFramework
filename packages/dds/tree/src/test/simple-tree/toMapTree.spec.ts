@@ -14,21 +14,21 @@ import {
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 
+// import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
 	SchemaFactory,
 	booleanSchema,
 	handleSchema,
-	numberSchema,
 	nullSchema,
+	numberSchema,
 	stringSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactory.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-// import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { InsertableContent } from "../../simple-tree/proxies.js";
 
 const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = brand(booleanSchema.identifier);
 const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(handleSchema.identifier);

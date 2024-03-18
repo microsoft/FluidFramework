@@ -34,7 +34,7 @@ export {
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./flexNode.js";
 export { treeNodeApi, TreeNodeApi, TreeNodeEvents } from "./treeApi.js";
-export { toFlexConfig } from "./toFlexSchema.js";
+export { toFlexConfig } from "./toFlexConfig.js";
 export {
 	ObjectFromSchemaRecordUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,

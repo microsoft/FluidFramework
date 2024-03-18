@@ -13,30 +13,30 @@ import {
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	type LazyItem,
 	Multiplicity,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
+	allowsValue as flexSchemaAllowsValue,
 	isFluidHandle,
-	typeNameSymbol,
+	isLazy,
 	isTreeValue,
 	schemaIsLeaf,
-	type LazyItem,
-	isLazy,
-	allowsValue as flexSchemaAllowsValue,
+	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";
-import {
-	FieldKind,
-	FieldSchema,
-	type TreeNodeSchema,
-	type ImplicitAllowedTypes,
-	NodeKind,
-	type AllowedTypes,
-	type ImplicitFieldSchema,
-	type FieldProps,
-} from "./schemaTypes.js";
 import { nullSchema } from "./schemaFactory.js";
+import {
+	type AllowedTypes,
+	FieldKind,
+	type FieldProps,
+	FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	NodeKind,
+	type TreeNodeSchema,
+} from "./schemaTypes.js";
 import { cachedFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 
 /**

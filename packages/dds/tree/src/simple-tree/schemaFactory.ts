@@ -17,6 +17,7 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { getClassSchema } from "./classSchemaCaching.js";
 import {
 	arrayNodePrototypeProperties,
 	createNodeProxy,
@@ -28,6 +29,11 @@ import {
 import {
 	AllowedTypes,
 	FieldKind,
+	type FieldProps,
+	FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
 	NodeFromSchema,
@@ -40,16 +46,10 @@ import {
 	TreeNodeSchemaNonClass,
 	WithType,
 	type,
-	type FieldProps,
-	type ImplicitFieldSchema,
-	type InsertableObjectFromSchemaRecord,
-	type ImplicitAllowedTypes,
-	FieldSchema,
 } from "./schemaTypes.js";
 import { setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
-import { getClassSchema } from "./classSchemaCaching.js";
 
 /**
  * Instances of this class are schema for leaf nodes.

@@ -13,13 +13,13 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { getClassSchema } from "./classSchemaCaching.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { getOrCreateNodeProxy } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
-import { getClassSchema } from "./classSchemaCaching.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.

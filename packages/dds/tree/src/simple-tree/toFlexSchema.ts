@@ -22,6 +22,7 @@ import {
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
+import { getClassSchema, simpleSchemaSymbol } from "./classSchemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -30,7 +31,6 @@ import {
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes.js";
-import { getClassSchema, simpleSchemaSymbol } from "./classSchemaCaching.js";
 
 interface SchemaInfo {
 	toFlex: () => FlexTreeNodeSchema;

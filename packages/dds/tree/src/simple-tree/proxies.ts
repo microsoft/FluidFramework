@@ -35,27 +35,27 @@ import {
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
+import { getClassSchema, getClassSchemaOrFail } from "./classSchemaCaching.js";
 import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "./flexNode.js";
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 import {
+	FieldSchema,
+	type ImplicitFieldSchema,
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
-	type TreeNodeSchema as TreeNodeSchemaClass,
 	type TreeNodeSchema,
-	type ImplicitFieldSchema,
-	FieldSchema,
+	type TreeNodeSchema as TreeNodeSchemaClass,
 } from "./schemaTypes.js";
+import { getFlexSchema } from "./toFlexSchema.js";
 import {
+	type NormalizedFieldSchema,
 	cursorFromFieldData,
 	cursorFromNodeData,
 	normalizeFieldSchema,
-	type NormalizedFieldSchema,
 } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
-import { getClassSchema, getClassSchemaOrFail } from "./classSchemaCaching.js";
-import { getFlexSchema } from "./toFlexSchema.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.
