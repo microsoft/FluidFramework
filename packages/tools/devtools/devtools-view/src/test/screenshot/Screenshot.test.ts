@@ -15,7 +15,7 @@ import { run } from "mocha";
 import { chromium } from "playwright";
 import { pathspec, simpleGit } from "simple-git";
 
-import { ThemeOption } from "../ThemeHelper";
+import { ThemeOption } from "../../ThemeHelper.js";
 
 /**
  * Viewport configuration for running a screenshot test.
@@ -126,7 +126,7 @@ async function checkScreenshotDiff(screenshotFilePath: string): Promise<boolean>
  * etc.).
  */
 async function generateTestSuite(): Promise<void> {
-	const storiesPathPatterns = ["src/screenshot-tests/stories/*.tsx"];
+	const storiesPathPatterns = ["src/test/screenshot/stories/*.tsx"];
 	const screenshotsDirectory = "__screenshots__";
 
 	// Initialize chromium browser instance for test suite
