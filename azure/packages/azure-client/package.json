@@ -71,7 +71,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/server-services-client": "^4.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"axios": "^0.26.0"
+		"axios": "^0.28.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",

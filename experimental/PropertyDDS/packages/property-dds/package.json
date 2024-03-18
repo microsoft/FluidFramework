@@ -48,7 +48,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"axios": "^0.26.0",
+		"axios": "^0.28.0",
 		"buffer": "^6.0.3",
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",

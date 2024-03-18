@@ -81,7 +81,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
 		"@fluidframework/view-interfaces": "workspace:~",
-		"axios": "^0.26.0",
+		"axios": "^0.28.0",
 		"buffer": "^6.0.3",
 		"express": "^4.16.3",
 		"isomorphic-fetch": "^3.0.0",
