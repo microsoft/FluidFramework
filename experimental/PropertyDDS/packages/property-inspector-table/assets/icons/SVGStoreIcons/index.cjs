@@ -6,7 +6,7 @@
 const context = require.context("./", false, /\.svg$/i);
 
 // keys() returns all possible matching targets within "./" that don't include sub-directories and have an svg extension.
-export default context.keys().reduce((svgs, currentSvg) => {
+module.exports = context.keys().reduce((svgs, currentSvg) => {
 	// This takes just the file name without the extension from the current svg.
 	const keyName = /^\.\/(.*)\.svg$/.exec(currentSvg)[1];
 
