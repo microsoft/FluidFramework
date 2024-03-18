@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-test-utils",
-	"version": "3.0.0",
+	"version": "3.0.1",
 	"description": "Fluid server test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
