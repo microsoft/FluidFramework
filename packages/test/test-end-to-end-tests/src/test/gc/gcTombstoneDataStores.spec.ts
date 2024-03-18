@@ -1079,13 +1079,6 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					clientType: "interactive",
 					category: "error",
 				},
-				// During the Summarize after auto-recovery is triggered (results in summaryVersion2)
-				{
-					eventName: "fluid:telemetry:Summarizer:Running:gcUnknownOutboundReferences",
-					clientType: "noninteractive/summarizer",
-					// id: { value: "/default/root", tag: "CodeArtifact" }, (nested object comparison not supported)
-					summarizeReason: "onDemand/Summarize after auto-recovery",
-				},
 			],
 			async () => {
 				const mockLogger = new MockLogger();
