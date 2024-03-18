@@ -7,12 +7,12 @@
  * @fileoverview Tests for the array changeset operations
  */
 
+import { copy as cloneDeep } from "fastest-json-copy";
 import isEmpty from "lodash/isEmpty.js";
 import isNumber from "lodash/isNumber.js";
-import { copy as cloneDeep } from "fastest-json-copy";
 import range from "lodash/range.js";
 
-import { expect, assert } from "chai";
+import { assert, expect } from "chai";
 import { ChangeSet, SerializedChangeSet } from "../changeset.js";
 
 describe("Array Operations", function () {

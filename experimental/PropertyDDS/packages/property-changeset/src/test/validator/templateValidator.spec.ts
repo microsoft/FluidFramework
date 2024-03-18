@@ -18,9 +18,9 @@ import { expect } from "chai";
 
 import { constants } from "@fluid-experimental/property-common";
 import semver from "semver";
-import { SchemaValidator } from "../schemaValidator.js";
 import { TemplateValidator } from "../../templateValidator.js";
 import type { SchemaValidationResult } from "../../validationResultBuilder.js";
+import { SchemaValidator } from "../schemaValidator.js";
 import {
 	badInvalidSemverInTypeid,
 	badMissingSemverInTypeid,

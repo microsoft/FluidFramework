@@ -2,37 +2,32 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import {
-	EditManager,
-	SharedTreeCore,
-	Summarizable,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../../shared-tree-core/index.js";
 import {
 	AllowedUpdateType,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	rootFieldKey,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	DefaultEditBuilder,
 	FieldKinds,
@@ -41,10 +36,16 @@ import {
 	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries/index.js";
+import {
+	EditManager,
+	SharedTreeCore,
+	Summarizable,
+	SummaryElementParser,
+	SummaryElementStringifier,
+} from "../../shared-tree-core/index.js";
+import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
 import { brand } from "../../util/index.js";
 import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
-import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import { leaf } from "../../domains/index.js";
 import { TestSharedTreeCore } from "./utils.js";
 
 describe("SharedTreeCore", () => {

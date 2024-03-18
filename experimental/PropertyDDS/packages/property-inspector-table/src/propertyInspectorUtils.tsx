@@ -15,14 +15,13 @@ import {
 	ReferenceProperty,
 } from "@fluid-experimental/property-properties";
 import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
+import { createStyles, withStyles } from "@material-ui/core";
 import Tooltip from "@material-ui/core/Tooltip";
 import memoize from "memoize-one";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
-import { createStyles, withStyles } from "@material-ui/core";
+import { EditReferencePath } from "./EditReferencePath";
 import { EditableValueCell } from "./EditableValueCell";
-import { TypeColumn } from "./TypeColumn";
-import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants";
 import { HashCalculator } from "./HashCalculator";
 import {
 	ColumnRendererType,
@@ -35,11 +34,12 @@ import {
 	SearchResult,
 } from "./InspectorTableTypes";
 import { NameCell } from "./NameCell";
-import { Utils } from "./typeUtils";
-import { ThemedSkeleton } from "./ThemedSkeleton";
 import { NewDataForm } from "./NewDataForm";
-import { EditReferencePath } from "./EditReferencePath";
+import { ThemedSkeleton } from "./ThemedSkeleton";
+import { TypeColumn } from "./TypeColumn";
+import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants";
 import { getDefaultInspectorTableIcons } from "./icons";
+import { Utils } from "./typeUtils";
 
 const {
 	isEnumProperty,

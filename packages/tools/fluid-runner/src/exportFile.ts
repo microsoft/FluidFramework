@@ -4,16 +4,16 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IFluidFileConverter } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
-import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
 /* eslint-disable import/no-internal-modules */
 import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
+import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils";
 /* eslint-enable import/no-internal-modules */
 
 /**

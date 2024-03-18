@@ -3,31 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeFn,
+	IExperimentalIncrementalSummaryContext,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
-	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-	createChildLogger,
 	ITelemetryLoggerExt,
 	ThresholdCounter,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import {
 	ChannelServiceEndpoints,
-	createChannelServiceEndpoints,
 	IChannelContext,
+	createChannelServiceEndpoints,
 	loadChannel,
 	loadChannelFactoryAndAttributes,
 	summarizeChannelAsync,

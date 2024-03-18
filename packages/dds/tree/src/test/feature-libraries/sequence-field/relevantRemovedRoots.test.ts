@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag } from "../../utils.js";
 import {
 	ChangeAtomId,
 	DeltaDetachedNodeId,
@@ -14,7 +13,8 @@ import {
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
+import { mintRevisionTag } from "../../utils.js";
+import { MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };

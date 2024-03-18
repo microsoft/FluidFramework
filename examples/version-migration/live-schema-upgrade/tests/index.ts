@@ -5,11 +5,11 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { renderDiceRoller } from "../src/view.js";
 import {
 	DiceRollerContainerRuntimeFactory,
 	IDiceRollerAppModel,
 } from "../src/modelVersion1/containerCode.js";
+import { renderDiceRoller } from "../src/view.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container

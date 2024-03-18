@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { runWithRetry } from "@fluidframework/driver-utils";
 import type * as git from "@fluidframework/gitresources";
 import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { runWithRetry } from "@fluidframework/driver-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IGitManager } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
 import { IWholeFlatSnapshot } from "./contracts";
+import { IR11sResponse } from "./restWrapper";
+import { IGitManager } from "./storageContracts";
 
 export class RetriableGitManager implements IGitManager {
 	constructor(

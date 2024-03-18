@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 
-import { type HasContainerKey, type FluidObjectTreeNode } from "@fluidframework/devtools-core";
+import { type FluidObjectTreeNode, type HasContainerKey } from "@fluidframework/devtools-core";
 
 import { type DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";

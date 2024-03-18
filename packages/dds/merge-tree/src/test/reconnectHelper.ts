@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeDeltaOp } from "../ops.js";
 import { SegmentGroup } from "../index.js";
-import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
+import { IMergeTreeDeltaOp } from "../ops.js";
+import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = (typeof ClientIds)[number];

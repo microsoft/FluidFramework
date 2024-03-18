@@ -5,16 +5,16 @@
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
+	ISummarizeResult,
+	ISummaryTreeWithStats,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	ISummarizeResult,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { IRefreshSummaryResult } from "../summary/index.js";
-import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions.js";
+import { GCVersion, IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
 

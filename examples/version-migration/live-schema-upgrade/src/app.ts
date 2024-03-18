@@ -4,18 +4,18 @@
  */
 
 import { ModelLoader } from "@fluid-example/example-utils";
+import { assert } from "@fluidframework/core-utils";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
-	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { assert } from "@fluidframework/core-utils";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1.js";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2.js";
-import { renderDiceRoller } from "./view.js";
 import { IDiceRollerAppModel } from "./interfaces.js";
+import { renderDiceRoller } from "./view.js";
 
 /**
  * Get the latest version of the model.

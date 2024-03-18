@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
 /**
  * @fileoverview Collection class definition

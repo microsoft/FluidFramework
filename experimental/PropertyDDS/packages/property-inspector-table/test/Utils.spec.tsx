@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import {
 	defaultInspectorTableChildGetter,
 	defaultInspectorTableNameGetter,
@@ -14,20 +14,20 @@ import { IColumns, IInspectorRow, IInspectorSearchMatch } from "../src/Inspector
 import { search, showNextResult } from "../src/utils";
 
 import {
+	dummyChild,
+	expandAll,
+	fillExpanded,
+	sanitizePath,
+	toTableRows,
+} from "../src/propertyInspectorUtils";
+import { uniqueIdentifier } from "./common";
+import {
 	findRow,
+	getAllMatchesFromRows,
 	getExpandedMap,
 	getHash,
 	initializeWorkspace,
-	getAllMatchesFromRows,
 } from "./testUtils";
-import {
-	toTableRows,
-	dummyChild,
-	fillExpanded,
-	expandAll,
-	sanitizePath,
-} from "../src/propertyInspectorUtils";
-import { uniqueIdentifier } from "./common";
 
 describe("InspectorTable", () => {
 	let workspace;

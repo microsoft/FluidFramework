@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	readAndParse,
 	blobHeadersBlobName as blobNameForBlobHeaders,
+	readAndParse,
 } from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
@@ -15,9 +15,9 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { IGCMetadata } from "../gc/index.js";
 import { IDocumentSchema } from "./documentSchema.js";

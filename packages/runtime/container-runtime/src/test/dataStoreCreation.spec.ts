@@ -2,26 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
+	CreateChildSummarizerNodeFn,
+	CreateSummarizerNodeSource,
+	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	FluidDataStoreRegistryEntry,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
-	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
+import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
 describe("Data Store Creation Tests", () => {
