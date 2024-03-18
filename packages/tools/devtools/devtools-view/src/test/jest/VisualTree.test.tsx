@@ -18,10 +18,10 @@ import {
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { MessageRelayContext } from "../MessageRelayContext";
-import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../components";
-import { MockMessageRelay } from "./MockMessageRelay";
+import { userEvent } from "@testing-library/user-event";
+import { MessageRelayContext } from "../../MessageRelayContext.js";
+import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../../components/index.js";
+import { MockMessageRelay } from "../utils/index.js";
 
 const testContainerKey = "test-container-key";
 const testFluidObjectId = "test-fluid-object-id";
