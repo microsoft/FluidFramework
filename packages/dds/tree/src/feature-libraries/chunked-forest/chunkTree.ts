@@ -5,27 +5,27 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	FieldKey,
-	TreeFieldStoredSchema,
-	ITreeCursorSynchronous,
-	mapCursorFields,
-	TreeNodeSchemaIdentifier,
-	Value,
-	TreeValue,
-	TreeStoredSchemaSubscription,
 	CursorLocationType,
-	TreeStoredSchema,
-	StoredSchemaCollection,
+	FieldKey,
+	ITreeCursorSynchronous,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchema,
+	TreeStoredSchemaSubscription,
+	TreeValue,
+	Value,
+	mapCursorFields,
 } from "../../core/index.js";
-import { FullSchemaPolicy } from "../modular-schema/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
+import { FullSchemaPolicy } from "../modular-schema/index.js";
 import { Multiplicity } from "../multiplicity.js";
-import { TreeChunk, tryGetChunk } from "./chunk.js";
 import { BasicChunk } from "./basicChunk.js";
-import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import { TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
+import { FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
 export interface Disposable {
 	/**

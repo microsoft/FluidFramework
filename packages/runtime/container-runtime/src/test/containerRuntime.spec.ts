@@ -4,18 +4,31 @@
  */
 
 import { strict as assert } from "assert";
-import { createSandbox, SinonFakeTimers, useFakeTimers } from "sinon";
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IErrorBase,
+	IResponse,
+} from "@fluidframework/core-interfaces";
+import {
+	IDocumentStorageService,
+	ISnapshot,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import {
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 	ISummaryTree,
 	MessageType,
-	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
 	FluidDataStoreRegistryEntry,
@@ -28,32 +41,20 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import {
-	createChildLogger,
 	IFluidErrorBase,
+	MockLogger,
+	createChildLogger,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
-	MockLogger,
 } from "@fluidframework/telemetry-utils";
 import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import {
-	IErrorBase,
-	IResponse,
-	FluidObject,
-	ConfigTypes,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
-import {
-	IDocumentStorageService,
-	ISnapshot,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 import { ChannelCollection } from "../channelCollection.js";
 import {
 	CompressionAlgorithms,
@@ -64,8 +65,8 @@ import {
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
-	type RecentlyAddedContainerRuntimeMessageDetails,
 	type OutboundContainerRuntimeMessage,
+	type RecentlyAddedContainerRuntimeMessageDetails,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
@@ -2195,10 +2196,7 @@ describe("Runtime", () => {
 						await containerRuntime.getAliasedDataStoreEntryPoint("missingDataStore");
 					},
 					(err: IFluidErrorBase) => {
-						assert(
-							err.message === "groupId should be present to fetch snapshot",
-							"groupId not specified when the snapshot was omitted",
-						);
+						validateAssertionError(err, "groupId should be present to fetch snapshot");
 						return true;
 					},
 				);

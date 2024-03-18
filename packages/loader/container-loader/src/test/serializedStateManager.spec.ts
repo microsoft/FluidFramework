@@ -4,14 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IVersion,
-	ISnapshotTree,
-	MessageType,
-	ISequencedDocumentMessage,
-	IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,8 +13,14 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
-import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	IDocumentAttributes,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	IVersion,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IPendingContainerState } from "../container.js";
 import { SerializedStateManager } from "../serializedStateManager.js";
 
@@ -173,30 +173,6 @@ describe("serializedStateManager", () => {
 			(error: Error) =>
 				errorFn(error, "Can't get pending local state unless offline load is enabled"),
 			"container can get local state with offline load disabled",
-		);
-	});
-
-	it("can't get pending local state when there is no base snapshot", async () => {
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			undefined,
-			logger,
-			storageAdapter,
-			true,
-		);
-
-		await assert.rejects(
-			async () =>
-				serializedStateManager.getPendingLocalStateCore(
-					{
-						notifyImminentClosure: false,
-					},
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				),
-			(error: Error) => errorFn(error, "no base data"),
-			"container can get local state with no base snapshot",
 		);
 	});
 

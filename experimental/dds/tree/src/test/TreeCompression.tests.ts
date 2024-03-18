@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { expect, assert } from 'chai';
+import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { walkTree } from '../EditUtilities.js';
-import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor/index.js';
 import {
 	Definition,
 	DetachedSequenceId,
 	InternedStringId,
-	isDetachedSequenceId,
 	NodeId,
 	OpSpaceNodeId,
 	TraitLabel,
+	isDetachedSequenceId,
 } from '../Identifiers.js';
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
-import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
 import { RevisionView } from '../RevisionView.js';
 import { MutableStringInterner } from '../StringInterner.js';
 import { InterningTreeCompressor } from '../TreeCompressor.js';
+import { IdCompressor, createSessionId, isFinalId, isLocalId } from '../id-compressor/index.js';
+import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**

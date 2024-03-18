@@ -5,22 +5,22 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
 import {
 	ConsensusCallback,
 	ConsensusResult,
 	IConsensusOrderedCollection,
-	IOrderedCollection,
 	IConsensusOrderedCollectionEvents,
+	IOrderedCollection,
 } from "./interfaces.js";
 
 const snapshotFileNameData = "header";

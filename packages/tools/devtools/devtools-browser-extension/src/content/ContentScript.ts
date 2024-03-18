@@ -4,15 +4,15 @@
  */
 
 import {
-	devtoolsMessageSource,
 	type ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core";
 
 import { browser, window } from "../Globals";
 import {
-	extensionViewMessageSource,
 	extensionPopupMessageSource,
+	extensionViewMessageSource,
 	relayMessageToPort,
 } from "../messaging";
 import {

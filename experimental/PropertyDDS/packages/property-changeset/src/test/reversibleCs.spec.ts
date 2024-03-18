@@ -9,7 +9,7 @@
 
 import { copy as cloneDeep } from "fastest-json-copy";
 
-import { ChangeSet } from "../changeset";
+import { ChangeSet } from "../changeset.js";
 
 describe("Reversible ChangeSets", function () {
 	it("Inverting a string map insert", () => {

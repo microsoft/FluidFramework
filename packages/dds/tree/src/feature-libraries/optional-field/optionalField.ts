@@ -5,45 +5,45 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TaggedChange,
+	ChangeAtomId,
+	ChangeAtomIdMap,
 	ChangesetLocalId,
-	RevisionTag,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaMark,
-	DeltaDetachedNodeId,
-	DeltaDetachedNodeChanges,
-	ChangeAtomId,
+	RevisionTag,
+	TaggedChange,
 	areEqualChangeAtomIds,
-	ChangeAtomIdMap,
 	makeChangeAtomId,
 } from "../../core/index.js";
 import {
-	Mutable,
 	IdAllocator,
+	Mutable,
 	SizedNestedMap,
+	deleteFromNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
-	deleteFromNestedMap,
 } from "../../util/index.js";
-import {
-	ToDelta,
-	FieldChangeRebaser,
-	NodeChangeComposer,
-	NodeChangeInverter,
-	NodeChangeRebaser,
-	NodeChangeset,
-	FieldEditor,
-	NodeExistenceState,
-	FieldChangeHandler,
-	RelevantRemovedRootsFromChild,
-	NodeChangePruner,
-} from "../modular-schema/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
-	RegisterId,
-	OptionalChangeset,
-	Move,
+	FieldChangeHandler,
+	FieldChangeRebaser,
+	FieldEditor,
+	NodeChangeComposer,
+	NodeChangeInverter,
+	NodeChangePruner,
+	NodeChangeRebaser,
+	NodeChangeset,
+	NodeExistenceState,
+	RelevantRemovedRootsFromChild,
+	ToDelta,
+} from "../modular-schema/index.js";
+import {
 	ChildChange,
+	Move,
+	OptionalChangeset,
+	RegisterId,
 	Replace,
 } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
@@ -450,7 +450,7 @@ function getComposedReplaceDst(
 ): ChangeAtomId {
 	const dst1 = taggedOptAtomId(change1?.dst, revision1);
 	if (change2.valueReplace === undefined) {
-		assert(dst1 !== undefined, "Both replace replaces should not be undefined");
+		assert(dst1 !== undefined, 0x8ce /* Both replace replaces should not be undefined */);
 		return getIdAfterMoves(dst1, change2.moves);
 	}
 
@@ -460,7 +460,10 @@ function getComposedReplaceDst(
 		(change2.valueReplace.src !== undefined &&
 			areEqualRegisterIds(taggedRegister(change2.valueReplace.src, revision2), dst1))
 	) {
-		assert(change2.valueReplace !== undefined, "Both replace replaces should not be undefined");
+		assert(
+			change2.valueReplace !== undefined,
+			0x8cf /* Both replace replaces should not be undefined */,
+		);
 		return taggedAtomId(change2.valueReplace.dst, revision2);
 	} else {
 		return getIdAfterMoves(dst1, change2.moves);

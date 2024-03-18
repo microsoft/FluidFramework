@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
+	FetchSource,
+	FiveDaysMs,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	ISummaryContext,
-	LoaderCachingPolicy,
-	FiveDaysMs,
-	FetchSource,
 	ISnapshot,
 	ISnapshotFetchOptions,
+	ISummaryContext,
+	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";

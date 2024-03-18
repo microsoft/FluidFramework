@@ -111,6 +111,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get routeContext(): IFluidHandleContext;
     // (undocumented)
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
     submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown): void;

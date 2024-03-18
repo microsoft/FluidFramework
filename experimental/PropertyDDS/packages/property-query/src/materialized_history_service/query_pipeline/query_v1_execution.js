@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const IndexUtils = require("./index_utils");
 const FilterInMemoryByType = require("./filtering/in_memory_by_type");
 const FilterInMemoryByValue = require("./filtering/in_memory_by_value");

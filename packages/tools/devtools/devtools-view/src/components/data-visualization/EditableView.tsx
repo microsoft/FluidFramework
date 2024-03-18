@@ -26,8 +26,8 @@ import {
 
 import { type Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
-import { TreeHeader } from "./TreeHeader";
 import { type HasLabel } from "./CommonInterfaces";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * Input to {@link EditableView}

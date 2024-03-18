@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
@@ -25,6 +26,8 @@ import {
 	indentString,
 	isDependencyUpdateType,
 	npmCheckUpdates,
+	// eslint-disable-next-line import/no-deprecated
+	MonoRepoKind,
 } from "../../library";
 import { ReleaseGroup } from "../../releaseGroups";
 // eslint-disable-next-line import/no-internal-modules
@@ -136,6 +139,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
+		// eslint-disable-next-line import/no-deprecated
 		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const { confirmed } = await prompts({
@@ -244,7 +248,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];

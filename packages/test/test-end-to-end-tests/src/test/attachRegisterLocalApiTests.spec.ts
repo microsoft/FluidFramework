@@ -17,9 +17,34 @@ import {
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { SharedObject } from "@fluidframework/shared-object-base";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import {
+	IContainerRuntimeBase,
+	type IFluidDataStoreContext,
+} from "@fluidframework/runtime-definitions";
 import type { ISharedMap } from "@fluidframework/map";
 import { describeCompat } from "@fluid-private/test-version-utils";
+
+/*
+Context no longer provides observability point to when context changes its attach states
+Instead context notifies attached channel only.
+Tests here want to know inner details of context, thus this workaround to achive old behavior by reaching out
+into guts of the context implementation.
+If this stops working in the future, I'd advice to get rid of tests that need to know inner details of context
+*/
+function onAttachChange(
+	context: IFluidDataStoreContext,
+	stateToNotify: AttachState.Attaching | AttachState.Attached,
+	callback: () => void,
+) {
+	const oldApi = (context as any).setAttachState.bind(context);
+
+	(context as any).setAttachState = (arg) => {
+		oldApi(arg);
+		if (arg === stateToNotify) {
+			callback();
+		}
+	};
+}
 
 // REVIEW: enable compat testing?
 describeCompat(
@@ -717,7 +742,7 @@ describeCompat(
 			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			let dataStoreContextAttachState = AttachState.Detached;
 			let dataStoreRuntimeAttachState = AttachState.Detached;
-			defaultDataStore.context.once("attaching", () => {
+			onAttachChange(defaultDataStore.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStoreContextAttachState,
 					AttachState.Detached,
@@ -731,7 +756,7 @@ describeCompat(
 				dataStoreContextAttachState = AttachState.Attaching;
 			});
 
-			defaultDataStore.context.once("attached", () => {
+			onAttachChange(defaultDataStore.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStoreContextAttachState,
 					AttachState.Attaching,
@@ -800,7 +825,7 @@ describeCompat(
 			);
 
 			let dataStore1AttachState = AttachState.Detached;
-			dataStore1.context.once("attaching", () => {
+			onAttachChange(dataStore1.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Detached,
@@ -814,7 +839,7 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attaching;
 			});
 
-			dataStore1.context.once("attached", () => {
+			onAttachChange(dataStore1.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Attaching,
@@ -828,11 +853,11 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attached;
 			});
 
-			dataStore2.context.once("attaching", () => {
+			onAttachChange(dataStore2.context, AttachState.Attaching, () => {
 				assert.fail("Attaching event should not be fired for unreferenced context");
 			});
 
-			dataStore2.context.once("attached", () => {
+			onAttachChange(dataStore2.context, AttachState.Attached, () => {
 				assert.fail("Attached event should not be fired for unreferenced context");
 			});
 			await container.attach(request);
@@ -866,7 +891,7 @@ describeCompat(
 
 			let dataStore1AttachState = AttachState.Detached;
 			let dataStore2AttachState = AttachState.Detached;
-			dataStore1.context.once("attaching", () => {
+			onAttachChange(dataStore1.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Detached,
@@ -880,7 +905,7 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attaching;
 			});
 
-			dataStore1.context.once("attached", () => {
+			onAttachChange(dataStore1.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStore1AttachState,
 					AttachState.Attaching,
@@ -894,7 +919,7 @@ describeCompat(
 				dataStore1AttachState = AttachState.Attached;
 			});
 
-			dataStore2.context.once("attaching", () => {
+			onAttachChange(dataStore2.context, AttachState.Attaching, () => {
 				assert.strictEqual(
 					dataStore2AttachState,
 					AttachState.Detached,
@@ -908,7 +933,7 @@ describeCompat(
 				dataStore2AttachState = AttachState.Attaching;
 			});
 
-			dataStore2.context.once("attached", () => {
+			onAttachChange(dataStore2.context, AttachState.Attached, () => {
 				assert.strictEqual(
 					dataStore2AttachState,
 					AttachState.Attaching,

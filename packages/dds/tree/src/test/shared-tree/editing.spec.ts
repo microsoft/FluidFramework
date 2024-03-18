@@ -2,35 +2,36 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 
-import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
 import {
-	rootFieldKey,
-	UpPath,
-	moveToDetachedField,
+	AnchorNode,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
+	EmptyKey,
 	FieldUpPath,
 	PathVisitor,
-	DetachedRangeUpPath,
-	RangeUpPath,
-	DetachedPlaceUpPath,
 	PlaceUpPath,
-	AnchorNode,
-	EmptyKey,
 	ProtoNodes,
+	RangeUpPath,
 	TreeNavigationResult,
+	UpPath,
+	moveToDetachedField,
+	rootFieldKey,
 } from "../../core/index.js";
+import { jsonObject, leaf, singleJsonCursor } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
+import { ITreeCheckout } from "../../shared-tree/index.js";
 import { JsonCompatible, brand, makeArray } from "../../util/index.js";
 import {
+	createTestUndoRedoStacks,
+	expectJsonTree,
+	insert,
 	makeTreeFromJson,
 	remove,
-	insert,
-	expectJsonTree,
-	createTestUndoRedoStacks,
 } from "../utils.js";
-import { ITreeCheckout } from "../../shared-tree/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,

@@ -5,20 +5,20 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
 import { take } from '@fluid-private/stochastic-test-utils';
-import { fail, Mutable } from '../Common.js';
-import { defaultClusterCapacity, IdCompressor, isFinalId, isLocalId } from '../id-compressor/IdCompressor.js';
-import { IdCreationRange, UnackedLocalId, SerializedIdCompressorWithNoSession } from '../id-compressor/index.js';
-import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid.js';
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { Mutable, fail } from '../Common.js';
 import { CompressedId, FinalCompressedId, LocalCompressedId, OpSpaceCompressedId, SessionId } from '../Identifiers.js';
+import { IdCompressor, defaultClusterCapacity, isFinalId, isLocalId } from '../id-compressor/IdCompressor.js';
+import { createSessionId, numericUuidFromStableId, stableIdFromNumericUuid } from '../id-compressor/NumericUuid.js';
+import { IdCreationRange, SerializedIdCompressorWithNoSession, UnackedLocalId } from '../id-compressor/index.js';
 import {
 	Client,
 	IdCompressorTestNetwork,
+	TestIdData,
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
-	TestIdData,
 } from './utilities/IdCompressorTestUtilities.js';
 
 describe('IdCompressor Perf', () => {

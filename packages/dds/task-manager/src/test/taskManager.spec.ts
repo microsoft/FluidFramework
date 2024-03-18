@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { ITaskManager } from "../interfaces.js";
 import { TaskManager } from "../taskManager.js";
 import { TaskManagerFactory } from "../taskManagerFactory.js";
-import { ITaskManager } from "../interfaces.js";
 
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a TaskManager.

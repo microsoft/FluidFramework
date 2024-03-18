@@ -5,10 +5,10 @@
 
 import type {
 	IDisposable,
-	IEventProvider,
-	IEvent,
-	IErrorEvent,
 	IErrorBase,
+	IErrorEvent,
+	IEvent,
+	IEventProvider,
 } from "@fluidframework/core-interfaces";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions";
 import type {

@@ -83,12 +83,15 @@ export {
 	TreeAdapter,
 	MapTree,
 	Revertible,
-	RevertibleKind,
+	CommitKind,
 	RevertibleStatus,
-	RevertibleResult,
+	CommitMetadata,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
 } from "./core/index.js";
 
 export {
@@ -253,6 +256,8 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	Tree,
+	TreeApi,
 } from "./shared-tree/index.js";
 
 export {
@@ -268,8 +273,7 @@ export {
 	TreeViewEvents,
 	SchemaFactory,
 	type ScopedSchemaName,
-	Tree,
-	TreeApi,
+	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,

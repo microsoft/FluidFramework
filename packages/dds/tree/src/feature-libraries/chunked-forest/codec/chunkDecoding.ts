@@ -4,22 +4,13 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { assertValidIndex } from "../../../util/index.js";
-import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
-import { TreeChunk } from "../chunk.js";
+import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
+import { assertValidIndex } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
-import { SequenceChunk } from "../sequenceChunk.js";
+import { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
-import {
-	EncodedAnyShape,
-	EncodedChunkShape,
-	EncodedFieldBatch,
-	EncodedInlineArray,
-	EncodedNestedArray,
-	EncodedTreeShape,
-	EncodedValueShape,
-} from "./format.js";
+import { SequenceChunk } from "../sequenceChunk.js";
 import {
 	ChunkDecoder,
 	StreamCursor,
@@ -35,6 +26,15 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
+import {
+	EncodedAnyShape,
+	EncodedChunkShape,
+	EncodedFieldBatch,
+	EncodedInlineArray,
+	EncodedNestedArray,
+	EncodedTreeShape,
+	EncodedValueShape,
+} from "./format.js";
 
 /**
  * Decode `chunk` into a TreeChunk.

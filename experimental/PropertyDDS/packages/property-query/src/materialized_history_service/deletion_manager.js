@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const HTTPStatus = require("http-status");
 const ModuleLogger = require("../utils/module_logger");
 const logger = ModuleLogger.getLogger("HFDM.MaterializedHistoryService.DeletionManager");

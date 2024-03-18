@@ -2,53 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	ITelemetryBaseLogger,
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-	IProvideFluidHandleContext,
-	ISignalEnvelope,
-} from "@fluidframework/core-interfaces";
-import {
+	AttachState,
 	IAudience,
 	IBatchMessage,
 	IContainerContext,
-	IDeltaManager,
-	IRuntime,
 	ICriticalContainerError,
-	AttachState,
-	ILoader,
-	LoaderHeader,
+	IDeltaManager,
 	IGetPendingLocalStateProps,
+	ILoader,
+	IRuntime,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Deferred, delay, LazyPromise, PromiseCache } from "@fluidframework/core-utils";
-import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createChildLogger,
-	createChildMonitoringContext,
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	raiseConnectedEvent,
-	PerformanceEvent,
-	TaggedLoggerAdapter,
-	MonitoringContext,
-	wrapError,
-	ITelemetryLoggerExt,
-	UsageError,
-	LoggingError,
-	createSampledLogger,
-	IEventSampler,
-	type ITelemetryGenericEventExt,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+	IProvideFluidHandleContext,
+	IRequest,
+	IResponse,
+	ISignalEnvelope,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils";
 import {
 	DriverHeader,
 	FetchSource,
@@ -56,6 +38,13 @@ import {
 	type ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import type {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -69,134 +58,146 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
-	gcTreeKey,
-	InboundAttachMessage,
+	IDataStore,
+	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
-	NamedFluidDataStoreRegistryEntries,
-	ISummaryTreeWithStats,
 	ISummarizeInternalResult,
-	CreateChildSummarizerNodeParam,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	InboundAttachMessage,
+	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	channelsTreeName,
-	IDataStore,
-	ITelemetryContext,
-	IEnvelope,
+	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
-import type {
-	SerializedIdCompressorWithNoSession,
-	IIdCompressor,
-	IIdCompressorCore,
-	SerializedIdCompressorWithOngoingSession,
-	IdCreationRange,
-} from "@fluidframework/id-compressor";
 import {
+	GCDataBuilder,
+	ReadAndParseBlob,
+	RequestParser,
+	TelemetryContext,
 	addBlobToSummary,
 	addSummarizeResultToSummary,
-	RequestParser,
+	calculateStats,
 	create404Response,
 	exceptionToResponse,
-	GCDataBuilder,
-	seqFromTree,
-	calculateStats,
-	TelemetryContext,
-	ReadAndParseBlob,
 	responseToException,
+	seqFromTree,
 } from "@fluidframework/runtime-utils";
-import { v4 as uuid } from "uuid";
-import { ContainerFluidHandleContext } from "./containerHandleContext.js";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry.js";
 import {
-	IPendingBatchMessage,
-	IPendingLocalState,
-	PendingStateManager,
-} from "./pendingStateManager.js";
-import { pkgVersion } from "./packageVersion.js";
+	DataCorruptionError,
+	DataProcessingError,
+	GenericError,
+	IEventSampler,
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	LoggingError,
+	MonitoringContext,
+	PerformanceEvent,
+	TaggedLoggerAdapter,
+	UsageError,
+	createChildLogger,
+	createChildMonitoringContext,
+	createSampledLogger,
+	loggerToMonitoringContext,
+	raiseConnectedEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+import { BindBatchTracker } from "./batchTracker.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
 import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
+import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import { ContainerFluidHandleContext } from "./containerHandleContext.js";
+import { channelToDataStore } from "./dataStore.js";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
 import {
-	aliasBlobName,
-	blobsTreeName,
-	chunksBlobName,
-	createRootSummarizerNodeWithGC,
-	electedSummarizerBlobName,
-	extractSummaryMetadataMessage,
-	IContainerRuntimeMetadata,
-	ICreateContainerMetadata,
-	idCompressorBlobName,
-	IRootSummarizerNodeWithGC,
-	ISummaryMetadataMessage,
-	metadataBlobName,
-	Summarizer,
-	SummaryManager,
-	wrapSummaryInChannelsTree,
-	SummaryCollection,
-	ISerializedElection,
-	OrderedClientCollection,
-	OrderedClientElection,
-	SummarizerClientElection,
-	summarizerClientType,
-	SubmitSummaryResult,
-	IConnectableRuntime,
-	IGeneratedSummaryStats,
-	ISubmitSummaryOptions,
-	ISummarizerInternalsProvider,
-	ISummarizerRuntime,
-	IRefreshSummaryAckOptions,
-	RunWhileConnectedCoordinator,
-	IGenerateSummaryTreeResult,
-	RetriableSummaryError,
-	IOnDemandSummarizeOptions,
-	ISummarizeResults,
-	IEnqueueSummarizeOptions,
-	EnqueueSummarizeResult,
-	ISummarizerEvents,
-	IBaseSummarizeResult,
-	ISummarizer,
-	rootHasIsolatedChannels,
-	IdCompressorMode,
-} from "./summary/index.js";
-import { formExponentialFn, Throttler } from "./throttler.js";
-import {
-	GarbageCollector,
 	GCNodeType,
-	gcGenerationOptionName,
-	IGarbageCollector,
+	GarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
+	IGarbageCollector,
+	gcGenerationOptionName,
 } from "./gc/index.js";
-import { channelToDataStore } from "./dataStore.js";
-import { BindBatchTracker } from "./batchTracker.js";
-import { ScheduleManager } from "./scheduleManager.js";
+import {
+	ContainerMessageType,
+	ContainerRuntimeGCMessage,
+	type ContainerRuntimeIdAllocationMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
+	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
+} from "./messageTypes.js";
+import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
 import {
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
-	Outbox,
-	OpSplitter,
-	RemoteMessageProcessor,
 	OpGroupingManager,
+	OpSplitter,
+	Outbox,
+	RemoteMessageProcessor,
 	getLongStack,
 } from "./opLifecycle/index.js";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
-	ContainerMessageType,
-	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
-	type ContainerRuntimeIdAllocationMessage,
-	type LocalContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
-	type UnknownContainerRuntimeMessage,
-	ContainerRuntimeGCMessage,
-} from "./messageTypes.js";
+	IPendingBatchMessage,
+	IPendingLocalState,
+	PendingStateManager,
+} from "./pendingStateManager.js";
+import { ScheduleManager } from "./scheduleManager.js";
+import {
+	EnqueueSummarizeResult,
+	IBaseSummarizeResult,
+	IConnectableRuntime,
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
+	IEnqueueSummarizeOptions,
+	IGenerateSummaryTreeResult,
+	IGeneratedSummaryStats,
+	IOnDemandSummarizeOptions,
+	IRefreshSummaryAckOptions,
+	IRootSummarizerNodeWithGC,
+	ISerializedElection,
+	ISubmitSummaryOptions,
+	ISummarizeResults,
+	ISummarizer,
+	ISummarizerEvents,
+	ISummarizerInternalsProvider,
+	ISummarizerRuntime,
+	ISummaryMetadataMessage,
+	IdCompressorMode,
+	OrderedClientCollection,
+	OrderedClientElection,
+	RetriableSummaryError,
+	RunWhileConnectedCoordinator,
+	SubmitSummaryResult,
+	Summarizer,
+	SummarizerClientElection,
+	SummaryCollection,
+	SummaryManager,
+	aliasBlobName,
+	blobsTreeName,
+	chunksBlobName,
+	createRootSummarizerNodeWithGC,
+	electedSummarizerBlobName,
+	extractSummaryMetadataMessage,
+	idCompressorBlobName,
+	metadataBlobName,
+	rootHasIsolatedChannels,
+	summarizerClientType,
+	wrapSummaryInChannelsTree,
+} from "./summary/index.js";
+import { Throttler, formExponentialFn } from "./throttler.js";
 
 /**
  * Utility to implement compat behaviors given an unknown message type
@@ -479,6 +480,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
@@ -1023,7 +1025,10 @@ export class ContainerRuntime
 		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
 		// to reason over such things as session ID space.
 		if (this.idCompressorMode === "on") {
-			assert(this._idCompressor !== undefined, "compressor should have been loaded");
+			assert(
+				this._idCompressor !== undefined,
+				0x8ea /* compressor should have been loaded */,
+			);
 			return this._idCompressor;
 		}
 	}
@@ -1566,7 +1571,10 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: this.reSubmit.bind(this),
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
 				isAttached: () => this.attachState !== AttachState.Detached,
@@ -1790,8 +1798,13 @@ export class ContainerRuntime
 		return this.summarizerNode.deleteChild(id);
 	}
 
+	/* IFluidParentContext APIs that should not be called on Root */
 	public makeLocallyVisible() {
-		assert(false, "should not be called");
+		assert(false, 0x8eb /* should not be called */);
+	}
+
+	public setChannelDirty(address: string) {
+		assert(false, 0x909 /* should not be called */);
 	}
 
 	/**
@@ -1803,7 +1816,7 @@ export class ContainerRuntime
 			(this.idCompressorMode === "delayed" && this.connected)
 		) {
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
-			assert(this.pendingIdCompressorOps.length === 0, "no pending ops");
+			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 			this._idCompressor = await this.createIdCompressor();
 		}
 
@@ -1848,7 +1861,10 @@ export class ContainerRuntime
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }> {
 		const sortedLoadingGroupIds = loadingGroupIds.sort();
-		assert(this.storage.getSnapshot !== undefined, "getSnapshot api should be defined if used");
+		assert(
+			this.storage.getSnapshot !== undefined,
+			0x8ed /* getSnapshot api should be defined if used */,
+		);
 		let loadedFromCache = true;
 		// Lookup up in the cache, if not present then make the network call as multiple datastores could
 		// be in same loading group. So, once we have fetched the snapshot for that loading group on
@@ -1858,7 +1874,7 @@ export class ContainerRuntime
 			async () => {
 				assert(
 					this.storage.getSnapshot !== undefined,
-					"getSnapshot api should be defined if used",
+					0x8ee /* getSnapshot api should be defined if used */,
 				);
 				loadedFromCache = false;
 				return this.storage.getSnapshot({
@@ -1883,9 +1899,9 @@ export class ContainerRuntime
 			pathParts,
 			hasIsolatedChannels,
 		);
-		assert(snapshotTreeForPath !== undefined, "no snapshotTree for the path");
+		assert(snapshotTreeForPath !== undefined, 0x8ef /* no snapshotTree for the path */);
 		const snapshotSeqNumber = snapshot.sequenceNumber;
-		assert(snapshotSeqNumber !== undefined, "snapshotSeqNumber should be present");
+		assert(snapshotSeqNumber !== undefined, 0x8f0 /* snapshotSeqNumber should be present */);
 
 		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
 		// Snapshots should only move forward. If we observe an older snapshot than the one we loaded from, then likely
@@ -2138,14 +2154,8 @@ export class ContainerRuntime
 		return this.consecutiveReconnects < this.maxConsecutiveReconnects;
 	}
 
-	private resetReconnectCount(message?: ISequencedDocumentMessage) {
-		// Chunked ops don't count towards making progress as they are sent
-		// in their own batches before the originating batch is sent.
-		// Therefore, receiving them while attempting to send the originating batch
-		// does not mean that the container is making any progress.
-		if (message?.type !== ContainerMessageType.ChunkedOp) {
-			this.consecutiveReconnects = 0;
-		}
+	private resetReconnectCount() {
+		this.consecutiveReconnects = 0;
 	}
 
 	private replayPendingStates() {
@@ -2201,7 +2211,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
-				assert(this.idCompressorMode !== "off", "ID compressor should be in use");
+				assert(this.idCompressorMode !== "off", 0x8f1 /* ID compressor should be in use */);
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -2401,12 +2411,17 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
+			// See commit that added this assert for more details.
+			// These calls should be made for all but chunked ops:
+			// 1) this.pendingStateManager.processPendingLocalMessage() below
+			// 2) this.resetReconnectCount() below
+			assert(
+				message.type !== ContainerMessageType.ChunkedOp,
+				"we should never get here with chunked ops",
+			);
+
 			let localOpMetadata: unknown;
-			if (
-				local &&
-				messageWithContext.modernRuntimeMessage &&
-				message.type !== ContainerMessageType.ChunkedOp
-			) {
+			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
 				);
@@ -2428,7 +2443,7 @@ export class ContainerRuntime
 				// If we have processed a local op, this means that the container is
 				// making progress and we can reset the counter for how many times
 				// we have consecutively replayed the pending states
-				this.resetReconnectCount(message);
+				this.resetReconnectCount();
 			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
@@ -2484,6 +2499,9 @@ export class ContainerRuntime
 				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
+				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
+				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
+				assert(false, "should not even get here");
 			case ContainerMessageType.Rejoin:
 				break;
 			default: {
@@ -2714,14 +2732,14 @@ export class ContainerRuntime
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.channelCollection.createDetachedDataStoreCore(pkg, loadingGroupId);
+		return this.channelCollection.createDetachedDataStore(pkg, loadingGroupId);
 	}
 
 	public async createDataStore(
 		pkg: Readonly<string | string[]>,
 		loadingGroupId?: string,
 	): Promise<IDataStore> {
-		const context = this.channelCollection._createFluidDataStoreContext(
+		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
 			undefined, // props
 			loadingGroupId,
@@ -2741,7 +2759,7 @@ export class ContainerRuntime
 		pkg: Readonly<string | string[]>,
 		props?: any,
 	): Promise<IDataStore> {
-		const context = this.channelCollection._createFluidDataStoreContext(
+		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
 			props,
 		);
@@ -2804,6 +2822,7 @@ export class ContainerRuntime
 				}
 				break;
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.GC: {
 				return false;
 			}
@@ -3037,24 +3056,6 @@ export class ContainerRuntime
 
 		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(usedRoutes);
 		this.channelCollection.updateUsedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * This is called to update objects whose routes are unused.
-	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-		this.channelCollection.updateUnusedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * @deprecated Replaced by deleteSweepReadyNodes.
-	 */
-	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
-		throw new Error("deleteUnusedRoutes should not be called");
 	}
 
 	/**
@@ -3898,7 +3899,10 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
+		assert(
+			!this.isSummarizerClient,
+			0x8f2 /* Summarizer never reconnects so should never resubmit */,
+		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:

@@ -17,7 +17,7 @@ import Select, {
 	Props as SelectProps,
 	components,
 } from "react-select";
-import { SvgIcon } from "./SVGIcon";
+import { SvgIcon } from "./SVGIcon.js";
 import {
 	backGroundDarkGrayColor,
 	backGroundGrayColor,
@@ -26,7 +26,7 @@ import {
 	colorWhite,
 	textDarkColor,
 	transparentShadowColor,
-} from "./constants";
+} from "./constants.js";
 
 const { Option, SingleValue } = components;
 
