@@ -32,10 +32,13 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
+	ISweepMessage,
 } from "./gcDefinitions";
 export {
 	cloneGCData,

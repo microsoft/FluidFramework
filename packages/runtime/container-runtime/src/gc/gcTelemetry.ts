@@ -63,6 +63,7 @@ interface INodeUsageProps extends ICommonProps {
 	currentReferenceTimestampMs: number | undefined;
 	packagePath: readonly string[] | undefined;
 	fromId?: string;
+	autorecovery?: true;
 }
 
 /**

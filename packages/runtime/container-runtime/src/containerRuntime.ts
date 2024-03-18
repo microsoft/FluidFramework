@@ -2909,6 +2909,12 @@ export class ContainerRuntime
 	 * data store or an attachment blob.
 	 */
 	public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+		// GC uses "/" when adding "root" references, e.g. for Aliasing or as part of Tombstone Auto-Recovery.
+		// These have no package path so return a special value.
+		if (nodePath === "/") {
+			return ["_gcRoot"];
+		}
+
 		switch (this.getNodeType(nodePath)) {
 			case GCNodeType.Blob:
 				return [BlobManager.basePath];
@@ -3691,6 +3697,7 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
+		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
@@ -3712,8 +3719,8 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			case ContainerMessageType.GC:
-				// GC op is only sent in summarizer which should never reconnect.
-				throw new LoggingError("GC op not expected to be resubmitted in summarizer");
+				this.submit(message);
+				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
 				// future version of runtime code and now is being applied on an older version
