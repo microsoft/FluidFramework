@@ -184,6 +184,23 @@ describe("ArrayNode Proxy", () => {
 		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [5])), ["0", "length", "extra"]);
 	});
 
+	it("in", () => {
+		assert("length" in hydrate(StructurallyNamedNumberArray, []));
+		assert("length" in hydrate(NumberArray, []));
+		assert("length" in hydrate(CustomizedArray, []));
+		assert(!("extra" in hydrate(StructurallyNamedNumberArray, [])));
+		assert(!("extra" in hydrate(NumberArray, [])));
+		assert("extra" in hydrate(CustomizedArray, []));
+		assert(!("extra2" in hydrate(CustomizedArray, [])));
+		assert(!("0" in hydrate(StructurallyNamedNumberArray, [])));
+		assert(!("0" in hydrate(NumberArray, [])));
+		assert(!("0" in hydrate(CustomizedArray, [])));
+
+		assert("0" in hydrate(StructurallyNamedNumberArray, [5]));
+		assert("0" in hydrate(NumberArray, [5]));
+		assert("0" in hydrate(CustomizedArray, [5]));
+	});
+
 	it("length", () => {
 		assert.equal(hydrate(StructurallyNamedNumberArray, []).length, 0);
 		assert.equal(hydrate(StructurallyNamedNumberArray, [1, 2, 3]).length, 3);
@@ -198,6 +215,22 @@ describe("ArrayNode Proxy", () => {
 			Reflect.getOwnPropertyDescriptor(hydrate(NumberArray, [5]), "length"),
 			Reflect.getOwnPropertyDescriptor([5], "length"),
 		);
+
+		// Since getOwnPropertyDescriptor reports length as writable, but its not actually writable, ensure writing it errors:
+		{
+			const array = hydrate(NumberArray, []);
+			assert.throws(() => {
+				// @ts-expect-error length is readonly
+				array.length = 1;
+			});
+		}
+		{
+			const array = hydrate(StructurallyNamedNumberArray, []);
+			assert.throws(() => {
+				// @ts-expect-error length is readonly
+				array.length = 1;
+			});
+		}
 	});
 
 	it("Json stringify", () => {

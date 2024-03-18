@@ -564,7 +564,8 @@ function asIndex(key: string | symbol, length: number) {
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
  * If not provided `[]` is used for the target and a separate object created to dispatch array methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the array functionality from {@link arrayNodePrototype}.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide an own `length` value property
+ * (which is not used but must exist for getOwnPropertyDescriptor invariants) and the array functionality from {@link arrayNodePrototype}.
  */
 function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
@@ -581,6 +582,7 @@ function createArrayNodeProxy(
 	const dispatch: object =
 		customTargetObject ??
 		Object.create(arrayNodePrototype, {
+			// This dispatch object's set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases, and therefor must include `length`.
 			length: {
 				get(this: TreeArrayNode) {
 					fail("Proxy should intercept length");
@@ -623,6 +625,14 @@ function createArrayNodeProxy(
 			return getOrCreateNodeProxy(value);
 		},
 		set: (target, key, newValue, receiver) => {
+			if (key === "length") {
+				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
+				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
+				// Therefor length has to be handled in this proxy.
+				// Since its not actually mutable, return false so setting it will produce a type error.
+				return false;
+			}
+
 			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
 			// the concat method.  We allow this property to be added to the dispatch object.
 			if (key === Symbol.isConcatSpreadable) {
