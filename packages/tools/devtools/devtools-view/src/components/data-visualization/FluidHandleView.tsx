@@ -17,11 +17,11 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 
-import { useMessageRelay } from "../../MessageRelayContext";
-import { type HasLabel } from "./CommonInterfaces";
-import { TreeDataView } from "./TreeDataView";
-import { TreeHeader } from "./TreeHeader";
-import { TreeItem } from "./TreeItem";
+import { useMessageRelay } from "../../MessageRelayContext.js";
+import { type HasLabel } from "./CommonInterfaces.js";
+import { TreeDataView } from "./TreeDataView.js";
+import { TreeHeader } from "./TreeHeader.js";
+import { TreeItem } from "./TreeItem.js";
 
 const loggingContext = "EXTENSION(HandleView)";
 

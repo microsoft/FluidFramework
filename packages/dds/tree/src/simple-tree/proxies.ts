@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { EmptyKey, FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { EmptyKey, FieldKey, TreeValue } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
@@ -29,14 +29,13 @@ import {
 	isFluidHandle,
 	onNextChange,
 	schemaIsFieldNode,
-	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "./flexNode.js";
-import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
+import { extractRawNodeContent } from "./rawNode.js";
 import {
 	type InsertableTypedNode,
 	NodeKind,
@@ -127,50 +126,12 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	const schema = flexNode.schema;
 	const classSchema = getSimpleSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
-	return createTree(classSchema as TreeNodeSchema<any, any, TreeNode | TreeValue>, flexNode);
-}
-
-export function createTree<TNode, TInsert>(
-	schema: TreeNodeSchema<string, NodeKind, TNode, TInsert>,
-	data: TInsert | FlexTreeNode,
-): TNode {
-	if (typeof schema === "function") {
-		return new schema(data as TInsert);
-	}
-	return schema.create(data as TInsert);
-}
-
-/**
- * @param flexNode - underlying tree node which this proxy should wrap.
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided an empty collection of the relevant type is used for the target and a separate object created to dispatch methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide needed functionality depending on the schema kind.
- */
-export function createNodeProxy(
-	flexNode: FlexTreeNode,
-	allowAdditionalProperties: boolean,
-	targetObject?: object,
-): TreeNode | TreeValue {
-	const schema = flexNode.schema;
-	if (schemaIsLeaf(schema)) {
-		// Can't use `??` here since null is a valid TreeValue.
-		assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
-		return flexNode.value;
-	}
-	let proxy: TreeNode;
-	if (schemaIsMap(schema)) {
-		proxy = createMapProxy(allowAdditionalProperties, targetObject);
-	} else if (schemaIsFieldNode(schema)) {
-		proxy = createArrayNodeProxy(allowAdditionalProperties, targetObject);
-	} else if (schemaIsObjectNode(schema)) {
-		proxy = createObjectProxy(schema, allowAdditionalProperties, targetObject);
+	if (typeof classSchema === "function") {
+		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
+		return new simpleSchema(flexNode);
 	} else {
-		fail("unrecognized node kind");
+		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
-	setFlexNode(proxy, flexNode);
-	return proxy;
 }
 
 /**
@@ -571,7 +532,7 @@ function asIndex(key: string | symbol, length: number) {
  * If not provided `[]` is used for the target and a separate object created to dispatch array methods.
  * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the array functionality from {@link arrayNodePrototype}.
  */
-function createArrayNodeProxy(
+export function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
 ): TreeArrayNode {
@@ -769,7 +730,7 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
  * If not provided `new Map()` is used for the target and a separate object created to dispatch map methods.
  * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide the map functionality from {@link mapPrototype}.
  */
-function createMapProxy(
+export function createMapProxy(
 	allowAdditionalProperties: boolean,
 	customTargetObject?: object,
 ): TreeMapNode {
@@ -803,59 +764,6 @@ function createMapProxy(
 		},
 	});
 	return proxy;
-}
-
-/**
- * Create a proxy to a {@link TreeObjectNode} that is backed by a raw object node (see {@link createRawNode}).
- * @param schema - the schema of the object node
- * @param content - the content to be stored in the raw node.
- * A copy of content is stored, the input `content` is not modified and can be safely reused in another call to {@link createRawObjectProxy}.
- * @param allowAdditionalProperties - If true, setting of unexpected properties will be forwarded to the target object.
- * Otherwise setting of unexpected properties will error.
- * @param customTargetObject - Target object of the proxy.
- * If not provided `{}` is used for the target.
- * @remarks
- * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawNode}.
- * Most of its properties and methods will error if read/called.
- */
-export function createRawNodeProxy(
-	schema: FlexTreeNodeSchema,
-	content: InsertableTypedNode<TreeNodeSchema> & object,
-	allowAdditionalProperties: boolean,
-	target?: object,
-): Unhydrated<TreeNode> {
-	// Shallow copy the content and then add the type name symbol to it.
-	let flexNode: RawTreeNode<FlexTreeNodeSchema, InsertableTypedNode<TreeNodeSchema>>;
-	let proxy: TreeNode;
-	if (schema instanceof FlexObjectNodeSchema) {
-		const contentCopy = copyContent(schema.name, content);
-		flexNode = createRawNode(schema, contentCopy);
-		proxy = createObjectProxy(schema, allowAdditionalProperties, target);
-	} else if (schema instanceof FlexFieldNodeSchema) {
-		// simple-tree uses field nodes exclusively to represent array nodes
-		const contentCopy = copyContent(schema.name, content);
-		flexNode = createRawNode(schema, contentCopy);
-		proxy = createArrayNodeProxy(allowAdditionalProperties, target);
-	} else if (schema instanceof FlexMapNodeSchema) {
-		const contentCopy = copyContent(schema.name, content);
-		flexNode = createRawNode(schema, contentCopy);
-		proxy = createMapProxy(allowAdditionalProperties, target);
-	} else {
-		fail("Unrecognized content schema");
-	}
-
-	return setFlexNode(proxy, flexNode);
-}
-
-function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
-	const copy =
-		content instanceof Map
-			? (new Map(content) as T)
-			: Array.isArray(content)
-			? (content.slice() as T)
-			: { ...content };
-
-	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 }
 
 type ProxyHydrator = (flexNode: FlexTreeNode | undefined) => void;
