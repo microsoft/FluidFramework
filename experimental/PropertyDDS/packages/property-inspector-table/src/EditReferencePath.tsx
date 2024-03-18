@@ -5,13 +5,13 @@
 
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import { Theme, makeStyles } from "@material-ui/core/styles";
+import { type Theme, makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React from "react";
-import { ErrorPopup } from "./ErrorPopup";
-import { LoadingButton } from "./LoadingButton";
-import { SvgIcon } from "./SVGIcon";
-import { iconHeight, iconWidth } from "./constants";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { LoadingButton } from "./LoadingButton.js";
+import { SvgIcon } from "./SVGIcon.js";
+import { iconHeight, iconWidth } from "./constants.js";
 
 const useStyles = makeStyles(
 	(theme: Theme) => ({

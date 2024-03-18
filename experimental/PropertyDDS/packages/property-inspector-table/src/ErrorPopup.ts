@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { notificationContext } from "./NotificationsViewer";
+import { notificationContext } from "./NotificationsViewer.js";
 
 const isPromise = <K, R>(in_obj: Promise<K> | R): in_obj is Promise<K> => {
 	return Promise.resolve(in_obj as Promise<K>) === in_obj;
