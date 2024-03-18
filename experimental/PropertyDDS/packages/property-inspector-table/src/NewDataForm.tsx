@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import { type ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import TextField from "@material-ui/core/TextField";
@@ -13,23 +13,23 @@ import React, { useEffect, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import {
 	DecoratedSelect,
-	DecoratedSelectGroupedOptionsType,
-	DecoratedSelectOptionsType,
-	DecoratedSelectValueType,
-	IDecoratedSelectOptionType,
-} from "./DecoratedSelect";
-import { ErrorPopup } from "./ErrorPopup";
-import { ErrorTooltip } from "./ErrorTooltip";
-import { IInspectorRow } from "./InspectorTableTypes";
-import { SvgIcon } from "./SVGIcon";
-import { TypeIcon } from "./TypeIcon";
+	type DecoratedSelectGroupedOptionsType,
+	type DecoratedSelectOptionsType,
+	type DecoratedSelectValueType,
+	type IDecoratedSelectOptionType,
+} from "./DecoratedSelect.js";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { ErrorTooltip } from "./ErrorTooltip.js";
+import type { IInspectorRow } from "./InspectorTableTypes.js";
+import { SvgIcon } from "./SVGIcon.js";
+import { TypeIcon } from "./TypeIcon.js";
 import {
 	backGroundGrayColor,
 	borderGrayColor,
 	colorWhite,
 	iconMarginRight,
 	unit,
-} from "./constants";
+} from "./constants.js";
 
 const useStyles = makeStyles(
 	{
