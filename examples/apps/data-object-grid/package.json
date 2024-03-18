@@ -95,6 +95,7 @@
 		"sass-loader": "^7.1.0",
 		"source-map-loader": "^2.0.0",
 		"style-loader": "^1.0.0",
+		"tinylicious": "^4.0.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",
 		"url-loader": "^2.1.0",
