@@ -4,13 +4,13 @@
  * Licensed under the MIT License.
  */
 
-import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
-import { Project } from "ts-morph";
+import { Project, type ImportDeclaration, type SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base";
+import type { CommandLogger } from "../../logging";
 
 // These types are very similar to those defined and used in the `release setPackageTypesField` command, but that
 // command is likely to be deprecated soon, so no effort has been made to unify them.
@@ -83,7 +83,7 @@ async function updateImports(
 	mappingData: MapData,
 	onlyInternal: boolean,
 	organizeImports: boolean,
-	log?: Logger,
+	log?: CommandLogger,
 ): Promise<void> {
 	const project = new Project({
 		tsConfigFilePath,
@@ -93,6 +93,12 @@ async function updateImports(
 		// Filter out type files - this may not be correct in projects with manually defined declarations.
 		.filter((sourceFile) => sourceFile.getExtension() !== ".d.ts");
 
+	/**
+	 * List of source file save promises. Used to collect modified source file save promises so we can await them all at
+	 * once.
+	 */
+	const fileSavePromises: Promise<void>[] = [];
+
 	// Iterate over each source file, looking for Fluid imports
 	for (const sourceFile of sourceFiles) {
 		log?.verbose(`Source file: ${sourceFile.getBaseName()}`);
@@ -100,7 +106,12 @@ async function updateImports(
 		/**
 		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
 		 */
-		const imports = sourceFile.getImportDeclarations();
+		let imports = sourceFile.getImportDeclarations();
+
+		// Skip source files with no imports.
+		if (imports.length === 0) {
+			continue;
+		}
 
 		/**
 		 * True if the sourceFile has changed.
@@ -111,98 +122,158 @@ async function updateImports(
 		 * A mapping of new module specifier to named import. We'll populate this as we scan the existing imports, then
 		 * write new remapped imports to the file.
 		 */
-		const newImports: Map<string, string[]> = new Map();
+		const newImports: Map<string, Set<string>> = new Map();
 
-		// Collect the existing declarations
+		// First pass: collect the existing declarations
 		for (const importDeclaration of imports) {
-			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-			if (
-				moduleSpecifier.startsWith("@fluid") ||
-				["fluid-framework", "tinylicious"].includes(moduleSpecifier)
-			) {
-				log?.verbose(`Found a fluid import: '${moduleSpecifier}'`);
-				const modulePieces = moduleSpecifier.split("/");
-				const moduleName = modulePieces.slice(0, 2).join("/");
-				const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
-				log?.verbose(`subpath: ${subpath}`);
-				const data = mappingData.get(moduleName);
+			// Skip non-Fluid imports
+			if (!isFluidImport(importDeclaration)) {
+				continue;
+			}
+			const [moduleName] = parseImport(importDeclaration);
+			const data = mappingData.get(moduleName);
 
-				if (data === undefined) {
-					log?.verbose(`Skipping ${moduleSpecifier}`);
-				} else {
-					// TODO: Handle default import if needed.
-					const defaultImport = importDeclaration.getDefaultImport();
-					if (defaultImport !== undefined) {
-						log?.warning(
-							`Found a default import (not yet implemented): ${defaultImport
-								.getText()
-								.trim()}`,
-						);
+			// Skip modules with no mapping
+			if (data === undefined) {
+				log?.verbose(`Skipping ${importDeclaration.getModuleSpecifierValue()}`);
+			} else {
+				// TODO: Handle default import.
+				const defaultImport = importDeclaration.getDefaultImport();
+				if (defaultImport !== undefined) {
+					log?.warning(
+						`Found a default import (not yet implemented): ${defaultImport.getText().trim()}`,
+					);
+				}
+				const namedImports = importDeclaration.getNamedImports();
+
+				log?.logIndent(`Iterating named imports...`, 2);
+				for (const importSpecifier of namedImports) {
+					const name = importSpecifier.getName();
+
+					/**
+					 * fullImportSpecifierText includes surrounding text like "type" and whitespace. The surrounding whitespace is
+					 * trimmed, but leading or trailing text like "type" or "as foo" is still included. This is the string that
+					 * will be used in the new imports.
+					 *
+					 * This text also includes an alias if defined. Imports that are aliased are updated but the alias should not
+					 * be changed; they should remain the same after import cleanup, just possibly imported from a different
+					 * module/path.
+					 */
+					const fullImportSpecifierText = importSpecifier.getFullText().trim();
+					const expectedLevel = getApiLevelForImportName(name, data, "public", onlyInternal);
+
+					log?.logIndent(
+						`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
+						4,
+					);
+					const newSpecifier =
+						expectedLevel === "public" ? moduleName : `${moduleName}/${expectedLevel}`;
+
+					if (!newImports.has(newSpecifier)) {
+						newImports.set(newSpecifier, new Set());
 					}
-					const namedImports = importDeclaration.getNamedImports();
-
-					log?.info(`Iterating named imports...`);
-					for (const importSpecifier of namedImports) {
-						const alias = importSpecifier.getAliasNode();
-						if (alias !== undefined) {
-							log?.warning(`Found an alias (not yet implemented): ${alias.getText().trim()}`);
-						}
-
-						const name = importSpecifier.getName();
-						// fullImportSpecifierText includes surrounding text like "type" and whitespace. The surrounding whitespace
-						// is trimmed, but leading or trailing text like "type" or "as foo" is still included. This is the string
-						// that will be used in the new imports.
-						const fullImportSpecifierText = importSpecifier.getFullText().trim();
-						const expectedLevel = getApiLevelForImportName(name, data, "public", onlyInternal);
-
-						log?.verbose(
-							`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
-						);
-						const newSpecifier =
-							expectedLevel === "public" ? moduleName : `${moduleName}/${expectedLevel}`;
-
-						if (!newImports.has(newSpecifier)) {
-							newImports.set(newSpecifier, []);
-						}
-						newImports.get(newSpecifier)?.push(fullImportSpecifierText);
-					}
-
-					// Delete this declaration; we've collected all the imports from it and will output them in new nodes later.
-					// This does re-order code, but that seems like a fact of life here. The organize flag can be used to add some
-					// determinism to the output.
-					importDeclaration.remove();
-					log?.info(`REMOVED import from ${moduleSpecifier}`);
+					newImports.get(newSpecifier)?.add(fullImportSpecifierText);
 				}
 			}
 		}
 
-		for (const [newSpecifier, names] of newImports) {
-			// Not sure this check is necessary.
-			if (names.length > 0) {
-				sourceFile.addImportDeclaration({
-					namedImports: names,
-					moduleSpecifier: newSpecifier,
-				});
+		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
+		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
+		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
+		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
+		const headerText = removeFileHeaderComment(sourceFile);
+
+		// Need to get declarations again because nodes are invalidated after calling replaceText above
+		imports = sourceFile.getImportDeclarations();
+
+		// Second pass: Update existing imports and add any missing ones
+		for (const importDeclaration of imports) {
+			// Skip non-Fluid imports
+			if (!isFluidImport(importDeclaration)) {
+				continue;
+			}
+
+			const [moduleName] = parseImport(importDeclaration);
+			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+
+			// Skip fluid imports that aren't in the data file
+			if (!mappingData.has(moduleName)) {
+				continue;
+			}
+
+			// Check if there are supposed to be any new imports from the module specifier
+			const newImportNames = newImports.get(moduleSpecifier);
+
+			// Since there are no imports from this module specifier, remove it.
+			if (newImportNames === undefined) {
+				importDeclaration.remove();
+				sourceFileChanged = true;
+				continue;
+			}
+
+			// There are new named imports for this module specifier, so remove all individual named imports and immediately
+			// add the new ones.
+			if (newImportNames.size > 0) {
+				importDeclaration.removeNamedImports();
+				importDeclaration.addNamedImports([...newImportNames]);
+				// Need to clear the list of new named imports since we just added them.
+				newImportNames.clear();
 				sourceFileChanged = true;
 			}
-			log?.info(`ADDED import from ${newSpecifier}`);
 		}
 
-		if (sourceFileChanged && organizeImports) {
-			log?.info(`Organized imports in: ${sourceFile.getBaseName()}`);
-			sourceFile.organizeImports();
+		// Add any imports from a specifier that wasn't already in the file
+		for (const [importSpecifier, newImportNames] of newImports) {
+			if (newImportNames.size > 0) {
+				sourceFile.addImportDeclaration({
+					moduleSpecifier: importSpecifier,
+					namedImports: [...newImportNames],
+				});
+			}
+		}
+
+		if (sourceFileChanged) {
+			// Manually re-insert the header at the top of the file
+			sourceFile.insertText(0, headerText);
+
+			if (organizeImports) {
+				log?.info(`Organized imports in: ${sourceFile.getBaseName()}`);
+				sourceFile.organizeImports();
+			}
+
+			fileSavePromises.push(sourceFile.save());
 		}
 	}
 
-	// Don't save the project since we're saving source files one at a time instead
-	await project.save();
+	// We don't want to save the project since we may have made temporary edits to some source files.
+	// Instead, we save files individually.
+	await Promise.all(fileSavePromises);
 }
 
-// This raw data comes from this ripgrep one-liner:
-//
-// rg -UPNo -g '**/api-report/*.api.md' --multiline-dotall --heading '\s*@(alpha|beta|public|internal).*?export\s*(\w*)\s(\w*).*?(?:\{|;)' -r '{ "level": "$1", "kind": "$2", "name": "$3" },'
-//
-// It's transformed into a more usable format in the code below.
+/**
+ * Parses an import declaration into its module specifier and subpath.
+ *
+ * @param importDeclaration - the import declaration to check.
+ * @returns a tuple of `[module specifier, subpath]`
+ */
+function parseImport(importDeclaration: ImportDeclaration): [string, string] {
+	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+	// log?.verbose(`Found a fluid import: '${moduleSpecifier}'`);
+	const modulePieces = moduleSpecifier.split("/");
+	const moduleName = modulePieces.slice(0, 2).join("/");
+	const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
+	// log?.verbose(`subpath: ${subpath}`);
+	return [moduleName, subpath];
+}
+
+function isFluidImport(importDeclaration: ImportDeclaration): boolean {
+	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+	return (
+		moduleSpecifier.startsWith("@fluid") ||
+		["fluid-framework", "tinylicious"].includes(moduleSpecifier)
+	);
+}
+
 interface MemberDataRaw {
 	level: ApiLevel;
 	kind: string;
@@ -246,4 +317,17 @@ async function loadData(dataFile: string): Promise<MapData> {
 		apiLevelData.set(moduleName, entry);
 	}
 	return apiLevelData;
+}
+
+/**
+ * Delete any header comments at the beginning of the file. Return the removed text.
+ */
+function removeFileHeaderComment(sourceFile: SourceFile): string {
+	const firstNode = sourceFile.getChildAtIndex(0);
+	const headerComments = firstNode.getLeadingCommentRanges();
+	// const headerComments = imports[0].getLeadingCommentRanges();
+	const headerText = `${headerComments.map((comment) => comment.getText()).join("\n\n")}\n\n`;
+	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
+	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
+	return headerText;
 }
