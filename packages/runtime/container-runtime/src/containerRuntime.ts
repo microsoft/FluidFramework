@@ -2164,8 +2164,6 @@ export class ContainerRuntime
 		if (this._idCompressor) {
 			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
-		} else {
-			assert(this.idCompressorMode === undefined, "compressor should have been created");
 		}
 
 		if (this.remoteMessageProcessor.partialMessages.size > 0) {
@@ -2336,7 +2334,11 @@ export class ContainerRuntime
 	}
 
 	private async loadIdCompressor() {
-		if (this.idCompressorMode !== undefined && this._loadIdCompressor === undefined) {
+		if (
+			this._idCompressor === undefined &&
+			this.idCompressorMode !== undefined &&
+			this._loadIdCompressor === undefined
+		) {
 			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
