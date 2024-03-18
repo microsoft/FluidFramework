@@ -56,7 +56,10 @@ import { cachedFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 export function cursorFromNodeData(
 	data: InsertableContent,
 	allowedTypes: ImplicitAllowedTypes,
-): CursorWithNode<MapTree> {
+): CursorWithNode<MapTree> | undefined {
+	if (data === undefined) {
+		return undefined;
+	}
 	const mappedContent = nodeDataToMapTree(data, normalizeAllowedTypes(allowedTypes));
 	return cursorForMapTreeNode(mappedContent);
 }
