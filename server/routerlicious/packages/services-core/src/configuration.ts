@@ -284,8 +284,8 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 			maxMessages: 500,
 		},
 		scrubUserDataInSummaries: false,
-		scrubUserDataInLocalCheckpoints: true,
-		scrubUserDataInGlobalCheckpoints: true,
+		scrubUserDataInLocalCheckpoints: false,
+		scrubUserDataInGlobalCheckpoints: false,
 	},
 	moira: {
 		enable: false,
