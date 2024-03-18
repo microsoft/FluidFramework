@@ -434,6 +434,7 @@ function shallowCompatibilityTest(
 
 	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
 
+	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
 		const normalizedFieldSchema = normalizeFieldSchema(fieldSchema);
 		if (data[fieldKey] === undefined && normalizedFieldSchema.kind === FieldKind.Required) {
