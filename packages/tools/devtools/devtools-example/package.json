@@ -55,6 +55,7 @@
 			}
 		}
 	},
+	"types": "dist/devtools-example-public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -169,6 +170,5 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"types": "dist/devtools-example-public.d.ts"
+	}
 }
