@@ -304,6 +304,7 @@ export {
 	SchemaFactoryRecursive,
 	ValidateRecursiveSchema,
 	ObjectFromSchemaRecordUnsafe,
+	type FieldProps,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	FieldSchemaUnsafe,

@@ -8,10 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import { leaf } from "../domains/index.js";
 import {
-	FlexFieldNodeSchema,
 	LeafNodeSchema as FlexLeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
 	FlexTreeNode,
 	isFlexTreeNode,
 	isFluidHandle,
@@ -20,11 +17,11 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { getClassSchema } from "./classSchemaCaching.js";
 import {
 	arrayNodePrototypeProperties,
 	createNodeProxy,
 	createRawNodeProxy,
-	getClassSchema,
 	getSequenceField,
 	isTreeNode,
 	mapStaticDispatchMap,
@@ -32,10 +29,11 @@ import {
 import {
 	AllowedTypes,
 	FieldKind,
+	type FieldProps,
 	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	InsertableObjectFromSchemaRecord,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTypedNode,
 	NodeFromSchema,
@@ -49,7 +47,7 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
+import { setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
 
@@ -95,11 +93,11 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 }
 
 // Leaf schema shared between all SchemaFactory instances.
-const stringSchema = makeLeaf(leaf.string);
-const numberSchema = makeLeaf(leaf.number);
-const booleanSchema = makeLeaf(leaf.boolean);
-const nullSchema = makeLeaf(leaf.null);
-const handleSchema = makeLeaf(leaf.handle);
+export const stringSchema = makeLeaf(leaf.string);
+export const numberSchema = makeLeaf(leaf.number);
+export const booleanSchema = makeLeaf(leaf.boolean);
+export const nullSchema = makeLeaf(leaf.null);
+export const handleSchema = makeLeaf(leaf.handle);
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -139,7 +137,6 @@ export type ScopedSchemaName<
 	TScope extends string | undefined,
 	TName extends number | string,
 > = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
-// > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -365,12 +362,17 @@ export class SchemaFactory<
 				const customizable = this.constructor !== schema;
 				const proxyTarget = customizable ? this : undefined;
 
+				// eslint-disable-next-line unicorn/prefer-ternary
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
+					return createNodeProxy(
+						this.constructor as TreeNodeSchema,
+						input,
+						customizable,
+						proxyTarget,
+					) as schema;
 				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FlexObjectNodeSchema,
+						this.constructor as TreeNodeSchema,
 						input,
 						customizable,
 						proxyTarget,
@@ -511,12 +513,17 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
+				// eslint-disable-next-line unicorn/prefer-ternary
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
+					return createNodeProxy(
+						this.constructor as TreeNodeSchema,
+						input,
+						customizable,
+						proxyTarget,
+					) as schema;
 				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FlexMapNodeSchema,
+						this.constructor as TreeNodeSchema,
 						input,
 						customizable,
 						proxyTarget,
@@ -676,12 +683,17 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
+				// eslint-disable-next-line unicorn/prefer-ternary
 				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
+					return createNodeProxy(
+						this.constructor as TreeNodeSchema,
+						input,
+						customizable,
+						proxyTarget,
+					) as schema;
 				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 					return createRawNodeProxy(
-						flexSchema as FlexFieldNodeSchema,
+						this.constructor as TreeNodeSchema,
 						[...input],
 						customizable,
 						proxyTarget,
@@ -708,8 +720,19 @@ export class SchemaFactory<
 	 */
 	public optional<const T extends ImplicitAllowedTypes>(
 		t: T,
+		props?: FieldProps,
 	): FieldSchema<FieldKind.Optional, T> {
-		return new FieldSchema(FieldKind.Optional, t);
+		return new FieldSchema(FieldKind.Optional, t, props);
+	}
+
+	/**
+	 * Explicitly make a field required. Fields are required by default, but this API allows associating custom properties with the field.
+	 */
+	public required<const T extends ImplicitAllowedTypes>(
+		t: T,
+		props?: FieldProps,
+	): FieldSchema<FieldKind.Required, T> {
+		return new FieldSchema(FieldKind.Required, t, props);
 	}
 
 	/**

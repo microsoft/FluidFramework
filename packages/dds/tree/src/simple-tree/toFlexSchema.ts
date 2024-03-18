@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -21,55 +21,16 @@ import {
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-import {
-	InsertableContent,
-	extractFactoryContent,
-	getClassSchema,
-	simpleSchemaSymbol,
-} from "./proxies.js";
+import { getClassSchema, simpleSchemaSymbol } from "./classSchemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
-	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes.js";
-import { cursorFromNodeData } from "./toMapTree.js";
-import { TreeConfiguration } from "./tree.js";
-
-/**
- * Returns a cursor (in nodes mode) for the root node.
- *
- * @privateRemarks
- * Ideally this would work on any node, not just the root,
- * and the schema would come from the unhydrated node.
- * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
- */
-export function cursorFromUnhydratedRoot(
-	schema: FlexTreeSchema,
-	tree: InsertableTreeNodeFromImplicitAllowedTypes,
-): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
-	return (
-		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
-		fail("failed to decode tree")
-	);
-}
-
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
-	const schema = toFlexSchema(config.schema);
-	const unhydrated = config.initialTree();
-	const initialTree =
-		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
-	return {
-		schema,
-		initialTree,
-	};
-}
 
 interface SchemaInfo {
 	toFlex: () => FlexTreeNodeSchema;
@@ -81,7 +42,7 @@ type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
 /**
  * Generate a {@link FlexTreeSchema} with `root` as the root field.
  *
- * This also has the side effect of populating the cached view schema on the class based schema.
+ * This also has the side effect of populating the cached view schema on the class-based schema.
  */
 export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const schemaMap: SchemaMap = new Map();
@@ -219,13 +180,25 @@ export function convertNodeSchema(
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
-				for (const [key, value] of Object.entries(info)) {
+
+				// TODO: should we check here for colliding keys / stableNames?
+				for (const [propertyKey, implicitFieldSchema] of Object.entries(info)) {
+					// If a `stableName` was provided, use it as the key in the flex schema.
+					// Otherwise, use the developer-facing key.
+					let flexKey: string = propertyKey;
+					if (
+						implicitFieldSchema instanceof FieldSchema &&
+						implicitFieldSchema.props?.stableName !== undefined
+					) {
+						flexKey = implicitFieldSchema.props.stableName;
+					}
+
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
-					Object.defineProperty(fields, key, {
+					Object.defineProperty(fields, flexKey, {
 						enumerable: true,
 						configurable: false,
 						writable: false,
-						value: convertField(schemaMap, value),
+						value: convertField(schemaMap, implicitFieldSchema),
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);

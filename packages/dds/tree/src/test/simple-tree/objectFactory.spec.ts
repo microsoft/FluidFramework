@@ -29,7 +29,7 @@ describe("SharedTreeObject factories", () => {
 	});
 
 	const ChildOptional = sb.object("childOptional", {
-		content: sb.optional(sb.number),
+		content: sb.optional(sb.number, { stableName: "optional-child" }),
 	});
 
 	const ChildD = sb.object("childD", {

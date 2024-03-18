@@ -13,8 +13,9 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { getClassSchema } from "./classSchemaCaching.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
+import { getOrCreateNodeProxy } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
