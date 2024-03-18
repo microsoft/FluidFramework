@@ -155,7 +155,7 @@ export async function scribeCreate(
 		localCheckpointEnabled,
 	);
 
-	const webhookManager = new services.WebhookManager(internalHistorianUrl);
+	const webhookManager = new services.WebhookManager(internalHistorianUrl, tenantManager);
 	const webhookUrl = config.get("webhooks:url");
 	webhookManager.subscribe(webhookUrl, core.SummaryWebhookEvents.NEW_SUMMARY_CREATED);
 	webhookManager.subscribe(webhookUrl, core.CollabSessionWebhookEvents.SESSION_CLIENT_JOIN);

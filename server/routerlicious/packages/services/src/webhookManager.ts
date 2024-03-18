@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IWebhookManager } from "@fluidframework/server-services-core";
-import axios, { default as Axios, isAxiosError } from "axios";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { BasicRestWrapper, generateToken } from "@fluidframework/server-services-client";
+import { IWebhookManager, type ITenantManager } from "@fluidframework/server-services-core";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
+import axios from "axios";
 
 /**
  * Manages Webhooks and associated events
@@ -13,10 +16,12 @@ export class WebhookManager implements IWebhookManager {
 	// Map of webhook event names to URL's (webhooks)
 	private readonly eventSubscriptions: Map<string, Set<string>>;
 	private readonly internalHistorianUrl: string;
+	private readonly tenantManager: ITenantManager;
 
-	constructor(historianUrl: string) {
+	constructor(historianUrl: string, tenantManager: ITenantManager) {
 		this.eventSubscriptions = new Map();
 		this.internalHistorianUrl = historianUrl;
+		this.tenantManager = tenantManager;
 	}
 
 	public getSubscriptions(eventName: string): Set<string> {
@@ -61,13 +66,13 @@ export class WebhookManager implements IWebhookManager {
 		}
 	}
 
-	public async getLatestSummary(tenantId: string): Promise<string> {
-		const requestUrl = `${this.internalHistorianUrl}/repos/${tenantId}/git/summaries/latest?disableCache=true`;
+	public async getLatestSummary(tenantId: string, documentId: string): Promise<string> {
+		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
+		const requestUrl = `/repos/${tenantId}/git/summaries/latest?disableCache=true`;
 
 		try {
-			const response = await Axios.get(requestUrl);
-			console.log(`RESPONSE RECEIVED`);
-			const messages = response.data.blobs
+			const response = await restWrapper.get<any>(requestUrl);
+			const messages = response.data?.blobs
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				.filter((e) => e.content.includes("blobs") && e.content.includes("content"))
 				.map((e) => {
@@ -75,26 +80,33 @@ export class WebhookManager implements IWebhookManager {
 					return e.content;
 				});
 
-			console.log(
-				`HttpStatus: ${response.status}\nHttpStatusText: ${
-					response.statusText
-				}\nResponseData:\n${JSON.stringify(response.data)}`,
-			);
-			console.log(`messages:\n${messages}`);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return messages;
-		} catch (error: unknown) {
-			if (isAxiosError(error) && error.response) {
-				console.log(
-					`Axios error: ${error.config?.url}\nHttp status: ${
-						error.response.status
-					}\nHttp statusText: ${error.response.statusText}\nHttpHeader: ${JSON.stringify(
-						error.response.headers,
-					)}\nResponseData: ${JSON.stringify(error.response?.data)}`,
-				);
-			} else {
-				console.log(error);
-			}
+			return messages ?? "No Data";
+		} catch (error) {
+			console.log(`Error getting latest summary. ${JSON.stringify(error).substring(0, 300)}`);
 		}
+	}
+
+	private async getBasicRestWrapper(tenantId: string, documentId: string) {
+		const key = await this.tenantManager.getKey(tenantId);
+		const getDefaultHeaders = () => {
+			const jwtToken = generateToken(tenantId, documentId, key, [ScopeType.DocRead]);
+			return {
+				Authorization: `Basic ${jwtToken}`,
+			};
+		};
+
+		const restWrapper = new BasicRestWrapper(
+			this.internalHistorianUrl,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			getDefaultHeaders(),
+			undefined /* Axios */,
+			undefined /* refreshDefaultQueryString */,
+			getDefaultHeaders /* refreshDefaultHeaders */,
+			getCorrelationId /* getCorrelationId */,
+		);
+		return restWrapper;
 	}
 }

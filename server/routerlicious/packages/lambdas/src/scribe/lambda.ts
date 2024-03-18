@@ -298,6 +298,7 @@ export class ScribeLambda implements IPartitionLambda {
 										try {
 											messages = await this.webhookManager?.getLatestSummary(
 												this.tenantId,
+												this.documentId,
 											);
 										} catch (error) {
 											Lumberjack.error(
