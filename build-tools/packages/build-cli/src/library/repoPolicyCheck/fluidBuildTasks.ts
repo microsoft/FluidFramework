@@ -513,7 +513,12 @@ function getTscCommandDependencies(
 			if (fileInfo.isDirectory()) {
 				refConfigPath = path.join(refConfigPath, "tsconfig.json");
 			}
-			refConfigPath = `./${path.relative(packageDir, refConfigPath)}`;
+			// Environment path separator may be \, but find helpers all do
+			// simple string comparisons where paths are expected to use /.
+			// So, ensure search project is set with only / separators.
+			refConfigPath = TscUtils.normalizeSlashes(
+				`./${path.relative(packageDir, refConfigPath)}`,
+			);
 
 			// Warning: This check will find any script that references the project, but
 			// there may be multiple scripts that reference the same project with tsc-multi

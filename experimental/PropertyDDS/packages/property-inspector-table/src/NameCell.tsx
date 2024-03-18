@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ArrayProperty,
 	BaseProperty,
 	MapProperty,
 	NodeProperty,
 } from "@fluid-experimental/property-properties";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
+import { type WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { IInspectorRow } from "./InspectorTableTypes";
-import { ItemMenu } from "./ItemMenu";
-import { OverflowableCell } from "./OverflowableCell";
-import { iconMarginRight, iconWidth, unit } from "./constants";
+import type { IInspectorRow } from "./InspectorTableTypes.js";
+import { ItemMenu } from "./ItemMenu.js";
+import { OverflowableCell } from "./OverflowableCell.js";
+import { iconMarginRight, iconWidth, unit } from "./constants.js";
 
 const styles = () =>
 	createStyles({
