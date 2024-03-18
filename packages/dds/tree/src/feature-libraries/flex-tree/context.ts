@@ -5,21 +5,21 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	moveToDetachedField,
-	ForestEvents,
-	TreeFieldStoredSchema,
 	FieldKey,
+	ForestEvents,
 	IForestSubscription,
+	TreeFieldStoredSchema,
+	moveToDetachedField,
 } from "../../core/index.js";
 import { ISubscribable } from "../../events/index.js";
+import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { IDefaultEditBuilder } from "../default-schema/index.js";
-import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
 import { FieldGenerator } from "../fieldGenerator.js";
+import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
 import { FlexTreeSchema } from "../typed-schema/index.js";
-import { disposeSymbol, IDisposable } from "../../util/index.js";
 import { FlexTreeField } from "./flexTreeTypes.js";
-import { makeField } from "./lazyField.js";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import { makeField } from "./lazyField.js";
 import { NodeKeys, SimpleNodeKeys } from "./nodeKeys.js";
 
 /**

@@ -5,11 +5,11 @@
 
 import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import type {
-	SummaryTree,
-	ISummaryTree,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISummaryTree,
 	ITree,
+	SummaryTree,
 } from "@fluidframework/protocol-definitions";
 import type {
 	IGarbageCollectionData,

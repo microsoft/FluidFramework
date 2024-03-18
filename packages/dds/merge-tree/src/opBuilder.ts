@@ -6,14 +6,14 @@
 import { ISegment, Marker } from "./mergeTreeNodes.js";
 import {
 	IMergeTreeAnnotateMsg,
+	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
-	MergeTreeDeltaType,
-	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
+	IMergeTreeRemoveMsg,
+	MergeTreeDeltaType,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
 

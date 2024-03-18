@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
-	MockContainerRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
+import {
+	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 [
 	{

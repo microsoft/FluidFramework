@@ -5,33 +5,34 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { leaf } from "../domains/index.js";
 import {
-	FlexTreeNode,
+	FlexFieldNodeSchema,
 	LeafNodeSchema as FlexLeafNodeSchema,
-	isFlexTreeNode,
+	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNode,
+	isFlexTreeNode,
+	isFluidHandle,
 	isLazy,
 	markEager,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	isFluidHandle,
-	valueSchemaAllows,
 	typeNameSymbol,
+	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { leaf } from "../domains/index.js";
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { setFlexNode } from "./flexNode.js";
 import {
+	arrayNodePrototypeProperties,
+	createArrayNodeProxy,
+	createMapProxy,
+	createObjectProxy,
 	getClassSchema,
 	getSequenceField,
-	arrayNodePrototypeProperties,
-	mapStaticDispatchMap,
 	isTreeNode,
-	createObjectProxy,
-	createMapProxy,
-	createArrayNodeProxy,
+	mapStaticDispatchMap,
 } from "./proxies.js";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
+import { createRawNode } from "./rawNode.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -52,10 +53,9 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
-import { createRawNode } from "./rawNode.js";
-import { setFlexNode } from "./flexNode.js";
+import { TreeNode } from "./types.js";
 
 /**
  * Instances of this class are schema for leaf nodes.

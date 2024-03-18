@@ -5,19 +5,19 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { structuralName } from "../../domains/schemaBuilder.js";
 import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSequenceField,
 	FlexTreeNodeSchema,
+	FlexTreeSequenceField,
+	FlexTreeTypedNode,
 	schemaIsFieldNode,
 	schemaIsMap,
-	FlexTreeTypedNode,
 } from "../../feature-libraries/index.js";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { structuralName } from "../../domains/schemaBuilder.js";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {

@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { MapFactory, AttributableMap } from "../../map.js";
+import { AttributableMap, MapFactory } from "../../map.js";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {

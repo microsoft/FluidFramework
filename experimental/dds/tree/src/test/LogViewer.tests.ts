@@ -4,10 +4,15 @@
  */
 
 import { strict as assert } from 'assert';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { StableRange } from '../ChangeTypes.js';
+import { copyPropertyIfDefined, fail } from '../Common.js';
 import { EditLog } from '../EditLog.js';
+import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities.js';
+import { EditId } from '../Identifiers.js';
+import { initialTree } from '../InitialTree.js';
 import {
 	CachingLogViewer,
 	CachingLogViewerDiagnosticEvents,
@@ -16,9 +21,9 @@ import {
 	SequencedEditResult,
 	SequencedEditResultCallback,
 } from '../LogViewer.js';
-import { EditId } from '../Identifiers.js';
-import { copyPropertyIfDefined, fail } from '../Common.js';
-import { initialTree } from '../InitialTree.js';
+import { NodeIdContext } from '../NodeIdUtilities.js';
+import { RevisionView } from '../RevisionView.js';
+import { TransactionInternal } from '../TransactionInternal.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -29,13 +34,8 @@ import {
 	SetValueInternal,
 	StablePlaceInternal,
 } from '../persisted-types/index.js';
-import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities.js';
-import { NodeIdContext } from '../NodeIdUtilities.js';
-import { RevisionView } from '../RevisionView.js';
-import { TransactionInternal } from '../TransactionInternal.js';
-import { StableRange } from '../ChangeTypes.js';
 import { expectDefined } from './utilities/TestCommon.js';
-import { buildLeaf, TestTree } from './utilities/TestNode.js';
+import { TestTree, buildLeaf } from './utilities/TestNode.js';
 import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities.js';
 
 /**

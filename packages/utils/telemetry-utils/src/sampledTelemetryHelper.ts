@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties, IDisposable } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerExt,
 	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
 	type ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
 

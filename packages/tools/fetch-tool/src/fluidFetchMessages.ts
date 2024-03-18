@@ -15,11 +15,11 @@ import {
 import { printMessageStats } from "./fluidAnalyzeMessages";
 import {
 	connectToWebSocket,
-	dumpMessages,
 	dumpMessageStats,
+	dumpMessages,
+	messageTypeFilter,
 	overWrite,
 	paramActualFormatting,
-	messageTypeFilter,
 } from "./fluidFetchArgs";
 
 function filenameFromIndex(index: number): string {

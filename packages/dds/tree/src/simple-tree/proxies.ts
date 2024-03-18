@@ -3,48 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { brand, fail, isReadonlyArray } from "../util/index.js";
-import {
-	FlexAllowedTypes,
-	FlexFieldSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	schemaIsFieldNode,
-	schemaIsMap,
-	schemaIsObjectNode,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	FieldKinds,
-	FlexTreeFieldNode,
-	FlexTreeMapNode,
-	FlexTreeObjectNode,
-	FlexTreeOptionalField,
-	FlexTreeRequiredField,
-	FlexTreeSequenceField,
-	FlexTreeNode,
-	FlexTreeTypedField,
-	onNextChange,
-	typeNameSymbol,
-	isFluidHandle,
-	FlexTreeField,
-} from "../feature-libraries/index.js";
+import { assert } from "@fluidframework/core-utils";
 import { EmptyKey, FieldKey, TreeValue } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
 import {
-	type TreeNodeSchema as TreeNodeSchemaClass,
+	FieldKinds,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeField,
+	FlexTreeFieldNode,
+	FlexTreeMapNode,
+	FlexTreeNode,
+	FlexTreeNodeSchema,
+	FlexTreeObjectNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	FlexTreeTypedField,
+	isFluidHandle,
+	onNextChange,
+	schemaIsFieldNode,
+	schemaIsMap,
+	schemaIsObjectNode,
+	typeNameSymbol,
+} from "../feature-libraries/index.js";
+import { brand, fail, isReadonlyArray } from "../util/index.js";
+import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "./flexNode.js";
+import { extractRawNodeContent } from "./rawNode.js";
+import {
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
+	type TreeNodeSchema as TreeNodeSchemaClass,
 } from "./schemaTypes.js";
-import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
-import { Unhydrated, TreeNode } from "./types.js";
-import { tryGetFlexNodeTarget, setFlexNode, getFlexNode, tryGetFlexNode } from "./flexNode.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
-import { extractRawNodeContent } from "./rawNode.js";
+import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /**
  * Detects if the given 'candidate' is a TreeNode.

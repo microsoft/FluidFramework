@@ -6,23 +6,23 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	Any,
-	FlexFieldKind,
 	FieldKinds,
+	FlexFieldKind,
+	FlexFieldNodeSchema,
 	FlexFieldSchema,
 	FlexImplicitAllowedTypes,
+	FlexImplicitFieldSchema,
+	FlexMapFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
 	NormalizeAllowedTypes,
 	NormalizeField,
-	SchemaBuilderOptions,
-	FlexTreeNodeSchema,
-	FlexMapFieldSchema,
-	normalizeField,
 	SchemaBuilderBase,
-	FlexImplicitFieldSchema,
-	FlexObjectNodeSchema,
-	Unenforced,
-	FlexFieldNodeSchema,
-	FlexMapNodeSchema,
+	SchemaBuilderOptions,
 	TreeNodeSchemaBase,
+	Unenforced,
+	normalizeField,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
 import { leaf } from "./leafDomain.js";

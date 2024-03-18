@@ -5,6 +5,7 @@
 
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	PropertiesManager,
 	PropertySet,
@@ -12,7 +13,6 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";

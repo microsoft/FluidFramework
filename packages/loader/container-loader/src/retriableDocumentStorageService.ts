@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
 	FetchSource,
@@ -12,6 +13,7 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
+import { runWithRetry } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -19,9 +21,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
 import { GenericError, ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
-import { runWithRetry } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;

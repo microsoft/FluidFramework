@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
-import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
+import type { ContainerProperty, SetProperty } from "@fluid-experimental/property-properties";
+import { PropertyProxy, type ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import * as React from "react";
-import { StringView, typeToViewMap } from "./PropertyViews";
-import { Utils } from "./typeUtils";
-import { IEditableValueCellProps } from "./InspectorTableTypes";
+import type { IEditableValueCellProps } from "./InspectorTableTypes.js";
+import { StringView, typeToViewMap } from "./PropertyViews/index.js";
+import { Utils } from "./typeUtils.js";
 
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
 	const { rowData } = props;
