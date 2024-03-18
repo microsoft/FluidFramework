@@ -2,21 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	AttachState,
+	type ConnectionState,
+	type IContainer,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import {
 	type IEvent,
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
-	AttachState,
-	type IContainer,
-	type ICriticalContainerError,
-	type ConnectionState,
-} from "@fluidframework/container-definitions";
 import type {
-	ContainerSchema,
 	ContainerAttachProps,
+	ContainerSchema,
 	IRootDataObject,
 	LoadableObjectClass,
 } from "./types.js";
@@ -27,7 +28,7 @@ import type {
  */
 export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
-	// 'ContainerSchema.initialObjects' and infering the value type of each key.
+	// 'ContainerSchema.initialObjects' and inferring the value type of each key.
 	//
 	// The '? TChannel : never' is required because infer can only be used in
 	// a conditional 'extends' expression.

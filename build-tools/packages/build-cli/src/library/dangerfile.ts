@@ -2,11 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ADOSizeComparator,
 	BundleComparisonResult,
 	bundlesContainNoChanges,
 	getAzureDevopsApi,
+	BundleComparison,
+	BundleMetric,
+	totalSizeMetricName,
 } from "@fluidframework/bundle-size-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
@@ -15,6 +19,18 @@ import {
 // actually puts its exports in the global namespace at that time)
 declare function markdown(message: string, file?: string, line?: number): void;
 
+declare function warn(message: string, file?: string, line?: number): void;
+
+declare const danger: {
+	github: {
+		utils: {
+			createOrAddLabel: (
+				labelConfig: { color: string; description: string; name: string },
+				repoConfig?: { owner: string; repo: string; id: number },
+			) => Promise<void>;
+		};
+	};
+};
 const adoConstants = {
 	orgUrl: "https://dev.azure.com/fluidframework",
 	projectName: "public",
@@ -23,6 +39,8 @@ const adoConstants = {
 };
 
 const localReportPath = "./artifacts/bundleAnalysis";
+
+const sizeWarningThresholdBytes = 5120;
 
 export async function dangerfile(): Promise<void> {
 	if (process.env.ADO_API_TOKEN === undefined) {
@@ -41,12 +59,44 @@ export async function dangerfile(): Promise<void> {
 		undefined,
 		ADOSizeComparator.naiveFallbackCommitGenerator,
 	);
-	const result: BundleComparisonResult = await sizeComparator.createSizeComparisonMessage(false);
+	const result: BundleComparisonResult =
+		await sizeComparator.createSizeComparisonMessage(false);
 
 	// Post a message only if there was an error (result.comparison is undefined) or if
 	// there were actual changes to the bundle sizes.  In other cases, we don't post a
 	// message and danger will delete its previous message
 	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
+		// Check for bundle size regression
+		const sizeRegressionDetected =
+			result.comparison?.some((bundle: BundleComparison) => {
+				return Object.entries(bundle.commonBundleMetrics).some(
+					([metricName, { baseline, compare }]: [
+						string,
+						{ baseline: BundleMetric; compare: BundleMetric },
+					]) => {
+						if (metricName === totalSizeMetricName) {
+							return false;
+						}
+						return compare.parsedSize - baseline.parsedSize > sizeWarningThresholdBytes;
+					},
+				);
+			}) ?? false;
+
+		// Add warning message in case of bundle size regression
+		if (sizeRegressionDetected) {
+			warn("Bundle size regression detected -- please investigate before merging!");
+
+			try {
+				await danger.github.utils.createOrAddLabel({
+					color: "ff0000",
+					description: "Significant bundle size regression (>5 KB)",
+					name: "size regression",
+				});
+			} catch (error) {
+				console.error(`Error adding label: ${error}`);
+			}
+		}
+
 		markdown(result.message);
 	} else {
 		console.log("No size changes detected, skipping posting PR comment");

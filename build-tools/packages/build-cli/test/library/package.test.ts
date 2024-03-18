@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PackageName } from "@rushstack/node-core-library";
 import { assert } from "chai";
 import { parseJSON } from "date-fns";
 
-import { VersionDetails } from "@fluidframework/build-tools";
+import { VersionDetails } from "../../src/library";
 
 import { generateReleaseGitTagName, sortVersions } from "../../src/library/package";
 

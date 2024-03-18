@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { EOL as newline } from "os";
 
 import { Handler, readFile, writeFile } from "../common";
@@ -46,7 +47,9 @@ function makeHandler(config: IFileConfig) {
 
 	// Detection regex matches the header start (if any), followed by lines in 'copyrightText',
 	// optionally followed by lines in the 'autoGenText', and finally the header end (if any).
-	const regex = new RegExp(`^${pre}${toRegex(copyrightText)}(${toRegex(autoGenText)})?${post}`);
+	const regex = new RegExp(
+		`^${pre}${toRegex(copyrightText)}(${toRegex(autoGenText)})?${post}`,
+	);
 
 	return async (file: string): Promise<string | undefined> => {
 		// TODO: Consider reading only the first 512B or so since copyright headers are required
@@ -115,7 +118,7 @@ export const handlers: Handler[] = [
 			headerStart: /(#![^\n]*\r?\n)?\/\*!\r?\n/, // Begins with optional hashbang followed by '/*!'
 			lineStart: / \* /, // Subsequent lines begins with ' * '
 			lineEnd: /\r?\n/, // Subsequent lines end with CRLF or LF
-			headerEnd: / \*\/\r?\n/, // Header ends with ' */' on a line by itself.
+			headerEnd: / \*\/\r?\n\r?\n/, // Header ends with ' */' on a line by itself, followed by another newline
 		}),
 		resolver: (file) => {
 			const prevContent = readFile(file);

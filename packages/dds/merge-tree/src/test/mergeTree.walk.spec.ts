@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { IMergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
-import { TextSegment } from "../textSegment.js";
 import { LocalClientId, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { IMergeBlock, ISegmentLeaf, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { TextSegment } from "../textSegment.js";
 import { insertText } from "./testUtils.js";
 
 const localClientId = 17;

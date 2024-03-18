@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import execa from "execa";
@@ -9,7 +10,8 @@ import execa from "execa";
 import { PackageCommand } from "../BasePackageCommand";
 
 export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
-	static readonly description = `Run a shell command in the context of a package or release group.`;
+	static readonly description =
+		`Run a shell command in the context of a package or release group.`;
 
 	static readonly args = {
 		cmd: Args.string({

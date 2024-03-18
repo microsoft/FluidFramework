@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { UsageError } from "@fluidframework/driver-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions";
+import { UsageError } from "@fluidframework/driver-utils";
 import {
 	IFileEntry,
-	InstrumentedStorageTokenFetcher,
 	IOdspResolvedUrl,
+	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
-import { IWriteSummaryResponse } from "./contracts";
-import { createCacheSnapshotKey, getOrigin, IExistingFileInfo } from "./odspUtils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { EpochTracker } from "./epochTracker";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { IWriteSummaryResponse } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {
 	convertCreateNewSummaryTreeToTreeAndBlobs,
 	convertSummaryIntoContainerSnapshot,
 	createNewFluidContainerCore,
-} from "./createNewUtils";
-import { ClpCompliantAppHeader } from "./contractsPublic";
+} from "./createNewUtils.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { EpochTracker } from "./epochTracker.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { IExistingFileInfo, createCacheSnapshotKey, getOrigin } from "./odspUtils.js";
 
 /**
  * Creates a new Fluid container on an existing file.

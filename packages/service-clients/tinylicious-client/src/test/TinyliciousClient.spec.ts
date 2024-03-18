@@ -14,12 +14,12 @@ import { AttachState, ContainerErrorTypes } from "@fluidframework/container-defi
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
-import { TinyliciousClient } from "../index";
-import { TestDataObject } from "./TestDataObject";
+import { TinyliciousClient } from "../index.js";
+import { TestDataObject } from "./TestDataObject.js";
 
 const corruptedAliasOp = async (
 	runtime: IContainerRuntime,
@@ -50,11 +50,11 @@ const allDataCorruption = async (containers: IFluidContainer[]): Promise<boolean
 
 describe("TinyliciousClient", () => {
 	let tinyliciousClient: TinyliciousClient;
-	const schema: ContainerSchema = {
+	const schema = {
 		initialObjects: {
 			map1: SharedMap,
 		},
-	};
+	} satisfies ContainerSchema;
 	beforeEach(() => {
 		tinyliciousClient = new TinyliciousClient();
 	});
@@ -232,12 +232,12 @@ describe("TinyliciousClient", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (DDS) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [SharedDirectory],
-		};
+		} satisfies ContainerSchema;
 
 		const { container } = await tinyliciousClient.createContainer(dynamicSchema);
 		await container.attach();
@@ -267,12 +267,12 @@ describe("TinyliciousClient", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [TestDataObject],
-		};
+		} satisfies ContainerSchema;
 
 		const { container: createFluidContainer } =
 			await tinyliciousClient.createContainer(dynamicSchema);
@@ -299,11 +299,11 @@ describe("TinyliciousClient", () => {
 	 * error event.
 	 */
 	it("can process data corruption events", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema = {
 			initialObjects: {
 				do1: TestDataObject,
 			},
-		};
+		} satisfies ContainerSchema;
 
 		const { container: createFluidContainer } =
 			await tinyliciousClient.createContainer(dynamicSchema);
@@ -314,7 +314,7 @@ describe("TinyliciousClient", () => {
 			});
 		});
 
-		const do1 = createFluidContainer.initialObjects.do1 as TestDataObject;
+		const do1 = createFluidContainer.initialObjects.do1;
 		const dataCorruption = allDataCorruption([createFluidContainer]);
 		await corruptedAliasOp(runtimeOf(do1), "alias");
 		assert(await dataCorruption);

@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
-	IAudience,
-	IContainerContext,
-	IDeltaManager,
-	ILoader,
-	ICriticalContainerError,
 	AttachState,
-	ILoaderOptions,
-	IFluidCodeDetails,
+	IAudience,
 	IBatchMessage,
+	IContainerContext,
+	ICriticalContainerError,
+	IDeltaManager,
+	IFluidCodeDetails,
+	ILoader,
+	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
@@ -23,10 +22,11 @@ import {
 	IQuorumClients,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISummaryContent,
 	IVersion,
 	MessageType,
-	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}

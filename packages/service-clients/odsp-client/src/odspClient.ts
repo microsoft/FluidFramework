@@ -2,24 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { v4 as uuid } from "uuid";
+
 import {
 	AttachState,
 	IContainer,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
 import { Loader } from "@fluidframework/container-loader";
+import {
+	type FluidObject,
+	type IConfigProviderBase,
+	type IRequest,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-	type ContainerSchema,
-	createDOProviderContainerRuntimeFactory,
-	IFluidContainer,
-	createFluidContainer,
-	IRootDataObject,
-	createServiceAudience,
 	ContainerAttachProps,
+	type ContainerSchema,
+	IFluidContainer,
+	IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import {
 	OdspDocumentServiceFactory,
@@ -33,11 +37,13 @@ import type {
 	TokenResponse,
 } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import {
 	OdspClientProps,
-	OdspContainerServices,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
+	OdspContainerServices,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
@@ -65,6 +71,37 @@ async function getWebsocketToken(
 }
 
 /**
+ * Default feature gates.
+ * These values will only be used if the feature gate is not already set by the supplied config provider.
+ */
+const odspClientFeatureGates = {
+	// None yet
+};
+
+/**
+ * Feature gates required to support runtime compatibility when V1 and V2 clients are collaborating
+ */
+const odspClientV1CompatFeatureGates = {
+	// Disable Garbage Collection
+	"Fluid.GarbageCollection.RunSweep": false, // To prevent the GC op
+	"Fluid.GarbageCollection.DisableAutoRecovery": true, // To prevent the GC op
+	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride": false, // For a consistent story of "GC is disabled"
+};
+
+/**
+ * Wrap the config provider to fall back on the appropriate defaults for ODSP Client.
+ * @param baseConfigProvider - The base config provider to wrap
+ * @returns A new config provider with the appropriate defaults applied underneath the given provider
+ */
+function wrapConfigProvider(baseConfigProvider?: IConfigProviderBase): IConfigProviderBase {
+	const defaults = {
+		...odspClientFeatureGates,
+		...odspClientV1CompatFeatureGates,
+	};
+	return wrapConfigProviderWithDefaults(baseConfigProvider, defaults);
+}
+
+/**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
  * @sealed
  * @beta
@@ -72,6 +109,7 @@ async function getWebsocketToken(
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: OdspDriverUrlResolver;
+	private readonly configProvider: IConfigProviderBase | undefined;
 
 	public constructor(private readonly properties: OdspClientProps) {
 		this.documentServiceFactory = new OdspDocumentServiceFactory(
@@ -80,10 +118,13 @@ export class OdspClient {
 		);
 
 		this.urlResolver = new OdspDriverUrlResolver();
+		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -100,14 +141,14 @@ export class OdspClient {
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	public async getContainer(
+	public async getContainer<T extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -124,7 +165,7 @@ export class OdspClient {
 			rootDataObject: await this.getContainerEntryPoint(container),
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
@@ -153,6 +194,7 @@ export class OdspClient {
 			codeLoader,
 			logger: this.properties.logger,
 			options: { client },
+			configProvider: this.configProvider,
 		});
 	}
 
