@@ -206,12 +206,10 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 3.0.3
       sinon: 17.0.1
       start-server-and-test: 1.15.5
       tinylicious: 4.0.0
@@ -227,8 +225,10 @@ importers:
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      cross-env: 7.0.3
       eslint: 8.55.0
       nock: 13.4.0
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
@@ -294,7 +294,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       commander: 5.1.0
-      cross-env: 7.0.3
       js-yaml: 4.1.0
       mocha: 10.2.0
       sinon: 17.0.1
@@ -315,6 +314,7 @@ importers:
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
+      cross-env: 7.0.3
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -10038,7 +10038,6 @@ importers:
       '@fluidframework/tree': link:../../dds/tree
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       '@types/sinon': 17.0.3
-      cross-env: 7.0.3
       mocha: 10.2.0
       semver: 7.5.4
       sinon: 17.0.1
@@ -10055,6 +10054,7 @@ importers:
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      cross-env: 7.0.3
       eslint: 8.55.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
