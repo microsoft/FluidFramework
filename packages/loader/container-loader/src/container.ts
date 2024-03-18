@@ -30,7 +30,7 @@ import {
 	FluidObject,
 	IEvent,
 	IRequest,
-	type ISignalEnvelope,
+  type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
