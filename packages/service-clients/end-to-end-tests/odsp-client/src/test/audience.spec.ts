@@ -13,7 +13,7 @@ import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { createOdspClient, IOdspLoginCredentials } from "./OdspClientFactory.js";
+import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

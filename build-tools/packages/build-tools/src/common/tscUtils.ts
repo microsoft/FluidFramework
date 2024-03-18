@@ -264,3 +264,9 @@ export function getTscUtils(path: string): TscUtil {
 	tscUtilLibPathCache.set(tsPath, tscUtil);
 	return tscUtil;
 }
+
+// Any paths given by typescript will be normalized to forward slashes.
+// Local paths should be normalized to make any comparisons.
+export function normalizeSlashes(path: string): string {
+	return path.replace(/\\/g, "/");
+}

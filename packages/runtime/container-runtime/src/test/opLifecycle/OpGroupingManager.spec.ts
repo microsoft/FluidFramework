@@ -73,52 +73,16 @@ describe("OpGroupingManager", () => {
 
 	describe("groupBatch", () => {
 		it("grouped batching disabled", () => {
-			const result = new OpGroupingManager(
-				{
-					groupedBatchingEnabled: false,
-					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
-				},
-				mockLogger,
-			).groupBatch(createBatch(5));
-			assert.strictEqual(result.content.length, 5);
-			assert.deepStrictEqual(result.content, [
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-			]);
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: false,
+						opCountThreshold: 2,
+						reentrantBatchGroupingEnabled: false,
+					},
+					mockLogger,
+				).groupBatch(createBatch(5));
+			});
 		});
 
 		it("grouped batching enabled", () => {
@@ -144,52 +108,16 @@ describe("OpGroupingManager", () => {
 		});
 
 		it("grouped batching enabled, not large enough", () => {
-			const result = new OpGroupingManager(
-				{
-					groupedBatchingEnabled: true,
-					opCountThreshold: 10,
-					reentrantBatchGroupingEnabled: false,
-				},
-				mockLogger,
-			).groupBatch(createBatch(5));
-			assert.strictEqual(result.content.length, 5);
-			assert.deepStrictEqual(result.content, [
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-				{
-					contents: "0",
-					localOpMetadata: undefined,
-					metadata: undefined,
-					referenceSequenceNumber: 0,
-					type: "component",
-				},
-			]);
+			assert.throws(() => {
+				new OpGroupingManager(
+					{
+						groupedBatchingEnabled: true,
+						opCountThreshold: 10,
+						reentrantBatchGroupingEnabled: false,
+					},
+					mockLogger,
+				).groupBatch(createBatch(5));
+			});
 		});
 
 		it("grouped batching enabled, op metadata not allowed", () => {
