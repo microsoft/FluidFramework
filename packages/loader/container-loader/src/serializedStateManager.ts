@@ -80,9 +80,10 @@ export class SerializedStateManager {
 			}
 			return { snapshotTree, version };
 		} else {
+			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			this.snapshot = {
-				tree: this.pendingLocalState.baseSnapshot,
-				blobs: this.pendingLocalState.snapshotBlobs,
+				tree: baseSnapshot,
+				blobs: snapshotBlobs,
 			};
 			return { snapshotTree: this.pendingLocalState.baseSnapshot, version: undefined };
 		}
@@ -148,10 +149,7 @@ export async function fetchISnapshot(
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
 	specifiedVersion: string | undefined,
 ): Promise<{ snapshot?: ISnapshot | ISnapshotTree; version?: IVersion }> {
-	const snapshot =
-		(await storageAdapter.getSnapshot?.({
-			versionId: specifiedVersion,
-		})) ?? undefined;
+	const snapshot = await storageAdapter.getSnapshot?.({ versionId: specifiedVersion });
 	const version: IVersion | undefined =
 		snapshot?.snapshotTree.id === undefined
 			? undefined
