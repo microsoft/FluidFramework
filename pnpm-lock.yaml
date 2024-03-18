@@ -9096,6 +9096,7 @@ importers:
   packages/service-clients/azure-client:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@2.0.0-internal.8.0.0
@@ -9151,6 +9152,7 @@ importers:
       axios: 1.6.2
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/2.0.0-internal.8.0.0
@@ -9178,6 +9180,7 @@ importers:
 
   packages/service-clients/end-to-end-tests/odsp-client:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/odsp-client': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -9231,15 +9234,14 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@fluidframework/test-utils': link:../../../test/test-utils
       '@types/sinon': 17.0.3
-      cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
-      prettier: 3.0.3
       sinon: 17.0.1
       uuid: 9.0.1
     devDependencies:
+      '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
@@ -9248,14 +9250,17 @@ importers:
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
+      cross-env: 7.0.3
       eslint: 8.55.0
       nock: 13.4.0
+      prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
 
   packages/service-clients/odsp-client:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/build-common': ^2.0.3
@@ -9303,6 +9308,7 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
@@ -9325,6 +9331,7 @@ importers:
   packages/service-clients/tinylicious-client:
     specifiers:
       '@arethetypeswrong/cli': ^0.13.3
+      '@biomejs/biome': ^1.6.1
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -9374,6 +9381,7 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
+      '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/build-common': 2.0.3
