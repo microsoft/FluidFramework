@@ -7,14 +7,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ReferenceType } from "../ops.js";
-import { createMap, extend, MapLike } from "../properties.js";
+import { MapLike, createMap, extend } from "../properties.js";
 import { ReferencePosition } from "../referencePositions.js";
+import { _dirname } from "./dirname.cjs";
 import { TestClient } from "./testClient.js";
 import { loadTextFromFileWithMarkers } from "./testUtils.js";
-import { _dirname } from "./dirname.cjs";
 
 const clock = () => Trace.start();
 

@@ -3,42 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assert } from "@fluidframework/core-utils";
 import { SessionId } from "@fluidframework/id-compressor";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 import {
+	ChangeFamily,
+	ChangeFamilyEditor,
+	GraphCommit,
+	Revertible,
+	RevisionTag,
+	findAncestor,
+	findCommonAncestor,
+	mintCommit,
+	rebaseChange,
+} from "../core/index.js";
+import {
+	Mutable,
+	RecursiveReadonly,
 	brand,
 	fail,
 	getOrCreate,
 	mapIterable,
-	Mutable,
-	RecursiveReadonly,
 } from "../util/index.js";
-import {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	findAncestor,
-	findCommonAncestor,
-	GraphCommit,
-	mintCommit,
-	rebaseChange,
-	Revertible,
-	RevisionTag,
-} from "../core/index.js";
-import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch.js";
+import { SharedTreeBranch, getChangeReplaceType, onForkTransitive } from "./branch.js";
 import {
 	Commit,
-	SequenceId,
-	SummarySessionBranch,
 	SeqNumber,
+	SequenceId,
 	SequencedCommit,
+	SummarySessionBranch,
 } from "./editManagerFormat.js";
 import {
-	sequenceIdComparator,
-	equalSequenceIds,
-	minSequenceId,
 	decrementSequenceId,
+	equalSequenceIds,
 	maxSequenceId,
+	minSequenceId,
+	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
 
 export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);

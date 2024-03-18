@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { Provider } from "../nconf.cjs";
 import { RouterliciousUrlResolver } from "../urlResolver.js";
 

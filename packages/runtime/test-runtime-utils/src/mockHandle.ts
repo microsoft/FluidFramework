@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 /**
  * Mock implementation of IFluidHandle.

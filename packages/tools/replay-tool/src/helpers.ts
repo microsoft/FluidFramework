@@ -8,10 +8,6 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
-import stringify from "json-stable-stringify";
 import {
 	ConfigTypes,
 	FluidObject,
@@ -19,10 +15,14 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IFileSnapshot } from "@fluidframework/replay-driver";
+import { ISnapshotNormalizerConfig, getNormalizedSnapshot } from "@fluidframework/tool-utils";
+import stringify from "json-stable-stringify";
 import {
-	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,
+	excludeChannelContentDdsFactories,
 } from "./replayFluidFactories.js";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject.js";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel.js";

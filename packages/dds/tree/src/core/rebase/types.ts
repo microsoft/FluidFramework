@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
 import {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
+import { Type } from "@sinclair/typebox";
 import {
 	Brand,
 	NestedMap,

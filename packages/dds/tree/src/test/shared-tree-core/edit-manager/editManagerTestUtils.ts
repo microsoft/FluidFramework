@@ -6,19 +6,19 @@
 import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangeFamily,
-	ChangeRebaser,
 	ChangeFamilyEditor,
+	ChangeRebaser,
 	DeltaRoot,
 	emptyDelta,
 } from "../../../core/index.js";
-import {
-	TestChangeFamily,
-	TestChange,
-	testChangeFamilyFactory,
-	asDelta,
-} from "../../testChange.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
 import { RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
+import {
+	TestChange,
+	TestChangeFamily,
+	asDelta,
+	testChangeFamilyFactory,
+} from "../../testChange.js";
 import { mintRevisionTag, testIdCompressor } from "../../utils.js";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 

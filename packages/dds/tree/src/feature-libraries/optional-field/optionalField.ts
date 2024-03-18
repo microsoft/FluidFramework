@@ -5,45 +5,45 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TaggedChange,
+	ChangeAtomId,
+	ChangeAtomIdMap,
 	ChangesetLocalId,
-	RevisionTag,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaMark,
-	DeltaDetachedNodeId,
-	DeltaDetachedNodeChanges,
-	ChangeAtomId,
+	RevisionTag,
+	TaggedChange,
 	areEqualChangeAtomIds,
-	ChangeAtomIdMap,
 	makeChangeAtomId,
 } from "../../core/index.js";
 import {
-	Mutable,
 	IdAllocator,
+	Mutable,
 	SizedNestedMap,
+	deleteFromNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
-	deleteFromNestedMap,
 } from "../../util/index.js";
-import {
-	ToDelta,
-	FieldChangeRebaser,
-	NodeChangeComposer,
-	NodeChangeInverter,
-	NodeChangeRebaser,
-	NodeChangeset,
-	FieldEditor,
-	NodeExistenceState,
-	FieldChangeHandler,
-	RelevantRemovedRootsFromChild,
-	NodeChangePruner,
-} from "../modular-schema/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import {
-	RegisterId,
-	OptionalChangeset,
-	Move,
+	FieldChangeHandler,
+	FieldChangeRebaser,
+	FieldEditor,
+	NodeChangeComposer,
+	NodeChangeInverter,
+	NodeChangePruner,
+	NodeChangeRebaser,
+	NodeChangeset,
+	NodeExistenceState,
+	RelevantRemovedRootsFromChild,
+	ToDelta,
+} from "../modular-schema/index.js";
+import {
 	ChildChange,
+	Move,
+	OptionalChangeset,
+	RegisterId,
 	Replace,
 } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";

@@ -2,27 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { FieldKey, AllowedUpdateType, anchorSlot, Compatibility } from "../core/index.js";
-import {
-	defaultSchemaPolicy,
-	FlexFieldSchema,
-	ViewSchema,
-	NodeKeyManager,
-} from "../feature-libraries/index.js";
+import { AllowedUpdateType, Compatibility, FieldKey, anchorSlot } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
-import { disposeSymbol } from "../util/index.js";
 import {
-	TreeConfiguration,
-	toFlexConfig,
+	FlexFieldSchema,
+	NodeKeyManager,
+	ViewSchema,
+	defaultSchemaPolicy,
+} from "../feature-libraries/index.js";
+import {
 	ImplicitFieldSchema,
+	SchemaIncompatible,
+	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
 	TreeViewEvents,
 	getProxyForField,
-	SchemaIncompatible,
+	toFlexConfig,
 } from "../simple-tree/index.js";
+import { disposeSymbol } from "../util/index.js";
 import { TreeContent, UpdateType, ensureSchema, evaluateUpdate } from "./schematizeTree.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./treeView.js";
