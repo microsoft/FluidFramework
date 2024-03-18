@@ -177,18 +177,10 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 	it("Aliasing", async () => {
 		const channelCollection1 = await initialize();
 		const dataStore1 = await channelCollection1.createDataStore([testObjectFactory.type]);
-		assert.equal(await dataStore1.trySetAlias("test"), "Success");
-
-		const aliasedDataStore1 = await channelCollection1.getAliasedDataStoreEntryPoint("test");
-		assert.ok(aliasedDataStore1);
-		const testObject1 = (await aliasedDataStore1.get()) as TestFluidObject;
-		testObject1.root.set("testKey", 100);
-
-		await waitForSummary();
-		const channelCollection2 = (await addContainerInstance()).channelCollection;
-		await provider.ensureSynchronized();
-
-		const aliasedDataStore2 = await channelCollection2.getAliasedDataStoreEntryPoint("test");
-		assert.ok(aliasedDataStore2 === undefined); // aliasing is not currently supported
+		await assert.rejects(dataStore1.trySetAlias("test"), "Aliasing should not work here");
+		await assert.rejects(
+			channelCollection1.getAliasedDataStoreEntryPoint("test"),
+			"Fetching aliases should not work here",
+		);
 	});
 });

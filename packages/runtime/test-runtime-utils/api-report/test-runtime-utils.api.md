@@ -376,6 +376,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     isLocalDataStore: boolean;
     // (undocumented)
+    level: number;
+    // (undocumented)
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     makeLocallyVisible(): void;

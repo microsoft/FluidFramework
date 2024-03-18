@@ -126,6 +126,7 @@ interface FluidDataStoreMessage {
  */
 export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 	return {
+		level: context.level + 1,
 		get IFluidDataStoreRegistry() {
 			return context.IFluidDataStoreRegistry;
 		},
@@ -323,6 +324,7 @@ export class ChannelCollection
 			if (this.parentContext.attachState !== AttachState.Detached) {
 				dataStoreContext = new RemoteFluidDataStoreContext({
 					id: key,
+					level: this.parentContext.level,
 					snapshotTree: value,
 					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
@@ -339,6 +341,7 @@ export class ChannelCollection
 				const snapshotTree = value;
 				dataStoreContext = new LocalFluidDataStoreContext({
 					id: key,
+					level: this.parentContext.level,
 					pkg: undefined,
 					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
@@ -454,6 +457,7 @@ export class ChannelCollection
 		const pkg = [attachMessage.type];
 		const remoteFluidDataStoreContext = new RemoteFluidDataStoreContext({
 			id: attachMessage.id,
+			level: this.parentContext.level,
 			snapshotTree,
 			parentContext: this.wrapContextForInnerChannel(attachMessage.id),
 			storage: new StorageServiceWithAttachBlobs(this.parentContext.storage, flatAttachBlobs),
@@ -650,6 +654,7 @@ export class ChannelCollection
 		const context = new contextCtor({
 			id,
 			pkg,
+			level: this.parentContext.level,
 			parentContext: this.wrapContextForInnerChannel(id),
 			storage: this.parentContext.storage,
 			scope: this.parentContext.scope,
@@ -694,6 +699,10 @@ export class ChannelCollection
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
+		if (this.parentContext.level > 1) {
+			throw new UsageError("Aliasing is not supported for nested data stores");
+		}
+
 		// Back-comapatibility:
 		// There are old files that were created without using data store aliasing feature, but
 		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,

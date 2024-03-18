@@ -131,6 +131,7 @@ describe("Data Store Creation Tests", () => {
 			// Create the default dataStore that is in the global registry.
 			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [defaultName],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,
@@ -155,6 +156,7 @@ describe("Data Store Creation Tests", () => {
 			// Create dataStore A that is not in the global registry.
 			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [dataStoreAName],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,
@@ -179,6 +181,7 @@ describe("Data Store Creation Tests", () => {
 			// Create dataStore A that is in the registry of the default dataStore.
 			const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [defaultName, dataStoreAName],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,
@@ -203,6 +206,7 @@ describe("Data Store Creation Tests", () => {
 			// Create dataStore B that is in not the registry of the default dataStore.
 			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [defaultName, dataStoreBName],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,
@@ -227,6 +231,7 @@ describe("Data Store Creation Tests", () => {
 			// Create dataStore B that is in the registry of dataStore A (which is at depth 2).
 			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreBId,
+				level: 0,
 				pkg: [defaultName, dataStoreAName, dataStoreBName],
 				parentContext: wrapContextForInnerChannel(dataStoreBId, containerRuntime),
 				storage,
@@ -248,6 +253,7 @@ describe("Data Store Creation Tests", () => {
 			// Create dataStore C that is in the registry of dataStore A (which is at depth 2).
 			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreCId,
+				level: 0,
 				pkg: [defaultName, dataStoreAName, dataStoreCName],
 				parentContext: wrapContextForInnerChannel(dataStoreCId, containerRuntime),
 				storage,
@@ -272,6 +278,7 @@ describe("Data Store Creation Tests", () => {
 			// Create a fake dataStore that is not in the registry of dataStore A (which is at depth 2).
 			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [defaultName, dataStoreAName, "fake"],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,
@@ -296,6 +303,7 @@ describe("Data Store Creation Tests", () => {
 			// Create a fake dataStore that is not in the registry of dataStore B (which is at depth 3).
 			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [defaultName, dataStoreAName, "fake"],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,
@@ -320,6 +328,7 @@ describe("Data Store Creation Tests", () => {
 			// Create dataStore C that is in parent's registry but not in the registry of dataStore B.
 			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
+				level: 0,
 				pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
 				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
 				storage,

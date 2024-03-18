@@ -276,6 +276,8 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
+    // (undocumented)
+    readonly level: number;
     readonly loadingGroupId?: string;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;

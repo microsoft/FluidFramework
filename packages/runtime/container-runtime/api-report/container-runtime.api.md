@@ -289,6 +289,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     get isDirty(): boolean;
+    // (undocumented)
+    readonly level: number;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -481,6 +483,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     readonly isLocalDataStore: boolean;
     isRoot(): Promise<boolean>;
+    // (undocumented)
+    readonly level: number;
     // (undocumented)
     readonly loadingGroupId: string | undefined;
     // (undocumented)
@@ -738,6 +742,8 @@ export interface IFluidDataStoreContextProps {
     readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     // (undocumented)
     readonly id: string;
+    // (undocumented)
+    readonly level: number;
     // (undocumented)
     readonly loadingGroupId?: string;
     // (undocumented)

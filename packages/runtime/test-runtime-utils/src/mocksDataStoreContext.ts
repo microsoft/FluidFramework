@@ -30,6 +30,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
  * @alpha
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
+	public level = 0;
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -986,6 +986,7 @@ export class ContainerRuntime
 	private readonly submitSignalFn: (content: any, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
+	public readonly level: number = 0;
 
 	public get flushMode(): FlushMode {
 		return this._flushMode;

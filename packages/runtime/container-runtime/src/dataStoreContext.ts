@@ -126,6 +126,7 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
  */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
+	readonly level: number;
 	readonly parentContext: IFluidParentContext;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
@@ -248,6 +249,7 @@ export abstract class FluidDataStoreContext
 	/** If true, throw an error when a tombstone data store is used. */
 	public readonly gcThrowOnTombstoneUsage: boolean;
 	public readonly gcTombstoneEnforcementAllowed: boolean;
+	public readonly level: number;
 
 	/** If true, this means that this data store context and its children have been removed from the runtime */
 	protected deleted: boolean = false;
@@ -326,6 +328,7 @@ export abstract class FluidDataStoreContext
 	) {
 		super();
 
+		this.level = props.level + 1;
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
 		this.id = props.id;
