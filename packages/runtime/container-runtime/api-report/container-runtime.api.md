@@ -478,8 +478,7 @@ export class DocumentsSchemaController {
     onDisconnect(): void;
     // (undocumented)
     onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
-    // (undocumented)
-    processDocumentSchemaOp(message: IDocumentSchemaChangeMessage, local: boolean): void;
+    processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
     // (undocumented)

@@ -2607,6 +2607,7 @@ export class ContainerRuntime
 				this.documentsSchemaController.processDocumentSchemaOp(
 					messageWithContext.message.contents,
 					messageWithContext.local,
+					messageWithContext.message.sequenceNumber,
 				);
 				break;
 			default: {

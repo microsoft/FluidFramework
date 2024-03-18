@@ -39,9 +39,13 @@ describe("Runtime", () => {
 		}, "should throw on unknown property");
 
 		const controller = createController(validConfig);
-		assert.throws(() => {
-			controller.processDocumentSchemaOp(config as IDocumentSchemaCurrent, false /* local */);
-		});
+		assert.throws(() =>
+			controller.processDocumentSchemaOp(
+				config as IDocumentSchemaCurrent,
+				false, // local
+				100,
+			),
+		); // sequenceNumber
 	}
 
 	// Validate first that config is indeed valid, such that all further tests are not tripping
@@ -115,7 +119,8 @@ describe("Runtime", () => {
 		assert(controller.sessionSchema.refSeq === 0, "refSeq");
 		assert(controller.sessionSchema.version === "1.0", "version");
 		assert(
-			controller.sessionSchema.runtime.explicitSchemaControl === boolToProp(explicitSchemaControl),
+			controller.sessionSchema.runtime.explicitSchemaControl ===
+				boolToProp(explicitSchemaControl),
 			"explicitSchemaControl",
 		);
 
@@ -167,7 +172,13 @@ describe("Runtime", () => {
 		}
 
 		// No local messages are expected
-		assert.throws(() => controller.processDocumentSchemaOp(validConfig, true /* local */));
+		assert.throws(() =>
+			controller.processDocumentSchemaOp(
+				validConfig,
+				true, // local
+				100,
+			),
+		); // sequenceNumber
 	}
 
 	it("Creation of new document", () => {
@@ -214,6 +225,91 @@ describe("Runtime", () => {
 		testExistingDocNoChangesInSchema({
 			...validConfig,
 			runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+		});
+	});
+
+	it("Existing document, changes required; race conditions", () => {
+		const controller = new DocumentsSchemaController(
+			true, // explicitSchemaControl
+			true, // existing,
+			validConfig, // old schema,
+			true, // lz4
+			"delayed", // idCompressionMode
+			true, // groupedBatching,
+			() => {}, // onSchemaChange
+		);
+
+		let message: IDocumentSchemaCurrent | undefined;
+		controller.onMessageSent((msg) => {
+			message = msg as IDocumentSchemaCurrent;
+		});
+
+		assert(message !== undefined);
+		assert(message.runtime.opGroupingEnabled === true);
+
+		assert(
+			controller.processDocumentSchemaOp(
+				message,
+				true, // local
+				200,
+			) === true,
+		);
+
+		assert(controller.sessionSchema.runtime.opGroupingEnabled === true);
+		assert(controller.sessionSchema.refSeq === 200);
+
+		const schema = controller.summarizeDocumentSchema(300);
+		assert(schema !== undefined);
+		assert(schema.refSeq === 200);
+
+		const controller2 = new DocumentsSchemaController(
+			true, // explicitSchemaControl
+			true, // existing,
+			schema, // old schema,
+			false, // lz4
+			undefined, // idCompressionMode
+			false, // groupedBatching,
+			() => {}, // onSchemaChange
+		);
+
+		assert.deepEqual((controller2 as any).documentSchema, schema);
+
+		// updates with old refSeq should fail silently.
+		assert(
+			controller.processDocumentSchemaOp(
+				{ ...message, refSeq: 100 },
+				false, // local
+				201,
+			) === false,
+		);
+
+		// new change with some future sequence number should never happen, thus code should throw.
+		assert.throws(() => {
+			assert(message !== undefined);
+			controller.processDocumentSchemaOp(
+				{ ...message, refSeq: 300 },
+				false, // local
+				202,
+			);
+		});
+
+		// new change in schema with updated ref seq should be allowed
+		assert(
+			controller.processDocumentSchemaOp(
+				{ ...message, refSeq: 200 },
+				false, // local
+				305,
+			) === true,
+		);
+
+		// Sequence numbers should move only forward.
+		assert.throws(() => {
+			assert(message !== undefined);
+			controller.processDocumentSchemaOp(
+				{ ...message, refSeq: 305 },
+				false, // local
+				300,
+			);
 		});
 	});
 
@@ -290,7 +386,11 @@ describe("Runtime", () => {
 		});
 		assert(message !== undefined, "message sent");
 
-		controller3.processDocumentSchemaOp(message, true /* local */);
+		controller3.processDocumentSchemaOp(
+			message,
+			true, // local
+			100,
+		); // sequenceNumber
 		assert(schemaChanged, "schema changed");
 		assert(controller3.sessionSchema.runtime.idCompressorMode === "on");
 		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
@@ -312,11 +412,13 @@ describe("Runtime", () => {
 			false, // lz4
 			undefined, // idCompressionMode
 			true, // groupedBatching,
-			() => {
-				schemaChanged = true;
-			}, // onSchemaChange
+			() => (schemaChanged = true), // onSchemaChange
 		);
-		controller4.processDocumentSchemaOp(message, false /* local */);
+		controller4.processDocumentSchemaOp(
+			message,
+			false, // local
+			200,
+		); // sequenceNumber
 		assert(schemaChanged, "schema changed");
 		assert(controller4.sessionSchema.runtime.idCompressorMode === "on");
 		controller4.onMessageSent(() => {
@@ -329,13 +431,5 @@ describe("Runtime", () => {
 		// Validate same summaries by two clients.
 		const schema2 = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert.deepEqual(schema, schema2, "same summaries");
-	});
-
-	it("Existing document with existing schema, changes required", () => {
-		// TBD
-	});
-
-	it("changing schema and races", () => {
-		// TBD
 	});
 });

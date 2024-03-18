@@ -38,7 +38,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * For now this structure and appropriate interpretation / behavior is focused only on runtime features.
  * In the future that could be interpolated to more areas, including DDSs used, and even possibly - application
  * schema.
- * 
+ *
  * Runtime will ignore any properties at the root that it does not understand (i.e. IDocumentSchema.app), but will
  * stop (and fail session) on any unknown properties within "runtime" sub-tree.
  *
@@ -142,7 +142,9 @@ class MultiChoice implements IProperty<string | undefined> {
 		if (currentDocSchema === undefined || desiredDocSchema === undefined) {
 			return undefined;
 		}
-		return this.choices[Math.min(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))];
+		return this.choices[
+			Math.min(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))
+		];
 	}
 
 	public or(currentDocSchema?: string, desiredDocSchema?: string) {
@@ -152,7 +154,9 @@ class MultiChoice implements IProperty<string | undefined> {
 		if (desiredDocSchema === undefined) {
 			return currentDocSchema;
 		}
-		return this.choices[Math.max(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))];
+		return this.choices[
+			Math.max(this.choices.indexOf(currentDocSchema), this.choices.indexOf(desiredDocSchema))
+		];
 	}
 
 	public validate(t: unknown) {
@@ -225,9 +229,15 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 	}
 }
 
-function and(currentDocSchema: IDocumentSchemaCurrent, desiredDocSchema: IDocumentSchemaCurrent): IDocumentSchemaCurrent {
+function and(
+	currentDocSchema: IDocumentSchemaCurrent,
+	desiredDocSchema: IDocumentSchemaCurrent,
+): IDocumentSchemaCurrent {
 	const runtime = {};
-	for (const key of new Set([...Object.keys(currentDocSchema.runtime), ...Object.keys(desiredDocSchema.runtime)])) {
+	for (const key of new Set([
+		...Object.keys(currentDocSchema.runtime),
+		...Object.keys(desiredDocSchema.runtime),
+	])) {
 		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).and(
 			currentDocSchema.runtime[key],
 			desiredDocSchema.runtime[key],
@@ -240,9 +250,15 @@ function and(currentDocSchema: IDocumentSchemaCurrent, desiredDocSchema: IDocume
 	} as unknown as IDocumentSchemaCurrent;
 }
 
-function or(currentDocSchema: IDocumentSchemaCurrent, desiredDocSchema: IDocumentSchemaCurrent): IDocumentSchemaCurrent {
+function or(
+	currentDocSchema: IDocumentSchemaCurrent,
+	desiredDocSchema: IDocumentSchemaCurrent,
+): IDocumentSchemaCurrent {
 	const runtime = {};
-	for (const key of new Set([...Object.keys(currentDocSchema.runtime), ...Object.keys(desiredDocSchema.runtime)])) {
+	for (const key of new Set([
+		...Object.keys(currentDocSchema.runtime),
+		...Object.keys(desiredDocSchema.runtime),
+	])) {
 		runtime[key] = (documentSchemaSupportedConfigs[key] as IProperty).or(
 			currentDocSchema.runtime[key],
 			desiredDocSchema.runtime[key],
@@ -255,10 +271,19 @@ function or(currentDocSchema: IDocumentSchemaCurrent, desiredDocSchema: IDocumen
 	} as unknown as IDocumentSchemaCurrent;
 }
 
-function same(currentDocSchema: IDocumentSchemaCurrent, desiredDocSchema: IDocumentSchemaCurrent): boolean {
-	for (const key of new Set([...Object.keys(currentDocSchema.runtime), ...Object.keys(desiredDocSchema.runtime)])) {
+function same(
+	currentDocSchema: IDocumentSchemaCurrent,
+	desiredDocSchema: IDocumentSchemaCurrent,
+): boolean {
+	for (const key of new Set([
+		...Object.keys(currentDocSchema.runtime),
+		...Object.keys(desiredDocSchema.runtime),
+	])) {
 		// If schemas differ only by type of behavior, then we should not send schema change ops!
-		if (key !== "explicitSchemaControl" && currentDocSchema.runtime[key] !== desiredDocSchema.runtime[key]) {
+		if (
+			key !== "explicitSchemaControl" &&
+			currentDocSchema.runtime[key] !== desiredDocSchema.runtime[key]
+		) {
 			return false;
 		}
 	}
@@ -380,7 +405,8 @@ export class DocumentsSchemaController {
 
 		// Use legacy behavior only if both document and options tell us to use legacy.
 		// Otherwise it's no longer legacy time!
-		this.explicitSchemaControl = this.documentSchema.runtime.explicitSchemaControl === true || explicitSchemaControl;
+		this.explicitSchemaControl =
+			this.documentSchema.runtime.explicitSchemaControl === true || explicitSchemaControl;
 
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
@@ -396,7 +422,8 @@ export class DocumentsSchemaController {
 		if (!this.explicitSchemaControl || !existing) {
 			this.sessionSchema = this.desiredSchema;
 			assert(
-				boolToProp(this.explicitSchemaControl) === this.sessionSchema.runtime.explicitSchemaControl,
+				boolToProp(this.explicitSchemaControl) ===
+					this.sessionSchema.runtime.explicitSchemaControl,
 				"explicitSchemaControl",
 			);
 			this.futureSchema = undefined;
@@ -437,7 +464,8 @@ export class DocumentsSchemaController {
 	public onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void) {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			assert(
-				this.explicitSchemaControl && this.futureSchema.runtime.explicitSchemaControl === true,
+				this.explicitSchemaControl &&
+					this.futureSchema.runtime.explicitSchemaControl === true,
 				"not legacy",
 			);
 			send({
@@ -448,21 +476,37 @@ export class DocumentsSchemaController {
 		this.sendOp = false;
 	}
 
-	public processDocumentSchemaOp(message: IDocumentSchemaChangeMessage, local: boolean) {
-		assert(message.refSeq >= this.documentSchema.refSeq, "");
-		if (message.refSeq !== this.documentSchema.refSeq) {
+	/**
+	 * Process document schema change message
+	 * @param content - content of the message
+	 * @param local - whether op is local
+	 * @param sequenceNumber - sequence number of the op
+	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 */
+	public processDocumentSchemaOp(
+		content: IDocumentSchemaChangeMessage,
+		local: boolean,
+		sequenceNumber: number,
+	) {
+		assert(content.refSeq <= this.documentSchema.refSeq, "did we lost a message somewhere???");
+		assert(this.documentSchema.refSeq < sequenceNumber, "time should move forward only!");
+		if (content.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
-			return;
+			return false;
 		}
 
 		// This assert should be after checking for successful CAS above.
 		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
-		assert(!local || (this.explicitSchemaControl && this.futureSchema !== undefined), "not sending ops");
+		assert(
+			!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
+			"not sending ops",
+		);
 
 		// Changes are in effect. Immidiatly check that this client understands these changes
-		checkRuntimeCompatibility(message);
+		checkRuntimeCompatibility(content);
 
-		this.documentSchema = message as IDocumentSchemaCurrent;
+		const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
+		this.documentSchema = schema as IDocumentSchemaCurrent;
 		this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 
 		// legacy behavior is automatically off for the document once someone sends a schema op -
@@ -479,6 +523,8 @@ export class DocumentsSchemaController {
 		this.futureSchema = undefined;
 
 		this.onSchemaChange(this.sessionSchema);
+
+		return true;
 	}
 
 	public onDisconnect() {

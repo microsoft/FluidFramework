@@ -9,7 +9,10 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions";
-import { type ContainerRuntime, disabledCompressionConfig } from "@fluidframework/container-runtime";
+import {
+	type ContainerRuntime,
+	disabledCompressionConfig,
+} from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	type FluidObject,
