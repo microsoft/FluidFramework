@@ -13,14 +13,14 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
 import {
-	sequenceIntervalHelpers,
 	IntervalType,
 	SequenceInterval,
 	createPositionReferenceFromSegoff,
+	sequenceIntervalHelpers,
 } from "../intervals/index.js";
 import { SharedString } from "../sharedString.js";
-import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
+import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
 
 /**
  * @public

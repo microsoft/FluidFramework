@@ -4,19 +4,19 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { SharedMatrix } from "@fluidframework/matrix";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { type SharedObjectClass } from "@fluidframework/fluid-static";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { SharedString } from "@fluidframework/sequence";
 import {
 	type ITree,
-	SharedTreeFactory,
 	SchemaFactory,
+	SharedTreeFactory,
 	TreeConfiguration,
 } from "@fluidframework/tree";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { makeStyles } from "@material-ui/core/styles";
 import Tooltip from "@material-ui/core/Tooltip";
+import { makeStyles } from "@material-ui/core/styles";
 import * as React from "react";
-import { CustomChip } from "./CustomChip";
-import { IInspectorRow } from "./InspectorTableTypes";
+import { CustomChip } from "./CustomChip.js";
+import { IInspectorRow } from "./InspectorTableTypes.js";
 
 const useStyles = makeStyles(
 	{

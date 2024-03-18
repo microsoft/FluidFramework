@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
 import {
 	AcceptanceCondition,
-	combineReducersAsync,
-	AsyncReducer,
 	AsyncGenerator,
+	AsyncReducer,
+	combineReducersAsync,
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
@@ -19,13 +19,13 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles.js";
+import type { SequenceInterval } from "../../index.js";
+import { type IIntervalCollection, Side } from "../../intervalCollection.js";
+import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
 import { SharedString } from "../../sharedString.js";
-import { Side, type IIntervalCollection } from "../../intervalCollection.js";
-import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 import { _dirname } from "../dirname.cjs";
-import type { SequenceInterval } from "../../index.js";
+import { assertEquivalentSharedStrings } from "../intervalTestUtils.js";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];

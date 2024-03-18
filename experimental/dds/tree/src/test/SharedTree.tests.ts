@@ -4,12 +4,12 @@
  */
 
 import { WriteFormat } from '../persisted-types/index.js';
-import { setUpTestSharedTree, setUpLocalServerTestSharedTree } from './utilities/TestUtilities.js';
-import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests.js';
-import { runSummarySizeTests } from './utilities/SummarySizeTests.js';
-import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests.js';
-import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests.js';
 import { runSummaryTests } from './Summary.tests.js';
+import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests.js';
+import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests.js';
+import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests.js';
+import { runSummarySizeTests } from './utilities/SummarySizeTests.js';
+import { setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities.js';
 
 describe('SharedTree', () => {
 	describe('Operations', () => {

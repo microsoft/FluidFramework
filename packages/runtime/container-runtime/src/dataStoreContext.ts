@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import {
-	IDisposable,
 	FluidObject,
+	IDisposable,
+	IFluidHandle,
 	IRequest,
 	IResponse,
-	IFluidHandle,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { IEvent } from "@fluidframework/core-interfaces";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -27,16 +27,16 @@ import {
 	ITreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-	channelsTreeName,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
+	IContainerRuntimeBase,
+	IDataStore,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
-	IFluidParentContext,
-	IContainerRuntimeBase,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
+	IFluidParentContext,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	IInboundSignalMessage,
@@ -44,35 +44,35 @@ import {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	SummarizeInternalFn,
-	ITelemetryContext,
 	ISummaryTreeWithStats,
-	IDataStore,
+	ITelemetryContext,
+	SummarizeInternalFn,
+	channelsTreeName,
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
-	createChildMonitoringContext,
 	DataCorruptionError,
 	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	generateStack,
 	LoggingError,
 	MonitoringContext,
-	tagCodeArtifacts,
 	ThresholdCounter,
+	createChildMonitoringContext,
+	extractSafePropertiesFromMessage,
+	generateStack,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
-	dataStoreAttributesBlobName,
-	hasIsolatedChannels,
-	wrapSummaryInChannelsTree,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
+	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
+	hasIsolatedChannels,
 	summarizerClientType,
+	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
-import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 
 function createAttributes(
 	pkg: readonly string[],

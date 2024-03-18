@@ -8,8 +8,8 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	LocalNodeKey,
-	StableNodeKey,
 	NodeKeyManager,
+	StableNodeKey,
 	compareLocalNodeKeys,
 	createMockNodeKeyManager,
 	createNodeKeyManager,

@@ -11,8 +11,8 @@ import IconButton from "@material-ui/core/IconButton";
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { ModalConsumer } from "./ModalManager";
-import { SvgIcon } from "./SVGIcon";
+import { ModalConsumer } from "./ModalManager.js";
+import { SvgIcon } from "./SVGIcon.js";
 
 const useStyles = makeStyles(
 	{

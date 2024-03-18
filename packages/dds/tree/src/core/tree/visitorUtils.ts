@@ -4,14 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
-import { RevisionTagCodec } from "../rebase/index.js";
 import { ICodecOptions } from "../../codec/index.js";
-import { PlaceIndex, Range } from "./pathTree.js";
-import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex.js";
-import { DeltaVisitor, visitDelta } from "./visitDelta.js";
+import { IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { RevisionTagCodec } from "../rebase/index.js";
+import { FieldKey } from "../schema-stored/index.js";
 import { ProtoNodes, Root } from "./delta.js";
+import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
+import { PlaceIndex, Range } from "./pathTree.js";
+import { DeltaVisitor, visitDelta } from "./visitDelta.js";
 
 export function makeDetachedFieldIndex(
 	prefix: string = "Temp",

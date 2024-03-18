@@ -4,44 +4,74 @@
  */
 
 import { strict as assert } from "assert";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 import { createIdCompressor } from "@fluidframework/id-compressor";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	cursorForJsonableTreeNode,
-	Any,
-	TreeStatus,
-	FlexFieldSchema,
-	SchemaBuilderInternal,
-	FieldKinds,
-	typeNameSymbol,
-	FlexTreeSchema,
-	intoStoredSchema,
-	SchemaBuilderBase,
-	FlexTreeTypedField,
-	ViewSchema,
-	defaultSchemaPolicy,
-	createMockNodeKeyManager,
-	nodeKeyFieldKey,
-	TreeCompressionStrategy,
-} from "../../feature-libraries/index.js";
+	AllowedUpdateType,
+	CommitKind,
+	JsonableTree,
+	Revertible,
+	UpPath,
+	compareUpPaths,
+	moveToDetachedField,
+	rootFieldKey,
+	storedEmptyFieldSchema,
+} from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeSchema,
+	FlexTreeTypedField,
+	SchemaBuilderBase,
+	SchemaBuilderInternal,
+	TreeCompressionStrategy,
+	TreeStatus,
+	ViewSchema,
+	createMockNodeKeyManager,
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	nodeKeyFieldKey,
+	typeNameSymbol,
+} from "../../feature-libraries/index.js";
+import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
+import { EditManager } from "../../shared-tree-core/index.js";
+import {
+	CheckoutFlexTreeView,
+	FlexTreeView,
+	ForestType,
+	ISharedTree,
+	InitializeAndSchematizeConfiguration,
+	SharedTree,
+	SharedTreeFactory,
+	runSynchronous,
+} from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
+	ConnectionSetter,
+	type ITestTreeProvider,
 	SharedTreeTestFactory,
+	SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -49,44 +79,14 @@ import {
 	emptyStringSequenceConfig,
 	expectSchemaEqual,
 	jsonSequenceRootSchema,
+	numberSequenceRootSchema,
+	schematizeFlexTree,
 	stringSequenceRootSchema,
+	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
-	numberSequenceRootSchema,
-	ConnectionSetter,
-	SharedTreeWithConnectionStateSetter,
-	type ITestTreeProvider,
-	treeTestFactory,
-	schematizeFlexTree,
 } from "../utils.js";
-import {
-	ForestType,
-	ISharedTree,
-	FlexTreeView,
-	InitializeAndSchematizeConfiguration,
-	SharedTree,
-	SharedTreeFactory,
-	CheckoutFlexTreeView,
-	runSynchronous,
-} from "../../shared-tree/index.js";
-import {
-	compareUpPaths,
-	rootFieldKey,
-	UpPath,
-	moveToDetachedField,
-	AllowedUpdateType,
-	storedEmptyFieldSchema,
-	Revertible,
-	JsonableTree,
-	CommitKind,
-} from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import { EditManager } from "../../shared-tree-core/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 
 describe("SharedTree", () => {
 	describe("schematize", () => {

@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions";
-import {
-	NamedFluidDataStoreRegistryEntries,
-	IFluidDataStoreFactory,
-	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
 import { CodeMirrorComponent, CodeMirrorReactView, SmdeFactory } from "@fluid-example/codemirror";
 import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
-import { Clicker, ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Serializable } from "@fluidframework/datastore-definitions";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
 
 import * as React from "react";
 

@@ -13,28 +13,28 @@
 
 /* eslint-disable jsdoc/check-line-alignment */
 
-import each from "lodash/each.js";
-import isEqual from "lodash/isEqual.js";
-import every from "lodash/every.js";
-import isString from "lodash/isString.js";
-import isObject from "lodash/isObject.js";
-import difference from "lodash/difference.js";
-import has from "lodash/has.js";
-import mapValues from "lodash/mapValues.js";
-import includes from "lodash/includes.js";
-import map from "lodash/map.js";
-import find from "lodash/find.js";
-import isEmpty from "lodash/isEmpty.js";
 import { copy as cloneDeep } from "fastest-json-copy";
+import difference from "lodash/difference.js";
+import each from "lodash/each.js";
+import every from "lodash/every.js";
+import find from "lodash/find.js";
+import has from "lodash/has.js";
+import includes from "lodash/includes.js";
+import isEmpty from "lodash/isEmpty.js";
+import isEqual from "lodash/isEqual.js";
+import isObject from "lodash/isObject.js";
+import isString from "lodash/isString.js";
+import map from "lodash/map.js";
+import mapValues from "lodash/mapValues.js";
 
-import { gt, diff, major, valid, compare } from "semver";
-import traverse from "traverse";
 import { queue } from "async";
+import { compare, diff, gt, major, valid } from "semver";
+import traverse from "traverse";
 
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { ajvFactory } from "./ajvFactory.cjs";
-import { TemplateSchema } from "./templateSchema.js";
 import { TypeIdHelper } from "./helpers/typeidHelper.js";
+import { TemplateSchema } from "./templateSchema.js";
 import { SchemaValidationResult, ValidationResultBuilder } from "./validationResultBuilder.js";
 
 const { MSG } = constants;
