@@ -611,7 +611,6 @@ importers:
       scheduler: ^0.20.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
-      tinylicious: ^4.0.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
       url-loader: ^2.1.0
@@ -676,7 +675,6 @@ importers:
       sass-loader: 7.3.1_webpack@5.89.0
       source-map-loader: 2.0.2_webpack@5.89.0
       style-loader: 1.3.0_webpack@5.89.0
-      tinylicious: 4.0.0
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       url-loader: 2.3.0_webpack@5.89.0
