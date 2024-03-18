@@ -67,7 +67,7 @@
 		"@fluidframework/server-test-utils": "workspace:~",
 		"debug": "^4.3.4",
 		"events": "^3.1.0",
-		"jsrsasign": "^10.5.25",
+		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -77,7 +77,7 @@
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server-previous": "npm:@fluidframework/server-local-server@2.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/jsrsasign": "^8.0.8",
+		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.17.1",
