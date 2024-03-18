@@ -4,7 +4,8 @@
  */
 
 import { IWebhookManager } from "@fluidframework/server-services-core";
-import axios, { default as Axios, isAxiosError } from "axios";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import axios, { default as Axios } from "axios";
 
 /**
  * Manages Webhooks and associated events
@@ -50,12 +51,12 @@ export class WebhookManager implements IWebhookManager {
 		for (const url of urlSubscriptions) {
 			const response = await axios.post(url, payload);
 			if (response.status !== 200) {
-				console.warn(
+				Lumberjack.warning(
 					`Did not receieve successful response from Client url: ${url} for event: ${event}`,
 				);
 			} else {
-				console.log(
-					`Successfully send event payload response from Client url: ${url} for event: ${event}`,
+				Lumberjack.info(
+					`Successfully sent event payload response from Client url: ${url} for event: ${event}`,
 				);
 			}
 		}
@@ -66,8 +67,6 @@ export class WebhookManager implements IWebhookManager {
 
 		try {
 			const response = await Axios.get(requestUrl);
-			console.log(`RESPONSE RECEIVED`);
-			console.log(`MESSAGE: ${JSON.stringify(response)}`);
 			const messages = response.data.blobs
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				.filter((e) => e.content.includes("blobs") && e.content.includes("content"))
@@ -75,28 +74,11 @@ export class WebhookManager implements IWebhookManager {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 					return e.content;
 				});
-
-			console.log(
-				`HttpStatus: ${response.status}\nHttpStatusText: ${
-					response.statusText
-				}\nResponseData:\n${JSON.stringify(response.data)}`,
-			);
-			console.log(`messages:\n${messages}`);
+			Lumberjack.info(`Fetched latest summary.`, { tenantId, requestUrl });
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return messages;
 		} catch (error: unknown) {
-			if (isAxiosError(error) && error.response) {
-				// eslint-disable-next-line max-len
-				console.log(
-					`Axios error: ${error.config?.url}\nHttp status: ${
-						error.response.status
-					}\nHttp statusText: ${error.response.statusText}\nHttpHeader: ${JSON.stringify(
-						error.response.headers,
-					)}\nResponseData: ${JSON.stringify(error.response?.data)}`,
-				);
-			} else {
-				console.log(error);
-			}
+			Lumberjack.error(`Error fetching latest summary.`, { tenantId });
 		}
 	}
 }
