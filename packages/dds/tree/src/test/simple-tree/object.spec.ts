@@ -244,7 +244,10 @@ const tcs: TestCase[] = [
 				string: _.required(_.string, { stableName: "stable-string" }),
 			});
 		})(),
-		initialTree: {},
+		initialTree: {
+			number: 42,
+			string: "Foo",
+		},
 	},
 	{
 		schema: (() => {
