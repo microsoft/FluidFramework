@@ -52,7 +52,7 @@ The above assumptions imply the following requirements for changes in document s
 
 1.  Any changes in document schema must ship dark (default to not being used for writing) and be rolled out (enabling new format) on a schedule controlled by the team controlling the application deployment schedule.
 
-    Writing new formats can only be enabled by an application once its authors confirm nearly 100% of clients have code capable of collaborating with new schema (or it’s OK for old clients to fail in some controlled way).
+    Writing new formats can only be enabled by an application once its authors confirm nearly 100% of clients have code capable of collaborating with new schema (or it’s OK for old clients to fail in some controlled way). Please see remark below about 100% being hard to reach.
 
 1.  When a new format is added, support for writing the previous format must available in the same version that has support for the new format. (This is implied by the above, and is called out separately for clarity).
 
@@ -133,7 +133,8 @@ This includes Fluid Framework, as well other libraries consumed by Fluid applica
 
 -   Applications should opt into writing new data formats only once support for those formats has been fully deployed.
     This includes enough testing to be confident they won't need to roll back to a version without the support.
--   To best support Fluids maximum 30 day session length, applications may want to include an extra 30 days after the last rollout of support for the format before starting the rollout of enabling the new format for writing.
+-   In most case it's almost impossible to get to 100% saturation of newly deployed application version, even years after deployment. There almost always would be a client who run an application version 2 years ago, closed a lid of laptop and reopened it just now. While applciation (and FluidFramework) can attempt its best to shut down such old versions of application / session / FluidFramework, all such attepts would race with this client attempting to reconnect back to document, send and receive ops that might it might not understand due to changes in document schema
+      - For that reason, it's extreamly important to build a framework (upfront) that could fail in very predictable way when application (and libraries) find themselves dealing with unknown format.
 -   When updating to a new major version of a library (such as Fluid), check the release notes for current or upcoming format changes, and schedule format updates accordingly.
 
 # Complications

@@ -259,8 +259,13 @@ function boolToProp(b: boolean) {
 
 /**
  * Controller of document schema.
+ * 
+ * Recomended pre-reading: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/SchemaVersioning.md
  *
  * This class manages current document schema and transitions between document schemas.
+ * At the moment, it only focuses on subset of document schema, specifically - how FluidFramework runtime serializes data
+ * (summary and op format), features & capabilities that a version of runtime has to support and understand in
+ * order to collaborate on a document.
  * New features that modify document format have to be included in document schema definition.
  * Usage of such features could only happen after document schema has been updated to reflect such feature.
  *
