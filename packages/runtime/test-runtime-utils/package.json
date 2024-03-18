@@ -96,7 +96,7 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"events": "^3.1.0",
-		"jsrsasign": "^10.5.25",
+		"jsrsasign": "^11.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -108,7 +108,7 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils-previous": "npm:@fluidframework/test-runtime-utils@2.0.0-internal.8.0.0",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/jsrsasign": "^8.0.8",
+		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
