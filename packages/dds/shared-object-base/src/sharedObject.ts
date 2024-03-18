@@ -9,6 +9,7 @@ import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-int
 import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
+	type IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,

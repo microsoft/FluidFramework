@@ -17,7 +17,7 @@ import {
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { type ISharedMatrix, MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
 import type { PermutationVector } from "../permutationvector.js";
 import { TestConsumer } from "./testconsumer.js";
 import { check, expectSize, extract, fill, insertFragmented } from "./utils.js";

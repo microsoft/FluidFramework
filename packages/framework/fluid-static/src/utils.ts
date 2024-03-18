@@ -9,6 +9,7 @@ import {
 	type IFluidDataStoreFactory,
 	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 
 /**
