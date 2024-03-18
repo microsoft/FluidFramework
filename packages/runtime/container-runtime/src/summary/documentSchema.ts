@@ -148,7 +148,7 @@ class MultiChoice implements IProperty<string | undefined> {
  * Helper structure to valida if a schema is compatible with existing code.
  */
 const documentSchemaSupportedConfigs = {
-	newBehavior: new TrueOrUndefinedMax(), // once new behavior shows up, it's sticki
+	newBehavior: new TrueOrUndefinedMax(), // once new behavior shows up, it's sticky
 	idCompressorMode: new MultiChoice(["on", "delayed"]),
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
@@ -233,7 +233,8 @@ function or(sc1: IDocumentSchemaCurrent, sc2: IDocumentSchemaCurrent): IDocument
 
 function same(sc1: IDocumentSchemaCurrent, sc2: IDocumentSchemaCurrent): boolean {
 	for (const key of new Set([...Object.keys(sc1.runtime), ...Object.keys(sc2.runtime)])) {
-		if (sc1.runtime[key] !== sc2.runtime[key]) {
+		// If schemas differ only by type of behavior, then we should not send schema change ops!
+		if (key !== "newBehavior" && sc1.runtime[key] !== sc2.runtime[key]) {
 			return false;
 		}
 	}
@@ -328,7 +329,7 @@ export class DocumentsSchemaController {
 		existing: boolean,
 		documentMetadataSchema: IDocumentSchema | undefined,
 		compressionLz4: boolean,
-		idCompressorModeArg: IdCompressorMode,
+		idCompressorMode: IdCompressorMode,
 		groupedBatchingEnabled: boolean,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
@@ -350,22 +351,6 @@ export class DocumentsSchemaController {
 		// Use legacy behavior only if both document and options tell us to use legacy.
 		// Otherwise it's no longer legacy time!
 		this.newBehavior = this.documentSchema.runtime.newBehavior === true || newBehavior;
-
-		// Enabling the IdCompressor is a one-way operation and we only want to
-		// allow new containers to turn it on.
-		// This setting has to be sticky for correctness:
-		// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
-		//    how to process compressor ops
-		// 2) if it's ON, then all sessions should load compressor right away
-		// 3) Same logic applies for "delayed" mode
-		// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
-		// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and
-		// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
-		// using compressor in future sessions.
-		// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
-		const idCompressorMode = !existing
-			? idCompressorModeArg
-			: this.documentSchema.runtime.idCompressorMode;
 
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
@@ -433,12 +418,15 @@ export class DocumentsSchemaController {
 	}
 
 	public processDocumentSchemaOp(message: IDocumentSchemaChangeMessage, local: boolean) {
-		assert(!local || this.newBehavior, "not sending ops");
 		assert(message.refSeq >= this.documentSchema.refSeq, "");
 		if (message.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
 			return;
 		}
+
+		// This assert should be after checking for successful CAS above.
+		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
+		assert(!local || (this.newBehavior && this.futureSchema !== undefined), "not sending ops");
 
 		// Changes are in effect. Immidiatly check that this client understands these changes
 		checkRuntimeCompatibility(message);

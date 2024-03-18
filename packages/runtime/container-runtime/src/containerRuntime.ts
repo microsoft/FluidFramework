@@ -893,6 +893,23 @@ export class ContainerRuntime
 				break;
 		}
 
+		// Enabling the IdCompressor is a one-way operation and we only want to
+		// allow new containers to turn it on.
+		// This setting has to be sticky for correctness:
+		// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
+		//    how to process compressor ops
+		// 2) if it's ON, then all sessions should load compressor right away
+		// 3) Same logic applies for "delayed" mode
+		// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
+		// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and
+		// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
+		// using compressor in future sessions.
+		// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
+		if (existing) {
+			idCompressorMode = metadata?.documentSchema?.runtime
+				?.idCompressorMode as IdCompressorMode;
+		}
+
 		const disableGroupedBatching = mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisableGroupedBatching",
 		);

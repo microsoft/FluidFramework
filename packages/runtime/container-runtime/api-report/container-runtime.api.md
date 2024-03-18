@@ -407,7 +407,7 @@ export type DocumentSchemaValueType = string | boolean | number | undefined;
 
 // @alpha
 export class DocumentsSchemaController {
-    constructor(newBehavior: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionLz4: boolean, idCompressorModeArg: IdCompressorMode, groupedBatchingEnabled: boolean, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    constructor(newBehavior: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionLz4: boolean, idCompressorMode: IdCompressorMode, groupedBatchingEnabled: boolean, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     // (undocumented)
     onDisconnect(): void;
     // (undocumented)
