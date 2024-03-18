@@ -156,11 +156,14 @@ import {
 } from "./pendingStateManager.js";
 import { ScheduleManager } from "./scheduleManager.js";
 import {
+	DocumentsSchemaController,
 	EnqueueSummarizeResult,
 	IBaseSummarizeResult,
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IDocumentSchemaChangeMessage,
+	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
@@ -196,9 +199,6 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
-	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
-	type IDocumentSchemaCurrent,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 

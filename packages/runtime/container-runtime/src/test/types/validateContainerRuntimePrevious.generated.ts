@@ -578,26 +578,26 @@ use_old_InterfaceDeclaration_IClientSummaryWatcher(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ICompressionRuntimeOptions": {"forwardCompat": false}
+* "InterfaceDeclaration_ICompressionRuntimeOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICompressionRuntimeOptions():
     TypeOnly<old.ICompressionRuntimeOptions>;
-declare function use_current_RemovedInterfaceDeclaration_ICompressionRuntimeOptions(
+declare function use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<current.ICompressionRuntimeOptions>): void;
-use_current_RemovedInterfaceDeclaration_ICompressionRuntimeOptions(
+use_current_InterfaceDeclaration_ICompressionRuntimeOptions(
     get_old_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ICompressionRuntimeOptions": {"backCompat": false}
+* "InterfaceDeclaration_ICompressionRuntimeOptions": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_ICompressionRuntimeOptions():
+declare function get_current_InterfaceDeclaration_ICompressionRuntimeOptions():
     TypeOnly<current.ICompressionRuntimeOptions>;
 declare function use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
     use: TypeOnly<old.ICompressionRuntimeOptions>): void;
 use_old_InterfaceDeclaration_ICompressionRuntimeOptions(
-    get_current_RemovedInterfaceDeclaration_ICompressionRuntimeOptions());
+    get_current_InterfaceDeclaration_ICompressionRuntimeOptions());
 
 /*
 * Validate forward compat by using old type in place of current type
