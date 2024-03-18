@@ -6,17 +6,17 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
 import {
@@ -26,8 +26,8 @@ import {
 } from "../../shared-tree-core/index.js";
 import { JsonCompatible } from "../../util/index.js";
 import { CollabWindow } from "../incrementalSummarizationUtils.js";
-import { Format } from "./format.js";
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
+import { Format } from "./format.js";
 
 const schemaStringKey = "SchemaString";
 /**

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	Brand,
 	IdAllocator,
@@ -16,13 +17,12 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
-import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
+import { FieldKey } from "../schema-stored/index.js";
 import * as Delta from "./delta.js";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
+import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 
 /**
  * ID used to create a detached field key for a removed subtree.

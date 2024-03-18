@@ -5,41 +5,41 @@
 
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { strict as assert } from "assert";
-import { expect } from "chai";
-import { v5 as uuidv5 } from "uuid";
+import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
 import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	ITestFluidObject,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-	LoaderContainerTracker,
 } from "@fluidframework/test-utils";
-import { DeterministicRandomGenerator } from "@fluid-experimental/property-common";
+import { expect } from "chai";
 import lodash from "lodash";
+import { v5 as uuidv5 } from "uuid";
 
 // 'lodash' import workaround.
 const { range, sortedIndex, isFunction } = lodash;
 
 import {
-	StringArrayProperty,
-	PropertyFactory,
 	ArrayProperty,
-	NamedProperty,
-	Int32Property,
-	StringProperty,
 	Float64Property,
+	Int32Property,
+	NamedProperty,
+	PropertyFactory,
+	StringArrayProperty,
+	StringProperty,
 } from "@fluid-experimental/property-properties";
 import { SharedPropertyTree } from "../propertyTree.js";
 

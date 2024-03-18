@@ -12,11 +12,11 @@ import {
 	onValuesChanged,
 } from "./data_binder/dataBinding.js";
 import { forEachProperty } from "./data_binder/internalUtils.js";
+import { RemovalContext } from "./data_binder/removalContext.js";
 import { SingletonDataBinding, StatelessDataBinding } from "./data_binder/statelessDataBinding.js";
 import { DataBinderHandle } from "./internal/dataBinderHandle.js";
 import { PropertyElement } from "./internal/propertyElement.js";
 import { UpgradeType } from "./internal/semvermap.js";
-import { RemovalContext } from "./data_binder/removalContext.js";
 
 import { IActivateDataBindingOptions } from "./data_binder/IActivateDataBindingOptions.js";
 import {

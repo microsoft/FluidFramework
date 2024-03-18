@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { AttachState } from "@fluidframework/container-definitions";
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
-	IMapSetOperation,
-	IMapDeleteOperation,
-	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
 	IMapClearLocalOpMetadata,
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapKeyEditLocalOpMetadata,
+	IMapSetOperation,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
-import { MapFactory, AttributableMap } from "../../map.js";
+import { AttributableMap, MapFactory } from "../../map.js";
 import { IMapOperation } from "../../mapKernel.js";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): TestMap {

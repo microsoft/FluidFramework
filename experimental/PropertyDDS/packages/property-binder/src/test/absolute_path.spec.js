@@ -17,25 +17,25 @@
 
 import _ from "lodash";
 import { DataBinder } from "../data_binder/dataBinder";
+import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
+import { RESOLVE_NO_LEAFS } from "../internal/constants";
+import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 import {
-	registerTestTemplates,
-	ParentTemplate,
-	ReferenceParentTemplate,
-	PrimitiveChildrenTemplate,
-	NodeContainerTemplate,
-	point2DImplicitTemplate,
-	point2DExplicitTemplate,
-} from "./testTemplates";
-import {
-	ParentDataBinding,
 	ChildDataBinding,
-	PrimitiveChildrenDataBinding,
 	InheritedChildDataBinding,
+	ParentDataBinding,
+	PrimitiveChildrenDataBinding,
 } from "./testDataBindings";
-import { catchConsoleErrors } from "./catchConsoleError";
-import { RESOLVE_NO_LEAFS } from "../internal/constants";
-import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
+import {
+	NodeContainerTemplate,
+	ParentTemplate,
+	PrimitiveChildrenTemplate,
+	ReferenceParentTemplate,
+	point2DExplicitTemplate,
+	point2DImplicitTemplate,
+	registerTestTemplates,
+} from "./testTemplates";
 
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 

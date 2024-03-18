@@ -5,43 +5,43 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+import { noopValidator } from "../codec/index.js";
 import {
-	AnchorLocator,
-	IForestSubscription,
-	AnchorSetRootEvents,
 	Anchor,
+	AnchorLocator,
 	AnchorNode,
 	AnchorSet,
-	IEditableForest,
-	TreeStoredSchemaRepository,
-	combineVisitors,
-	visitDelta,
-	DetachedFieldIndex,
-	makeDetachedFieldIndex,
-	Revertible,
+	AnchorSetRootEvents,
 	ChangeFamily,
-	tagChange,
-	TreeStoredSchema,
-	TreeStoredSchemaSubscription,
-	JsonableTree,
-	RevisionTagCodec,
-	DeltaVisitor,
 	CommitMetadata,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	IEditableForest,
+	IForestSubscription,
+	JsonableTree,
+	Revertible,
+	RevisionTagCodec,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+	combineVisitors,
+	makeDetachedFieldIndex,
+	tagChange,
+	visitDelta,
 } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
+	FieldBatchCodec,
+	TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
-	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
-import { noopValidator } from "../codec/index.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**

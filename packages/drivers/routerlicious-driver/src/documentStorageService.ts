@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ICache } from "./cache";
-import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
-import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
-import { GitManager } from "./gitManager";
-import { ISnapshotTreeVersion } from "./definitions";
 import { INormalizedWholeSnapshot } from "./contracts";
+import { ISnapshotTreeVersion } from "./definitions";
+import { GitManager } from "./gitManager";
+import { IRouterliciousDriverPolicies } from "./policies";
+import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
+import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;

@@ -5,14 +5,14 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, serializeHandles } from "@fluidframework/shared-object-base";
+import type { IntervalCollection } from "./intervalCollection.js";
 import {
-	ISerializableIntervalCollection,
-	ISerializedIntervalCollection,
 	IIntervalCollectionOperation,
 	IIntervalCollectionType,
+	ISerializableIntervalCollection,
+	ISerializedIntervalCollection,
 } from "./intervalCollectionMapInterfaces.js";
-import { IntervalOpType, type ISerializableInterval } from "./intervals/index.js";
-import type { IntervalCollection } from "./intervalCollection.js";
+import { type ISerializableInterval, IntervalOpType } from "./intervals/index.js";
 
 /**
  * A local value to be stored in a container type DDS.

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import { WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { SvgIcon } from "./SVGIcon";
+import { SvgIcon } from "./SVGIcon.js";
 
 const styles = () =>
 	createStyles({

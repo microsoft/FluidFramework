@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type IClient } from "@fluidframework/protocol-definitions";
 import { type IAudience } from "@fluidframework/container-definitions";
+import { type IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.

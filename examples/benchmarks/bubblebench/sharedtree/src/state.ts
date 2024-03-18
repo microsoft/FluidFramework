@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Change, SharedTree } from "@fluid-experimental/tree";
 import {
 	IAppState,
-	IClient,
 	IArrayish,
+	IClient,
 	makeBubble,
 	makeClient,
 } from "@fluid-example/bubblebench-common";
-import { fromJson, TreeArrayProxy, TreeObjectProxy } from "./proxy/index.js";
+import { Change, SharedTree } from "@fluid-experimental/tree";
+import { TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
 
 interface IApp {
 	clients: IArrayish<IClient>;

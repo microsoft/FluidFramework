@@ -4,8 +4,8 @@
  */
 
 import {
-	Opaque,
 	ExtractFromOpaque,
+	Opaque,
 	brandOpaque,
 	extractFromOpaque,
 	// Allow importing from this specific file which is being tested:
@@ -17,10 +17,10 @@ import {
 	BrandedType,
 	Erased,
 	areSafelyAssignable,
-	isAssignableTo,
-	requireTrue,
-	requireFalse,
 	isAny,
+	isAssignableTo,
+	requireFalse,
+	requireTrue,
 } from "../../util/index.js";
 
 // These tests currently just cover the type checking, so its all compile time.

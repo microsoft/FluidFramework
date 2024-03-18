@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import type {
+	FluidObject,
+	IDisposable,
 	IEvent,
 	IEventProvider,
-	ITelemetryBaseLogger,
-	IDisposable,
-	IProvideFluidHandleContext,
 	IFluidHandle,
+	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
-	FluidObject,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IClientDetails,
 	IDocumentMessage,
@@ -23,7 +24,6 @@ import type {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
