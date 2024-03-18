@@ -1144,7 +1144,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				closeMe.close();
 
 				// Then wait the Tombstone timeout and update current timestamp, and summarize again
-				await delay(tombstoneTimeoutMs);
+				await delay(sweepTimeoutMs);
 				dataStoreX._root.set("update", "timestamp");
 				const { summarizer } = await loadSummarizer(
 					initialContainer,
@@ -1247,7 +1247,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				// Wait the Tombstone timeout then summarize and load another container
 				// Since auto-recovery triggered full GC, the corruption was repaired and GC knows dataStoreA is referenced
 				// Otherwise it would have been unreferenced and would have become tombstoned again
-				await delay(tombstoneTimeoutMs);
+				await delay(sweepTimeoutMs);
 				dataStoreX._root.set("update", "timestamp again");
 				const { summaryVersion: summaryVersion_stillRepaired } =
 					await summarize(summarizer);
