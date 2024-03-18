@@ -1095,6 +1095,12 @@ export class GarbageCollector implements IGarbageCollector {
 			fromId: fromNodePath,
 			autorecovery,
 		});
+
+		// This node is referenced - Clear its unreferenced state
+		// But don't delete the node id from the map yet.
+		// When generating GC stats, the set of nodes in here is used as the baseline for
+		// what was unreferenced in the last GC run.
+		this.unreferencedNodesState.get(toNodePath)?.stopTracking();
 	}
 
 	/**
