@@ -10,4 +10,4 @@ export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
 export { OpSplitter, splitOp, isChunkedMessage } from "./opSplitter.js";
 export { RemoteMessageProcessor, unpackRuntimeMessage } from "./remoteMessageProcessor.js";
-export { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
+export { OpGroupingManager, OpGroupingManagerConfig, isGroupedBatch } from "./opGroupingManager.js";

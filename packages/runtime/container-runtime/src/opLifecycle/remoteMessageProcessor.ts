@@ -44,13 +44,13 @@ export class RemoteMessageProcessor {
 	 * depends on this object instance.
 	 * Note remoteMessageCopy.contents (and other object props) MUST not be modified,
 	 * but may be overwritten (as is the case with contents).
-	 * 
+	 *
 	 * Incoming messages will always have compression, chunking, and grouped batching happen in a defined order and that order cannot be changed.
 	 * When processing these messages, the order is:
 	 * 1. If chunked, process the chunk and only continue if this is a final chunk
 	 * 2. If compressed, decompress the message and store for further unrolling of the decompressed content
 	 * 3. If grouped, ungroup the message
-	 * 
+	 *
 	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
 	 * a singleton array [remoteMessageCopy] is returned

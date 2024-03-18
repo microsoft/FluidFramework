@@ -50,9 +50,7 @@ export class OpGroupingManager {
 	}
 
 	public groupBatch(batch: IBatch): IBatch {
-		if (!this.shouldGroup(batch)) {
-			return batch;
-		}
+		assert(this.shouldGroup(batch), "cannot group the provided batch");
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
