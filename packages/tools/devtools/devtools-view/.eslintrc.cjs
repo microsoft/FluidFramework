@@ -33,6 +33,24 @@ module.exports = {
 		 */
 		"unicorn/no-useless-undefined": "off",
 
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					// - Copied allowances from @fluidframework/eslint-config-fluid/strict -
+					// Within Fluid Framework allow import of '/internal' from other FF packages.
+					"@fluidframework/*/internal",
+					// Allow imports from sibling and ancestral sibling directories,
+					// but not from cousin directories. Parent is allowed but only
+					// because there isn't a known way to deny it.
+					"*/index.js",
+
+					// Allow use of unstable API
+					"@fluentui/react-components/unstable",
+				],
+			},
+		],
+
 		// Forbid new imports from legacy FluentUI react package.
 		// We have a couple of components that still use it, but new usages should not be added without due consideration.
 		"no-restricted-imports": ["error", "@fluentui/react"],

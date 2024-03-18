@@ -4,8 +4,6 @@
  */
 
 import { Label, TableCellLayout } from "@fluentui/react-components";
-// Allow use of unstable API
-// eslint-disable-next-line import/no-internal-modules
 import { InfoLabel } from "@fluentui/react-components/unstable";
 import React from "react";
 

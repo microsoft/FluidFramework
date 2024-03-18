@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Allow use of unstable API
-// eslint-disable-next-line import/no-internal-modules
 import { Tree as FluentTree } from "@fluentui/react-components/unstable";
 import React from "react";
 
