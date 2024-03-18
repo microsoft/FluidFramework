@@ -6,8 +6,8 @@
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { InputValidator } from "./InputValidator";
-import { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes";
+import { InputValidator } from "./InputValidator.js";
+import type { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes.js";
 
 const EXCLUDE_PROPS = ["BaseProperty", "Enum", "ContainerProperty"];
 
