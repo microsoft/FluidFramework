@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
 		".": {
 			"import": {
@@ -66,6 +67,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
 		"api-extractor:esnext": "api-extractor run --local",
 		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
@@ -90,8 +92,7 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir .",
-		"api": "fluid-build . --task api"
+		"typetests:prepare": "flub generate typetests --prepare --dir ."
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -120,7 +121,10 @@
 					"api-extractor:esnext"
 				],
 				"script": false
-			}
+			},
+			"tsc": [
+				"typetests:gen"
+			]
 		}
 	},
 	"pnpm": {
@@ -133,6 +137,5 @@
 	},
 	"typeValidation": {
 		"broken": {}
-	},
-	"type": "module"
+	}
 }
