@@ -42,8 +42,7 @@ describe("Rebasing", () => {
 			beforeEach("createMaps", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -52,8 +51,7 @@ describe("Rebasing", () => {
 				map1.connect(services1);
 
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -104,8 +102,7 @@ describe("Rebasing", () => {
 			beforeEach("createDirectories", async () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory(testConfig.options);
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				containerRuntime1 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+				containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
@@ -119,8 +116,7 @@ describe("Rebasing", () => {
 
 				// Create the second SharedMap.
 				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				const services2 = {
 					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),

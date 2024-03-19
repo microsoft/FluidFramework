@@ -381,10 +381,8 @@ describe("Reconnection", () => {
 				"/subDir/subDir should exist",
 			);
 			assert(
-				directory1
-					.getSubDirectory(subDirName)
-					?.getSubDirectory(subDirName)
-					?.get(subDirKey) === subDirValue,
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName)?.get(subDirKey) ===
+					subDirValue,
 				"/subDir/subDir(subDirKey) should exist",
 			);
 			assertEquivalentDirectories(directory1, directory2);

@@ -3,6 +3,6 @@
 	"extends": "../../../common/build/build-common/api-extractor-base.cjs.primary.json",
 	// CJS is actually secondary; so, no report.
 	"apiReport": {
-		"enabled": false
-	}
+		"enabled": false,
+	},
 }
