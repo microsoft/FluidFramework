@@ -33,14 +33,10 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		this.enableClustering = enableClustering;
 		this.slotsRefreshTimeout = slotsRefreshTimeout;
 		if (!redisOptions && !redisConfig) {
-			Lumberjack.info(
-				"Either redisOptions or redisConfig must be provided",
-			);
+			Lumberjack.info("Either redisOptions or redisConfig must be provided");
 			throw new Error("Either redisOptions or redisConfig must be provided");
 		} else if (!redisOptions && redisConfig) {
-			Lumberjack.info(
-				"Using default redisOptions after reading from config",
-			);
+			Lumberjack.info("Using default redisOptions after reading from config");
 			this.redisOptions = {
 				host: redisConfig.host,
 				port: redisConfig.port,
@@ -72,9 +68,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 			Lumberjack.info("Using the provided redisOptions");
 			this.redisOptions = redisOptions;
 		} else {
-			Lumberjack.error(
-				"Both redisOptions and redisConfig cannot be provided",
-			);
+			Lumberjack.error("Both redisOptions and redisConfig cannot be provided");
 			throw new Error("Both redisOptions and redisConfig cannot be provided");
 		}
 		this.authenticateAndCreateRedisClient();

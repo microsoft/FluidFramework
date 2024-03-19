@@ -473,11 +473,7 @@ export function configureWebSocketServices(
 				);
 				connectDocumentAddClientMetric.success("Successfully added client");
 			} catch (err) {
-				const errMsg = `Could not add client. Error: ${safeStringify(
-					err,
-					undefined,
-					2,
-				)}`;
+				const errMsg = `Could not add client. Error: ${safeStringify(err, undefined, 2)}`;
 				connectDocumentAddClientMetric.error(
 					"Error adding client during connectDocument",
 					err,
