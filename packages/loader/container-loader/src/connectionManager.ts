@@ -536,6 +536,8 @@ export class ConnectionManager implements IConnectionManager {
 		let connection: IDocumentDeltaConnection | undefined;
 
 		if (docService.policies?.storageOnly === true) {
+			// go through all steps
+			this.props.establishConnectionHandler(reason);
 			connection = new NoDeltaStream();
 			this.setupNewSuccessfulConnection(connection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
