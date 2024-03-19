@@ -67,9 +67,7 @@ describe("OpLatencyView component tests", () => {
 		expect(opLatencyHeaderElement).toBeDefined();
 
 		// Confirm helper text header exists
-		const instructionsText = await screen.findByText(
-			`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`,
-		);
+		const instructionsText = await screen.findByText(`Enable Unsampled Telemetry`);
 		expect(instructionsText).not.toBeNull();
 		expect(instructionsText).toBeDefined();
 	});
