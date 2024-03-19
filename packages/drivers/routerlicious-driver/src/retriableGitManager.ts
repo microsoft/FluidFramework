@@ -10,9 +10,9 @@ import {
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IWholeFlatSnapshot } from "./contracts";
-import { IR11sResponse } from "./restWrapper";
-import { IGitManager } from "./storageContracts";
+import { IWholeFlatSnapshot } from "./contracts.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { IGitManager } from "./storageContracts.js";
 
 export class RetriableGitManager implements IGitManager {
 	constructor(

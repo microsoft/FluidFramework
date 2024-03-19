@@ -14,7 +14,7 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
+import { getOrCreateNodeProxy, getSimpleSchema } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
@@ -129,7 +129,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (isTreeValue(node)) {
 			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
 		}
-		return getClassSchema(getFlexNode(node).schema) as TreeNodeSchema<
+		return getSimpleSchema(getFlexNode(node).schema) as TreeNodeSchema<
 			string,
 			NodeKind,
 			unknown,

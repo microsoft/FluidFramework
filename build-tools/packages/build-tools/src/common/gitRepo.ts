@@ -5,9 +5,12 @@
 
 import { parseISO } from "date-fns";
 import { exec, execNoError } from "./utils";
-
 import registerDebug from "debug";
+import { statSync } from "fs-extra";
+import path from "node:path";
+
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
+
 export class GitRepo {
 	constructor(public readonly resolvedRoot: string) {}
 
@@ -211,6 +214,21 @@ export class GitRepo {
 			.split("\n")
 			.filter((t) => t !== "" && !t.startsWith(" D "))
 			.map((t) => t.substring(3));
+	}
+
+	/**
+	 * Returns an array containing all the files in the the provided path.
+	 * Returned paths are rooted at the root of the repo.
+	 */
+	public async getFiles(directory: string): Promise<string[]> {
+		const results = await this.exec(
+			`ls-files -co --exclude-standard --full-name -- ${directory}`,
+			`get files`,
+		);
+		return results
+			.split("\n")
+			.map((line) => line.trim())
+			.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile());
 	}
 
 	/**

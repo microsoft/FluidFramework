@@ -14,10 +14,10 @@ import {
 } from "@fluidframework/devtools-core";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import React from "react";
-import { useMessageRelay } from "../MessageRelayContext";
-import { AudienceHistoryTable } from "./AudienceHistoryTable";
-import { AudienceStateTable } from "./AudienceStateTable";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { AudienceHistoryTable } from "./AudienceHistoryTable.js";
+import { AudienceStateTable } from "./AudienceStateTable.js";
+import { Waiting } from "./Waiting.js";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer

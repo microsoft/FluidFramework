@@ -12,7 +12,12 @@ module.exports = {
 		"prettier",
 	],
 	parserOptions: {
-		project: ["./tsconfig.json"],
+		project: [
+			"./tsconfig.esm.json",
+			"./src/test/jest/tsconfig.esm.json",
+			"./src/test/screenshot/tsconfig.json",
+			"./src/test/utils/tsconfig.esm.json",
+		],
 	},
 	rules: {
 		// Disabled because they disagrees with React common patterns / best practices.
@@ -32,6 +37,14 @@ module.exports = {
 			"error",
 			{
 				allow: [
+					// - Copied allowances from @fluidframework/eslint-config-fluid/strict -
+					// Within Fluid Framework allow import of '/internal' from other FF packages.
+					"@fluidframework/*/internal",
+					// Allow imports from sibling and ancestral sibling directories,
+					// but not from cousin directories. Parent is allowed but only
+					// because there isn't a known way to deny it.
+					"*/index.js",
+
 					// Allow use of unstable API
 					"@fluentui/react-components/unstable",
 				],
@@ -44,8 +57,8 @@ module.exports = {
 	},
 	overrides: [
 		{
-			// Overrides for test files
-			files: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/test/**"],
+			// Overrides for jest test files
+			files: ["src/test/jest/**"],
 			plugins: ["jest"],
 			extends: ["plugin:jest/recommended"],
 			rules: {
@@ -54,7 +67,7 @@ module.exports = {
 			},
 
 			// Overrides for screenshot tests
-			files: ["src/screenshot-tests/**"],
+			files: ["src/test/screenshot/**"],
 			rules: {
 				// Default exports are used by "Storybook" modules to describe test scenarios
 				"import/no-default-export": "off",
