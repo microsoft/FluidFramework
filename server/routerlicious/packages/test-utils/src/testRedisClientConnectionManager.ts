@@ -5,15 +5,11 @@
 import RedisMock from "ioredis-mock";
 import * as Redis from "ioredis";
 
+/**
+ * Adding a duplicate of the IRedisClientConnectionManager interface from server-services-utils
+ * to prevent a cyclic dependency between server-services-utils and test-utils
+ */
 export interface IRedisClientConnectionManager {
-	/**
-	 * Creates a new Redis client.
-	 * @returns The newly created Redis client.
-	 */
-	authenticateAndCreateRedisClient(): Promise<void>;
-	/**
-	 * @returns The newly created Redis client.
-	 */
 	getRedisClient(): Redis.default | Redis.Cluster;
 }
 
@@ -22,10 +18,6 @@ export class TestRedisClientConnectionManager implements IRedisClientConnectionM
 
 	constructor(options?) {
 		this.options = options;
-	}
-
-	public async authenticateAndCreateRedisClient(): Promise<void> {
-		// Dummy implementation
 	}
 
 	public getRedisClient(): Redis.Redis {

@@ -12,13 +12,13 @@ import {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
 	IRedisParameters,
+	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
 
 /**
  * Manages storage of throttling metrics and usage data in redis.
@@ -42,7 +42,7 @@ export class RedisThrottleAndUsageStorageManager implements IThrottleAndUsageSto
 
 		redisClientConnectionManager.getRedisClient().on("error", (error) => {
 			Lumberjack.error(
-				"[DHRUV DEBUG] Throttle Manager Redis Error",
+				"Throttle Manager Redis Error",
 				{ [CommonProperties.telemetryGroupName]: "throttling" },
 				error,
 			);

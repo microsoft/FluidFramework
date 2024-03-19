@@ -5,7 +5,7 @@
 
 import * as Redis from "ioredis";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as utils from "@fluidframework/server-services-utils";
+import { getRedisClusterRetryStrategy } from "./redisUtils";
 
 /**
  * Represents an interface for managing creation,
@@ -34,12 +34,12 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		this.slotsRefreshTimeout = slotsRefreshTimeout;
 		if (!redisOptions && !redisConfig) {
 			Lumberjack.info(
-				"[DHRUV DEBUG] Routerlicious Either redisOptions or redisConfig must be provided",
+				"Either redisOptions or redisConfig must be provided",
 			);
 			throw new Error("Either redisOptions or redisConfig must be provided");
 		} else if (!redisOptions && redisConfig) {
 			Lumberjack.info(
-				"[DHRUV DEBUG] Routerlicious using default redisOptions after reading from config",
+				"Using default redisOptions after reading from config",
 			);
 			this.redisOptions = {
 				host: redisConfig.host,
@@ -49,7 +49,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				enableReadyCheck: true,
 				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 				enableOfflineQueue: redisConfig.enableOfflineQueue,
-				retryStrategy: utils.getRedisClusterRetryStrategy({
+				retryStrategy: getRedisClusterRetryStrategy({
 					delayPerAttemptMs: 50,
 					maxDelayMs: 2000,
 				}),
@@ -69,11 +69,11 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 				};
 			}
 		} else if (redisOptions && !redisConfig) {
-			Lumberjack.info("[DHRUV DEBUG] Routerlicious using the provided redisOptions");
+			Lumberjack.info("Using the provided redisOptions");
 			this.redisOptions = redisOptions;
 		} else {
 			Lumberjack.error(
-				"[DHRUV DEBUG] Routerlicious Both redisOptions and redisConfig cannot be provided",
+				"Both redisOptions and redisConfig cannot be provided",
 			);
 			throw new Error("Both redisOptions and redisConfig cannot be provided");
 		}
@@ -81,7 +81,6 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	}
 
 	private authenticateAndCreateRedisClient(): void {
-		Lumberjack.info("[DHRUV DEBUG] Routerlicious Creating redis client");
 		// this.client = new Redis.default(this.redisOptions);
 		this.client = this.enableClustering
 			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
@@ -91,15 +90,13 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 					showFriendlyErrorStack: true,
 			  })
 			: new Redis.default(this.redisOptions);
-		Lumberjack.info("[DHRUV DEBUG] Routerlicious Redis client created");
+		Lumberjack.info("Redis client created");
 	}
 
 	public getRedisClient(): Redis.default | Redis.Cluster {
 		if (!this.client) {
-			Lumberjack.error("[DHRUV DEBUG] Routerlicious Redis client not initialized");
 			throw new Error("Redis client not initialized");
 		}
-		Lumberjack.info("[DHRUV DEBUG] Routerlicious Returning latest redis client");
 		return this.client;
 	}
 }

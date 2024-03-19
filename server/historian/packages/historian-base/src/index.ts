@@ -28,8 +28,3 @@ export {
 	RestGitService,
 	RiddlerService,
 } from "./services";
-export {
-	IRedisClientConnectionManager,
-	RedisClientConnectionManager,
-} from "./redisClientConnectionManager";
-export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";

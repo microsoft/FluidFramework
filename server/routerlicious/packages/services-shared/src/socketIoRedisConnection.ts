@@ -5,11 +5,11 @@
 
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import {
 	ISocketIoRedisConnection,
 	ISocketIoRedisSubscriptionConnection,
 } from "./redisSocketIoAdapter";
-import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
 
 /**
  * Simple implementation of ISocketIoRedisConnection, which wraps a redis client

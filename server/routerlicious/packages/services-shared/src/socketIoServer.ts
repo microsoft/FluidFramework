@@ -11,12 +11,12 @@ import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-serv
 import { Namespace, Server, Socket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
-import { IRedisClientConnectionManager } from "./redisClientConnectionManager";
 
 class SocketIoSocket implements core.IWebSocket {
 	public get id(): string {
@@ -141,10 +141,10 @@ export function create(
 	ioSetup?: (io: Server) => void,
 ): core.IWebSocketServer {
 	redisClientConnectionManagerForPub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("[DHRUV DEBUG] Error with Redis pub connection", undefined, err);
+		Lumberjack.error("Error with Redis pub connection", undefined, err);
 	});
 	redisClientConnectionManagerForSub.getRedisClient().on("error", (err) => {
-		Lumberjack.error("[DHRUV DEBUG] Error with Redis sub connection", undefined, err);
+		Lumberjack.error("Error with Redis sub connection", undefined, err);
 	});
 
 	let adapter: (nsp: Namespace) => Adapter;

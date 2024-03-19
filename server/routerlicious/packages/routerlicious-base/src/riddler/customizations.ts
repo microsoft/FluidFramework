@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { ITenantRepository } from "./mongoTenantRepository";
 
 /**

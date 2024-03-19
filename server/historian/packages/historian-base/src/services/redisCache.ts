@@ -5,7 +5,8 @@
 
 import { IRedisParameters } from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "../redisClientConnectionManager";
+import * as Redis from "ioredis";
+import * as winston from "winston";
 import { ICache } from "./definitions";
 
 /**
@@ -16,7 +17,7 @@ export class RedisCache implements ICache {
 	private readonly prefix: string = "git";
 
 	constructor(
-		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -27,15 +28,14 @@ export class RedisCache implements ICache {
 			this.prefix = parameters.prefix;
 		}
 
-		redisClientConnectionManager.getRedisClient().on("error", (error) => {
-			Lumberjack.error("[DHRUV DEBUG] Redis Cache Error", undefined, error);
+		client.on("error", (error) => {
+			winston.error("Redis Cache Error:", error);
+			Lumberjack.error("Redis Cache Error", undefined, error);
 		});
 	}
 
 	public async get<T>(key: string): Promise<T> {
-		const stringValue = await this.redisClientConnectionManager
-			.getRedisClient()
-			.get(this.getKey(key));
+		const stringValue = await this.client.get(this.getKey(key));
 		return JSON.parse(stringValue) as T;
 	}
 
@@ -44,18 +44,19 @@ export class RedisCache implements ICache {
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		const result = await this.redisClientConnectionManager
-			.getRedisClient()
-			.set(this.getKey(key), JSON.stringify(value), "EX", expireAfterSeconds);
+		const result = await this.client.set(
+			this.getKey(key),
+			JSON.stringify(value),
+			"EX",
+			expireAfterSeconds,
+		);
 		if (result !== "OK") {
 			throw new Error(result);
 		}
 	}
 
 	public async delete(key: string): Promise<boolean> {
-		const result = await this.redisClientConnectionManager
-			.getRedisClient()
-			.del(this.getKey(key));
+		const result = await this.client.del(this.getKey(key));
 		// The DEL API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.

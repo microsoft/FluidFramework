@@ -4,9 +4,11 @@
  */
 
 import { ICache } from "@fluidframework/server-services-core";
-import { IRedisParameters } from "@fluidframework/server-services-utils";
+import {
+	IRedisParameters,
+	IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
 
 /**
  * Redis based cache redisClientConnectionManager.getRedisClient()
@@ -28,7 +30,7 @@ export class RedisCache implements ICache {
 		}
 
 		redisClientConnectionManager.getRedisClient().on("error", (err) => {
-			Lumberjack.error("[DHRUV DEBUG] Error with Redis", undefined, err);
+			Lumberjack.error("Error with Redis", undefined, err);
 		});
 	}
 	public async delete(key: string): Promise<boolean> {

@@ -19,7 +19,7 @@ import * as winston from "winston";
 import {
 	RedisClientConnectionManager,
 	type IRedisClientConnectionManager,
-} from "@fluidframework/server-services-shared";
+} from "@fluidframework/server-services-utils";
 
 export async function deliCreate(
 	config: Provider,

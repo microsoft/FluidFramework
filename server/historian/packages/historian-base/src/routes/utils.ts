@@ -12,17 +12,16 @@ import { NetworkError } from "@fluidframework/server-services-client";
 import { validateTokenClaims } from "@fluidframework/server-services-utils";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import {
-	runWithRetry,
+	Lumberjack,
+	getGlobalTelemetryContext,
+	getLumberBaseProperties,
+} from "@fluidframework/server-services-telemetry";
+import {
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IDocumentStaticProperties,
 } from "@fluidframework/server-services-core";
-import {
-	Lumberjack,
-	getGlobalTelemetryContext,
-	getLumberBaseProperties,
-} from "@fluidframework/server-services-telemetry";
 import {
 	ICache,
 	ITenantService,
@@ -94,34 +93,8 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			isEphemeral = isEphemeralContainer;
-			runWithRetry(
-				async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
-				"utils.createGitService.set" /* callName */,
-				3 /* maxRetries */,
-				1000 /* retryAfterMs */,
-				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-			).catch((error) => {
-				Lumberjack.error(
-					`Error setting ${isEphemeralKey} in redis`,
-					getLumberBaseProperties(documentId, tenantId),
-					error,
-				);
-			});
+			await cache?.set(isEphemeralKey, isEphemeral);
 		} else {
-			// Attempt to cache to Redis - log any errors but don't fail
-			runWithRetry(
-				async () => cache?.get(isEphemeralKey) /* api */,
-				"utils.createGitService.get" /* callName */,
-				3 /* maxRetries */,
-				1000 /* retryAfterMs */,
-				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
-			).catch((error) => {
-				Lumberjack.error(
-					`Error getting ${isEphemeralKey} from redis`,
-					getLumberBaseProperties(documentId, tenantId),
-					error,
-				);
-			});
 			isEphemeral = await cache?.get(isEphemeralKey);
 			if (typeof isEphemeral !== "boolean") {
 				// If isEphemeral was not in the cache, fetch the value from database

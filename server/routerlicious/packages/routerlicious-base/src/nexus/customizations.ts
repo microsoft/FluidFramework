@@ -12,7 +12,7 @@ import {
 	IWebSocketTracker,
 	IServiceMessageResourceManager,
 } from "@fluidframework/server-services-core";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-shared";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 /**
  * @internal

@@ -8,10 +8,6 @@ import * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
 import { normalizePort } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import {
-	RedisClientConnectionManager,
-	IRedisClientConnectionManager,
-} from "./redisClientConnectionManager";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
@@ -22,8 +18,6 @@ import {
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
 } from "./utils";
-import { IGitrestResourcesCustomizations } from "./customizations";
-
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
@@ -45,17 +39,11 @@ export class GitrestResources implements core.IResources {
 }
 
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
-	public async create(
-		config: Provider,
-		customizations: IGitrestResourcesCustomizations,
-	): Promise<GitrestResources> {
+	public async create(config: Provider): Promise<GitrestResources> {
 		const port = normalizePort(process.env.PORT || "3000");
 		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
 
-		const fileSystemManagerFactories = await this.getFileSystemManagerFactories(
-			config,
-			customizations,
-		);
+		const fileSystemManagerFactories = this.getFileSystemManagerFactories(config);
 		const repositoryManagerFactory = this.getRepositoryManagerFactory(
 			config,
 			fileSystemManagerFactories,
@@ -70,23 +58,18 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		);
 	}
 
-	private async getFileSystemManagerFactories(
-		config: Provider,
-		customizations: IGitrestResourcesCustomizations,
-	): Promise<IFileSystemManagerFactories> {
+	private getFileSystemManagerFactories(config: Provider): IFileSystemManagerFactories {
 		const defaultFileSystemName: string = config.get("git:filesystem:name") ?? "nodeFs";
 		const ephemeralFileSystemName: string =
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
 
-		const defaultFileSystemManagerFactory = await this.getFileSystemManagerFactoryByName(
+		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			defaultFileSystemName,
 			config,
-			customizations?.redisClientConnectionManagerForDefaultFileSystem,
 		);
-		const ephemeralFileSystemManagerFactory = await this.getFileSystemManagerFactoryByName(
+		const ephemeralFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			ephemeralFileSystemName,
 			config,
-			customizations?.redisClientConnectionManagerForEphemeralFileSystem,
 		);
 
 		return {
@@ -95,24 +78,11 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		};
 	}
 
-	private async getFileSystemManagerFactoryByName(
-		fileSystemName: string,
-		config: Provider,
-		redisClientConnectionManagerCustomization?: IRedisClientConnectionManager,
-	) {
+	private getFileSystemManagerFactoryByName(fileSystemName: string, config: Provider) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
 			return new NodeFsManagerFactory();
 		} else if (fileSystemName === "redisFs") {
-			const redisConfig = config.get("redis");
-			const redisClientConnectionManager =
-				redisClientConnectionManagerCustomization ??
-				new RedisClientConnectionManager(
-					undefined,
-					redisConfig,
-					redisConfig.enableClustering,
-					redisConfig.slotsRefreshTimeout,
-				);
-			return new RedisFsManagerFactory(config, redisClientConnectionManager);
+			return new RedisFsManagerFactory(config);
 		}
 		throw new Error("Invalid file system name.");
 	}

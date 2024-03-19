@@ -22,7 +22,7 @@ import * as bytes from "bytes";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import * as ws from "ws";
-import { RedisClientConnectionManager } from "@fluidframework/server-services-shared";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
 import { INexusResourcesCustomizations } from ".";
