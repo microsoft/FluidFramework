@@ -4118,6 +4118,7 @@ importers:
       sass-loader: ^7.1.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
+      tinylicious: ^4.0.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
       webpack: ^5.82.0
@@ -4185,6 +4186,7 @@ importers:
       sass-loader: 7.3.1_webpack@5.89.0
       source-map-loader: 2.0.2_webpack@5.89.0
       style-loader: 1.3.0_webpack@5.89.0
+      tinylicious: 4.0.0
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -9113,7 +9115,6 @@ importers:
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-services-client': ^4.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -9145,7 +9146,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/server-services-client': 4.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
     devDependencies:
