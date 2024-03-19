@@ -2,25 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
-	Generator,
-	done,
-	IRandom,
-	createWeightedGenerator,
 	BaseFuzzTestState,
+	Generator,
+	IRandom,
 	Weights,
+	createWeightedGenerator,
+	done,
 } from "@fluid-private/stochastic-test-utils";
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import {
-	ISharedTree,
-	FlexTreeView,
-	SharedTreeFactory,
-	TreeContent,
-	ITreeViewFork,
-} from "../../../shared-tree/index.js";
-import { brand, fail, getOrCreate } from "../../../util/index.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -29,6 +22,17 @@ import {
 	UpPath,
 } from "../../../core/index.js";
 import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
+import {
+	FlexTreeView,
+	ISharedTree,
+	ITreeViewFork,
+	SharedTree,
+	SharedTreeFactory,
+	TreeContent,
+} from "../../../shared-tree/index.js";
+import { brand, fail, getOrCreate } from "../../../util/index.js";
+import { schematizeFlexTree } from "../../utils.js";
+import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -46,7 +50,6 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes.js";
-import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
 	/**
@@ -83,7 +86,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
-	view?: Map<ISharedTree, FuzzView>;
+	view?: Map<SharedTree, FuzzView>;
 	/**
 	 * Schematized view of clients undergoing transactions with their nodeSchemas.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
@@ -103,12 +106,16 @@ export function viewFromState(
 
 	return (
 		state.transactionViews?.get(client.channel) ??
-		getOrCreate(state.view, client.channel, (tree) => {
-			const fuzzView = tree.schematizeInternal({
-				initialTree,
-				schema: fuzzSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			}) as FuzzView;
+		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
+				tree,
+				{
+					initialTree,
+					schema: fuzzSchema,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+				},
+			);
+			const fuzzView = flexView as FuzzView;
 			assert.equal(fuzzView.currentSchema, undefined);
 			fuzzView.currentSchema = fuzzNode;
 			return fuzzView;

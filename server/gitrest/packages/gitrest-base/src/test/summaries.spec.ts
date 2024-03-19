@@ -8,7 +8,12 @@ import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis-mock";
-import { IWholeFlatSummary, LatestSummaryId } from "@fluidframework/server-services-client";
+import {
+	IWholeFlatSummary,
+	LatestSummaryId,
+	NetworkError,
+	isNetworkError,
+} from "@fluidframework/server-services-client";
 import { ISummaryTestMode } from "./utils";
 import {
 	GitWholeSummaryManager,
@@ -18,6 +23,8 @@ import {
 	IsomorphicGitManagerFactory,
 	MemFsManagerFactory,
 	RedisFsManagerFactory,
+	checkSoftDeleted,
+	type IRepoManagerParams,
 } from "../utils";
 import { NullExternalStorageManager } from "../externalStorageManager";
 import { ISummaryWriteFeatureFlags } from "../utils/wholeSummary";
@@ -458,19 +465,6 @@ testFileSystems.forEach((fileSystem) => {
 					await getWholeSummaryManager().writeSummary(
 						// Replace the referenced channel summary with the one we just wrote.
 						// This matters when low-io write is enabled, because it alters how the tree is stored.
-						// JSON.parse(
-						// 	JSON.stringify(ElaborateFirstServiceContainerPayload)
-						// 		.replace(
-						// 			ElaborateFirstContainerResult.id,
-						// 			firstContainerWriteResponse.writeSummaryResponse.id,
-						// 		)
-						// 		.replace(
-						// 			ElaborateFirstContainerResult.trees[0].id,
-						// 			(
-						// 				firstContainerWriteResponse.writeSummaryResponse as IWholeFlatSummary
-						// 			).trees[0].id,
-						// 		),
-						// ),
 						replaceTestShas(ElaborateFirstServiceContainerPayload, [
 							{
 								sha: ElaborateFirstContainerResult.id,
@@ -556,6 +550,120 @@ testFileSystems.forEach((fileSystem) => {
 					"Container summary read response should match expected response.",
 				);
 			});
+
+			if (testMode.repoPerDocEnabled) {
+				/**
+				 * Test that we can write an initial summary, read it, then delete the document's summary data.
+				 * Validates that after deletion we cannot read and subsequent delete attempts are no-ops, not errors.
+				 */
+				it("Can hard-delete a document's summary data", async () => {
+					// Write and validate initial summary.
+					const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+						ElaborateInitialPayload,
+						true,
+					);
+					assert.strictEqual(
+						initialWriteResponse.isNew,
+						true,
+						"Initial summary write `isNew` should be `true`.",
+					);
+					assertEqualSummaries(
+						initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+						ElaborateInitialResult,
+						"Initial summary write response should match expected response.",
+					);
+					const initialReadResponse =
+						await getWholeSummaryManager().readSummary(LatestSummaryId);
+					assertEqualSummaries(
+						initialReadResponse,
+						ElaborateInitialResult,
+						"Initial summary read response should match expected response.",
+					);
+
+					// Delete document.
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
+					await getWholeSummaryManager().deleteSummary(fsManager, false /* softDelete */);
+					// Validate that we cannot read the summary.
+					await assert.rejects(
+						async () => getWholeSummaryManager().readSummary(LatestSummaryId),
+						(thrown) => isNetworkError(thrown) && thrown.code === 404,
+						"Reading a deleted summary should throw an 404 error.",
+					);
+					// Validate that we can delete the summary again.
+					assert.doesNotReject(
+						async () =>
+							getWholeSummaryManager().deleteSummary(
+								fsManager,
+								false /* softDelete */,
+							),
+						"Deleting a deleted summary should not throw an error.",
+					);
+				});
+
+				/**
+				 * Test that we can write an initial summary, read it, then delete the document's summary data.
+				 * Validates that after deletion we cannot read and subsequent delete attempts are no-ops, not errors.
+				 */
+				it("Can soft-delete a document's summary data", async () => {
+					// Write and validate initial summary.
+					const initialWriteResponse = await getWholeSummaryManager().writeSummary(
+						ElaborateInitialPayload,
+						true,
+					);
+					assert.strictEqual(
+						initialWriteResponse.isNew,
+						true,
+						"Initial summary write `isNew` should be `true`.",
+					);
+					assertEqualSummaries(
+						initialWriteResponse.writeSummaryResponse as IWholeFlatSummary,
+						ElaborateInitialResult,
+						"Initial summary write response should match expected response.",
+					);
+					const initialReadResponse =
+						await getWholeSummaryManager().readSummary(LatestSummaryId);
+					assertEqualSummaries(
+						initialReadResponse,
+						ElaborateInitialResult,
+						"Initial summary read response should match expected response.",
+					);
+
+					// Delete document.
+					const fsManager = fsManagerFactory.create({
+						rootDir: repoManager.path,
+					});
+					await getWholeSummaryManager().deleteSummary(fsManager, true /* softDelete */);
+					// Validate that soft-deletion flag is detected.
+					assert.rejects(
+						async () =>
+							checkSoftDeleted(
+								fsManager,
+								repoManager.path,
+								// only used for telemetry
+								{} as unknown as IRepoManagerParams,
+								testMode.repoPerDocEnabled,
+							),
+						(thrown) => isNetworkError(thrown) && (thrown as NetworkError).code === 410,
+						"CheckSoftDeleted on deleted document should throw 410.",
+					);
+					// Validate that we can hard-delete the soft-deleted summary.
+					assert.doesNotReject(
+						async () =>
+							getWholeSummaryManager().deleteSummary(
+								fsManager,
+								false /* softDelete */,
+							),
+						"Deleting a deleted summary should not throw an error.",
+					);
+					await assert.rejects(
+						async () => getWholeSummaryManager().readSummary(LatestSummaryId),
+						(thrown) => isNetworkError(thrown) && thrown.code === 404,
+						"Reading a deleted summary should throw an 404 error.",
+					);
+				});
+			}
 
 			// Test cross-compat between low-io and non-low-io write modes for same summary.
 			[true, false].forEach((enableLowIoWrite) => {

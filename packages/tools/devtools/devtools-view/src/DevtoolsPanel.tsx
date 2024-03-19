@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 
-import { type IMessageRelay } from "@fluidframework/devtools-core";
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DevtoolsView } from "./DevtoolsView";
-import { MessageRelayContext } from "./MessageRelayContext";
+import type { IMessageRelay } from "@fluidframework/devtools-core";
+import { DevtoolsView } from "./DevtoolsView.js";
+import { MessageRelayContext } from "./MessageRelayContext.js";
 
 /**
  * {@link DevtoolsPanel} input props.

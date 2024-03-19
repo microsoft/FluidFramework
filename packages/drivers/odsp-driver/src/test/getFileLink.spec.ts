@@ -5,15 +5,15 @@
 
 import { strict as assert } from "node:assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { getFileLink } from "../getFileLink";
+import { getFileLink } from "../getFileLink.js";
 import {
-	mockFetchSingle,
-	mockFetchMultiple,
-	okResponse,
-	notFound,
+	MockResponse,
 	createResponse,
-	type MockResponse,
-} from "./mockFetch";
+	mockFetchMultiple,
+	mockFetchSingle,
+	notFound,
+	okResponse,
+} from "./mockFetch.js";
 
 describe("getFileLink", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";

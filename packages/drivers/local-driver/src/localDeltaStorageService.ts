@@ -4,9 +4,9 @@
  */
 
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
+import { streamFromMessages } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDatabaseManager } from "@fluidframework/server-services-core";
-import { streamFromMessages } from "@fluidframework/driver-utils";
 
 /**
  * Provides access to the underlying delta storage on the server for local driver.

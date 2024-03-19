@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
-import { MapFactory, SharedMap } from "../../map";
+import { MapFactory, SharedMap } from "../../map.js";
 
 function createLocalMap(id: string): SharedMap {
 	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);

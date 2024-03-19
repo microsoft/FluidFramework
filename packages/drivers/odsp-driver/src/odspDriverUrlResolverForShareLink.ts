@@ -2,30 +2,31 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils";
-import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,
 	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { getFileLink } from "./getFileLink.js";
+import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import {
 	getLocatorFromOdspUrl,
-	storeLocatorInOdspUrl,
 	locatorQueryParamName,
-} from "./odspFluidFileLink";
-import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic";
-import { createOdspUrl } from "./createOdspUrl";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { getOdspResolvedUrl, createOdspLogger } from "./odspUtils";
-import { getFileLink } from "./getFileLink";
+	storeLocatorInOdspUrl,
+} from "./odspFluidFileLink.js";
+import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.

@@ -5,27 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	TreeNavigationResult,
 } from "../../core/index.js";
-import { disposeSymbol, IDisposable } from "../../util/index.js";
+import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
-
-/**
- * Like {@link makePropertyNotEnumerable}, but less type safe so it works on private properties.
- */
-export function makePrivatePropertyNotEnumerable(
-	target: object,
-	key: string | symbol | number,
-): void {
-	assert(
-		Object.getOwnPropertyDescriptor(target, key)?.enumerable === true,
-		0x777 /* missing property or not enumerable */,
-	);
-	Object.defineProperty(target, key, { enumerable: false });
-}
 
 export const prepareForEditSymbol = Symbol("prepareForEdit");
 export const isFreedSymbol = Symbol("isFreed");
@@ -41,8 +27,8 @@ export const anchorSymbol = Symbol("anchor");
  * TODO: provide a non implementation dependent way to leverage this optimization.
  */
 export function assertFlexTreeEntityNotFreed(entity: FlexTreeEntity): void {
-	assert(entity instanceof LazyEntity, "unexpected implementation");
-	assert(!entity[isFreedSymbol](), "Use after free");
+	assert(entity instanceof LazyEntity, 0x8c9 /* unexpected implementation */);
+	assert(!entity[isFreedSymbol](), 0x8ca /* Use after free */);
 }
 
 /**

@@ -4,28 +4,28 @@
  */
 
 import type {
-	ITelemetryBaseLogger,
-	IDisposable,
 	FluidObject,
+	IDisposable,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
 import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import type {
 	IClientDetails,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	MessageType,
-	ISummaryTree,
-	IVersion,
 	IDocumentMessage,
 	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
 	ISummaryContent,
+	ISummaryTree,
+	IVersion,
+	MessageType,
 } from "@fluidframework/protocol-definitions";
-import type { IAudience } from "./audience";
-import type { IDeltaManager } from "./deltas";
-import type { ICriticalContainerError } from "./error";
-import type { ILoader } from "./loader";
-import type { IFluidCodeDetails } from "./fluidPackage";
+import type { IAudience } from "./audience.js";
+import type { IDeltaManager } from "./deltas.js";
+import type { ICriticalContainerError } from "./error.js";
+import type { IFluidCodeDetails } from "./fluidPackage.js";
+import type { ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the

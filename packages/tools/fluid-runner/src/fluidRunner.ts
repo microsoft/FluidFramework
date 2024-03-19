@@ -4,11 +4,11 @@
  */
 
 import * as yargs from "yargs";
-import { exportFile } from "./exportFile";
 import { IFluidFileConverter } from "./codeLoaderBundle";
-import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
+import { exportFile } from "./exportFile";
 // eslint-disable-next-line import/no-internal-modules
 import { validateAndParseTelemetryOptions } from "./logger/loggerUtils";
+import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
 import { validateCommandLineArgs } from "./utils";
 
 /**

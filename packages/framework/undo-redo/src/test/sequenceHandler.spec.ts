@@ -10,8 +10,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler";
-import { UndoRedoStackManager } from "../undoRedoStackManager";
+import { SharedSegmentSequenceUndoRedoHandler } from "../sequenceHandler.js";
+import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 const text =
 	"The SharedSegmentSequenceRevertible does the heavy lifting of tracking and reverting changes on the underlying SharedSegmentSequence. This is accomplished via TrackingGroup objects.";

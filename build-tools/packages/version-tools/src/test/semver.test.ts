@@ -2,9 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "chai";
 
-import { bumpRange, detectBumpType, getPreviousVersions, isPrereleaseVersion } from "../semver";
+import {
+	bumpRange,
+	detectBumpType,
+	getPreviousVersions,
+	isPrereleaseVersion,
+} from "../semver";
 
 describe("semver", () => {
 	describe("detectBumpType semver", () => {

@@ -9,9 +9,9 @@ export {
 	IAttributionCollectionSpec,
 	SerializedAttributionCollection,
 	SequenceOffsets,
-} from "./attributionCollection";
-export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
-export { Client, IClientEvents } from "./client";
+} from "./attributionCollection.js";
+export { createInsertOnlyAttributionPolicy } from "./attributionPolicy.js";
+export { Client, IClientEvents } from "./client.js";
 export {
 	ConflictAction,
 	Dictionary,
@@ -26,20 +26,20 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
-} from "./collections";
-export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
+} from "./collections/index.js";
+export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
-} from "./localReference";
+} from "./localReference.js";
 export {
 	AttributionPolicy,
 	IMergeTreeAttributionOptions,
 	IMergeTreeOptions,
 	getSlideToSegoff,
-} from "./mergeTree";
+} from "./mergeTree.js";
 export {
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDeltaCallbackArgs,
@@ -49,7 +49,7 @@ export {
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
 	MergeTreeMaintenanceType,
-} from "./mergeTreeDeltaCallback";
+} from "./mergeTreeDeltaCallback.js";
 export {
 	BaseSegment,
 	CollaborationWindow,
@@ -66,13 +66,13 @@ export {
 	reservedMarkerSimpleTypeKey,
 	SegmentGroup,
 	toRemovalInfo,
-} from "./mergeTreeNodes";
+} from "./mergeTreeNodes.js";
 export {
 	Trackable,
 	TrackingGroup,
 	ITrackingGroup,
 	TrackingGroupCollection,
-} from "./mergeTreeTracking";
+} from "./mergeTreeTracking.js";
 export {
 	createAnnotateRangeOp,
 	createGroupOp,
@@ -80,7 +80,7 @@ export {
 	createInsertSegmentOp,
 	createRemoveRangeOp,
 	createObliterateRangeOp,
-} from "./opBuilder";
+} from "./opBuilder.js";
 export {
 	IJSONSegment,
 	IMarkerDef,
@@ -95,8 +95,8 @@ export {
 	MergeTreeDeltaType,
 	ReferenceType,
 	IMergeTreeObliterateMsg,
-} from "./ops";
-export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties";
+} from "./ops.js";
+export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties.js";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,
@@ -109,12 +109,12 @@ export {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
-} from "./referencePositions";
-export { SegmentGroupCollection } from "./segmentGroupCollection";
-export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
-export { SortedSet } from "./sortedSet";
-export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet";
-export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment";
+} from "./referencePositions.js";
+export { SegmentGroupCollection } from "./segmentGroupCollection.js";
+export { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager.js";
+export { SortedSet } from "./sortedSet.js";
+export { SortedSegmentSet, SortedSegmentSetItem } from "./sortedSegmentSet.js";
+export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegment.js";
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
@@ -122,4 +122,4 @@ export {
 	MergeTreeDeltaRevertible,
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
-} from "./revertibles";
+} from "./revertibles.js";

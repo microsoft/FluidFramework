@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
-import { type OdspMember } from "./interfaces";
+import { type OdspMember } from "./interfaces.js";
 
 /**
  * Since ODSP provides user names, email and oids for all of its members, we extend the

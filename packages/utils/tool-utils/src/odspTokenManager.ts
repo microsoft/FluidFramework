@@ -5,20 +5,20 @@
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
-	IOdspTokens,
 	IClientConfig,
+	IOdspTokens,
+	TokenRequestCredentials,
 	fetchTokens,
-	refreshTokens,
+	getLoginPageUrl,
 	getOdspScope,
 	pushScope,
-	getLoginPageUrl,
-	TokenRequestCredentials,
+	refreshTokens,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { jwtDecode } from "jwt-decode";
 import { Mutex } from "async-mutex";
-import { debug } from "./debug";
-import { IAsyncCache, loadRC, saveRC, lockRC } from "./fluidToolRC";
-import { serverListenAndHandle, endResponse } from "./httpHelpers";
+import { jwtDecode } from "jwt-decode";
+import { debug } from "./debug.js";
+import { IAsyncCache, loadRC, lockRC, saveRC } from "./fluidToolRC.js";
+import { endResponse, serverListenAndHandle } from "./httpHelpers.js";
 
 const odspAuthRedirectPort = 7000;
 const odspAuthRedirectOrigin = `http://localhost:${odspAuthRedirectPort}`;

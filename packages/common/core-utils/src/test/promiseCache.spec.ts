@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
+
 import { PromiseCache } from "@fluidframework/core-utils";
 
 describe("PromiseCache", () => {
