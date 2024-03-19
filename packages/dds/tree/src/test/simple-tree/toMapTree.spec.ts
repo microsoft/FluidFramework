@@ -39,7 +39,7 @@ const numberSchemaIdentifier: TreeNodeSchemaIdentifier = brand(numberSchema.iden
 const nullSchemaIdentifier: TreeNodeSchemaIdentifier = brand(nullSchema.identifier);
 const stringSchemaIdentifier: TreeNodeSchemaIdentifier = brand(stringSchema.identifier);
 
-describe.only("toMapTree", () => {
+describe("toMapTree", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 
