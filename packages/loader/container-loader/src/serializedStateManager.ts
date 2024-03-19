@@ -44,8 +44,6 @@ export interface SnapshotWithBlobs {
 export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	pendingRuntimeState: unknown;
-	snapshotTree: ISnapshotTree;
-	snapshotBlobs: ISerializableBlobContents;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
