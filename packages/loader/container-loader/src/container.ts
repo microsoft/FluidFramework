@@ -1782,7 +1782,7 @@ export class Container
 				pendingSnapshot.snapshotBlobs,
 			);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(pendingSnapshot.snapshotBlobs);
-		const attributes = this.getDocumentAttributes(
+		const attributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,
 		);
