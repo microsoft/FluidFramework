@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TSchema, Type, ObjectOptions, Static } from "@sinclair/typebox";
 import { SessionId } from "@fluidframework/id-compressor";
-import { Brand, brandedNumberType } from "../util/index.js";
+import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
 import {
-	SessionIdSchema,
+	EncodedRevisionTag,
 	RevisionTag,
 	RevisionTagSchema,
-	EncodedRevisionTag,
+	SessionIdSchema,
 } from "../core/index.js";
+import { Brand, brandedNumberType } from "../util/index.js";
 
 /**
  * Contains a single change to the `SharedTree` and associated metadata.

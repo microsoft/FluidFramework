@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IEventProvider } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
 import {
 	IEventSampler,
 	ISampledTelemetryLogger,
@@ -11,16 +21,6 @@ import {
 	createSampledLogger,
 	formatTick,
 } from "@fluidframework/telemetry-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
-import { IEventProvider } from "@fluidframework/core-interfaces";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.

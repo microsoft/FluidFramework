@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDisposable,
 	IEvent,
@@ -10,15 +11,15 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	createChildLogger,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { IThrottler } from "../throttler";
-import { ISummarizerClientElection } from "./summarizerClientElection";
+import { IThrottler } from "../throttler.js";
+import { Summarizer } from "./summarizer.js";
+import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
@@ -28,9 +29,8 @@ import {
 	ISummarizer,
 	ISummarizerEvents,
 	SummarizerStopReason,
-} from "./summarizerTypes";
-import { SummaryCollection } from "./summaryCollection";
-import { Summarizer } from "./summarizer";
+} from "./summarizerTypes.js";
+import { SummaryCollection } from "./summaryCollection.js";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;

@@ -1,5 +1,28 @@
 # @fluidframework/telemetry-utils
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   fluid-framework: EventEmitterWithErrorHandling is no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    EventEmitterWithErrorHandling is intended for authoring DDSes, and thus is only intended for use within the Fluid Framework client packages.
+    It is no longer publicly exported: any users should fine their own solution or be upstreamed.
+    EventEmitterWithErrorHandling is available for now as `@alpha` to make this migration less disrupting for any existing users.
+
+-   telemetry-utils: logIfFalse() is removed ([#19597](https://github.com/microsoft/FluidFramework/issues/19597)) [213b5ab761](https://github.com/microsoft/FluidFramework/commits/213b5ab7611c214fda7fa005f89ac37c2f1695c1)
+
+    The deprecated `logIfFalse()` function has been removed. Consumers who want to keep using it can reimplement in in their
+    codebase by copying it from a previous version of the `@fluidframework/telemetry-utils` package.
+
+-   Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+
+    Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+    deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+    `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+    2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+    on the replacements.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
-import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
-import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
-import { RevisionView } from '../RevisionView.js';
+import { expect } from 'chai';
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
-import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
+import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';
+import { RevisionView } from '../RevisionView.js';
+import { SequencedEditAppliedEventArguments, SharedTree } from '../SharedTree.js';
 import { TransactionInternal } from '../TransactionInternal.js';
-import { buildLeaf, TestTree } from './utilities/TestNode.js';
+import { ConstraintEffect, EditStatus } from '../persisted-types/index.js';
+import { TestTree, buildLeaf } from './utilities/TestNode.js';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 async function setupHeartbeat() {

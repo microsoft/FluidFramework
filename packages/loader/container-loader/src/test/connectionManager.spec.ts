@@ -14,9 +14,9 @@ import {
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ConnectionManager } from "../connectionManager";
-import { IConnectionManagerFactoryArgs } from "../contracts";
-import { pkgVersion } from "../packageVersion";
+import { ConnectionManager } from "../connectionManager.js";
+import { IConnectionManagerFactoryArgs } from "../contracts.js";
+import { pkgVersion } from "../packageVersion.js";
 
 describe("connectionManager", () => {
 	let nextClientId = 0;

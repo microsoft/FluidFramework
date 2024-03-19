@@ -45,8 +45,8 @@ steps:
       echo "
       Parameters:
         pathToTelemetryGenerator=${{ parameters.pathToTelemetryGenerator }}
-        devFeedUrl={{ parameters.devFeedUrl }}
-        officeFeedUrl={{ parameters.officeFeedUrl }}
+        devFeedUrl=${{ parameters.devFeedUrl }}
+        officeFeedUrl=${{ parameters.officeFeedUrl }}
       "
 
 - task: Bash@3

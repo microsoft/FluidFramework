@@ -5,18 +5,18 @@
 
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
+	ISummarizeResult,
+	ISummaryTreeWithStats,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	ISummarizeResult,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IRefreshSummaryResult } from "../summary";
-import { GCVersion, IGarbageCollectorConfigs, IGCStats } from "./gcDefinitions";
-import { generateSortedGCState } from "./gcHelpers";
-import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
+import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils";
+import { IRefreshSummaryResult } from "../summary/index.js";
+import { GCVersion, IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
+import { generateSortedGCState } from "./gcHelpers.js";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
 
 export const gcStateBlobKey = `${gcBlobPrefix}_root`;
 

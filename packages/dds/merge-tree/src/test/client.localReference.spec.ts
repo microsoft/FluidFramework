@@ -2,21 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Client } from "../client";
-import { toRemovalInfo } from "../mergeTreeNodes";
-import { MergeTreeDeltaType, ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { DetachedReferencePosition } from "../referencePositions";
-import { setValidateRefCount, LocalReferencePosition, SlidingPreference } from "../localReference";
-import { getSlideToSegoff } from "../mergeTree";
-import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking";
-import { createClientsAtInitialState } from "./testClientLogger";
-import { validateRefCount } from "./testUtils";
-import { TestClient } from "./testClient";
+import { Client } from "../client.js";
+import {
+	LocalReferencePosition,
+	SlidingPreference,
+	setValidateRefCount,
+} from "../localReference.js";
+import { getSlideToSegoff } from "../mergeTree.js";
+import { toRemovalInfo } from "../mergeTreeNodes.js";
+import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { DetachedReferencePosition } from "../referencePositions.js";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
+import { validateRefCount } from "./testUtils.js";
 
 function getSlideOnRemoveReferencePosition(
 	client: Client,
@@ -499,7 +504,7 @@ describe("MergeTree.Client", () => {
 		{
 			const segInfo = clients.A.getContainingSegment(9);
 			const segment = segInfo.segment;
-			assert(TextSegment.is(segment!));
+			assert(segment !== undefined && TextSegment.is(segment));
 			assert.strictEqual(segment.text[segInfo.offset!], "9");
 			const localRef = clients.A.createLocalReferencePosition(
 				segment,
@@ -516,7 +521,7 @@ describe("MergeTree.Client", () => {
 		{
 			const segInfo = clients.A.getContainingSegment(6);
 			const segment = segInfo.segment;
-			assert(TextSegment.is(segment!));
+			assert(segment !== undefined && TextSegment.is(segment));
 			assert.strictEqual(segment.text[segInfo.offset!], "B");
 			clients.A.createLocalReferencePosition(
 				segment,

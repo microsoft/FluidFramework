@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "./assert";
-import { Deferred } from "./promises";
+import { assert } from "./assert.js";
+import { Deferred } from "./promises.js";
 
 /**
  * @internal

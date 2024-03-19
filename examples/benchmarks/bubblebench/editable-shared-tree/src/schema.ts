@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
 import {
-	SchemaBuilderBase,
-	leaf,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeTypedNode,
 	FlexTreeTypedField,
+	FlexTreeTypedNode,
 	InsertableFlexNode,
-} from "@fluidframework/tree";
+	SchemaBuilderBase,
+	leaf,
+} from "@fluidframework/tree/internal";
 
 const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "bubble-bench" });
 

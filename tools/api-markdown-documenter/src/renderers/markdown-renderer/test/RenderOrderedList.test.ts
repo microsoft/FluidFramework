@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { OrderedListNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { OrderedListNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("OrderedListNode Markdown rendering tests", () => {
 	describe("Standard context", () => {

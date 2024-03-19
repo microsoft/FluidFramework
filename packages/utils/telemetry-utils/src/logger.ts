@@ -3,35 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
+	ITelemetryBaseProperties,
 	LogLevel,
 	Tagged,
-	ITelemetryBaseProperties,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import {
 	CachedConfigProvider,
 	loggerIsMonitoringContext,
 	mixinMonitoringContext,
 } from "./config.js";
 import {
-	isILoggingError,
 	extractLogSafeErrorProperties,
 	generateStack,
+	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
 import {
+	type ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	TelemetryEventPropertyTypeExt,
-	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
-	type ITelemetryErrorEventExt,
+	TelemetryEventCategory,
+	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
 
 export interface Memory {

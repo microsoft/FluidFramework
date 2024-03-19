@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISummaryTree,
-	IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { ISummaryConfigurationHeuristics } from "../containerRuntime";
-import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
-import { SummarizeReason } from "./summaryGenerator";
+import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
+import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
+import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
+import { SummarizeReason } from "./summaryGenerator.js";
 
 /**
  * Similar to AbortSignal, but using promise instead of events

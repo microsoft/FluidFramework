@@ -8,15 +8,14 @@ import React from "react";
 import {
 	Button,
 	FluentProvider,
+	Tooltip,
 	makeStyles,
 	shorthands,
 	tokens,
-	Tooltip,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	type ContainerKey,
 	ContainerList,
@@ -24,31 +23,32 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	handleIncomingMessage,
 	type HasContainerKey,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
-import {
-	ContainerDevtoolsView,
-	LandingView,
-	MenuSection,
-	MenuItem,
-	NoDevtoolsErrorBar,
-	OpLatencyView,
-	SettingsView,
-	TelemetryView,
-	Waiting,
-} from "./components";
-import { useMessageRelay } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
 	LoggerContext,
 	TelemetryOptInLogger,
 	useLogger,
-} from "./TelemetryUtils";
-import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
+} from "./TelemetryUtils.js";
+import { ThemeContext, getFluentUIThemeToUse } from "./ThemeHelper.js";
+import {
+	ContainerDevtoolsView,
+	LandingView,
+	MenuItem,
+	MenuSection,
+	NoDevtoolsErrorBar,
+	OpLatencyView,
+	SettingsView,
+	TelemetryView,
+	Waiting,
+} from "./components/index.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 

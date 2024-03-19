@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ErrorObject } from "ajv";
+
 /**
  * @fileoverview The ValidationResultBuilder maintains validation context that ultimately gets returned as a
  * single result.
@@ -10,7 +12,7 @@
 
 export declare interface SchemaValidationResult {
 	isValid: boolean;
-	errors: Error[];
+	errors: (Error | ErrorObject)[];
 	warnings: string[];
 	resolvedTypes: string[];
 	unresolvedTypes: string[];

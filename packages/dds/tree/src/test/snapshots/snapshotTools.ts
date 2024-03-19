@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
 import { strict as assert } from "assert";
-import { existsSync, rmSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import path from "path";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");

@@ -5,20 +5,20 @@
 
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
 	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SharedCounter } from "./counter";
-import { type ISharedCounter } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { SharedCounter } from "./counter.js";
+import { type ISharedCounter } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedCounter}.
  *
  * @sealed
  */
-export class CounterFactory implements IChannelFactory {
+export class CounterFactory implements IChannelFactory<ISharedCounter> {
 	/**
 	 * Static value for {@link CounterFactory."type"}.
 	 */

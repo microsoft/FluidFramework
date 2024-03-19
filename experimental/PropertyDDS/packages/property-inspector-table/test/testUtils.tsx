@@ -4,27 +4,27 @@
  */
 
 import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
-import { mount, MountRendererProps } from "enzyme";
+import { MountRendererProps, mount } from "enzyme";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
-import { EditableValueCell } from "../src/EditableValueCell";
-import { HashCalculator } from "../src/HashCalculator";
-import { InspectorTable } from "../src/InspectorTable";
+import { EditableValueCell } from "../src/EditableValueCell.js";
+import { HashCalculator } from "../src/HashCalculator.js";
+import { InspectorTable } from "../src/InspectorTable.js";
 import {
 	IColumns,
 	IInspectorRow,
 	IInspectorSearchMatch,
 	IInspectorSearchMatchMap,
 	IInspectorTableProps,
-} from "../src/InspectorTableTypes";
-import { ModalManager } from "../src/ModalManager";
-import { ModalRoot } from "../src/ModalRoot";
+} from "../src/InspectorTableTypes.js";
+import { ModalManager } from "../src/ModalManager.js";
+import { ModalRoot } from "../src/ModalRoot.js";
 import {
 	handlePropertyDataCreation,
 	handlePropertyDataCreationOptionGeneration,
-} from "../src/PropertyDataCreationHandlers";
-import { search } from "../src/utils";
-import { MockWorkspace, populateWorkspace } from "./common";
+} from "../src/PropertyDataCreationHandlers.js";
+import { search } from "../src/utils.js";
+import { MockWorkspace, populateWorkspace } from "./common.js";
 
 export async function getAllMatchesFromRows(
 	searchExpression: string,

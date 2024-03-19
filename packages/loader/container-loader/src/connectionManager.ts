@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
+	DriverErrorTypes,
 	IAnyDriverError,
-	IDocumentService,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-	DriverErrorTypes,
+	IDocumentService,
 } from "@fluidframework/driver-definitions";
 import {
-	canRetryOnError,
-	createWriteError,
-	createGenericNetworkError,
-	getRetryDelayFromError,
-	logNetworkFailure,
-	isRuntimeMessage,
 	calculateMaxWaitTime,
+	canRetryOnError,
+	createGenericNetworkError,
+	createWriteError,
+	getRetryDelayFromError,
+	isRuntimeMessage,
+	logNetworkFailure,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -36,31 +36,31 @@ import {
 	INack,
 	INackContent,
 	ISequencedDocumentMessage,
+	ISequencedDocumentSystemMessage,
 	ISignalClient,
 	ISignalMessage,
 	ITokenClaims,
 	MessageType,
 	ScopeType,
-	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	formatTick,
 	GenericError,
-	isFluidError,
 	ITelemetryLoggerExt,
-	normalizeError,
 	UsageError,
+	formatTick,
+	isFluidError,
+	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import {
-	ReconnectMode,
+	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
-	IConnectionDetailsInternal,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { SignalType } from "./protocol";
-import { isDeltaStreamConnectionForbiddenError } from "./utils";
+	ReconnectMode,
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { SignalType } from "./protocol.js";
+import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const InitialReconnectDelayInMs = 500;

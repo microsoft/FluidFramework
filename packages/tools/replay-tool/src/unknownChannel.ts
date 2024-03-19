@@ -6,11 +6,11 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
 import {
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-	IChannelAttributes,
-	IChannelServices,
 	IChannel,
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import {

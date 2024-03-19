@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SummarizerStopReason, Summarizer } from "../../summary";
+import { Summarizer, SummarizerStopReason } from "../../summary/index.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

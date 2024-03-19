@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { createStyles, withStyles, WithStyles } from "@material-ui/core/styles";
+import { WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 
 import * as React from "react";
-import { SvgIcon } from "./SVGIcon";
+import { SvgIcon } from "./SVGIcon.js";
 
-import { iconHeight, iconMarginRight, iconWidth, unit } from "./constants";
+import { iconHeight, iconMarginRight, iconWidth, unit } from "./constants.js";
 
 const styles = () =>
 	createStyles({

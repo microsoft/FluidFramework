@@ -19,6 +19,7 @@ module.exports = function handler(fileData, logger) {
 			asset.name.toLowerCase().endsWith(".js") === true
 		) {
 			logger.send({
+				namespace: "FFEngineering", // Transfer the telemetry associated with bundle size measurement to namespace "FFEngineering"
 				category: "performance",
 				eventName: "Benchmark",
 				benchmarkType: "BundleSize",
