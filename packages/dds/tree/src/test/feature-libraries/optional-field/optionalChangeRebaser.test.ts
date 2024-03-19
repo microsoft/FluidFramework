@@ -21,7 +21,7 @@ import {
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
 // since OptionalChangeset is not generic over the child changeset type.
 // Search this file for "as any" and "as NodeChangeset"
-import { TestChange, isEmpty } from "../../testChange.js";
+import { TestChange } from "../../testChange.js";
 import {
 	deepFreeze,
 	defaultRevInfosFromChanges,
@@ -234,12 +234,18 @@ function compose(
 
 // This is only valid for optional changesets for childchanges of type TestChange
 function isChangeEmpty(change: OptionalChangeset): boolean {
-	for (const childChange of change.childChanges) {
-		if (!isEmpty(childChange[1] as TestChange)) {
-			return false;
-		}
-	}
-	return change.moves.length === 0;
+	const delta = toDelta(change);
+	return !isDeltaVisible(delta);
+}
+
+function assertChangesetsEquivalent(
+	change1: TaggedChange<OptionalChangeset>,
+	change2: TaggedChange<OptionalChangeset>,
+) {
+	assert.deepEqual(
+		toDelta(change1.change, change1.revision),
+		toDelta(change2.change, change2.revision),
+	);
 }
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
@@ -506,10 +512,9 @@ export function testRebaserAxioms() {
 					assertEqual: assertTaggedEqual,
 					createEmpty: Change.empty,
 					isEmpty: isChangeEmpty,
+					assertChangesetsEquivalent,
 				},
 				{
-					skipComposeWithEmpty: true,
-					skipComposeWithInverse: true,
 					numberOfEditsToRebase: 3,
 					numberOfEditsToRebaseOver: isStress ? 5 : 3,
 					numberOfEditsToVerifyAssociativity: isStress ? 6 : 4,

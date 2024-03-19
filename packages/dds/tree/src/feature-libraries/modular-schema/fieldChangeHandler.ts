@@ -174,10 +174,7 @@ export type ToDelta = (child: NodeChangeset) => DeltaFieldMap;
 /**
  * @internal
  */
-export type NodeChangeInverter = (
-	change: NodeChangeset,
-	allowUndefinedRevision?: boolean,
-) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 /**
  * @internal

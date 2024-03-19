@@ -19,6 +19,8 @@ import { TestChange } from "./testChange.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { deepFreeze, mintRevisionTag } from "./utils.js";
+import { toDelta } from "./feature-libraries/sequence-field/utils.js";
+import { TestChangeset } from "./feature-libraries/sequence-field/testEdits.js";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -111,6 +113,13 @@ describe("TestChange", () => {
 		return rebaseResult;
 	}
 
+	function assertChangesetsEquivalent(
+		change1: TaggedChange<TestChange>,
+		change2: TaggedChange<TestChange>,
+	) {
+		assert.deepEqual(change1, change2);
+	}
+
 	/**
 	 * See {@link ChildStateGenerator}
 	 */
@@ -150,9 +159,8 @@ describe("TestChange", () => {
 					},
 					rebaseComposed,
 					createEmpty: () => TestChange.emptyChange,
-					isEmpty: (change) => {
-						return TestChange.isEmpty(change);
-					},
+					isEmpty: TestChange.isEmpty,
+					assertChangesetsEquivalent,
 				},
 				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
 			);

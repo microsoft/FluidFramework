@@ -74,7 +74,10 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 		change2: TaggedChange<TChangeset> | undefined,
 	): void;
 	isEmpty?(change1: TChangeset): boolean;
-	compareWithoutTombstones?(change1: TChangeset, change2: TChangeset): void;
+	assertChangesetsEquivalent?(
+		change1: TaggedChange<TChangeset>,
+		change2: TaggedChange<TChangeset>,
+	): void;
 }
 
 export interface NamedChangeset<TChangeset> {

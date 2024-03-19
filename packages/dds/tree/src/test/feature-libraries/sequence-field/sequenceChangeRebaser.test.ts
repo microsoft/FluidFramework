@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { strict as assert } from "assert";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
@@ -22,7 +22,7 @@ import {
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { deepFreeze, mintRevisionTag } from "../../utils.js";
+import { deepFreeze, defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
@@ -677,17 +677,11 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 	isEmpty: (change: TestChangeset): boolean => {
 		return withoutTombstones(prune(change)).length === 0;
 	},
-	compareWithoutTombstones: (change1, change2) => {
-		if (change1 === undefined && change2 === undefined) {
-			return true;
-		}
-
-		if (change1 === undefined || change2 === undefined) {
-			return false;
-		}
-
-		const pruned1 = prune(change1);
-		const pruned2 = prune(change2);
+	assertChangesetsEquivalent: (change1, change2) => {
+		const metadata = defaultRevisionMetadataFromChanges([change1, change2]);
+		// We are composing the single changesets to inline the revision tags, as some are undefined.
+		const pruned1 = prune(compose([change1], metadata));
+		const pruned2 = prune(compose([change2], metadata));
 		return assertChangesetsEqual(withoutTombstones(pruned1), withoutTombstones(pruned2));
 	},
 };
@@ -717,7 +711,6 @@ export function testStateBasedRebaserAxioms() {
 					groupSubSuites: true,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
-					skipComposeWithEmpty: true,
 				},
 			);
 		});
@@ -744,7 +737,6 @@ export function testStateBasedRebaserAxioms() {
 					groupSubSuites: true,
 					numberOfEditsToVerifyAssociativity: isStress ? 4 : 3,
 					skipRebaseOverCompose: false,
-					skipComposeWithEmpty: true,
 				},
 			);
 		});
