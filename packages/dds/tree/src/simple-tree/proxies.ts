@@ -40,7 +40,7 @@ import {
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
-	type TreeNodeSchema as TreeNodeSchemaClass,
+	type TreeNodeSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
@@ -106,13 +106,13 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 }
 
 /**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
+ * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
  */
 export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
 
-export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
+export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
 	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
+		return schema[simpleSchemaSymbol] as TreeNodeSchema;
 	}
 	return undefined;
 }
@@ -124,7 +124,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	const classSchema = getClassSchema(schema);
+	const classSchema = getSimpleSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
 	if (typeof classSchema === "function") {
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
@@ -686,7 +686,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode,
 			key: string,
-			value: InsertableTypedNode<TreeNodeSchemaClass>,
+			value: InsertableTypedNode<TreeNodeSchema>,
 		): TreeMapNode {
 			const node = getFlexNode(this);
 
@@ -1053,7 +1053,7 @@ function modifyChildren<T extends FlexTreeNode>(
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
 function getNodeKind(node: TreeNode): NodeKind {
 	return (
-		getClassSchema(getFlexNode(node).schema)?.kind ??
+		getSimpleSchema(getFlexNode(node).schema)?.kind ??
 		fail("NodeBase should always have class schema")
 	);
 }
