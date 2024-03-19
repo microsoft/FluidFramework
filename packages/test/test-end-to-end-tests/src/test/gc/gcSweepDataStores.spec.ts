@@ -36,6 +36,8 @@ import {
 	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";

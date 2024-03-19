@@ -15,7 +15,12 @@ import {
 	reinstall,
 	tenantIndex,
 } from "../compatOptions.cjs";
-import { baseVersion, baseVersionForMinCompat, codeVersion, testBaseVersion } from "./baseVersion.js";
+import {
+	baseVersion,
+	baseVersionForMinCompat,
+	codeVersion,
+	testBaseVersion,
+} from "./baseVersion.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
