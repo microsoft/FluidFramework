@@ -31,21 +31,6 @@ export class Client
 	})
 	implements ITreeClient
 {
-	public get clientId() {
-		return this.clientId;
-	}
-
-	public set clientId(value: string) {
-		this.clientId = value;
-	}
-
-	public get color() {
-		return this.color;
-	}
-
-	public set color(value: string) {
-		this.color = value;
-	}
 }
 
 export class Clients extends sf.array("Clients", Client) {}
