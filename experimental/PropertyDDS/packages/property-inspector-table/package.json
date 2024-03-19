@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-inspector-table",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.2.0.1",
 	"description": "Property Inspector Table component",
 	"homepage": "https://fluidframework.com",
 	"repository": {

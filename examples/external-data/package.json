@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.2.0.1",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",
@@ -88,7 +88,7 @@
 		"@types/express": "^4.11.0",
 		"@types/fs-extra": "^9.0.11",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/lodash.isequal": "^4.5.6",
 		"@types/node": "^18.19.0",
 		"@types/node-fetch": "^2.6.11",

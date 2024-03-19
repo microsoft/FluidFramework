@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.2.0.1",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -78,7 +78,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.1",
