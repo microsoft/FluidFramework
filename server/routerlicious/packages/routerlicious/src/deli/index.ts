@@ -133,7 +133,12 @@ export async function deliCreate(
 	}
 	const redisClientConnectionManager: IRedisClientConnectionManager =
 		customizations?.redisClientConnectionManager ??
-		new RedisClientConnectionManager(redisOptions, undefined, false, 50000);
+		new RedisClientConnectionManager(
+			redisOptions,
+			undefined,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+		);
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
