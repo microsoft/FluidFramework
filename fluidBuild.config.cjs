@@ -382,6 +382,7 @@ module.exports = {
 					"@fluidframework",
 					"fluid-framework",
 					"@fluid-internal/client-utils",
+					"@fluid-internal/mocha-test-setup",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
@@ -425,6 +426,7 @@ module.exports = {
 				["renamer", "renamer"],
 				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
+				["tinylicious", "tinylicious"],
 				["attw", "@arethetypeswrong/cli"],
 			],
 		},
