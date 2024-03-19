@@ -16,4 +16,4 @@ export { OpCompressor } from "./opCompressor.js";
 export { OpDecompressor } from "./opDecompressor.js";
 export { OpSplitter, splitOp } from "./opSplitter.js";
 export { RemoteMessageProcessor, unpackRuntimeMessage } from "./remoteMessageProcessor.js";
-export { OpGroupingManager } from "./opGroupingManager.js";
+export { OpGroupingManager, OpGroupingManagerConfig } from "./opGroupingManager.js";
