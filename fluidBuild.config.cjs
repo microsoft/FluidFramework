@@ -421,6 +421,7 @@ module.exports = {
 				["renamer", "renamer"],
 				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
+				["tinylicious", "tinylicious"],
 				["attw", "@arethetypeswrong/cli"],
 			],
 		},
