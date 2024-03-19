@@ -38,11 +38,6 @@ module.exports = (env) =>
 				path: path.resolve(__dirname, "dist"),
 				library: { name: "[name]", type: "umd" },
 			},
-			plugins: [
-				new webpack.ProvidePlugin({
-					process: "process/browser",
-				}),
-			],
 			watchOptions: {
 				ignored: "**/node_modules/**",
 			},

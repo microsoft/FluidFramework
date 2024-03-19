@@ -1911,7 +1911,6 @@ importers:
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': workspace:~
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1944,18 +1943,17 @@ importers:
       '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
       jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
