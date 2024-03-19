@@ -1783,13 +1783,13 @@ export class Container
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(pendingSnapshot.snapshotBlobs);
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,
-			pendingSnapshot.snapshotTree,
+			snapshotTreeWithBlobContents,
 		);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(pendingSnapshot.snapshotTree);
+		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,
