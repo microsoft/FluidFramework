@@ -10,7 +10,6 @@
 		}
 	],
 	"settings": {
-		"search.followSymlinks": false,
-		"typescript.tsdk": "@fluidframework\\tree\\node_modules\\typescript\\lib"
+		"search.followSymlinks": false
 	}
 }
