@@ -4,7 +4,8 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
+export { IContainerExperimental } from "./container.js";
+export { waitContainerToCatchUp } from "./waitContainerToCatchUp.js";
 export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
