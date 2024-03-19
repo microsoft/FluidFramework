@@ -140,7 +140,7 @@ export interface IScribeServerConfiguration {
 	// Enables scrubbing user data from protocol state quorum in local checkpoints
 	scrubUserDataInLocalCheckpoints: boolean;
 
-	// Enables scrubbing user data from protocol state quorum in local checkpoints
+	// Enables scrubbing user data from protocol state quorum in global checkpoints
 	scrubUserDataInGlobalCheckpoints: boolean;
 }
 
