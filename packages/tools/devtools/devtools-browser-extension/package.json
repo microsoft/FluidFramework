@@ -11,15 +11,32 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./e2e-tests/tsconfig.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./e2e-tests/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"clean": "rimraf --glob coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "fluid-build --task format .",
@@ -38,11 +55,13 @@
 		"test:end-to-end": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
-		"test:mocha": "npm run mocha",
+		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.test.*js\" --exit",
+		"test:mocha:esm": "echo \"Skipping ESM tests -- See AB#7470\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:unit": "npm run test:mocha",
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
-		"tsc": "tsc",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack",
 		"webpack:dev": "webpack --env development"
 	},
@@ -51,14 +70,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/tsc/test/**/*.*js",
-			"dist/e2e-tests/**",
-			"dist/bundle/**"
+			"lib/tsc/test/**/*.*js",
+			"lib/e2e-tests/**",
+			"lib/bundle/**"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/tsc/**/*.*js"
+			"lib/tsc/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -84,6 +103,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
 		"@biomejs/biome": "^1.6.1",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
@@ -97,7 +117,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.42.3",
 		"@types/chai": "^4.0.0",
 		"@types/chrome": "0.0.232",
 		"@types/jest": "29.5.3",
@@ -115,6 +134,7 @@
 		"chai": "^4.2.0",
 		"concurrently": "^8.2.1",
 		"copy-webpack-plugin": "^11.0.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"dotenv-webpack": "^7.0.3",
 		"eslint": "~8.55.0",

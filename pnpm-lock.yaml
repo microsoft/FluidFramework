@@ -10479,6 +10479,7 @@ importers:
 
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluentui/react': ^8.109.4
       '@fluid-example/example-utils': workspace:~
@@ -10500,7 +10501,6 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@microsoft/1ds-core-js': ^3.2.13
       '@microsoft/1ds-post-js': ^3.2.13
-      '@microsoft/api-extractor': ^7.42.3
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
@@ -10519,6 +10519,7 @@ importers:
       chai: ^4.2.0
       concurrently: ^8.2.1
       copy-webpack-plugin: ^11.0.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       dotenv-webpack: ^7.0.3
       eslint: ~8.55.0
@@ -10566,6 +10567,7 @@ importers:
       tslib: 1.14.1
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
@@ -10579,7 +10581,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
@@ -10597,6 +10598,7 @@ importers:
       chai: 4.3.10
       concurrently: 8.2.2
       copy-webpack-plugin: 11.0.0_webpack@5.89.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       dotenv-webpack: 7.1.1_webpack@5.89.0
       eslint: 8.55.0

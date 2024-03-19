@@ -13,7 +13,7 @@ import {
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core";
 
-import { browser } from "./Globals";
+import { browser } from "./Globals.js";
 import {
 	type DevToolsInitMessage,
 	type TypedPortConnection,
@@ -21,7 +21,7 @@ import {
 	devToolsInitMessageType,
 	extensionPopupMessageSource,
 	extensionViewMessageSource,
-} from "./messaging";
+} from "./messaging/index.js";
 
 /**
  * {@link BackgroundConnection} input parameters.

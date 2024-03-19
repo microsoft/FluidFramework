@@ -8,11 +8,11 @@ import ReactDOM from "react-dom";
 
 import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 
-import { BackgroundConnection } from "../BackgroundConnection";
-import { browser } from "../Globals";
-import { extensionViewMessageSource } from "../messaging";
-import { formatDevtoolsScriptMessageForLogging } from "./Logging";
-import { OneDSLogger } from "./TelemetryLogging";
+import { BackgroundConnection } from "../BackgroundConnection.js";
+import { browser } from "../Globals.js";
+import { extensionViewMessageSource } from "../messaging/index.js";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
+import { OneDSLogger } from "./TelemetryLogging.js";
 
 /**
  * Renders the Fluid Devtools view into the provided target element.
