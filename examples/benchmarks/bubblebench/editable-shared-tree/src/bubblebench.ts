@@ -11,7 +11,7 @@ import {
 	ISharedTree,
 	SharedTreeFactory,
 	fail,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import { AppState } from "./appState.js";
 import { appSchemaData, rootAppStateSchema } from "./schema.js";
 

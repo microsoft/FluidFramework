@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/presence-tracker",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "Example Data Object that tracks page focus for Audience members using signals.",
 	"homepage": "https://fluidframework.com",
@@ -57,7 +57,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
