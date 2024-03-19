@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type VisualNode, type VisualNodeBase } from "@fluidframework/devtools-core";
-import { type Serializable } from "@fluidframework/datastore-definitions";
+import type { VisualNode, VisualNodeBase } from "@fluidframework/devtools-core";
 
 /**
  * Base interface used in passing key of the child node from Record {@link VisualTree}.
@@ -30,11 +29,4 @@ export interface DataVisualizationTreeProps<TNode extends VisualNodeBase = Visua
 	 * The visual data to be displayed.
 	 */
 	node: TNode;
-}
-
-/**
- * TODO
- */
-export interface CanSupplyEdit {
-	edit<T>(newValue: Serializable<T>);
 }

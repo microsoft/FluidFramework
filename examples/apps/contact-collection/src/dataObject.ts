@@ -4,8 +4,8 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { v4 as uuid } from "uuid";
 
 /**
  * IContact describes the public, read-only API surface for a single contact

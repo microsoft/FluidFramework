@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { Divider } from "@fluentui/react-components";
 import {
 	type ConnectionStateChangeLogEntry,
 	ContainerStateHistory,
 	GetContainerState,
-	handleIncomingMessage,
 	type HasContainerKey,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
-import { useMessageRelay } from "../MessageRelayContext";
-import { ContainerHistoryLog } from "./ContainerHistoryLog";
-import { Waiting } from "./Waiting";
+import React from "react";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { ContainerHistoryLog } from "./ContainerHistoryLog.js";
+import { Waiting } from "./Waiting.js";
 
 /**
  * {@link ContainerHistoryView} input props.

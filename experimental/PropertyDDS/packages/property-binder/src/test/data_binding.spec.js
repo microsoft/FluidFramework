@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 /* globals should, sinon, expect  */
 /* eslint spaced-comment: 0 */
 /* eslint no-unused-expressions: 0 */
@@ -17,42 +18,41 @@
 import _ from "lodash";
 import { DataBinder } from "../data_binder/dataBinder";
 import {
-	onValuesChanged,
-	onPropertyChanged,
-	onPathChanged,
 	DataBinding,
+	onPathChanged,
+	onPropertyChanged,
+	onValuesChanged,
 } from "../data_binder/dataBinding";
 import { unregisterAllOnPathListeners } from "../data_binder/internalUtils";
+import { ModificationContext } from "../data_binder/modificationContext";
+import { RESOLVE_NO_LEAFS } from "../internal/constants";
+import { catchConsoleErrors } from "./catchConsoleError";
+import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 import {
-	registerTestTemplates,
-	ParentTemplate,
-	ChildTemplate,
-	ReferenceParentTemplate,
-	PrimitiveChildrenTemplate,
-	NodeContainerTemplate,
-	ArrayContainerTemplate,
-	MapContainerTemplate,
-	SetContainerTemplate,
-	InheritedChildTemplate,
-	InheritedInheritedChildTemplate,
-	positionTemplate,
-	point2DImplicitTemplate,
-	point2DExplicitTemplate,
-	referenceContainerTemplate,
-} from "./testTemplates";
-import {
-	ParentDataBinding,
 	ChildDataBinding,
-	PrimitiveChildrenDataBinding,
-	InheritedChildDataBinding,
 	DerivedDataBinding,
 	DerivedDerivedDataBinding,
+	InheritedChildDataBinding,
+	ParentDataBinding,
+	PrimitiveChildrenDataBinding,
 } from "./testDataBindings";
-import { catchConsoleErrors } from "./catchConsoleError";
-import { RESOLVE_NO_LEAFS } from "../internal/constants";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
-import { ModificationContext } from "../data_binder/modificationContext";
-import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
+import {
+	ArrayContainerTemplate,
+	ChildTemplate,
+	InheritedChildTemplate,
+	InheritedInheritedChildTemplate,
+	MapContainerTemplate,
+	NodeContainerTemplate,
+	ParentTemplate,
+	PrimitiveChildrenTemplate,
+	ReferenceParentTemplate,
+	SetContainerTemplate,
+	point2DExplicitTemplate,
+	point2DImplicitTemplate,
+	positionTemplate,
+	referenceContainerTemplate,
+	registerTestTemplates,
+} from "./testTemplates";
 
 // Create a mock THREE.Object3D
 class Vector3 {

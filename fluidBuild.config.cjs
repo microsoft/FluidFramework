@@ -207,6 +207,10 @@ module.exports = {
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/test-utils/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				// TODO: AB#7460 fix tsconfig reference path match on Windows
+				"^packages/tools/devtools/devtools-view/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -378,6 +382,7 @@ module.exports = {
 					"@fluidframework",
 					"fluid-framework",
 					"@fluid-internal/client-utils",
+					"@fluid-internal/mocha-test-setup",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
@@ -421,6 +426,7 @@ module.exports = {
 				["renamer", "renamer"],
 				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
+				["tinylicious", "tinylicious"],
 				["attw", "@arethetypeswrong/cli"],
 			],
 		},

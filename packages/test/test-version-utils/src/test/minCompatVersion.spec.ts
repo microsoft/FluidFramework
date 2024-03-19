@@ -5,26 +5,16 @@
 
 import { strict as assert } from "assert";
 import { CompatKind } from "../../compatOptions.cjs";
-import { testBaseVersion } from "../baseVersion.js";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
-import { pkgVersion } from "../packageVersion.js";
-import { getRequestedVersion } from "../versionUtils.js";
-
-function transformVersion(version: string): string {
-	const regex = /(\d+)\.(\d+)\.(\d+)-dev-(\w+)\.(\d+)\.(\d+)\.(\d+)\.\d+/;
-	const matches = version.match(regex);
-
-	if (matches) {
-		const [, major, minor, patch, label, num1, num2, num3] = matches;
-		return `${major}.${minor}.${patch}-${label}.${num1}.${num2}.${num3}`;
-	} else {
-		return version;
-	}
-}
+import { baseVersionForMinCompat } from "../baseVersion.js";
 
 describe("Minimum Compat Version", () => {
-	const minTestVersion = transformVersion(pkgVersion);
 	const numCompatVersions = 9;
+	const oldVersion = "1.3.7";
+	// for cross compat unit testing
+	const greaterVersion = "2.0.0-rc.1.0.0";
+	const lowerVersion = "1.3.7";
+
 	it("bad min compat string", () => {
 		const invalidString = "invalid string";
 		assert.throws(
@@ -45,30 +35,43 @@ describe("Minimum Compat Version", () => {
 		);
 	});
 
+	// Making sure all previous versions get filtered.
 	for (let i = 1; i < numCompatVersions; i++) {
-		it(`compatVersion N-${i} < ${minTestVersion}`, () => {
+		it(`compatVersion N-${i} < ${baseVersionForMinCompat}`, () => {
 			assert.strictEqual(
-				isCompatVersionBelowMinVersion(minTestVersion, {
+				isCompatVersionBelowMinVersion(baseVersionForMinCompat, {
 					name: `test`,
 					kind: CompatKind.None,
 					compatVersion: -i,
 				}),
 				true,
-				`N-${i} version: "${getRequestedVersion(
-					testBaseVersion(-i),
-					-i,
-				)}"  is not lower than min version: ${minTestVersion}`,
+				`N-${i} version is not lower than min version: ${baseVersionForMinCompat}`,
+			);
+		});
+	}
+
+	// Making sure compatConfigs with old min compat don't get filtered.
+	for (let i = 1; i < numCompatVersions; i++) {
+		it(`compatVersion N-${i} > ${oldVersion}`, () => {
+			assert.strictEqual(
+				isCompatVersionBelowMinVersion(oldVersion, {
+					name: `test`,
+					kind: CompatKind.None,
+					compatVersion: -i,
+				}),
+				false,
+				`N-${i} version: is lower than min version: ${oldVersion}`,
 			);
 		});
 	}
 
 	it("cross compat. filters out if loadVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(minTestVersion, {
+			isCompatVersionBelowMinVersion(greaterVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: minTestVersion,
-				loadVersion: "1.3.7",
+				compatVersion: greaterVersion,
+				loadVersion: lowerVersion,
 			}),
 			true,
 		);
@@ -76,11 +79,11 @@ describe("Minimum Compat Version", () => {
 
 	it("cross compat. filters out if compatVersion is lower than minVersion", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion(minTestVersion, {
+			isCompatVersionBelowMinVersion(greaterVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: "1.3.7",
-				loadVersion: minTestVersion,
+				compatVersion: lowerVersion,
+				loadVersion: greaterVersion,
 			}),
 			true,
 		);
@@ -88,24 +91,24 @@ describe("Minimum Compat Version", () => {
 
 	it("cross compat. does not filter out valid versions", () => {
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("1.3.7", {
+			isCompatVersionBelowMinVersion(lowerVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: minTestVersion,
-				loadVersion: "1.3.7",
+				compatVersion: greaterVersion,
+				loadVersion: lowerVersion,
 			}),
 			false,
-			`fails with minVersion: 1.3.7 compatversion: ${minTestVersion} loadVersion: 1.3.7`,
+			`fails with minVersion: ${lowerVersion} compatversion: ${greaterVersion} loadVersion: ${lowerVersion}`,
 		);
 		assert.strictEqual(
-			isCompatVersionBelowMinVersion("1.3.7", {
+			isCompatVersionBelowMinVersion(lowerVersion, {
 				name: "test",
 				kind: CompatKind.CrossVersion,
-				compatVersion: "1.3.7",
-				loadVersion: minTestVersion,
+				compatVersion: lowerVersion,
+				loadVersion: greaterVersion,
 			}),
 			false,
-			`fails with minVersion: 1.3.7 compatversion: 1.3.7 loadVersion: ${minTestVersion}`,
+			`fails with minVersion: ${lowerVersion} compatversion: ${lowerVersion} loadVersion: ${greaterVersion}`,
 		);
 	});
 });

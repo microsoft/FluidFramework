@@ -1,29 +1,19 @@
 {
-  "name": "@types/jest-environment-puppeteer",
-  "version": "2.0.0-rc.2.0.0",
-  "private": true,
-  "description": "TypeScript `globals` definitions fix-up for jest-environment-puppeteer",
-  "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/test/types_jest-environment-puppeteer"
-  },
-  "license": "MIT",
-  "author": "Microsoft and contributors",
-  "main": "",
-  "types": "index.d.ts",
-  "scripts": {
-    "check:biome": "biome check .",
-    "format": "fluid-build --task format .",
-    "format:biome": "biome check --apply .",
-    "lint": "fluid-build . --task lint",
-    "lint:fix": "fluid-build . --task eslint:fix --task format"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.6.1",
-    "@fluidframework/build-tools": "^0.34.0",
-    "jest-environment-puppeteer": "^9.0.2",
-    "prettier": "~3.0.3"
-  }
+	"name": "@types/jest-environment-puppeteer",
+	"version": "2.0.0-rc.3.0.0",
+	"private": true,
+	"description": "TypeScript `globals` definitions fix-up for jest-environment-puppeteer",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "packages/test/types_jest-environment-puppeteer"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "",
+	"types": "index.d.ts",
+	"devDependencies": {
+		"jest-environment-puppeteer": "^9.0.2"
+	}
 }

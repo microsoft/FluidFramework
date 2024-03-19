@@ -5,8 +5,8 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { browser } from "../Globals";
 import { BackgroundConnection } from "../BackgroundConnection";
+import { browser } from "../Globals";
 import { extensionPopupMessageSource } from "../messaging";
 import { PopupView } from "./PopupView";
 

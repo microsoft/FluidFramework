@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 /* globals should, sinon, expect */
 import { DataBinder } from "../data_binder/dataBinder";
 import { DataBinding } from "../data_binder/dataBinding";
 import { catchConsoleErrors } from "./catchConsoleError";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
-import { BaseProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 const NEVER = { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER };
 
 describe("ES6 DataBinding", function () {
