@@ -16,7 +16,7 @@ module.exports = {
 		PATH: `http://localhost:${mappedPort}`,
 	},
 	testMatch: ["**/?(*.)+(spec|test).[t]s"],
-	testPathIgnorePatterns: ["/node_modules/", "dist"],
+	testPathIgnorePatterns: ["/node_modules/"],
 	transform: {
 		"^.+\\.ts?$": "ts-jest",
 	},
