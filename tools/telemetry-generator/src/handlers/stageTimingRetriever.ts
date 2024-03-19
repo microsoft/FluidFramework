@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 /** Interface to make it easier to parse json returned from the timeline REST API */
 interface ParsedJob {
 	stageName: string;

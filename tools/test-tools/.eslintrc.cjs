@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {

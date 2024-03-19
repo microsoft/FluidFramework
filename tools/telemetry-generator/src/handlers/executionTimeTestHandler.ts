@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 module.exports = function handler(fileData, logger) {
 	if (process.env.FLUID_ENDPOINTNAME !== undefined) {
 		console.log("ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);

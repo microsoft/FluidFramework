@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 /**
  * This is a template for how to define a handler file that can be passed to this tool to process
  * arbitrary JSON files.
