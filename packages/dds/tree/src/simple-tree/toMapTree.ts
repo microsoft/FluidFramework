@@ -264,7 +264,6 @@ function objectToMapTree(
 	const keys = Reflect.ownKeys(data).filter((key) => typeof key === "string") as FieldKey[];
 
 	for (const key of keys) {
-		assert(!fields.has(key), 0x84d /* Keys should not be duplicated */);
 		const fieldValue = data[key];
 
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry

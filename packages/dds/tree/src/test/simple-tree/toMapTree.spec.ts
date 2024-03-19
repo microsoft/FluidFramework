@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import {
 	EmptyKey,
@@ -30,13 +30,16 @@ import {
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 
+// Test TODOs:
+// - collisions (2 stableNames, stableName with dev key, etc.)
+
 const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = brand(booleanSchema.identifier);
 const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(handleSchema.identifier);
 const numberSchemaIdentifier: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
 const nullSchemaIdentifier: TreeNodeSchemaIdentifier = brand(nullSchema.identifier);
 const stringSchemaIdentifier: TreeNodeSchemaIdentifier = brand(stringSchema.identifier);
 
-describe("toMapTree", () => {
+describe.only("toMapTree", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 
@@ -85,228 +88,303 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("list (non-empty)", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const childObjectSchema = schemaFactory.object("child-object", {
-			name: schemaFactory.string,
-			age: schemaFactory.number,
-		});
-		const schema = schemaFactory.array("list", [
-			schemaFactory.number,
-			schemaFactory.handle,
-			childObjectSchema,
-		]);
+	describe("list", () => {
+		it("Non-empty list", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const childObjectSchema = schemaFactory.object("child-object", {
+				name: schemaFactory.string,
+				age: schemaFactory.number,
+			});
+			const schema = schemaFactory.array("list", [
+				schemaFactory.number,
+				schemaFactory.handle,
+				childObjectSchema,
+			]);
 
-		const handle = new MockHandle<boolean>(true);
-		const tree = [42, handle, { age: 37, name: "Jack" }];
+			const handle = new MockHandle<boolean>(true);
+			const tree = [42, handle, { age: 37, name: "Jack" }];
 
-		const actual = nodeDataToMapTree(tree, [schema]);
+			const actual = nodeDataToMapTree(tree, [schema]);
 
-		const expected: MapTree = {
-			type: brand("test.list"),
-			fields: new Map<FieldKey, MapTree[]>([
-				[
-					EmptyKey,
+			const expected: MapTree = {
+				type: brand("test.list"),
+				fields: new Map<FieldKey, MapTree[]>([
 					[
-						{
-							type: numberSchemaIdentifier,
-							value: 42,
-							fields: new Map(),
-						},
-						{
-							type: handleSchemaIdentifier,
-							value: handle,
-							fields: new Map(),
-						},
-						{
-							type: brand(childObjectSchema.identifier),
-							fields: new Map<FieldKey, MapTree[]>([
-								[
-									brand("name"),
+						EmptyKey,
+						[
+							{
+								type: numberSchemaIdentifier,
+								value: 42,
+								fields: new Map(),
+							},
+							{
+								type: handleSchemaIdentifier,
+								value: handle,
+								fields: new Map(),
+							},
+							{
+								type: brand(childObjectSchema.identifier),
+								fields: new Map<FieldKey, MapTree[]>([
 									[
-										{
-											type: stringSchemaIdentifier,
-											value: "Jack",
-											fields: new Map(),
-										},
+										brand("name"),
+										[
+											{
+												type: stringSchemaIdentifier,
+												value: "Jack",
+												fields: new Map(),
+											},
+										],
 									],
-								],
-								[
-									brand("age"),
 									[
-										{
-											type: numberSchemaIdentifier,
-											value: 37,
-											fields: new Map(),
-										},
+										brand("age"),
+										[
+											{
+												type: numberSchemaIdentifier,
+												value: 37,
+												fields: new Map(),
+											},
+										],
 									],
-								],
-							]),
-						},
+								]),
+							},
+						],
 					],
-				],
-			]),
-		};
+				]),
+			};
 
-		assert.deepEqual(actual, expected);
-	});
-
-	it("list (empty)", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const schema = schemaFactory.array("list", schemaFactory.number);
-
-		const tree: number[] = [];
-
-		const actual = nodeDataToMapTree(tree, [schema]);
-
-		const expected: MapTree = {
-			type: brand("test.list"),
-			fields: new Map<FieldKey, MapTree[]>(),
-		};
-
-		assert.deepEqual(actual, expected);
-	});
-
-	it("map (non-empty)", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const childObjectSchema = schemaFactory.object("child-object", {
-			name: schemaFactory.string,
-			age: schemaFactory.number,
+			assert.deepEqual(actual, expected);
 		});
-		const schema = schemaFactory.map("map", [
-			childObjectSchema,
-			schemaFactory.number,
-			schemaFactory.string,
-			schemaFactory.null,
-		]);
 
-		const entries: [string, InsertableContent][] = [
-			["a", 42],
-			["b", "Hello world"],
-			["c", null],
-			["d", undefined as unknown as InsertableContent], // Should be skipped in output
-			["e", { age: 37, name: "Jill" }],
-		];
-		const tree = new Map<string, InsertableContent>(entries);
+		it("Empty list", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.array("list", schemaFactory.number);
 
-		const actual = nodeDataToMapTree(tree, [schema]);
+			const tree: number[] = [];
 
-		const expected: MapTree = {
-			type: brand("test.map"),
-			fields: new Map<FieldKey, MapTree[]>([
-				[brand("a"), [{ type: numberSchemaIdentifier, value: 42, fields: new Map() }]],
-				[
-					brand("b"),
-					[{ type: stringSchemaIdentifier, value: "Hello world", fields: new Map() }],
-				],
-				[
-					brand("c"),
-					[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
-				],
-				[
-					brand("e"),
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.list"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+	});
+
+	describe("map", () => {
+		it("Non-empty map", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const childObjectSchema = schemaFactory.object("child-object", {
+				name: schemaFactory.string,
+				age: schemaFactory.number,
+			});
+			const schema = schemaFactory.map("map", [
+				childObjectSchema,
+				schemaFactory.number,
+				schemaFactory.string,
+				schemaFactory.null,
+			]);
+
+			const entries: [string, InsertableContent][] = [
+				["a", 42],
+				["b", "Hello world"],
+				["c", null],
+				["d", undefined as unknown as InsertableContent], // Should be skipped in output
+				["e", { age: 37, name: "Jill" }],
+			];
+			const tree = new Map<string, InsertableContent>(entries);
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.map"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[brand("a"), [{ type: numberSchemaIdentifier, value: 42, fields: new Map() }]],
 					[
-						{
-							type: brand(childObjectSchema.identifier),
-							fields: new Map([
-								[
-									brand("name"),
-									[
-										{
-											type: stringSchemaIdentifier,
-											value: "Jill",
-											fields: new Map(),
-										},
-									],
-								],
-								[
-									brand("age"),
-									[
-										{
-											type: numberSchemaIdentifier,
-											value: 37,
-											fields: new Map(),
-										},
-									],
-								],
-							]),
-						},
+						brand("b"),
+						[{ type: stringSchemaIdentifier, value: "Hello world", fields: new Map() }],
 					],
-				],
-			]),
-		};
+					[
+						brand("c"),
+						[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
+					],
+					[
+						brand("e"),
+						[
+							{
+								type: brand(childObjectSchema.identifier),
+								fields: new Map([
+									[
+										brand("name"),
+										[
+											{
+												type: stringSchemaIdentifier,
+												value: "Jill",
+												fields: new Map(),
+											},
+										],
+									],
+									[
+										brand("age"),
+										[
+											{
+												type: numberSchemaIdentifier,
+												value: 37,
+												fields: new Map(),
+											},
+										],
+									],
+								]),
+							},
+						],
+					],
+				]),
+			};
 
-		assert.deepEqual(actual, expected);
-	});
-
-	it("map (empty)", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const schema = schemaFactory.map("map", [schemaFactory.number]);
-
-		const tree = new Map<string, number>();
-
-		const actual = nodeDataToMapTree(tree, [schema]);
-
-		const expected: MapTree = {
-			type: brand("test.map"),
-			fields: new Map<FieldKey, MapTree[]>(),
-		};
-
-		assert.deepEqual(actual, expected);
-	});
-
-	it("object (non-empty)", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const schema = schemaFactory.object("object", {
-			a: schemaFactory.string,
-			b: schemaFactory.optional(schemaFactory.number, { stableName: "stable-b" }), // Stable name should be used in output.
-			c: schemaFactory.boolean,
-			d: schemaFactory.optional(schemaFactory.number),
+			assert.deepEqual(actual, expected);
 		});
 
-		const tree = {
-			a: "Hello world",
-			b: 42,
-			c: false,
-			d: undefined, // Should be skipped in output
-		};
+		it("Empty map", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.map("map", [schemaFactory.number]);
 
-		const actual = nodeDataToMapTree(tree, [schema]);
+			const tree = new Map<string, number>();
 
-		const expected: MapTree = {
-			type: brand("test.object"),
-			fields: new Map<FieldKey, MapTree[]>([
-				[
-					brand("a"),
-					[{ type: stringSchemaIdentifier, value: "Hello world", fields: new Map() }],
-				],
-				[
-					brand("stable-b"),
-					[{ type: numberSchemaIdentifier, value: 42, fields: new Map() }],
-				],
-				[brand("c"), [{ type: booleanSchemaIdentifier, value: false, fields: new Map() }]],
-			]),
-		};
+			const actual = nodeDataToMapTree(tree, [schema]);
 
-		assert.deepEqual(actual, expected);
+			const expected: MapTree = {
+				type: brand("test.map"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
 	});
 
-	it("object (empty)", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const schema = schemaFactory.object("object", {
-			a: schemaFactory.optional(schemaFactory.number),
+	describe("object", () => {
+		it("Non-empty object", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.string,
+				b: schemaFactory.optional(schemaFactory.number, { stableName: "stable-b" }), // Stable name should be used in output.
+				c: schemaFactory.boolean,
+				d: schemaFactory.optional(schemaFactory.number),
+			});
+
+			const tree = {
+				a: "Hello world",
+				b: 42,
+				c: false,
+				d: undefined, // Should be skipped in output
+			};
+
+			const actual = nodeDataToMapTree(tree, [schema]);
+
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("a"),
+						[{ type: stringSchemaIdentifier, value: "Hello world", fields: new Map() }],
+					],
+					[
+						brand("stable-b"),
+						[{ type: numberSchemaIdentifier, value: 42, fields: new Map() }],
+					],
+					[
+						brand("c"),
+						[{ type: booleanSchemaIdentifier, value: false, fields: new Map() }],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
 		});
 
-		const tree = {};
+		it("Empty object", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const schema = schemaFactory.object("object", {
+				a: schemaFactory.optional(schemaFactory.number),
+			});
 
-		const actual = nodeDataToMapTree(tree, [schema]);
+			const tree = {};
 
-		const expected: MapTree = {
-			type: brand("test.object"),
-			fields: new Map<FieldKey, MapTree[]>(),
-		};
+			const actual = nodeDataToMapTree(tree, [schema]);
 
-		assert.deepEqual(actual, expected);
+			const expected: MapTree = {
+				type: brand("test.object"),
+				fields: new Map<FieldKey, MapTree[]>(),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Fields contain `stableName`s", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class Point extends schemaFactory.object("point", {
+				x: schemaFactory.required(schemaFactory.number, { stableName: "stable-x" }),
+				y: schemaFactory.required(schemaFactory.number, { stableName: "stable-y" }),
+			}) {}
+
+			const point = { x: 1, y: 2 };
+
+			const actual = nodeDataToMapTree(point, [Point]);
+
+			const expected: MapTree = {
+				type: brand("test.point"),
+				fields: new Map<FieldKey, MapTree[]>([
+					[
+						brand("stable-x"),
+						[{ type: numberSchemaIdentifier, value: 1, fields: new Map() }],
+					],
+					[
+						brand("stable-y"),
+						[{ type: numberSchemaIdentifier, value: 2, fields: new Map() }],
+					],
+				]),
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("Fields contain duplicate `stableName`s", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class Point extends schemaFactory.object("point", {
+				x: schemaFactory.required(schemaFactory.number, { stableName: "stable-key" }),
+				y: schemaFactory.required(schemaFactory.number, { stableName: "stable-key" }),
+			}) {}
+
+			const point = { x: 1, y: 2 };
+
+			assert.throws(
+				() => nodeDataToMapTree(point, [Point]),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						/collides with another "key" or "stableName" in schema/,
+					),
+			);
+		});
+
+		it("Fields contain duplicate `stableName` that conflicts with dev key", () => {
+			const schemaFactory = new SchemaFactory("test");
+			class ObjectSchema extends schemaFactory.object("object", {
+				foo: schemaFactory.required(schemaFactory.number, { stableName: "bar" }),
+				bar: schemaFactory.optional(schemaFactory.string),
+			}) {}
+
+			const schema = { foo: 42, bar: "Hello world!" };
+
+			assert.throws(
+				() => nodeDataToMapTree(schema, [ObjectSchema]),
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						/collides with another "key" or "stableName" in schema/,
+					),
+			);
+		});
 	});
 
 	it("complex", () => {
