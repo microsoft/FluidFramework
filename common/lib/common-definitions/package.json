@@ -92,7 +92,7 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir ."
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
