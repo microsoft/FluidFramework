@@ -1,5 +1,9 @@
 # @fluidframework/tool-utils
 
+## 2.0.0-rc.2.0.0
+
+Dependency updates only.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

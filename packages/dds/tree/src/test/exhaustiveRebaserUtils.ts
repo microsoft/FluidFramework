@@ -44,7 +44,7 @@ export function getSequentialStates<TContent, TChangeset>(
  * - revision metadata source
  */
 export interface BoundFieldChangeRebaser<TChangeset> {
-	invert(change: TaggedChange<TChangeset>): TChangeset;
+	invert(change: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
 	rebase(
 		change: TChangeset,
 		base: TaggedChange<TChangeset>,

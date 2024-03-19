@@ -7,7 +7,7 @@
 @fluidframework/devtools
 @fluidframework/test-utils
 @fluidframework/test-driver-definitions
-@fluidframework/mocha-test-setup
+@fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
@@ -65,7 +65,6 @@ fluid-framework
 @fluidframework/core-interfaces
 @fluidframework/container-definitions
 @fluid-internal/client-utils
-@fluid-experimental/react-inputs
 @fluid-experimental/last-edited
 @fluid-experimental/data-objects
 @fluid-experimental/tree

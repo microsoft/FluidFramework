@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import sinon from "sinon";
-import { Deferred } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -15,27 +15,27 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { DefaultSummaryConfiguration } from "../../containerRuntime";
+import sinon from "sinon";
+import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,
 	IConnectedState,
-	ISummaryManagerConfig,
-	SummaryManager,
-	SummaryManagerState,
-	Summarizer,
 	ISummarizer,
-	ISummarizerEvents,
-	SummarizerStopReason,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
+	ISummarizerEvents,
+	ISummarizerRuntime,
+	ISummaryManagerConfig,
+	ISummaryOpMessage,
 	RunningSummarizer,
 	SummarizeHeuristicData,
+	Summarizer,
+	SummarizerStopReason,
 	SummaryCollection,
-	ISummaryOpMessage,
+	SummaryManager,
+	SummaryManagerState,
 	neverCancelledSummaryToken,
-	ISummarizerRuntime,
-} from "../../summary";
+} from "../../summary/index.js";
 
 class MockRuntime {
 	constructor(

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 
 const stashedOpMetadataMark = Symbol();
 
@@ -65,6 +65,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,
 		) => void,
+		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 
 	public attach(handler: IDeltaHandler) {
@@ -116,17 +117,8 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	public applyStashedOp(content: any): unknown {
 		try {
-			this.stashedOpMd = createStashedOpMetadata();
-			const md = this.handler.applyStashedOp(content);
-			if (md !== undefined) {
-				// temporary assert while we migrate dds to the new pattern
-				// after migration we will always return stashedOpMd
-				assert(
-					(this.stashedOpMd?.length ?? 0) === 0,
-					"stashedOpMd should be empty if metadata returned. this means ops were submitted and local op metadata was returned. this will cause a corruption",
-				);
-				return md;
-			}
+			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
+			this.handler.applyStashedOp(content);
 			return this.stashedOpMd;
 		} finally {
 			this.stashedOpMd = undefined;

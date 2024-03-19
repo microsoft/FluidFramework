@@ -7,6 +7,7 @@
 import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
+import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
@@ -16,6 +17,18 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+
+// @internal @sealed
+export class CellFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    get attributes(): IChannelAttributes;
+    create(document: IFluidDataStoreRuntime, id: string): ISharedCell;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedCell>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/cell";
+    get type(): string;
+}
 
 // @internal
 export interface ICellAttributionOptions {
@@ -48,7 +61,6 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 // @internal
 export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> implements ISharedCell<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
     protected applyStashedOp(content: unknown): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCell;
     delete(): void;
@@ -58,7 +70,6 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>> impl
     getAttribution(): AttributionKey | undefined;
     static getFactory(): IChannelFactory;
     protected initializeLocalCore(): void;
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     protected onDisconnect(): void;
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;

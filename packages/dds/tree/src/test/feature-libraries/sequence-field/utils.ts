@@ -5,7 +5,6 @@
 
 import { strict } from "assert";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -17,24 +16,26 @@ import {
 	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
-import {
-	assertFieldChangesEqual,
-	deepFreeze,
-	defaultRevInfosFromChanges,
-	defaultRevisionMetadataFromChanges,
-} from "../../utils.js";
-import {
-	brand,
-	fail,
-	fakeIdAllocator,
-	getOrAddEmptyToMap,
-	IdAllocator,
-	idAllocatorFromMaxId,
-	Mutable,
-} from "../../../util/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	CellOrderingMethod,
+	SequenceConfig,
+	sequenceConfig,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/config.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+import {
+	CellId,
+	Changeset,
+	HasMarkFields,
+	MarkListFactory,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
@@ -49,22 +50,21 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	CellOrderingMethod,
-	SequenceConfig,
-	sequenceConfig,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/config.js";
+	IdAllocator,
+	Mutable,
+	brand,
+	fail,
+	fakeIdAllocator,
+	getOrAddEmptyToMap,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import {
-	CellId,
-	Changeset,
-	HasMarkFields,
-	MarkListFactory,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+	assertFieldChangesEqual,
+	deepFreeze,
+	defaultRevInfosFromChanges,
+	defaultRevisionMetadataFromChanges,
+} from "../../utils.js";
 import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
@@ -334,6 +334,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		cleanChange,
 		TestChange.invert,
+		true,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
@@ -347,6 +348,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.invert(
 			cleanChange,
 			TestChange.invert,
+			true,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,

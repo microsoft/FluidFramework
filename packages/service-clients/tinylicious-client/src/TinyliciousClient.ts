@@ -2,37 +2,38 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import {
+	AttachState,
+	type IContainer,
+	type IFluidModuleWithDetails,
+	type IHostLoader,
+} from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import {
-	AttachState,
-	type IHostLoader,
-	type IContainer,
-	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import {
-	createTinyliciousCreateNewRequest,
-	InsecureTinyliciousTokenProvider,
-	InsecureTinyliciousUrlResolver,
-} from "@fluidframework/tinylicious-driver";
-import {
 	type ContainerSchema,
-	createDOProviderContainerRuntimeFactory,
-	createFluidContainer,
 	type IFluidContainer,
 	type IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
-import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces";
-import { createTinyliciousAudienceMember } from "./TinyliciousAudience";
+import {
+	InsecureTinyliciousTokenProvider,
+	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
+} from "@fluidframework/tinylicious-driver";
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
+import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

@@ -3,55 +3,55 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	IThrottlingWarning,
-	IEventProvider,
-	ITelemetryProperties,
-	ITelemetryErrorEvent,
-	type ITelemetryBaseEvent,
-} from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	IEventProvider,
+	type ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
+	IThrottlingWarning,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	normalizeError,
-	safeRaiseEvent,
-	isFluidError,
-	ITelemetryLoggerExt,
-	DataCorruptionError,
-	UsageError,
-	type ITelemetryGenericEventExt,
-} from "@fluidframework/telemetry-utils";
-import {
+	DriverErrorTypes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
+import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
+	ConnectionMode,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	MessageType,
-	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
-import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	UsageError,
+	extractSafePropertiesFromMessage,
+	isFluidError,
+	normalizeError,
+	safeRaiseEvent,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-} from "./contracts";
-import { DeltaQueue } from "./deltaQueue";
-import { ThrottlingWarning } from "./error";
+} from "./contracts.js";
+import { DeltaQueue } from "./deltaQueue.js";
+import { ThrottlingWarning } from "./error.js";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -361,7 +361,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		assert(this.messageBuffer.length === 0, 0x3cc /* reentrancy */);
 	}
 
-	public get connectionProps(): ITelemetryProperties {
+	public get connectionProps(): ITelemetryBaseProperties {
 		return {
 			sequenceNumber: this.lastSequenceNumber,
 			opsSize: this.opsSize > 0 ? this.opsSize : undefined,
@@ -376,7 +376,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * we stop processing ops that results in no processing join op and thus moving to connected state)
 	 * @param event - Event to log.
 	 */
-	public logConnectionIssue(event: ITelemetryErrorEvent) {
+	public logConnectionIssue(event: ITelemetryErrorEventExt) {
 		assert(this.connectionManager.connected, 0x238 /* "called only in connected state" */);
 
 		const pendingSorted = this.pending.sort((a, b) => a.sequenceNumber - b.sequenceNumber);

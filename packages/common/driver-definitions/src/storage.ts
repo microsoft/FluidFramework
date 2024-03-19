@@ -5,10 +5,10 @@
 
 import type {
 	IDisposable,
-	IEventProvider,
 	IErrorEvent,
-	ITelemetryBaseLogger,
 	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
 	ConnectionMode,
@@ -26,8 +26,8 @@ import type {
 	ITokenClaims,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import type { IAnyDriverError } from "./driverError";
-import type { IResolvedUrl } from "./urlResolver";
+import type { IAnyDriverError } from "./driverError.js";
+import type { IResolvedUrl } from "./urlResolver.js";
 
 /**
  * @internal

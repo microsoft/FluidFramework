@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as fs from "fs";
 import * as path from "path";
 import * as semver from "semver";
@@ -166,8 +167,7 @@ export async function symlinkPackage(
 		if (depBuildPackage) {
 			const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
 			const satisfied =
-				version.startsWith("workspace:") ||
-				semver.satisfies(depBuildPackage.version, version);
+				version.startsWith("workspace:") || semver.satisfies(depBuildPackage.version, version);
 			traceSymLink(
 				`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${
 					depBuildPackage.version

@@ -14,7 +14,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	const requiredModules = [
 		// General mocha setup e.g. suppresses console.log,
 		// This has to be before others (except logger) so that registerMochaTestWrapperFuncs is available
-		"@fluidframework/mocha-test-setup",
+		"@fluid-internal/mocha-test-setup",
 		"source-map-support/register",
 		...(additionalRequiredModules ? additionalRequiredModules : []),
 	];

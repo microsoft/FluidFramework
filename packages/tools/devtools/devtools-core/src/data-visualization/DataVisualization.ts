@@ -16,18 +16,18 @@ import {
 } from "@fluidframework/core-interfaces";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 
-import { type FluidObjectId } from "../CommonInterfaces";
-import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
+import { type FluidObjectId } from "../CommonInterfaces.js";
+import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing.js";
+import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {
-	createHandleNode,
 	type FluidObjectNode,
-	VisualNodeKind,
-	type VisualChildNode,
 	type Primitive,
 	type RootHandleNode,
+	type VisualChildNode,
+	VisualNodeKind,
+	createHandleNode,
 	unknownObjectNode,
-} from "./VisualTree";
-import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing";
+} from "./VisualTree.js";
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?

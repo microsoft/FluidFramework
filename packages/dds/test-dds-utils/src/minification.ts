@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SaveInfo, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
+import type { SaveInfo } from "@fluid-private/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import type {
 	BaseOperation,
 	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
-	ReducerPreconditionError,
-	replayTest,
-} from "./ddsFuzzHarness";
+} from "./ddsFuzzHarness.js";
+import { ReducerPreconditionError, replayTest } from "./ddsFuzzHarness.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more

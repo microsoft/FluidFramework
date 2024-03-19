@@ -10,10 +10,10 @@ import {
 	type InboundSequencedContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
-} from "../messageTypes";
-import { OpDecompressor } from "./opDecompressor";
-import { OpGroupingManager } from "./opGroupingManager";
-import { OpSplitter } from "./opSplitter";
+} from "../messageTypes.js";
+import { OpDecompressor } from "./opDecompressor.js";
+import { OpGroupingManager } from "./opGroupingManager.js";
+import { OpSplitter } from "./opSplitter.js";
 
 /**
  * Stateful class for processing incoming remote messages as the virtualization measures are unwrapped,
@@ -66,9 +66,13 @@ export class RemoteMessageProcessor {
 					this.opSplitter.processRemoteMessage(ungroupedMessage2);
 				ungroupedMessage2 = chunkProcessingResult.message;
 
+				// if the splitter is still rebuilding the original message, there is no need to continue processing
+				if (chunkProcessingResult.state === "Accepted") {
+					continue;
+				}
+
+				// If the message is not chunked there is no need to continue processing
 				if (chunkProcessingResult.state !== "Processed") {
-					// If the message is not chunked or if the splitter is still rebuilding the original message,
-					// there is no need to continue processing
 					result.push(
 						ungroupedMessage2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
 					);

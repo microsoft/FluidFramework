@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
@@ -16,7 +17,12 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
+import {
+	baseVersion,
+	baseVersionForMinCompat,
+	codeVersion,
+	testBaseVersion,
+} from "./baseVersion.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
 /**
@@ -252,7 +258,7 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 				? (config.loadVersion as string)
 				: config.compatVersion;
 	}
-	const compatVersion = getRequestedVersion(testBaseVersion(lowerVersion), lowerVersion);
+	const compatVersion = getRequestedVersion(baseVersionForMinCompat, lowerVersion);
 	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }

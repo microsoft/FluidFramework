@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -45,7 +45,7 @@
 		"test:realsvc:r11s:docker": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker --timeout=20s",
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
-		"test:realsvc:run": "mocha dist/test --config src/test/.mocharc.cjs --exclude \"dist/test/benchmark/**/*\" --verbose",
+		"test:realsvc:run": "mocha lib/test --config src/test/.mocharc.cjs --exclude \"lib/test/benchmark/**/*\" --verbose",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
@@ -57,12 +57,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -77,6 +77,8 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
@@ -99,11 +101,10 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -116,26 +117,26 @@
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@fluidframework/undo-redo": "workspace:~",
-		"cross-env": "^7.0.3",
+		"@types/sinon": "^17.0.3",
 		"mocha": "^10.2.0",
 		"semver": "^7.5.3",
-		"sinon": "^7.4.2",
+		"sinon": "^17.0.1",
 		"start-server-and-test": "^1.11.7",
-		"tinylicious": "^3.1.0-237980",
-		"url": "^0.11.0",
+		"tinylicious": "^4.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^3.5.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
-		"eslint": "~8.50.0",
+		"cross-env": "^7.0.3",
+		"eslint": "~8.55.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",

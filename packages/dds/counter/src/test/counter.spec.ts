@@ -4,17 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { type IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { type ISharedCounter, SharedCounter } from "../index";
-import { CounterFactory } from "../counterFactory";
+import { CounterFactory } from "../counterFactory.js";
+import { type ISharedCounter, SharedCounter } from "../index.js";
 
 class TestSharedCounter extends SharedCounter {
 	public testApplyStashedOp(content: unknown): void {
@@ -127,7 +128,7 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 
 			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
@@ -213,7 +214,7 @@ describe("SharedCounter", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 
 			// Connect the first SharedCounter.
-			dataStoreRuntime.local = false;
+			dataStoreRuntime.setAttachState(AttachState.Attached);
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services1 = {
 				deltaConnection: dataStoreRuntime.createDeltaConnection(),

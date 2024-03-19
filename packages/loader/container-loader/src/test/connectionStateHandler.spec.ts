@@ -5,26 +5,26 @@
 
 import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
+	ConnectionMode,
 	IClient,
 	IClientConfiguration,
-	ConnectionMode,
-	ITokenClaims,
 	ISequencedClient,
+	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { TelemetryEventCategory, createChildLogger } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/core-interfaces";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { Audience } from "../audience";
-import { ConnectionState } from "../connectionState";
+import { Audience } from "../audience.js";
+import { ConnectionState } from "../connectionState.js";
 import {
-	IConnectionStateHandlerInputs,
 	IConnectionStateHandler,
+	IConnectionStateHandlerInputs,
 	createConnectionStateHandlerCore,
-} from "../connectionStateHandler";
-import { IConnectionDetailsInternal } from "../contracts";
-import { ProtocolHandler } from "../protocol";
+} from "../connectionStateHandler.js";
+import { IConnectionDetailsInternal } from "../contracts.js";
+import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp
 	extends TypedEventEmitter<IDeltaManagerEvents>
@@ -147,7 +147,7 @@ describe("ConnectionStateHandler Tests", () => {
 			logConnectionIssue: (
 				eventName: string,
 				category: TelemetryEventCategory,
-				details?: ITelemetryProperties,
+				details?: ITelemetryBaseProperties,
 			) => {
 				throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`);
 			},

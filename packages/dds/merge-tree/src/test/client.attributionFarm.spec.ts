@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy";
+import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy.js";
 import {
-	IMergeTreeOperationRunnerConfig,
-	removeRange,
-	runMergeTreeOperationRunner,
-	generateClientNames,
 	IConfigRange,
+	IMergeTreeOperationRunnerConfig,
 	TestOperation,
-	resolveRanges,
+	generateClientNames,
 	insert,
-} from "./mergeTreeOperationRunner";
-import { TestClient } from "./testClient";
-import { TestClientLogger } from "./testClientLogger";
+	removeRange,
+	resolveRanges,
+	runMergeTreeOperationRunner,
+} from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
 	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId });

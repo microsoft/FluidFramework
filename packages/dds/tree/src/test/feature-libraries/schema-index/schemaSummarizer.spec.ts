@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { storedEmptyFieldSchema } from "../../../core/index.js";
+import { intoStoredSchema } from "../../../feature-libraries/index.js";
 import {
 	encodeTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
-import { storedEmptyFieldSchema } from "../../../core/index.js";
-import { jsonSequenceRootSchema } from "../../utils.js";
-import { intoStoredSchema } from "../../../feature-libraries/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { jsonSequenceRootSchema } from "../../utils.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {

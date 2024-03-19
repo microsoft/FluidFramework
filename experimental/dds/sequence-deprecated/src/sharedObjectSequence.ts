@@ -4,12 +4,12 @@
  */
 
 import {
-	IFluidDataStoreRuntime,
 	IChannelAttributes,
+	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedObjectSequenceFactory } from "./sequenceFactory";
-import { SharedSequence } from "./sharedSequence";
+import { SharedObjectSequenceFactory } from "./sequenceFactory.js";
+import { SharedSequence } from "./sharedSequence.js";
 
 /**
  * The SharedObjectSequence holds a sequence of serializable objects. Each object will be stored

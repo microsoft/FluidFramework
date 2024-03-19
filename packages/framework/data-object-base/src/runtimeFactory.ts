@@ -13,8 +13,8 @@ import {
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler";
 import {
-	type NamedFluidDataStoreRegistryEntries,
 	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 

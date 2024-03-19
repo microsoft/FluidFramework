@@ -3,19 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
-import {
-	ChangesetLocalId,
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-} from "../../core/index.js";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
+import { TAnySchema } from "@sinclair/typebox";
 import {
 	ICodecOptions,
 	IJsonCodec,
@@ -23,18 +12,24 @@ import {
 	SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
+	ChangeAtomIdMap,
+	ChangeEncodingContext,
+	ChangesetLocalId,
+	EncodedRevisionTag,
+	FieldKey,
+	FieldKindIdentifier,
+	ITreeCursorSynchronous,
+	RevisionInfo,
+	RevisionTag,
+} from "../../core/index.js";
+import { JsonCompatibleReadOnly, Mutable, brand, fail } from "../../util/index.js";
+import {
 	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import {
-	FieldChangeMap,
-	FieldChangeset,
-	ModularChangeset,
-	NodeChangeset,
-} from "./modularChangeTypes.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
@@ -46,6 +41,12 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
+import {
+	FieldChangeMap,
+	FieldChangeset,
+	ModularChangeset,
+	NodeChangeset,
+} from "./modularChangeTypes.js";
 
 export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
@@ -201,16 +202,16 @@ export function makeV0Codec(
 		return decodedChange;
 	}
 
-	function encodeBuilds(
-		builds: ModularChangeset["builds"],
+	function encodeDetachedNodes(
+		detachedNodes: ChangeAtomIdMap<TreeChunk> | undefined,
 		context: ChangeEncodingContext,
 	): EncodedBuilds | undefined {
-		if (builds === undefined) {
+		if (detachedNodes === undefined) {
 			return undefined;
 		}
 
 		const treesToEncode: ITreeCursorSynchronous[] = [];
-		const buildsArray: EncodedBuildsArray = Array.from(builds.entries()).map(
+		const buildsArray: EncodedBuildsArray = Array.from(detachedNodes.entries()).map(
 			([r, commitBuilds]) => {
 				const commitBuildsEncoded: [ChangesetLocalId, number][] = Array.from(
 					commitBuilds.entries(),
@@ -238,10 +239,10 @@ export function makeV0Codec(
 			  };
 	}
 
-	function decodeBuilds(
+	function decodeDetachedNodes(
 		encoded: EncodedBuilds | undefined,
 		context: ChangeEncodingContext,
-	): ModularChangeset["builds"] {
+	): ChangeAtomIdMap<TreeChunk> | undefined {
 		if (encoded === undefined || encoded.builds.length === 0) {
 			return undefined;
 		}
@@ -317,7 +318,8 @@ export function makeV0Codec(
 						? change.revisions
 						: encodeRevisionInfos(change.revisions, context),
 				changes: encodeFieldChangesForJson(change.fieldChanges, context),
-				builds: encodeBuilds(change.builds, context),
+				builds: encodeDetachedNodes(change.builds, context),
+				refreshers: encodeDetachedNodes(change.refreshers, context),
 			};
 		},
 		decode: (change, context) => {
@@ -326,7 +328,10 @@ export function makeV0Codec(
 				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
 			};
 			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeBuilds(encodedChange.builds, context);
+				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
+			}
+			if (encodedChange.refreshers !== undefined) {
+				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
 			}
 			if (encodedChange.revisions !== undefined) {
 				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);

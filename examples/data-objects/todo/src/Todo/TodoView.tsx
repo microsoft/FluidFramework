@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
+import { CollaborativeInput } from "@fluid-example/example-utils";
 import { SharedString } from "@fluidframework/sequence";
 import React, { useEffect, useRef, useState } from "react";
 import { TodoItem, TodoItemView } from "../TodoItem/index.js";
