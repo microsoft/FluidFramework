@@ -10,7 +10,7 @@
  */
 
 import base64js from "base64-js";
-import { generateRandomUInt32Array } from "../platform-dependent";
+import { v4 as uuid } from "uuid";
 const UINT_32HASH_PRIME = 16777619;
 
 /**
@@ -49,7 +49,9 @@ const guidRNG = {
 			this.isInitialized = true;
 
 			if (in_seed === undefined) {
-				const randomValues = generateRandomUInt32Array(4);
+				const randomValues = uuid()
+					.split("-")
+					.map((x) => +x);
 				this.u = randomValues[0];
 				this.v = randomValues[1];
 				this.w1 = randomValues[2];
