@@ -4414,6 +4414,7 @@ importers:
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
+      '@types/events_pkg': /@types/events/3.0.3
       ajv: 8.12.0
       async: 3.2.5
       base64-js: 1.5.1
@@ -4434,7 +4435,6 @@ importers:
       '@microsoft/api-extractor': 7.43.0_@types+node@18.19.26
       '@types/chai': 4.3.13
       '@types/debug': 4.1.12
-      '@types/events_pkg': /@types/events/3.0.3
       '@types/lodash': 4.17.0
       '@types/mocha': 9.1.1
       '@types/node': 18.19.26
