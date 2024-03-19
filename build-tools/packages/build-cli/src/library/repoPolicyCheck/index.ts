@@ -12,12 +12,13 @@ import { handlers as lockfileHandlers } from "./lockfiles";
 import { handler as noJsFileHandler } from "./noJsFiles";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages";
 import { handlers as pnpmHandlers } from "./pnpm";
+import { handlers as tsconfigHandlers } from "./tsconfig";
 import { handlers as fluidBuildTasks } from "./fluidBuildTasks";
 
 /**
  * declared file handlers
  */
-export const policyHandlers: Handler[] = [
+export const allPolicyHandlers: Handler[] = [
 	...copyrightFileHeaderHandlers,
 	...npmPackageContentsHandlers,
 	dockerfilePackageHandler,
@@ -27,6 +28,7 @@ export const policyHandlers: Handler[] = [
 	...pnpmHandlers,
 	...fluidBuildTasks,
 	noJsFileHandler,
+	...tsconfigHandlers,
 ];
 
 export { type Handler } from "./common";

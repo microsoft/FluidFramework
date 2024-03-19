@@ -11,7 +11,7 @@ import { EOL as newline } from "node:os";
 import { loadFluidBuildConfig } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
-import { Context, Repository, Handler, policyHandlers } from "../../library";
+import { Context, Repository, Handler, allPolicyHandlers } from "../../library";
 
 type policyAction = "handle" | "resolve" | "final";
 
@@ -119,7 +119,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	private count = 0;
 
 	async run(): Promise<void> {
-		let handlersToRun: Handler[] = policyHandlers.filter((h) => {
+		let handlersToRun: Handler[] = allPolicyHandlers.filter((h) => {
 			if (this.flags.excludeHandler === undefined || this.flags.excludeHandler.length === 0) {
 				return true;
 			}

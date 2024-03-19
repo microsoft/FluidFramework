@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Handler } from "@fluidframework/build-tools";
 import synchronizedPrettier from "@prettier/sync";
 import { readFileSync, writeFileSync } from "fs-extra";
 import { sortJsonc } from "sort-jsonc";
+import type { Handler } from "./common";
 
 const { format: prettier, resolveConfig: resolvePrettierConfig } = synchronizedPrettier;
 const match = /(^|\/)tsconfig.*?\.json/i;
@@ -24,6 +24,8 @@ export const tsconfigSorter: Handler = {
 		return { resolved: wroteOutput };
 	},
 };
+
+export const handlers: Handler[] = [tsconfigSorter];
 
 /**
  * Sorting order for keys in the compilerOptions section of tsconfig. The groups and the order within each group are

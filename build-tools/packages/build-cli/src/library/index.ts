@@ -30,7 +30,6 @@ export {
 	setVersion,
 	sortVersions,
 } from "./package";
-export { allPolicyHandlers } from "./policy";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github";
@@ -43,4 +42,4 @@ export {
 	toReportKind,
 } from "./release";
 export { LayerGraph } from "./layerGraph";
-export { type Handler, policyHandlers } from "./repoPolicyCheck";
+export { type Handler, allPolicyHandlers } from "./repoPolicyCheck";
