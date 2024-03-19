@@ -71,6 +71,7 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:biome": "biome check .",
+		"check:format": "fluid-build --task check:format .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
@@ -92,8 +93,7 @@
 		"test:snapshots:regen": "npm run test:mocha:esm -- --snapshot",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
-		"check:format": "fluid-build --task check:format ."
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
 		"all": true,
