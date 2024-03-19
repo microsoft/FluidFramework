@@ -384,6 +384,12 @@ export abstract class LeafTask extends Task {
 		return summarizeBuildResult(await Promise.all(p));
 	}
 
+	/**
+	 * Returns the absolute path to a package-relative path within the repo.
+	 *
+	 * @param filePath - a path relative to the package being processed by this task.
+	 * @returns An absolute path to the file.
+	 */
 	protected getPackageFileFullPath(filePath: string): string {
 		if (path.isAbsolute(filePath)) {
 			return filePath;

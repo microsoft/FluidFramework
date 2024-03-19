@@ -7,13 +7,13 @@ import assert from "assert";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import nock from "nock";
-import { DefaultTokenProvider } from "../defaultTokenProvider";
-import { RouterliciousErrorTypes } from "../errorUtils";
+import { DefaultTokenProvider } from "../defaultTokenProvider.js";
+import { RouterliciousErrorTypes } from "../errorUtils.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
-} from "../restWrapper";
-import { ITokenResponse } from "../tokens";
+} from "../restWrapper.js";
+import { ITokenResponse } from "../tokens.js";
 
 describe("RouterliciousDriverRestWrapper", () => {
 	const rateLimiter = new RateLimiter(1);
