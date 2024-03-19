@@ -194,7 +194,7 @@ export class ScribeLambdaFactory
 		const checkpointIsBlank = document.scribe === "";
 		const checkpointQuorumIsScrubbed = isCheckpointQuorumScrubbed(document.scribe);
 		const useLatestSummaryCheckpointForExistingDocument =
-			checkpointIsBlank || !checkpointQuorumIsScrubbed;
+			checkpointIsBlank || checkpointQuorumIsScrubbed;
 
 		if (useDefaultCheckpointForNewDocument) {
 			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
@@ -205,7 +205,7 @@ export class ScribeLambdaFactory
 			lastCheckpoint = DefaultScribe;
 		} else if (useLatestSummaryCheckpointForExistingDocument) {
 			const message = `Existing document${
-				!checkpointIsBlank && !checkpointQuorumIsScrubbed
+				!checkpointIsBlank && checkpointQuorumIsScrubbed
 					? " with invalid quorum members"
 					: ""
 			}. Fetching checkpoint from summary`;
@@ -216,7 +216,7 @@ export class ScribeLambdaFactory
 				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
 				lastCheckpoint = DefaultScribe;
 			} else {
-				if (!isCheckpointQuorumScrubbed(latestSummary.scribe)) {
+				if (isCheckpointQuorumScrubbed(latestSummary.scribe)) {
 					Lumberjack.error(
 						"Quorum from summary is invalid. Continuing.",
 						lumberProperties,

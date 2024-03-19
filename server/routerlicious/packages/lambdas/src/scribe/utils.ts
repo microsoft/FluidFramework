@@ -86,8 +86,8 @@ export const isCheckpointQuorumScrubbed = (stringifiedCheckpoint: string): boole
 		const user: IUser = sequencedClient.client.user;
 		// User information was scrubbed.
 		if (!user.id) {
-			return false;
+			return true;
 		}
 	}
-	return true;
+	return false;
 };
