@@ -27,6 +27,9 @@ import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { hydrate } from "./utils.js";
 
+// Test TODOs:
+// - collisions (2 stableNames, stableName with dev key, etc.)
+
 {
 	const schema = new SchemaFactory("Blah");
 
@@ -226,6 +229,9 @@ describe("schemaFactory", () => {
 			assert.deepEqual(values, [2, 3]);
 		});
 
+		// TODO: stableName
+		// TODO: stableName (conflicts)
+
 		describe("deep equality", () => {
 			const schema = new SchemaFactory("com.example");
 
@@ -270,6 +276,8 @@ describe("schemaFactory", () => {
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), { x: 1, y: 2 });
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), hydrate(Item, { x: 1, y: 2 }));
 			});
+
+			// TODO: stableName
 		});
 	});
 
@@ -282,7 +290,7 @@ describe("schemaFactory", () => {
 		}) {}
 
 		class Note extends schema.object("Note", {
-			text: schema.string,
+			text: schema.required(schema.string, { stableName: "content" }),
 			location: schema.optional(Point),
 		}) {}
 
