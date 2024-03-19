@@ -76,11 +76,11 @@
 		"tasks": {
 			"eslint": [
 				"build:esnext",
-				"build:test"
+				"build:test",
+				"build:test:esm"
 			],
 			"build:test": [
-				"build:esnext",
-				"build:test:esm"
+				"build:esnext"
 			]
 		}
 	},
