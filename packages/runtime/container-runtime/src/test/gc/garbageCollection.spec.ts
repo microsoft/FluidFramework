@@ -236,11 +236,11 @@ describe("Garbage Collection Tests", () => {
 			return closeCalled;
 		}
 
-		gc = createGarbageCollector({closeFn:
-			() => {
+		gc = createGarbageCollector({
+			closeFn: () => {
 				closeCalled = true;
 			},
-			}	);
+		});
 		assert(
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
