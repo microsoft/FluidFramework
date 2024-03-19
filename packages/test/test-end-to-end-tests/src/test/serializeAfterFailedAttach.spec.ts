@@ -27,17 +27,7 @@ describeCompat(
 	`Serialize After Failure to Attach Container Test`,
 	"FullCompat",
 	(getTestObjectProvider, apis) => {
-		const {
-			SharedMap,
-			SharedDirectory,
-			SharedMatrix,
-			SharedCounter,
-			SharedString,
-			SharedCell,
-			ConsensusQueue,
-			ConsensusRegisterCollection,
-			SparseMatrix,
-		} = apis.dds;
+		const { SharedMap, SharedString } = apis.dds;
 
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
@@ -45,13 +35,6 @@ describeCompat(
 		};
 		const sharedStringId = "ss1Key";
 		const sharedMapId = "sm1Key";
-		const crcId = "crc1Key";
-		const cocId = "coc1Key";
-		const sharedDirectoryId = "sd1Key";
-		const sharedCellId = "scell1Key";
-		const sharedMatrixId = "smatrix1Key";
-		const sparseMatrixId = "sparsematrixKey";
-		const sharedCounterId = "sharedcounterKey";
 
 		let provider: ITestObjectProvider;
 		let loader: Loader;
@@ -72,13 +55,6 @@ describeCompat(
 			const factory: TestFluidObjectFactory = new TestFluidObjectFactory([
 				[sharedStringId, SharedString.getFactory()],
 				[sharedMapId, SharedMap.getFactory()],
-				[crcId, ConsensusRegisterCollection.getFactory()],
-				[sharedDirectoryId, SharedDirectory.getFactory()],
-				[sharedCellId, SharedCell.getFactory()],
-				[sharedMatrixId, SharedMatrix.getFactory()],
-				[cocId, ConsensusQueue.getFactory()],
-				[sparseMatrixId, SparseMatrix.getFactory()],
-				[sharedCounterId, SharedCounter.getFactory()],
 			]);
 			const codeLoader = new LocalCodeLoader([[codeDetails, factory]], {});
 			const testLoader = new Loader({
