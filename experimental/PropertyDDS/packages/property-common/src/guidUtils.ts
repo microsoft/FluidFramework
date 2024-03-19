@@ -51,7 +51,7 @@ const guidRNG = {
 			if (in_seed === undefined) {
 				const randomValues = uuid()
 					.split("-")
-					.map((x) => +x);
+					.map((x) => parseInt(x, 16));
 				this.u = randomValues[0];
 				this.v = randomValues[1];
 				this.w1 = randomValues[2];
