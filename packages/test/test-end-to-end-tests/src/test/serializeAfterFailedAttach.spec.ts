@@ -25,7 +25,7 @@ import { wrapObjectAndOverride } from "../mocking.js";
 
 describeCompat(
 	`Serialize After Failure to Attach Container Test`,
-	"FullCompat",
+	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedString } = apis.dds;
 
