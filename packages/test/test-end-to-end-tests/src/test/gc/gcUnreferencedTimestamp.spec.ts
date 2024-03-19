@@ -36,7 +36,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 	let mainContainer: IContainer;
 	let containerRuntime: IContainerRuntime;
 	let dataStoreA: ITestDataObject;
-	let settings: Record<string, ConfigTypes> = {};
+	const settings: Record<string, ConfigTypes> = {};
 
 	/**
 	 * Submits a summary and returns the unreferenced timestamp for all the nodes in the container. If a node is
@@ -654,7 +654,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			 */
 			it(`Scenario 8 - Node re-referenced via new DDS attaching`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
-					loaderProps: { configProvider },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
 				});
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
@@ -720,7 +720,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			 */
 			it(`Scenario 9 - Node re-referenced via new DDS attaching (extra indirection)`, async () => {
 				const { summarizer } = await createSummarizer(provider, mainContainer, {
-					loaderProps: { configProvider },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
 				});
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
