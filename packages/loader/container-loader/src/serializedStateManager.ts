@@ -61,8 +61,6 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
  */
 export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	attached: false;
-	snapshotTree: ISnapshotTree;
-	snapshotBlobs: ISerializableBlobContents;
 	hasAttachmentBlobs: boolean;
 	pendingRuntimeState?: unknown;
 }
