@@ -54,6 +54,8 @@ export interface TreeNodeApi {
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
+
+	// TODO: update docs to note that this is not necessarily the persisted key (stableName).
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
@@ -61,6 +63,22 @@ export interface TreeNodeApi {
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key(node: TreeNode): string | number;
+
+	/**
+	 * TODO
+	 * @param node - TODO
+	 */
+	stableName(node: TreeNode): string | number;
+
+	// TODO: maybe child(stableName)? Or maybe `devKeyForStableName(stableName)` - from which they can walk the tree as normal?
+
+	/**
+	 * TODO
+	 * @param node - TODO
+	 * @param stableName - TODO
+	 */
+	child(node: TreeNode, stableName: string): TreeNode | undefined;
+
 	/**
 	 * Register an event listener on the given node.
 	 * @returns A callback function which will deregister the event.
@@ -81,6 +99,7 @@ export interface TreeNodeApi {
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
 export const treeNodeApi: TreeNodeApi = {
+	child: (node: TreeNode, stableName: string) => {},
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
@@ -95,6 +114,18 @@ export const treeNodeApi: TreeNodeApi = {
 		return output;
 	},
 	key: (node: TreeNode) => {
+		const parentField = getFlexNode(node).parentField;
+		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
+			// The parent of `node` is an array node
+			return parentField.index;
+		}
+
+		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+
+		// TODO: map this back to developer-facing key
+		return parentField.parent.key;
+	},
+	stableName: (node: TreeNode) => {
 		const parentField = getFlexNode(node).parentField;
 		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
 			// The parent of `node` is an array node
