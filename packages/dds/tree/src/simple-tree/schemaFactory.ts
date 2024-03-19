@@ -401,8 +401,6 @@ export class SchemaFactory<
 		const Name extends number | string,
 		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(schemaName: Name, fields: Fields): void {
-		// TODO: the below is wrong. It should be valid to explicitly set the stableName to be the same as the property key for the same field.
-
 		const devKeys = new Set<string>();
 		const stableNames = new Set<string>();
 		for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
@@ -418,7 +416,10 @@ export class SchemaFactory<
 					throw new UsageError(
 						`Duplicate stableName "${fieldStableName}" in schema "${schemaName}".`,
 					);
-				} else {
+					// While not an expected usage pattern, if a consumer explicitly specifies
+					// stableName that is the same as the developer key, that should be equivalent to
+					// not specifying a stableName at all rather than resulting in an error.
+				} else if (fieldStableName !== fieldKey) {
 					stableNames.add(fieldStableName);
 				}
 			}

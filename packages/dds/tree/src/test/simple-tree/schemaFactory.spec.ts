@@ -242,11 +242,11 @@ describe("schemaFactory", () => {
 						y: schema.required(schema.number, { stableName: "stable-key" }),
 					}),
 				(error: Error) =>
-					validateAssertionError(error, /Duplicate stableName "foo" in schema "Object"/),
+					validateAssertionError(error, /Duplicate stableName "stable-key" in schema/),
 			);
 		});
 
-		it.only("stableName collides with developer key", () => {
+		it("stableName collides with developer key", () => {
 			const schema = new SchemaFactory("com.example");
 			assert.throws(
 				() =>
@@ -257,13 +257,19 @@ describe("schemaFactory", () => {
 				(error: Error) =>
 					validateAssertionError(
 						error,
-						/stableName "foo" conflicts with a property key of the same name in schema "Object"/,
+						/stableName "foo" conflicts with a property key of the same name in schema/,
 					),
 			);
 		});
 
-		// TODO: stableName
-		// TODO: stableName (conflicts)
+		it("stableName === developer key", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.doesNotThrow(() =>
+				schema.object("Object", {
+					foo: schema.optional(schema.string, { stableName: "foo" }),
+				}),
+			);
+		});
 
 		describe("deep equality", () => {
 			const schema = new SchemaFactory("com.example");
