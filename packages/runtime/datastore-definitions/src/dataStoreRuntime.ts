@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import type {
+	FluidObject,
+	IDisposable,
 	IEvent,
 	IEventProvider,
-	IDisposable,
-	IFluidHandleContext,
 	IFluidHandle,
-	FluidObject,
+	IFluidHandleContext,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IChannel } from "./channel.js";
 
 /**

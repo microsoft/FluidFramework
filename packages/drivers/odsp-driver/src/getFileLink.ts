@@ -4,7 +4,6 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/core-utils";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
 import {
@@ -13,6 +12,7 @@ import {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,

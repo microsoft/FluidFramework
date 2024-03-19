@@ -107,7 +107,7 @@ module.exports = {
 			script: false,
 		},
 		"format": {
-			dependsOn: ["format:prettier", "format:biome"],
+			dependsOn: ["prettier:fix", "format:prettier", "format:biome"],
 			script: false,
 		},
 		"check:biome": [],
@@ -207,6 +207,10 @@ module.exports = {
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/test-utils/package.json",
 			],
+			"fluid-build-tasks-tsc": [
+				// TODO: AB#7460 fix tsconfig reference path match on Windows
+				"^packages/tools/devtools/devtools-view/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -252,8 +256,8 @@ module.exports = {
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
-				// These packages use biome for formatting
-				"build-tools/",
+				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				".*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use

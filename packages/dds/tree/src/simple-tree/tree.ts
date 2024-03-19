@@ -4,9 +4,9 @@
  */
 
 import { IChannel } from "@fluidframework/datastore-definitions";
+import { CommitMetadata, Revertible } from "../core/index.js";
 import { ISubscribable } from "../events/index.js";
 import { IDisposable } from "../util/index.js";
-import { CommitMetadata, Revertible } from "../core/index.js";
 import {
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,

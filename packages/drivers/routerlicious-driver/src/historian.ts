@@ -9,10 +9,10 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { QueryStringType, RestWrapper } from "./restWrapperBase";
-import { IR11sResponse } from "./restWrapper";
-import { IHistorian } from "./storageContracts";
-import { IWholeFlatSnapshot } from "./contracts";
+import { IWholeFlatSnapshot } from "./contracts.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { IHistorian } from "./storageContracts.js";
 
 export interface ICredentials {
 	user: string;

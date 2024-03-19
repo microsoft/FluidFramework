@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { getExecutableFromCommand } from "../../common/utils";
 import { BuildPackage } from "../buildGraph";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
@@ -24,6 +25,7 @@ import { Task } from "./task";
 import { FlubListTask, FlubCheckLayerTask, FlubCheckPolicyTask } from "./leaf/flubTasks";
 import { RenameTypesTask } from "./leaf/renamerTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
+import { BiomeTask } from "./leaf/biomeTasks";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
@@ -50,6 +52,8 @@ const executableToLeafTask: {
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 	"depcruise": DepCruiseTask,
+	"biome check": BiomeTask,
+	"biome format": BiomeTask,
 
 	// Note that this assumes that "renamer" is ONLY used for renaming types. If it is used in a different task in the
 	// pipeline then this mapping will have to be updated.

@@ -5,22 +5,22 @@
 
 import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
+	ConnectionMode,
 	IClient,
 	IClientConfiguration,
-	ConnectionMode,
-	ITokenClaims,
 	ISequencedClient,
+	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { TelemetryEventCategory, createChildLogger } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { createChildLogger, TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
 import {
-	IConnectionStateHandlerInputs,
 	IConnectionStateHandler,
+	IConnectionStateHandlerInputs,
 	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
 import { IConnectionDetailsInternal } from "../contracts.js";
