@@ -182,6 +182,9 @@
 			"generate": {
 				"description": "Generate commands are used to create/update code, docs, readmes, etc."
 			},
+			"modify": {
+				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.."
+			},
 			"release": {
 				"description": "Release commands are used to manage the Fluid release process."
 			}

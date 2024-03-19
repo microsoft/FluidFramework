@@ -1,17 +1,17 @@
-`flub update`
+`flub modify`
 =============
 
-Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)
+Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc..
 
-* [`flub update fluid-imports`](#flub-update-fluid-imports)
+* [`flub modify fluid-imports`](#flub-modify-fluid-imports)
 
-## `flub update fluid-imports`
+## `flub modify fluid-imports`
 
 Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)
 
 ```
 USAGE
-  $ flub update fluid-imports [-v | --quiet] [--tsconfig <value>] [--data <value>] [--organize] [--onlyInternal]
+  $ flub modify fluid-imports [-v | --quiet] [--tsconfig <value>] [--data <value>] [--organize] [--onlyInternal]
 
 FLAGS
   --data=<value>      Path to a data file containing raw API level data.
@@ -28,4 +28,4 @@ DESCRIPTION
   Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)
 ```
 
-_See code: [src/commands/update/fluid-imports.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/update/fluid-imports.ts)_
+_See code: [src/commands/modify/fluid-imports.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/modify/fluid-imports.ts)_
