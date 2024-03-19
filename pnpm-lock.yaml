@@ -10717,7 +10717,6 @@ importers:
 
   packages/tools/devtools/devtools-example:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluentui/react-components': ~9.19.1
       '@fluentui/react-icons': ^2.0.201
@@ -10813,7 +10812,6 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
