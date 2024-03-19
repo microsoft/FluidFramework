@@ -272,11 +272,18 @@ function objectToMapTree(
 			const fieldSchema = getObjectFieldSchema(schema, key);
 			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypes);
 
-			if (mappedChildTree !== undefined) {
-				// If a stable name was provided, we will use it as the key in the output.
-				const stableName: FieldKey = brand(fieldSchema.props?.stableName ?? key);
-				fields.set(stableName, [mappedChildTree]);
+			// If a stable name was provided, we will use it as the key in the output.
+			const stableName: FieldKey = brand(fieldSchema.props?.stableName ?? key);
+			if (fields.has(stableName)) {
+				throw new UsageError(
+					`Provided ${
+						fieldSchema.props?.stableName === undefined ? "key" : "stableName"
+					} "${stableName}" collides with another "key" or "stableName" in schema "${
+						schema.identifier
+					}". You must ensure that all keys and stableNames are unique within a schema.`,
+				);
 			}
+			fields.set(stableName, [mappedChildTree]);
 		}
 	}
 
