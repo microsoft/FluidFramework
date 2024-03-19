@@ -194,7 +194,7 @@ describe("serializedStateManager", () => {
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
 		assert(snapshotTree);
 		assert.strictEqual(version, undefined);
@@ -238,7 +238,7 @@ describe("serializedStateManager", () => {
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
 		assert(snapshotTree);
 		assert.strictEqual(version?.id, "test");

@@ -11,14 +11,16 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
@@ -35,7 +37,6 @@
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:watch": "npm run test:jest -- --watch",
-		"tsc": "tsc",
 		"webpack": "webpack --color --no-stats"
 	},
 	"dependencies": {
@@ -116,7 +117,7 @@
 				],
 				"script": false
 			},
-			"tsc": [
+			"build:esnext": [
 				"...",
 				"@fluid-experimental/property-inspector-table#build:copy-resources"
 			],
@@ -127,7 +128,7 @@
 		},
 		"buildDependencies": {
 			"merge": {
-				"tsc": {
+				"build:esnext": {
 					"@fluid-experimental/property-inspector-table": [
 						"build:webpack"
 					]

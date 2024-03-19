@@ -10,17 +10,17 @@ import {
 	MockWorkspace,
 	getPopulateFunctionWithSerializedBranchData,
 	populateWorkspace,
-} from "../test/common";
-import { InspectorDecorator } from "./InspectorDecorator";
-import { InspectorTable } from "./InspectorTable";
-import { InspectorTableDecorator } from "./InspectorTableDecorator";
-import { IInspectorTableProps } from "./InspectorTableTypes";
-import { ModalManager } from "./ModalManager";
-import { ModalRoot } from "./ModalRoot";
+} from "../test/common.js";
+import { InspectorDecorator } from "./InspectorDecorator.js";
+import { InspectorTable } from "./InspectorTable.js";
+import { InspectorTableDecorator } from "./InspectorTableDecorator.js";
+import { IInspectorTableProps } from "./InspectorTableTypes.js";
+import { ModalManager } from "./ModalManager.js";
+import { ModalRoot } from "./ModalRoot.js";
 import {
 	handlePropertyDataCreation,
 	handlePropertyDataCreationOptionGeneration,
-} from "./PropertyDataCreationHandlers";
+} from "./PropertyDataCreationHandlers.js";
 
 class Loading extends React.Component<
 	Partial<IInspectorTableProps> & {
