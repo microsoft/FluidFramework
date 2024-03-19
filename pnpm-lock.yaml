@@ -4890,6 +4890,7 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
+      '@types/node': ^18.19.0
       copyfiles: ^2.4.1
       eslint: ~8.55.0
       eslint-config-prettier: ~9.0.0
@@ -4908,13 +4909,14 @@ importers:
       '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@types/jest': 29.5.3
+      '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
       eslint-config-prettier: 9.0.0_eslint@8.55.0
-      jest: 29.7.0
+      jest: 29.7.0_@types+node@18.19.1
       jest-junit: 10.0.0
       prettier: 3.0.3
       rimraf: 4.4.1
