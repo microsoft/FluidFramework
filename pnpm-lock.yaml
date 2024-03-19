@@ -2069,8 +2069,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
 
   examples/data-objects/multiview/constellation-view:
@@ -2102,9 +2100,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
 
   examples/data-objects/multiview/container:
@@ -2229,8 +2224,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
 
   examples/data-objects/multiview/interface:
@@ -2287,9 +2280,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
 
   examples/data-objects/multiview/slider-coordinate-view:
@@ -2348,9 +2338,6 @@ importers:
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
-      style-loader: 1.3.0_webpack@5.89.0
-      ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
-      ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
 
   examples/data-objects/prosemirror:
@@ -7451,7 +7438,6 @@ importers:
       rimraf: ^4.4.0
       sinon: ^17.0.1
       socket.io-client: ^4.7.3
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7498,7 +7484,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 17.0.1
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/routerlicious-urlResolver:
@@ -10910,7 +10895,7 @@ importers:
       '@types/recharts': ^1.8.24
       '@types/testing-library__jest-dom': ^5.14.5
       chai: ^4.2.0
-      chalk: ^2.4.2
+      chalk: ^4.1.2
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
@@ -10983,7 +10968,7 @@ importers:
       '@types/recharts': 1.8.28
       '@types/testing-library__jest-dom': 5.14.9
       chai: 4.3.10
-      chalk: 2.4.2
+      chalk: 4.1.2
       concurrently: 8.2.2
       copyfiles: 2.4.1
       cross-env: 7.0.3
@@ -26330,6 +26315,7 @@ packages:
     hasBin: true
     dependencies:
       cross-spawn: 7.0.3
+    dev: true
 
   /cross-fetch/3.1.8:
     resolution: {integrity: sha512-cvA+JwZoU0Xq+h6WkMvAUqPEYy92Obet6UdKLfW60qn99ftItKjB5T+BkyWOFWe2pUyfQ+IJHmpOTznqk1M6Kg==}
@@ -28153,18 +28139,6 @@ packages:
       escape-string-regexp: 1.0.5
       eslint: 8.55.0
       ignore: 5.3.0
-    dev: true
-
-  /eslint-plugin-filenames/1.3.2_eslint@8.55.0:
-    resolution: {integrity: sha512-tqxJTiEM5a0JmRCUYQmxw23vtTxrb2+a3Q2mMOPhFxvt7ZQQJmdiuMby9B/vUAuVMghyP7oET+nIf6EO6CBd/w==}
-    peerDependencies:
-      eslint: '*'
-    dependencies:
-      eslint: 8.55.0
-      lodash.camelcase: 4.3.0
-      lodash.kebabcase: 4.1.1
-      lodash.snakecase: 4.1.1
-      lodash.upperfirst: 4.3.1
     dev: true
 
   /eslint-plugin-i/2.29.0_j7h7oj6rrhtikhzta4fgkou42e:
@@ -36313,6 +36287,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       p-map: 4.0.0
+    dev: false
 
   /p-cancelable/1.1.0:
     resolution: {integrity: sha512-s73XxOZ4zpt1edZYZzvhqFa6uvQc1vwUa0K0BdtIZgQMAJj9IbebH+JkgKZc9h+B05PKHLOTl4ajG1BmNrVZlw==}
@@ -37469,6 +37444,7 @@ packages:
     resolution: {integrity: sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==}
     engines: {node: '>=14'}
     hasBin: true
+    dev: true
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
@@ -40631,6 +40607,7 @@ packages:
     resolution: {integrity: sha512-Hl092MV3USJuUCC6mfl9sPzGloA3K5VwdIeJjYIkXY/8K+mUvaeEabWJgArp+xXrsWxCajeT2pc4axbVhIZJyg==}
     dependencies:
       readable-stream: 3.6.2
+    dev: false
 
   /string-width/1.0.2:
     resolution: {integrity: sha512-0XsVpQLnVCXHJfyEs8tC0zpTVIr5PKKsQtkT29IwupnPTjtPmQ3xT/4yCREF9hYkV/3M3kzcUTSAZT6a6h81tw==}
@@ -40929,6 +40906,7 @@ packages:
   /superstruct/1.0.3:
     resolution: {integrity: sha512-8iTn3oSS8nRGn+C2pgXSKPI3jmpm6FExNazNpjvqS6ZUJQCej3PUXEKM8NjHBOs54ExM+LPW/FBRhymrdcCiSg==}
     engines: {node: '>=14.0.0'}
+    dev: false
 
   /supertest/3.4.2:
     resolution: {integrity: sha512-WZWbwceHUo2P36RoEIdXvmqfs47idNNZjCuJOqDz6rvtkk8ym56aU5oglORCpPeXGxT7l9rkJ41+O1lffQXYSA==}
@@ -41892,6 +41870,7 @@ packages:
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
+    dev: false
     patched: true
 
   /tsconfck/2.1.2_typescript@5.1.6:

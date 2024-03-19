@@ -24,7 +24,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { ThemeOption, useThemeContext } from "../../ThemeHelper";
+import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 
 /**
  * Data To be rendered with Op Latency Graph
