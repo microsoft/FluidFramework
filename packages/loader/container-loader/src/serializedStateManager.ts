@@ -29,7 +29,7 @@ export interface SnapshotWithBlobs {
 	/**
 	 * Snapshot from which container initially loaded.
 	 */
-	snapshotTree: ISnapshotTree;
+	baseSnapshot: ISnapshotTree;
 	/**
 	 * Serializable blobs from the base snapshot. Used to load offline since
 	 * storage is not available.
@@ -103,23 +103,23 @@ export class SerializedStateManager {
 			const { snapshot, version } = supportGetSnapshotApi
 				? await fetchISnapshot(this.mc, this.storageAdapter, specifiedVersion)
 				: await fetchISnapshotTree(this.mc, this.storageAdapter, specifiedVersion);
-			const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+			const baseSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 				? snapshot.snapshotTree
 				: snapshot;
-			assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
+			assert(baseSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const snapshotBlobs = await getBlobContentsFromTree(
-					snapshotTree,
+					baseSnapshot,
 					this.storageAdapter,
 				);
-				this.snapshot = { snapshotTree, snapshotBlobs };
+				this.snapshot = { baseSnapshot, snapshotBlobs };
 			}
-			return { snapshotTree, version };
+			return { baseSnapshot, version };
 		} else {
-			const { snapshotTree, snapshotBlobs } = this.pendingLocalState;
-			this.snapshot = { snapshotTree, snapshotBlobs };
-			return { snapshotTree, version: undefined };
+			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
+			this.snapshot = { baseSnapshot, snapshotBlobs };
+			return { baseSnapshot, version: undefined };
 		}
 	}
 
@@ -157,7 +157,7 @@ export class SerializedStateManager {
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
-					snapshotTree: this.snapshot.snapshotTree,
+					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,

@@ -1153,7 +1153,7 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { snapshotTree, snapshotBlobs } =
+		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
@@ -1161,7 +1161,7 @@ export class Container
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			snapshotTree,
+			baseSnapshot,
 			snapshotBlobs,
 			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
@@ -1547,14 +1547,14 @@ export class Container
 			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
 				true && this.service?.policies?.supportGetSnapshotApi === true;
 		// Fetch specified snapshot.
-		const { snapshotTree, version } = await this.serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
 			supportGetSnapshotApi,
 		);
 		this._loadedFromVersion = version;
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
-			snapshotTree,
+			baseSnapshot,
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
@@ -1644,17 +1644,17 @@ export class Container
 		await this.initializeProtocolStateFromSnapshot(
 			attributes,
 			this.storageAdapter,
-			snapshotTree,
+			baseSnapshot,
 		);
 
 		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
-			snapshotTree,
+			baseSnapshot,
 			// give runtime a dummy value so it knows we're loading from a stash blob
 			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
-			isInstanceOfISnapshot(snapshotTree) ? snapshotTree : undefined,
+			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 
 		// replay saved ops
@@ -1768,7 +1768,7 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot({
-		snapshotTree,
+		baseSnapshot,
 		snapshotBlobs,
 		hasAttachmentBlobs,
 		pendingRuntimeState,
@@ -1780,7 +1780,7 @@ export class Container
 			);
 		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			combineSnapshotTreeAndSnapshotBlobs(snapshotTree, snapshotBlobs);
+			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
 		const attributes = await getDocumentAttributes(
 			this.storageAdapter,

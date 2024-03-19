@@ -108,7 +108,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.snapshotTree);
+		assert.ok(parsedState.baseSnapshot);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -142,7 +142,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.snapshotTree);
+		assert.ok(parsedState.baseSnapshot);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -171,7 +171,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
-		assert.ok(parsedState.snapshotTree);
+		assert.ok(parsedState.baseSnapshot);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -237,7 +237,7 @@ describe("loader unit test", () => {
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
 		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.snapshotTree);
+		assert.ok(parsedState.baseSnapshot);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 });

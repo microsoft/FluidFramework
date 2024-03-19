@@ -136,7 +136,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);
-				treeNode.trees[key] = innerSnapshot.snapshotTree;
+				treeNode.trees[key] = innerSnapshot.baseSnapshot;
 				blobContents = { ...blobContents, ...innerSnapshot.snapshotBlobs };
 				break;
 			}
@@ -163,7 +163,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 			}
 		}
 	}
-	const pendingSnapshot = { snapshotTree: treeNode, snapshotBlobs: blobContents };
+	const pendingSnapshot = { baseSnapshot: treeNode, snapshotBlobs: blobContents };
 	return pendingSnapshot;
 }
 
@@ -254,7 +254,7 @@ function isPendingDetachedContainerState(
 ): detachedContainerState is IPendingDetachedContainerState {
 	if (
 		detachedContainerState?.attached === undefined ||
-		detachedContainerState?.snapshotTree === undefined ||
+		detachedContainerState?.baseSnapshot === undefined ||
 		detachedContainerState?.snapshotBlobs === undefined ||
 		detachedContainerState?.hasAttachmentBlobs === undefined
 	) {
@@ -271,11 +271,11 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const { snapshotTree, snapshotBlobs } =
+		const { baseSnapshot: snapshotTree, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			snapshotTree,
+			baseSnapshot: snapshotTree,
 			snapshotBlobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};

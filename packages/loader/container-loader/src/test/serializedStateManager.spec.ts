@@ -124,10 +124,10 @@ const errorFn = (error: Error, expected: string): boolean => {
 const getAttributesFromPendingState = (
 	pendingState: IPendingContainerState,
 ): IDocumentAttributes => {
-	if (pendingState.snapshotTree === undefined) {
+	if (pendingState.baseSnapshot === undefined) {
 		throw new Error("base snapshot should be valid");
 	}
-	const attributesId = pendingState.snapshotTree.trees[".protocol"].blobs.attributes;
+	const attributesId = pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
 	const attributes = pendingState.snapshotBlobs[attributesId];
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
@@ -178,7 +178,7 @@ describe("serializedStateManager", () => {
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
 			attached: true,
-			snapshotTree: { id: "fromPending", blobs: {}, trees: {} },
+			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
 			snapshotBlobs: {},
 			pendingRuntimeState: {},
 			savedOps: [],
@@ -191,11 +191,11 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
 			false,
 		);
-		assert(snapshotTree);
+		assert(baseSnapshot);
 		assert.strictEqual(version, undefined);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
@@ -203,7 +203,7 @@ describe("serializedStateManager", () => {
 			new MockRuntime(),
 			resolvedUrl,
 		);
-		assert.strictEqual(JSON.parse(state).snapshotTree.id, "fromPending");
+		assert.strictEqual(JSON.parse(state).baseSnapshot.id, "fromPending");
 	});
 
 	it("can get pending local state after attach", async () => {
@@ -216,7 +216,7 @@ describe("serializedStateManager", () => {
 		);
 		// equivalent to attach
 		serializedStateManager.setSnapshot({
-			snapshotTree: { trees: {}, blobs: {} },
+			baseSnapshot: { trees: {}, blobs: {} },
 			snapshotBlobs: {},
 		});
 		for (let num = 0; num < 10; ++num) {
@@ -238,11 +238,11 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
 			false,
 		);
-		assert(snapshotTree);
+		assert(baseSnapshot);
 		assert.strictEqual(version?.id, "test");
 		assert.strictEqual(version.treeId, "test");
 		const state = await serializedStateManager.getPendingLocalStateCore(
@@ -252,7 +252,7 @@ describe("serializedStateManager", () => {
 			resolvedUrl,
 		);
 		const parsed = JSON.parse(state);
-		assert.strictEqual(parsed.snapshotTree.id, "SnapshotId");
+		assert.strictEqual(parsed.baseSnapshot.id, "SnapshotId");
 		const attributes = getAttributesFromPendingState(parsed);
 		assert.strictEqual(attributes.sequenceNumber, 0);
 		assert.strictEqual(attributes.minimumSequenceNumber, 0);
