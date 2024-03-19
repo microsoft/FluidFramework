@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.2.0.1",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -98,7 +98,7 @@
 		"@types/chai": "^4.0.0",
 		"@types/chrome": "0.0.232",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/jsdom": "^21.1.1",
 		"@types/jsdom-global": "^3.0.4",
 		"@types/mocha": "^9.1.1",
