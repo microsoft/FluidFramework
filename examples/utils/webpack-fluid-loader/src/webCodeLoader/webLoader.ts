@@ -4,13 +4,13 @@
  */
 
 import {
-	IFluidModule,
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
 	IFluidCodeResolver,
+	IFluidModule,
+	IFluidModuleWithDetails,
 	IResolvedFluidCodeDetails,
 	isFluidBrowserPackage,
-	IFluidCodeDetails,
-	ICodeDetailsLoader,
-	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { AllowList } from "./allowList.js";
 import { ScriptManager } from "./scriptManager.js";

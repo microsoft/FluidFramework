@@ -5,6 +5,7 @@
 
 import { expect } from 'chai';
 import {
+	RestOrArray,
 	filter,
 	find,
 	getOrCreate,
@@ -12,7 +13,6 @@ import {
 	map,
 	memoizeGetter,
 	reduce,
-	RestOrArray,
 	unwrapRestOrArray,
 } from '../Common.js';
 

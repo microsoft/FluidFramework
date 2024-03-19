@@ -5,18 +5,39 @@
 
 import { strict as assert } from "assert";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
-	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
-	tagChange,
 	TaggedChange,
-	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
+	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
 } from "../../../core/index.js";
+import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries/index.js";
+import {
+	RebaseRevisionMetadata,
+	rebaseRevisionMetadataFromInfo,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/index.js";
+import {
+	OptionalChangeset,
+	optionalChangeRebaser,
+	optionalFieldEditor,
+	optionalFieldIntoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/optional-field/index.js";
+import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	ChildStateGenerator,
+	FieldStateTree,
+	generatePossibleSequenceOfEdits,
+	getSequentialEdits,
+	getSequentialStates,
+} from "../../exhaustiveRebaserUtils.js";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 // TODO: Throughout this file, we use TestChange as the child change type.
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
 // since OptionalChangeset is not generic over the child changeset type.
@@ -28,27 +49,6 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
-import {
-	optionalChangeRebaser,
-	optionalFieldEditor,
-	optionalFieldIntoDelta,
-	OptionalChangeset,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/optional-field/index.js";
-import {
-	FieldStateTree,
-	getSequentialEdits,
-	generatePossibleSequenceOfEdits,
-	ChildStateGenerator,
-	getSequentialStates,
-} from "../../exhaustiveRebaserUtils.js";
-import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
-import {
-	RebaseRevisionMetadata,
-	rebaseRevisionMetadataFromInfo,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;

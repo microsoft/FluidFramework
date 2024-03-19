@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTreeDeltaType } from "../ops.js";
 import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
-import { useStrictPartialLengthChecks } from "./testUtils.js";
+import { MergeTreeDeltaType } from "../ops.js";
 import { ReconnectTestHelper } from "./reconnectHelper.js";
+import { useStrictPartialLengthChecks } from "./testUtils.js";
 
 describe("obliterate delta callback", () => {
 	useStrictPartialLengthChecks();

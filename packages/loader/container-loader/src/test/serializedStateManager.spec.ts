@@ -4,14 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IVersion,
-	ISnapshotTree,
-	MessageType,
-	ISequencedDocumentMessage,
-	IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,8 +13,14 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
-import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	IDocumentAttributes,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	IVersion,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IPendingContainerState } from "../container.js";
 import { SerializedStateManager } from "../serializedStateManager.js";
 
@@ -194,7 +194,7 @@ describe("serializedStateManager", () => {
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
 		assert(snapshotTree);
 		assert.strictEqual(version, undefined);
@@ -238,7 +238,7 @@ describe("serializedStateManager", () => {
 		);
 		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
 		assert(snapshotTree);
 		assert.strictEqual(version?.id, "test");

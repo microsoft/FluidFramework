@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 
 import { FieldKey } from "../schema-stored/index.js";
 import * as Delta from "./delta.js";
-import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
-import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex.js";
+import { ProtoNodes } from "./delta.js";
 import {
 	areDetachedNodeIdsEqual,
 	isAttachMark,
@@ -15,7 +15,8 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil.js";
-import { ProtoNodes } from "./delta.js";
+import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
+import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
 
 /**
  * Implementation notes:

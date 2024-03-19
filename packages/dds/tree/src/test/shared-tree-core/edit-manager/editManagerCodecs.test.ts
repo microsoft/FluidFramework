@@ -5,11 +5,11 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
-import { TestChange } from "../../testChange.js";
-import { brand } from "../../../util/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
 	makeEncodingTestSuite,

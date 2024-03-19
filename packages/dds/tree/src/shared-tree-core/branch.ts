@@ -5,24 +5,24 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
+	BranchRebaseResult,
 	ChangeFamily,
 	ChangeFamilyEditor,
-	findAncestor,
-	GraphCommit,
-	mintCommit,
-	tagChange,
-	TaggedChange,
-	rebaseBranch,
-	RevisionTag,
-	findCommonAncestor,
-	makeAnonChange,
-	Revertible,
-	RevertibleStatus,
-	BranchRebaseResult,
-	rebaseChangeOverChanges,
-	tagRollbackInverse,
 	CommitKind,
 	CommitMetadata,
+	GraphCommit,
+	Revertible,
+	RevertibleStatus,
+	RevisionTag,
+	TaggedChange,
+	findAncestor,
+	findCommonAncestor,
+	makeAnonChange,
+	mintCommit,
+	rebaseBranch,
+	rebaseChangeOverChanges,
+	tagChange,
+	tagRollbackInverse,
 } from "../core/index.js";
 import { EventEmitter, ISubscribable } from "../events/index.js";
 import { TransactionStack } from "./transactionStack.js";
@@ -409,11 +409,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const getRevertible = () => {
 			assert(
 				withinEventContext,
-				"cannot get a revertible outside of the context of a commitApplied event",
+				0x902 /* cannot get a revertible outside of the context of a commitApplied event */,
 			);
 			assert(
 				this._revertibleCommits.get(revision) === undefined,
-				"cannot get the revertible more than once",
+				0x903 /* cannot get the revertible more than once */,
 			);
 
 			const revertibleCommits = this._revertibleCommits;
@@ -427,7 +427,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				revert: () => {
 					assert(
 						revertible.status === RevertibleStatus.Valid,
-						"a disposed revertible cannot be reverted",
+						0x904 /* a disposed revertible cannot be reverted */,
 					);
 					this.revertRevertible(revision, data.kind);
 				},
@@ -435,7 +435,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				dispose: () => {
 					assert(
 						revertible.status === RevertibleStatus.Valid,
-						"a disposed revertible cannot be reverted",
+						0x905 /* a disposed revertible cannot be reverted */,
 					);
 					this.disposeRevertible(revertible, revision);
 				},
@@ -542,7 +542,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const newCommits = targetCommits.concat(sourceCommits);
 		if (this.isTransacting()) {
 			const src = targetCommits[0].parent?.revision;
-			const dst = targetCommits.at(-1)?.revision;
+			const dst = targetCommits[targetCommits.length - 1].revision;
 			if (src !== undefined && dst !== undefined) {
 				this.initialTransactionRevToRebasedRev.set(src, dst);
 			}

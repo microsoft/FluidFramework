@@ -4,19 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
-import { v4 as uuid } from "uuid";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
+import { v4 as uuid } from "uuid";
 import {
 	AttachProcessProps,
 	AttachingDataWithBlobs,
-	DetachedDataWithOutstandingBlobs,
-	runRetriableAttachProcess,
-	DetachedDefaultData,
-	AttachmentData,
 	AttachingDataWithoutBlobs,
+	AttachmentData,
+	DetachedDataWithOutstandingBlobs,
+	DetachedDefaultData,
+	runRetriableAttachProcess,
 } from "../attachment.js";
 import { combineAppAndProtocolSummary } from "../utils.js";
 

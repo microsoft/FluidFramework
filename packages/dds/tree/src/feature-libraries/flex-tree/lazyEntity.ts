@@ -5,27 +5,13 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
+	TreeNavigationResult,
 } from "../../core/index.js";
-import { disposeSymbol, IDisposable } from "../../util/index.js";
+import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
-
-/**
- * Like {@link makePropertyNotEnumerable}, but less type safe so it works on private properties.
- */
-export function makePrivatePropertyNotEnumerable(
-	target: object,
-	key: string | symbol | number,
-): void {
-	assert(
-		Object.getOwnPropertyDescriptor(target, key)?.enumerable === true,
-		0x777 /* missing property or not enumerable */,
-	);
-	Object.defineProperty(target, key, { enumerable: false });
-}
 
 export const prepareForEditSymbol = Symbol("prepareForEdit");
 export const isFreedSymbol = Symbol("isFreed");

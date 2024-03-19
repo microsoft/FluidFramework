@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -11,20 +11,24 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"start": "webpack serve --open",
 		"start:server": "tinylicious",
 		"start:test": "webpack serve --config webpack.test.cjs",
@@ -33,7 +37,6 @@
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:watch": "npm run test:jest -- --watch",
-		"tsc": "tsc",
 		"webpack": "webpack --color --no-stats"
 	},
 	"dependencies": {
@@ -75,10 +78,11 @@
 		"react-virtualized-auto-sizer": "^1.0.6"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^1.6.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.1",
@@ -113,7 +117,7 @@
 				],
 				"script": false
 			},
-			"tsc": [
+			"build:esnext": [
 				"...",
 				"@fluid-experimental/property-inspector-table#build:copy-resources"
 			],
@@ -124,7 +128,7 @@
 		},
 		"buildDependencies": {
 			"merge": {
-				"tsc": {
+				"build:esnext": {
 					"@fluid-experimental/property-inspector-table": [
 						"build:webpack"
 					]

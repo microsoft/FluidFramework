@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { EditLog, separateEditAndId } from '../EditLog.js';
-import { EditId } from '../Identifiers.js';
+import { expect } from 'chai';
 import { assertNotUndefined } from '../Common.js';
-import { Edit } from '../persisted-types/index.js';
+import { EditLog, separateEditAndId } from '../EditLog.js';
 import { newEdit } from '../EditUtilities.js';
+import { EditId } from '../Identifiers.js';
+import { Edit } from '../persisted-types/index.js';
 
 type DummyChange = never;
 

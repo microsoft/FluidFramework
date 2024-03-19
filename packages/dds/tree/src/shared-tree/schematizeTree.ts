@@ -7,19 +7,19 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AllowedUpdateType,
 	Compatibility,
-	TreeStoredSchema,
 	ITreeCursorSynchronous,
-	schemaDataIsEmpty,
+	TreeStoredSchema,
 	rootFieldKey,
+	schemaDataIsEmpty,
 } from "../core/index.js";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
-	allowsRepoSuperset,
-	FlexTreeSchema,
 	FlexFieldSchema,
-	ViewSchema,
+	FlexTreeSchema,
 	InsertableFlexField,
+	ViewSchema,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
 	intoStoredSchema,
 	normalizeNewFieldContent,
 } from "../feature-libraries/index.js";

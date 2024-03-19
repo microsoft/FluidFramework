@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions.js";
 import {

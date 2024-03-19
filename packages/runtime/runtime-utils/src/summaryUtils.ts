@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import {
-	bufferToString,
-	fromBase64ToUtf8,
 	IsoBuffer,
 	Uint8ArrayToString,
+	bufferToString,
+	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
-	ITree,
-	SummaryType,
-	ISummaryTree,
-	SummaryObject,
 	ISummaryBlob,
-	TreeEntry,
+	ISummaryTree,
+	ITree,
 	ITreeEntry,
+	SummaryObject,
+	SummaryType,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import {
-	ISummaryStats,
+	IGarbageCollectionData,
 	ISummarizeResult,
+	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 
 /**
  * Combines summary stats by adding their totals together.

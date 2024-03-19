@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedObjectSequence } from "../sharedObjectSequence.js";
 import { SharedObjectSequenceFactory } from "../sequenceFactory.js";
+import { SharedObjectSequence } from "../sharedObjectSequence.js";
 
 function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { v4 as uuid } from "uuid";
 import {
+	IMockContainerRuntimeOptions,
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,
-	IMockContainerRuntimeOptions,
 	MockFluidDataStoreRuntime,
-} from "./mocks";
+} from "./mocks.js";
 
 /**
  * Specialized implementation of MockContainerRuntime for testing ops during reconnection.

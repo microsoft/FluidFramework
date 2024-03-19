@@ -26,7 +26,6 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEnvelope } from '@fluidframework/runtime-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
-import { IEvent as IEvent_2 } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
@@ -103,6 +102,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     protected createDataStoreId(): string;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    deleteChild(dataStoreId: string): void;
     deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[];
     // (undocumented)
     readonly dispose: () => void;
@@ -154,7 +155,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     summarize(fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
-    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     waitIfPendingAlias(maybeAlias: string): Promise<AliasResult>;
@@ -244,8 +244,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     deleteChildSummarizerNode(id: string): void;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
-    // @deprecated (undocumented)
-    deleteUnusedNodes(unusedRoutes: readonly string[]): string[];
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
@@ -343,7 +341,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
-    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -715,7 +712,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
 }
 
 // @internal (undocumented)
-export interface IFluidDataStoreContextEvents extends IEvent_2 {
+export interface IFluidDataStoreContextEvents extends IEvent {
     // (undocumented)
     (event: "attaching" | "attached", listener: () => void): any;
 }

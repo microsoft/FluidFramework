@@ -4,18 +4,18 @@
  */
 
 import {
-	type IContainerRuntimeOptions,
 	type ContainerRuntime,
+	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import {
-	type NamedFluidDataStoreRegistryEntries,
-	type IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
+import {
+	type IFluidDataStoreFactory,
+	type NamedFluidDataStoreRegistryEntries,
+} from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
-import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
