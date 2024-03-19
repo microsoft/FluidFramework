@@ -10,9 +10,9 @@ import {
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotBlob,
 	IWholeFlatSnapshotTreeEntry,
-} from "../contracts";
-import { IR11sResponse } from "../restWrapper";
-import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
+} from "../contracts.js";
+import { IR11sResponse } from "../restWrapper.js";
+import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService.js";
 
 /* Blobs contained within source snapshot tree returned by git manager */
 const summaryBlobs: IWholeFlatSnapshotBlob[] = [
