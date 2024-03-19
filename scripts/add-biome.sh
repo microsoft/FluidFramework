@@ -12,7 +12,11 @@
 
 set -eux -o pipefail
 
-# add biome dependency
+############
+# Add biome
+############
+
+# add biome dependency if needed
 npe "devDependencies.@biomejs/biome" "^1.6.1"
 
 # add biome formatting and check scripts
@@ -20,6 +24,10 @@ npe scripts.format "fluid-build --task format ."
 npe scripts.format:biome "biome check --apply ."
 npe scripts.check:biome "biome check ."
 npe scripts.check:format "fluid-build --task check:format ."
+
+# clean up lint task
+npe scripts.lint "fluid-build . --task lint"
+npe scripts.lint:fix "fluid-build . --task eslint:fix --task format"
 
 # Add local biome config file. Note that the `extends` property should point to the root biome.json file and may need to
 # be updated depending on the project.
@@ -36,5 +44,19 @@ cat << EOF > biome.jsonc
 }
 
 EOF
+
+##################
+# REMOVE PRETTIER
+##################
+
+# remove prettier scripts
+npe scripts.format:prettier --delete
+npe scripts.check:prettier --delete
+npe scripts.prettier --delete
+npe scripts.prettier:fix --delete
+
+# remove prettier dep and config files
+npe devDependencies.prettier --delete
+rm -f .prettierignore prettier.config.cjs
 
 pnpm run format
