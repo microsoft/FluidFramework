@@ -23,13 +23,13 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ICache, InMemoryCache } from "./cache";
-import { ISnapshotTreeVersion } from "./definitions";
-import { GitManager } from "./gitManager";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { RetriableGitManager } from "./retriableGitManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
+import { ICache, InMemoryCache } from "./cache.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { RetriableGitManager } from "./retriableGitManager.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
+import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
 
 const isNode = typeof window === "undefined";
 

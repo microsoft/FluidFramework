@@ -763,6 +763,8 @@ export class DocumentDeltaConnection
 				details: JSON.stringify({
 					...this.getConnectionDetailsProps(),
 				}),
+				// We use this param to clear the joinSession cache if the error happens in connect_document flow.
+				errorFrom: handler,
 			},
 		);
 	}

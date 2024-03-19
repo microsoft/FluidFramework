@@ -5,13 +5,19 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
+	readAndParse,
 } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	IDocumentAttributes,
+	ISnapshotTree,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
@@ -301,3 +307,25 @@ export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) 
 		return running.result;
 	};
 };
+
+export async function getDocumentAttributes(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
+}

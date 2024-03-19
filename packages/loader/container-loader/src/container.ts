@@ -126,6 +126,7 @@ import {
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
 	getProtocolSnapshotTree,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,
@@ -1549,7 +1550,7 @@ export class Container
 			supportGetSnapshotApi,
 		);
 		this._loadedFromVersion = version;
-		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTree,
 		);
@@ -1781,7 +1782,7 @@ export class Container
 				pendingSnapshot.snapshotBlobs,
 			);
 		this.storageAdapter.loadSnapshotFromSnapshotBlobs(pendingSnapshot.snapshotBlobs);
-		const attributes = await this.getDocumentAttributes(
+		const attributes = this.getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,
 		);
@@ -1811,28 +1812,6 @@ export class Container
 		);
 
 		this.setLoaded();
-	}
-
-	private async getDocumentAttributes(
-		storage: IDocumentStorageService,
-		tree: ISnapshotTree | undefined,
-	): Promise<IDocumentAttributes> {
-		if (tree === undefined) {
-			return {
-				minimumSequenceNumber: 0,
-				sequenceNumber: 0,
-			};
-		}
-
-		// Backward compatibility: old docs would have ".attributes" instead of "attributes"
-		const attributesHash =
-			".protocol" in tree.trees
-				? tree.trees[".protocol"].blobs.attributes
-				: tree.blobs[".attributes"];
-
-		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-		return attributes;
 	}
 
 	private async initializeProtocolStateFromSnapshot(

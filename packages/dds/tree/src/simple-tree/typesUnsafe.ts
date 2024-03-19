@@ -113,12 +113,11 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T exte
  * @beta
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
-	extends TreeNode,
-		TreeArrayNodeBase<
-			TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
-			InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
-			TreeArrayNode
-		> {}
+	extends TreeArrayNodeBase<
+		TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
+		InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
+		TreeArrayNode
+	> {}
 
 /**
  * {@link Unenforced} version of {@link TreeMapNode}.
