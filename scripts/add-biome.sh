@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# This script adds biome to a project. By itself, none of the changes made by this script will take effect in the build.
-# In order to completely switch away from prettier and to biome, the `rm-prettier.sh` script should be run after this
-# one.
+# This script adds biome to a project. It also removes prettier from the project and updatesvarious scripts to use biome
+# and/or remove prettier. It also adds a local biome config file to the project.
 #
 # THIS SCRIPT DOES NOT RUN ON WINDOWS.
 #
