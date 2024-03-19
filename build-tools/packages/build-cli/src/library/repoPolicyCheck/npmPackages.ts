@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import * as child_process from "child_process";
-import fs from "fs";
-import { EOL as newline } from "os";
-import path from "path";
-import * as readline from "readline";
+import * as child_process from "node:child_process";
+import fs from "node:fs";
+import { EOL as newline } from "node:os";
+import path from "node:path";
+import * as readline from "node:readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import { loadFluidBuildConfig } from "../../common/fluidUtils";
-import { Handler, readFile, writeFile } from "../common";
-import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
+import {
+	PackageJson,
+	updatePackageJsonFile,
+	loadFluidBuildConfig,
+	PackageNamePolicyConfig,
+	ScriptRequirement,
+} from "@fluidframework/build-tools";
+import { Handler, readFile, writeFile } from "./common";
 
 const licenseId = "MIT";
 const author = "Microsoft and contributors";
@@ -249,7 +253,7 @@ export const feeds = [
 	"internal-test",
 
 	/**
-	 * Contains packages private to the FluidFramework repository (@fluid-private packages). These should only be
+	 * Contains packages private to the FluidFramework repository (\@fluid-private packages). These should only be
 	 * referenced as devDependencies by other packages in FluidFramework and its pipelines.
 	 */
 	"internal-dev",
@@ -267,7 +271,7 @@ export function isFeed(str: string | undefined): str is Feed {
 	if (str === undefined) {
 		return false;
 	}
-	return feeds.includes(str as any);
+	return (feeds as readonly string[]).includes(str);
 }
 
 /**
@@ -283,6 +287,7 @@ export function packagePublishesToFeed(
 	const publishInternalBuild =
 		publishPublic || packageMustPublishToInternalFeedOnly(name, config);
 
+	// eslint-disable-next-line default-case
 	switch (feed) {
 		case "public": {
 			return publishPublic;
@@ -339,12 +344,13 @@ function getReadmeInfo(dir: string): IReadmeInfo {
 	};
 }
 
-function ensurePrivatePackagesComputed(): void {
-	if (privatePackages) {
-		return;
+let computedPrivatePackages: Set<string> | undefined;
+function ensurePrivatePackagesComputed(): Set<string> {
+	if (computedPrivatePackages) {
+		return computedPrivatePackages;
 	}
 
-	privatePackages = new Set();
+	const newPrivatePackages = new Set<string>();
 	const pathToGitRoot = child_process
 		.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
 		.trim();
@@ -363,12 +369,16 @@ function ensurePrivatePackagesComputed(): void {
 	lineReader.on("line", (line) => {
 		const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
 		if (fs.existsSync(filePath)) {
-			const packageJson = JSON.parse(readFile(filePath));
+			const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (packageJson.private) {
-				privatePackages.add(packageJson.name);
+				newPrivatePackages.add(packageJson.name);
 			}
 		}
 	});
+
+	computedPrivatePackages = newPrivatePackages;
+	return computedPrivatePackages;
 }
 
 interface ParsedArg {
@@ -385,7 +395,7 @@ interface ParsedArg {
  * @param commandLine - complete command line as a simple string
  * @param onlyDoubleQuotes - only consider double quotes for grouping
  * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
- *  and `original` corresponding strings.
+ * and `original` corresponding strings.
  */
 function parseArgs(
 	commandLine: string,
@@ -393,11 +403,11 @@ function parseArgs(
 ): ParsedArg[] {
 	const regexArg = onlyDoubleQuotes
 		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
-		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
+		: /(?<!\S)(?:[^\s"'\\]|\\\S)*(?:(["']).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"'\\]|\\\S)*|$))*(?!\S)/g;
 	const regexQuotedSegment = onlyDoubleQuotes
 		? /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(")(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g
-		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(['"])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
-	const regexEscapedCharacters = onlyDoubleQuotes ? /\\([\\"])/g : /\\([\\'"])/g;
+		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(["'])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
+	const regexEscapedCharacters = onlyDoubleQuotes ? /\\(["\\])/g : /\\(["'\\])/g;
 	return [...commandLine.matchAll(regexArg)].map((matches) => ({
 		arg: matches[0].replace(regexQuotedSegment, "$2").replace(regexEscapedCharacters, "$1"),
 		original: matches[0],
@@ -414,7 +424,7 @@ function parseArgs(
 function quoteAndEscapeArgsForUniversalCommandLine(
 	resolvedArg: string,
 	{ forceQuote }: { forceQuote?: boolean } = {},
-) {
+): string {
 	// Unix shells provide feature where arguments that can be resolved as globs
 	// are expanded before passed to new process. Detect those and group them
 	// to ensure consistent arg passing. (Grouping disables glob expansion.)
@@ -424,7 +434,8 @@ function quoteAndEscapeArgsForUniversalCommandLine(
 	// escaped with \ and \ itself must therefore be escaped.
 	// Unix shells also use single quotes for grouping. Rather than escape those,
 	// which Windows command shell would not unescape, those args must be grouped.
-	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
+	const escapedArg = resolvedArg.replace(/(["\\])/g, "\\$1");
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
 	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
 }
@@ -436,34 +447,34 @@ function quoteAndEscapeArgsForUniversalCommandLine(
  * @param parsedArg - one result from parseArgs
  * @returns preferred string to use within a command script string
  */
-function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) {
+function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg): string {
 	// Check for exactly `&&` or `|`.
 	if (arg === "&&" || arg === "|") {
 		// Use quoting if original had any quoting.
-		return arg !== original ? `"${arg}"` : arg;
+		return arg === original ? arg : `"${arg}"`;
 	}
 
 	// Check for unquoted start of `&&` or `|`.
-	if (!/^['"]/.test(original)) {
+	if (!/^["']/.test(original)) {
 		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
 		if (specialStart) {
 			// Separate the `&&` or `|` from remainder that will be its own arg.
 			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
 				arg: specialStart[2],
-				original: original.substring(specialStart[1].length),
+				original: original.slice(specialStart[1].length),
 			});
 			return `${specialStart[1]} ${remainder}`;
 		}
 	}
 
 	// Check for unquoted tail `|`.
-	if (!/['"]$/.test(original)) {
+	if (!/["']$/.test(original)) {
 		const specialEnd = /^(.+)\|$/.exec(arg);
 		if (specialEnd) {
 			// Separate the `|` from prior that will be its own arg.
 			const prior = quoteAndEscapeArgsForUniversalScriptLine({
 				arg: specialEnd[1],
-				original: original.substring(0, original.length - 1),
+				original: original.slice(0, Math.max(0, original.length - 1)),
 			});
 			return `${prior} |`;
 		}
@@ -472,7 +483,7 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) 
 	// Among the special characters `>`, `|`, `;`, and `&`, check for `&` at
 	// start, pipe (with anything else), or `;`. Some common `&` uses like `2>&1`
 	// should also remain unquoted.
-	const forceQuote = /^&|[|;]/.test(arg);
+	const forceQuote = /^&|[;|]/.test(arg);
 
 	return quoteAndEscapeArgsForUniversalCommandLine(arg, { forceQuote });
 }
@@ -483,10 +494,13 @@ function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) 
  * @param scriptLine - unparsed script line
  * @returns preferred command line
  */
-function getPreferredScriptLine(scriptLine: string) {
-	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
-		.map(quoteAndEscapeArgsForUniversalScriptLine)
-		.join(" ");
+function getPreferredScriptLine(scriptLine: string): string {
+	return (
+		parseArgs(scriptLine, { onlyDoubleQuotes: false })
+			// eslint-disable-next-line unicorn/no-array-callback-reference
+			.map(quoteAndEscapeArgsForUniversalScriptLine)
+			.join(" ")
+	);
 }
 
 /**
@@ -496,24 +510,22 @@ function isDefined<T>(v: T | undefined): v is T {
 	return v !== undefined;
 }
 
-let privatePackages: Set<string>;
-
 const match = /(^|\/)package\.json/i;
 export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const ret: string[] = [];
 
-			if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
+			if (JSON.stringify(sortPackageJson(json)) !== JSON.stringify(json)) {
 				ret.push(`package.json not sorted`);
 			}
 
@@ -525,6 +537,7 @@ export const handlers: Handler[] = [
 				ret.push(`license: "${json.license}" !== "${licenseId}"`);
 			}
 
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (!json.repository) {
 				ret.push(`repository field missing`);
 			} else if (typeof json.repository === "string") {
@@ -533,6 +546,7 @@ export const handlers: Handler[] = [
 				ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
 			}
 
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (!json.private && !json.description) {
 				ret.push("description: must not be empty");
 			}
@@ -543,13 +557,14 @@ export const handlers: Handler[] = [
 
 			if (ret.length > 1) {
 				return `${ret.join(newline)}`;
-			} else if (ret.length === 1) {
+			}
+			if (ret.length === 1) {
 				return ret[0];
 			}
 
 			return undefined;
 		},
-		resolver: (file, root) => {
+		resolver: (file: string, root: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
@@ -573,12 +588,12 @@ export const handlers: Handler[] = [
 		// If you'd like to introduce a new package scope or a new unscoped package, please discuss it first.
 		name: "npm-strange-package-name",
 		match,
-		handler: async (file, root) => {
-			let json: { name: string };
+		handler: async (file: string, root: string): Promise<string | undefined> => {
+			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			// "root" is the package name for monorepo roots, so ignore them
@@ -586,9 +601,8 @@ export const handlers: Handler[] = [
 				const matched = json.name.match(/^(@.+)\//);
 				if (matched !== null) {
 					return `Scope ${matched[1]} is an unexpected Fluid scope`;
-				} else {
-					return `Package ${json.name} is an unexpected unscoped package`;
 				}
+				return `Package ${json.name} is an unexpected unscoped package`;
 			}
 		},
 	},
@@ -597,17 +611,18 @@ export const handlers: Handler[] = [
 		// Also verify that non-private packages don't take dependencies on private packages.
 		name: "npm-private-packages",
 		match,
-		handler: async (file, root) => {
-			let json: { name: string; private?: boolean; dependencies: Record<string, string> };
+		handler: async (file: string, root: string): Promise<string | undefined> => {
+			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			ensurePrivatePackagesComputed();
+			const privatePackages = ensurePrivatePackagesComputed();
 			const errors: string[] = [];
 
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (json.private && packageMustNotBePrivate(json.name, root)) {
 				errors.push(`Package ${json.name} must not be marked private`);
 			}
@@ -634,12 +649,12 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-readmes",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const packageName = json.name;
@@ -648,26 +663,25 @@ export const handlers: Handler[] = [
 
 			if (!readmeInfo.exists) {
 				return `Package directory ${packageDir} contains no README.md`;
-			} else if (readmeInfo.title !== packageName) {
+			}
+			if (readmeInfo.title !== packageName) {
 				// These packages don't follow the convention of starting the readme with "# PackageName"
-				const skip = ["root", "fluid-docs"].some((skipMe) => packageName === skipMe);
+				const skip = ["root", "fluid-docs"].includes(packageName);
 				if (!skip) {
 					return `Readme in package directory ${packageDir} should begin with heading "${json.name}"`;
 				}
 			}
 
-			if (fs.existsSync(path.join(packageDir, "Dockerfile"))) {
-				if (!readmeInfo.trademark) {
-					return `Readme in package directory ${packageDir} with Dockerfile should contain with trademark verbiage`;
-				}
+			if (fs.existsSync(path.join(packageDir, "Dockerfile")) && !readmeInfo.trademark) {
+				return `Readme in package directory ${packageDir} with Dockerfile should contain with trademark verbiage`;
 			}
 		},
-		resolver: (file) => {
+		resolver: (file: string): { resolved: boolean; message?: string } => {
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return { resolved: false, message: `Error parsing JSON file: ${file}` };
 			}
 
 			const packageName = json.name;
@@ -687,7 +701,7 @@ export const handlers: Handler[] = [
 			const fixTrademark =
 				!readmeInfo.trademark && !readmeInfo.readme.includes("## Trademark");
 			if (fixTrademark) {
-				const existingNewLine = readmeInfo.readme[readmeInfo.readme.length - 1] === "\n";
+				const existingNewLine = readmeInfo.readme.endsWith("\n");
 				writeFile(
 					readmeInfo.filePath,
 					`${readmeInfo.readme}${existingNewLine ? "" : newline}${trademark}`,
@@ -707,12 +721,12 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-folder-name",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const packageName = json.name;
@@ -725,7 +739,7 @@ export const handlers: Handler[] = [
 			// Full match isn't required for cases where the package name is prefixed with names from earlier in the path
 			if (!nameWithoutScope.toLowerCase().endsWith(folderName.toLowerCase())) {
 				// These packages don't follow the convention of the dir matching the tail of the package name
-				const skip = ["root"].some((skipMe) => packageName === skipMe);
+				const skip = ["root"].includes(packageName);
 				if (!skip) {
 					return `Containing folder ${folderName} for package ${packageName} should be named similarly to the package`;
 				}
@@ -735,14 +749,15 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-license",
 		match,
-		handler: async (file, root) => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (json.private) {
 				return;
 			}
@@ -762,7 +777,7 @@ export const handlers: Handler[] = [
 				return `LICENSE file in ${packageDir} doesn't match ${rootLicensePath}`;
 			}
 		},
-		resolver: (file, root) => {
+		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
 			const packageDir = path.dirname(file);
 			const licensePath = path.join(packageDir, "LICENSE");
 			const rootLicensePath = path.join(root, "LICENSE");
@@ -780,13 +795,13 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-prettier",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -802,21 +817,20 @@ export const handlers: Handler[] = [
 					"prettier:fix",
 				);
 				const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
-				const isLernaFormat = json["scripts"]["format"]?.includes("lerna");
+				const isLernaFormat = json.scripts.format?.includes("lerna");
 
-				if (!isLernaFormat) {
-					if (hasPrettierScript || hasPrettierFixScript || hasFormatScript) {
-						if (!hasPrettierScript) {
-							missingScripts.push(`prettier`);
-						}
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				if (!isLernaFormat && (hasPrettierScript || hasPrettierFixScript || hasFormatScript)) {
+					if (!hasPrettierScript) {
+						missingScripts.push(`prettier`);
+					}
 
-						if (!hasPrettierFixScript) {
-							missingScripts.push(`prettier:fix`);
-						}
+					if (!hasPrettierFixScript) {
+						missingScripts.push(`prettier:fix`);
+					}
 
-						if (!hasFormatScript) {
-							missingScripts.push(`format`);
-						}
+					if (!hasFormatScript) {
+						missingScripts.push(`format`);
 					}
 				}
 			}
@@ -825,7 +839,7 @@ export const handlers: Handler[] = [
 				? `${file} is missing the following scripts: ${missingScripts.join("\n\t")}`
 				: undefined;
 		},
-		resolver: (file) => {
+		resolver: (file: string): { resolved: boolean; message?: string } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 
@@ -854,14 +868,14 @@ export const handlers: Handler[] = [
 						const prettierScript = json.scripts?.prettier?.includes("--ignore-path");
 						const prettierFixScript =
 							json.scripts?.["prettier:fix"]?.includes("--ignore-path");
-
+						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 						if (json.scripts !== undefined && !formatScript) {
 							json.scripts.format = "npm run prettier:fix";
-
+							// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 							if (!prettierScript) {
 								json.scripts.prettier = "prettier --check .";
 							}
-
+							// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 							if (!prettierFixScript) {
 								json.scripts["prettier:fix"] = "prettier --write .";
 							}
@@ -876,13 +890,13 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-clean",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -905,7 +919,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-dep",
 		match,
-		handler: async (file, root) => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const manifest = loadFluidBuildConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
@@ -915,9 +929,9 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -926,12 +940,14 @@ export const handlers: Handler[] = [
 			if (hasScriptsField) {
 				const commands = new Set(
 					Object.values(json.scripts)
+						// eslint-disable-next-line unicorn/no-array-callback-reference
 						.filter(isDefined)
 						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
 					const dep = commandDep.get(command);
 					if (
+						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 						dep &&
 						json.dependencies?.[dep] === undefined &&
 						json.devDependencies?.[dep] === undefined
@@ -951,13 +967,13 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-scripts-args",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
@@ -979,14 +995,15 @@ export const handlers: Handler[] = [
 				  )}`
 				: undefined;
 		},
-		resolver: (file) => {
+		resolver: (file: string): { resolved: boolean; message?: string } => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				Object.entries(json.scripts).forEach(([scriptName, scriptContent]) => {
+				for (const [scriptName, scriptContent] of Object.entries(json.scripts)) {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (scriptContent) {
 						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
 					}
-				});
+				}
 			});
 
 			return result;
@@ -995,20 +1012,20 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			const packageDir = path.dirname(file);
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (
 				scripts !== undefined &&
 				Object.keys(scripts).some((name) => name.startsWith("test"))
@@ -1032,34 +1049,35 @@ export const handlers: Handler[] = [
 			const dep = ["mocha", "@types/mocha", "jest", "@types/jest"];
 			if (
 				(json.dependencies &&
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					Object.keys(json.dependencies).some((name) => dep.includes(name))) ||
 				(json.devDependencies &&
 					Object.keys(json.devDependencies).some((name) => dep.includes(name)))
 			) {
-				return `Package has one of "${dep.join()}" dependency but no test scripts`;
+				return `Package has one of "${dep.join(",")}" dependency but no test scripts`;
 			}
 		},
 	},
 	{
 		name: "npm-package-json-test-scripts-split",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const testScript = scripts["test"];
+			const testScript = scripts.test;
 
 			const splitTestScriptNames = ["test:mocha", "test:jest", "test:realsvc"];
 
@@ -1091,20 +1109,20 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-mocha-config",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const mochaScriptName = scripts["test:mocha"] !== undefined ? "test:mocha" : "test";
+			const mochaScriptName = scripts["test:mocha"] === undefined ? "test" : "test:mocha";
 			const mochaScript = scripts[mochaScriptName];
 
 			if (mochaScript === undefined || !mochaScript.startsWith("mocha")) {
@@ -1118,10 +1136,8 @@ export const handlers: Handler[] = [
 				fs.existsSync(path.join(packageDir, name)),
 			);
 
-			if (mochaRcName === undefined) {
-				if (!mochaScript.includes(" --config ")) {
-					return "Missing config arguments";
-				}
+			if (mochaRcName === undefined && !mochaScript.includes(" --config ")) {
+				return "Missing config arguments";
 			}
 		},
 	},
@@ -1129,21 +1145,21 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-jest-config",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
-			const jestScriptName = scripts["test:jest"] !== undefined ? "test:jest" : "test";
+			const jestScriptName = scripts["test:jest"] === undefined ? "test" : "test:jest";
 			const jestScript = scripts[jestScriptName];
 
 			if (jestScript === undefined || !jestScript.startsWith("jest")) {
@@ -1160,8 +1176,8 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
-			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			const config = require(path.resolve(jestConfigFile));
+			// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports, unicorn/prefer-module
+			const config = require(path.resolve(jestConfigFile)) as { reporters?: unknown };
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
 			}
@@ -1181,7 +1197,8 @@ export const handlers: Handler[] = [
 				return `Unexpected reporters in '${jestConfigFile}'`;
 			}
 
-			if (json["jest-junit"] !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			if ((json as any)["jest-junit"] !== undefined) {
 				return `Extraneous jest-unit config in ${file}`;
 			}
 		},
@@ -1189,7 +1206,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-esm",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces that we have a type (or legacy module) field in the package iff
 			// we have an ESM build.
 			// Note that setting for type is not checked. Presence of the field indicates that
@@ -1198,12 +1215,12 @@ export const handlers: Handler[] = [
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
@@ -1218,34 +1235,33 @@ export const handlers: Handler[] = [
 				if (json.type === undefined && !hasModuleOutput) {
 					return "Missing 'type' (or legacy 'module') field in package.json for ESM build";
 				}
-			} else {
+			} else if (hasModuleOutput && json.main !== json.module) {
 				// If we don't have a separate esnext build, it's still ok to have the "module"
 				// field if it is the same as "main"
-				if (hasModuleOutput && json.main !== json.module) {
-					return "Missing ESM build script while package.json has 'module' field";
-				}
+				return "Missing ESM build script while package.json has 'module' field";
 			}
 		},
 	},
 	{
 		name: "npm-package-json-clean-script",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces the "clean" script will delete all the build and test output
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
-			const scripts = json.scripts;
+			const { scripts } = json;
 			if (scripts === undefined) {
 				return undefined;
 			}
 
 			const cleanScript = scripts.clean;
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
 				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
@@ -1260,23 +1276,22 @@ export const handlers: Handler[] = [
 
 			const missing = missingCleanDirectories(scripts);
 
-			if (missing.length !== 0) {
+			if (missing.length > 0) {
 				return `'clean' script missing the following:${missing
 					.map((i) => `\n\t${i}`)
 					.join("")}`;
 			}
 
-			if (cleanScript) {
-				if (cleanScript !== getPreferredScriptLine(cleanScript)) {
-					return "'clean' script should double quote the globs and only the globs";
-				}
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			if (cleanScript && cleanScript !== getPreferredScriptLine(cleanScript)) {
+				return "'clean' script should double quote the globs and only the globs";
 			}
 		},
-		resolver: (file) => {
+		resolver: (file: string): { resolved: boolean; message?: string } => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
-				let clean: string = json.scripts["clean"] ?? "rimraf --glob";
+				let clean: string = json.scripts.clean ?? "rimraf --glob";
 				if (!clean.startsWith("rimraf --glob")) {
 					result.resolved = false;
 					result.message =
@@ -1287,7 +1302,7 @@ export const handlers: Handler[] = [
 					clean += ` ${missing.join(" ")}`;
 				}
 				// clean up for grouping
-				json.scripts["clean"] = getPreferredScriptLine(clean);
+				json.scripts.clean = getPreferredScriptLine(clean);
 			});
 
 			return result;
@@ -1296,14 +1311,14 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-types-field",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			// This rule enforces each package has a types field in its package.json
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (
@@ -1327,13 +1342,13 @@ export const handlers: Handler[] = [
 		// exports["."] field match the ones in the main/module/types fields.
 		name: "npm-package-exports-field",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			let json: PackageJson;
 
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (!shouldCheckExportsField(json)) {
@@ -1345,7 +1360,8 @@ export const handlers: Handler[] = [
 				return "Missing 'exports' field in package.json.";
 			}
 
-			const exportsRoot = exportsField?.["."];
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			const exportsRoot = (exportsField as any)?.["."];
 			if (exportsRoot === undefined) {
 				return "Missing '.' entry in 'exports' field in package.json.";
 			}
@@ -1359,9 +1375,11 @@ export const handlers: Handler[] = [
 
 			// CJS- and ESM-only packages should use default, not import or require.
 			const defaultField =
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				exportsRoot?.default?.default === undefined
 					? undefined
-					: normalizePathField(exportsRoot?.default?.default);
+					: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+					  normalizePathField(exportsRoot?.default?.default);
 
 			// CJS-only packages should use default, not import or require.
 			if (isCJSOnly) {
@@ -1382,9 +1400,11 @@ export const handlers: Handler[] = [
 			if (!isESMOnly && !isCJSOnly) {
 				// ESM exports in import field
 				const importField =
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					exportsRoot?.import?.default === undefined
 						? undefined
-						: normalizePathField(exportsRoot?.import?.default);
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+						  normalizePathField(exportsRoot?.import?.default);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const moduleField = normalizePathField(json.module!);
 				if (importField !== moduleField) {
@@ -1393,16 +1413,18 @@ export const handlers: Handler[] = [
 
 				// CJS exports in require field
 				const requireField =
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					exportsRoot?.require?.default === undefined
 						? undefined
-						: normalizePathField(exportsRoot?.require?.default);
+						: // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+						  normalizePathField(exportsRoot?.require?.default);
 				const mainField = normalizePathField(json.main);
 				if (requireField !== mainField) {
 					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
 				}
 			}
 		},
-		resolver: (file) => {
+		resolver: (file: string): { resolved: boolean; message?: string } => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (shouldCheckExportsField(json)) {
@@ -1425,14 +1447,18 @@ export const handlers: Handler[] = [
 		 */
 		name: "npm-public-package-requirements",
 		match,
-		handler: async (packageJsonFilePath, rootDirectoryPath) => {
+		handler: async (
+			packageJsonFilePath: string,
+			rootDirectoryPath: string,
+		): Promise<string | undefined> => {
 			let packageJson: PackageJson;
 			try {
-				packageJson = JSON.parse(readFile(packageJsonFilePath));
-			} catch (err) {
-				return "Error parsing JSON file: " + packageJsonFilePath;
+				packageJson = JSON.parse(readFile(packageJsonFilePath)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${packageJsonFilePath}`;
 			}
 
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (packageJson.private) {
 				// If the package is private, we have nothing to validate.
 				return;
@@ -1484,7 +1510,10 @@ export const handlers: Handler[] = [
 				);
 			}
 		},
-		resolver: (packageJsonFilePath, rootDirectoryPath) => {
+		resolver: (
+			packageJsonFilePath: string,
+			rootDirectoryPath: string,
+		): { resolved: boolean; message?: string } => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
 				// If the package is private, there is nothing to fix.
@@ -1520,6 +1549,7 @@ export const handlers: Handler[] = [
 					}
 
 					// Applies script corrections as needed for all script requirements
+					// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
 					requirements.requiredScripts.forEach(applyScriptCorrection);
 				}
 
@@ -1543,10 +1573,10 @@ export const handlers: Handler[] = [
 	},
 ];
 
-function missingCleanDirectories(scripts: any) {
+function missingCleanDirectories(scripts: { [key: string]: string | undefined }): string[] {
 	const expectedClean: string[] = [];
 
-	if (scripts["tsc"]) {
+	if (scripts.tsc !== undefined) {
 		expectedClean.push("dist");
 	}
 
@@ -1558,24 +1588,26 @@ function missingCleanDirectories(scripts: any) {
 		expectedClean.push("lib");
 	}
 
-	if (scripts["build"]?.startsWith("fluid-build")) {
-		expectedClean.push("*.tsbuildinfo");
-		expectedClean.push("*.build.log");
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+	if (scripts.build?.startsWith("fluid-build")) {
+		expectedClean.push("*.tsbuildinfo", "*.build.log");
 	}
 
-	if (scripts["build:docs"]) {
+	if (scripts["build:docs"] !== undefined) {
 		expectedClean.push("_api-extractor-temp");
 	}
 
-	if (scripts["test"] && !scripts["test"].startsWith("echo")) {
+	if (scripts.test !== undefined && !scripts.test.startsWith("echo")) {
 		expectedClean.push("nyc");
 	}
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));
 }
 
 /**
  * Generates an 'exports' field for a package based on the value of other fields in package.json.
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function generateExportsField(json: PackageJson) {
 	if (json.types === undefined && json.typings === undefined) {
 		throw new Error(
@@ -1595,7 +1627,7 @@ function generateExportsField(json: PackageJson) {
 	const isESMOnly = json.type === "module";
 
 	if (isESMOnly) {
-		const exports = {
+		return {
 			".": {
 				default: {
 					// Assume the types field is the ESM types since this is an ESM-only package.
@@ -1604,13 +1636,12 @@ function generateExportsField(json: PackageJson) {
 				},
 			},
 		};
-		return exports;
 	}
 
 	if (isCJSOnly) {
 		// This logic is the same as the ESM-only case, but it's separate intentionally to make it easier to refactor
 		// as we learn more about what our exports field should look like for different package types.
-		const exports = {
+		return {
 			".": {
 				default: {
 					types: cjsTypes,
@@ -1618,7 +1649,6 @@ function generateExportsField(json: PackageJson) {
 				},
 			},
 		};
-		return exports;
 	}
 
 	// Package has both CJS and ESM
@@ -1670,7 +1700,7 @@ function shouldCheckExportsField(json: PackageJson): boolean {
  *
  * Does not work with absolute paths.
  */
-function normalizePathField(pathIn: string) {
+function normalizePathField(pathIn: string): string {
 	if (pathIn === "" || pathIn === undefined) {
 		throw new Error(`Invalid path!`);
 	}

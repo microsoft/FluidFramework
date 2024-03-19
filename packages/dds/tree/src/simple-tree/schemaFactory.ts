@@ -27,7 +27,7 @@ import {
 	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
-	getClassSchema,
+	getSimpleSchema,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
@@ -40,8 +40,6 @@ import {
 	ImplicitFieldSchema,
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	InsertableTypedNode,
-	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
 	TreeMapNode,
@@ -311,7 +309,7 @@ export class SchemaFactory<
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
-						getClassSchema(input.schema) === this.constructor,
+						getSimpleSchema(input.schema) === this.constructor,
 						0x83b /* building node with wrong schema */,
 					);
 				}
@@ -743,24 +741,6 @@ export class SchemaFactory<
 	 * @deprecated Use special `recursive` versions of builders instead of relying on this.
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
-}
-
-// TODO: unify this with logic in getOrCreateNodeProxy
-export function createTree<T extends TreeNodeSchema>(
-	schema: T,
-	data: InsertableTypedNode<T> | FlexTreeNode,
-): NodeFromSchema<T> {
-	if (typeof schema === "function") {
-		return new (schema as TreeNodeSchemaClass<
-			any,
-			any,
-			any,
-			InsertableTypedNode<T> | FlexTreeNode
-		>)(data) as NodeFromSchema<T>;
-	}
-	return (
-		schema as TreeNodeSchemaNonClass<any, any, any, InsertableTypedNode<T> | FlexTreeNode>
-	).create(data) as NodeFromSchema<T>;
 }
 
 export function structuralName<const T extends string>(

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Handler } from "../common";
+import { type Handler } from "./common";
 import { handler as assertShortCodeHandler } from "./assertShortCode";
 import { handlers as copyrightFileHeaderHandlers } from "./copyrightFileHeader";
 import { handler as dockerfilePackageHandler } from "./dockerfilePackages";
 import { handler as fluidCaseHandler } from "./fluidCase";
-import { handlers as lockfilesHandlers } from "./lockfiles";
+import { handlers as lockfileHandlers } from "./lockfiles";
 import { handler as noJsFileHandler } from "./noJsFiles";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages";
 import { handlers as pnpmHandlers } from "./pnpm";
@@ -22,9 +22,11 @@ export const policyHandlers: Handler[] = [
 	...npmPackageContentsHandlers,
 	dockerfilePackageHandler,
 	fluidCaseHandler,
-	...lockfilesHandlers,
+	...lockfileHandlers,
 	assertShortCodeHandler,
 	...pnpmHandlers,
 	...fluidBuildTasks,
 	noJsFileHandler,
 ];
+
+export { type Handler } from "./common";
