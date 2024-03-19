@@ -5,22 +5,23 @@
 
 import * as path from "path";
 import chalk from "chalk";
+import registerDebug from "debug";
 import { FluidRepo, IFluidBuildConfig } from "../common/fluidRepo";
 import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
 import {
+	ExecAsyncResult,
 	existsSync,
 	globFn,
 	isSameFileOrDir,
 	lookUpDirSync,
-	ExecAsyncResult,
 } from "../common/utils";
 import { BuildGraph } from "./buildGraph";
 import { NpmDepChecker } from "./npmDepChecker";
 import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
-import registerDebug from "debug";
+
 const traceInit = registerDebug("fluid-build:init");
 
 const { log } = defaultLogger;

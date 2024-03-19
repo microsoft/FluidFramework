@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
-import { strict as assert } from "node:assert";
 
 import { BaseCommand } from "../../base";
 import {

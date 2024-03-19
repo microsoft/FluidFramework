@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { lookUpDirSync, readFileAsync } from "./utils";
+import { readdir } from "node:fs/promises";
+import * as path from "path";
+
 import type { PackageJson } from "./npmPackage";
+import { lookUpDirSync, readFileAsync } from "./utils";
 
 export function getEsLintConfigFilePath(dir: string) {
 	// TODO: we currently don't support .yaml and .yml, or config in package.json

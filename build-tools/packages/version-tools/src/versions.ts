@@ -6,12 +6,12 @@
 import child_process from "node:child_process";
 import * as semver from "semver";
 
-import { detectVersionScheme, getLatestReleaseFromList } from "./schemes";
 import {
 	changePreReleaseIdentifier,
 	fromInternalScheme,
 	isInternalVersionScheme,
 } from "./internalVersionScheme";
+import { detectVersionScheme, getLatestReleaseFromList } from "./schemes";
 
 // TODO: Replace this with a shared release group type.
 type TagPrefix = string | "client" | "server" | "azure" | "build-tools";

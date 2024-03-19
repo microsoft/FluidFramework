@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { FileSystem as fs } from "@rushstack/node-core-library";
 import { from as createStateMachine } from "jssm";
-import path from "node:path";
 
 // eslint-disable-next-line unicorn/prefer-module
 const machineDefinitionFile = path.join(__dirname, "FluidRelease.fsl");

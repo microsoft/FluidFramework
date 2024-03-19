@@ -3,11 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import {
+	VersionBumpType,
+	VersionScheme,
+	isVersionBumpType,
+	isVersionBumpTypeExtended,
+	isVersionScheme,
+} from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
 // eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "./library";
+import { DependencyUpdateType, MonoRepoKind } from "./library";
+import { ReleaseGroup, isReleaseGroup } from "./releaseGroups";
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
@@ -20,17 +28,6 @@ function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 		yield flag;
 	}
 }
-
-import {
-	isVersionBumpType,
-	isVersionBumpTypeExtended,
-	isVersionScheme,
-	VersionBumpType,
-	VersionScheme,
-} from "@fluid-tools/version-tools";
-
-import { DependencyUpdateType } from "./library";
-import { isReleaseGroup, ReleaseGroup } from "./releaseGroups";
 
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.

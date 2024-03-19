@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type * as tsTypes from "typescript";
 import path from "path";
+import type * as tsTypes from "typescript";
+
 import { defaultLogger } from "./logging.js";
 import { getTscUtils, normalizeSlashes } from "./tscUtils.js";
 

@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Package } from "@fluidframework/build-tools";
 import { strict as assert } from "node:assert";
+import { Package } from "@fluidframework/build-tools";
+
 import { PackageCommand } from "../BasePackageCommand";
 import { PackageWithKind } from "../filter";
 

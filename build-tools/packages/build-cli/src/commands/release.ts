@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 import { Config } from "@oclif/core";
 import chalk from "chalk";
-import { strict as assert } from "node:assert";
 
 import { findPackageOrReleaseGroup } from "../args";
 import {
@@ -22,11 +22,11 @@ import {
 	StateHandler,
 } from "../handlers";
 import { PromptWriter } from "../instructionalPromptWriter";
+// eslint-disable-next-line import/no-deprecated
+import { MonoRepoKind } from "../library";
 import { FluidReleaseMachine } from "../machines";
 import { getRunPolicyCheckDefault } from "../repoConfig";
 import { StateMachineCommand } from "../stateMachineCommand";
-// eslint-disable-next-line import/no-deprecated
-import { MonoRepoKind } from "../library";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,

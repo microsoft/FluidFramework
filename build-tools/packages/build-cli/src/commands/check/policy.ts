@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
 import * as fs from "node:fs";
-import * as path from "node:path";
-import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
-
+import * as path from "node:path";
 import { loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import { readJson } from "fs-extra";
 
 import { BaseCommand } from "../../base";
-import { Context, Repository, Handler, policyHandlers } from "../../library";
+import { Context, Handler, Repository, policyHandlers } from "../../library";
 
 type policyAction = "handle" | "resolve" | "final";
 

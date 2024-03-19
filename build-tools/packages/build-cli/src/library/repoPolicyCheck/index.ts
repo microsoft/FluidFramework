@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { type Handler } from "./common";
 import { handler as assertShortCodeHandler } from "./assertShortCode";
+import { type Handler } from "./common";
 import { handlers as copyrightFileHeaderHandlers } from "./copyrightFileHeader";
 import { handler as dockerfilePackageHandler } from "./dockerfilePackages";
+import { handlers as fluidBuildTasks } from "./fluidBuildTasks";
 import { handler as fluidCaseHandler } from "./fluidCase";
 import { handlers as lockfileHandlers } from "./lockfiles";
 import { handler as noJsFileHandler } from "./noJsFiles";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages";
 import { handlers as pnpmHandlers } from "./pnpm";
-import { handlers as fluidBuildTasks } from "./fluidBuildTasks";
 
 /**
  * declared file handlers
@@ -30,3 +30,4 @@ export const policyHandlers: Handler[] = [
 ];
 
 export { type Handler } from "./common";
+export { type Feed, feeds, isFeed, packagePublishesToFeed } from "./npmPackages";

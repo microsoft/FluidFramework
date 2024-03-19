@@ -4,18 +4,17 @@
  */
 
 import * as childProcess from "node:child_process";
-import * as path from "node:path";
 import { existsSync } from "node:fs";
+import * as path from "node:path";
+import { getPackages } from "@manypkg/get-packages";
 import { cosmiconfigSync } from "cosmiconfig";
+import registerDebug from "debug";
 import findUp from "find-up";
-
+import { readJson } from "fs-extra";
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";
-import { readJson } from "fs-extra";
-import { getPackages } from "@manypkg/get-packages";
 
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 async function isFluidRootPackage(dir: string) {

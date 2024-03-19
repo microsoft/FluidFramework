@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Package } from "@fluidframework/build-tools";
 import path from "node:path";
+import { Package } from "@fluidframework/build-tools";
+
 import { filterFlags, selectionFlags } from "./flags";
-import { knownReleaseGroups, ReleaseGroup } from "./releaseGroups";
 import { Context } from "./library";
+import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups";
 
 /**
  * The criteria that should be used for selecting package-like objects from a collection.

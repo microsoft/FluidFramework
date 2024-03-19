@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import ignore from "ignore";
 import * as path from "path";
+import ignore from "ignore";
 
+import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
 import { existsSync, globFn, readFileAsync, statAsync } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafWithDoneFileTask } from "./leafTask";
-import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
 
 export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;

@@ -4,11 +4,11 @@
  */
 
 import * as assert from "assert";
+import crypto from "crypto";
+import * as path from "path";
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
-import crypto from "crypto";
 import registerDebug from "debug";
-import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
 import {

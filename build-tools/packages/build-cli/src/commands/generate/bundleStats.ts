@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { Flags } from "@oclif/core";
 import { copySync, existsSync, readJson } from "fs-extra";
-import path from "node:path";
 
 import { BaseCommand } from "../../base";
 import { PnpmListEntry, pnpmList } from "../../pnpm";

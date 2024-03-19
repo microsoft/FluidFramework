@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
+import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
+import { findPackageOrReleaseGroup } from "../../args";
 // eslint-disable-next-line import/no-deprecated
-import { sortVersions, MonoRepoKind } from "../../library";
+import { MonoRepoKind, sortVersions } from "../../library";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
-import { findPackageOrReleaseGroup } from "../../args";
 
 const tagRefPrefix = "refs/tags/";
 
