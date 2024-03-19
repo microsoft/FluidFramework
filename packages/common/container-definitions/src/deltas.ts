@@ -227,9 +227,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	/**
 	 * Submit a signal to the service to be broadcast to other connected clients, but not persisted
 	 */
-	// TODO: use `unknown` instead (API breaking)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal(content: string, targetClientId?: string): void;
 }
 
 /**

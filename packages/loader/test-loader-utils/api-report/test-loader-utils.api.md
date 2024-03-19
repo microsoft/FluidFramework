@@ -65,7 +65,7 @@ export class MockDocumentDeltaConnection extends TypedEventEmitter<IDocumentDelt
     // (undocumented)
     submit(messages: IDocumentMessage[]): void;
     // (undocumented)
-    submitSignal(message: any): void;
+    submitSignal(message: string): void;
     // (undocumented)
     readonly version: string;
 }

@@ -71,7 +71,7 @@ export class MockDocumentDeltaConnection
 		}
 	}
 
-	public submitSignal(message: any): void {
+	public submitSignal(message: string): void {
 		if (this.submitSignalHandler !== undefined) {
 			this.submitSignalHandler(message);
 		}

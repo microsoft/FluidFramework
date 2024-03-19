@@ -874,7 +874,7 @@ export class MockFluidDataStoreRuntime
 		return this.containerRuntime.dirty();
 	}
 
-	public submitSignal(type: string, content: any) {
+	public submitSignal(type: string, content: unknown) {
 		return null;
 	}
 

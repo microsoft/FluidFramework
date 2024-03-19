@@ -122,7 +122,7 @@ export interface IFluidDataStoreRuntime
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any, targetClientId?: string): void;
+	submitSignal(type: string, content: unknown, targetClientId?: string): void;
 
 	/**
 	 * Returns the current quorum.

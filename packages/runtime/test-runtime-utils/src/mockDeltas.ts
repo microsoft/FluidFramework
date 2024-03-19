@@ -153,7 +153,7 @@ export class MockDeltaManager
 
 	public close(): void {}
 
-	public submitSignal(content: any): void {}
+	public submitSignal(content: string): void {}
 
 	public flush() {}
 

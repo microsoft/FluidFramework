@@ -102,7 +102,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public submitSignal(type: string, content: any): void {
+	public submitSignal(type: string, content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 

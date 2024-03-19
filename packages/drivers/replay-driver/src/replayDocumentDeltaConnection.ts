@@ -285,7 +285,7 @@ export class ReplayDocumentDeltaConnection
 		throw new Error("ReplayDocumentDeltaConnection.submit() can't be called");
 	}
 
-	public async submitSignal(message: any) {}
+	public async submitSignal(message: string) {}
 
 	private _disposed = false;
 	public get disposed() {

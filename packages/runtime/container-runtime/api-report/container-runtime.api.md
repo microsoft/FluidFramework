@@ -326,7 +326,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get storage(): IDocumentStorageService;
     // (undocumented)
     submitMessage(type: ContainerMessageType.FluidDataStoreOp | ContainerMessageType.Alias | ContainerMessageType.Attach, contents: any, localOpMetadata?: unknown): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal(type: string, content: unknown, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
@@ -526,7 +526,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     readonly storage: IDocumentStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
-    submitSignal(type: string, content: any, targetClientId?: string): void;
+    submitSignal(type: string, content: unknown, targetClientId?: string): void;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
     // (undocumented)
     protected readonly summarizerNode: ISummarizerNodeWithGC;

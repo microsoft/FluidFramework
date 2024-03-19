@@ -209,7 +209,7 @@ export class ReplayFileDeltaConnection
 		throw new Error("ReplayFileDeltaConnection.submit() can't be called");
 	}
 
-	public async submitSignal(message: any) {}
+	public async submitSignal(message: string) {}
 
 	private _disposed = false;
 	public get disposed() {
