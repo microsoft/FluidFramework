@@ -187,7 +187,7 @@ class SocketIoServer implements core.IWebSocketServer {
 					}
 				}
 				if (n + 1 < connectionCount) {
-					metricForTimeTaken.error("Graceful shutdown finished");
+					metricForTimeTaken.error("Graceful shutdown finished incompletely.");
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
 				}
