@@ -5,11 +5,11 @@
 
 import React from "react";
 
-import { type ValueNodeBase } from "@fluidframework/devtools-core";
+import type { ValueNodeBase } from "@fluidframework/devtools-core";
 
-import { type DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeHeader } from "./TreeHeader";
-import { TreeItem } from "./TreeItem";
+import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
+import { TreeHeader } from "./TreeHeader.js";
+import { TreeItem } from "./TreeItem.js";
 
 /**
  * {@link ValueView} input props.

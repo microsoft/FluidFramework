@@ -17,18 +17,22 @@ import {
 	isFluidHandle,
 	isLazy,
 	markEager,
+	typeNameSymbol,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { setFlexNode } from "./flexNode.js";
 import {
 	arrayNodePrototypeProperties,
-	createNodeProxy,
-	createRawNodeProxy,
-	getClassSchema,
+	createArrayNodeProxy,
+	createMapProxy,
+	createObjectProxy,
 	getSequenceField,
+	getSimpleSchema,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
+import { createRawNode } from "./rawNode.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -37,8 +41,6 @@ import {
 	ImplicitFieldSchema,
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	InsertableTypedNode,
-	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
 	TreeMapNode,
@@ -309,7 +311,7 @@ export class SchemaFactory<
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
-						getClassSchema(input.schema) === this.constructor,
+						getSimpleSchema(input.schema) === this.constructor,
 						0x83b /* building node with wrong schema */,
 					);
 				}
@@ -365,17 +367,15 @@ export class SchemaFactory<
 				const customizable = this.constructor !== schema;
 				const proxyTarget = customizable ? this : undefined;
 
-				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
-				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawNodeProxy(
-						flexSchema as FlexObjectNodeSchema,
-						input,
-						customizable,
-						proxyTarget,
-					) as unknown as schema;
-				}
+				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+				assert(flexSchema instanceof FlexObjectNodeSchema, "invalid flex schema");
+				const flexNode: FlexTreeNode = isFlexTreeNode(input)
+					? input
+					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
+
+				const proxy: TreeNode = createObjectProxy(flexSchema, customizable, proxyTarget);
+				setFlexNode(proxy, flexNode);
+				return proxy as unknown as schema;
 			}
 		}
 
@@ -511,17 +511,15 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
-				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
-				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawNodeProxy(
-						flexSchema as FlexMapNodeSchema,
-						input,
-						customizable,
-						proxyTarget,
-					) as unknown as schema;
-				}
+				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+				assert(flexSchema instanceof FlexMapNodeSchema, "invalid flex schema");
+				const flexNode: FlexTreeNode = isFlexTreeNode(input)
+					? input
+					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
+
+				const proxy: TreeNode = createMapProxy(customizable, proxyTarget);
+				setFlexNode(proxy, flexNode);
+				return proxy as unknown as schema;
 			}
 		}
 
@@ -676,17 +674,15 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
-				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
-				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawNodeProxy(
-						flexSchema as FlexFieldNodeSchema,
-						[...input],
-						customizable,
-						proxyTarget,
-					) as unknown as schema;
-				}
+				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+				assert(flexSchema instanceof FlexFieldNodeSchema, "invalid flex schema");
+				const flexNode: FlexTreeNode = isFlexTreeNode(input)
+					? input
+					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
+
+				const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget);
+				setFlexNode(proxy, flexNode);
+				return proxy as unknown as schema;
 			}
 		}
 
@@ -742,24 +738,6 @@ export class SchemaFactory<
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
 
-// TODO: unify this with logic in getOrCreateNodeProxy
-export function createTree<T extends TreeNodeSchema>(
-	schema: T,
-	data: InsertableTypedNode<T> | FlexTreeNode,
-): NodeFromSchema<T> {
-	if (typeof schema === "function") {
-		return new (schema as TreeNodeSchemaClass<
-			any,
-			any,
-			any,
-			InsertableTypedNode<T> | FlexTreeNode
-		>)(data) as NodeFromSchema<T>;
-	}
-	return (
-		schema as TreeNodeSchemaNonClass<any, any, any, InsertableTypedNode<T> | FlexTreeNode>
-	).create(data) as NodeFromSchema<T>;
-}
-
 export function structuralName<const T extends string>(
 	collectionName: T,
 	allowedTypes: TreeNodeSchema | readonly TreeNodeSchema[],
@@ -781,4 +759,15 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
+}
+
+function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
+	const copy =
+		content instanceof Map
+			? (new Map(content) as T)
+			: Array.isArray(content)
+			? (content.slice() as T)
+			: { ...content };
+
+	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 }

@@ -18,13 +18,13 @@ import {
 	PerformanceEvent,
 	numberFromString,
 } from "@fluidframework/telemetry-utils";
-import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "axios";
 import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { QueryStringType, RestWrapper } from "./restWrapperBase";
-import { ITokenProvider, ITokenResponse } from "./tokens";
+import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
+import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { QueryStringType, RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
