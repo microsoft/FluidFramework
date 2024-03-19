@@ -19,6 +19,10 @@ module.exports = {
 	transform: {
 		"^.+\\.ts$": "ts-jest",
 	},
+	moduleNameMapper: {
+		// Remove explicit .js from local paths to allow jest to find the .ts* files
+		"^(\\.{1,2}/.*)\\.js$": "$1",
+	},
 	globals: {
 		"ts-jest": {
 			tsconfig: "src/test/tsconfig.json",

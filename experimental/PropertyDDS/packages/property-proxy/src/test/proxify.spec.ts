@@ -7,8 +7,8 @@
 /* eslint-env jest */
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy, proxySymbol } from "../index";
-import { bookDataTemplate } from "./testSchemas";
+import { PropertyProxy, proxySymbol } from "../index.js";
+import { bookDataTemplate } from "./testSchemas.js";
 
 describe("proxify ", () => {
 	describe("proxySymbol ", () => {
