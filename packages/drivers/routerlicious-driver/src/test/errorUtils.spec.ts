@@ -11,7 +11,7 @@ import {
 	createR11sNetworkError,
 	errorObjectFromSocketError,
 	throwR11sNetworkError,
-} from "../errorUtils";
+} from "../errorUtils.js";
 
 describe("ErrorUtils", () => {
 	/**
