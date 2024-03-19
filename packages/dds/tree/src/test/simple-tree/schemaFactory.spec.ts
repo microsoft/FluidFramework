@@ -315,8 +315,6 @@ describe("schemaFactory", () => {
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), { x: 1, y: 2 });
 				assert.notDeepEqual(new Point({ x: 1, y: 2 }), hydrate(Item, { x: 1, y: 2 }));
 			});
-
-			// TODO: stableName
 		});
 	});
 
