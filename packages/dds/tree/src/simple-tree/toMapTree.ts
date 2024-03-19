@@ -7,17 +7,22 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { EmptyKey, type FieldKey, type MapTree, type TreeValue } from "../core/index.js";
+import {
+	EmptyKey,
+	ValueSchema,
+	type FieldKey,
+	type MapTree,
+	type TreeValue,
+} from "../core/index.js";
 import {
 	type CursorWithNode,
 	type LazyItem,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	allowsValue as flexSchemaAllowsValue,
+	valueSchemaAllows,
 	isFluidHandle,
 	isLazy,
 	isTreeValue,
-	schemaIsLeaf,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
@@ -33,7 +38,6 @@ import {
 	NodeKind,
 	type TreeNodeSchema,
 } from "./schemaTypes.js";
-import { cachedFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 
 /**
  * Module notes:
@@ -450,13 +454,7 @@ function shallowCompatibilityTest(
 
 function allowsValue(schema: TreeNodeSchema, value: TreeValue): boolean {
 	if (schema.kind === NodeKind.Leaf) {
-		// TODO: better option?
-		// TODO: document why this is safe
-		const flexSchema =
-			cachedFlexSchemaFromClassSchema(schema) ?? fail("leaf schema should be pre-cached");
-		assert(schemaIsLeaf(flexSchema), 0x840 /* expected leaf */);
-
-		return flexSchemaAllowsValue(flexSchema.leafValue, value);
+		return valueSchemaAllows(schema.info as ValueSchema, value);
 	}
 	return false;
 }
