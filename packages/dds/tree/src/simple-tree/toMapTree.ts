@@ -9,21 +9,21 @@ import { UsageError } from "@fluidframework/telemetry-utils";
 
 import {
 	EmptyKey,
-	ValueSchema,
 	type FieldKey,
 	type MapTree,
 	type TreeValue,
+	ValueSchema,
 } from "../core/index.js";
 import {
 	type CursorWithNode,
 	type LazyItem,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	valueSchemaAllows,
 	isFluidHandle,
 	isLazy,
 	isTreeValue,
 	typeNameSymbol,
+	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";

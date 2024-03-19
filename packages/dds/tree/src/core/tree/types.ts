@@ -116,7 +116,7 @@ export interface FieldKind {
 
 /**
  * Value that may be stored on a leaf node.
- * @internal
+ * @public
  */
 export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 	{

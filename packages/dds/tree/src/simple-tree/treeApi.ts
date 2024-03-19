@@ -13,11 +13,19 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { brand } from "../util/index.js";
 import { getClassSchema } from "./classSchemaCaching.js";
 import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { getOrCreateNodeProxy } from "./proxies.js";
+import { getOrCreateNodeProxy, getProxyForField } from "./proxies.js";
 import { schemaFromValue } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
+import {
+	FieldSchema,
+	type ImplicitFieldSchema,
+	NodeFromSchema,
+	NodeKind,
+	TreeLeafValue,
+	TreeNodeSchema,
+} from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
 
@@ -73,11 +81,13 @@ export interface TreeNodeApi {
 	// TODO: maybe child(stableName)? Or maybe `devKeyForStableName(stableName)` - from which they can walk the tree as normal?
 
 	/**
-	 * TODO
+	 * Gets the child node based on its `stableName`.
+	 * @remarks This method is intended to be used when the developer-facing key for a particular child
+	 * is not known, and only the `stableName` is known.
 	 * @param node - TODO
 	 * @param stableName - TODO
 	 */
-	child(node: TreeNode, stableName: string): TreeNode | undefined;
+	child(node: TreeNode, stableName: string): TreeNode | TreeValue | undefined;
 
 	/**
 	 * Register an event listener on the given node.
@@ -99,7 +109,12 @@ export interface TreeNodeApi {
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
 export const treeNodeApi: TreeNodeApi = {
-	child: (node: TreeNode, stableName: string) => {},
+	child: (node: TreeNode, stableName: string) => {
+		const editNode = getFlexNode(node);
+		const flexField = editNode.tryGetField(brand(stableName));
+
+		return flexField === undefined ? undefined : getProxyForField(flexField);
+	},
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
@@ -114,16 +129,10 @@ export const treeNodeApi: TreeNodeApi = {
 		return output;
 	},
 	key: (node: TreeNode) => {
-		const parentField = getFlexNode(node).parentField;
-		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
-			// The parent of `node` is an array node
-			return parentField.index;
-		}
-
-		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
-
-		// TODO: map this back to developer-facing key
-		return parentField.parent.key;
+		const stableName = treeNodeApi.stableName(node);
+		const devKey = tryGetKeyFromStableName(node, stableName);
+		assert(devKey !== undefined, 0x880 /* Existing stableName should always map to a devKey */);
+		return devKey;
 	},
 	stableName: (node: TreeNode) => {
 		const parentField = getFlexNode(node).parentField;
@@ -179,4 +188,43 @@ export interface TreeNodeEvents {
 	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
 	 */
 	afterChange(): void;
+}
+
+/**
+ * TODO
+ */
+function tryGetKeyFromStableName(
+	tree: TreeNode,
+	stableName: string | number,
+): string | number | undefined {
+	// Only object nodes have the concept of a stableName, differentiated from the developer-facing key.
+	// For any other kind of node, the stableName and developer-facing key are the same.
+	const schema = treeNodeApi.schema(tree);
+	if (schema.kind !== NodeKind.Object) {
+		return stableName;
+	}
+
+	// The simple-tree layer maps from developer-facing keys to schemas, which may or may not include
+	// `stableName`s. Search the field schemas for one with the specified.
+	// Note: tree creation / insertion validates that naming conflicts do not occur between multiple
+	// schemas' `stableName`s or between `stableName`s and developer-facing keys, so if we find a match
+	// here, we know we are returning the right key.
+
+	const fields = schema.info as Record<string, ImplicitFieldSchema>;
+
+	// If there is a direct key match, then there must not have been a custom `stableName` provided,
+	// and therefore the `stableName` and developer-facing key must be the same.
+	if (fields[stableName] !== undefined) {
+		return stableName;
+	}
+
+	// If we didn't find a direct key match above, then either a `stableName` was provided for one of
+	// the schemas, or no such `stableName`/key exists.
+	for (const [fieldDevKey, fieldSchema] of Object.entries(fields)) {
+		if (fieldSchema instanceof FieldSchema && fieldSchema.props?.stableName === stableName) {
+			return fieldDevKey;
+		}
+	}
+
+	return undefined;
 }

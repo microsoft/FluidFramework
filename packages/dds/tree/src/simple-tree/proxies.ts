@@ -40,13 +40,13 @@ import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "
 import { RawTreeNode, createRawNode, extractRawNodeContent } from "./rawNode.js";
 import {
 	FieldSchema,
+	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
 	type TreeNodeSchema as TreeNodeSchemaClass,
-	type ImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import {

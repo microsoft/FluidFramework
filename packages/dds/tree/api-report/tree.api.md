@@ -978,7 +978,7 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 export interface InitializeAndSchematizeConfiguration<TRoot extends FlexFieldSchema = FlexFieldSchema> extends TreeContent<TRoot>, SchematizeConfiguration<TRoot> {
 }
 
-// @internal
+// @public
 export type _InlineTrick = 0;
 
 // @internal
@@ -1893,11 +1893,13 @@ export abstract class TreeNode implements WithType {
 
 // @public
 export interface TreeNodeApi {
+    child(node: TreeNode, stableName: string): TreeNode | TreeValue | undefined;
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
     on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
+    stableName(node: TreeNode): string | number;
     readonly status: (node: TreeNode) => TreeStatus;
 }
 
@@ -1990,7 +1992,7 @@ export type TreeType = TreeNodeSchemaIdentifier;
 // @internal
 export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
 
-// @internal
+// @public
 export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
     {
     [ValueSchema.Number]: number;
@@ -2083,7 +2085,7 @@ export interface ValueFieldEditBuilder {
 // @internal
 export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
-// @internal
+// @public
 export enum ValueSchema {
     // (undocumented)
     Boolean = 2,
