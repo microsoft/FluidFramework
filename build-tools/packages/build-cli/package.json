@@ -102,7 +102,7 @@
 		"semver": "^7.5.4",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.19.1",
-		"sort-jsonc": "^1.0.0",
+		"sort-jsonc": "^1.0.1",
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.1",

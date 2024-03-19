@@ -177,7 +177,7 @@ const sortOrder = [
 ];
 
 /**
- * Checks if a tsconfig file is sorted.
+ * Sorts a tsconfig file, optionally writing the changes back to the file.
  *
  * @param tsconfigPath - path to a tsconfig file
  * @param write - if true, the file will be overwritten with sorted content
@@ -205,6 +205,9 @@ function sortTsconfig(tsconfigPath: string, write: boolean): boolean {
 	return updated;
 }
 
+/**
+ * Checks if a tsconfig file is sorted.
+ */
 function isSorted(tsconfigPath: string): boolean {
 	return !sortTsconfig(tsconfigPath, false);
 }

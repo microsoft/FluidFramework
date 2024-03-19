@@ -131,7 +131,7 @@ importers:
       semver: ^7.5.4
       semver-utils: ^1.1.4
       simple-git: ^3.19.1
-      sort-jsonc: ^1.0.0
+      sort-jsonc: ^1.0.1
       sort-package-json: 1.57.0
       strip-ansi: ^6.0.1
       table: ^6.8.1
@@ -180,7 +180,7 @@ importers:
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
-      sort-jsonc: 1.0.0
+      sort-jsonc: 1.0.1
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.1
@@ -9950,8 +9950,8 @@ packages:
       minimist: 1.2.8
     dev: true
 
-  /sort-jsonc/1.0.0:
-    resolution: {integrity: sha512-1LiJwuz8Z9Lh5l9NbrMEbtph4/IlQ3WxWqkaNBBHAj/JsgVobfhug/BJ+UWw6z1AeZNrxpUn72EQRs1BHWNNRw==}
+  /sort-jsonc/1.0.1:
+    resolution: {integrity: sha512-Uy01Oc2/L/YA0NlPf6Ahh7pe2qNY8RlPB+Px12AGAb2mfc1KMVx7uf7A9MmLBL5TDYEyVnd+Pc4mPU9qOGokvA==}
     engines: {node: '>= 6'}
     dependencies:
       comment-json: 4.2.3
