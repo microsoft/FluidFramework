@@ -35,11 +35,8 @@ cat << EOF > biome.jsonc
 	"\$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["../../../biome.json"],
 	"formatter": {
-		"enabled": true,
-	},
-	// "files": {
-	// 	 "ignore": [],
-	// },
+		"enabled": true
+	}
 }
 
 EOF
