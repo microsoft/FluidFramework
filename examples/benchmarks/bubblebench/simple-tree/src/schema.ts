@@ -18,9 +18,6 @@ export class Bubble
 	})
 	implements IBubble
 {
-	constructor(public readonly bubble: IBubble) {
-		super(bubble);
-	}
 }
 
 export class Client
