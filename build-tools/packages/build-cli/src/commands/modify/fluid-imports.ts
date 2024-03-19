@@ -1,8 +1,9 @@
-/* eslint-disable max-depth */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable max-depth */
 
 import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
@@ -196,7 +197,7 @@ async function updateImports(
 			const [moduleName] = parseImport(importDeclaration);
 			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
 
-			// Skip fluid imports that aren't in the data file
+			// Skip Fluid imports that aren't in the data file
 			if (!mappingData.has(moduleName)) {
 				continue;
 			}
@@ -258,7 +259,7 @@ async function updateImports(
  */
 function parseImport(importDeclaration: ImportDeclaration): [string, string] {
 	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-	// log?.verbose(`Found a fluid import: '${moduleSpecifier}'`);
+	// log?.verbose(`Found a Fluid import: '${moduleSpecifier}'`);
 	const modulePieces = moduleSpecifier.split("/");
 	const moduleName = modulePieces.slice(0, 2).join("/");
 	const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
