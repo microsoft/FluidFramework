@@ -4,29 +4,31 @@
  */
 
 import {
-	Button,
 	Badge,
-	createTableColumn,
-	makeStyles,
-	shorthands,
+	Button,
 	Table,
-	TableRow,
+	TableBody,
 	TableCell,
 	TableCellLayout,
 	type TableColumnDefinition,
 	type TableColumnSizingOptions,
-	useTableFeatures,
+	TableRow,
+	createTableColumn,
+	makeStyles,
+	shorthands,
 	useTableColumnSizing_unstable,
-	TableBody,
+	useTableFeatures,
 } from "@fluentui/react-components";
 import { InfoLabel } from "@fluentui/react-components/unstable";
 import {
+	Delete20Regular,
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
-	Delete20Regular,
 } from "@fluentui/react-icons";
 import React from "react";
 
+import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	CloseContainer,
 	ConnectContainer,
@@ -34,20 +36,22 @@ import {
 	type ContainerStateMetadata,
 	DisconnectContainer,
 	GetContainerState,
-	handleIncomingMessage,
 	type HasContainerKey,
 	type IMessageRelay,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 
-import { useLogger } from "../TelemetryUtils";
-import { connectionStateToString } from "../Utilities";
-import { useMessageRelay } from "../MessageRelayContext";
-import { Waiting } from "./Waiting";
-import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+import { connectionStateToString } from "../Utilities.js";
+import {
+	clientIdTooltipText,
+	containerStatusTooltipText,
+	userIdTooltipText,
+} from "./TooltipTexts.js";
+import { Waiting } from "./Waiting.js";
 
 /**
  * {@link ContainerSummaryView} input props.

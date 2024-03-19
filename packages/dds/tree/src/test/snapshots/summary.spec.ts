@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { takeSummarySnapshot } from "./utils.js";
-import { generateTestTrees } from "./testTrees.js";
 import { useSnapshotDirectory } from "./snapshotTools.js";
+import { generateTestTrees } from "./testTrees.js";
+import { takeSummarySnapshot } from "./utils.js";
 
 describe("snapshot tests", () => {
 	useSnapshotDirectory();

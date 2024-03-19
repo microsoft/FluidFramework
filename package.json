@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -44,12 +44,8 @@
 		"ci:test:mocha:coverage": "c8 --no-clean npm run test:mocha -- --timeout 4s",
 		"ci:test:realsvc:local": "pnpm run -r --no-sort --stream --no-bail test:realsvc:local:report",
 		"ci:test:realsvc:local:coverage": "c8 --no-clean pnpm recursive --no-sort --stream --no-bail run test:realsvc:local:report",
-		"ci:test:realsvc:local:full": "pnpm run -r --no-sort --stream --no-bail test:realsvc:local:report:full",
-		"ci:test:realsvc:local:full:coverage": "c8 --no-clean pnpm recursive --no-sort --stream --no-bail run test:realsvc:local:report:full",
 		"ci:test:realsvc:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:realsvc:tinylicious:report",
 		"ci:test:realsvc:tinylicious:coverage": "c8 --no-clean pnpm run -r --no-sort --stream --no-bail test:realsvc:tinylicious:report ",
-		"ci:test:realsvc:tinylicious:full": "pnpm run -r --no-sort --stream --no-bail test:realsvc:tinylicious:report:full",
-		"ci:test:realsvc:tinylicious:full:coverage": "c8 --no-clean pnpm run -r --no-sort --stream --no-bail test:realsvc:tinylicious:report:full",
 		"ci:test:stress:tinylicious": "pnpm run -r --no-sort --stream --no-bail test:stress:tinylicious:report ",
 		"ci:test:stress:tinylicious:coverage": "c8 --no-clean pnpm run -r --no-sort --stream --no-bail test:stress:tinylicious:report ",
 		"clean": "fluid-build --task clean",
@@ -59,7 +55,8 @@
 		"clean:root": "rimraf --glob \"*.done.build.log\"",
 		"eslint": "fluid-build --task eslint",
 		"eslint:fix": "fluid-build --task eslint:fix",
-		"format": "npm run prettier:root:fix && pnpm run -r --no-sort --stream format",
+		"format": "fluid-build --task format",
+		"format:biome": "fluid-build --task format:biome",
 		"format:changed": "npm run format:changed:main",
 		"format:changed:main": "pretty-quick --branch main",
 		"format:changed:next": "pretty-quick --branch next",
@@ -155,13 +152,14 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^1.6.1",
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluid-tools/markdown-magic": "file:tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.42.3",
@@ -254,6 +252,7 @@
 			"checks": {
 				"dependsOn": [
 					"^checks",
+					"check:format",
 					"generate:packageList",
 					"policy-check",
 					"layer-check",
@@ -267,6 +266,7 @@
 			"checks:fix": {
 				"dependsOn": [
 					"^checks:fix",
+					"format",
 					"generate:packageList",
 					"policy-check:fix",
 					"syncpack:deps:fix",
@@ -308,6 +308,15 @@
 				"before": [
 					"*"
 				]
+			},
+			"format": {
+				"dependsOn": [
+					"prettier:root:fix",
+					"^prettier:fix",
+					"^format:prettier",
+					"^format:biome"
+				],
+				"script": false
 			},
 			"generate:packageList": {
 				"dependsOn": [

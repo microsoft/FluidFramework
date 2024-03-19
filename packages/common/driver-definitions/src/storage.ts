@@ -5,10 +5,10 @@
 
 import type {
 	IDisposable,
-	IEventProvider,
 	IErrorEvent,
-	ITelemetryBaseLogger,
 	IEvent,
+	IEventProvider,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
 	ConnectionMode,

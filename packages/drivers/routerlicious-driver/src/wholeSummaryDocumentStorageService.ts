@@ -3,19 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { performance, stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {
 	IDocumentStorageService,
-	ISummaryContext,
 	IDocumentStorageServicePolicies,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -24,19 +18,25 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ICache, InMemoryCache } from "./cache";
-import { IRouterliciousDriverPolicies } from "./policies";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
+import { ICache, InMemoryCache } from "./cache.js";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
 import {
 	convertSnapshotAndBlobsToSummaryTree,
 	evalBlobsAndTrees,
 	validateBlobsAndTrees,
-} from "./treeUtils";
-import { GitManager } from "./gitManager";
-import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
-import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
+} from "./treeUtils.js";
+import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
 
 const latestSnapshotId: string = "latest";
 

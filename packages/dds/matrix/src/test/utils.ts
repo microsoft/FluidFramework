@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IMatrixProducer, IMatrixReader, IMatrixConsumer, IMatrixWriter } from "@tiny-calc/nano";
+import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
 import { SharedMatrix } from "../index.js";
 
 export type IMatrix<T> = IMatrixReader<T> & IMatrixWriter<T>;

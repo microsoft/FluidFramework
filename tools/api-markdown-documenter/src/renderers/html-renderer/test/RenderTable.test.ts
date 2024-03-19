@@ -10,8 +10,8 @@ import {
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
-} from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+} from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("Table HTML rendering tests", () => {
 	it("Empty table", () => {

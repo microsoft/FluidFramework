@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter, EventEmitterEventType } from "@fluid-internal/client-utils";
+
+import { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 
 /**

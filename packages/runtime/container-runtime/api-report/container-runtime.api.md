@@ -30,7 +30,6 @@ import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreContextEvents } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
@@ -103,6 +102,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     protected createDataStoreId(): string;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    // (undocumented)
+    deleteChild(dataStoreId: string): void;
     deleteSweepReadyNodes(sweepReadyDataStoreRoutes: readonly string[]): readonly string[];
     // (undocumented)
     readonly dispose: () => void;
@@ -154,7 +155,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     summarize(fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
-    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     waitIfPendingAlias(maybeAlias: string): Promise<AliasResult>;
@@ -244,8 +244,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     deleteChildSummarizerNode(id: string): void;
     deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
-    // @deprecated (undocumented)
-    deleteUnusedNodes(unusedRoutes: readonly string[]): string[];
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
@@ -343,7 +341,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get summarizerClientId(): string | undefined;
     updateStateBeforeGC(): Promise<void>;
     updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void;
-    updateUnusedRoutes(unusedRoutes: readonly string[]): void;
     updateUsedRoutes(usedRoutes: readonly string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
@@ -517,6 +514,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     rollback(type: string, contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     readonly scope: FluidObject;
+    // (undocumented)
+    abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setChannelDirty(address: string): void;
     setConnectionState(connected: boolean, clientId?: string): void;
     // @deprecated (undocumented)
@@ -710,6 +709,12 @@ export type IdCompressorMode = "on" | "delayed" | "off";
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
+}
+
+// @internal (undocumented)
+export interface IFluidDataStoreContextEvents extends IEvent {
+    // (undocumented)
+    (event: "attaching" | "attached", listener: () => void): any;
 }
 
 // @internal
@@ -1093,6 +1098,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     };
     // (undocumented)
     getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
+    // (undocumented)
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 // @internal

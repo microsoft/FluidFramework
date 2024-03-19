@@ -110,5 +110,6 @@ export {
 	IFluidDataStoreContextProps,
 	ILocalFluidDataStoreContextProps,
 	ILocalDetachedFluidDataStoreContextProps,
+	IFluidDataStoreContextEvents,
 } from "./dataStoreContext.js";
 export { DataStoreContexts } from "./dataStoreContexts.js";

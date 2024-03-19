@@ -9,8 +9,8 @@
  * @fileoverview In this file, we will test typeid_helper functions.
  */
 
-import { expect } from "chai";
 import { constants } from "@fluid-experimental/property-common";
+import { expect } from "chai";
 import { TypeIdHelper } from "../../helpers/typeidHelper.js";
 
 (function () {

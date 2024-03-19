@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as assert from "assert";
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
@@ -44,6 +45,11 @@ export abstract class LeafTask extends Task {
 	private directParentLeafTasks: LeafTask[] = [];
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
+
+	// For task that needs to override the actual command to execute
+	protected get executionCommand() {
+		return this.command;
+	}
 
 	constructor(
 		node: BuildPackage,
@@ -206,7 +212,7 @@ export abstract class LeafTask extends Task {
 		if (workerPool && this.useWorker) {
 			const workerResult = await workerPool.runOnWorker(
 				this.executable,
-				this.command,
+				this.executionCommand,
 				this.node.pkg.directory,
 			);
 			if (workerResult.code === 0 || !workerResult.error) {
@@ -217,7 +223,7 @@ export abstract class LeafTask extends Task {
 							: {
 									name: "Worker error",
 									message: "Worker error",
-									cmd: this.command,
+									cmd: this.executionCommand,
 									code: workerResult.code,
 							  },
 					stdout: workerResult.stdout ?? "",
@@ -245,10 +251,10 @@ export abstract class LeafTask extends Task {
 	}
 
 	private async execCommand(): Promise<ExecAsyncResult> {
-		if (this.command === "") {
+		if (this.executionCommand === "") {
 			return { error: null, stdout: "", stderr: "" };
 		}
-		return execAsync(this.command, {
+		return execAsync(this.executionCommand, {
 			cwd: this.node.pkg.directory,
 			env: {
 				...process.env,
@@ -378,6 +384,12 @@ export abstract class LeafTask extends Task {
 		return summarizeBuildResult(await Promise.all(p));
 	}
 
+	/**
+	 * Returns the absolute path to a package-relative path within the repo.
+	 *
+	 * @param filePath - a path relative to the package being processed by this task.
+	 * @returns An absolute path to the file.
+	 */
 	protected getPackageFileFullPath(filePath: string): string {
 		if (path.isAbsolute(filePath)) {
 			return filePath;

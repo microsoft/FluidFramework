@@ -24,11 +24,7 @@
 	"bin": {
 		"flub": "./bin/run.js"
 	},
-	"files": [
-		"/bin",
-		"/lib",
-		"/oclif.manifest.json"
-	],
+	"files": ["/bin", "/lib", "/oclif.manifest.json"],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:test && npm run build:copy && npm run build:readme",
@@ -39,17 +35,15 @@
 		"build:readme": "fluid-readme generate readme --multi",
 		"build:test": "tsc --project ./test/tsconfig.json",
 		"check:biome": "biome check .",
-		"check:format": "npm run check:biome && npm run check:prettier",
-		"check:prettier": "prettier --check . --cache",
+		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome && npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check --apply .",
-		"format:prettier": "prettier --write . --cache",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
@@ -61,21 +55,11 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [
-			"src/test/**/*.*ts",
-			"lib/test/**/*.*js"
-		],
+		"exclude": ["src/test/**/*.*ts", "lib/test/**/*.*js"],
 		"exclude-after-remap": false,
-		"include": [
-			"src/**/*.*ts",
-			"lib/**/*.*js"
-		],
+		"include": ["src/**/*.*ts", "lib/**/*.*js"],
 		"report-dir": "nyc/report",
-		"reporter": [
-			"cobertura",
-			"html",
-			"text"
-		],
+		"reporter": ["cobertura", "html", "text"],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
@@ -103,6 +87,7 @@
 		"gray-matter": "^4.0.3",
 		"human-id": "^4.0.0",
 		"inquirer": "^8.2.5",
+		"json5": "^2.2.3",
 		"jssm": "^5.89.2",
 		"latest-version": "^5.1.0",
 		"minimatch": "^7.4.6",
@@ -112,6 +97,7 @@
 		"prettier": "~3.2.4",
 		"prompts": "^2.4.2",
 		"read-pkg-up": "^7.0.1",
+		"replace-in-file": "^6.3.5",
 		"semver": "^7.5.4",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.19.1",
@@ -125,13 +111,14 @@
 	"devDependencies": {
 		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/async": "^3.2.20",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
 		"@types/debug": "^4.1.7",
 		"@types/fs-extra": "^8.1.2",
 		"@types/inquirer": "^8.2.6",
+		"@types/json5": "^2.2.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.18.6",
 		"@types/node-fetch": "^2.5.10",
@@ -165,18 +152,11 @@
 	"fluidBuild": {
 		"tasks": {
 			"compile": {
-				"dependsOn": [
-					"...",
-					"build:diagrams"
-				],
+				"dependsOn": ["...", "build:diagrams"],
 				"script": false
 			},
 			"build:diagrams": [],
-			"build:manifest": [
-				"...",
-				"build:copy",
-				"build:diagrams"
-			]
+			"build:manifest": ["...", "build:copy", "build:diagrams"]
 		}
 	},
 	"oclif": {
@@ -184,12 +164,8 @@
 		"dirname": "flub",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": [
-			"-h"
-		],
-		"additionalVersionFlags": [
-			"-V"
-		],
+		"additionalHelpFlags": ["-h"],
+		"additionalVersionFlags": ["-V"],
 		"plugins": [
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",

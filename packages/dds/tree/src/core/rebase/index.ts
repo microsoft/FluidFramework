@@ -9,6 +9,8 @@ export {
 	asChangeAtomId,
 	mintCommit,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	EncodedRevisionTag,

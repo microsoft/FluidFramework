@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import type {
+	FluidObject,
+	IDisposable,
 	IEvent,
 	IEventProvider,
-	ITelemetryBaseLogger,
-	IDisposable,
-	IProvideFluidHandleContext,
 	IFluidHandle,
+	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
-	FluidObject,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IClientDetails,
 	IDocumentMessage,
@@ -23,7 +24,6 @@ import type {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
@@ -364,6 +364,8 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
+
+	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
 
 /**
@@ -377,13 +379,6 @@ export type CreateChildSummarizerNodeFn = (
 	 */
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
-
-/**
- * @alpha
- */
-export interface IFluidDataStoreContextEvents extends IEvent {
-	(event: "attaching" | "attached", listener: () => void);
-}
 
 /**
  * Represents the context for the data store like objects. It is used by the data store runtime to
@@ -489,7 +484,7 @@ export interface IFluidParentContext
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn;
 
-	deleteChildSummarizerNode?(id: string): void;
+	deleteChildSummarizerNode(id: string): void;
 
 	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 
@@ -521,9 +516,7 @@ export interface IFluidParentContext
  * get information and call functionality to the container.
  * @alpha
  */
-export interface IFluidDataStoreContext
-	extends IEventProvider<IFluidDataStoreContextEvents>,
-		IFluidParentContext {
+export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
 	/**
 	 * A data store created by a client, is a local data store for that client. Also, when a detached container loads

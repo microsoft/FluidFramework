@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from 'assert';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import {
-	setTrait,
+	Change,
+	Checkout,
+	CheckoutEvent,
 	EditStatus,
-	StableRange,
-	StablePlace,
 	EditValidationResult,
 	SharedTree,
 	SharedTreeEvent,
-	Checkout,
-	CheckoutEvent,
-	Change,
 	Side,
+	StablePlace,
+	StableRange,
 	areRevisionViewsSemanticallyEqual,
+	setTrait,
 } from '../index.js';
 import { TestTree } from './utilities/TestNode.js';
-import { setUpTestSharedTree, SharedTreeTestingOptions, setUpTestTree } from './utilities/TestUtilities.js';
+import { SharedTreeTestingOptions, setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**
  * Checkout test suite

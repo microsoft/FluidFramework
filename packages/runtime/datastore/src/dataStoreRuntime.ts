@@ -4,17 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	DataProcessingError,
-	ITelemetryLoggerExt,
-	generateStack,
-	LoggingError,
-	MonitoringContext,
-	raiseConnectedEvent,
-	createChildMonitoringContext,
-	tagCodeArtifacts,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
+import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -23,62 +13,72 @@ import {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
+import {
+	IChannel,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
+} from "@fluidframework/datastore-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
+	IQuorumClients,
 	ISequencedDocumentMessage,
-	SummaryType,
 	ISummaryBlob,
 	ISummaryTree,
-	IQuorumClients,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
-	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	ISummaryTreeWithStats,
-	VisibilityState,
 	ITelemetryContext,
+	VisibilityState,
 	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
-	convertSnapshotTreeToSummaryTree,
-	convertSummaryTreeToITree,
-	generateHandleContextPath,
+	GCDataBuilder,
 	RequestParser,
 	SummaryTreeBuilder,
+	addBlobToSummary,
+	convertSnapshotTreeToSummaryTree,
+	convertSummaryTreeToITree,
 	create404Response,
 	createResponseError,
-	exceptionToResponse,
-	GCDataBuilder,
-	unpackChildNodesUsedRoutes,
-	addBlobToSummary,
-	processAttachMessageGCData,
 	encodeCompactIdToString,
+	exceptionToResponse,
+	generateHandleContextPath,
+	processAttachMessageGCData,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
-	IChannel,
-	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeEvents,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+	DataProcessingError,
+	ITelemetryLoggerExt,
+	LoggingError,
+	MonitoringContext,
+	UsageError,
+	createChildMonitoringContext,
+	generateStack,
+	raiseConnectedEvent,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { IIdCompressor } from "@fluidframework/id-compressor";
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import { FluidObjectHandle } from "./fluidHandle.js";
 import {
 	LocalChannelContext,
 	LocalChannelContextBase,
 	RehydratedLocalChannelContext,
 } from "./localChannelContext.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
-import { FluidObjectHandle } from "./fluidHandle.js";
 
 /**
  * @alpha
@@ -1138,43 +1138,17 @@ export class FluidDataStoreRuntime
 
 	private attachListener() {
 		this.setMaxListeners(Number.MAX_SAFE_INTEGER);
-		this.dataStoreContext.once("attaching", () => {
-			/**
-			 * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
-			 * locally visible. However, before visibility state was added, this may not have been the case and data
-			 * store can move to "attaching" state in 2 scenarios:
-			 * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
-			 * 2) After attachGraph() is called - When a detached container is attached.
-			 *
-			 * The basic idea is that all local object should become locally visible before they are globally visible.
-			 */
-			this.attachGraph();
 
-			this._attachState = AttachState.Attaching;
-
-			assert(
-				this.visibilityState === VisibilityState.LocallyVisible,
-				0x2d1 /* "Data store should be locally visible before it can become globally visible." */,
-			);
-
-			// Mark the data store globally visible and make its child channels visible as well.
-			this.visibilityState = VisibilityState.GloballyVisible;
-			this.localChannelContextQueue.forEach((channel) => {
-				channel.makeVisible();
-			});
-			this.localChannelContextQueue.clear();
-
-			// This promise resolution will be moved to attached event once we fix the scheduler.
-			this.deferredAttached.resolve();
-			this.emit("attaching");
+		// back-compat, to be removed in the future.
+		// Added in "2.0.0-rc.2.0.0" timeframe.
+		(this.dataStoreContext as any).once?.("attaching", () => {
+			this.setAttachState(AttachState.Attaching);
 		});
-		this.dataStoreContext.once("attached", () => {
-			assert(
-				this.visibilityState === VisibilityState.GloballyVisible,
-				0x2d2 /* "Data store should be globally visible when its attached." */,
-			);
-			this._attachState = AttachState.Attached;
-			this.emit("attached");
+
+		// back-compat, to be removed in the future.
+		// Added in "2.0.0-rc.2.0.0" timeframe.
+		(this.dataStoreContext as any).once?.("attached", () => {
+			this.setAttachState(AttachState.Attached);
 		});
 	}
 
@@ -1212,6 +1186,51 @@ export class FluidDataStoreRuntime
 			stack: generateStack(),
 		});
 		this.localChangesTelemetryCount--;
+	}
+
+	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+		switch (attachState) {
+			case AttachState.Attaching:
+				/**
+				 * back-compat 0.59.1000 - Ideally, attachGraph() should have already been called making the data store
+				 * locally visible. However, before visibility state was added, this may not have been the case and data
+				 * store can move to "attaching" state in 2 scenarios:
+				 * 1) Before attachGraph() is called - When a data store is created and bound in an attached container.
+				 * 2) After attachGraph() is called - When a detached container is attached.
+				 *
+				 * The basic idea is that all local object should become locally visible before they are globally visible.
+				 */
+				this.attachGraph();
+
+				this._attachState = AttachState.Attaching;
+
+				assert(
+					this.visibilityState === VisibilityState.LocallyVisible,
+					0x2d1 /* "Data store should be locally visible before it can become globally visible." */,
+				);
+
+				// Mark the data store globally visible and make its child channels visible as well.
+				this.visibilityState = VisibilityState.GloballyVisible;
+				this.localChannelContextQueue.forEach((channel) => {
+					channel.makeVisible();
+				});
+				this.localChannelContextQueue.clear();
+
+				// This promise resolution will be moved to attached event once we fix the scheduler.
+				this.deferredAttached.resolve();
+				this.emit("attaching");
+				break;
+			case AttachState.Attached:
+				assert(
+					this.visibilityState === VisibilityState.GloballyVisible,
+					0x2d2 /* "Data store should be globally visible when its attached." */,
+				);
+				this._attachState = AttachState.Attached;
+				this.emit("attached");
+				break;
+			default:
+				unreachableCase(attachState, "unreached");
+		}
 	}
 }
 
