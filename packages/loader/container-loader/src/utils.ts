@@ -21,7 +21,10 @@ import {
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import { ISerializableBlobContents } from "./containerStorageAdapter.js";
-import type { IPendingDetachedContainerState, PendingSnapshot } from "./serializedStateManager.js";
+import type {
+	IPendingDetachedContainerState,
+	SnapshotWithBlobs,
+} from "./serializedStateManager.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -117,7 +120,7 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): PendingSnapshot {
+function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBlobs {
 	let blobContents: ISerializableBlobContents = {};
 	const treeNode: ISnapshotTree = {
 		blobs: {},
@@ -172,7 +175,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): PendingSnapsho
 function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
-): PendingSnapshot {
+): SnapshotWithBlobs {
 	const combinedSummary: ISummaryTree = {
 		type: SummaryType.Tree,
 		tree: { ...appSummaryTree.tree },
@@ -185,7 +188,7 @@ function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 
 export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-): PendingSnapshot => {
+): SnapshotWithBlobs => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		0x8e6 /* Protocol and App summary trees should be present */,
@@ -251,7 +254,8 @@ function isPendingDetachedContainerState(
 ): detachedContainerState is IPendingDetachedContainerState {
 	if (
 		detachedContainerState?.attached === undefined ||
-		detachedContainerState?.pendingSnapshot === undefined ||
+		detachedContainerState?.snapshotTree === undefined ||
+		detachedContainerState?.snapshotBlobs === undefined ||
 		detachedContainerState?.hasAttachmentBlobs === undefined
 	) {
 		return false;
@@ -267,11 +271,12 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const pendingSnapshot =
+		const { snapshotTree, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			pendingSnapshot,
+			snapshotTree,
+			snapshotBlobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;

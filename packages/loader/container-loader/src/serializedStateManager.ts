@@ -25,7 +25,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 
-export interface PendingSnapshot {
+export interface SnapshotWithBlobs {
 	/**
 	 * Snapshot from which container initially loaded.
 	 */
@@ -41,10 +41,11 @@ export interface PendingSnapshot {
  * of the container to the same state
  * @internal
  */
-export interface IPendingContainerState {
+export interface IPendingContainerState extends SnapshotWithBlobs {
 	attached: true;
 	pendingRuntimeState: unknown;
-	pendingSnapshot: PendingSnapshot;
+	snapshotTree: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
 	/**
 	 * All ops since base snapshot sequence number up to the latest op
 	 * seen when the container was closed. Used to apply stashed (saved pending)
@@ -60,16 +61,17 @@ export interface IPendingContainerState {
  * of the container to the same state (rehydrate)
  * @internal
  */
-export interface IPendingDetachedContainerState {
+export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	attached: false;
-	pendingSnapshot: PendingSnapshot;
+	snapshotTree: ISnapshotTree;
+	snapshotBlobs: ISerializableBlobContents;
 	hasAttachmentBlobs: boolean;
 	pendingRuntimeState?: unknown;
 }
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot: PendingSnapshot | undefined;
+	private snapshot: SnapshotWithBlobs | undefined;
 	private readonly mc: MonitoringContext;
 
 	constructor(
@@ -119,8 +121,9 @@ export class SerializedStateManager {
 			}
 			return { snapshotTree, version };
 		} else {
-			this.snapshot = this.pendingLocalState.pendingSnapshot;
-			return { snapshotTree: this.snapshot.snapshotTree, version: undefined };
+			const { snapshotTree, snapshotBlobs } = this.pendingLocalState;
+			this.snapshot = { snapshotTree, snapshotBlobs };
+			return { snapshotTree, version: undefined };
 		}
 	}
 
@@ -129,7 +132,7 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching
 	 */
-	public setSnapshot(snapshot: PendingSnapshot | undefined) {
+	public setSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		this.snapshot = snapshot;
 	}
 
@@ -158,7 +161,8 @@ export class SerializedStateManager {
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
-					pendingSnapshot: this.snapshot,
+					snapshotTree: this.snapshot.snapshotTree,
+					snapshotBlobs: this.snapshot.snapshotBlobs,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state

@@ -34,7 +34,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 // eslint-disable-next-line import/no-internal-modules
-import type { PendingSnapshot } from "../../../../loader/container-loader/lib/serializedStateManager";
+import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -241,10 +241,13 @@ describeCompat(
 			return handle.get();
 		}
 
-		function getSnapshotInfoFromSerializedContainer(container: IContainer): PendingSnapshot {
+		function getSnapshotInfoFromSerializedContainer(container: IContainer): SnapshotWithBlobs {
 			const snapshot = container.serialize();
 			const deserializedSummary = JSON.parse(snapshot);
-			return deserializedSummary.pendingSnapshot as PendingSnapshot;
+			return {
+				snapshotTree: deserializedSummary.snapshotTree,
+				snapshotBlobs: deserializedSummary.snapshotBlobs,
+			};
 		}
 
 		beforeEach("createLoader", async function () {

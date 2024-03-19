@@ -107,8 +107,8 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
-		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
-		assert.ok(parsedState.pendingSnapshot.snapshotTree);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -141,8 +141,8 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
-		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
-		assert.ok(parsedState.pendingSnapshot.snapshotTree);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -169,9 +169,9 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
-		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
 		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
-		assert.ok(parsedState.pendingSnapshot.snapshotTree);
+		assert.ok(parsedState.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -236,8 +236,8 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
-		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
-		assert.ok(parsedState.pendingSnapshot.snapshotTree);
+		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.ok(parsedState.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 });

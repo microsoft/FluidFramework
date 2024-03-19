@@ -124,12 +124,11 @@ const errorFn = (error: Error, expected: string): boolean => {
 const getAttributesFromPendingState = (
 	pendingState: IPendingContainerState,
 ): IDocumentAttributes => {
-	if (pendingState.pendingSnapshot.snapshotTree === undefined) {
+	if (pendingState.snapshotTree === undefined) {
 		throw new Error("base snapshot should be valid");
 	}
-	const attributesId =
-		pendingState.pendingSnapshot.snapshotTree.trees[".protocol"].blobs.attributes;
-	const attributes = pendingState.pendingSnapshot.snapshotBlobs[attributesId];
+	const attributesId = pendingState.snapshotTree.trees[".protocol"].blobs.attributes;
+	const attributes = pendingState.snapshotBlobs[attributesId];
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 
@@ -179,10 +178,8 @@ describe("serializedStateManager", () => {
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
 			attached: true,
-			pendingSnapshot: {
-				snapshotTree: { id: "fromPending", blobs: {}, trees: {} },
-				snapshotBlobs: {},
-			},
+			snapshotTree: { id: "fromPending", blobs: {}, trees: {} },
+			snapshotBlobs: {},
 			pendingRuntimeState: {},
 			savedOps: [],
 			url: "fluid",
@@ -206,7 +203,7 @@ describe("serializedStateManager", () => {
 			new MockRuntime(),
 			resolvedUrl,
 		);
-		assert.strictEqual(JSON.parse(state).pendingSnapshot.snapshotTree.id, "fromPending");
+		assert.strictEqual(JSON.parse(state).snapshotTree.id, "fromPending");
 	});
 
 	it("can get pending local state after attach", async () => {
@@ -255,7 +252,7 @@ describe("serializedStateManager", () => {
 			resolvedUrl,
 		);
 		const parsed = JSON.parse(state);
-		assert.strictEqual(parsed.pendingSnapshot.snapshotTree.id, "SnapshotId");
+		assert.strictEqual(parsed.snapshotTree.id, "SnapshotId");
 		const attributes = getAttributesFromPendingState(parsed);
 		assert.strictEqual(attributes.sequenceNumber, 0);
 		assert.strictEqual(attributes.minimumSequenceNumber, 0);

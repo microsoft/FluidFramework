@@ -916,7 +916,7 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			detachedBlobStorage,
 			this.mc.logger,
-			pendingLocalState?.pendingSnapshot.snapshotBlobs,
+			pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1153,14 +1153,16 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const pendingSnapshot = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const { snapshotTree, snapshotBlobs } =
+			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			pendingSnapshot,
+			snapshotTree,
+			snapshotBlobs,
 			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
@@ -1766,7 +1768,8 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot({
-		pendingSnapshot,
+		snapshotTree,
+		snapshotBlobs,
 		hasAttachmentBlobs,
 		pendingRuntimeState,
 	}: IPendingDetachedContainerState) {
@@ -1777,11 +1780,8 @@ export class Container
 			);
 		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			combineSnapshotTreeAndSnapshotBlobs(
-				pendingSnapshot.snapshotTree,
-				pendingSnapshot.snapshotBlobs,
-			);
-		this.storageAdapter.loadSnapshotFromSnapshotBlobs(pendingSnapshot.snapshotBlobs);
+			combineSnapshotTreeAndSnapshotBlobs(snapshotTree, snapshotBlobs);
+		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
 		const attributes = await getDocumentAttributes(
 			this.storageAdapter,
 			snapshotTreeWithBlobContents,
