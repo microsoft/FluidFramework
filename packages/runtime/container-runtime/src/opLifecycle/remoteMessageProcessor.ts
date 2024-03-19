@@ -84,11 +84,7 @@ export class RemoteMessageProcessor {
 		}
 
 		if (isGroupedBatch(message)) {
-			return this.opGroupingManager.ungroupOp(message).map((el) => {
-				// We always need to unpack an ungrouped message
-				unpack(el);
-				return el as InboundSequencedContainerRuntimeMessageOrSystemMessage;
-			});
+			return this.opGroupingManager.ungroupOp(message).map(unpack);
 		}
 
 		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
@@ -114,9 +110,7 @@ function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): 
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
  * (but there is no runtime validation of the 'type' or 'compatDetails' values).
  */
-function unpack(
-	message: ISequencedDocumentMessage,
-): asserts message is InboundSequencedContainerRuntimeMessage {
+function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
 	const contents = message.contents as InboundContainerRuntimeMessage;
 
@@ -129,6 +123,7 @@ function unpack(
 		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
 			contents.compatDetails;
 	}
+	return messageUnpacked;
 }
 
 /**

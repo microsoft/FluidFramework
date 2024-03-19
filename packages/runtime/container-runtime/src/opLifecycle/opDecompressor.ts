@@ -146,13 +146,13 @@ export class OpDecompressor {
 		} else if (batchMetadata === true) {
 			// Start of compressed batch
 			return newMessage(message, this.rootMessageContents[this.processedCount++]);
-		} else {
-			assert(batchMetadata === undefined, "invalid batch metadata");
-			assert(message.contents === undefined, 0x512 /* Expecting empty message */);
-
-			// Continuation of compressed batch
-			return newMessage(message, this.rootMessageContents[this.processedCount++]);
 		}
+
+		assert(batchMetadata === undefined, "invalid batch metadata");
+		assert(message.contents === undefined, 0x512 /* Expecting empty message */);
+
+		// Continuation of compressed batch
+		return newMessage(message, this.rootMessageContents[this.processedCount++]);
 	}
 }
 
