@@ -1929,6 +1929,19 @@ export class Container
 		// this was breaking this._initialClients handling
 		//
 		this._protocolHandler = protocol;
+
+		// This is a bit debatable.
+		// On one hand, we notify about changes in connection and clientId in propagateConnectionState()
+		// If we established connection while loading container runtiem, we will delay notifying container runtime
+		// until it's fully loaded, and setLoaded() will trigger notification
+		// At the same time, current clientId is available through API surface (IContainer.clientId, ContainerRuntime.clientId, etc.)
+		// And it would be weird to have audience.self not match it at any point in time, including through loading process.
+		//
+		// I think the best course of action is to remove Container's mode that allows concurrent establishing of socket
+		// connection with loading runtime (as it brings these weird combos and we observed runtiem and developers get it wrong)
+		//
+		// For now the choise is to keep self in sync with clientId properties.
+		this.protocolHandler.audience.setSelf(this._clientId);
 	}
 
 	private captureProtocolSummary(): ISummaryTree {
@@ -2174,6 +2187,10 @@ export class Container
 		initialTransition: boolean,
 		disconnectedReason?: IConnectionStateChangeReason,
 	) {
+		if (this.connectionState === ConnectionState.Connected) {
+			this.protocolHandler.audience.setSelf(this._clientId);
+		}
+
 		// When container loaded, we want to propagate initial connection state.
 		// After that, we communicate only transitions to Connected & Disconnected states, skipping all other states.
 		// This can be changed in the future, for example we likely should add "CatchingUp" event on Container.

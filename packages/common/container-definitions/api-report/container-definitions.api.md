@@ -4,7 +4,6 @@
 
 ```ts
 
-import type { EventEmitter } from 'events_pkg';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions';
 import type { IClient } from '@fluidframework/protocol-definitions';
@@ -72,16 +71,23 @@ export interface ContainerWarning extends IErrorBase {
 }
 
 // @public
-export interface IAudience extends EventEmitter {
+export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+    readonly self: string | undefined;
+}
+
+// @public (undocumented)
+export interface IAudienceEvents extends IEvent {
+    // (undocumented)
+    (event: "addMember" | "removeMember" | "selfChanged", listener: (clientId: string, client: IClient) => void): void;
 }
 
 // @alpha
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
+    setSelf(clientId: string | undefined): void;
 }
 
 // @alpha

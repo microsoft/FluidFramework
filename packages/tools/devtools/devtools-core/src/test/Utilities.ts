@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IAudience,
+	IAudienceEvents,
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
@@ -16,34 +17,13 @@ import type { IClient } from "@fluidframework/protocol-definitions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-class MockAudience extends EventEmitter implements IAudienceOwner {
+class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly audienceMembers: Map<string, IClient>;
+	private _self: string | undefined;
 
 	public constructor() {
 		super();
 		this.audienceMembers = new Map<string, IClient>();
-	}
-
-	public on(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): this;
-	public on(event: string, listener: (...args: any[]) => void): this {
-		return super.on(event, listener);
-	}
-	public off(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): this;
-	public off(event: string, listener: (...args: any[]) => void): this {
-		return super.off(event, listener);
-	}
-	public once(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): this;
-	public once(event: string, listener: (...args: any[]) => void): this {
-		return super.once(event, listener);
 	}
 
 	public addMember(clientId: string, member: IClient): void {
@@ -62,6 +42,17 @@ class MockAudience extends EventEmitter implements IAudienceOwner {
 	}
 	public getMember(clientId: string): IClient | undefined {
 		return this.audienceMembers.get(clientId);
+	}
+
+	public get self(): string | undefined {
+		return this._self;
+	}
+
+	public setSelf(clientId: string | undefined): void {
+		if (this._self !== clientId) {
+			this._self = clientId;
+			this.emit("selfChanged");
+		}
 	}
 }
 
