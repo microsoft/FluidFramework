@@ -159,9 +159,9 @@ class SocketIoServer implements core.IWebSocketServer {
 				const connectionsToDisconnectPerDrain = Math.ceil(connectionCount / totalDrains);
 				let done = false;
 				const drainConnections = Array.from(connections.values());
+				let n = 0;
 				if (connectionsToDisconnectPerDrain > 0) {
 					// start draining                let done = false;
-					let n = 0;
 					for (let i = 0; i < totalDrains; i++) {
 						for (let j = 0; j < connectionsToDisconnectPerDrain; j++) {
 							const connection: RemoteSocket<any, any> = drainConnections[n];
@@ -180,13 +180,17 @@ class SocketIoServer implements core.IWebSocketServer {
 							break;
 						}
 						Lumberjack.info("Graceful disconnect batch processed", {
-							disconnectedSoFar: n,
+							disconnectedSoFar: n + 1,
 							connectionCount,
 						});
 						await sleep(drainInterval);
 					}
 				}
-				metricForTimeTaken.success("Graceful shutdown finished");
+				if (n + 1 < connectionCount) {
+					metricForTimeTaken.error("Graceful shutdown finished");
+				} else {
+					metricForTimeTaken.success("Graceful shutdown finished");
+				}
 			}
 		}
 
