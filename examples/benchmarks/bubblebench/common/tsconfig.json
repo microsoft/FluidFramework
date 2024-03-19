@@ -4,7 +4,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["mocha", "react", "react-dom"],
+		"types": ["react", "react-dom"],
 	},
 	"include": ["src/**/*"],
 }
