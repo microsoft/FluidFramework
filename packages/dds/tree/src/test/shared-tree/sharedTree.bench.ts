@@ -50,17 +50,17 @@ import {
 	toJsonableTree,
 } from "../utils.js";
 
-// Number of nodes in test for wide trees.
+// number of nodes in test for wide trees
 const nodesCountWide = [
 	[1, BenchmarkType.Measurement],
 	[100, BenchmarkType.Perspective],
 	[1000, BenchmarkType.Measurement],
 	[10000, BenchmarkType.Measurement],
 ];
-// Number of nodes in test for deep trees.
+// number of nodes in test for deep trees
 // TODO: We currently run into a "maximum call stack size exceeded" error if we increase the node count,
-// due to recursive calls when calling flexTreeViewWithContent, or calling assert.deepEqual.
-// To include tests with higher node counts, we will likely need to replace these parts of the code to be done iteratively.
+// due to major limititations in a large portion of our tree processing code.
+// Our encoders, decoders, editing code, and more will fail with really deep trees.
 const nodesCountDeep = [
 	[1, BenchmarkType.Measurement],
 	[10, BenchmarkType.Perspective],

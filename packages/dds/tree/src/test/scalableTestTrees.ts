@@ -83,7 +83,6 @@ type JSWideTreeRoot2 = InsertableFlexField<typeof wideSchema.rootFieldSchema>;
 }
 
 /**
- *
  * Creates a {@link JSDeepTree} with the specified depth and value.
  * @remarks
  * This method is done iteratively to prevent exceeding max callstack for very deep trees.
