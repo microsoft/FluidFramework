@@ -30,6 +30,7 @@ export {
 	setVersion,
 	sortVersions,
 } from "./package";
+export { allPolicyHandlers } from "./policy";
 export { difference } from "./sets";
 export { getIndent, indentString } from "./text";
 export { createPullRequest, getCommitInfo, pullRequestExists } from "./github";

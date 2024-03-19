@@ -1,15 +1,15 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
-		"declaration": true,
-		"importHelpers": true,
-		"declarationMap": false,
-		"noUnusedLocals": false,
 		"rootDir": "./",
 		"outDir": "../lib/test",
+		"declaration": true,
+		"declarationMap": false,
+		"importHelpers": true,
 		"types": ["node", "mocha", "chai"],
-		"skipLibCheck": true,
+		"noUnusedLocals": false,
 		"target": "ES2015",
+		"skipLibCheck": true,
 	},
 	"references": [
 		{
