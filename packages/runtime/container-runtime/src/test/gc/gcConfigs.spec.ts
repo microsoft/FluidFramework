@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IErrorBase } from "@fluidframework/core-interfaces";
+import { Timer } from "@fluidframework/core-utils";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
@@ -14,43 +14,43 @@ import {
 import {
 	MockLogger,
 	MonitoringContext,
-	mixinMonitoringContext,
 	createChildLogger,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { Timer } from "@fluidframework/core-utils";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
-	GarbageCollector,
 	GCNodeType,
 	GCSummaryStateTracker,
+	GCVersion,
+	GarbageCollector,
+	IGCMetadata,
+	IGCMetadata_Deprecated,
+	IGCRuntimeOptions,
 	IGarbageCollectionRuntime,
 	IGarbageCollectionState,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
-	IGCMetadata,
-	IGCMetadata_Deprecated,
-	IGCRuntimeOptions,
-	defaultSessionExpiryDurationMs,
-	oneDayMs,
-	runGCKey,
-	runSweepKey,
 	defaultInactiveTimeoutMs,
+	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
-	gcTestModeKey,
-	nextGCVersion,
-	stableGCVersion,
-	gcVersionUpgradeToV4Key,
-	gcGenerationOptionName,
-	throwOnTombstoneLoadOverrideKey,
+	disableDatastoreSweepKey,
 	gcDisableDataStoreSweepOptionName,
 	gcDisableThrowOnTombstoneLoadOptionName,
-	GCVersion,
+	gcGenerationOptionName,
+	gcTestModeKey,
+	gcVersionUpgradeToV4Key,
+	nextGCVersion,
+	oneDayMs,
+	runGCKey,
 	runSessionExpiryKey,
-	disableDatastoreSweepKey,
+	runSweepKey,
+	stableGCVersion,
+	throwOnTombstoneLoadOverrideKey,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
-import { IContainerRuntimeMetadata } from "../../summary/index.js";
 import { pkgVersion } from "../../packageVersion.js";
+import { IContainerRuntimeMetadata } from "../../summary/index.js";
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {
@@ -120,7 +120,6 @@ describe("Garbage Collection configurations", () => {
 			updateUsedRoutes: (usedRoutes: string[]) => {
 				return { totalNodeCount: 0, unusedNodeCount: 0 };
 			},
-			updateUnusedRoutes: (unusedRoutes: string[]) => {},
 			deleteSweepReadyNodes: (sweepReadyRoutes: string[]): string[] => {
 				return [];
 			},

@@ -7,21 +7,21 @@ import {
 	DeltaDetachedNodeId,
 	DeltaFieldChanges,
 	DeltaMark,
-	makeAnonChange,
 	RevisionMetadataSource,
 	TaggedChange,
+	makeAnonChange,
 } from "../../core/index.js";
-import { fail, IdAllocator } from "../../util/index.js";
+import { IdAllocator, fail } from "../../util/index.js";
 import { Multiplicity } from "../multiplicity.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,
-	ToDelta,
 	NodeChangeComposer,
 	NodeChangeInverter,
+	NodeChangePruner,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
-	NodeChangePruner,
+	ToDelta,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";

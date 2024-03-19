@@ -70,9 +70,7 @@ export interface ITokenService {
 // @internal
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
     constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
-    // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
 }
 

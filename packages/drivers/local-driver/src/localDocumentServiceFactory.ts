@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url_pkg";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
+import { createDocument } from "./localCreateDocument.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
-import { createDocument } from "./localCreateDocument.js";
 
 /**
  * Implementation of document service factory for local use.
@@ -29,7 +28,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 
 	/**
 	 * @param localDeltaConnectionServer - delta connection server for ops
-	 * @alpha
 	 */
 	constructor(
 		private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
@@ -62,8 +60,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		const parsedUrl = parse(resolvedUrl.url);
-		const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
+		const parsedUrl = new URL(resolvedUrl.url);
+		const [, tenantId, documentId] = parsedUrl.pathname ? parsedUrl.pathname.split("/") : [];
 		if (!documentId || !tenantId) {
 			throw new Error(
 				`Couldn't parse resolved url. [documentId:${documentId}][tenantId:${tenantId}]`,

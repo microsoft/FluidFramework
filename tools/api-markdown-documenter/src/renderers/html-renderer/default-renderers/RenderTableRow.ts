@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { TableRowNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import type { RenderContext } from "../RenderContext";
-import { renderContentsUnderTag } from "../Utilities";
+import type { TableRowNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderContentsUnderTag } from "../Utilities.js";
 
 /**
  * Renders a {@link TableRowNode} as HTML.

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import {
+	ArrayProperty,
+	BaseProperty,
 	EnumArrayProperty,
 	EnumProperty,
 	Int64Property,
-	ReferenceMapProperty,
-	SetProperty,
-	ArrayProperty,
-	BaseProperty,
 	MapProperty,
 	PropertyFactory,
 	ReferenceArrayProperty,
+	ReferenceMapProperty,
+	SetProperty,
 	Uint64Property,
 } from "@fluid-experimental/property-properties";
-import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 
 import memoize from "memoize-one";
 

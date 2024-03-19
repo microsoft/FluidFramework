@@ -7,6 +7,6 @@
  * Library for rendering {@link DocumentationNode} trees as `Markdown`.
  */
 
-export { type RenderConfiguration, type Renderers } from "./configuration";
-export { renderDocument, renderNode, renderNodes } from "./Render";
-export { type RenderContext } from "./RenderContext";
+export { type RenderConfiguration, type Renderers } from "./configuration/index.js";
+export { renderDocument, renderNode, renderNodes } from "./Render.js";
+export { type RenderContext } from "./RenderContext.js";

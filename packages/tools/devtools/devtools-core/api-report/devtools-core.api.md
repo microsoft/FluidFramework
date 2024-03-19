@@ -145,12 +145,9 @@ export namespace ContainerStateHistory {
 
 // @internal
 export interface ContainerStateMetadata extends HasContainerKey {
-    // (undocumented)
     attachState: AttachState;
-    // (undocumented)
     clientId?: string;
     closed: boolean;
-    // (undocumented)
     connectionState: ConnectionState;
     userId?: string;
 }

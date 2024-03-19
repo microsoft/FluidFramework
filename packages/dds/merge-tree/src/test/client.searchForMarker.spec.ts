@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { UniversalSequenceNumber } from "../constants.js";
-import { reservedMarkerIdKey, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { MaxNodesInBlock, reservedMarkerIdKey } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
 import { TextSegment } from "../textSegment.js";
 import { TestClient } from "./testClient.js";
-import { insertSegments } from "./testUtils.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
+import { insertSegments } from "./testUtils.js";
 
 describe("TestClient", () => {
 	const localUserLongId = "localUser";

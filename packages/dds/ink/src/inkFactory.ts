@@ -5,13 +5,13 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { Ink } from "./ink";
-import { pkgVersion } from "./packageVersion";
+import { Ink } from "./ink.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Factory for Ink.

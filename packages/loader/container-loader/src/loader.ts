@@ -3,32 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	ITelemetryLoggerExt,
-	mixinMonitoringContext,
-	MonitoringContext,
-	PerformanceEvent,
-	sessionStorageConfigProvider,
-	createChildMonitoringContext,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
-import {
-	ITelemetryBaseLogger,
-	FluidObject,
-	IRequest,
-	IConfigProviderBase,
-} from "@fluidframework/core-interfaces";
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IFluidModule,
 	IHostLoader,
 	ILoader,
 	ILoaderOptions as ILoaderOptions1,
-	LoaderHeader,
 	IProvideFluidCodeDetailsComparer,
-	IFluidCodeDetails,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
+import {
+	FluidObject,
+	IConfigProviderBase,
+	IRequest,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
@@ -36,11 +26,21 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	UsageError,
+	createChildMonitoringContext,
+	mixinMonitoringContext,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import { Container, IPendingContainerState } from "./container.js";
-import { IParsedUrl, tryParseCompatibleResolvedUrl } from "./utils.js";
+import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
-import { DebugLogger } from "./debugLogger.js";
+import { tryParseCompatibleResolvedUrl } from "./utils.js";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -332,18 +332,17 @@ export class Loader implements IHostLoader {
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
 		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
-			const resolved = await this.resolveCore(
+			return this.resolveCore(
 				request,
 				pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
 			);
-			return resolved.container;
 		});
 	}
 
 	private async resolveCore(
 		request: IRequest,
 		pendingLocalState?: IPendingContainerState,
-	): Promise<{ container: Container; parsed: IParsedUrl }> {
+	): Promise<Container> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
@@ -387,10 +386,7 @@ export class Loader implements IHostLoader {
 			throw new UsageError('opsBeforeReturn must be set to "sequenceNumber"');
 		}
 
-		return {
-			container: await this.loadContainer(request, resolvedAsFluid, pendingLocalState),
-			parsed,
-		};
+		return this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 	}
 
 	private async loadContainer(

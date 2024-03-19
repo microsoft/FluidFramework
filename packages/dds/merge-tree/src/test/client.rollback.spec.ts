@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { UniversalSequenceNumber } from "../constants.js";
-import { ISegmentLeaf, Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes.js";
+import { ISegmentLeaf, Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 import { TestClient } from "./testClient.js";
@@ -512,11 +513,11 @@ describe("client.rollback", () => {
 	});
 	it("Should function properly after rollback with external ops", () => {
 		const remoteClient = new TestClient();
-		remoteClient.insertTextLocal(0, client.getText());
 		remoteClient.startOrUpdateCollaboration("remoteUser");
 		const clients = [client, remoteClient];
 		let seq = 0;
 		const logger = new TestClientLogger(clients);
+		logger.validate();
 
 		let msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(0, "12345"), ++seq);
 		clients.forEach((c) => c.applyMsg(msg));

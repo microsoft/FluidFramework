@@ -4,8 +4,21 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { assertWithMessage, copyPropertyIfDefined, fail, Result } from './Common.js';
-import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId } from './Identifiers.js';
+import { Result, assertWithMessage, copyPropertyIfDefined, fail } from './Common.js';
+import {
+	BadPlaceValidationResult,
+	BadRangeValidationResult,
+	PlaceValidationResult,
+	RangeValidationResultKind,
+	detachRange,
+	insertIntoTrait,
+	validateStablePlace,
+	validateStableRange,
+} from './EditUtilities.js';
+import { DetachedSequenceId, NodeId, TraitLabel, isDetachedSequenceId } from './Identifiers.js';
+import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
+import { RevisionView, TransactionView } from './RevisionView.js';
+import { TreeViewNode } from './TreeView.js';
 import { rangeFromStableRange } from './TreeViewUtilities.js';
 import {
 	BuildInternal,
@@ -21,19 +34,6 @@ import {
 	StablePlaceInternal,
 	StableRangeInternal,
 } from './persisted-types/index.js';
-import {
-	detachRange,
-	insertIntoTrait,
-	validateStablePlace,
-	validateStableRange,
-	BadPlaceValidationResult,
-	BadRangeValidationResult,
-	PlaceValidationResult,
-	RangeValidationResultKind,
-} from './EditUtilities.js';
-import { RevisionView, TransactionView } from './RevisionView.js';
-import { ReconciliationChange, ReconciliationPath } from './ReconciliationPath.js';
-import { TreeViewNode } from './TreeView.js';
 
 /**
  * Result of applying a transaction.

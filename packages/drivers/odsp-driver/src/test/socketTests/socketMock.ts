@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";
-import { pkgVersion as driverVersion } from "../../packageVersion";
-import { IOdspSocketError } from "../../contracts";
+import { v4 as uuid } from "uuid";
+import { IOdspSocketError } from "../../contracts.js";
+import { pkgVersion as driverVersion } from "../../packageVersion.js";
 
 export interface SocketMockEvents extends IEvent {
 	(event: "disconnect", listener: (reason?: IAnyDriverError, details?: unknown) => void): void;
@@ -105,7 +105,19 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 			case "connect_document": {
 				const connectMessage = args[0] as IConnect;
 				switch (this.mockSocketConnectResponse.connect_document.eventToEmit) {
-					case "connect_document_error":
+					case "connect_document_error": {
+						const errorToThrow =
+							this.mockSocketConnectResponse.connect_document.errorToThrow ??
+							createGenericNetworkError(
+								"TestError",
+								{ canRetry: false },
+								{ driverVersion, isSocketError: false },
+							);
+						this.emit(
+							this.mockSocketConnectResponse.connect_document.eventToEmit,
+							errorToThrow,
+						);
+					}
 					case "connect_error": {
 						const errorToThrow =
 							this.mockSocketConnectResponse.connect_document.errorToThrow ??
