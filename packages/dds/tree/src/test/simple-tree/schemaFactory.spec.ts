@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import { createIdCompressor } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
+import {
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils";
 import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
@@ -227,6 +231,35 @@ describe("schemaFactory", () => {
 			assert.equal(root.increment(), 1);
 			assert.equal(root.increment(), 2);
 			assert.deepEqual(values, [2, 3]);
+		});
+
+		it("stableName collision", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.throws(
+				() =>
+					schema.object("Point", {
+						x: schema.required(schema.number, { stableName: "stable-key" }),
+						y: schema.required(schema.number, { stableName: "stable-key" }),
+					}),
+				(error: Error) =>
+					validateAssertionError(error, /Duplicate stableName "foo" in schema "Object"/),
+			);
+		});
+
+		it.only("stableName collides with developer key", () => {
+			const schema = new SchemaFactory("com.example");
+			assert.throws(
+				() =>
+					schema.object("Object", {
+						foo: schema.number,
+						bar: schema.required(schema.string, { stableName: "foo" }),
+					}),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/stableName "foo" conflicts with a property key of the same name in schema "Object"/,
+					),
+			);
 		});
 
 		// TODO: stableName

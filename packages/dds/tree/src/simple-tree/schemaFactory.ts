@@ -337,6 +337,9 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(name: Name, t: T) {
+		// Ensure no collisions between field `key`s and `stableName`s
+		SchemaFactory.validateObjectSchemaKeyUniqueness(name, t);
+
 		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
@@ -389,6 +392,45 @@ export class SchemaFactory<
 			true,
 			T
 		>;
+	}
+
+	/**
+	 * TODO
+	 */
+	private static validateObjectSchemaKeyUniqueness<
+		const Name extends number | string,
+		const Fields extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(schemaName: Name, fields: Fields): void {
+		// TODO: the below is wrong. It should be valid to explicitly set the stableName to be the same as the property key for the same field.
+
+		const devKeys = new Set<string>();
+		const stableNames = new Set<string>();
+		for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
+			if (devKeys.has(fieldKey)) {
+				throw new UsageError(`Duplicate key "${fieldKey}" in schema "${schemaName}".`);
+			} else {
+				devKeys.add(fieldKey);
+			}
+
+			if (fieldSchema instanceof FieldSchema && fieldSchema.props?.stableName !== undefined) {
+				const fieldStableName = fieldSchema.props.stableName;
+				if (stableNames.has(fieldStableName)) {
+					throw new UsageError(
+						`Duplicate stableName "${fieldStableName}" in schema "${schemaName}".`,
+					);
+				} else {
+					stableNames.add(fieldStableName);
+				}
+			}
+		}
+
+		for (const fieldStableName of stableNames) {
+			if (devKeys.has(fieldStableName)) {
+				throw new UsageError(
+					`stableName "${fieldStableName}" conflicts with a property key of the same name in schema "${schemaName}".`,
+				);
+			}
+		}
 	}
 
 	/**
