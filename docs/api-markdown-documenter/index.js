@@ -13,7 +13,8 @@ const path = require("path");
 const versions = require("../data/versions.json");
 const { renderApiDocumentation } = require("./render-api-documentation");
 
-const docVersions = versions.params.previousVersions.concat(versions.params.currentVersion);
+const isLocal = process.argv[2];
+const docVersions = isLocal ? ["local"] : versions.params.previousVersions.concat(versions.params.currentVersion);
 
 Promise.all(
 	docVersions.map(async (version) => {
