@@ -37,10 +37,13 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:docs": "fluid-build . --task api",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
@@ -54,16 +57,18 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"postpack": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test",
+		"postpack": "tar -cf ./experimental-tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluid-internal/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
 		"perf:measure": "npm run perf -- --fgrep @Measurement",
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit --perfMode --fgrep @Benchmark -r node_modules/@fluid-internal/mocha-test-setup --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/**/*.tests.*js\" --exit",
+		"test:mocha:esm": "mocha --recursive \"lib/**/*.tests.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -120,6 +125,18 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,
