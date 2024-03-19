@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { TreeValue } from "../core/index.js";
+import { TreeValue, rootFieldKey } from "../core/index.js";
 import {
 	EditableTreeEvents,
 	LeafNodeSchema,
@@ -129,12 +129,23 @@ export const treeNodeApi: TreeNodeApi = {
 		return output;
 	},
 	key: (node: TreeNode) => {
+		// If the parent is undefined, then this node is under the root field,
+		// so we know its key is the special root one.
+		const parent = treeNodeApi.parent(node);
+		if (parent === undefined) {
+			return rootFieldKey;
+		}
+
+		// The flex-domain strictly operates in terms of the `stableName`, if one was given.
+		// To find the associated developer-facing key, we need to look up the field associated with
+		// the stable name, and get the key it was created with.
 		const stableName = treeNodeApi.stableName(node);
-		const devKey = tryGetKeyFromStableName(node, stableName);
+		const devKey = tryGetKeyFromStableName(parent, stableName);
 		assert(devKey !== undefined, "Existing stableName should always map to a devKey");
 		return devKey;
 	},
 	stableName: (node: TreeNode) => {
+		// Note: the flex domain strictly works with `stableName`s, and knows nothing of developer keys.
 		const parentField = getFlexNode(node).parentField;
 		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
 			// The parent of `node` is an array node
