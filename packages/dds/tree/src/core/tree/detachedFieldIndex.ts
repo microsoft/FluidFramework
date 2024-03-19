@@ -86,21 +86,6 @@ export class DetachedFieldIndex {
 		}
 	}
 
-	/*
-	public *entries(): Generator<{ root: ForestRootId } & { id: Delta.DetachedNodeId }> {
-		for (const [major, innerMap] of this.detachedNodeToField) {
-			if (major !== undefined) {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { major, minor }, root: entry };
-				}
-			} else {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { minor }, root: entry };
-				}
-			}
-		}
-	} */
-
 	/**
 	 * Removes all entries from the index.
 	 */
@@ -129,25 +114,6 @@ export class DetachedFieldIndex {
 		}
 	}
 
-	// public updateMajor(current: Major, updated: Major) {
-	// 	const innerCurrent = this.detachedNodeToField.get(current);
-	// 	if (innerCurrent !== undefined) {
-	// 		this.detachedNodeToField.delete(current);
-	// 		const innerUpdated = this.detachedNodeToField.get(updated);
-	// 		if (innerUpdated === undefined) {
-	// 			this.detachedNodeToField.set(updated, innerCurrent);
-	// 		} else {
-	// 			for (const [minor, entry] of innerCurrent) {
-	// 				assert(
-	// 					innerUpdated.get(minor) === undefined,
-	// 					0x7a9 /* Collision during index update */,
-	// 				);
-	// 				innerUpdated.set(minor, entry);
-	// 			}
-	// 		}
-	// 	}
-	// }
-
 	/**
 	 * Returns a field key for the given ID.
 	 * This does not save the field key on the index. To do so, call {@link createEntry}.
@@ -160,11 +126,6 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Returns undefined if no such id is known to the index.
 	 */
-	/*
-	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
-	} */
-
 	public tryGetEntry(
 		id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId,
 	): ForestRootId | undefined {
@@ -186,11 +147,6 @@ export class DetachedFieldIndex {
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
 	}
-	// public getEntry(id: Delta.DetachedNodeId): ForestRootId {
-	// 	const key = this.tryGetEntry(id);
-	// 	assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
-	// 	return key;
-	// }
 
 	public deleteEntry(id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): void {
 		const rangeId = Delta.convertToRangeId(id) as Delta.DetachedNodeRangeId;
@@ -202,10 +158,6 @@ export class DetachedFieldIndex {
 		);
 		assert(found, 0x7ab /* Unable to delete unknown entry */);
 	}
-	// public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-	// 	const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
-	// 	assert(found, 0x7ab /* Unable to delete unknown entry */);
-	// }
 
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
@@ -235,23 +187,6 @@ export class DetachedFieldIndex {
 		}
 		return root;
 	}
-	// public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): ForestRootId {
-	// 	const root = this.rootIdAllocator.allocate(count);
-	// 	if (nodeId !== undefined) {
-	// 		for (let i = 0; i < count; i++) {
-	// 			assert(
-	// 				tryGetFromNestedMap(
-	// 					this.detachedNodeToField,
-	// 					nodeId.major,
-	// 					nodeId.minor + i,
-	// 				) === undefined,
-	// 				0x7ce /* Detached node ID already exists in index */,
-	// 			);
-	// 			setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
-	// 		}
-	// 	}
-	// 	return root;
-	// }
 
 	public encode(): JsonCompatibleReadOnly {
 		return this.codec.encode({
