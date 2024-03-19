@@ -4193,17 +4193,21 @@ importers:
 
   experimental/PropertyDDS/examples/schemas:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.34.0
+      copyfiles: ^2.4.1
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0
+      copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
