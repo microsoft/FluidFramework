@@ -11,9 +11,12 @@ import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IAudienceEvents } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
@@ -90,6 +93,23 @@ export class InsecureTokenProvider implements ITokenProvider {
     scopes?: ScopeType[] | undefined);
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
+}
+
+// @alpha (undocumented)
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+    constructor();
+    // (undocumented)
+    addMember(clientId: string, member: IClient): void;
+    // (undocumented)
+    getMember(clientId: string): IClient | undefined;
+    // (undocumented)
+    getMembers(): Map<string, IClient>;
+    // (undocumented)
+    removeMember(clientId: string): boolean;
+    // (undocumented)
+    get self(): string | undefined;
+    // (undocumented)
+    setSelf(clientId: string | undefined): void;
 }
 
 // @alpha

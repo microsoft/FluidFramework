@@ -4,7 +4,13 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IAudience,
+	IAudienceEvents,
+	IAudienceOwner,
+	ILoader,
+} from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -15,6 +21,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
+import type { IClient } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
@@ -683,6 +690,48 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	}
 	listenerCount(type: string | number): number {
 		throw new Error("Method not implemented.");
+	}
+}
+
+/**
+ * @alpha
+ */
+export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
+	private readonly audienceMembers: Map<string, IClient>;
+	private _self: string | undefined;
+
+	public constructor() {
+		super();
+		this.audienceMembers = new Map<string, IClient>();
+	}
+
+	public addMember(clientId: string, member: IClient): void {
+		this.emit("addMember", clientId, member);
+		this.audienceMembers.set(clientId, member);
+	}
+
+	public removeMember(clientId: string): boolean {
+		const member = this.audienceMembers.get(clientId);
+		this.emit("removeMember", clientId, member);
+		return this.audienceMembers.delete(clientId);
+	}
+
+	public getMembers(): Map<string, IClient> {
+		return new Map<string, IClient>(this.audienceMembers.entries());
+	}
+	public getMember(clientId: string): IClient | undefined {
+		return this.audienceMembers.get(clientId);
+	}
+
+	public get self(): string | undefined {
+		return this._self;
+	}
+
+	public setSelf(clientId: string | undefined): void {
+		if (this._self !== clientId) {
+			this._self = clientId;
+			this.emit("selfChanged");
+		}
 	}
 }
 

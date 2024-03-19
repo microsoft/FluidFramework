@@ -49,6 +49,7 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
+	MockAudience,
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
@@ -133,6 +134,7 @@ describe("Runtime", () => {
 		const mockContext = {
 			attachState: AttachState.Attached,
 			deltaManager: new MockDeltaManager(),
+			audience: new MockAudience(),
 			quorum: new MockQuorumClients(),
 			taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
 			clientDetails: { capabilities: { interactive: true } },
@@ -281,6 +283,7 @@ describe("Runtime", () => {
 						return {
 							attachState: AttachState.Attached,
 							deltaManager: new MockDeltaManager(),
+							audience: new MockAudience(),
 							quorum: new MockQuorumClients(),
 							taggedLogger: new MockLogger(),
 							supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
@@ -701,6 +704,7 @@ describe("Runtime", () => {
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => ({
 						attachState: AttachState.Attached,
 						deltaManager: new MockDeltaManager(),
+						audience: new MockAudience(),
 						quorum: new MockQuorumClients(),
 						taggedLogger: mixinMonitoringContext(
 							new MockLogger(),
@@ -772,6 +776,7 @@ describe("Runtime", () => {
 
 				return {
 					deltaManager: new MockDeltaManager(),
+					audience: new MockAudience(),
 					quorum: new MockQuorumClients(),
 					taggedLogger: new MockLogger(),
 					clientDetails: { capabilities: { interactive: true } },
@@ -855,6 +860,7 @@ describe("Runtime", () => {
 						clientId: "fakeClientId",
 						attachState: AttachState.Attached,
 						deltaManager: new MockDeltaManager(),
+						audience: new MockAudience(),
 						quorum: new MockQuorumClients(),
 						taggedLogger: mockLogger,
 						clientDetails: { capabilities: { interactive: true } },
@@ -1526,6 +1532,7 @@ describe("Runtime", () => {
 				return {
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
+					audience: new MockAudience(),
 					quorum: new MockQuorumClients(),
 					taggedLogger: mixinMonitoringContext(
 						mockLogger,
@@ -1638,6 +1645,7 @@ describe("Runtime", () => {
 				return {
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
+					audience: new MockAudience(),
 					quorum: new MockQuorumClients(),
 					taggedLogger: mockLogger,
 					supportedFeatures: features,

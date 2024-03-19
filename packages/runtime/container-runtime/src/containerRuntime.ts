@@ -2249,6 +2249,14 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		// Validate we have consistent state
+		// back-compat: we can be dealing with old loader and no self property at all.
+		const self = this._audience.self;
+		if (self !== undefined) {
+			assert(clientId === self, "same clientId");
+			assert(this.clientId === self, "same clientId");
+		}
+
 		if (connected && this.idCompressorMode === "delayed" && !this.compressorLoadInitiated) {
 			this.compressorLoadInitiated = true;
 			this.createIdCompressor()
