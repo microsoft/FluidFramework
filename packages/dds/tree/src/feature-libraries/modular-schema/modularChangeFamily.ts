@@ -718,7 +718,7 @@ export class ModularChangeFamily
 		);
 
 		const rebasedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
-		for (const [newId, taggedBaseId] of crossFieldTable.nodeIdPairs) {
+		for (const [newId, taggedBaseId, existenceState] of crossFieldTable.nodeIdPairs) {
 			const newNodeChange =
 				newId !== undefined
 					? tryGetFromNestedMap(change.nodeChanges, newId.revision, newId.localId)
@@ -744,6 +744,7 @@ export class ModularChangeFamily
 				() => true,
 				rebaseMetadata,
 				constraintState,
+				existenceState,
 			);
 
 			if (rebasedNode !== undefined) {
@@ -841,7 +842,7 @@ export class ModularChangeFamily
 				const taggedBase =
 					baseChild !== undefined ? tagChange(baseChild, over.revision) : undefined;
 
-				crossFieldTable.nodeIdPairs.push([child, taggedBase]);
+				crossFieldTable.nodeIdPairs.push([child, taggedBase, stateChange]);
 				return (
 					child ??
 					taggedAtomId(
@@ -900,7 +901,7 @@ export class ModularChangeFamily
 							0x5b6 /* This field should not have any base changes */,
 						);
 
-						crossFieldTable.nodeIdPairs.push([child, undefined]);
+						crossFieldTable.nodeIdPairs.push([child, undefined, existenceState]);
 						return child;
 					},
 					genId,
@@ -1449,7 +1450,11 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	/**
 	 * List of (newId, baseId) pairs encountered so far.
 	 */
-	nodeIdPairs: [NodeId | undefined, TaggedChange<NodeId> | undefined][];
+	nodeIdPairs: [
+		NodeId | undefined,
+		TaggedChange<NodeId> | undefined,
+		NodeExistenceState | undefined,
+	][];
 }
 
 interface RebaseFieldContext {
