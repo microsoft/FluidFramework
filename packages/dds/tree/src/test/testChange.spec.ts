@@ -19,8 +19,6 @@ import { TestChange } from "./testChange.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { deepFreeze, mintRevisionTag } from "./utils.js";
-import { toDelta } from "./feature-libraries/sequence-field/utils.js";
-import { TestChangeset } from "./feature-libraries/sequence-field/testEdits.js";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
