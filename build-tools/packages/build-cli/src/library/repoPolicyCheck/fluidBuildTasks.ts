@@ -3,27 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import * as JSON5 from "json5";
 import * as semver from "semver";
-import { Package, PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import {
+	Package,
+	PackageJson,
+	updatePackageJsonFile,
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
-} from "../../common/fluidTaskDefinitions";
-import { getEsLintConfigFilePath } from "../../common/taskUtils";
-import { FluidRepo } from "../../common/fluidRepo";
-import { loadFluidBuildConfig } from "../../common/fluidUtils";
-import * as TscUtils from "../../common/tscUtils";
-import { Handler, readFile } from "../common";
+	getEsLintConfigFilePath,
+	FluidRepo,
+	loadFluidBuildConfig,
+	TscUtils,
+} from "@fluidframework/build-tools";
+import { Handler, readFile } from "./common";
+import { TsConfigJson } from "type-fest";
 
 /**
  * Get and cache the tsc check ignore setting
  */
 const fluidBuildTasksTscIgnoreTasksCache = new Map<string, Set<string>>();
 
-const getFluidBuildTasksTscIgnore = (root: string) => {
+const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
@@ -36,7 +39,7 @@ const getFluidBuildTasksTscIgnore = (root: string) => {
 };
 
 const fluidBuildTasksTscIgnoreDependenciesCache = new Map<string, Set<string>>();
-const getFluidBuildTasksIgnoreDependencies = (root: string) => {
+const getFluidBuildTasksIgnoreDependencies = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreDependenciesCache.get(rootDir);
 	if (ignore === undefined) {
@@ -49,7 +52,7 @@ const getFluidBuildTasksIgnoreDependencies = (root: string) => {
 };
 
 const fluidBuildTasksTscIgnoreDevDependenciesCache = new Map<string, Set<string>>();
-const getFluidBuildTasksIgnoreDevDependencies = (root: string) => {
+const getFluidBuildTasksIgnoreDevDependencies = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreDevDependenciesCache.get(rootDir);
 	if (ignore === undefined) {
@@ -64,7 +67,7 @@ const getFluidBuildTasksIgnoreDevDependencies = (root: string) => {
  * Cache the FluidRepo object, so we don't have to load it repeatedly
  */
 const repoCache = new Map<string, { repo: FluidRepo; packageMap: Map<string, Package> }>();
-function getFluidPackageMap(root: string) {
+function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
@@ -83,16 +86,22 @@ function getFluidPackageMap(root: string) {
  * @param command - the command to find the script name for
  * @returns best script name found to match the command
  */
-function findScript(json: PackageJson, command: string) {
+function findScript(json: PackageJson, command: string): string | undefined {
+	if (json.scripts === undefined) {
+		return undefined;
+	}
+
 	// Multiple scripts can have the same command, we want to find the best one.
 	let bestScript: { rank: number; script: string | undefined } = {
 		rank: 0,
 		script: undefined,
 	};
-	for (const script in json.scripts) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const scriptCommands = json.scripts[script]!.split("&&");
-		scriptCommands.forEach((scriptCommand, index) => {
+	for (const [script, commands] of Object.entries(json.scripts)) {
+		if (commands === undefined) {
+			continue;
+		}
+		const scriptCommands = commands.split("&&");
+		for (const [index, scriptCommand] of scriptCommands.entries()) {
 			if (command === scriptCommand.trim()) {
 				// Rank better (lower) when there are fewer commands and the command is earlier
 				// in the list.
@@ -101,7 +110,7 @@ function findScript(json: PackageJson, command: string) {
 					bestScript = { rank, script };
 				}
 			}
-		});
+		}
 		// If we find an exact match, we can stop looking.
 		if (bestScript.rank === 1) {
 			return bestScript.script;
@@ -115,16 +124,17 @@ function findScript(json: PackageJson, command: string) {
  *
  * @param json - the package.json content to search script in
  * @param config - the tsc-multi config to check for
- * @returns  first script name found to match the command
+ * @returns first script name found to match the command
  *
  * @remarks
  */
-function findTscMultiScript(json: PackageJson, config: string) {
-	for (const script in json.scripts) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const scriptCommand = json.scripts[script]!;
+function findTscMultiScript(json: PackageJson, config: string): string | undefined {
+	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
+		if (scriptCommands === undefined) {
+			continue;
+		}
 
-		if (scriptCommand.startsWith("tsc-multi") && scriptCommand.includes(config)) {
+		if (scriptCommands.startsWith("tsc-multi") && scriptCommands.includes(config)) {
 			return script;
 		}
 	}
@@ -135,19 +145,25 @@ function findTscMultiScript(json: PackageJson, config: string) {
  *
  * @param json - the package.json content to search script in
  * @param project - the tsc project to check for; `undefined` checks for unspecified project
- * @returns  first script name found to match the command
+ * @returns first script name found to match the command
  *
  * @remarks
  */
-function findFluidTscScript(json: PackageJson, project: string | undefined) {
-	for (const script in json.scripts) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const scriptCommand = json.scripts[script]!;
+function findFluidTscScript(
+	json: PackageJson,
+	project: string | undefined,
+): string | undefined {
+	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
+		if (scriptCommands === undefined) {
+			continue;
+		}
 
-		if (scriptCommand.startsWith("fluid-tsc")) {
-			if (project ? scriptCommand.includes(project) : !scriptCommand.includes("--project")) {
-				return script;
-			}
+		if (
+			scriptCommands.startsWith("fluid-tsc") &&
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			(project ? scriptCommands.includes(project) : !scriptCommands.includes("--project"))
+		) {
+			return script;
 		}
 	}
 }
@@ -165,7 +181,7 @@ function findFluidTscScript(json: PackageJson, project: string | undefined) {
  * @param json - packages build dependencies to get.
  * @returns an array of build task dependencies name expected
  */
-function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
+function getDefaultTscTaskDependencies(root: string, json: PackageJson): string[] {
 	const packageMap = getFluidPackageMap(root);
 	const pkg = packageMap.get(json.name);
 	if (pkg === undefined) {
@@ -206,13 +222,14 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 }
 
 /**
+ * Find all the tsc scripts in the package.json
  * @param json - the package.json content to search
  * @param project - the tsc project to search for
  * @returns set of script names found to use the project
  */
-function findTscScripts(json: PackageJson, project: string) {
+function findTscScripts(json: PackageJson, project: string): string[] | undefined {
 	const tscScripts: string[] = [];
-	function addIfDefined(script: string | undefined) {
+	function addIfDefined(script: string | undefined): void {
 		if (script !== undefined) {
 			tscScripts.push(script);
 		}
@@ -229,49 +246,56 @@ function findTscScripts(json: PackageJson, project: string) {
 	return tscScripts.length > 0 ? tscScripts : undefined;
 }
 
+interface EslintConfig {
+	parserOptions?: {
+		project?: string | string[];
+	};
+}
 /**
  * Get a list of build script names that the eslint depends on, based on .eslintrc file.
  * @remarks eslint does not _depend_ on other build tasks. The projects that it references
- *          are configuration guides for the eslint parser, and they associated build tasks
- *          are not prerequisites. Consider policy updates that confirm those tasks are
- *          present, but do not enforce them as prerequisite actions.
+ * are configuration guides for the eslint parser, and they associated build tasks
+ * are not prerequisites. Consider policy updates that confirm those tasks are
+ * present, but do not enforce them as prerequisite actions.
  * @param packageDir - directory of the package
  * @param root - directory of the Fluid repo root
  * @param json - content of the package.json
- * @returns
+ * @returns list of build script names that the eslint depends on
  */
 function eslintGetScriptDependencies(
 	packageDir: string,
 	root: string,
 	json: PackageJson,
-): string[] {
-	if (json.scripts?.["eslint"] === undefined) {
+): (string | string[])[] {
+	if (json.scripts?.eslint === undefined) {
 		return [];
 	}
 
 	const eslintConfig = getEsLintConfigFilePath(packageDir);
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!eslintConfig) {
 		throw new Error(`Unable to find eslint config file for package in ${packageDir}`);
 	}
 
-	let config;
+	let config: EslintConfig;
 	try {
-		const ext = path.parse(eslintConfig).ext;
+		const { ext } = path.parse(eslintConfig);
 		if (ext !== ".js" && ext !== ".cjs") {
 			// TODO: optimize double read for TscDependentTask.getDoneFileContent and there.
 			const configFile = fs.readFileSync(eslintConfig, "utf8");
 			config = JSON5.parse(configFile);
 		} else {
-			config = require(path.resolve(eslintConfig));
+			// eslint-disable-next-line  @typescript-eslint/no-require-imports, unicorn/prefer-module, @typescript-eslint/no-var-requires
+			config = require(path.resolve(eslintConfig)) as EslintConfig;
 			if (config === undefined) {
 				throw new Error(`Exports not found in ${eslintConfig}`);
 			}
 		}
-	} catch (e) {
-		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${e}`);
+	} catch (error) {
+		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${error}`);
 	}
 
-	let projects = config.parserOptions?.project;
+	let projects: string | string[] | undefined = config.parserOptions?.project;
 	if (projects === undefined) {
 		// If we don't have projects, our task needs to have dependent build scripts
 		return getDefaultTscTaskDependencies(root, json);
@@ -301,7 +325,7 @@ function eslintGetScriptDependencies(
  * @param json - package.json content for the package
  * @returns true if FluidRepo includes the package, false otherwise
  */
-function isFluidBuildEnabled(root: string, json: PackageJson) {
+function isFluidBuildEnabled(root: string, json: PackageJson): boolean {
 	return getFluidPackageMap(root).get(json.name) !== undefined;
 }
 
@@ -318,17 +342,18 @@ function hasTaskDependency(
 	json: PackageJson,
 	taskName: string,
 	searchDeps: string[],
-) {
+): boolean {
 	const rootConfig = loadFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
 	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
+	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (taskDefinitions[taskName]) {
 		pending.push(...taskDefinitions[taskName].dependsOn);
 	}
 
-	while (pending.length !== 0) {
+	while (pending.length > 0) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const dep = pending.pop()!;
 		if (seenDep.has(dep)) {
@@ -342,6 +367,7 @@ function hasTaskDependency(
 		if (dep.startsWith("^") || dep.includes("#")) {
 			continue;
 		}
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		if (taskDefinitions[dep]) {
 			pending.push(...taskDefinitions[dep].dependsOn);
 		}
@@ -362,7 +388,7 @@ function checkTaskDeps(
 	json: PackageJson,
 	taskName: string,
 	taskDeps: (string | string[])[],
-) {
+): string | undefined {
 	const missingTaskDependencies = taskDeps
 		.filter(
 			(taskDep) =>
@@ -390,7 +416,7 @@ function patchTaskDeps(
 	json: PackageJson,
 	taskName: string,
 	taskDeps: (string | string[])[],
-) {
+): void {
 	const missingTaskDependencies = taskDeps.filter(
 		(taskDep) =>
 			!hasTaskDependency(root, json, taskName, Array.isArray(taskDep) ? taskDep : [taskDep]),
@@ -400,21 +426,19 @@ function patchTaskDeps(
 		const fileDep = json.fluidBuild?.tasks?.[taskName];
 		if (fileDep === undefined) {
 			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
-			if (json.fluidBuild !== undefined) {
-				if (json.fluidBuild.tasks !== undefined) {
-					tasks = json.fluidBuild.tasks;
-				} else {
-					tasks = {};
-					json.fluidBuild.tasks = tasks;
-				}
-			} else {
+			if (json.fluidBuild === undefined) {
 				tasks = {};
 				json.fluidBuild = { tasks };
+			} else if (json.fluidBuild.tasks === undefined) {
+				tasks = {};
+				json.fluidBuild.tasks = tasks;
+			} else {
+				tasks = json.fluidBuild.tasks;
 			}
 
 			tasks[taskName] = taskDeps.map((dep) => {
 				if (Array.isArray(dep)) {
-					throw new Error(
+					throw new TypeError(
 						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${dep.join(
 							" or ",
 						)}`,
@@ -426,15 +450,15 @@ function patchTaskDeps(
 			let depArray: string[];
 			if (Array.isArray(fileDep)) {
 				depArray = fileDep;
-			} else if (fileDep.dependsOn !== undefined) {
-				depArray = fileDep.dependsOn;
-			} else {
+			} else if (fileDep.dependsOn === undefined) {
 				depArray = [];
 				fileDep.dependsOn = depArray;
+			} else {
+				depArray = fileDep.dependsOn;
 			}
 			for (const missingDep of missingTaskDependencies) {
 				if (Array.isArray(missingDep)) {
-					throw new Error(
+					throw new TypeError(
 						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${missingDep.join(
 							" or ",
 						)}`,
@@ -455,14 +479,14 @@ function getTscCommandDependencies(
 	script: string,
 	command: string,
 	defaultDeps: string[],
-) {
+): (string | string[])[] {
 	// If the project has a referenced project, depend on that instead of the default
 	const parsedCommand = TscUtils.parseCommandLine(command);
 	if (!parsedCommand) {
 		throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 	}
 	const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
-	const configJson = TscUtils.readConfigFile(configFile);
+	const configJson = TscUtils.readConfigFile(configFile) as TsConfigJson;
 	if (configJson === undefined) {
 		throw new Error(`Failed to load config file '${configFile}'`);
 	}
@@ -473,7 +497,7 @@ function getTscCommandDependencies(
 	if (
 		json.scripts["build:test"] === undefined &&
 		json.scripts["typetests:gen"] !== undefined &&
-		(script === "tsc" || (json.scripts["tsc"] === undefined && script === "build:esnext"))
+		(script === "tsc" || (json.scripts.tsc === undefined && script === "build:esnext"))
 	) {
 		deps.push("typetests:gen");
 	}
@@ -509,6 +533,7 @@ function getTscCommandDependencies(
 		}
 	}
 
+	// eslint-disable-next-line unicorn/prefer-spread
 	return deps.concat(defaultDeps);
 }
 
@@ -517,38 +542,35 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-eslint",
 		match,
-		handler: async (file, root) => {
-			let json;
+		handler: async (file: string, root: string): Promise<string | undefined> => {
+			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (!isFluidBuildEnabled(root, json)) {
 				return;
 			}
-			let scriptDeps: string[];
 			try {
-				scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+				const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
 				return checkTaskDeps(root, json, "eslint", scriptDeps);
-			} catch (e: any) {
-				return e.message;
+			} catch (error: unknown) {
+				return (error as Error).message;
 			}
 		},
-		resolver: (file, root) => {
+		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
 					return;
 				}
-				let scriptDeps: string[];
 				try {
-					scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
+					const scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
 					patchTaskDeps(root, json, "eslint", scriptDeps);
-				} catch (e: any) {
-					result = { resolved: false, message: e.message };
-					return;
+				} catch (error: unknown) {
+					result = { resolved: false, message: (error as Error).message };
 				}
 			});
 			return result;
@@ -557,12 +579,12 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-tsc",
 		match,
-		handler: async (file, root) => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return "Error parsing JSON file: " + file;
+				json = JSON.parse(readFile(file)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${file}`;
 			}
 
 			if (!isFluidBuildEnabled(root, json)) {
@@ -575,34 +597,37 @@ export const handlers: Handler[] = [
 			const errors: string[] = [];
 			const deps = getDefaultTscTaskDependencies(root, json);
 			const ignore = getFluidBuildTasksTscIgnore(root);
-			for (const script in json.scripts) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const commands = json.scripts[script]!;
-				for (const commandUntrimmed of commands.split("&&")) {
+			for (const [script, scriptCommands] of Object.entries(json.scripts)) {
+				if (scriptCommands === undefined) {
+					continue;
+				}
+				for (const commandUntrimmed of scriptCommands.split("&&")) {
 					const command = commandUntrimmed.trim();
-					if (shouldProcessScriptForTsc(script, command, ignore)) {
-						try {
-							const checkDeps = getTscCommandDependencies(
-								packageDir,
-								json,
-								script,
-								command,
-								deps,
-							);
-							// Check the dependencies
-							const error = checkTaskDeps(root, json, script, checkDeps);
-							if (error) {
-								errors.push(error);
-							}
-						} catch (e: any) {
-							return e.message;
+					if (!shouldProcessScriptForTsc(script, command, ignore)) {
+						continue;
+					}
+					try {
+						const checkDeps = getTscCommandDependencies(
+							packageDir,
+							json,
+							script,
+							command,
+							deps,
+						);
+						// Check the dependencies
+						const error = checkTaskDeps(root, json, script, checkDeps);
+						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+						if (error) {
+							errors.push(error);
 						}
+					} catch (error: unknown) {
+						return (error as Error).message;
 					}
 				}
 			}
 			return errors.length > 0 ? errors.join("\n") : undefined;
 		},
-		resolver: (file, root) => {
+		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (!isFluidBuildEnabled(root, json)) {
@@ -612,10 +637,11 @@ export const handlers: Handler[] = [
 				const packageDir = path.dirname(file);
 				const deps = getDefaultTscTaskDependencies(root, json);
 				const ignore = getFluidBuildTasksTscIgnore(root);
-				for (const script in json.scripts) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const commands = json.scripts[script]!;
-					for (const commandUntrimmed of commands.split("&&")) {
+				for (const [script, scriptCommands] of Object.entries(json.scripts)) {
+					if (scriptCommands === undefined) {
+						continue;
+					}
+					for (const commandUntrimmed of scriptCommands.split("&&")) {
 						const command = commandUntrimmed.trim();
 						if (shouldProcessScriptForTsc(script, command, ignore)) {
 							try {
@@ -627,8 +653,8 @@ export const handlers: Handler[] = [
 									deps,
 								);
 								patchTaskDeps(root, json, script, checkDeps);
-							} catch (e: any) {
-								result = { resolved: false, message: e.message };
+							} catch (error: unknown) {
+								result = { resolved: false, message: (error as Error).message };
 								return;
 							}
 						}
@@ -645,7 +671,7 @@ export const handlers: Handler[] = [
  * @param script - The name of the npm script in package.json.
  * @param command - The command that the npm script executes.
  * @param tasksToIgnore - List of fluid-build tasks (usually npm scripts) that should be ignored.
- * @returns
+ * @returns true if script/command should be processed by the handler for tsc fluid-build tasks
  */
 function shouldProcessScriptForTsc(
 	script: string,
