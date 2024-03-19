@@ -312,12 +312,7 @@ importers:
       '@types/semver': 7.5.0
       '@types/shelljs': 0.8.12
       concurrently: 8.2.1
-<<<<<<< HEAD
-      copyfiles: 2.4.1
-      eslint: 8.51.0
-=======
       eslint: 8.55.0
->>>>>>> main
       mocha: 10.2.0
 
   packages/bundle-size-tools:
