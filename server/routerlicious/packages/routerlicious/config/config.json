@@ -201,7 +201,10 @@
 		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true,
 		"disableTransientTenantFiltering": true,
-		"maxLogtailLength": 2000
+		"maxLogtailLength": 2000,
+		"scrubUserDataInGlobalCheckpoints": false,
+		"scrubUserDataInLocalCheckpoints": false,
+		"scrubUserDataInSummaries": false
 	},
 	"system": {
 		"httpServer": {

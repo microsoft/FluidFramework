@@ -79,6 +79,9 @@
 			"InterfaceDeclaration_IServiceConfiguration": {
 				"forwardCompat": false
 			},
+			"InterfaceDeclaration_IScribeServerConfiguration": {
+				"forwardCompat": false
+			},
 			"InterfaceDeclaration_IDeliServerConfiguration": {
 				"forwardCompat": false,
 				"backCompat": true
