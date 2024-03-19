@@ -1,15 +1,15 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"include": ["./**/*"],
 	"compilerOptions": {
-		"strictNullChecks": false,
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"lib": ["ES2021", "DOM", "DOM.Iterable"],
-		"types": ["node", "mocha"],
 		"declaration": false,
 		"declarationMap": false,
+		"types": ["node", "mocha"],
+		"strictNullChecks": false,
+		"lib": ["ES2021", "DOM", "DOM.Iterable"],
 	},
-	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
