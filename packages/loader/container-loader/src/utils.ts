@@ -271,11 +271,11 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const { baseSnapshot: snapshotTree, snapshotBlobs } =
+		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot: snapshotTree,
+			baseSnapshot,
 			snapshotBlobs,
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
