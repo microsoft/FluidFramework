@@ -10,25 +10,25 @@ import { NetworkErrorBasic, RateLimiter, canRetryOnError } from "@fluidframework
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import io from "socket.io-client";
-import { ICache } from "./cache";
-import { INormalizedWholeSnapshot } from "./contracts";
-import { ISnapshotTreeVersion } from "./definitions";
-import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
-import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
-import { DocumentStorageService } from "./documentStorageService";
-import { RouterliciousErrorTypes } from "./errorUtils";
-import { GitManager } from "./gitManager";
-import { Historian } from "./historian";
-import { NullBlobStorageService } from "./nullBlobStorageService";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IRouterliciousDriverPolicies } from "./policies";
+import { ICache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
+import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RouterliciousErrorTypes } from "./errorUtils.js";
+import { GitManager } from "./gitManager.js";
+import { Historian } from "./historian.js";
+import { NullBlobStorageService } from "./nullBlobStorageService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	TokenFetcher,
-} from "./restWrapper";
-import { RestWrapper } from "./restWrapperBase";
-import { ITokenProvider } from "./tokens";
+} from "./restWrapper.js";
+import { RestWrapper } from "./restWrapperBase.js";
+import { ITokenProvider } from "./tokens.js";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
