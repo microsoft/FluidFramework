@@ -79,7 +79,7 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * Whenever this property changes, "selfChanged" event is fired on this object.
 	 * Wheneever clients loses connection and reconnects, it will raise "connected" event at various API surfaces.
 	 * It's guranteed that such events and change of self clientId happens at the same time (syncronously, one after another).
-	 * 
+	 *
 	 * That said, at the moment this is experimental API. It depends on some experimental settings that might change in the future.
 	 * While it's marked experimental, you break in above described promise, where you could experience "self" being changed
 	 * (and "selfChanged" event fired) while you can't find such clientId in the list of audience clients.
