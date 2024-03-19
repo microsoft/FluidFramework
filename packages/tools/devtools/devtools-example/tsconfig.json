@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "src",
 		"outDir": "./lib",
-		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer"],
+		"types": ["jest", "puppeteer", "jest-environment-puppeteer"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],

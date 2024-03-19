@@ -13,54 +13,10 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/devtools-example-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/devtools-example-public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./beta": {
-			"import": {
-				"types": "./lib/devtools-example-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/devtools-example-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/devtools-example-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/devtools-example-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		}
-	},
-	"types": "dist/devtools-example-public.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
@@ -118,7 +74,6 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
 		"@biomejs/biome": "^1.6.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
