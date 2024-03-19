@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type {
+	FluidObject,
+	IDisposable,
 	IEvent,
 	IEventProvider,
-	IDisposable,
-	IFluidHandleContext,
 	IFluidHandle,
-	FluidObject,
-	type ITelemetryBaseLogger,
+	IFluidHandleContext,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IAudience, IDeltaManager, AttachState } from "@fluidframework/container-definitions";
-import {
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { IIdCompressor } from "@fluidframework/id-compressor";
-import { IChannel } from "./channel";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IChannel } from "./channel.js";
 
 /**
  * Events emitted by {@link IFluidDataStoreRuntime}.
@@ -87,6 +87,21 @@ export interface IFluidDataStoreRuntime
 	 * @param type - Type of the channel.
 	 */
 	createChannel(id: string | undefined, type: string): IChannel;
+
+	/**
+	 * This api allows adding channel to data store after it was created.
+	 * This allows callers to cusmomize channel instance. For example, channel implementation
+	 * could have various modes of operations. As long as such configuration is provided at creation
+	 * and stored in summaries (such that all users of such channel instance behave the same), this
+	 * could be useful technique to have customized solutions without introducing a number of data structures
+	 * that all have same implementation.
+	 * This is also useful for scenarios like SharedTree DDS, where schema is provided at creation and stored in a summary.
+	 * The channel type should be present in the registry, otherwise the runtime would reject
+	 * the channel. The runtime used to create the channel object should be same to which
+	 * it is added.
+	 * @param channel - channel which needs to be added to the runtime.
+	 */
+	addChannel(channel: IChannel): void;
 
 	/**
 	 * Bind the channel with the data store runtime. If the runtime

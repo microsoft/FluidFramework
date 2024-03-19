@@ -4,10 +4,10 @@
  */
 
 import {
-	getKeyForCacheEntry,
 	ICacheEntry,
 	IFileEntry,
 	IPersistedCache,
+	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
 
 export class OdspPersistentCache implements IPersistedCache {

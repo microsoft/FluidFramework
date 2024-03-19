@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { copyPropertyIfDefined, fail, Mutable, ReplaceRecursive } from './Common.js';
+import { Mutable, ReplaceRecursive, copyPropertyIfDefined, fail } from './Common.js';
 import { convertTreeNodes } from './EditUtilities.js';
-import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers.js';
+import { DetachedSequenceId, NodeId, isDetachedSequenceId } from './Identifiers.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,

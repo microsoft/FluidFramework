@@ -5,19 +5,20 @@
 
 import { strict as assert } from "assert";
 import {
+	BaseFuzzTestState,
 	Generator,
+	SaveInfo,
 	createWeightedGenerator,
 	interleave,
 	makeRandom,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
-	SaveInfo,
 	take,
-	BaseFuzzTestState,
 } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	createIdCompressor,
+	type IIdCompressor,
+	type IIdCompressorCore,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -25,20 +26,19 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	type IIdCompressor,
-	type IIdCompressorCore,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { assertIsSessionId, createSessionId } from "../utilities";
+	createIdCompressor,
+} from "..//index.js";
+import { IdCompressor } from "../idCompressor.js";
+import { assertIsSessionId, createSessionId } from "../utilities.js";
 import {
 	FinalCompressedId,
+	ReadonlyIdCompressor,
+	fail,
 	getOrCreate,
 	incrementStableId,
 	isFinalId,
 	isLocalId,
-	ReadonlyIdCompressor,
-	fail,
-} from "./testCommon";
+} from "./testCommon.js";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key

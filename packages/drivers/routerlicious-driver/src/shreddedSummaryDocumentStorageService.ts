@@ -3,17 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
-	PerformanceEvent,
-	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
-	ISummaryContext,
 	IDocumentStorageServicePolicies,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
@@ -23,13 +17,19 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ICache, InMemoryCache } from "./cache";
-import { RetriableGitManager } from "./retriableGitManager";
-import { ISnapshotTreeVersion } from "./definitions";
-import { GitManager } from "./gitManager";
-import { ISummaryUploadManager } from "./storageContracts";
-import { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
+import { ICache, InMemoryCache } from "./cache.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { RetriableGitManager } from "./retriableGitManager.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
+import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
 
 const isNode = typeof window === "undefined";
 

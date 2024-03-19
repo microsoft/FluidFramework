@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
@@ -113,8 +114,8 @@ export class Package {
 		this.packageManager = existsSync(pnpmWorkspacePath)
 			? "pnpm"
 			: existsSync(yarnLockPath)
-			? "yarn"
-			: "npm";
+			  ? "yarn"
+			  : "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
@@ -227,8 +228,8 @@ export class Package {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			? "npm run install-strict"
-			: "npm i";
+			  ? "npm run install-strict"
+			  : "npm i";
 	}
 
 	private get color() {
@@ -358,9 +359,7 @@ async function queueExec<TItem, TResult>(
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
 				log(
-					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
-						3,
-					)}s`,
+					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`,
 				);
 				return result;
 		  }
@@ -402,9 +401,7 @@ export class Packages {
 					ignoredDirFullPaths === undefined ||
 					!ignoredDirFullPaths.some((name) => isSameFileOrDir(name, fullPath))
 				) {
-					packages.push(
-						...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo),
-					);
+					packages.push(...Packages.loadDir(fullPath, group, ignoredDirFullPaths, monoRepo));
 				}
 			}
 		});
@@ -526,7 +523,9 @@ export function updatePackageJsonFile(
  *
  * @internal
  */
-export function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, indent: string] {
+export function readPackageJsonAndIndent(
+	pathToJson: string,
+): [json: PackageJson, indent: string] {
 	const contents = readFileSync(pathToJson).toString();
 	const indentation = detectIndent(contents).indent || "\t";
 	const pkgJson: PackageJson = JSON.parse(contents);

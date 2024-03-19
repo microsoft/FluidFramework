@@ -131,6 +131,7 @@ export class RedisFs implements IFileSystemPromises {
 		filepath: PathLike | FileHandle,
 		options?: any,
 	): Promise<Buffer | string> {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const filepathString = filepath.toString();
 		// Do not read packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
@@ -147,6 +148,9 @@ export class RedisFs implements IFileSystemPromises {
 			},
 			true,
 		);
+		if (data === undefined) {
+			throw new RedisFsError(SystemErrors.ENOENT, filepathString);
+		}
 		return data;
 	}
 
@@ -172,6 +176,7 @@ export class RedisFs implements IFileSystemPromises {
 			// eslint-disable-next-line @rushstack/no-new-null
 			| null,
 	): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		const filepathString = filepath.toString();
 		// Do not write packed-ref files which are not supported in r11s scenarios
 		if (filepathString.includes(packedRefsFileName)) {
@@ -375,7 +380,7 @@ export class RedisFs implements IFileSystemPromises {
 					return this.redisFsClient.peek(filepathString);
 				}
 				const data = await this.redisFsClient.get<string | Buffer>(filepathString);
-				if (data === null) {
+				if (data === null || data === undefined) {
 					return -1;
 				}
 				return data.length;

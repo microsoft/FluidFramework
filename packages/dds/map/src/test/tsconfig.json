@@ -1,15 +1,15 @@
 {
-	"extends": ["../../../../../common/build/build-common/tsconfig.test.json"],
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
+		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory
+	},
 	"include": ["./**/*"],
 	"references": [
 		{
 			"path": "../..",
 		},
 	],
-	"compilerOptions": {
-		"rootDir": "./",
-		"outDir": "../../dist/test",
-		"types": ["mocha", "node"],
-		"noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping things in memory
-	},
 }

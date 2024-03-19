@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import * as fs from "fs";
 import assert from "assert";
+import * as fs from "fs";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops";
-import { createGroupOp } from "../opBuilder";
-import { TestClient } from "./testClient";
-import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner";
-import { TestClientLogger } from "./testClientLogger";
+import { createGroupOp } from "../opBuilder.js";
+import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner.js";
+import { TestClient } from "./testClient.js";
+import { TestClientLogger } from "./testClientLogger.js";
 
 describe("MergeTree.Client", () => {
 	for (const filePath of fs.readdirSync(replayResultsPath)) {

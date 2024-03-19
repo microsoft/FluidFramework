@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 import ReactDOM from "react-dom";
-import { browser } from "../Globals";
 import { BackgroundConnection } from "../BackgroundConnection";
+import { browser } from "../Globals";
 import { extensionPopupMessageSource } from "../messaging";
 import { PopupView } from "./PopupView";
 

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const webpack = require("webpack");
@@ -55,7 +56,9 @@ module.exports = (env) => {
 		],
 		resolve: {
 			extensionAlias: {
-				".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
+				".cjs": [".cts", ".cjs"],
+				".js": [".ts", ".tsx", ".js"],
+				".mjs": [".mts", ".mjs"],
 			},
 			extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 		},

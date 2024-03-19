@@ -5,10 +5,10 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { InspectorDecorator } from "./InspectorDecorator";
-import { InspectorTableDecorator } from "./InspectorTableDecorator";
-import { IInspectorRow } from "./InspectorTableTypes";
-import { NewDataForm } from "./NewDataForm";
+import { InspectorDecorator } from "./InspectorDecorator.js";
+import { InspectorTableDecorator } from "./InspectorTableDecorator.js";
+import { IInspectorRow } from "./InspectorTableTypes.js";
+import { NewDataForm } from "./NewDataForm.js";
 
 storiesOf("NewDataForm", module)
 	.addDecorator(InspectorDecorator)

@@ -6,9 +6,9 @@
 // RATIONALE: Many methods consume and return 'any' by necessity.
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { generateHandleContextPath, isSerializedHandle } from "@fluidframework/runtime-utils";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { RemoteFluidObjectHandle } from "./remoteObjectHandle";
+import { generateHandleContextPath, isSerializedHandle } from "@fluidframework/runtime-utils";
+import { RemoteFluidObjectHandle } from "./remoteObjectHandle.js";
 
 /**
  * @public

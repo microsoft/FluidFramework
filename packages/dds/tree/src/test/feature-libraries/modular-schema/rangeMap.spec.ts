@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	RangeEntry,
 	RangeMap,
+	deleteFromRangeMap,
 	getFirstEntryFromRangeMap,
 	setInRangeMap,
 } from "../../../util/index.js";
@@ -140,5 +141,115 @@ describe("RangeMap", () => {
 		const entry7 = getFirstEntryFromRangeMap(map, 7, 4);
 		const expectedA2: RangeEntry<string> = { start: 7, length: 4, value: "a" };
 		assert.deepEqual(entry7, expectedA2);
+	});
+
+	describe("deleteFromRangeMap", () => {
+		it("delete range from empty map", () => {
+			const map = newRangeMap();
+
+			// Delete keys 3-6 from an empty map
+			deleteFromRangeMap(map, 3, 4);
+
+			assert.deepEqual(map, []);
+		});
+
+		it("delete range spanning one entry", () => {
+			const map = newRangeMap();
+
+			// Set keys 2-5
+			setInRangeMap(map, 2, 4, "a");
+
+			// Delete keys 3-6
+			deleteFromRangeMap(map, 3, 4);
+
+			assert.deepEqual(map, [{ start: 2, length: 1, value: "a" }]);
+		});
+
+		it("delete range spanning multiple entries", () => {
+			const map = newRangeMap();
+
+			// Set keys 2-4
+			setInRangeMap(map, 2, 3, "a");
+
+			// Set keys 6-7
+			setInRangeMap(map, 6, 2, "b");
+
+			// Set keys 9-12
+			setInRangeMap(map, 9, 4, "c");
+
+			// Delete keys 4-8
+			deleteFromRangeMap(map, 4, 5);
+
+			assert.deepEqual(map, [
+				{ start: 2, length: 2, value: "a" },
+				{ start: 9, length: 4, value: "c" },
+			]);
+		});
+
+		it("delete an entire entry", () => {
+			const map = newRangeMap();
+
+			// Set keys 2-5
+			setInRangeMap(map, 2, 4, "a");
+
+			// Set keys 7-9
+			setInRangeMap(map, 7, 3, "b");
+
+			// Delete keys 2-5
+			deleteFromRangeMap(map, 2, 4);
+
+			assert.deepEqual(map, [{ start: 7, length: 3, value: "b" }]);
+		});
+
+		it("delete range at startpoint of an entry", () => {
+			const map = newRangeMap();
+
+			// Set keys 2-5
+			setInRangeMap(map, 2, 4, "a");
+
+			// Set keys 7-9
+			setInRangeMap(map, 7, 3, "b");
+
+			// Delete keys 4-6
+			deleteFromRangeMap(map, 4, 3);
+
+			assert.deepEqual(map, [
+				{ start: 2, length: 2, value: "a" },
+				{ start: 7, length: 3, value: "b" },
+			]);
+		});
+
+		it("delete range at endpoint of an entry", () => {
+			const map = newRangeMap();
+
+			// Set keys 2-5
+			setInRangeMap(map, 2, 4, "a");
+
+			// Set keys 7-9
+			setInRangeMap(map, 7, 3, "b");
+
+			// Delete keys 5-8
+			deleteFromRangeMap(map, 5, 4);
+
+			assert.deepEqual(map, [
+				{ start: 2, length: 3, value: "a" },
+				{ start: 9, length: 1, value: "b" },
+			]);
+		});
+
+		it("delete range splitting an entry", () => {
+			const map = newRangeMap();
+
+			// Set keys 2-7
+			setInRangeMap(map, 2, 6, "a");
+
+			// Delete keys 4-6
+			deleteFromRangeMap(map, 4, 3);
+
+			assert.deepEqual(map, [
+				{ start: 2, length: 2, value: "a" },
+				{ start: 7, length: 1, value: "a" },
+			]);
+		});
 	});
 });

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 
 const stashedOpMetadataMark = Symbol();
 
@@ -65,6 +65,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			srcHandle: IFluidHandle,
 			outboundHandle: IFluidHandle,
 		) => void,
+		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 
 	public attach(handler: IDeltaHandler) {
@@ -116,7 +117,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	public applyStashedOp(content: any): unknown {
 		try {
-			this.stashedOpMd = createStashedOpMetadata();
+			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
 			this.handler.applyStashedOp(content);
 			return this.stashedOpMd;
 		} finally {

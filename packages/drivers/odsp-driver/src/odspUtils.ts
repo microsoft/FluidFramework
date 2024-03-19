@@ -3,50 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { performance } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions";
 import {
-	isOnline,
+	type AuthorizationError,
+	NetworkErrorBasic,
+	NonRetryableError,
 	OnlineStatus,
 	RetryableError,
-	NonRetryableError,
-	NetworkErrorBasic,
-	type AuthorizationError,
+	isOnline,
 } from "@fluidframework/driver-utils";
-import { performance } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import {
+	fetchIncorrectResponse,
+	getSPOAndGraphRequestIdsFromResponse,
+	throwOdspNetworkError,
+} from "@fluidframework/odsp-doclib-utils/internal";
+import {
+	ICacheEntry,
+	IOdspResolvedUrl,
+	IOdspUrlParts,
+	ISharingLinkKind,
+	InstrumentedStorageTokenFetcher,
+	OdspErrorTypes,
+	OdspResourceTokenFetchOptions,
+	TokenFetchOptions,
+	TokenFetcher,
+	isTokenFromCache,
+	snapshotKey,
+	tokenFromResponse,
+} from "@fluidframework/odsp-driver-definitions";
+import {
+	type IFluidErrorBase,
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils";
-import {
-	fetchIncorrectResponse,
-	throwOdspNetworkError,
-	getSPOAndGraphRequestIdsFromResponse,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	IOdspResolvedUrl,
-	TokenFetchOptions,
-	OdspErrorTypes,
-	tokenFromResponse,
-	isTokenFromCache,
-	OdspResourceTokenFetchOptions,
-	ISharingLinkKind,
-	TokenFetcher,
-	ICacheEntry,
-	snapshotKey,
-	InstrumentedStorageTokenFetcher,
-	IOdspUrlParts,
-} from "@fluidframework/odsp-driver-definitions";
-import { fetch } from "./fetch";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { IOdspSnapshot } from "./contracts";
+import { IOdspSnapshot } from "./contracts.js";
+import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./odspPublicUtils.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -61,7 +61,7 @@ export const getOrigin = (url: string): string => new URL(url).origin;
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;
-	propsToLog: ITelemetryProperties;
+	propsToLog: ITelemetryBaseProperties;
 	duration: number;
 }
 

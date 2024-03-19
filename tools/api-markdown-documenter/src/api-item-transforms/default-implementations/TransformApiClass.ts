@@ -13,11 +13,11 @@ import {
 	type ApiProperty,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain";
-import { ApiModifier, filterByKind, isStatic } from "../../utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createChildDetailsSection, createMemberTables } from "../helpers";
-import { filterChildMembers } from "../ApiItemTransformUtilities";
+import { type SectionNode } from "../../documentation-domain/index.js";
+import { ApiModifier, filterByKind, isStatic } from "../../utilities/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 
 /**
  * Default documentation transform for `Class` items.
