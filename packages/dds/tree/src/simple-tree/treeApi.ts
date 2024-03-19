@@ -131,7 +131,7 @@ export const treeNodeApi: TreeNodeApi = {
 	key: (node: TreeNode) => {
 		const stableName = treeNodeApi.stableName(node);
 		const devKey = tryGetKeyFromStableName(node, stableName);
-		assert(devKey !== undefined, 0x880 /* Existing stableName should always map to a devKey */);
+		assert(devKey !== undefined, "Existing stableName should always map to a devKey");
 		return devKey;
 	},
 	stableName: (node: TreeNode) => {
