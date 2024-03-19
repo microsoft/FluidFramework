@@ -111,6 +111,10 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_MongoCollection": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

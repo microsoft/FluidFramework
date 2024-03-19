@@ -198,6 +198,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const defaultTTLInSeconds = 864000;
 		const checkpointsTTLSeconds =
 			config.get("checkpoints:checkpointsTTLInSeconds") ?? defaultTTLInSeconds;
+		try {
+			await checkpointsCollection.dropIndex({ _ts: 1 });
+		} catch (error) {
+			Lumberjack.warning(`Did not drop ttl index.`);
+		}
 		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");

@@ -295,6 +295,19 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 	}
 
+	public async dropIndex(indexName: any) {
+		const req = async () => this.collection.dropIndex(indexName);
+		try {
+			await this.requestWithRetry(
+				req, // request
+				"MongoCollection.dropIndex", // callerName
+			);
+			Lumberjack.info(`Dropped index ${indexName}`);
+		} catch (error) {
+			Lumberjack.error(`Failed to drop index`, undefined, error);
+		}
+	}
+
 	public async findOrCreate(
 		query: any,
 		value: any,

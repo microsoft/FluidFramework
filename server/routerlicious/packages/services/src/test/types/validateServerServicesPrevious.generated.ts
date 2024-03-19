@@ -319,6 +319,7 @@ declare function get_old_ClassDeclaration_MongoCollection():
 declare function use_current_ClassDeclaration_MongoCollection(
     use: TypeOnly<current.MongoCollection<any>>): void;
 use_current_ClassDeclaration_MongoCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MongoCollection());
 
 /*

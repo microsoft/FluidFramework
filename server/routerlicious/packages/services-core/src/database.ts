@@ -250,6 +250,8 @@ export interface ICollection<T> {
 	createIndex(index: any, unique: boolean): Promise<void>;
 
 	createTTLIndex?(index: any, mongoExpireAfterSeconds?: number): Promise<void>;
+
+	dropIndex?(index: any): Promise<void>;
 }
 
 /**
