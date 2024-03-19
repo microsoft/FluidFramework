@@ -33,7 +33,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		this.enableClustering = enableClustering;
 		this.slotsRefreshTimeout = slotsRefreshTimeout;
 		if (!redisOptions && !redisConfig) {
-			Lumberjack.info("Either redisOptions or redisConfig must be provided");
+			Lumberjack.error("Either redisOptions or redisConfig must be provided");
 			throw new Error("Either redisOptions or redisConfig must be provided");
 		} else if (!redisOptions && redisConfig) {
 			Lumberjack.info("Using default redisOptions after reading from config");
@@ -64,18 +64,20 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 					servername: redisConfig.host,
 				};
 			}
-		} else if (redisOptions && !redisConfig) {
-			Lumberjack.info("Using the provided redisOptions");
-			this.redisOptions = redisOptions;
 		} else {
-			Lumberjack.error("Both redisOptions and redisConfig cannot be provided");
-			throw new Error("Both redisOptions and redisConfig cannot be provided");
+			Lumberjack.info("Using the provided redisOptions");
+			// Adding this check here to avoid linting errors
+			// If control-flow lands here, redisOptions will be defined
+			if (!redisOptions) {
+				Lumberjack.error("redisOptions must be provided");
+				throw new Error("redisOptions must be provided");
+			}
+			this.redisOptions = redisOptions;
 		}
 		this.authenticateAndCreateRedisClient();
 	}
 
 	private authenticateAndCreateRedisClient(): void {
-		// this.client = new Redis.default(this.redisOptions);
 		this.client = this.enableClustering
 			? new Redis.Cluster([{ port: this.redisOptions.port, host: this.redisOptions.host }], {
 					redisOptions: this.redisOptions,
