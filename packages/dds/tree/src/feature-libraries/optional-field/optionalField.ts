@@ -17,6 +17,7 @@ import {
 	ChangeAtomIdMap,
 	makeChangeAtomId,
 	taggedAtomId,
+	taggedOptAtomId,
 } from "../../core/index.js";
 import {
 	Mutable,
@@ -30,7 +31,6 @@ import {
 	ToDelta,
 	FieldChangeRebaser,
 	NodeChangeComposer,
-	NodeChangeInverter,
 	NodeChangeRebaser,
 	NodeId,
 	FieldEditor,
@@ -532,16 +532,6 @@ function taggedOptRegister(
 	revision: RevisionTag | undefined,
 ): RegisterId | undefined {
 	return id !== undefined ? taggedRegister(id, revision) : undefined;
-}
-
-export function taggedOptAtomId(
-	id: ChangeAtomId | undefined,
-	revision: RevisionTag | undefined,
-): ChangeAtomId | undefined {
-	if (id === undefined) {
-		return undefined;
-	}
-	return taggedAtomId(id, revision);
 }
 
 export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined): RegisterId {

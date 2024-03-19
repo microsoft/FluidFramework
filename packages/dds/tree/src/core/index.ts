@@ -185,6 +185,7 @@ export {
 	EncodedRevisionTag,
 	EncodedChangeAtomId,
 	taggedAtomId,
+	taggedOptAtomId,
 } from "./rebase/index.js";
 
 export {

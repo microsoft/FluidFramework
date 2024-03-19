@@ -38,6 +38,7 @@ import {
 	ITreeCursorSynchronous,
 	CursorLocationType,
 	taggedAtomId,
+	taggedOptAtomId,
 } from "../../core/index.js";
 import {
 	addToNestedSet,
@@ -194,7 +195,14 @@ export class ModularChangeFamily
 		const convertedChange = convertGenericChange(
 			genericChange,
 			handler,
-			(child1, child2) => fail("Should not need to compose child nodes"),
+			(child1, child2) => {
+				assert(
+					child1 === undefined || child2 === undefined,
+					"Should not have two changesets to compose",
+				);
+
+				return child1 ?? child2 ?? fail("Should not compose two undefined node IDs");
+			},
 			genId,
 			revisionMetadata,
 		) as FieldChangeset;
@@ -292,7 +300,11 @@ export class ModularChangeFamily
 							);
 						}
 					}
-					return child1 ?? child2 ?? fail("Should have compose two undefined nodes");
+					return (
+						taggedOptAtomId(child1, fieldChange1.revision) ??
+						taggedOptAtomId(child2, fieldChange2.revision) ??
+						fail("Should have compose two undefined nodes")
+					);
 				};
 
 				const amendedChange = rebaser.compose(
@@ -399,7 +411,11 @@ export class ModularChangeFamily
 					if (child1 !== undefined && child2 !== undefined) {
 						addToNestedSet(crossFieldTable.nodeIds, child2.revision, child2.localId);
 					}
-					return child1 ?? child2 ?? fail("Should have compose two undefined nodes");
+					return (
+						taggedOptAtomId(child1, revision1) ??
+						taggedOptAtomId(child2, revision2) ??
+						fail("Should have compose two undefined nodes")
+					);
 				},
 				genId,
 				manager,
@@ -461,7 +477,10 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		const nodeId = id1 ?? id2 ?? fail("Should not compose two undefined node IDs");
+		const nodeId =
+			taggedOptAtomId(id1, revision1) ??
+			taggedOptAtomId(id2, revision2) ??
+			fail("Should not compose two undefined node IDs");
 		setInNestedMap(composedNodeChanges, nodeId.revision, nodeId.localId, composedNodeChangeset);
 	}
 
