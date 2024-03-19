@@ -97,7 +97,7 @@ import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
-import { ContainerStorageAdapter, ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
 import {
 	IConnectionDetailsInternal,
 	IConnectionManagerFactoryArgs,
@@ -116,7 +116,11 @@ import {
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
-import { SerializedStateManager } from "./serializedStateManager.js";
+import {
+	type IPendingContainerState,
+	type IPendingDetachedContainerState,
+	SerializedStateManager,
+} from "./serializedStateManager.js";
 import {
 	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
@@ -333,46 +337,6 @@ export async function ReportIfTooLong(
 	if (event.duration > 200) {
 		event.end(props);
 	}
-}
-
-/**
- * State saved by a container at close time, to be used to load a new instance
- * of the container to the same state
- * @internal
- */
-export interface IPendingContainerState {
-	attached: true;
-	pendingRuntimeState: unknown;
-	/**
-	 * Snapshot from which container initially loaded.
-	 */
-	baseSnapshot: ISnapshotTree;
-	/**
-	 * Serializable blobs from the base snapshot. Used to load offline since
-	 * storage is not available.
-	 */
-	snapshotBlobs: ISerializableBlobContents;
-	/**
-	 * All ops since base snapshot sequence number up to the latest op
-	 * seen when the container was closed. Used to apply stashed (saved pending)
-	 * ops at the same sequence number at which they were made.
-	 */
-	savedOps: ISequencedDocumentMessage[];
-	url: string;
-	clientId?: string;
-}
-
-/**
- * State saved by a container in detached state, to be used to load a new instance
- * of the container to the same state (rehydrate)
- * @internal
- */
-export interface IPendingDetachedContainerState {
-	attached: false;
-	baseSnapshot: ISnapshotTree;
-	snapshotBlobs: ISerializableBlobContents;
-	hasAttachmentBlobs: boolean;
-	pendingRuntimeState?: unknown;
 }
 
 const summarizerClientType = "summarizer";
@@ -951,7 +915,7 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			detachedBlobStorage,
 			this.mc.logger,
-			pendingLocalState?.snapshotBlobs,
+			pendingLocalState?.pendingSnapshot.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1188,17 +1152,14 @@ export class Container
 				this.captureProtocolSummary(),
 			);
 
-		const { tree: snapshot, blobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
-
+		const pendingSnapshot = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 		const pendingRuntimeState =
 			attachingData !== undefined ? this.runtime.getPendingLocalState() : undefined;
 		assert(!isPromiseLike(pendingRuntimeState), 0x8e3 /* should not be a promise */);
 
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot: snapshot,
-			snapshotBlobs: blobs,
+			pendingSnapshot,
 			pendingRuntimeState,
 			hasAttachmentBlobs: !!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 		};
@@ -1804,8 +1765,7 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot({
-		baseSnapshot,
-		snapshotBlobs,
+		pendingSnapshot,
 		hasAttachmentBlobs,
 		pendingRuntimeState,
 	}: IPendingDetachedContainerState) {
@@ -1816,17 +1776,20 @@ export class Container
 			);
 		}
 		const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents =
-			combineSnapshotTreeAndSnapshotBlobs(baseSnapshot, snapshotBlobs);
-		this.storageAdapter.loadSnapshotFromSnapshotBlobs(snapshotBlobs);
+			combineSnapshotTreeAndSnapshotBlobs(
+				pendingSnapshot.snapshotTree,
+				pendingSnapshot.snapshotBlobs,
+			);
+		this.storageAdapter.loadSnapshotFromSnapshotBlobs(pendingSnapshot.snapshotBlobs);
 		const attributes = await this.getDocumentAttributes(
 			this.storageAdapter,
-			snapshotTreeWithBlobContents,
+			pendingSnapshot.snapshotTree,
 		);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
-		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
+		const baseTree = getProtocolSnapshotTree(pendingSnapshot.snapshotTree);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
 			baseTree.blobs.quorumValues,

@@ -23,17 +23,53 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { IPendingContainerState } from "./container.js";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+
+export interface PendingSnapshot {
+	/**
+	 * Snapshot from which container initially loaded.
+	 */
+	snapshotTree: ISnapshotTree;
+	/**
+	 * Serializable blobs from the base snapshot. Used to load offline since
+	 * storage is not available.
+	 */
+	snapshotBlobs: ISerializableBlobContents;
+}
+/**
+ * State saved by a container at close time, to be used to load a new instance
+ * of the container to the same state
+ * @internal
+ */
+export interface IPendingContainerState {
+	attached: true;
+	pendingRuntimeState: unknown;
+	pendingSnapshot: PendingSnapshot;
+	/**
+	 * All ops since base snapshot sequence number up to the latest op
+	 * seen when the container was closed. Used to apply stashed (saved pending)
+	 * ops at the same sequence number at which they were made.
+	 */
+	savedOps: ISequencedDocumentMessage[];
+	url: string;
+	clientId?: string;
+}
+
+/**
+ * State saved by a container in detached state, to be used to load a new instance
+ * of the container to the same state (rehydrate)
+ * @internal
+ */
+export interface IPendingDetachedContainerState {
+	attached: false;
+	pendingSnapshot: PendingSnapshot;
+	hasAttachmentBlobs: boolean;
+	pendingRuntimeState?: unknown;
+}
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot:
-		| {
-				tree: ISnapshotTree;
-				blobs: ISerializableBlobContents;
-		  }
-		| undefined;
+	private snapshot: PendingSnapshot | undefined;
 	private readonly mc: MonitoringContext;
 
 	constructor(
@@ -75,17 +111,16 @@ export class SerializedStateManager {
 			assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
-				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
-				this.snapshot = { tree: snapshotTree, blobs };
+				const snapshotBlobs = await getBlobContentsFromTree(
+					snapshotTree,
+					this.storageAdapter,
+				);
+				this.snapshot = { snapshotTree, snapshotBlobs };
 			}
 			return { snapshotTree, version };
 		} else {
-			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
-			this.snapshot = {
-				tree: baseSnapshot,
-				blobs: snapshotBlobs,
-			};
-			return { snapshotTree: this.pendingLocalState.baseSnapshot, version: undefined };
+			this.snapshot = this.pendingLocalState.pendingSnapshot;
+			return { snapshotTree: this.snapshot.snapshotTree, version: undefined };
 		}
 	}
 
@@ -94,14 +129,7 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching
 	 */
-	public setSnapshot(
-		snapshot:
-			| {
-					tree: ISnapshotTree;
-					blobs: ISerializableBlobContents;
-			  }
-			| undefined,
-	) {
+	public setSnapshot(snapshot: PendingSnapshot | undefined) {
 		this.snapshot = snapshot;
 	}
 
@@ -130,8 +158,7 @@ export class SerializedStateManager {
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
-					baseSnapshot: this.snapshot.tree,
-					snapshotBlobs: this.snapshot.blobs,
+					pendingSnapshot: this.snapshot,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state

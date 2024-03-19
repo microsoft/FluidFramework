@@ -33,6 +33,8 @@ import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+// eslint-disable-next-line import/no-internal-modules
+import type { PendingSnapshot } from "../../../../loader/container-loader/lib/serializedStateManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -239,15 +241,10 @@ describeCompat(
 			return handle.get();
 		}
 
-		function getSnapshotInfoFromSerializedContainer(
-			container: IContainer,
-		): [ISnapshotTree, ISerializableBlobContents] {
+		function getSnapshotInfoFromSerializedContainer(container: IContainer): PendingSnapshot {
 			const snapshot = container.serialize();
 			const deserializedSummary = JSON.parse(snapshot);
-			return [
-				deserializedSummary.baseSnapshot as ISnapshotTree,
-				deserializedSummary.snapshotBlobs as ISerializableBlobContents,
-			];
+			return deserializedSummary.pendingSnapshot as PendingSnapshot;
 		}
 
 		beforeEach("createLoader", async function () {
@@ -271,7 +268,7 @@ describeCompat(
 			it("Dehydrated container snapshot", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
-				const [snapshotTree, snapshotBlobs] =
+				const { snapshotTree, snapshotBlobs } =
 					getSnapshotInfoFromSerializedContainer(container);
 
 				// Check for protocol attributes
@@ -320,7 +317,7 @@ describeCompat(
 			it("Dehydrated container snapshot 2 times with changes in between", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
-				const [snapshotTree1, snapshotBlobs1] =
+				const { snapshotTree: snapshotTree1, snapshotBlobs: snapshotBlobs1 } =
 					getSnapshotInfoFromSerializedContainer(container);
 				// Create a channel
 				const channel = defaultDataStore.runtime.createChannel(
@@ -328,7 +325,7 @@ describeCompat(
 					"https://graph.microsoft.com/types/map",
 				) as ISharedMap;
 				channel.bindToContext();
-				const [snapshotTree2, snapshotBlobs2] =
+				const { snapshotTree: snapshotTree2, snapshotBlobs: snapshotBlobs2 } =
 					getSnapshotInfoFromSerializedContainer(container);
 
 				assert.strictEqual(
@@ -376,8 +373,7 @@ describeCompat(
 					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-				const [snapshotTree, snapshotBlobs] =
-					getSnapshotInfoFromSerializedContainer(container);
+				const { snapshotTree } = getSnapshotInfoFromSerializedContainer(container);
 
 				assertProtocolTree(snapshotTree);
 				assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
@@ -1056,8 +1052,7 @@ describeCompat(
 				// Create another not bounded dataStore
 				await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-				const [snapshotTree, snapshotBlobs] =
-					getSnapshotInfoFromSerializedContainer(container);
+				const { snapshotTree } = getSnapshotInfoFromSerializedContainer(container);
 
 				assertProtocolTree(snapshotTree);
 				assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);

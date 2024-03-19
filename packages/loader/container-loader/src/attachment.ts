@@ -7,9 +7,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader.js";
+import type { PendingSnapshot } from "./serializedStateManager.js";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
 
 /**
@@ -135,7 +135,7 @@ export interface AttachProcessProps {
  */
 export const runRetriableAttachProcess = async (
 	props: AttachProcessProps,
-): Promise<{ tree: ISnapshotTree; blobs: ISerializableBlobContents } | undefined> => {
+): Promise<PendingSnapshot | undefined> => {
 	const {
 		detachedBlobStorage,
 		createOrGetStorageService,
@@ -210,7 +210,7 @@ export const runRetriableAttachProcess = async (
 		});
 	}
 
-	const snapshot = offlineLoadEnabled
+	const snapshot: PendingSnapshot | undefined = offlineLoadEnabled
 		? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
 		: undefined;
 

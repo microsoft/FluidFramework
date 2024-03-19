@@ -17,8 +17,8 @@ import {
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
 import { isFluidError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { IPendingDetachedContainerState } from "../container.js";
 import { IDetachedBlobStorage, Loader } from "../loader.js";
+import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {
@@ -107,8 +107,8 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
-		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
+		assert.ok(parsedState.pendingSnapshot.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -141,8 +141,8 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
-		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
+		assert.ok(parsedState.pendingSnapshot.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -169,9 +169,9 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, false);
-		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
+		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
 		assert.deepStrictEqual(parsedState.pendingRuntimeState, { pending: [] });
-		assert.ok(parsedState.baseSnapshot);
+		assert.ok(parsedState.pendingSnapshot.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 
@@ -236,8 +236,8 @@ describe("loader unit test", () => {
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
 		assert.strictEqual(parsedState.hasAttachmentBlobs, true);
-		assert.strictEqual(Object.keys(parsedState.snapshotBlobs).length, 4);
-		assert.ok(parsedState.baseSnapshot);
+		assert.strictEqual(Object.keys(parsedState.pendingSnapshot.snapshotBlobs).length, 4);
+		assert.ok(parsedState.pendingSnapshot.snapshotTree);
 		await loader.rehydrateDetachedContainerFromSnapshot(detachedContainerState);
 	});
 });
