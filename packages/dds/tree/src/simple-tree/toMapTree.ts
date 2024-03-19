@@ -273,15 +273,10 @@ function objectToMapTree(
 
 			// If a stable name was provided, we will use it as the key in the output.
 			const stableName: FieldKey = brand(fieldSchema.props?.stableName ?? key);
-			if (fields.has(stableName)) {
-				throw new UsageError(
-					`Provided ${
-						fieldSchema.props?.stableName === undefined ? "key" : "stableName"
-					} "${stableName}" collides with another "key" or "stableName" in schema "${
-						schema.identifier
-					}". You must ensure that all keys and stableNames are unique within a schema.`,
-				);
-			}
+
+			// Note: SchemaFactory validates this at schema creation time, with a user-friendly error.
+			// So we don't expect to hit this, and if we do it is likely an internal bug.
+			assert(!fields.has(stableName), "Keys must not be duplicated");
 			fields.set(stableName, [mappedChildTree]);
 		}
 	}

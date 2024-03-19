@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 import {
 	EmptyKey,
@@ -29,9 +29,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
-
-// Test TODOs:
-// - collisions (2 stableNames, stableName with dev key, etc.)
 
 const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = brand(booleanSchema.identifier);
 const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(handleSchema.identifier);
@@ -346,44 +343,6 @@ describe("toMapTree", () => {
 			};
 
 			assert.deepEqual(actual, expected);
-		});
-
-		it("Fields contain duplicate `stableName`s", () => {
-			const schemaFactory = new SchemaFactory("test");
-			class Point extends schemaFactory.object("point", {
-				x: schemaFactory.required(schemaFactory.number, { stableName: "stable-key" }),
-				y: schemaFactory.required(schemaFactory.number, { stableName: "stable-key" }),
-			}) {}
-
-			const point = { x: 1, y: 2 };
-
-			assert.throws(
-				() => nodeDataToMapTree(point, [Point]),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/collides with another "key" or "stableName" in schema/,
-					),
-			);
-		});
-
-		it("Fields contain duplicate `stableName` that conflicts with dev key", () => {
-			const schemaFactory = new SchemaFactory("test");
-			class ObjectSchema extends schemaFactory.object("object", {
-				foo: schemaFactory.required(schemaFactory.number, { stableName: "bar" }),
-				bar: schemaFactory.optional(schemaFactory.string),
-			}) {}
-
-			const schema = { foo: 42, bar: "Hello world!" };
-
-			assert.throws(
-				() => nodeDataToMapTree(schema, [ObjectSchema]),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/collides with another "key" or "stableName" in schema/,
-					),
-			);
 		});
 	});
 
