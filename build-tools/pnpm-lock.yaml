@@ -82,6 +82,7 @@ importers:
       '@types/debug': ^4.1.7
       '@types/fs-extra': ^8.1.2
       '@types/inquirer': ^8.2.6
+      '@types/json5': ^2.2.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.18.6
       '@types/node-fetch': ^2.5.10
@@ -110,6 +111,7 @@ importers:
       gray-matter: ^4.0.3
       human-id: ^4.0.0
       inquirer: ^8.2.5
+      json5: ^2.2.3
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
@@ -124,6 +126,7 @@ importers:
       prettier: ~3.2.4
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
       semver-utils: ^1.1.4
@@ -162,6 +165,7 @@ importers:
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
+      json5: 2.2.3
       jssm: 5.89.2
       latest-version: 5.1.0
       minimatch: 7.4.6
@@ -171,6 +175,7 @@ importers:
       prettier: 3.2.5
       prompts: 2.4.2
       read-pkg-up: 7.0.1
+      replace-in-file: 6.3.5
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
@@ -190,6 +195,7 @@ importers:
       '@types/debug': 4.1.12
       '@types/fs-extra': 8.1.2
       '@types/inquirer': 8.2.6
+      '@types/json5': 2.2.0
       '@types/mocha': 9.1.1
       '@types/node': 18.18.6
       '@types/node-fetch': 2.6.4
@@ -255,7 +261,6 @@ importers:
       lodash.isequal: ^4.5.0
       mocha: ^10.2.0
       picomatch: ^2.3.1
-      replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
       sort-package-json: 1.57.0
@@ -284,7 +289,6 @@ importers:
       lodash: 4.17.21
       lodash.isequal: 4.5.0
       picomatch: 2.3.1
-      replace-in-file: 6.3.5
       rimraf: 4.4.1
       semver: 7.5.4
       sort-package-json: 1.57.0
@@ -9442,7 +9446,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       glob: 7.2.3
-      yargs: 17.7.1
+      yargs: 17.7.2
 
   /require-directory/2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -11198,6 +11202,7 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: true
 
   /yargs/17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
@@ -11210,7 +11215,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: true
 
   /yarn/1.22.19:
     resolution: {integrity: sha512-/0V5q0WbslqnwP91tirOvldvYISzaqhClxzyUKXYxs07yUILIs5jx/k6CFe8bvKSkds5w+eiOqta39Wk3WxdcQ==}

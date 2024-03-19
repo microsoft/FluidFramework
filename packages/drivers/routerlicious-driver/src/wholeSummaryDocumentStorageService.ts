@@ -24,19 +24,19 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ICache, InMemoryCache } from "./cache";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts";
-import { GitManager } from "./gitManager";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
-import { IR11sResponse } from "./restWrapper";
-import { ISummaryUploadManager } from "./storageContracts";
+import { ICache, InMemoryCache } from "./cache.js";
+import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
+import { GitManager } from "./gitManager.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
+import { convertWholeFlatSnapshotToSnapshotTreeAndBlobs } from "./r11sSnapshotParser.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { ISummaryUploadManager } from "./storageContracts.js";
 import {
 	convertSnapshotAndBlobsToSummaryTree,
 	evalBlobsAndTrees,
 	validateBlobsAndTrees,
-} from "./treeUtils";
-import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+} from "./treeUtils.js";
+import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
 
 const latestSnapshotId: string = "latest";
 

@@ -43,11 +43,15 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { useLogger } from "../TelemetryUtils";
-import { connectionStateToString } from "../Utilities";
-import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+import { connectionStateToString } from "../Utilities.js";
+import {
+	clientIdTooltipText,
+	containerStatusTooltipText,
+	userIdTooltipText,
+} from "./TooltipTexts.js";
+import { Waiting } from "./Waiting.js";
 
 /**
  * {@link ContainerSummaryView} input props.
