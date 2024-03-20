@@ -25,7 +25,7 @@ import { IProtocolHandler } from "./protocol.js";
 const JoinOpTimeoutMs = 45000;
 
 // Timeout waiting for "self" join signal, before giving up
-const JoinSignalTimeoutMs = 5000;
+const JoinSignalTimeoutMs = 10000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
@@ -78,8 +78,8 @@ export function createConnectionStateHandler(
 ) {
 	const mc = loggerToMonitoringContext(inputs.logger);
 	return createConnectionStateHandlerCore(
-		mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true, // connectedRaisedWhenCaughtUp
-		mc.config.getBoolean("Fluid.Container.EnableJoinSignalWait") === true, // readClientsWaitForJoinSignal
+		mc.config.getBoolean("Fluid.Container.DisableCatchUpBeforeDeclaringConnected") !== true, // connectedRaisedWhenCaughtUp
+		mc.config.getBoolean("Fluid.Container.DisableJoinSignalWait") !== true, // readClientsWaitForJoinSignal
 		inputs,
 		deltaManager,
 		clientId,

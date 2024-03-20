@@ -18,6 +18,7 @@ export {
 	MockFluidDataStoreRuntime,
 	MockObjectStorageService,
 	MockQuorumClients,
+	MockAudience,
 	MockSharedObjectServices,
 } from "./mocks.js";
 export {

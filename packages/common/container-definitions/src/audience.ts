@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
-import type { EventEmitter } from "events_pkg";
-
 /**
  * Manages the state and the members for {@link IAudience}
  * @alpha
@@ -21,6 +20,23 @@ export interface IAudienceOwner extends IAudience {
 	 * @returns if a client was removed from the audience
 	 */
 	removeMember(clientId: string): boolean;
+
+	/**
+	 * Notifies Audience that "self" has changed.
+	 * See IAudience.self and IAudienceEvents' "selfChanged" event for more details
+	 */
+	setSelf(clientId: string | undefined): void;
+}
+
+/**
+ * @public
+ */
+export interface IAudienceEvents extends IEvent {
+	// eslint-disable-next-line @typescript-eslint/prefer-function-type
+	(
+		event: "addMember" | "removeMember" | "selfChanged",
+		listener: (clientId: string, client: IClient) => void,
+	): void;
 }
 
 /**
@@ -29,19 +45,9 @@ export interface IAudienceOwner extends IAudience {
  * @remarks Access to the Audience when a container is disconnected is a tricky subject.
  * See the remarks on specific methods for more details.
  *
- * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`
- * class.
  * @public
  */
-export interface IAudience extends EventEmitter {
-	/**
-	 * See {@link https://nodejs.dev/learn/the-nodejs-event-emitter | here} for an overview of `EventEmitter.on`.
-	 */
-	on(
-		event: "addMember" | "removeMember",
-		listener: (clientId: string, client: IClient) => void,
-	): this;
-
+export interface IAudience extends IEventProvider<IAudienceEvents> {
 	/**
 	 * List all clients connected to the op stream, keyed off their clientId.
 	 *
@@ -67,4 +73,17 @@ export interface IAudience extends EventEmitter {
 	 * does not technically have a clientId tied to an active connection to the service.
 	 */
 	getMember(clientId: string): IClient | undefined;
+
+	/**
+	 * Returns this client's clientId, if it exists. undefined if this client never connected to ordering service.
+	 * Whenever this property changes, "selfChanged" event is fired on this object.
+	 * Wheneever clients loses connection and reconnects, it will raise "connected" event at various API surfaces.
+	 * It's guranteed that such events and change of self clientId happens at the same time (syncronously, one after another).
+	 *
+	 * That said, at the moment this is experimental API. It depends on some experimental settings that might change in the future.
+	 * While it's marked experimental, you break in above described promise, where you could experience "self" being changed
+	 * (and "selfChanged" event fired) while you can't find such clientId in the list of audience clients.
+	 * @experimental
+	 */
+	readonly self: string | undefined;
 }
