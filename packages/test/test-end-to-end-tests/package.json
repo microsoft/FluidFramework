@@ -165,6 +165,10 @@
 			"build:test": [
 				"...",
 				"^build:esnext"
+			],
+			"build:test:esm": [
+				"...",
+				"build:genver"
 			]
 		}
 	},
