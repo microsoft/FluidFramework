@@ -310,7 +310,7 @@ describe("collection", function () {
 
 		const result = {};
 		const collectionKeys = collection.getKeys();
-		let i = keys.length - 1;
+		let i = collectionKeys.length - 1;
 		collection.iterateFromTail(function (key, item) {
 			result[key] = item;
 			expect(key).to.equal(collectionKeys[i]);
