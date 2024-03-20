@@ -1441,6 +1441,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/fluid-static': workspace:~
       '@fluidframework/id-compressor': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -1469,6 +1470,7 @@ importers:
       '@fluidframework/azure-client': link:../../../packages/service-clients/azure-client
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/matrix': link:../../../packages/dds/matrix
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/tree': link:../../../packages/dds/tree
@@ -2987,6 +2989,8 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
+      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
+      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       assert: 2.1.0
@@ -3000,9 +3004,7 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
-      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server': 4.0.0
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
@@ -8060,6 +8062,7 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/fluid-static-previous': npm:@fluidframework/fluid-static@2.0.0-internal.8.0.0
@@ -8091,6 +8094,7 @@ importers:
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/request-handler': link:../request-handler

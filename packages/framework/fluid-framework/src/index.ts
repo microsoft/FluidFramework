@@ -20,6 +20,8 @@ export { ConnectionState } from "@fluidframework/container-loader";
 export type {
 	ContainerAttachProps,
 	ContainerSchema,
+	AzureContainerSchema,
+	FluidRuntimeMinVersion,
 	DataObjectClass,
 	IConnection,
 	IFluidContainer,

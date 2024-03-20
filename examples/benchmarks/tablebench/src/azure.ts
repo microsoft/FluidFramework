@@ -4,6 +4,7 @@
  */
 
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { SharedTree } from "@fluidframework/tree";
 
@@ -22,7 +23,8 @@ const client = new AzureClient({ connection: localConnectionConfig });
 
 const containerSchema = {
 	initialObjects: { tree: SharedTree },
-};
+	minRuntimeVersion: FluidRuntimeMinVersion.V2,
+} satisfies AzureContainerSchema;
 
 export async function initFluid() {
 	let container;

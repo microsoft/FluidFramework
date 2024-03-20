@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
@@ -23,7 +23,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
-	let schema: ContainerSchema;
+	let schema: AzureContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient("test-user-id-1", "test-user-name-1");
@@ -31,6 +31,7 @@ describe("Fluid audience", () => {
 			initialObjects: {
 				map1: SharedMap,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 	});
 

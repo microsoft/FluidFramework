@@ -34,4 +34,6 @@ export {
 	type Myself,
 	type SharedObjectClass,
 	type IProvideRootDataObject,
+	FluidRuntimeMinVersion,
+	type AzureContainerSchema,
 } from "./types.js";

@@ -12,6 +12,7 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
@@ -67,7 +68,8 @@ const containerSchema = {
 		map1: SharedMap,
 		map2: SharedMap,
 	},
-};
+	minRuntimeVersion: FluidRuntimeMinVersion.V2,
+} satisfies AzureContainerSchema;
 
 function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerProps {
 	return {

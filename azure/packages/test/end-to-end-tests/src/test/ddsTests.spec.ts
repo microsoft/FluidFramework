@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
@@ -22,7 +22,8 @@ describe("Fluid data updates", () => {
 		initialObjects: {
 			map1: SharedMap,
 		},
-	} satisfies ContainerSchema;
+		minRuntimeVersion: FluidRuntimeMinVersion.V2,
+	} satisfies AzureContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
@@ -94,11 +95,12 @@ describe("Fluid data updates", () => {
 	 * Expected behavior: DataObjects can be retrieved from the original and loaded container.
 	 */
 	it("can set DataObjects as initial objects for a container", async () => {
-		const doSchema: ContainerSchema = {
+		const doSchema: AzureContainerSchema = {
 			initialObjects: {
 				mdo1: TestDataObject,
 				mdo2: CounterTestDataObject,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 		const { container } = await client.createContainer(doSchema);
 		const containerId = await container.attach();
@@ -140,12 +142,13 @@ describe("Fluid data updates", () => {
 	 * TODO: Known bug that needs to be re-tested once fixed.
 	 */
 	it("can use multiple DataObjects of the same type", async () => {
-		const doSchema: ContainerSchema = {
+		const doSchema: AzureContainerSchema = {
 			initialObjects: {
 				mdo1: TestDataObject,
 				mdo2: CounterTestDataObject,
 				mdo3: CounterTestDataObject,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 		const { container } = await client.createContainer(doSchema);
 		const containerId = await container.attach();
@@ -193,11 +196,12 @@ describe("Fluid data updates", () => {
 	 * Expected behavior: DataObject changes are correctly reflected on original and loaded containers
 	 */
 	it("can change DataObjects within initialObjects value", async () => {
-		const doSchema: ContainerSchema = {
+		const doSchema: AzureContainerSchema = {
 			initialObjects: {
 				mdo1: TestDataObject,
 				mdo2: CounterTestDataObject,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 		const { container } = await client.createContainer(doSchema);
 		const initialObjectsCreate = container.initialObjects;
@@ -237,11 +241,12 @@ describe("Fluid data updates", () => {
 	 * the container.
 	 */
 	it("can create/add loadable objects (custom data object) dynamically during runtime", async () => {
-		const dynamicSchema: ContainerSchema = {
+		const dynamicSchema: AzureContainerSchema = {
 			initialObjects: {
 				map1: SharedMap,
 			},
 			dynamicObjectTypes: [TestDataObject],
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 
 		const { container } = await client.createContainer(dynamicSchema);

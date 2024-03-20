@@ -6,7 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import {
+	type AzureContainerSchema,
+	FluidRuntimeMinVersion,
+	type IFluidContainer,
+} from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils";
@@ -52,7 +56,7 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
 describe("AzureClient", () => {
 	const connectTimeoutMs = 1000;
 	let client: AzureClient;
-	let schema: ContainerSchema;
+	let schema: AzureContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
@@ -60,6 +64,7 @@ describe("AzureClient", () => {
 			initialObjects: {
 				map1: SharedMap,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 	});
 
@@ -302,6 +307,7 @@ describe("AzureClient", () => {
 				initialObjects: {
 					map: SharedMap,
 				},
+				minRuntimeVersion: FluidRuntimeMinVersion.V2,
 			});
 
 			// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
@@ -313,6 +319,7 @@ describe("AzureClient", () => {
 				initialObjects: {
 					tree: SharedTree,
 				},
+				minRuntimeVersion: FluidRuntimeMinVersion.V2,
 			});
 
 			// Ensure that the 'tree' API is accessible without casting or suppressing lint rules:
