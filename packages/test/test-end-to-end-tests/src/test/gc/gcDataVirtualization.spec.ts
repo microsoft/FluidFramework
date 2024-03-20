@@ -122,13 +122,15 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 			},
 		);
 
+		// create container and summarizer
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
 		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
-
+		callCount = 0;
 		const { container, summarizer } = await loadSummarizer(mainContainer);
+		assert(callCount === 1, "Expected one snapshot call");
 
-		// create datastore
+		// create datastore A and B
 		const dataStoreA = await mainDataStore._context.containerRuntime.createDataStore(
 			TestDataObjectType,
 			"group",
@@ -142,63 +144,75 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		const dataObjectA = (await handleA.get()) as ITestDataObject;
 		const dataStoreId = dataObjectA._context.id;
 
-		// store datastore handles
+		// reference datastore A and B
 		mainDataStore._root.set("dataStoreA", handleA);
 		mainDataStore._root.set("dataStoreB", handleB);
 
-		// unreference datastore handles
+		// unreference datastore A
 		mainDataStore._root.delete("dataStoreA");
 
-		// Summarize and verify datastore are unreferenced and not tombstoned
+		// Summarize and verify datastore A is unreferenced
 		await provider.ensureSynchronized();
+		callCount = 0;
 		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
+
+		// Validate GC state datastoreA should be unreferenced
+		assert(callCount === 0, "Expected no snapshot call");
 		const gcState = getGCStateFromSummary(summaryTree);
 		assert(gcState !== undefined, "Expected GC state to be generated");
-		assert(
-			gcState.gcNodes[handleA.absolutePath] !== undefined,
-			"Data Store should exist on gc graph",
-		);
-		const unreferencedTimestampMs =
-			gcState.gcNodes[handleA.absolutePath].unreferencedTimestampMs;
+		const gcNodeA = gcState.gcNodes[handleA.absolutePath];
+		assert(gcNodeA !== undefined, "Data Store should exist on gc graph");
+		const unreferencedTimestampMs = gcNodeA.unreferencedTimestampMs;
 		assert(unreferencedTimestampMs !== undefined, "Data Store should be unreferenced");
-		// Summary check
+		// DataStoreA should be in the summary
 		assert(
-			await isDataStoreInSummaryTree(summaryTree, dataStoreId),
+			isDataStoreInSummaryTree(summaryTree, dataStoreId),
 			"Data Store should be in the summary!",
 		);
 
+		// Load new container
 		const mainContainer2 = await provider.loadTestContainer(testContainerConfig, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 		const mainDataStore2 = (await mainContainer2.getEntryPoint()) as ITestDataObject;
+
+		// Close the old summarizer and container so that we can summarize th new container.
 		summarizer.close();
 		container.close();
 		mainContainer.close();
 
+		// Unreference datastore B
 		mainDataStore2._root.delete("dataStoreB");
+
+		// Load new summarizer
 		snapshotCaptured = undefined;
 		callCount = 0;
 		const { summarizer: summarizer2 } = await loadSummarizer(mainContainer2, summaryVersion);
 		assert(callCount === 1, "Expected one snapshot call");
 		assert(snapshotCaptured !== undefined, "Expected snapshot to be captured");
+
+		// Validate that we loaded the snapshot without datastoreA on the snapshot
 		const tree = (snapshotCaptured as ISnapshot).snapshotTree.trees[".channels"].trees;
 		const datastoreATree = tree[dataStoreId];
 		assert(datastoreATree !== undefined, "DataStoreA should be in the snapshot");
 		assertOmittedTree(datastoreATree, "group", "DataStoreA should be omitted");
 
+		// Summarize and verify datastoreA is still unreferenced
 		await provider.ensureSynchronized();
 		callCount = 0;
 		const { summaryTree: summaryTree2 } = await summarizeNow(summarizer2);
+
+		// Validate GC state (dataStoreA should be unreferenced with the same timestamp as the previous summary)
 		assert(callCount === 0, "Expected no snapshot call");
 		const gcState2 = getGCStateFromSummary(summaryTree2);
 		assert(gcState2 !== undefined, "Expected GC state to be generated");
-		const gcNodeA = gcState2.gcNodes[handleA.absolutePath];
-		assert(gcNodeA !== undefined, "DataStoreA should exist on gc graph");
+		const gcNodeA2 = gcState2.gcNodes[handleA.absolutePath];
+		assert(gcNodeA2 !== undefined, "DataStoreA should exist on gc graph");
 		assert(
-			gcNodeA.unreferencedTimestampMs === unreferencedTimestampMs,
+			gcNodeA2.unreferencedTimestampMs === unreferencedTimestampMs,
 			"DataStoreA should be unreferenced the same",
 		);
-		// Summary check
+		// Validate summary state (dataStoreA should be a summary handle)
 		const dataStoreTreeA = getDataStoreInSummaryTree(summaryTree2, dataStoreId);
 		assert(dataStoreTreeA?.type === SummaryType.Handle, "DataStoreA should not have changed!");
 	});
