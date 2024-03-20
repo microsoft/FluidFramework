@@ -92,7 +92,7 @@ export function OpLatencyView(): React.ReactElement {
 			data: [],
 		});
 	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState(
-		(): boolean => localStorage.getItem("Fluid.Telemetry.DisableSampling") === "true",
+		(): boolean => sessionStorage.getItem("Fluid.Telemetry.DisableSampling") === "true",
 	);
 
 	// Render the text conditionally
@@ -105,11 +105,11 @@ export function OpLatencyView(): React.ReactElement {
 	const toggleUnsampledTelemetry = (): void => {
 		const newValue = !unsampledTelemetry;
 		setUnsampledTelemetry(newValue);
-		localStorage.setItem("Fluid.Telemetry.DisableSampling", String(newValue));
+		sessionStorage.setItem("Fluid.Telemetry.DisableSampling", String(newValue));
 	};
 
 	React.useEffect(() => {
-		console.log("Unsampled Telemetry:", unsampledTelemetry);
+		console.debug("Unsampled Telemetry:", unsampledTelemetry);
 	}, [unsampledTelemetry]);
 
 	React.useEffect(() => {
@@ -177,7 +177,7 @@ export function OpLatencyView(): React.ReactElement {
 			<h3>Op Latency</h3>
 			{renderInstructions ? (
 				<Body1>
-					{`Unsampled telemetry has not been enabled and is necessary for this feature to work as designed.`}
+					{`Unsampled telemetry is not currently enabled in the Fluid-based application and is necessary for this feature to work as designed.`}
 					{`\nIMPORTANT: This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
 				</Body1>
 			) : (
@@ -270,6 +270,7 @@ export function OpLatencyView(): React.ReactElement {
 			<Button size="small" onClick={toggleUnsampledTelemetry}>
 				{unsampledTelemetry ? "Disable Unsampled Telemetry" : "Enable Unsampled Telemetry"}
 			</Button>
+			<Body1>The page will refresh upon clicking the button</Body1>
 		</div>
 	);
 }
