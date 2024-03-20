@@ -48,12 +48,12 @@ function validateDataStoreStateInSummary(
 	// for a data store is.
 	const expectedHandleId = `/${channelsTreeName}/${dataStoreId}`;
 	assert.strictEqual(
-		8,
+		dataStoreSummaryObject.type,
 		SummaryType.Handle,
 		"Data store summary should be a handle",
 	);
 	assert.strictEqual(
-		8,
+		dataStoreSummaryObject.handle,
 		expectedHandleId,
 		"Data store handle is incorrect",
 	);
