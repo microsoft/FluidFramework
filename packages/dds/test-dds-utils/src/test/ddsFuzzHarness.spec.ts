@@ -2,7 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -10,7 +13,7 @@ import * as path from "node:path";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-unresolved
 import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -883,7 +886,6 @@ describe("DDS Fuzz Harness", () => {
 					reject: false,
 				},
 			);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
 		}
