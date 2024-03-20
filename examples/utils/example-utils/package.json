@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-utils",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "Shared utilities used by examples.",
 	"homepage": "https://fluidframework.com",
@@ -96,7 +96,6 @@
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1",
-		"tsc-multi": "^1.1.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
@@ -107,7 +106,6 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
-		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",
