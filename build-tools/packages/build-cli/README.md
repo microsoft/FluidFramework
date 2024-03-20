@@ -44,7 +44,6 @@ USAGE
 * [`flub info`](docs/info.md) - Get info about the repo, release groups, and packages.
 * [`flub list`](docs/list.md) - List packages in a release group in topological order.
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
-* [`flub modify`](docs/modify.md) - Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
