@@ -309,11 +309,11 @@ describe("collection", function () {
 		collection.bulkAdd(objectToAdd);
 
 		const result = {};
-		const keys = collection.getKeys();
+		const collectionKeys = collection.getKeys();
 		let i = keys.length - 1;
 		collection.iterateFromTail(function (key, item) {
 			result[key] = item;
-			expect(key).to.equal(keys[i]);
+			expect(key).to.equal(collectionKeys[i]);
 			i--;
 		});
 
