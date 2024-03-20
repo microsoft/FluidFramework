@@ -1,12 +1,12 @@
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { fail, ISharedTree, SharedTreeFactory, type TreeView } from "@fluidframework/tree";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISharedTree, SharedTreeFactory, type TreeView, fail } from "@fluidframework/tree";
 import { AppState } from "./appState.js";
-import { appTreeConfiguration, type App } from "./schema.js";
+import { type App, appTreeConfiguration } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";

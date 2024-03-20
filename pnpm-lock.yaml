@@ -1355,6 +1355,7 @@ importers:
 
   examples/benchmarks/bubblebench/simple-tree:
     specifiers:
+      '@biomejs/biome': ^1.6.1
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
       '@fluid-example/webpack-fluid-loader': workspace:~
@@ -1392,6 +1393,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@biomejs/biome': 1.6.1
       '@fluid-example/bubblebench-common': link:../common
       '@fluid-example/example-utils': link:../../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
@@ -13243,7 +13245,6 @@ packages:
       '@biomejs/cli-linux-x64-musl': 1.6.1
       '@biomejs/cli-win32-arm64': 1.6.1
       '@biomejs/cli-win32-x64': 1.6.1
-    dev: true
 
   /@biomejs/cli-darwin-arm64/1.6.1:
     resolution: {integrity: sha512-KlvY00iB9T/vFi4m/GXxEyYkYnYy6aw06uapzUIIdiMMj7I/pmZu7CsZlzWdekVD0j+SsQbxdZMsb0wPhnRSsg==}
@@ -13251,7 +13252,6 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-darwin-x64/1.6.1:
@@ -13260,7 +13260,6 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-linux-arm64-musl/1.6.1:
@@ -13269,7 +13268,6 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-linux-arm64/1.6.1:
@@ -13278,7 +13276,6 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-linux-x64-musl/1.6.1:
@@ -13287,7 +13284,6 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-linux-x64/1.6.1:
@@ -13296,7 +13292,6 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-win32-arm64/1.6.1:
@@ -13305,7 +13300,6 @@ packages:
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@biomejs/cli-win32-x64/1.6.1:
@@ -13314,7 +13308,6 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
-    dev: true
     optional: true
 
   /@cerner/duplicate-package-checker-webpack-plugin/2.3.0_webpack@5.89.0:

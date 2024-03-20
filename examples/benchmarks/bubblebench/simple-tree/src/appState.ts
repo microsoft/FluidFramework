@@ -4,13 +4,13 @@
  */
 import {
 	type IAppState,
-	makeBubble,
-	randomColor,
 	type IBubble,
 	type IClient,
+	makeBubble,
+	randomColor,
 } from "@fluid-example/bubblebench-common";
 import type { InsertableTypedNode, TreeView } from "@fluidframework/tree";
-import { Client, type App, type Bubble } from "./schema.js";
+import { type App, type Bubble, Client } from "./schema.js";
 
 export class AppState implements IAppState {
 	readonly localClient: Client;
