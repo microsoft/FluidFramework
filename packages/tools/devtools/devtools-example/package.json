@@ -19,7 +19,7 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"clean": "rimraf --glob _api-extractor-temp coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
+		"clean": "rimraf --glob _api-extractor-temp coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "fluid-build --task format .",
