@@ -6,8 +6,9 @@
 /**
  * @fileoverview In this file, we will test the functions exported by datastructres/collection.js
  */
-
-import * as _ from "lodash";
+import lodash from "lodash";
+// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
+const { every, includes, keys } = lodash;
 import { expect } from "chai";
 import { Collection } from "../../index.js";
 
@@ -46,7 +47,7 @@ describe("collection", function () {
 
 		expect(collection.bulkAdd(objectToAdd)).to.equal(collection);
 
-		const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
+		const itemExists = every(objectToAdd, (item, key) => collection.has(key));
 
 		expect(itemExists).to.equal(true);
 
@@ -75,7 +76,7 @@ describe("collection", function () {
 		collection.bulkAdd(objectToAdd);
 		collection.bulkRemove(objectToAdd);
 
-		const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
+		const itemExists = every(objectToAdd, (item, key) => collection.has(key));
 
 		expect(itemExists).to.equal(false);
 
@@ -217,7 +218,7 @@ describe("collection", function () {
 
 		expect(array).to.be.an("array");
 
-		const exists = _.every(objectToAdd, (item) => _.includes(array, item));
+		const exists = every(objectToAdd, (item) => includes(array, item));
 
 		expect(exists).to.equal(true);
 
@@ -348,7 +349,7 @@ describe("collection", function () {
 
 		collection.bulkAdd(objectToAdd);
 
-		expect(collection.getKeys()).to.deep.equal(_.keys(objectToAdd));
+		expect(collection.getKeys()).to.deep.equal(keys(objectToAdd));
 
 		done();
 	});
@@ -455,7 +456,7 @@ describe("collection", function () {
 		};
 
 		collection.bulkAdd(objectToAdd);
-		expect(callbackCounter).to.equal(_.keys(objectToAdd).length);
+		expect(callbackCounter).to.equal(keys(objectToAdd).length);
 
 		done();
 	});
@@ -494,7 +495,7 @@ describe("collection", function () {
 		collection.bulkAdd(objectToAdd);
 		collection.bulkRemove(objectToAdd);
 
-		expect(callbackCounter).to.equal(_.keys(objectToAdd).length);
+		expect(callbackCounter).to.equal(keys(objectToAdd).length);
 
 		done();
 	});
