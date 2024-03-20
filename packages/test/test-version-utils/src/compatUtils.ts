@@ -109,8 +109,7 @@ function filterRuntimeOptionsForVersion(
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 		};
-	} else {
-		// "2.0.0-rc.2." ++
+	} else if (version.startsWith("2.0.0-rc.2.")) {
 		options = {
 			...options,
 			compressionOptions,
@@ -118,6 +117,8 @@ function filterRuntimeOptionsForVersion(
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 		};
+	} else {
+		throw new Error(`unknown version: ${version}`);
 	}
 
 	return options;
