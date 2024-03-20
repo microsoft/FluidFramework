@@ -478,6 +478,9 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 			if (runtimeMessage === false) {
 				return;
 			}
+			if (message.type === ContainerMessageType.IdAllocation) {
+				return;
+			}
 			try {
 				assert.strictEqual(
 					message.type,
