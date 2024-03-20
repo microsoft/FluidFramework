@@ -764,7 +764,7 @@ export function configureWebSocketServices(
 						.catch((error) => {
 							Lumberjack.error(
 								"Failed to remove client from client manager",
-								undefined,
+								getLumberBaseProperties(room.documentId, room.tenantId),
 								error,
 							);
 						}),
