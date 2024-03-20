@@ -207,7 +207,7 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 			{ schema, policy: defaultSchemaPolicy },
-			new DefaultCommitEnricher(changeFamily, () => {
+			new DefaultCommitEnricher(changeFamily.rebaser.invert, () => {
 				return new SharedTreeChangeEnricher(
 					forest.clone(schema, new AnchorSet()),
 					removedRoots.clone(),

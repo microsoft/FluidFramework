@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeFamily, GraphCommit, RevisionTag } from "../core/index.js";
+import { ChangeFamily, ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
 import { ICommitEnricher } from "../shared-tree-core/index.js";
 import { disposeSymbol } from "../util/index.js";
 
@@ -14,8 +14,7 @@ import { disposeSymbol } from "../util/index.js";
 export interface ChangeEnricherCheckout<TChange> {
 	/**
 	 * Updates the set of refreshers on a change.
-	 * @param change - the change to enrich.
-	 * This change must have already been passed to `enrichNewTipChange`.
+	 * @param change - the change to enrich. Not mutated.
 	 * @param revision - the revision associated with the change.
 	 * @returns the enriched change. Possibly the same as the one passed in.
 	 */
@@ -23,7 +22,7 @@ export interface ChangeEnricherCheckout<TChange> {
 
 	/**
 	 * Applies a change to the tip state.
-	 * @param change - the change to apply.
+	 * @param change - the change to apply. Not mutated.
 	 * @param revision - the revision associated with the change.
 	 * Can be undefined when the applied change is a rollback.
 	 */
@@ -35,9 +34,7 @@ export interface ChangeEnricherCheckout<TChange> {
 	[disposeSymbol](): void;
 }
 
-export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
-	implements ICommitEnricher<TChange>
-{
+export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> {
 	private tip: ChangeEnricherCheckout<TChange>;
 	/**
 	 * The list of commits (from oldest to most recent) that are have been submitted but not sequenced.
@@ -58,10 +55,10 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 	 * When defined, the session is going through a resubmit phase.
 	 * Used to manage the enrichment of resubmitted commits.
 	 */
-	private resubmitPhase?: ResubmitPhaseStateMachine<TChange, TChangeFamily>;
+	private resubmitPhase?: ResubmitPhaseStateMachine<TChange>;
 
 	public constructor(
-		private readonly changeFamily: TChangeFamily,
+		private readonly inverter: ChangeRebaser<TChange>["invert"],
 		private readonly checkoutFactory: () => ChangeEnricherCheckout<TChange>,
 	) {
 		this.tip = this.checkoutFactory();
@@ -96,7 +93,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			"Invalid resubmit phase start during incomplete resubmit phase",
 		);
 		this.resubmitPhase = new ResubmitPhaseStateMachine(
-			this.changeFamily,
+			this.inverter,
 			this.checkoutFactory(),
 			rebased,
 		);
@@ -126,7 +123,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 /**
  * A helper class that keeps track of the progression of a resubmit phase.
  */
-class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any, TChange>> {
+class ResubmitPhaseStateMachine<TChange> {
 	/**
 	 * The list of commits (from newest to oldest) that need to be resubmitted.
 	 */
@@ -138,14 +135,14 @@ class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any,
 	private readonly checkout: ChangeEnricherCheckout<TChange>;
 
 	/**
-	 * @param changeFamily - the change family to associated with the change type.
+	 * @param inverter - a function that can generate inverses of `TChange` instances.
 	 * @param checkout - a checkout in the local tip state. Owned (and mutated) by this state machine.
 	 * @param toResubmit - the commits that are being resubmitted (oldest to newest).
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
 	 */
 	public constructor(
-		changeFamily: TChangeFamily,
+		inverter: ChangeRebaser<TChange>["invert"],
 		checkout: ChangeEnricherCheckout<TChange>,
 		toResubmit: Iterable<GraphCommit<TChange>>,
 	) {
@@ -154,7 +151,7 @@ class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any,
 			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 			// Either we have to make it possible to do so, or this logic will have to change to work
 			// forwards from an earlier fork instead of backwards.
-			const rollback = changeFamily.rebaser.invert(commit, true);
+			const rollback = inverter(commit, true);
 			checkout.applyTipChange(rollback);
 		}
 		this.checkout = checkout;
