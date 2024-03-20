@@ -409,14 +409,6 @@ export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRa
 export const disposeSymbol: unique symbol;
 
 // @internal
-export interface FlexTreeNodeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
-    changing(upPath: UpPath): void;
-    subtreeChanging(upPath: UpPath): PathVisitor | void;
-}
-
-// @internal
 export const EmptyKey: FieldKey;
 
 // @internal
@@ -731,6 +723,14 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     };
     tryGetField(key: FieldKey): undefined | FlexTreeField;
     readonly value?: TreeValue;
+}
+
+// @internal
+export interface FlexTreeNodeEvents {
+    afterChange(event: TreeEvent): void;
+    beforeChange(event: TreeEvent): void;
+    changing(upPath: UpPath): void;
+    subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 // @internal
