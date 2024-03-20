@@ -97,7 +97,7 @@ describeCompat("GC & Data Virtualization", "NoCompat", (getTestObjectProvider) =
 		provider = getTestObjectProvider({ syncSummarizer: true });
 
 		// Data virtualization only works with local
-		// TODO: enable for ODSP
+		// TODO: enable for ODSP, AB#7508
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
