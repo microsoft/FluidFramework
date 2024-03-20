@@ -1246,6 +1246,10 @@ packages:
   /@fluidframework/gitresources/5.0.0-248224:
     resolution: {integrity: sha512-TvqDvL6zHaSSwDe0fzwYDq1J6Wmcd/YeUQSPuDKvM1LNRA6D5VbdU0OYQord1JnnCmxTC9oZJAt1dcFXU2HlNg==}
 
+  /@fluidframework/gitresources/5.0.0-248224:
+    resolution: {integrity: sha512-TvqDvL6zHaSSwDe0fzwYDq1J6Wmcd/YeUQSPuDKvM1LNRA6D5VbdU0OYQord1JnnCmxTC9oZJAt1dcFXU2HlNg==}
+    dev: false
+
   /@fluidframework/protocol-base/4.0.0:
     resolution: {integrity: sha512-mpuYXOOfCXKKEdzauxQ3KTY+ZWNj+NTEQTEJW8PD/xqN95g3AYoYXiikEkuzPbKghkAWcr6gYNxmK//MLbIVFw==}
     dependencies:
@@ -1262,6 +1266,15 @@ packages:
       '@fluidframework/gitresources': 5.0.0-248224
       '@fluidframework/protocol-definitions': 3.2.0
       events: 3.3.0
+
+  /@fluidframework/protocol-base/5.0.0-248224:
+    resolution: {integrity: sha512-cUhLWto6EkOSC5j5RzJTcqz+6TcG11fhhKJUUiHEeUmVjtdGbIXtq9Y14rlwDBYFRY3ENmqyePbGM56LCvIKag==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0-248224
+      '@fluidframework/protocol-definitions': 3.2.0
+      events: 3.3.0
+    dev: false
 
   /@fluidframework/protocol-definitions/3.2.0:
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
@@ -1303,6 +1316,25 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluidframework/server-services-client/5.0.0-248224:
+    resolution: {integrity: sha512-gSa0tATCnipp2qR7lt5AD6nbBuy9HJ+CfVOmF1uruYiy21muRLGuKAPrwFv2/5UhrrQAmoep9ikvI5p9doPU2g==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0-248224
+      '@fluidframework/protocol-base': 5.0.0-248224
+      '@fluidframework/protocol-definitions': 3.2.0
+      axios: 1.6.2_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 11.1.0
+      jwt-decode: 4.0.0
+      sillyname: 0.1.0
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/server-services-core/4.0.0:
     resolution: {integrity: sha512-gt8GLNIDf8ZALbZGsS7WDytSLXwVPYEBCmuE+J3bikd3mItGxFhxQQI/6ZynUz/lue7GvoZtSuDyeal3DarwCQ==}
     dependencies:
@@ -1335,6 +1367,7 @@ packages:
       nconf: 0.12.0
     transitivePeerDependencies:
       - supports-color
+    dev: false
 
   /@fluidframework/server-services-ordering-kafkanode/5.0.0-248224:
     resolution: {integrity: sha512-r5efW67Q9LI/rvi8EIEt9Zk0pmxpu1EPWlTgTsIDJtW9EVCSmDZor+G5zbo9/V73gO24JuUye5E1lx9mdbNRVQ==}
@@ -1459,6 +1492,16 @@ packages:
       path-browserify: 1.0.1
       serialize-error: 8.1.0
       uuid: 9.0.1
+
+  /@fluidframework/server-services-telemetry/5.0.0-248224:
+    resolution: {integrity: sha512-vHr9AWkLCf+DU3Dq7xj8JqC/SjMGzJnsBBjoEmhf1soEkgt/mN2ZKSujeB5gC8roORhvDTCe7nmCN8OdA5XtmQ==}
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      json-stringify-safe: 5.0.1
+      path-browserify: 1.0.1
+      serialize-error: 8.1.0
+      uuid: 9.0.1
+    dev: false
 
   /@fluidframework/server-services-utils/4.0.0:
     resolution: {integrity: sha512-Lo4RTPZ0GDtz0ul69VRHhiWE/ZGfbPWPZp9Kqwh0nsv/tAzxd3lWCdxZjhPegHtCEWzAxDBzOhPP1muKhLMWDQ==}
