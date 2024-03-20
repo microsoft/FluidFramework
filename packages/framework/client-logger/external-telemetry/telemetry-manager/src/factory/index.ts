@@ -4,15 +4,19 @@ import { ContainerEventTelemetryProducer } from "../container/telemetryProducer"
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { AppInsightsTelemetryConsumer } from "../common/consumers";
 
-export interface AppInsightsTelemetryConsumerConfig {
+export interface AppInsightsTelemetryConsumerConfig extends ConsumerConfig {
 	type: "AppInsights";
-	consumer: ApplicationInsights;
+	appInsightsClient: ApplicationInsights;
+}
+
+export interface ConsumerConfig {
+	type: "AppInsights";
 }
 
 export interface TelemetryManagerFactoryConfig {
 	containerTelemetry?: {
 		container: IContainer;
-		consumerConfig: AppInsightsTelemetryConsumerConfig;
+		consumerConfig: ConsumerConfig;
 	};
 }
 
@@ -24,11 +28,16 @@ export class TelemetryManagerFactory {
 		container?: ContainerTelemetryManager;
 	} {
 		let containerTelemetryManager;
-		if (config.containerTelemetry) {
+		if (
+			config.containerTelemetry &&
+			config.containerTelemetry.consumerConfig.type === "AppInsights"
+		) {
+			const consumerConfig = config.containerTelemetry
+				.consumerConfig as AppInsightsTelemetryConsumerConfig;
 			const container = config.containerTelemetry.container;
 			const telemetryProducer = new ContainerEventTelemetryProducer(container);
 			const telemetryConsumer = new AppInsightsTelemetryConsumer(
-				config.containerTelemetry.consumerConfig.consumer,
+				consumerConfig.appInsightsClient,
 			);
 			containerTelemetryManager = new ContainerTelemetryManager(
 				container,

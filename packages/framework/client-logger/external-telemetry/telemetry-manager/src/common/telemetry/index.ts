@@ -1,4 +1,4 @@
-import type { ContainerEventName } from "../../container";
+import type { ContainerTelemetryEventName } from "../../container";
 
 /**
  * The base interface extended by all external telemetry

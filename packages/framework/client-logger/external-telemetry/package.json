@@ -17,6 +17,7 @@
 		"typescript": "~5.1.6"
 	},
 	"dependencies": {
-		"@microsoft/applicationinsights-web": "^2.8.11"
+		"@microsoft/applicationinsights-web": "^2.8.11",
+		"mocha": "^10.2.0"
 	}
 }

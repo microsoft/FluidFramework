@@ -1,0 +1,12 @@
+{
+	"extends": [
+		"../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../common/build/build-common/tsconfig.cjs.json",
+	],
+	"include": ["src/**/*"],
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"types": ["mocha", "node"],
+	},
+}
