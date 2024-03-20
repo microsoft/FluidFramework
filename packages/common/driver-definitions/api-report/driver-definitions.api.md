@@ -125,7 +125,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal: (content: UnknownShouldBe<string>, targetClientId?: string) => void;
+    submitSignal: (content: string, targetClientId?: string) => void;
     version: string;
 }
 
@@ -320,9 +320,6 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
-
-// @alpha
-export type UnknownShouldBe<_T> = unknown;
 
 // (No @packageDocumentation comment for this package)
 

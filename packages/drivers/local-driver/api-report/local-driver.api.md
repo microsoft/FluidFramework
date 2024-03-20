@@ -39,7 +39,6 @@ import { IWebSocketServer } from '@fluidframework/server-services-core';
 import { NackErrorType } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import type { UnknownShouldBe } from '@fluidframework/driver-definitions';
 
 // @internal
 export function createLocalDocumentService(resolvedUrl: IResolvedUrl, localDeltaConnectionServer: ILocalDeltaConnectionServer, tokenProvider: ITokenProvider, tenantId: string, documentId: string, documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection>, policies?: IDocumentServicePolicies, innerDocumentService?: IDocumentService, logger?: ITelemetryBaseLogger): IDocumentService;
@@ -61,7 +60,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(message: UnknownShouldBe<string>): void;
+    submitSignal(message: string): void;
 }
 
 // @internal

@@ -32,7 +32,6 @@ export type {
 	IStream,
 	IStreamResult,
 	ISummaryContext,
-	UnknownShouldBe,
 } from "./storage.js";
 export { FetchSource, LoaderCachingPolicy } from "./storage.js";
 export type {

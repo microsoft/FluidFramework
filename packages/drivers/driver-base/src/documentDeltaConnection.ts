@@ -9,7 +9,6 @@ import {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-	type UnknownShouldBe,
 } from "@fluidframework/driver-definitions";
 import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
@@ -313,10 +312,7 @@ export class DocumentDeltaConnection
 	}
 
 	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
-	protected emitMessages(
-		type: "submitSignal",
-		messages: UnknownShouldBe<string>[][] | ISentSignalMessage[],
-	): void;
+	protected emitMessages(type: "submitSignal", messages: string[][] | ISentSignalMessage[]): void;
 	protected emitMessages(type: string, messages: unknown): void {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
@@ -342,7 +338,7 @@ export class DocumentDeltaConnection
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: UnknownShouldBe<string>, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
 		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
