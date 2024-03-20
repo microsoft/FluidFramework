@@ -4,20 +4,21 @@
  */
 
 import { ICache } from "@fluidframework/server-services-core";
-import { IRedisParameters } from "@fluidframework/server-services-utils";
-import * as Redis from "ioredis";
-import * as winston from "winston";
+import {
+	IRedisParameters,
+	IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
- * Redis based cache client
+ * Redis based cache redisClientConnectionManager.getRedisClient()
  * @internal
  */
 export class RedisCache implements ICache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "page";
 	constructor(
-		private readonly client: Redis.default | Redis.Cluster,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -28,14 +29,13 @@ export class RedisCache implements ICache {
 			this.prefix = parameters.prefix;
 		}
 
-		client.on("error", (err) => {
-			winston.error("Error with Redis:", err);
+		redisClientConnectionManager.getRedisClient().on("error", (err) => {
 			Lumberjack.error("Error with Redis", undefined, err);
 		});
 	}
 	public async delete(key: string): Promise<boolean> {
 		try {
-			await this.client.del(this.getKey(key));
+			await this.redisClientConnectionManager.getRedisClient().del(this.getKey(key));
 			return true;
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
@@ -47,7 +47,7 @@ export class RedisCache implements ICache {
 	public async get(key: string): Promise<string> {
 		try {
 			// eslint-disable-next-line @typescript-eslint/return-await
-			return this.client.get(this.getKey(key));
+			return this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
@@ -61,12 +61,9 @@ export class RedisCache implements ICache {
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
 		try {
-			const result = await this.client.set(
-				this.getKey(key),
-				value,
-				"EX",
-				expireAfterSeconds ?? this.expireAfterSeconds,
-			);
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.set(this.getKey(key), value, "EX", expireAfterSeconds ?? this.expireAfterSeconds);
 			if (result !== "OK") {
 				throw new Error(result);
 			}
@@ -84,7 +81,7 @@ export class RedisCache implements ICache {
 	public async incr(key: string): Promise<number> {
 		try {
 			// eslint-disable-next-line @typescript-eslint/return-await
-			return this.client.incr(key);
+			return this.redisClientConnectionManager.getRedisClient().incr(key);
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
@@ -99,7 +96,7 @@ export class RedisCache implements ICache {
 	public async decr(key: string): Promise<number> {
 		try {
 			// eslint-disable-next-line @typescript-eslint/return-await
-			return this.client.decr(key);
+			return this.redisClientConnectionManager.getRedisClient().decr(key);
 		} catch (error: any) {
 			const newError: Error = { name: error?.name, message: error?.message };
 			Lumberjack.error(
