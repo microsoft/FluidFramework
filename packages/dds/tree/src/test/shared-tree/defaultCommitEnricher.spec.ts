@@ -23,12 +23,26 @@ interface TestChange {
 class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
 	public isDisposed = false;
 
-	public constructor(public context: RevisionTag) {}
+	// These counters are used to verify that the commit enricher does not perform unnecessary work
+	public static commitsEnriched = 0;
+	public static commitsApplied = 0;
+	public static checkoutsCreated = 0;
+
+	public static resetCounters(): void {
+		TestChangeEnricher.commitsEnriched = 0;
+		TestChangeEnricher.commitsApplied = 0;
+		TestChangeEnricher.checkoutsCreated = 0;
+	}
+
+	public constructor(public context: RevisionTag) {
+		TestChangeEnricher.checkoutsCreated += 1;
+	}
 
 	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
 		assert.equal(this.isDisposed, false);
 		assert.equal(change.inputContext, this.context);
 		assert.equal(revision, change.outputContext);
+		TestChangeEnricher.commitsEnriched += 1;
 		return {
 			...change,
 			updateCount: change.updateCount + 1,
@@ -42,6 +56,7 @@ class TestChangeEnricher implements ChangeEnricherCheckout<TestChange> {
 			assert.equal(revision, change.outputContext);
 		}
 		this.context = change.outputContext;
+		TestChangeEnricher.commitsApplied += 1;
 	}
 
 	public [disposeSymbol](): void {
@@ -132,11 +147,16 @@ describe("DefaultCommitEnricher", () => {
 			// Simulate the sequencing of commit 1
 			enricher.commitSequenced(true);
 
+			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			enricher.enrichCommit(commit2, true);
 			assert.equal(enricher.isInResubmitPhase, false);
+			// No new enrichment should be necessary
+			assert.equal(TestChangeEnricher.checkoutsCreated, 0);
+			assert.equal(TestChangeEnricher.commitsEnriched, 0);
+			assert.equal(TestChangeEnricher.commitsApplied, 0);
 		});
 
 		it("omits sequenced commits that were rebased", () => {
@@ -155,11 +175,17 @@ describe("DefaultCommitEnricher", () => {
 				...commit2,
 				change: { ...commit2.change, rebased: true },
 			};
+
+			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([rebased2]);
 			assert.equal(enricher.isInResubmitPhase, true);
 			enricher.enrichCommit(rebased2, true);
 			assert.equal(enricher.isInResubmitPhase, false);
+			// One enrichment should be necessary
+			assert.equal(TestChangeEnricher.checkoutsCreated, 1);
+			assert.equal(TestChangeEnricher.commitsEnriched, 1);
+			assert.equal(TestChangeEnricher.commitsApplied, 1);
 		});
 
 		it("tolerates empty resubmit", () => {
@@ -177,9 +203,14 @@ describe("DefaultCommitEnricher", () => {
 			// Simulate the sequencing of commit2
 			enricher.commitSequenced(true);
 
+			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([]);
 			assert.equal(enricher.isInResubmitPhase, false);
+			// No new enrichment should be necessary
+			assert.equal(TestChangeEnricher.checkoutsCreated, 0);
+			assert.equal(TestChangeEnricher.commitsEnriched, 0);
+			assert.equal(TestChangeEnricher.commitsApplied, 0);
 		});
 	});
 
@@ -192,6 +223,8 @@ describe("DefaultCommitEnricher", () => {
 			const enriched1 = enricher.enrichCommit(commit1, false);
 			currentRevision = revision2;
 			const enriched2 = enricher.enrichCommit(commit2, false);
+
+			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([commit1, commit2]);
 			assert.equal(enricher.isInResubmitPhase, true);
@@ -201,6 +234,10 @@ describe("DefaultCommitEnricher", () => {
 			assert.equal(enricher.isInResubmitPhase, false);
 			assert.equal(enriched1Resubmit, enriched1);
 			assert.equal(enriched2Resubmit, enriched2);
+			// No new enrichment should be necessary
+			assert.equal(TestChangeEnricher.checkoutsCreated, 0);
+			assert.equal(TestChangeEnricher.commitsEnriched, 0);
+			assert.equal(TestChangeEnricher.commitsApplied, 0);
 
 			// Verify that the enricher can resubmit those commits again
 			enricher.startResubmitPhase([commit1, commit2]);
@@ -240,7 +277,7 @@ describe("DefaultCommitEnricher", () => {
 					parent: rebased1,
 					change: { ...commit2.change, rebased: true },
 				};
-
+				TestChangeEnricher.resetCounters();
 				assert.equal(enricher.isInResubmitPhase, false);
 				enricher.startResubmitPhase([rebased1, rebased2]);
 				assert.equal(enricher.isInResubmitPhase, true);
@@ -267,6 +304,10 @@ describe("DefaultCommitEnricher", () => {
 					revision: revision2,
 					parent: rebased1,
 				});
+				// Two enrichments should be necessary, which requires creating a new checkout and rewinding the state
+				assert.equal(TestChangeEnricher.checkoutsCreated, 1);
+				assert.equal(TestChangeEnricher.commitsEnriched, 2);
+				assert.equal(TestChangeEnricher.commitsApplied, 3);
 
 				// Verify that the enricher can resubmit those commits again
 				enricher.startResubmitPhase([rebased1, rebased2]);
@@ -304,6 +345,7 @@ describe("DefaultCommitEnricher", () => {
 			currentRevision = revision3;
 			const enriched3 = enricher.enrichCommit(commit3, false);
 
+			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
 			enricher.startResubmitPhase([rebased1, rebased2, commit3]);
 			assert.equal(enricher.isInResubmitPhase, true);
@@ -334,6 +376,11 @@ describe("DefaultCommitEnricher", () => {
 			});
 			// This commit did not undergo rebasing so its enrichments did not need updating
 			assert.equal(enriched3Resubmit, enriched3);
+			// Two enrichments should be necessary, which requires creating a new checkout and rewinding the state
+			assert.equal(TestChangeEnricher.checkoutsCreated, 1);
+			assert.equal(TestChangeEnricher.commitsEnriched, 2);
+			// Three rollbacks should applied to rewind the state, and one rebased change should be applied
+			assert.equal(TestChangeEnricher.commitsApplied, 4);
 
 			// Verify that the enricher can resubmit those commits again
 			enricher.startResubmitPhase([rebased1, rebased2, commit3]);
