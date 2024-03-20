@@ -22,6 +22,7 @@ import {
 	SummaryType,
 	type ISummaryNack,
 	type IDocumentMessage,
+	type ISummaryAck,
 } from "@fluidframework/protocol-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import { type ISummaryConfiguration } from "../../index.js";
@@ -126,14 +127,10 @@ export class MockContainerRuntimeForSummarizer
 		this.summaryManager.start();
 	}
 
+	private nackScheduled = false;
 	/** Prepare a SummaryNack to be sent by the server */
 	public prepareSummaryNack() {
-		const contents: ISummaryNack = {
-			summaryProposal: {
-				summarySequenceNumber: this.deltaManager.lastSequenceNumber,
-			},
-		};
-		this.deltaManager.prepareInboundResponse(MessageType.SummaryNack, contents);
+		this.nackScheduled = true;
 	}
 
 	/** Call on the Summarizer object to summarize */
@@ -156,22 +153,25 @@ export class MockContainerRuntimeForSummarizer
 			message: "",
 			parents: [],
 		};
+		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
 		const referenceSequenceNumber = this.deltaManager.lastSequenceNumber;
+		const minimumSequenceNumber = this.factory.getMinSeq();
 
 		const summarizeMessage: IDocumentMessage = {
 			type: MessageType.Summarize,
-			clientSequenceNumber: 0,
+			clientSequenceNumber,
 			referenceSequenceNumber,
 			contents: summaryMessage,
 		};
-		this.deltaManager.inbound.push({
-			...summarizeMessage,
-			clientId: this.clientId,
-			sequenceNumber: 0,
-			minimumSequenceNumber: 0,
-			timestamp: 0,
-		});
 		this.deltaManager.outbound.push([summarizeMessage]);
+		this.addPendingMessage(
+			summarizeMessage.contents,
+			summarizeMessage.metadata,
+			summarizeMessage.clientSequenceNumber,
+		);
+
+		this.scheduleAckNack(this.nackScheduled /* isNack */);
+		this.nackScheduled = false;
 
 		const summaryStats: IGeneratedSummaryStats = {
 			...mergeStats(),
@@ -183,9 +183,9 @@ export class MockContainerRuntimeForSummarizer
 		return {
 			stage: "submit",
 			handle: "",
-			clientSequenceNumber: -1,
+			clientSequenceNumber,
 			referenceSequenceNumber,
-			minimumSequenceNumber: -1,
+			minimumSequenceNumber,
 			submitOpDuration: 0,
 			uploadDuration: 0,
 			generateDuration: 0,
@@ -196,6 +196,31 @@ export class MockContainerRuntimeForSummarizer
 			},
 			summaryStats,
 		};
+	}
+
+	private scheduleAckNack(isNack: boolean) {
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		Promise.resolve().then(() => {
+			const contents: ISummaryAck | ISummaryNack = {
+				handle: "",
+				summaryProposal: {
+					summarySequenceNumber: this.deltaManager.lastSequenceNumber,
+				},
+			};
+
+			const summaryAckMessage = {
+				type: isNack ? MessageType.SummaryNack : MessageType.SummaryAck,
+				clientSequenceNumber: ++this.deltaManager.clientSequenceNumber,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				contents,
+			};
+			this.deltaManager.outbound.push([summaryAckMessage]);
+			this.addPendingMessage(
+				summaryAckMessage.contents,
+				undefined,
+				summaryAckMessage.clientSequenceNumber,
+			);
+		});
 	}
 
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {

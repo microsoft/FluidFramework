@@ -26,7 +26,6 @@ describe("ScheduleManager", () => {
 			deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
 				scheduleManager.beforeOpProcessing(message);
 				scheduleManager.afterOpProcessing(undefined, message);
-				deltaManager.emit("op", message);
 			};
 			scheduleManager = new ScheduleManager(
 				deltaManager,

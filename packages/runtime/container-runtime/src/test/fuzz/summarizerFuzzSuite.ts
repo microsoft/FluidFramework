@@ -144,7 +144,6 @@ export function createSummarizerFuzzSuite(
 	const options: SummarizerFuzzSuiteOptions = {
 		...defaultSummarizerFuzzSuiteOptions,
 		...providedOptions,
-		saveFailures: false,
 	};
 
 	const only = new Set(options.only);
@@ -224,7 +223,11 @@ async function runTestForSeed(
 		saveInfo,
 	);
 
-	// TODO AB#6954: Validate we can summarize
+	finalState.containerRuntime.disposeFn();
+	finalState.containerRuntime = finalState.containerRuntimeFactory.createContainerRuntime(
+		new MockFluidDataStoreRuntime(),
+	);
+	await finalState.containerRuntime.summarize();
 
 	options.emitter.emit("testEnd", finalState);
 

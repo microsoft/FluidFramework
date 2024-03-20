@@ -52,6 +52,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 				const el = this.pop();
 				assert(el !== undefined, "this is impossible due to the above length check");
 				this.processCallback(el);
+				this.callbackAfterEveryProcess?.(el);
 			}
 		});
 	}
@@ -90,7 +91,7 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 		throw new Error("NYI");
 	}
 
-	constructor() {
+	constructor(private readonly callbackAfterEveryProcess?: (el: T) => void) {
 		super();
 	}
 }
@@ -165,32 +166,34 @@ export class MockDeltaManager
 		this.removeAllListeners();
 	}
 
-	public prepareInboundResponse(type: MessageType, contents: any) {
-		const callback = () => {
-			this.inbound.push({
-				// TODO
-				type,
-				contents,
-				clientId: null,
-				sequenceNumber: 0,
-				minimumSequenceNumber: 0,
-				clientSequenceNumber: 0,
-				referenceSequenceNumber: 0,
-				timestamp: 0,
-			});
-			this.outbound.off("push", callback);
-		};
-		this.outbound.on("push", callback);
-	}
+	public clientSequenceNumber = 0;
 
-	constructor() {
+	constructor(
+		private readonly getClientId?: () => string,
+	)
+	{
 		super();
 
-		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
-		this._inbound.processCallback = (message: ISequencedDocumentMessage) => {
-			this.emit("op", message);
-		};
+		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>(
+			(message: ISequencedDocumentMessage) => {
+				this.lastSequenceNumber = message.sequenceNumber;
+				this.lastMessage = message;
+				this.emit("op", message);
+			},
+		);
+
 		this._outbound = new MockDeltaQueue<IDocumentMessage[]>();
+		this._outbound.on("push", (messages: IDocumentMessage[]) => {
+			messages.forEach((message: IDocumentMessage) => {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				this._inbound.push({
+					...message,
+					clientId: this.getClientId?.() ?? null,
+					timestamp: 0,
+					// ! sequenceNumber and minimumSequenceNumber should be added by MockContainerRuntimeFactory
+				} as ISequencedDocumentMessage);
+			});
+		});
 		this._inboundSignal = new MockDeltaQueue<ISignalMessage>();
 	}
 }

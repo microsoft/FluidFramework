@@ -93,19 +93,16 @@ function makeReducer(): AsyncReducer<SummarizerOperation, SummarizerFuzzTestStat
 
 	const reducer = combineReducersAsync<SummarizerOperation, SummarizerFuzzTestState>({
 		reconnect: async (state: SummarizerFuzzTestState, _op: Reconnect) => {
-			// TODO AB#6954
 			state.containerRuntime.connected = false;
 			state.containerRuntime.connected = true;
 		},
 		newSummarizer: async (state: SummarizerFuzzTestState, _op: NewSummarizer) => {
-			// TODO AB#6954
 			state.containerRuntime.disposeFn();
 			state.containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
 				new MockFluidDataStoreRuntime(),
 			);
 		},
 		summaryNack: async (state: SummarizerFuzzTestState, _op: SummaryNack) => {
-			// TODO AB#6954: not sure if it deadlocks between needing to process the SummaryNack and waiting for it
 			state.containerRuntime.prepareSummaryNack();
 			await state.containerRuntime.summarize();
 		},

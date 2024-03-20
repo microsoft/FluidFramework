@@ -42,7 +42,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 				this.process(remoteMessage);
 			}
 			this.pendingRemoteMessages.length = 0;
-			this.clientSequenceNumber = 0;
+			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
 			this.clientId = uuid();
 			// Update the clientId in FluidDataStoreRuntime.
@@ -98,7 +98,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
 	) {
-		if (this.pendingMessages.length !== 0 || this.clientSequenceNumber !== 0) {
+		if (this.pendingMessages.length !== 0 || this.deltaManager.clientSequenceNumber !== 0) {
 			throw new Error("applyStashedOps must be called first, and once.");
 		}
 

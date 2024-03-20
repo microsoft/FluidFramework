@@ -22,13 +22,13 @@ describe("Summarizer fuzz testing", () => {
 		workloadName: "summarizer",
 		generatorFactory: () =>
 			takeAsync(
-				1,
+				10,
 				summarizerOperationGenerator({
 					weights: {
-						reconnect: 2,
-						newSummarizer: 2,
-						summaryNack: 2,
-						submitOp: 2,
+						reconnect: 1,
+						newSummarizer: 1,
+						summaryNack: 1,
+						submitOp: 1,
 					},
 				}),
 			),

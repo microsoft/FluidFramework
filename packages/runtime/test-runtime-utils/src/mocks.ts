@@ -162,7 +162,6 @@ interface IInternalMockRuntimeMessage {
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
-	protected clientSequenceNumber: number = 0;
 	public readonly deltaManager: MockDeltaManager;
 	/**
 	 * @deprecated use the associated datastore to create the delta connection
@@ -183,7 +182,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		super();
-		this.deltaManager = new MockDeltaManager();
+		this.deltaManager = new MockDeltaManager(() => this.clientId);
+		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
+			this.factory.pushMessage(message);
+		});
+
 		const msn = overrides?.minimumSequenceNumber;
 		if (msn !== undefined) {
 			this.deltaManager.lastSequenceNumber = msn;
@@ -222,7 +225,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public submit(messageContent: any, localOpMetadata: unknown): number {
-		const clientSequenceNumber = this.clientSequenceNumber;
+		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
@@ -230,7 +233,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
 
-		this.clientSequenceNumber++;
+		// this.deltaManager.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
@@ -310,7 +313,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 				// read the fake client sequence numbers.
 				this.runtimeOptions.enableGroupedBatching
 					? fakeClientSequenceNumber++
-					: this.clientSequenceNumber,
+					: this.deltaManager.clientSequenceNumber,
 			);
 		});
 	}
@@ -380,13 +383,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
-		this.factory.pushMessage({
-			clientId: this.clientId,
-			clientSequenceNumber,
-			contents: message.content,
-			referenceSequenceNumber: this.referenceSequenceNumber,
-			type: MessageType.Operation,
-		});
+		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
+		this.deltaManager.outbound.push([
+			{
+				clientSequenceNumber,
+				contents: message.content,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				type: MessageType.Operation,
+			},
+		]);
 		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
@@ -429,13 +434,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
 		return [local, localOpMetadata];
-	}
-
-	/**
-	 * The current reference sequence number observed by this runtime instance.
-	 */
-	protected get referenceSequenceNumber() {
-		return this.deltaManager.lastSequenceNumber;
 	}
 }
 

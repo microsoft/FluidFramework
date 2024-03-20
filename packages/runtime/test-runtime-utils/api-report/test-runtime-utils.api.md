@@ -103,8 +103,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // (undocumented)
-    protected clientSequenceNumber: number;
     // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
@@ -131,7 +129,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
-    protected get referenceSequenceNumber(): number;
     // (undocumented)
     protected reSubmitMessages(messagesToResubmit: {
         content: any;
@@ -226,11 +223,13 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor();
+    constructor(getClientId?: (() => string) | undefined);
     // (undocumented)
     readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
+    // (undocumented)
+    clientSequenceNumber: number;
     // (undocumented)
     readonly clientType: string;
     // (undocumented)
@@ -264,8 +263,6 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    prepareInboundResponse(type: MessageType, contents: any): void;
-    // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;
@@ -279,7 +276,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
 
 // @alpha
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
-    constructor();
+    constructor(callbackAfterEveryProcess?: ((el: T) => void) | undefined);
     // (undocumented)
     dispose(): void;
     // (undocumented)
