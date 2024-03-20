@@ -11,7 +11,7 @@ function boolToProp(b: boolean) {
 
 describe("Runtime", () => {
 	const validConfig: IDocumentSchemaCurrent = {
-		version: "1.0",
+		version: 1,
 		refSeq: 0,
 		runtime: {
 			// explicitSchemaControl: undefined,
@@ -67,7 +67,9 @@ describe("Runtime", () => {
 	});
 
 	it("wrong version", () => {
-		testWrongConfig({ ...validConfig, version: "4.0" });
+		testWrongConfig({ ...validConfig, version: 4 });
+		testWrongConfig({ ...validConfig, version: "1" });
+		testWrongConfig({ ...validConfig, version: "2.0" });
 	});
 
 	it("wrong refSeq", () => {
@@ -117,7 +119,7 @@ describe("Runtime", () => {
 		);
 
 		assert(controller.sessionSchema.refSeq === 0, "refSeq");
-		assert(controller.sessionSchema.version === "1.0", "version");
+		assert(controller.sessionSchema.version === 1, "version");
 		assert(
 			controller.sessionSchema.runtime.explicitSchemaControl ===
 				boolToProp(explicitSchemaControl),
@@ -157,7 +159,7 @@ describe("Runtime", () => {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
 		} else {
 			const expected = {
-				version: "1.0",
+				version: 1,
 				refSeq: 0,
 				runtime: {
 					// Existing files without any schema are considered to be in legacy mode.

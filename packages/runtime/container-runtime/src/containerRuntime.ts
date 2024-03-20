@@ -870,7 +870,7 @@ export class ContainerRuntime
 			// 2) if it's ON, then all sessions should load compressor right away
 			// 3) Same logic applies for "delayed" mode
 			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
-			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and
+			// We could do "off" -> "on" transition too, if all clients start loading compressor (but not using it initially) and
 			// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
 			// using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
@@ -1848,7 +1848,7 @@ export class ContainerRuntime
 		// and will allow to start using it. If that were to happen, we want to ensure that we do not break eventual consistency
 		// promises. To do so, we need to initialize id compressor right away.
 		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
-		// Anything else is too risky, and requires abillity to initialize ID compressor syncronously!
+		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
 		if (schema.runtime.idCompressorMode !== undefined) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
@@ -3841,6 +3841,10 @@ export class ContainerRuntime
 				this.outbox.submitIdAllocation(message);
 			} else {
 				this.submitIdAllocationOpIfNeeded();
+
+				// Allow document schema controller to send a message if it needs to propose change in document schema.
+				// If it needs to send a message, it will call provided callback with payload of such message and rely
+				// on this callback to do actual sending.
 				this.documentsSchemaController.onMessageSent(
 					(content: IDocumentSchemaChangeMessage) => this.outbox.submit(message),
 				);
@@ -4046,6 +4050,9 @@ export class ContainerRuntime
 				this.submit(message);
 				break;
 			case ContainerMessageType.DocumentSchemaChange:
+				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
+				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
+				// send any ops, as some other client already changed schema.
 				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a

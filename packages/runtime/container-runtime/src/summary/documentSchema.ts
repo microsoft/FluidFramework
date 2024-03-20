@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert } from "@fluidframework/core-utils";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils";
 
 /**
  * Descripe allowed type for properties in document schema.
@@ -30,10 +30,10 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
 
 /**
  * Document schema information.
- * Describes overal shape of document schema, including unknown (to this version) properties.
+ * Describes overall shape of document schema, including unknown (to this version) properties.
  *
  * Used by runtime to make a call if it can understand document schema.
- * If it can't, it should not continue with document and immidiatly fail, preventing random (cryptic) failures
+ * If it can't, it should not continue with document and immediately fail, preventing random (cryptic) failures
  * down the road and potentially corrupting documents.
  * For now this structure and appropriate interpretation / behavior is focused only on runtime features.
  * In the future that could be interpolated to more areas, including DDSs used, and even possibly - application
@@ -45,20 +45,20 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * In most cases values preserved in the document will not dictate if such features should be enabled in a given session.
  * I.e. if compression is mentioned in document schema, this means that runtime version that opens such document must know
  * how to interpret such ops, but does not need to actually use compression itself. That said, some options could be
- * sticky, i.e. influece feature selection for all runtimes openning a document. ID compression is one such example.
+ * sticky, i.e. influence feature selection for all runtimes opening a document. ID compression is one such example.
  * Currently there is no mechanism to remove feature from this property bag, i.e. once compression was used, even if it's
- * dissbled (through feature gate or code deployment), all existing documents that used compression will continue to fail
+ * disabled (through feature gate or code deployment), all existing documents that used compression will continue to fail
  * if opened by clients who do not support compression.
  *
- * For now we are limitting it to just plain properties, and only really simple types, but that can be changed in the future.
+ * For now we are limiting it to just plain properties, and only really simple types, but that can be changed in the future.
  *
  * @alpha
  */
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
-	// If runtime sees a version it does not understand, it should immidiatly fail and not
-	// attempt to interpret any further dafa.
-	version: string;
+	// If runtime sees a version it does not understand, it should immediately fail and not
+	// attempt to interpret any further data.
+	version: number;
 
 	// Sequence number when this schema became active.
 	refSeq: number;
@@ -83,7 +83,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
  * @alpha
  */
-export const currentDocumentVersionSchema = "1.0";
+export const currentDocumentVersionSchema = 1;
 
 /**
  * Current document schema.
@@ -91,7 +91,7 @@ export const currentDocumentVersionSchema = "1.0";
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
-	version: typeof currentDocumentVersionSchema;
+	version: 1;
 	refSeq: number;
 
 	runtime: {
@@ -196,10 +196,14 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 
 	const msg = "Document can't be opened with current version of the code";
 	if (documentSchema.version !== currentDocumentVersionSchema) {
-		throw new DataCorruptionError(msg, {
-			version: documentSchema.version,
-			codeVersion: currentDocumentVersionSchema,
-		});
+		throw DataProcessingError.create(
+			msg,
+			"checkRuntimeCompat",
+			undefined, // message
+			{
+				runtimeSchemaVersion: documentSchema.version,
+				currentRuntimeSchemaVersion: currentDocumentVersionSchema,
+			});
 	}
 
 	let unknownProperty: string | undefined;
@@ -221,11 +225,15 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 
 	if (unknownProperty !== undefined) {
 		const value = documentSchema[unknownProperty];
-		throw new DataCorruptionError(msg, {
-			codeVersion: currentDocumentVersionSchema,
-			property: unknownProperty,
-			value,
-		});
+		throw DataProcessingError.create(
+			msg,
+			"checkRuntimeCompat",
+			undefined, // message
+			{
+				codeVersion: currentDocumentVersionSchema,
+				property: unknownProperty,
+				value,
+			});
 	}
 }
 
@@ -299,7 +307,7 @@ function boolToProp(b: boolean) {
 /**
  * Controller of document schema.
  *
- * Recomended pre-reading: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/SchemaVersioning.md
+ * Recommended pre-reading: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/SchemaVersioning.md
  *
  * This class manages current document schema and transitions between document schemas.
  * At the moment, it only focuses on subset of document schema, specifically - how FluidFramework runtime serializes data
@@ -308,18 +316,18 @@ function boolToProp(b: boolean) {
  * New features that modify document format have to be included in document schema definition.
  * Usage of such features could only happen after document schema has been updated to reflect such feature.
  *
- * This formalaty allows clients that do not understand such features to fail right away when they observe
+ * This formality allows clients that do not understand such features to fail right away when they observe
  * document schema listing capabilities that such client does not understand.
  * Old clients will fail in predictable way. This allows us to
- * 1) Immidiatly see such issues and adjust if features are enabled too early, before changes have been saturated.
+ * 1) Immediately see such issues and adjust if features are enabled too early, before changes have been saturated.
  * 2) There is no way to get to 100% saturation with new code. Even if we have 99.99% saturation, there are
  *    still 0.01% of clients who will fail. Failing early and predictably ensures they have no chance to limp along
  *    and potentially corrupt the document. This is especially true for summarizer client, who could simply "undo"
  *    changes it does not understands.
  *
- * It's importatant to note how it overlaps with feature gates and safe velocity.
+ * It's important to note how it overlaps with feature gates and safe velocity.
  * If new feature was in use, that resulted in a number of documents referencing such feature in document schema.
- * But, developers (through code depployment or feature gates) could disable usage of such features.
+ * But, developers (through code deployment or feature gates) could disable usage of such features.
  * That will stop a process of further document schema changes (for documents that were not using such feature).
  * And documents that already list such capability in their schema will continue to do so. Later ensures that old
  * clients who do not understand such feature will continue to fail to open such documents, as such documents very
@@ -330,12 +338,12 @@ function boolToProp(b: boolean) {
  * There are two modes this class can operate:
  * 1) Legacy mode. In such mode it does not issue any ops to change document schema. Any changes happen implicitly,
  *    right away, and new features are available right away
- * 2) Non-legacy mode. In such mode any changes to schema require an op rountrip. This class will manage such transitions.
+ * 2) Non-legacy mode. In such mode any changes to schema require an op roundtrip. This class will manage such transitions.
  *    However code should assume that any new features that were not enabled in a given document will not be available
  *    for a given session. That's because this session may never send any ops (including read-only documents). Or it may
  *    fail to convert schema.
  *    This class promises eventual movement forward. I.e. if new feature is allowed (let's say - through feature gates),
- *    then eventually all documents that are modified will have that feature refleced in their schema. It could require
+ *    then eventually all documents that are modified will have that feature reflected in their schema. It could require
  *    multiple reloads / new sessions to get there (depends on if code reacts to schema changes right away, or only consults
  *    schema on document load).
  *
@@ -444,7 +452,7 @@ export class DocumentsSchemaController {
 
 	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
-		// It does not buy us anything, as whatever written in summary does not actualy impact clients operating in legacy mode.
+		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
 		// But writing current used config (and assuming most of the clients settle on same config over time) will help with transition
 		// out of legacy mode, as clients transitioning out of it would be able to use all the
 		// features that are mentioned in schema right away, without a need to go through schema transition (and thus for a session or
@@ -488,7 +496,7 @@ export class DocumentsSchemaController {
 		local: boolean,
 		sequenceNumber: number,
 	) {
-		assert(content.refSeq <= this.documentSchema.refSeq, "did we lost a message somewhere???");
+		assert(content.refSeq <= this.documentSchema.refSeq, "did we lose a message somewhere?");
 		assert(this.documentSchema.refSeq < sequenceNumber, "time should move forward only!");
 		if (content.refSeq !== this.documentSchema.refSeq) {
 			// CAS failed
@@ -502,7 +510,7 @@ export class DocumentsSchemaController {
 			"not sending ops",
 		);
 
-		// Changes are in effect. Immidiatly check that this client understands these changes
+		// Changes are in effect. Immediately check that this client understands these changes
 		checkRuntimeCompatibility(content);
 
 		const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
@@ -517,7 +525,7 @@ export class DocumentsSchemaController {
 		// Stop attempting changing schema.
 		// If it was local op, then we succeeded and do not need to try again.
 		// If it was remote op, then some changes happened to schema.
-		// We would need to recalculate this.futureSchema by mering changes that we just received.
+		// We would need to recalculate this.futureSchema by merging changes that we just received.
 		// Avoid this complexity for now - a new client session (loading from new summary with these changes)
 		// will automatically do this recalculation and will figure out
 		this.futureSchema = undefined;

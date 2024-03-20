@@ -366,7 +366,7 @@ export interface ContainerRuntimeMessage {
 }
 
 // @alpha
-export const currentDocumentVersionSchema = "1.0";
+export const currentDocumentVersionSchema = 1;
 
 // @internal (undocumented)
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
@@ -749,7 +749,7 @@ export interface IDocumentSchema {
     // (undocumented)
     runtime: Record<string, DocumentSchemaValueType>;
     // (undocumented)
-    version: string;
+    version: number;
 }
 
 // @alpha
@@ -757,7 +757,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
 // @alpha
 export type IDocumentSchemaCurrent = {
-    version: typeof currentDocumentVersionSchema;
+    version: 1;
     refSeq: number;
     runtime: {
         explicitSchemaControl?: true;

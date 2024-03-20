@@ -133,8 +133,8 @@ This includes Fluid Framework, as well other libraries consumed by Fluid applica
 
 -   Applications should opt into writing new data formats only once support for those formats has been fully deployed.
     This includes enough testing to be confident they won't need to roll back to a version without the support.
--   In most case it's almost impossible to get to 100% saturation of newly deployed application version, even years after deployment. There almost always would be a client who run an application version 2 years ago, closed a lid of laptop and reopened it just now. While applciation (and FluidFramework) can attempt its best to shut down such old versions of application / session / FluidFramework, all such attepts would race with this client attempting to reconnect back to document, send and receive ops that might it might not understand due to changes in document schema
-      - For that reason, it's extreamly important to build a framework (upfront) that could fail in very predictable way when application (and libraries) find themselves dealing with unknown format.
+-   In most case it's almost impossible to get to 100% saturation of newly deployed application version, even years after deployment. There almost always would be a client who run an application version 2 years ago, closed a lid of laptop and reopened it just now. While application (and FluidFramework) can attempt its best to shut down such old versions of application / session / FluidFramework, all such attempts would race with this client attempting to reconnect back to document, send and receive ops that it might not understand due to changes in document schema.
+      - For that reason, it's extremely important to build a framework (upfront) that could fail in very predictable way when application (and libraries) find themselves dealing with unknown format.
 -   When updating to a new major version of a library (such as Fluid), check the release notes for current or upcoming format changes, and schedule format updates accordingly.
 
 # Complications
