@@ -101,7 +101,7 @@ function filterRuntimeOptionsForVersion(
 		options.enableRuntimeIdCompressor = "off";
 		options.maxBatchSizeInBytes = undefined;
 		options.chunkSizeInBytes = Number.POSITIVE_INFINITY; // disabled
-	} else if (version.startsWith("2.0.0-rc.1.")) {
+	} else if (version.startsWith("2.0.0-rc.1.") || version.startsWith("2.0.0-rc.2.")) {
 		options = {
 			...options,
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
@@ -109,7 +109,8 @@ function filterRuntimeOptionsForVersion(
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 		};
-	} else if (version.startsWith("2.0.0-rc.2.")) {
+	} else {
+		// "2.0.0-rc.3." ++
 		options = {
 			...options,
 			compressionOptions,
@@ -117,8 +118,6 @@ function filterRuntimeOptionsForVersion(
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 		};
-	} else {
-		throw new Error(`unknown version: ${version}`);
 	}
 
 	return options;
