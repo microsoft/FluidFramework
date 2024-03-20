@@ -26,7 +26,7 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import type { ISharedMap } from "@fluidframework/map";
 import { wrapObjectAndOverride } from "../mocking.js";
 
-describeCompat.only(
+describeCompat(
 	`Serialize After Failure to Attach Container Test`,
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
@@ -193,7 +193,7 @@ describeCompat.only(
 			const rootOfDds2 = await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 			const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 
-			// validate data store
+			// validate dds
 			assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 			const dds2FromRC = await dds2Handle.get();
 			assert(dds2FromRC, "DDS2 should have been serialized properly");
@@ -201,6 +201,65 @@ describeCompat.only(
 			assert.strictEqual(dds2FromRC.id, dds2.id, "Both DDS id should match");
 		});
 
-		it("Can serialize detached container with data store and DDS after failed attach", async () => {});
+		it("Can serialize detached container with data store and DDS after failed attach", async () => {
+			const provider = getTestObjectProvider();
+			const documentId = createDocumentId();
+			const request = provider.driver.createCreateNewRequest(documentId);
+			const loader = createTestLoader(provider);
+
+			// create a detached container and attempt to attach
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint(
+				loader,
+				request,
+			);
+
+			// create a new data store
+			const peerDataStore = await createPeerDataStore(
+				defaultDataStore.context.containerRuntime,
+			);
+			const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+
+			// create a new dds
+			const ddsId = "notbounddds";
+			const dds2 = dataStore2.runtime.createChannel(ddsId, SharedString.getFactory().type);
+
+			// attach the new data store and dds
+			const dds2Key = "dds2";
+			const dataStore2Key = "dataStore2";
+			const rootOfDataStore1 =
+				await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
+			rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
+			rootOfDataStore1.set(dds2Key, dds2.handle);
+
+			// serialize and rehydrate
+			const snapshotTree = container.serialize();
+			const rehydratedContainer =
+				await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+			const rehydratedEntryPoint =
+				(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
+			const rehydratedRoot =
+				await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
+			const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
+				rehydratedRoot.get(dataStore2Key);
+			const dds2Handle: IFluidHandle<ISharedMap> | undefined = rehydratedRoot.get(dds2Key);
+
+			// validate data store
+			assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
+			const dataStore2FromRC = await dataStore2Handle.get();
+			assert(dataStore2FromRC, "DataStore2 should have been serialized properly");
+			assert.strictEqual(
+				dataStore2FromRC.runtime.id,
+				dataStore2.runtime.id,
+				"DataStore2 id should match",
+			);
+
+			// validate dds
+			assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
+			const dds2FromRC = await dds2Handle.get();
+			assert(dds2FromRC, "DDS2 should have been serialized properly");
+			assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
+			assert.strictEqual(dds2FromRC.id, dds2.id, "Both DDS id should match");
+		});
 	},
 );
