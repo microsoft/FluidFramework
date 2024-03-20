@@ -5,7 +5,6 @@
 
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	EditableTreeEvents,
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
@@ -15,6 +14,7 @@ import {
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
 	FlexTreeNode,
+	FlexTreeNodeEvents,
 	FlexTreeNodeSchema,
 	FlexTreeObjectNode,
 	FlexTreeTypedField,
@@ -122,9 +122,9 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 
 	public value: undefined;
 
-	public on<K extends keyof EditableTreeEvents>(
+	public on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void {
 		throw rawError("Event registration");
 	}
