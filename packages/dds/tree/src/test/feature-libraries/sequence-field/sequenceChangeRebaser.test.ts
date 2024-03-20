@@ -27,7 +27,7 @@ import {
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { deepFreeze, mintRevisionTag } from "../../utils.js";
+import { deepFreeze, defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
 	DetachedNodeTracker,
@@ -673,6 +673,16 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 		const pruned2 = prune(change2.change);
 
 		return assertChangesetsEqual(withoutLineage(pruned1), withoutLineage(pruned2));
+	},
+	isEmpty: (change: TestChangeset): boolean => {
+		return withoutTombstones(prune(change)).length === 0;
+	},
+	assertChangesetsEquivalent: (change1, change2) => {
+		const metadata = defaultRevisionMetadataFromChanges([change1, change2]);
+		// We are composing the single changesets to inline the revision tags, as some are undefined.
+		const pruned1 = prune(compose([change1], metadata));
+		const pruned2 = prune(compose([change2], metadata));
+		return assertChangesetsEqual(withoutTombstones(pruned1), withoutTombstones(pruned2));
 	},
 };
 
