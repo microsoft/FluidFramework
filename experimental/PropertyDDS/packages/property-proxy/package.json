@@ -68,6 +68,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/jest": "29.5.3",
+		"@types/node": "^18.19.0",
 		"babel-loader": "^8.0.5",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
