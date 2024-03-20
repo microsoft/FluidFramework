@@ -50,6 +50,7 @@ export class RemoteMessageProcessor {
 	 * 1. If chunked, process the chunk and only continue if this is a final chunk
 	 * 2. If compressed, decompress the message and store for further unrolling of the decompressed content
 	 * 3. If grouped, ungroup the message
+	 * For more details, see https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/opLifecycle/README.md#inbound
 	 *
 	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
