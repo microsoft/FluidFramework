@@ -34,7 +34,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 // eslint-disable-next-line import/no-internal-modules
-import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager";
+import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 
 const detachedContainerRefSeqNumber = 0;
 

@@ -9910,6 +9910,7 @@ importers:
 
   packages/test/test-end-to-end-tests:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/attributor': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-experimental/tree': workspace:~
@@ -10033,6 +10034,7 @@ importers:
       tinylicious: 4.0.0
       uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
