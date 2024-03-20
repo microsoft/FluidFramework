@@ -1,5 +1,5 @@
 ---
-"@fluidframework/core-interfaces": minor
+"@fluidframework/core-interfaces": major
 ---
 
 Code details and package API surface removed from @fluidframework/core-interfaces

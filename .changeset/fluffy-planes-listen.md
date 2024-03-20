@@ -1,6 +1,6 @@
 ---
-"@fluidframework/container-definitions": minor
-"@fluidframework/container-loader": minor
+"@fluidframework/container-definitions": major
+"@fluidframework/container-loader": major
 ---
 
 IContainerContext.getSpecifiedCodeDetails() removed
