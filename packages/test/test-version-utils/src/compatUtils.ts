@@ -95,13 +95,13 @@ function filterRuntimeOptionsForVersion(
 		enableGroupedBatching = true,
 	} = options;
 
-	if (version === "1.3.7") {
+	if (version.startsWith("1.")) {
 		options.compressionOptions = undefined;
 		options.enableGroupedBatching = false;
 		options.enableRuntimeIdCompressor = "off";
 		options.maxBatchSizeInBytes = undefined;
 		options.chunkSizeInBytes = Number.POSITIVE_INFINITY; // disabled
-	} else if (version.includes("2.0.0-rc.1.0.4")) {
+	} else if (version.startsWith("2.0.0-rc.1.")) {
 		options = {
 			...options,
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
@@ -109,7 +109,8 @@ function filterRuntimeOptionsForVersion(
 			enableRuntimeIdCompressor,
 			enableGroupedBatching,
 		};
-	} else if (version.includes("2.0.0-rc.2.")) {
+	} else {
+		// "2.0.0-rc.2." ++
 		options = {
 			...options,
 			compressionOptions,
@@ -290,8 +291,8 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		apis.dataRuntimeForLoading,
 	);
 
-	// We want to ensure that we are testing all latest rutime features, but only if both runtimes
-	// (one that creates containers and one that loads them) are supported them.
+	// We want to ensure that we are testing all latest runtime features, but only if both runtimes
+	// (one that creates containers and one that loads them) support them.
 	//
 	// Theoretically it should be fine to use config for apis.containerRuntimeForLoading?.version.
 	// If it's higher then apis.containerRuntime, then unknown to lower version of apis.containerRuntime
@@ -340,7 +341,6 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			// containerOptions?.runtimeOptions,
 			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);

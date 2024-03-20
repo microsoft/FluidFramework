@@ -58,6 +58,9 @@ describeCompat("Fewer batches", "NoCompat", (getTestObjectProvider, apis) => {
 		const configWithFeatureGates = {
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
+			// This test counts number of ops and observes them at the container level.
+			// It has certain assumptions about count and shape of those ops.
+			// Disable op chunking to make sure test have full control over op stream, and thus can rely on those assumptions.
 			runtimeOptions: {
 				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
 				...containerConfig.runtimeOptions,

@@ -151,7 +151,7 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 				enableGroupedBatching,
 				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
 				compressionOptions: {
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disable
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 			});
