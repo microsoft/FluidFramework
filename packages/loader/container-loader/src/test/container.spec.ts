@@ -17,7 +17,7 @@ import {
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ConnectionState } from "../connectionState.js";
-import { waitContainerToCatchUp } from "../container.js";
+import { waitContainerToCatchUp } from "../waitContainerToCatchUp.js";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>
