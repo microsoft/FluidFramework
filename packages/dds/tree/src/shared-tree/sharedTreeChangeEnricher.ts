@@ -12,7 +12,7 @@ import {
 	visitDelta,
 } from "../core/index.js";
 import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";
-import { fail } from "../util/index.js";
+import { disposeSymbol, fail } from "../util/index.js";
 import { ChangeEnricherCheckout } from "./defaultCommitEnricher.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -64,7 +64,7 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		}
 	}
 
-	public dispose(): void {
+	public [disposeSymbol](): void {
 		// TODO: how come forest doesn't have a dispose method?
 	}
 }

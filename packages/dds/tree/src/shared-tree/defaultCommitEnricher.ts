@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ChangeFamily, GraphCommit, RevisionTag } from "../core/index.js";
 import { ICommitEnricher } from "../shared-tree-core/index.js";
+import { disposeSymbol } from "../util/index.js";
 
 /**
  * A checkout whose state can be controlled and used to enrich changes with refreshers.
@@ -29,9 +30,9 @@ export interface ChangeEnricherCheckout<TChange> {
 	applyTipChange(change: TChange, revision?: RevisionTag): void;
 
 	/**
-	 * Disposes of the checkout.
+	 * Disposes of the enricher.
 	 */
-	dispose(): void;
+	[disposeSymbol](): void;
 }
 
 export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<any, TChange>>
@@ -71,7 +72,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			assert(this.resubmitPhase !== undefined, "Invalid resubmit outside of resubmit phase");
 			const updatedCommit = this.resubmitPhase.updateCommit(commit);
 			if (this.resubmitPhase.isComplete) {
-				this.resubmitPhase.dispose();
+				this.resubmitPhase[disposeSymbol]();
 				delete this.resubmitPhase;
 			}
 			return updatedCommit;
@@ -83,7 +84,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 			const updatedChange = this.tip.updateChangeEnrichments(commit.change, commit.revision);
 			const updatedCommit = { ...commit, change: updatedChange };
 			this.inFlight.push(updatedCommit);
-			this.tip.dispose();
+			this.tip[disposeSymbol]();
 			this.tip = this.checkoutFactory();
 			return updatedCommit;
 		}
@@ -116,7 +117,7 @@ export class DefaultCommitEnricher<TChange, TChangeFamily extends ChangeFamily<a
 		} else {
 			// A peer commit has been sequenced
 			this.latestInFlightCommitWithStaleEnrichments = this.inFlight.length - 1;
-			this.tip.dispose();
+			this.tip[disposeSymbol]();
 			this.tip = this.checkoutFactory();
 		}
 	}
@@ -178,7 +179,7 @@ class ResubmitPhaseStateMachine<TChange, TChangeFamily extends ChangeFamily<any,
 		return { ...commit, change: enriched };
 	}
 
-	public dispose(): void {
-		this.checkout.dispose();
+	public [disposeSymbol](): void {
+		this.checkout[disposeSymbol]();
 	}
 }
