@@ -29,6 +29,7 @@ import {
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryType,
+	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -260,18 +261,8 @@ export class FluidDataStoreRuntime
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
 				if (dataStoreContext.isLocalDataStore) {
-					channelContext = new RehydratedLocalChannelContext(
+					channelContext = this.createRehydratedLocalChannelContext(
 						path,
-						this.sharedObjectRegistry,
-						this,
-						this.dataStoreContext,
-						this.dataStoreContext.storage,
-						this.logger,
-						(content, localOpMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata),
-						(address: string) => this.setChannelDirty(address),
-						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-							this.addedGCOutboundReference(srcHandle, outboundHandle),
 						tree.trees[path],
 					);
 					// This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
@@ -501,6 +492,27 @@ export class FluidDataStoreRuntime
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 		this.contexts.set(channel.id, context);
+	}
+
+	private createRehydratedLocalChannelContext(
+		id: string,
+		tree: ISnapshotTree,
+		flatBlobs?: Map<string, ArrayBufferLike>,
+	) {
+		return new RehydratedLocalChannelContext(
+			id,
+			this.sharedObjectRegistry,
+			this,
+			this.dataStoreContext,
+			this.dataStoreContext.storage,
+			this.logger,
+			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
+			(address: string) => this.setChannelDirty(address),
+			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+				this.addedGCOutboundReference(srcHandle, outboundHandle),
+			tree,
+			flatBlobs,
+		);
 	}
 
 	/**
@@ -1087,18 +1099,8 @@ export class FluidDataStoreRuntime
 				const flatBlobs = new Map<string, ArrayBufferLike>();
 				const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
-				const channelContext = new RehydratedLocalChannelContext(
+				const channelContext = this.createRehydratedLocalChannelContext(
 					attachMessage.id,
-					this.sharedObjectRegistry,
-					this,
-					this.dataStoreContext,
-					this.dataStoreContext.storage,
-					this.logger,
-					(c, localOpMetadata) =>
-						this.submitChannelOp(attachMessage.id, c, localOpMetadata),
-					(address: string) => this.setChannelDirty(address),
-					(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-						this.addedGCOutboundReference(srcHandle, outboundHandle),
 					snapshotTree,
 					flatBlobs,
 				);
