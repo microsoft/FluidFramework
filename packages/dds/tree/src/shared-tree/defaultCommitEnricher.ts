@@ -39,7 +39,12 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	/**
 	 * The list of commits (from oldest to most recent) that are have been submitted but not sequenced.
 	 */
-	private readonly inFlight: GraphCommit<TChange>[] = [];
+	private inFlightQueue: GraphCommit<TChange>[] = [];
+
+	/**
+	 * The list of commits (from oldest to most recent) that should be resubmitted.
+	 */
+	private resubmitQueue: GraphCommit<TChange>[] = [];
 
 	/**
 	 * Represents the index in the `inFlight` array of the most recent in flight commit that has
@@ -53,12 +58,6 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	 */
 	private latestInFlightCommitWithStaleEnrichments: number = -1;
 
-	/**
-	 * When defined, the session is going through a resubmit phase.
-	 * Used to manage the enrichment of resubmitted commits.
-	 */
-	private resubmitPhase?: ResubmitPhaseStateMachine<TChange>;
-
 	public constructor(
 		private readonly inverter: ChangeRebaser<TChange>["invert"],
 		private readonly checkoutFactory: () => ChangeEnricherCheckout<TChange>,
@@ -68,128 +67,92 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 
 	public enrichCommit(commit: GraphCommit<TChange>, isResubmit: boolean): GraphCommit<TChange> {
 		if (isResubmit) {
-			assert(this.resubmitPhase !== undefined, "Invalid resubmit outside of resubmit phase");
-			const updatedCommit = this.resubmitPhase.updateCommit(commit);
-			if (this.resubmitPhase.isComplete) {
-				delete this.resubmitPhase;
-			}
-			return updatedCommit;
+			const enriched = this.resubmitQueue.shift();
+			assert(enriched !== undefined, "Invalid resubmit outside of resubmit phase");
+			this.inFlightQueue.push(enriched);
+			return enriched;
 		} else {
 			assert(
-				this.resubmitPhase === undefined,
+				this.resubmitQueue.length === 0,
 				"Invalid enrichment call during incomplete resubmit phase",
 			);
 			const updatedChange = this.tip.updateChangeEnrichments(commit.change, commit.revision);
 			const updatedCommit = { ...commit, change: updatedChange };
-			this.inFlight.push(updatedCommit);
+			this.inFlightQueue.push(updatedCommit);
 			this.tip[disposeSymbol]();
 			this.tip = this.checkoutFactory();
 			return updatedCommit;
 		}
 	}
 
-	public startResubmitPhase(rebased: readonly GraphCommit<TChange>[]): void {
+	public startResubmitPhase(toResubmit: readonly GraphCommit<TChange>[]): void {
 		assert(
 			!this.isInResubmitPhase,
 			"Invalid resubmit phase start during incomplete resubmit phase",
 		);
 		assert(
-			rebased.length === this.inFlight.length,
+			toResubmit.length === this.inFlightQueue.length,
 			"Unexpected resubmit of more or fewer commits than are in flight",
 		);
-		this.resubmitPhase = new ResubmitPhaseStateMachine(
-			this.inverter,
-			this.checkoutFactory(),
-			rebased,
-			this.latestInFlightCommitWithStaleEnrichments + 1,
-		);
-		if (this.resubmitPhase.isComplete) {
-			delete this.resubmitPhase;
-		}
-	}
-
-	public get isInResubmitPhase(): boolean {
-		return this.resubmitPhase !== undefined;
-	}
-
-	public commitSequenced(isLocal: boolean): void {
-		if (isLocal) {
-			// The oldest in-flight commit has been sequenced
-			assert(this.inFlight.length > 0, "Sequencing of unknown local commit");
-			this.inFlight.shift();
-			if (this.latestInFlightCommitWithStaleEnrichments >= 0) {
-				this.latestInFlightCommitWithStaleEnrichments -= 1;
-			}
+		if (this.latestInFlightCommitWithStaleEnrichments === -1) {
+			// No in-flight commits have stale enrichments, so we can resubmit them as is
+			this.resubmitQueue = this.inFlightQueue;
+			this.inFlightQueue = [];
 		} else {
-			// A peer commit has been sequenced
-			this.latestInFlightCommitWithStaleEnrichments = this.inFlight.length - 1;
-			this.tip[disposeSymbol]();
-			this.tip = this.checkoutFactory();
-		}
-	}
-}
-
-/**
- * A helper class that keeps track of the progression of a resubmit phase.
- */
-class ResubmitPhaseStateMachine<TChange> {
-	/**
-	 * The list of commits (from newest to oldest) that need to be resubmitted.
-	 */
-	private readonly stack: GraphCommit<TChange>[];
-
-	/**
-	 * @param inverter - a function that can generate inverses of `TChange` instances.
-	 * @param checkout - a checkout in the local tip state. Owned (and mutated) by this state machine.
-	 * @param toResubmit - the commits that are being resubmitted (oldest to newest).
-	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
-	 * as opposed to the version which was last submitted.
-	 * @param countWithStaleEnrichments - the number of commits have stale enrichments.
-	 */
-	public constructor(
-		inverter: ChangeRebaser<TChange>["invert"],
-		checkout: ChangeEnricherCheckout<TChange>,
-		toResubmit: Iterable<GraphCommit<TChange>>,
-		countWithStaleEnrichments: number,
-	) {
-		this.stack = Array.from(toResubmit).reverse();
-		if (countWithStaleEnrichments > 0) {
+			const checkout = this.checkoutFactory();
 			// Roll back the checkout to the state before the oldest commit
-			for (const commit of this.stack) {
+			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
+				const commit = toResubmit[iCommit];
+				const rollback = this.inverter(commit, true);
 				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 				// Either we have to make it possible to do so, or this logic will have to change to work
 				// forwards from an earlier fork instead of backwards.
-				const rollback = inverter(commit, true);
 				checkout.applyTipChange(rollback);
 			}
-			for (let i = 0; i < countWithStaleEnrichments; i += 1) {
-				const iCommit = this.stack.length - (1 + i);
-				const commit = this.stack[iCommit];
+			// Update the enrichments of the stale commits
+			for (
+				let iCommit = 0;
+				iCommit <= this.latestInFlightCommitWithStaleEnrichments;
+				iCommit += 1
+			) {
+				const commit = toResubmit[iCommit];
 				const enrichedChange = checkout.updateChangeEnrichments(
 					commit.change,
 					commit.revision,
 				);
 				const enrichedCommit = { ...commit, change: enrichedChange };
-				this.stack[iCommit] = enrichedCommit;
-				checkout.applyTipChange(enrichedChange, commit.revision);
+				this.resubmitQueue.push(enrichedCommit);
+				if (iCommit < this.latestInFlightCommitWithStaleEnrichments) {
+					checkout.applyTipChange(enrichedChange, commit.revision);
+				}
+				this.inFlightQueue.shift();
 			}
+			// Whatever commits are left do not have stale enrichments
+			for (const commit of this.inFlightQueue) {
+				this.resubmitQueue.push(commit);
+			}
+			this.inFlightQueue.length = 0;
 		}
+		this.latestInFlightCommitWithStaleEnrichments = -1;
 	}
 
-	public get isComplete(): boolean {
-		return this.stack.length === 0;
+	public get isInResubmitPhase(): boolean {
+		return this.resubmitQueue.length !== 0;
 	}
 
-	public updateCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
-		const enrichedCommit = this.stack.pop();
-		assert(
-			enrichedCommit !== undefined,
-			"Invalid call to updateCommit after resubmit phase completion",
-		);
-		assert(
-			commit.revision === enrichedCommit.revision,
-			"Mismatch between resubmitted commit and commit passed when starting the resubmit phase",
-		);
-		return enrichedCommit;
+	public commitSequenced(isLocal: boolean): void {
+		if (isLocal) {
+			// The oldest in-flight commit has been sequenced
+			assert(this.inFlightQueue.length > 0, "Sequencing of unknown local commit");
+			this.inFlightQueue.shift();
+			if (this.latestInFlightCommitWithStaleEnrichments >= 0) {
+				this.latestInFlightCommitWithStaleEnrichments -= 1;
+			}
+		} else {
+			// A peer commit has been sequenced
+			this.latestInFlightCommitWithStaleEnrichments = this.inFlightQueue.length - 1;
+			this.tip[disposeSymbol]();
+			this.tip = this.checkoutFactory();
+		}
 	}
 }
