@@ -52,7 +52,7 @@ import {
 	requireTrue,
 } from "../../../util/index.js";
 
-describe("editableTreeTypes", () => {
+describe("flexTreeTypes", () => {
 	/**
 	 * Example showing narrowing and exhaustive matches.
 	 */
