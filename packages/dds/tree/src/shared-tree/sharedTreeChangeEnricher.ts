@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	DeltaDetachedNodeId,
 	DetachedFieldIndex,
@@ -12,12 +13,18 @@ import {
 	visitDelta,
 } from "../core/index.js";
 import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";
-import { disposeSymbol, fail } from "../util/index.js";
+import { disposeSymbol } from "../util/index.js";
 import { ChangeEnricherCheckout } from "./defaultCommitEnricher.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTreeChange> {
+	/**
+	 * @param forest - The state based on which to enrich changes.
+	 * Exclusively owned by the constructed instance.
+	 * @param removedRoots - The set of removed roots based on which to enrich changes.
+	 * Exclusively owned by the constructed instance.
+	 */
 	public constructor(
 		private readonly forest: IEditableForest,
 		private readonly removedRoots: DetachedFieldIndex,
@@ -28,43 +35,45 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		revision: RevisionTag,
 	): SharedTreeChange {
 		const taggedChange = tagChange(change, revision);
-		return updateRefreshers(taggedChange, (id: DeltaDetachedNodeId): TreeChunk | undefined => {
-			const root = this.removedRoots.tryGetEntry(id);
-			if (root !== undefined) {
-				const cursor = this.forest.getCursorAboveDetachedFields();
-				const parentField = this.removedRoots.toFieldKey(root);
-				cursor.enterField(parentField);
-				cursor.enterNode(0);
-				return chunkTree(cursor, defaultChunkPolicy);
-			}
-			return undefined;
-		});
+		return updateRefreshers(taggedChange, this.getDetachedRoot);
 	}
+
+	private readonly getDetachedRoot = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+		const root = this.removedRoots.tryGetEntry(id);
+		if (root !== undefined) {
+			const cursor = this.forest.getCursorAboveDetachedFields();
+			const parentField = this.removedRoots.toFieldKey(root);
+			cursor.enterField(parentField);
+			cursor.enterNode(0);
+			return chunkTree(cursor, defaultChunkPolicy);
+		}
+		return undefined;
+	};
 
 	public applyTipChange(change: SharedTreeChange, revision?: RevisionTag): void {
 		for (const dataOrSchemaChange of change.changes) {
-			if (dataOrSchemaChange.type === "data") {
-				const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
-				const visitor = this.forest.acquireVisitor();
-				visitDelta(delta, visitor, this.removedRoots);
-				visitor.free();
-			} else if (dataOrSchemaChange.type === "schema") {
-				// TODO: does SharedTreeChangeEnricher need to maintain a schema?
-				// const visitor = this.forest.acquireVisitor();
-				// for (const { root } of this.removedRoots.entries()) {
-				// 	const field = this.removedRoots.toFieldKey(root);
-				// 	// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
-				// 	visitor.destroy(field, 1);
-				// }
-				// visitor.free();
-				// this.removedRoots.purge();
-			} else {
-				fail("Unknown Shared Tree change type.");
+			const type = dataOrSchemaChange.type;
+			switch (type) {
+				case "data": {
+					const delta = intoDelta(tagChange(dataOrSchemaChange.innerChange, revision));
+					const visitor = this.forest.acquireVisitor();
+					visitDelta(delta, visitor, this.removedRoots);
+					visitor.free();
+					break;
+				}
+				case "schema":
+					// This enricher doesn't need to maintain schema information.
+					// Note that the refreshers being generated through `updateChangeEnrichments` will be encoded using
+					// the schema that was used in the input context of the data changeset these refreshers are on.
+					// See the encoding logic in SharedTreeCore for details.
+					break;
+				default:
+					unreachableCase(type);
 			}
 		}
 	}
 
 	public [disposeSymbol](): void {
-		// TODO: how come forest doesn't have a dispose method?
+		// TODO: in the future, forest and/or its AnchorSet may require disposal.
 	}
 }
