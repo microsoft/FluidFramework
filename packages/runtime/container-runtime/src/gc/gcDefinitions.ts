@@ -80,6 +80,8 @@ export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgrade
 export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
 /** Config key to revert new paradigm of detecting outbound routes in ContainerRuntime layer (use true) */
 export const detectOutboundRoutesViaDDSKey = "Fluid.GarbageCollection.DetectOutboundRoutesViaDDS";
+/** Config key to disable auto-recovery mechanism that protects Tombstones that are loaded from being swept (use true) */
+export const disableAutoRecoveryKey = "Fluid.GarbageCollection.DisableAutoRecovery";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -257,6 +259,8 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 export const GarbageCollectionMessageType = {
 	/** Message sent directing GC to delete the given nodes */
 	Sweep: "Sweep",
+	/** Message sent notifying GC that a Tombstoned object was Loaded */
+	TombstoneLoaded: "TombstoneLoaded",
 } as const;
 
 /**
@@ -270,16 +274,28 @@ export type GarbageCollectionMessageType =
  * @internal
  */
 export interface ISweepMessage {
-	type: "Sweep";
-	// The ids of nodes that are deleted.
+	/** @see GarbageCollectionMessageType.Sweep */
+	type: typeof GarbageCollectionMessageType.Sweep;
+	/** The ids of nodes that are deleted. */
 	deletedNodeIds: string[];
+}
+
+/**
+ * The GC TombstoneLoaded message.
+ * @internal
+ */
+export interface ITombstoneLoadedMessage {
+	/** @see GarbageCollectionMessageType.TombstoneLoaded */
+	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
+	/** The id of Tombstoned node that was loaded. */
+	nodePath: string;
 }
 
 /**
  * Type for a message to be used for sending / received garbage collection messages.
  * @internal
  */
-export type GarbageCollectionMessage = ISweepMessage;
+export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
@@ -359,7 +375,7 @@ export interface IGarbageCollector {
 		headerData?: RuntimeHeaderData,
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
-	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
+	addedOutboundReference(fromNodePath: string, toNodePath: string, autorecovery?: true): void;
 	/** Called to process a garbage collection message. */
 	processMessage(message: ContainerRuntimeGCMessage, local: boolean): void;
 	/** Returns true if this node has been deleted by GC during sweep phase. */

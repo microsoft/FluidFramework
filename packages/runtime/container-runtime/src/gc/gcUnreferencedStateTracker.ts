@@ -25,6 +25,17 @@ class TimerWithNoDefaultTimeout extends Timer {
 	}
 }
 
+/** The collection of UnreferencedStateTrackers for all unreferenced nodes. Ensures stopTracking is called when deleting */
+export class UnreferencedStateTrackerMap extends Map<string, UnreferencedStateTracker> {
+	/** Delete the given key, and stop tracking if that node was actually unreferenced */
+	delete(key: string): boolean {
+		// Stop tracking so as to clear out any running timers.
+		this.get(key)?.stopTracking();
+		// Delete the node as we don't need to track it any more.
+		return super.delete(key);
+	}
+}
+
 /**
  * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced and if it can
  * be tombstoned or deleted by the sweep phase.

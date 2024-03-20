@@ -52,6 +52,7 @@ import {
 	VisibilityState,
 	ITelemetryContext,
 	IIdCompressor,
+	gcDataBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -64,6 +65,8 @@ import {
 	exceptionToResponse,
 	GCDataBuilder,
 	unpackChildNodesUsedRoutes,
+	addBlobToSummary,
+	processAttachMessageGCData,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -482,7 +485,7 @@ export class FluidDataStoreRuntime
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.
 		if (this.isAttached) {
-			this.attachChannel(channel);
+			this.makeChannelLocallyVisible(channel);
 			return;
 		}
 
@@ -609,6 +612,13 @@ export class FluidDataStoreRuntime
 				case DataStoreMessageType.Attach: {
 					const attachMessage = message.contents as IAttachMessage;
 					const id = attachMessage.id;
+
+					// We need to process the GC Data for both local and remote attach messages
+					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
+						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
+						this.dataStoreContext.addedGCOutboundRoute?.(fromPath, toPath);
+					});
 
 					// If a non-local operation then go and create the object
 					// Otherwise mark it as officially attached.
@@ -812,6 +822,64 @@ export class FluidDataStoreRuntime
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		const summaryBuilder = new SummaryTreeBuilder();
+		this.visitLocalBoundContextsDuringAttach(
+			(contextId: string, context: LocalChannelContextBase) => {
+				let summaryTree: ISummaryTreeWithStats;
+				if (context.isLoaded) {
+					const contextSummary = context.getAttachSummary(telemetryContext);
+					assert(
+						contextSummary.summary.type === SummaryType.Tree,
+						0x180 /* "getAttachSummary should always return a tree" */,
+					);
+
+					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+				} else {
+					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+					// it was created as it is detached container. So just use the previous snapshot.
+					assert(
+						!!this.dataStoreContext.baseSnapshot,
+						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+					);
+					summaryTree = convertSnapshotTreeToSummaryTree(
+						this.dataStoreContext.baseSnapshot.trees[contextId],
+					);
+				}
+				summaryBuilder.addWithStats(contextId, summaryTree);
+			},
+		);
+
+		return summaryBuilder.getSummaryTree();
+	}
+
+	/**
+	 * Get the GC Data for the initial state being attached so remote clients can learn of this DataStore's outbound routes
+	 */
+	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
+		const gcDataBuilder = new GCDataBuilder();
+		this.visitLocalBoundContextsDuringAttach(
+			(contextId: string, context: LocalChannelContextBase) => {
+				if (context.isLoaded) {
+					const contextGCData = context.getAttachGCData(telemetryContext);
+
+					// Incorporate the GC Data for this context
+					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+				}
+				// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
+			},
+		);
+		this.updateGCNodes(gcDataBuilder);
+
+		return gcDataBuilder.getGCData();
+	}
+
+	/**
+	 * Helper method for preparing to attach this dataStore.
+	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 */
+	private visitLocalBoundContextsDuringAttach(
+		visitor: (contextId: string, context: LocalChannelContextBase) => void,
+	): void {
 		/**
 		 * back-compat 0.59.1000 - getAttachSummary() is called when making a data store globally visible (previously
 		 * attaching state). Ideally, attachGraph() should have already be called making it locally visible. However,
@@ -832,39 +900,15 @@ export class FluidDataStoreRuntime
 		//  "The data store should be locally visible when generating attach summary",
 		// );
 
-		const summaryBuilder = new SummaryTreeBuilder();
-
-		// Craft the .attributes file for each shared object
 		for (const [contextId, context] of this.contexts) {
 			if (!(context instanceof LocalChannelContextBase)) {
 				throw new LoggingError("Should only be called with local channel handles");
 			}
 
 			if (!this.notBoundedChannelContextSet.has(contextId)) {
-				let summaryTree: ISummaryTreeWithStats;
-				if (context.isLoaded) {
-					const contextSummary = context.getAttachSummary(telemetryContext);
-					assert(
-						contextSummary.summary.type === SummaryType.Tree,
-						0x180 /* "getAttachSummary should always return a tree" */,
-					);
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-				} else {
-					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-					// it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.dataStoreContext.baseSnapshot,
-						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					summaryTree = convertSnapshotTreeToSummaryTree(
-						this.dataStoreContext.baseSnapshot.trees[contextId],
-					);
-				}
-				summaryBuilder.addWithStats(contextId, summaryTree);
+				visitor(contextId, context);
 			}
 		}
-
-		return summaryBuilder.getSummaryTree();
 	}
 
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
@@ -890,9 +934,10 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Attach channel should only be called after the data store has been attached
+	 * Assuming this DataStore is already attached, this will make the given channel locally visible
+	 * by submitting its attach op.
 	 */
-	private attachChannel(channel: IChannel): void {
+	private makeChannelLocallyVisible(channel: IChannel): void {
 		this.verifyNotClosed();
 		// If this handle is already attached no need to attach again.
 		if (channel.handle.isAttached) {
@@ -912,6 +957,11 @@ export class FluidDataStoreRuntime
 			true /* fullTree */,
 			false /* trackState */,
 		);
+
+		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes
+		const gcData = channel.getGCData(/* fullGC: */ true);
+		addBlobToSummary(summarizeResult, gcDataBlobKey, JSON.stringify(gcData));
+
 		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
 		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
 

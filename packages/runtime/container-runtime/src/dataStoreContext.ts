@@ -35,7 +35,6 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
-	IAttachMessage,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
@@ -53,8 +52,9 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	VisibilityState,
+	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
+import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
 	createChildMonitoringContext,
 	DataCorruptionError,
@@ -650,8 +650,10 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated There is no replacement for this, its functionality is no longer needed.
+	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.
 	 * It will be removed in a future release, sometime after 2.0.0-internal.8.0.0
+	 *
+	 * Similar capability is exposed with from/to string paths instead of handles via @see addedGCOutboundRoute
 	 *
 	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
 	 * all references added in the system.
@@ -664,6 +666,22 @@ export abstract class FluidDataStoreContext
 			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
 			this._containerRuntime.addedGCOutboundReference(srcHandle, outboundHandle);
 		}
+	}
+
+	/**
+	 * (Same as @see addedGCOutboundReference, but with string paths instead of handles)
+	 *
+	 * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
+	 * all references added in the system.
+	 *
+	 * @param fromPath - The absolute path of the node that added the reference.
+	 * @param toPath - The absolute path of the outbound node that is referenced.
+	 */
+	public addedGCOutboundRoute(fromPath: string, toPath: string) {
+		this._containerRuntime.addedGCOutboundReference(
+			{ absolutePath: fromPath },
+			{ absolutePath: toPath },
+		);
 	}
 
 	/**
@@ -824,7 +842,20 @@ export abstract class FluidDataStoreContext
 		return this._containerRuntime.getAbsoluteUrl(relativeUrl);
 	}
 
-	public abstract generateAttachMessage(): IAttachMessage;
+	/**
+	 * Get the data required when attaching this context's DataStore.
+	 * Used for both Container Attach and DataStore Attach.
+	 *
+	 * @returns the summary, type, and GC Data for this context's DataStore.
+	 */
+	public abstract getAttachData(
+		includeGCData: boolean,
+		telemetryContext?: ITelemetryContext,
+	): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+		gcData?: IGarbageCollectionData;
+	};
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
@@ -1030,7 +1061,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		return this.initialSnapshotDetailsP;
 	}
 
-	public generateAttachMessage(): IAttachMessage {
+	/**
+	 * @see FluidDataStoreContext.getAttachData
+	 */
+	public getAttachData(includeGCData: boolean): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+		gcData?: IGarbageCollectionData;
+	} {
 		throw new Error("Cannot attach remote store");
 	}
 }
@@ -1081,7 +1119,17 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		});
 	}
 
-	public generateAttachMessage(): IAttachMessage {
+	/**
+	 * @see FluidDataStoreContext.getAttachData
+	 */
+	public getAttachData(
+		includeGCData: boolean,
+		telemetryContext?: ITelemetryContext,
+	): {
+		attachSummary: ISummaryTreeWithStats;
+		type: string;
+		gcData?: IGarbageCollectionData;
+	} {
 		assert(
 			this.channel !== undefined,
 			0x14f /* "There should be a channel when generating attach message" */,
@@ -1091,25 +1139,20 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			0x150 /* "pkg should be available in local data store context" */,
 		);
 
-		const summarizeResult = this.channel.getAttachSummary();
+		const attachSummary = this.channel.getAttachSummary(telemetryContext);
 
 		// Wrap dds summaries in .channels subtree.
-		wrapSummaryInChannelsTree(summarizeResult);
+		wrapSummaryInChannelsTree(attachSummary);
 
 		// Add data store's attributes to the summary.
 		const attributes = createAttributes(this.pkg, this.isInMemoryRoot());
-		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
+		addBlobToSummary(attachSummary, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
-		// Attach message needs the summary in ITree format. Convert the ISummaryTree into an ITree.
-		const snapshot = convertSummaryTreeToITree(summarizeResult.summary);
-
-		const message: IAttachMessage = {
-			id: this.id,
-			snapshot,
+		return {
+			attachSummary,
 			type: this.pkg[this.pkg.length - 1],
+			gcData: includeGCData ? this.channel.getAttachGCData?.(telemetryContext) : undefined,
 		};
-
-		return message;
 	}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {

@@ -33,11 +33,13 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
+	disableAutoRecoveryKey,
 	disableDatastoreSweepKey,
 	detectOutboundRoutesViaDDSKey,
 	UnreferencedState,
 	throwOnTombstoneLoadOverrideKey,
 	GarbageCollectionMessage,
+	GarbageCollectionMessageType,
 	ISweepMessage,
 } from "./gcDefinitions";
 export {
