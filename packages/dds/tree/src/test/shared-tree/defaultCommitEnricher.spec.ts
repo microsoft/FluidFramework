@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { GraphCommit } from "../../../dist/core/index.js";
-import { RevisionTag, TaggedChange } from "../../core/index.js";
+import { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
 import {
 	ChangeEnricherCheckout,
 	DefaultCommitEnricher,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/defaultCommitEnricher.js";
 import { disposeSymbol } from "../../util/index.js";
 import { testIdCompressor } from "../utils.js";

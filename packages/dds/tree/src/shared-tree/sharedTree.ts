@@ -207,12 +207,15 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 			{ schema, policy: defaultSchemaPolicy },
-			new DefaultCommitEnricher(changeFamily.rebaser.invert, () => {
-				return new SharedTreeChangeEnricher(
-					forest.clone(schema, new AnchorSet()),
-					removedRoots.clone(),
-				);
-			}),
+			new DefaultCommitEnricher(
+				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				() => {
+					return new SharedTreeChangeEnricher(
+						forest.clone(schema, new AnchorSet()),
+						removedRoots.clone(),
+					);
+				},
+			),
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

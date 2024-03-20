@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangeFamily, ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
+import { ChangeRebaser, GraphCommit, RevisionTag } from "../core/index.js";
 import { ICommitEnricher } from "../shared-tree-core/index.js";
 import { disposeSymbol } from "../util/index.js";
 

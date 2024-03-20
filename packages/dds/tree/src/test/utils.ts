@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/test-utils";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules -- test import
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
