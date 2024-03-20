@@ -3,32 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IdCreationRange,
-	IIdCompressor,
-	IIdCompressorCore,
-	OpSpaceCompressedId,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-} from "./types/index.js";
-import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers.js";
-import {
-	createSessionId,
-	localIdFromGenCount,
-	genCountFromLocalId,
-	numericUuidFromStableId,
-	offsetNumericUuid,
-	stableIdFromNumericUuid,
-	subtractNumericUuids,
-} from "./utilities.js";
+import { FinalSpace } from "./finalSpace.js";
+import { FinalCompressedId, LocalCompressedId, NumericUuid, isFinalId } from "./identifiers.js";
 import {
 	Index,
 	readBoolean,
@@ -38,17 +18,37 @@ import {
 	writeNumber,
 	writeNumericUuid,
 } from "./persistanceUtilities.js";
+import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
 import {
-	getAlignedLocal,
-	getAlignedFinal,
 	IdCluster,
-	lastFinalizedLocal,
 	Session,
 	Sessions,
+	getAlignedFinal,
+	getAlignedLocal,
 	lastFinalizedFinal,
+	lastFinalizedLocal,
 } from "./sessions.js";
-import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
-import { FinalSpace } from "./finalSpace.js";
+import {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	OpSpaceCompressedId,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./types/index.js";
+import {
+	createSessionId,
+	genCountFromLocalId,
+	localIdFromGenCount,
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+	subtractNumericUuids,
+} from "./utilities.js";
 
 /**
  * The version of IdCompressor that is currently persisted.

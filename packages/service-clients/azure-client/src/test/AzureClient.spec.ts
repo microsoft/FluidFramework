@@ -2,23 +2,31 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 import { AttachState } from "@fluidframework/container-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
+import { SchemaFactory, SharedTree } from "@fluidframework/tree";
 
 import { v4 as uuid } from "uuid";
 
 import { ConnectionState } from "@fluidframework/container-loader";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AzureClient } from "../AzureClient.js";
 import { type AzureLocalConnectionConfig } from "../interfaces.js";
 
-function createAzureClient(scopes?: ScopeType[]): AzureClient {
+function createAzureClient(
+	props: {
+		scopes?: ScopeType[];
+		configProvider?: IConfigProviderBase;
+	} = {},
+): AzureClient {
 	const connectionProperties: AzureLocalConnectionConfig = {
 		tokenProvider: new InsecureTokenProvider(
 			"fooBar",
@@ -26,12 +34,15 @@ function createAzureClient(scopes?: ScopeType[]): AzureClient {
 				id: uuid(),
 				name: uuid(),
 			},
-			scopes,
+			props.scopes,
 		),
 		endpoint: "http://localhost:7070",
 		type: "local",
 	};
-	return new AzureClient({ connection: connectionProperties });
+	return new AzureClient({
+		connection: connectionProperties,
+		configProvider: props.configProvider,
+	});
 }
 
 const connectionModeOf = (container: IFluidContainer): ConnectionMode =>
@@ -193,7 +204,7 @@ describe("AzureClient", () => {
 	 * Expected behavior: AzureClient should start the container with the connectionMode in `read`.
 	 */
 	it("can create a container with only read permission in read mode", async () => {
-		const readOnlyAzureClient = createAzureClient([ScopeType.DocRead]);
+		const readOnlyAzureClient = createAzureClient({ scopes: [ScopeType.DocRead] });
 
 		const { container } = await readOnlyAzureClient.createContainer(schema);
 		const containerId = await container.attach();
@@ -227,7 +238,9 @@ describe("AzureClient", () => {
 	 * Expected behavior: AzureClient should start the container with the connectionMode in `write`.
 	 */
 	it("can create a container with read and write permissions in write mode", async () => {
-		const readWriteAzureClient = createAzureClient([ScopeType.DocRead, ScopeType.DocWrite]);
+		const readWriteAzureClient = createAzureClient({
+			scopes: [ScopeType.DocRead, ScopeType.DocWrite],
+		});
 
 		const { container } = await readWriteAzureClient.createContainer(schema);
 		const containerId = await container.attach();
@@ -250,6 +263,32 @@ describe("AzureClient", () => {
 			connectionModeOf(containerGet),
 			"write",
 			"Getting a container with only write permission is not in write mode",
+		);
+	});
+
+	it("GC is disabled by default, but can be enabled", async () => {
+		const { container: container_defaultConfig } = await client.createContainer(schema);
+		assert.strictEqual(
+			(
+				container_defaultConfig as unknown as { container: { mc: MonitoringContext } }
+			).container.mc.config.getBoolean("Fluid.GarbageCollection.RunSweep"),
+			false,
+			"Expected GC to be disabled per configs set in constructor",
+		);
+
+		const client_gcEnabled = createAzureClient({
+			configProvider: {
+				getRawConfig: (name: string) =>
+					({ "Fluid.GarbageCollection.RunSweep": true })[name],
+			},
+		});
+		const { container: container_gcEnabled } = await client_gcEnabled.createContainer(schema);
+		assert.strictEqual(
+			(
+				container_gcEnabled as unknown as { container: { mc: MonitoringContext } }
+			).container.mc.config.getBoolean("Fluid.GarbageCollection.RunSweep"),
+			true,
+			"Expected GC to be able to enable GC via config provider",
 		);
 	});
 

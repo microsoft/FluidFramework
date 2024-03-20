@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -19,14 +19,16 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive dist/test -r node_modules/@fluid-internal/mocha-test-setup",
@@ -66,6 +68,7 @@
 		"traverse": "0.6.6"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^1.6.1",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",

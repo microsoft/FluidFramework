@@ -4,27 +4,27 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-	MockStorage,
 	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { AttachState } from "@fluidframework/container-definitions";
-import { SharedString } from "../sharedString.js";
-import { SharedStringFactory } from "../sequenceFactory.js";
 import { IIntervalCollection, Side } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
-import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals/index.js";
+import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>

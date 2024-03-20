@@ -8,7 +8,6 @@ import {
 	Combobox,
 	type ComboboxProps,
 	CounterBadge,
-	createTableColumn,
 	DataGrid,
 	DataGridBody,
 	DataGridCell,
@@ -17,29 +16,30 @@ import {
 	DataGridRow,
 	Dropdown,
 	type DropdownProps,
-	makeStyles,
 	Option,
-	shorthands,
 	type TableColumnDefinition,
+	createTableColumn,
+	makeStyles,
+	shorthands,
 	tokens,
 } from "@fluentui/react-components";
-import React, { useState, useRef } from "react";
-import SplitPane from "react-split-pane";
 import {
 	DevtoolsDisposed,
 	GetTelemetryHistory,
-	handleIncomingMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
 	type ITimestampedTelemetryEvent,
-	TelemetryHistory,
+	type InboundHandlers,
 	TelemetryEvent,
+	TelemetryHistory,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
+import React, { useState, useRef } from "react";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { useLogger } from "../TelemetryUtils";
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+import { SplitPane } from "./SplitPane.cjs";
+import { Waiting } from "./Waiting.js";
 
 /**
  * Set the default displayed size to 100.

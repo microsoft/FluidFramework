@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AttachState } from "@fluidframework/container-definitions";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
-import { ISnapshotTree, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IDetachedBlobStorage } from "./loader.js";
+import type { SnapshotWithBlobs } from "./serializedStateManager.js";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
-import { IDetachedBlobStorage } from "./index.js";
 
 /**
  * The default state a newly created detached container will have.
@@ -134,7 +135,7 @@ export interface AttachProcessProps {
  */
 export const runRetriableAttachProcess = async (
 	props: AttachProcessProps,
-): Promise<{ tree: ISnapshotTree; blobs: ISerializableBlobContents } | undefined> => {
+): Promise<SnapshotWithBlobs | undefined> => {
 	const {
 		detachedBlobStorage,
 		createOrGetStorageService,
@@ -209,7 +210,7 @@ export const runRetriableAttachProcess = async (
 		});
 	}
 
-	const snapshot = offlineLoadEnabled
+	const snapshot: SnapshotWithBlobs | undefined = offlineLoadEnabled
 		? getSnapshotTreeAndBlobsFromSerializedContainer(currentData.summary)
 		: undefined;
 

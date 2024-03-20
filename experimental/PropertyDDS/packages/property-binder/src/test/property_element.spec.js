@@ -2,26 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* globals expect, should  */
 import { DataBinder } from "../data_binder/dataBinder";
 
 import { catchConsoleErrors } from "./catchConsoleError";
 
 import {
-	registerTestTemplates,
+	ArrayContainerTemplate,
 	ChildTemplate,
+	MapContainerTemplate,
 	PrimitiveChildrenTemplate,
 	ReferenceParentTemplate,
-	ArrayContainerTemplate,
-	MapContainerTemplate,
 	SetContainerTemplate,
+	registerTestTemplates,
 } from "./testTemplates";
 
 import * as _ from "underscore";
 
-import { PropertyElement } from "../internal/propertyElement";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { RESOLVE_NEVER, RESOLVE_NO_LEAFS, RESOLVE_ALWAYS } from "../internal/constants";
+import { RESOLVE_ALWAYS, RESOLVE_NEVER, RESOLVE_NO_LEAFS } from "../internal/constants";
+import { PropertyElement } from "../internal/propertyElement";
 import { MockSharedPropertyTree } from "./mockSharedPropertyTree";
 
 describe("Property element", function () {

@@ -9,18 +9,18 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
-import {
-	MakeNominal,
-	Covariant,
+import type {
 	Contravariant,
+	Covariant,
 	Invariant,
-	requireTrue,
-	requireFalse,
-	isAssignableTo,
+	MakeNominal,
 	areSafelyAssignable,
-	isAny,
 	eitherIsAny,
+	isAny,
+	isAssignableTo,
 	isStrictSubset,
+	requireFalse,
+	requireTrue,
 } from "./typeCheck.js";
 
 /**

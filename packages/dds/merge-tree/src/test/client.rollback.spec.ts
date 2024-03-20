@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { UniversalSequenceNumber } from "../constants.js";
-import { ISegmentLeaf, Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes.js";
+import { ISegmentLeaf, Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 import { TestClient } from "./testClient.js";

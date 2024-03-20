@@ -5,12 +5,12 @@
 
 import type { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
 import type {
-	IEventProvider,
-	IRequest,
-	IResponse,
 	FluidObject,
+	IEventProvider,
 	IFluidHandle,
 	IFluidHandleContext,
+	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
