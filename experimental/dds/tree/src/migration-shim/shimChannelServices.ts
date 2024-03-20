@@ -4,9 +4,9 @@
  */
 
 import {
-	type IDeltaConnection,
 	type IChannelServices,
 	type IChannelStorageService,
+	type IDeltaConnection,
 } from '@fluidframework/datastore-definitions';
 
 /**

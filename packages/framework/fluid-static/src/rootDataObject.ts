@@ -2,11 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions";
+import { type ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	type FluidObject,
@@ -14,11 +17,9 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { type ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IDirectory } from "@fluidframework/map";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import { RequestParser } from "@fluidframework/runtime-utils";
 
 import {
 	type ContainerSchema,
@@ -231,7 +232,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				// resolution progress is tracked by the Feature 465 work item in AzDO
 				flushMode: FlushMode.Immediate,
 				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: true,
+				enableRuntimeIdCompressor: "on",
 			},
 			provideEntryPoint,
 		});

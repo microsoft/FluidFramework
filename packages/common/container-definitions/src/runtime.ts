@@ -4,28 +4,28 @@
  */
 
 import type {
-	ITelemetryBaseLogger,
-	IDisposable,
 	FluidObject,
+	IDisposable,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
 import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import type {
 	IClientDetails,
-	ISequencedDocumentMessage,
-	ISnapshotTree,
-	MessageType,
-	ISummaryTree,
-	IVersion,
 	IDocumentMessage,
 	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
 	ISummaryContent,
+	ISummaryTree,
+	IVersion,
+	MessageType,
 } from "@fluidframework/protocol-definitions";
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
-import type { ILoader } from "./loader.js";
 import type { IFluidCodeDetails } from "./fluidPackage.js";
+import type { ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -124,6 +124,9 @@ export interface IBatchMessage {
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
+ *
+ * TODO: once `@alpha` tag is removed, `unknown` should be removed from submitSignalFn
+ * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
  * @alpha
  */
 export interface IContainerContext {
@@ -153,9 +156,7 @@ export interface IContainerContext {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	// TODO: use `unknown` instead (API breaking)
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
+	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

@@ -9,15 +9,15 @@ import {
 	type ApiPackage,
 } from "@microsoft/api-extractor-model";
 
-import { type DocumentNode, type SectionNode } from "../documentation-domain";
-import { createDocument } from "./Utilities";
+import { type DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import { createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
-} from "./configuration";
-import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities";
-import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers";
-import { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
+} from "./configuration/index.js";
+import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
+import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.

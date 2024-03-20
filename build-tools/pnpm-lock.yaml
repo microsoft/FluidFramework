@@ -10,7 +10,7 @@ importers:
 
   .:
     specifiers:
-      '@biomejs/biome': ^1.5.3
+      '@biomejs/biome': ^1.6.1
       '@commitlint/cli': ^17.6.6
       '@commitlint/config-conventional': ^17.6.6
       '@commitlint/cz-commitlint': ^17.5.0
@@ -29,13 +29,12 @@ importers:
       cz-customizable: ^7.0.0
       eslint: ~8.55.0
       inquirer: ^8.2.5
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       run-script-os: ^1.1.6
       syncpack: ^9.8.6
       typescript: ~5.1.6
     devDependencies:
-      '@biomejs/biome': 1.5.3
+      '@biomejs/biome': 1.6.1
       '@commitlint/cli': 17.6.6
       '@commitlint/config-conventional': 17.6.6
       '@commitlint/cz-commitlint': 17.5.0_i4x6owxztfhigiiqlxwntt4k24
@@ -54,7 +53,6 @@ importers:
       cz-customizable: 7.0.0
       eslint: 8.55.0
       inquirer: 8.2.5
-      prettier: 3.2.5
       rimraf: 4.4.1
       run-script-os: 1.1.6
       syncpack: 9.8.6
@@ -67,7 +65,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': workspace:~
       '@fluidframework/bundle-size-tools': workspace:~
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.42.3
       '@oclif/core': ^3.9.0
       '@oclif/plugin-autocomplete': ^2.3.10
@@ -81,8 +79,10 @@ importers:
       '@types/async': ^3.2.20
       '@types/chai': ^4.3.5
       '@types/chai-arrays': ^2.0.0
+      '@types/debug': ^4.1.7
       '@types/fs-extra': ^8.1.2
       '@types/inquirer': ^8.2.6
+      '@types/json5': ^2.2.0
       '@types/mocha': ^9.1.1
       '@types/node': ^18.18.6
       '@types/node-fetch': ^2.5.10
@@ -100,6 +100,7 @@ importers:
       copyfiles: ^2.4.1
       danger: ^11.3.0
       date-fns: ^2.30.0
+      debug: ^4.3.4
       eslint: ~8.55.0
       eslint-config-oclif: ^5.0.0
       eslint-config-oclif-typescript: ^3.0.8
@@ -110,6 +111,7 @@ importers:
       gray-matter: ^4.0.3
       human-id: ^4.0.0
       inquirer: ^8.2.5
+      json5: ^2.2.3
       jssm: ^5.89.2
       jssm-viz-cli: ^5.89.2
       latest-version: ^5.1.0
@@ -124,6 +126,7 @@ importers:
       prettier: ~3.2.4
       prompts: ^2.4.2
       read-pkg-up: ^7.0.1
+      replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
       semver-utils: ^1.1.4
@@ -155,12 +158,14 @@ importers:
       chalk: 2.4.2
       danger: 11.3.0
       date-fns: 2.30.0
+      debug: 4.3.4
       execa: 5.1.1
       fs-extra: 9.1.0
       globby: 11.1.0
       gray-matter: 4.0.3
       human-id: 4.0.0
       inquirer: 8.2.5
+      json5: 2.2.3
       jssm: 5.89.2
       latest-version: 5.1.0
       minimatch: 7.4.6
@@ -170,6 +175,7 @@ importers:
       prettier: 3.2.5
       prompts: 2.4.2
       read-pkg-up: 7.0.1
+      replace-in-file: 6.3.5
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
@@ -182,12 +188,14 @@ importers:
     devDependencies:
       '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/async': 3.2.20
       '@types/chai': 4.3.5
       '@types/chai-arrays': 2.0.0
+      '@types/debug': 4.1.12
       '@types/fs-extra': 8.1.2
       '@types/inquirer': 8.2.6
+      '@types/json5': 2.2.0
       '@types/mocha': 9.1.1
       '@types/node': 18.18.6
       '@types/node-fetch': 2.6.4
@@ -220,7 +228,7 @@ importers:
       '@fluid-tools/version-tools': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/bundle-size-tools': workspace:~
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@manypkg/get-packages': ^2.2.0
       '@octokit/core': ^4.2.4
       '@rushstack/node-core-library': ^3.59.5
@@ -253,8 +261,6 @@ importers:
       lodash.isequal: ^4.5.0
       mocha: ^10.2.0
       picomatch: ^2.3.1
-      prettier: ~3.2.4
-      replace-in-file: ^6.3.5
       rimraf: ^4.4.1
       semver: ^7.5.4
       sort-package-json: 1.57.0
@@ -283,7 +289,6 @@ importers:
       lodash: 4.17.21
       lodash.isequal: 4.5.0
       picomatch: 2.3.1
-      replace-in-file: 6.3.5
       rimraf: 4.4.1
       semver: 7.5.4
       sort-package-json: 1.57.0
@@ -293,7 +298,7 @@ importers:
       yaml: 2.3.1
     devDependencies:
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/async': 3.2.20
       '@types/fs-extra': 8.1.2
       '@types/glob': 7.2.0
@@ -308,12 +313,11 @@ importers:
       concurrently: 8.2.1
       eslint: 8.55.0
       mocha: 10.2.0
-      prettier: 3.2.5
 
   packages/bundle-size-tools:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.42.3
       '@types/msgpack-lite': ^0.1.8
       '@types/node': ^18.18.6
@@ -325,7 +329,6 @@ importers:
       jszip: ^3.10.1
       msgpack-lite: ^0.1.26
       pako: ^2.1.0
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       typescript: ~5.1.6
       webpack: ^5.88.1
@@ -338,7 +341,7 @@ importers:
       webpack: 5.88.1
     devDependencies:
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.42.3_@types+node@18.18.6
       '@types/msgpack-lite': 0.1.8
       '@types/node': 18.18.6
@@ -346,13 +349,12 @@ importers:
       concurrently: 8.2.1
       copyfiles: 2.4.1
       eslint: 8.55.0
-      prettier: 3.2.5
       rimraf: 4.4.1
 
   packages/readme-command:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@oclif/core': ^3.9.0
       '@oclif/plugin-help': ^6.0.4
       '@oclif/plugin-plugins': ^3.9.4
@@ -369,7 +371,6 @@ importers:
       eslint-config-oclif-typescript: ^3.0.8
       eslint-config-prettier: ~9.0.0
       oclif: ^4.0.3
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       semver: ^7.5.4
       ts-node: ^10.9.1
@@ -383,7 +384,7 @@ importers:
       semver: 7.5.4
     devDependencies:
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@oclif/test': 2.3.33_6aghfyf5eabo7u6nxooxqsbtpq
       '@types/chai': 4.3.5
       '@types/chai-arrays': 2.0.0
@@ -396,7 +397,6 @@ importers:
       eslint-config-oclif: 5.0.0_eslint@8.55.0
       eslint-config-oclif-typescript: 3.0.8_bpztyfltmpuv6lhsgzfwtmxhte
       eslint-config-prettier: 9.0.0_eslint@8.55.0
-      prettier: 3.2.5
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -406,7 +406,7 @@ importers:
     specifiers:
       '@fluid-private/readme-command': workspace:~
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/eslint-config-fluid': ^4.0.0
+      '@fluidframework/eslint-config-fluid': ^5.1.0
       '@microsoft/api-extractor': ^7.42.3
       '@oclif/core': ^3.9.0
       '@oclif/plugin-autocomplete': ^2.3.10
@@ -432,7 +432,6 @@ importers:
       mocha-multi-reporters: ^1.5.1
       moment: ^2.29.4
       oclif: ^4.0.3
-      prettier: ~3.2.4
       rimraf: ^4.4.1
       semver: ^7.5.4
       table: ^6.8.1
@@ -452,7 +451,7 @@ importers:
     devDependencies:
       '@fluid-private/readme-command': link:../readme-command
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/eslint-config-fluid': 4.0.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/api-extractor': 7.42.3_@types+node@18.18.6
       '@oclif/test': 2.3.33_6aghfyf5eabo7u6nxooxqsbtpq
       '@types/chai': 4.3.5
@@ -471,7 +470,6 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       oclif: 4.0.3_ta3rswuxkuwpr666lgto7lkv44
-      prettier: 3.2.5
       rimraf: 4.4.1
       ts-node: 10.9.1_6aghfyf5eabo7u6nxooxqsbtpq
       tslib: 2.6.0
@@ -511,24 +509,24 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@biomejs/biome/1.5.3:
-    resolution: {integrity: sha512-yvZCa/g3akwTaAQ7PCwPWDCkZs3Qa5ONg/fgOUT9e6wAWsPftCjLQFPXBeGxPK30yZSSpgEmRCfpGTmVbUjGgg==}
+  /@biomejs/biome/1.6.1:
+    resolution: {integrity: sha512-SILQvA2S0XeaOuu1bivv6fQmMo7zMfr2xqDEN+Sz78pGbAKZnGmg0emsXjQWoBY/RVm9kPCgX+aGEpZZTYaM7w==}
     engines: {node: '>=14.*'}
     hasBin: true
     requiresBuild: true
     optionalDependencies:
-      '@biomejs/cli-darwin-arm64': 1.5.3
-      '@biomejs/cli-darwin-x64': 1.5.3
-      '@biomejs/cli-linux-arm64': 1.5.3
-      '@biomejs/cli-linux-arm64-musl': 1.5.3
-      '@biomejs/cli-linux-x64': 1.5.3
-      '@biomejs/cli-linux-x64-musl': 1.5.3
-      '@biomejs/cli-win32-arm64': 1.5.3
-      '@biomejs/cli-win32-x64': 1.5.3
+      '@biomejs/cli-darwin-arm64': 1.6.1
+      '@biomejs/cli-darwin-x64': 1.6.1
+      '@biomejs/cli-linux-arm64': 1.6.1
+      '@biomejs/cli-linux-arm64-musl': 1.6.1
+      '@biomejs/cli-linux-x64': 1.6.1
+      '@biomejs/cli-linux-x64-musl': 1.6.1
+      '@biomejs/cli-win32-arm64': 1.6.1
+      '@biomejs/cli-win32-x64': 1.6.1
     dev: true
 
-  /@biomejs/cli-darwin-arm64/1.5.3:
-    resolution: {integrity: sha512-ImU7mh1HghEDyqNmxEZBoMPr8SxekkZuYcs+gynKlNW+TALQs7swkERiBLkG9NR0K1B3/2uVzlvYowXrmlW8hw==}
+  /@biomejs/cli-darwin-arm64/1.6.1:
+    resolution: {integrity: sha512-KlvY00iB9T/vFi4m/GXxEyYkYnYy6aw06uapzUIIdiMMj7I/pmZu7CsZlzWdekVD0j+SsQbxdZMsb0wPhnRSsg==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [darwin]
@@ -536,8 +534,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-darwin-x64/1.5.3:
-    resolution: {integrity: sha512-vCdASqYnlpq/swErH7FD6nrFz0czFtK4k/iLgj0/+VmZVjineFPgevOb+Sr9vz0tk0GfdQO60bSpI74zU8M9Dw==}
+  /@biomejs/cli-darwin-x64/1.6.1:
+    resolution: {integrity: sha512-jP4E8TXaQX5e3nvRJSzB+qicZrdIDCrjR0sSb1DaDTx4JPZH5WXq/BlTqAyWi3IijM+IYMjWqAAK4kOHsSCzxw==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [darwin]
@@ -545,8 +543,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-arm64-musl/1.5.3:
-    resolution: {integrity: sha512-DYuMizUYUBYfS0IHGjDrOP1RGipqWfMGEvNEJ398zdtmCKLXaUvTimiox5dvx4X15mBK5M2m8wgWUgOP1giUpQ==}
+  /@biomejs/cli-linux-arm64-musl/1.6.1:
+    resolution: {integrity: sha512-YdkDgFecdHJg7PJxAMaZIixVWGB6St4yH08BHagO0fEhNNiY8cAKEVo2mcXlsnEiTMpeSEAY9VxLUrVT3IVxpw==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [linux]
@@ -554,8 +552,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-arm64/1.5.3:
-    resolution: {integrity: sha512-cupBQv0sNF1OKqBfx7EDWMSsKwRrBUZfjXawT4s6hKV6ALq7p0QzWlxr/sDmbKMLOaLQtw2Qgu/77N9rm+f9Rg==}
+  /@biomejs/cli-linux-arm64/1.6.1:
+    resolution: {integrity: sha512-nxD1UyX3bWSl/RSKlib/JsOmt+652/9yieogdSC/UTLgVCZYOF7u8L/LK7kAa0Y4nA8zSPavAQTgko7mHC2ObA==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [linux]
@@ -563,8 +561,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-x64-musl/1.5.3:
-    resolution: {integrity: sha512-UUHiAnlDqr2Y/LpvshBFhUYMWkl2/Jn+bi3U6jKuav0qWbbBKU/ByHgR4+NBxpKBYoCtWxhnmatfH1bpPIuZMw==}
+  /@biomejs/cli-linux-x64-musl/1.6.1:
+    resolution: {integrity: sha512-aSISIDmxq04NNy7tm4x9rBk2vH0ub2VDIE4outEmdC2LBtEJoINiphlZagx/FvjbsqUfygent9QUSn0oREnAXg==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [linux]
@@ -572,8 +570,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-linux-x64/1.5.3:
-    resolution: {integrity: sha512-YQrSArQvcv4FYsk7Q91Yv4uuu5F8hJyORVcv3zsjCLGkjIjx2RhjYLpTL733SNL7v33GmOlZY0eFR1ko38tuUw==}
+  /@biomejs/cli-linux-x64/1.6.1:
+    resolution: {integrity: sha512-BYAzenlMF3QdngjNFw9QVBXKGNzeecqwF3pwDgUGEvU7OJpn1/lyVkJVxYPtVGRNdjQ9e6l/s8NjKuBpW/ZR4Q==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [linux]
@@ -581,8 +579,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-win32-arm64/1.5.3:
-    resolution: {integrity: sha512-HxatYH7vf/kX9nrD+pDYuV2GI9GV8EFo6cfKkahAecTuZLPxryHx1WEfJthp5eNsE0+09STGkKIKjirP0ufaZA==}
+  /@biomejs/cli-win32-arm64/1.6.1:
+    resolution: {integrity: sha512-/eCHQKZ1kEawUpkSuXq4urtxMsD1P1678OPG3zNKt3ru16AqqspLdO3jzBe3k74xCPYnQ36e9Yqc97Mo0qgPtg==}
     engines: {node: '>=14.*'}
     cpu: [arm64]
     os: [win32]
@@ -590,8 +588,8 @@ packages:
     dev: true
     optional: true
 
-  /@biomejs/cli-win32-x64/1.5.3:
-    resolution: {integrity: sha512-fMvbSouZEASU7mZH8SIJSANDm5OqsjgtVXlbUqxwed6BP7uuHRSs396Aqwh2+VoW8fwTpp6ybIUoC9FrzB0kyA==}
+  /@biomejs/cli-win32-x64/1.6.1:
+    resolution: {integrity: sha512-5TUZbzBwnDLFxLVGEPsorNi6eC2Gt+z4Oei9Qvq0M/4c4/mjZ96ABgwao/tMxf4ZBr/qyy2YdvF+gX9Rc+xC0A==}
     engines: {node: '>=14.*'}
     cpu: [x64]
     os: [win32]
@@ -907,6 +905,18 @@ packages:
     resolution: {integrity: sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
+  /@fluid-internal/eslint-plugin-fluid/0.1.1_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-7CNeAjn81BPvq/BKc1nQo/6HUZXg4KUAglFuCX6HFCnpGPrDLdm7cdkrGyA1tExB1EGnCAPFzVNbSqSYcwJnag==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@typescript-eslint/parser': 6.9.0_bpztyfltmpuv6lhsgzfwtmxhte
+      ts-morph: 20.0.0
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
+    dev: true
+
   /@fluid-tools/build-cli/0.29.0_bpztyfltmpuv6lhsgzfwtmxhte:
     resolution: {integrity: sha512-gQyW8SfBtP9bdn+6KzaCCVv5Qo0K2gYaIuULSe8VGYWJLtv65ftPnIyZw9T8GZPhXhhmKHDPsCQrGH7Tr1Pucw==}
     engines: {node: '>=14.17.0'}
@@ -1060,9 +1070,10 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/eslint-config-fluid/4.0.0_bpztyfltmpuv6lhsgzfwtmxhte:
-    resolution: {integrity: sha512-mLE+1uocMaMACF51EPhnGgLi2okbKRAPE53RzC3Jd2CfqqIGk2sk8yrsvw7KVfeBp8w0Mf646ZM17yAbNTErDg==}
+  /@fluidframework/eslint-config-fluid/5.1.0_bpztyfltmpuv6lhsgzfwtmxhte:
+    resolution: {integrity: sha512-PJEe6Otz3bJScEUg20oaPnzj3L9cM3L10vNz0o6AooskqLLUcV7BMUTucOSFhad20CffWXMIY7XarvRSTWVDDw==}
     dependencies:
+      '@fluid-internal/eslint-plugin-fluid': 0.1.1_bpztyfltmpuv6lhsgzfwtmxhte
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1_bpztyfltmpuv6lhsgzfwtmxhte
@@ -2433,6 +2444,15 @@ packages:
       mkdirp: 1.0.4
       path-browserify: 1.0.1
 
+  /@ts-morph/common/0.21.0:
+    resolution: {integrity: sha512-ES110Mmne5Vi4ypUKrtVQfXFDtCsDXiUiGxF6ILVlE90dDD4fdpC1LSjydl/ml7xJWKSDZwUYD2zkOePMSrPBA==}
+    dependencies:
+      fast-glob: 3.3.1
+      minimatch: 7.4.6
+      mkdirp: 2.1.6
+      path-browserify: 1.0.1
+    dev: true
+
   /@tsconfig/node10/1.0.9:
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}
 
@@ -2484,6 +2504,12 @@ packages:
     resolution: {integrity: sha512-XhXhBv1R/q2ahF3BM7qT5HLzJNlIL0wbcGyZVjqOTqAybAnsLisd7gy1UCyIqpL+5Iv6XhlSyzjLCnI2sIdbCg==}
     dependencies:
       '@types/node': 18.18.7
+
+  /@types/debug/4.1.12:
+    resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
+    dependencies:
+      '@types/ms': 0.7.34
+    dev: true
 
   /@types/eslint-scope/3.7.4:
     resolution: {integrity: sha512-9K4zoImiZc3HlIp6AVUDE4CWYx22a+lhSZMYNpbjW04+YF0KWj4pJXnEMjdnFTiQibFFmElcsasJXDbdI/EPhA==}
@@ -2566,6 +2592,10 @@ packages:
 
   /@types/mocha/9.1.1:
     resolution: {integrity: sha512-Z61JK7DKDtdKTWwLeElSEBcWGRLY8g95ic5FoQqI9CMx0ns/Ghep3B4DfcEimiKMvtamNVULVNKEsiwV3aQmXw==}
+    dev: true
+
+  /@types/ms/0.7.34:
+    resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
     dev: true
 
   /@types/msgpack-lite/0.1.8:
@@ -4003,6 +4033,10 @@ packages:
 
   /code-block-writer/11.0.3:
     resolution: {integrity: sha512-NiujjUFB4SwScJq2bwbYUtXbZhBSlY6vYzm++3Q6oC+U+injTqfPYFK8wS9COOmb2lueqp0ZRB4nK1VYeHgNyw==}
+
+  /code-block-writer/12.0.0:
+    resolution: {integrity: sha512-q4dMFMlXtKR3XNBHyMHt/3pwYNA69EDk00lloMOaaUMKPUXBw6lpXtbu3MMVG6/uOihGnRDOlkyqsONEUj60+w==}
+    dev: true
 
   /color-convert/1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
@@ -7930,6 +7964,12 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  /mkdirp/2.1.6:
+    resolution: {integrity: sha512-+hEnITedc8LAtIP9u3HJDFIdcLV2vXP33sqLLIzkv1Db1zO/1OxbvYf0Y1OC/S/Qo5dxHXepofhmxL02PsKe+A==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: true
+
   /mocha-json-output-reporter/2.1.0_mocha@10.2.0+moment@2.29.4:
     resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
     peerDependencies:
@@ -8997,6 +9037,7 @@ packages:
     resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
     engines: {node: '>=14'}
     hasBin: true
+    dev: false
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
@@ -9405,7 +9446,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       glob: 7.2.3
-      yargs: 17.7.1
+      yargs: 17.7.2
 
   /require-directory/2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -10387,6 +10428,13 @@ packages:
       '@ts-morph/common': 0.18.1
       code-block-writer: 11.0.3
 
+  /ts-morph/20.0.0:
+    resolution: {integrity: sha512-JVmEJy2Wow5n/84I3igthL9sudQ8qzjh/6i4tmYCm6IqYyKFlNbJZi7oBdjyqcWSWYRu3CtL0xbT6fS03ESZIg==}
+    dependencies:
+      '@ts-morph/common': 0.21.0
+      code-block-writer: 12.0.0
+    dev: true
+
   /ts-node/10.9.1_6aghfyf5eabo7u6nxooxqsbtpq:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
@@ -11154,6 +11202,7 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: true
 
   /yargs/17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
@@ -11166,7 +11215,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: true
 
   /yarn/1.22.19:
     resolution: {integrity: sha512-/0V5q0WbslqnwP91tirOvldvYISzaqhClxzyUKXYxs07yUILIs5jx/k6CFe8bvKSkds5w+eiOqta39Wk3WxdcQ==}

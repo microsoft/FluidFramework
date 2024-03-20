@@ -5,19 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	Any,
-	FlexTreeSchema,
-	FlexFieldSchema,
-	FieldKinds,
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
-	NewFieldContent,
-	intoStoredSchema,
-	ViewSchema,
-	SchemaBuilderBase,
-} from "../../feature-libraries/index.js";
-import { ITreeCheckout, ITreeCheckoutFork } from "../../shared-tree/index.js";
-import {
 	AllowedUpdateType,
 	Anchor,
 	AnchorNode,
@@ -26,8 +13,22 @@ import {
 	TreeStoredSchema,
 	TreeStoredSchemaRepository,
 } from "../../core/index.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeSchema,
+	NewFieldContent,
+	SchemaBuilderBase,
+	ViewSchema,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
+import { ITreeCheckout, ITreeCheckoutFork } from "../../shared-tree/index.js";
 import { checkoutWithContent, jsonSequenceRootSchema, validateViewConsistency } from "../utils.js";
 
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
 	TreeContent,
 	UpdateType,
@@ -37,7 +38,6 @@ import {
 	initializeContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import { SchemaBuilder, leaf } from "../../domains/index.js";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;

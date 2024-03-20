@@ -8,19 +8,21 @@
 import { strict as assert } from "node:assert";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { FlexListToUnion } from "../../feature-libraries/index.js";
 import {
 	ApplyKind,
 	FieldSchema,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeFromSchema,
-	SchemaFactoryRecursive,
 	TreeConfiguration,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeView,
 } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
-import { FlexListToUnion } from "../../feature-libraries/index.js";
+import {
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaFactoryRecursive.js";
 import {
 	FieldSchemaUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
@@ -28,7 +30,9 @@ import {
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaFactoryRecursive.js";
+} from "../../simple-tree/typesUnsafe.js";
+import { TreeFactory } from "../../treeFactory.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { hydrate } from "./utils.js";
 
 // TODO:
@@ -302,6 +306,49 @@ describe("SchemaFactoryRecursive", () => {
 			{
 				const tree = hydrate(A, new A({ a: new B({ b: new A({ a: 6 }) }) }));
 				assert.equal((tree.a as B).b!.a, 6);
+			}
+		});
+	});
+	describe("ValidateRecursiveSchema", () => {
+		it("Valid cases", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.objectRecursive("Test", {
+					x: sf.optionalRecursive([() => Test]),
+				}) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.mapRecursive("Test", [() => Test]) {}
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+		});
+
+		it("Invalid cases", () => {
+			{
+				class Test extends sf.arrayRecursive("Test", () => Test) {}
+				// @ts-expect-error Missing [] around allowed types.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class Test extends sf.objectRecursive("Test", sf.optionalRecursive([() => Test])) {}
+				// @ts-expect-error Objects take a record type with fields, not a field directly.
+				type _check = ValidateRecursiveSchema<typeof Test>;
+			}
+
+			{
+				class MapRecursive extends sf.mapRecursive(
+					"Test",
+					sf.optionalRecursive([() => MapRecursive]),
+				) {}
+				// @ts-expect-error Maps accept allowed types, not field schema.
+				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
 			}
 		});
 	});

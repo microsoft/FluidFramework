@@ -5,13 +5,13 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { TaskManager } from "./taskManager.js";
 import { ITaskManager } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
+import { TaskManager } from "./taskManager.js";
 
 /**
  * The factory that defines the task queue

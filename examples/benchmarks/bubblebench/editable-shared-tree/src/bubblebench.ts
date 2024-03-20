@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	AllowedUpdateType,
-	fail,
-	ISharedTree,
-	FlexTreeView,
-	SharedTreeFactory,
-} from "@fluidframework/tree";
+
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	AllowedUpdateType,
+	FlexTreeView,
+	ISharedTree,
+	SharedTreeFactory,
+	fail,
+} from "@fluidframework/tree/internal";
 import { AppState } from "./appState.js";
 import { appSchemaData, rootAppStateSchema } from "./schema.js";
 

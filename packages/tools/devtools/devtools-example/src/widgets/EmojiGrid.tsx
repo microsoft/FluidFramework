@@ -7,10 +7,10 @@ import React from "react";
 
 import { Spinner } from "@fluentui/react-components";
 
-import { type SharedMatrix } from "@fluidframework/matrix";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type SharedCell } from "@fluidframework/cell";
-import { EmojiButton } from "./EmojiButton";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type SharedMatrix } from "@fluidframework/matrix";
+import { EmojiButton } from "./EmojiButton.js";
 
 /**
  * {@link EmojiGrid} input props.

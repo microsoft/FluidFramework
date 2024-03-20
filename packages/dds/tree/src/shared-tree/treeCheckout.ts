@@ -2,44 +2,46 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+import { noopValidator } from "../codec/index.js";
 import {
-	AnchorLocator,
-	IForestSubscription,
-	AnchorSetRootEvents,
 	Anchor,
+	AnchorLocator,
 	AnchorNode,
 	AnchorSet,
-	IEditableForest,
-	TreeStoredSchemaRepository,
-	combineVisitors,
-	visitDelta,
-	DetachedFieldIndex,
-	makeDetachedFieldIndex,
-	Revertible,
+	AnchorSetRootEvents,
 	ChangeFamily,
-	tagChange,
-	TreeStoredSchema,
-	TreeStoredSchemaSubscription,
-	JsonableTree,
-	RevisionTagCodec,
+	CommitMetadata,
 	DeltaVisitor,
+	DetachedFieldIndex,
+	IEditableForest,
+	IForestSubscription,
+	JsonableTree,
+	Revertible,
+	RevisionTagCodec,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+	combineVisitors,
+	makeDetachedFieldIndex,
+	tagChange,
+	visitDelta,
 } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
+	FieldBatchCodec,
+	TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
-	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
-	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
-import { noopValidator } from "../codec/index.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
@@ -49,7 +51,7 @@ import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilde
 export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
 	 *
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
@@ -64,7 +66,11 @@ export interface CheckoutEvents {
 	 *
 	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	newRevertible(revertible: Revertible): void;
+
+	/**
+	 * {@inheritdoc TreeViewEvents.commitApplied}
+	 */
+	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
 
 	/**
 	 * Fired when a revertible is either reverted or discarded.
@@ -376,8 +382,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("newRevertible", (revertible) => {
-			this.events.emit("newRevertible", revertible);
+		branch.on("commitApplied", (data, getRevertible) => {
+			this.events.emit("commitApplied", data, getRevertible);
 		});
 		branch.on("revertibleDisposed", (revertible, revision) => {
 			// We do not expose the revision in this API

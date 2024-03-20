@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { shortCodeMap } from "./assertionShortCodesMap";
+import { shortCodeMap } from "./assertionShortCodesMap.js";
 
 /**
  * Validates that an error thrown by our assert() function has the expected message, or a

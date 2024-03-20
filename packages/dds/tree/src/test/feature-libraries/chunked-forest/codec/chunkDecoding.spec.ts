@@ -6,40 +6,40 @@
 import { strict as assert } from "assert";
 
 import { compareArrays } from "@fluidframework/core-utils";
-import {
-	aggregateChunks,
-	deaggregateChunks,
-	decode,
-	readValue,
-	NestedArrayDecoder,
-	InlineArrayDecoder,
-	anyDecoder,
-	TreeDecoder,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-import {
-	emptyChunk,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
-import {
-	EncodedChunkShape,
-	version,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+// eslint-disable-next-line import/no-internal-modules
+import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	ChunkDecoder,
 	StreamCursor,
 	readStream,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+import {
+	InlineArrayDecoder,
+	NestedArrayDecoder,
+	TreeDecoder,
+	aggregateChunks,
+	anyDecoder,
+	deaggregateChunks,
+	decode,
+	readValue,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import/no-internal-modules
-import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
-import { ReferenceCountedBase, brand } from "../../../../util/index.js";
+import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import {
+	EncodedChunkShape,
+	version,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/format.js";
+import {
+	emptyChunk,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/emptyChunk.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import { TreeChunk } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import { ReferenceCountedBase, brand } from "../../../../util/index.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 
 function assertRefCount(item: ReferenceCountedBase, count: 0 | 1 | "shared"): void {

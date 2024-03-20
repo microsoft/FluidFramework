@@ -5,26 +5,26 @@
 
 import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
-	EditableTreeEvents,
 	FlexFieldNodeSchema,
-	FlexTreeContext,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeTypedNode,
-	FlexTreeEntityKind,
-	FlexTreeMapNode,
-	FlexTreeObjectNode,
-	FlexTreeTypedField,
-	FlexTreeUnboxField,
-	FlexibleFieldContent,
-	flexTreeMarker,
-	onNextChange,
-	LocalNodeKey,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	TreeStatus,
+	FlexTreeContext,
+	FlexTreeEntityKind,
+	FlexTreeField,
 	FlexTreeFieldNode,
+	FlexTreeMapNode,
+	FlexTreeNode,
+	FlexTreeNodeEvents,
+	FlexTreeNodeSchema,
+	FlexTreeObjectNode,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
+	FlexTreeUnboxField,
+	FlexibleFieldContent,
+	LocalNodeKey,
+	TreeStatus,
+	flexTreeMarker,
+	onNextChange,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";
@@ -122,9 +122,9 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 
 	public value: undefined;
 
-	public on<K extends keyof EditableTreeEvents>(
+	public on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void {
 		throw rawError("Event registration");
 	}

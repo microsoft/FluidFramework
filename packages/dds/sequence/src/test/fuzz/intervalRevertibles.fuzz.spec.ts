@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
+	createWeightedAsyncGenerator as createWeightedGenerator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
 	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
 	DDSFuzzSuiteOptions,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
 	appendAddIntervalToRevertibles,
@@ -23,19 +23,19 @@ import {
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
-} from "../../revertibles";
+} from "../../revertibles.js";
 import {
 	FuzzTestState,
-	RevertOperation,
-	RevertibleSharedString,
-	isRevertibleSharedString,
 	IntervalOperationGenerationConfig,
+	RevertOperation,
 	RevertSharedStringRevertibles,
+	RevertibleSharedString,
 	SharedStringFuzzFactory,
 	baseModel,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
-import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
+	isRevertibleSharedString,
+	makeIntervalOperationGenerator,
+} from "./fuzzUtils.js";
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -120,7 +120,7 @@ function operationGenerator(
 	};
 
 	assert(optionsParam.weights !== undefined);
-	const baseGenerator = makeOperationGenerator(optionsParam, true);
+	const baseGenerator = makeIntervalOperationGenerator(optionsParam, true);
 	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[revertSharedStringRevertibles, optionsParam.weights.revertWeight, hasRevertibles],
 		[baseGenerator, 1],
