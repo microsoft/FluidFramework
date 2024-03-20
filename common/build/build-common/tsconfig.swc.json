@@ -1,0 +1,11 @@
+{
+	"extends": ["./tsconfig.node16.json"],
+	"compilerOptions": {
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"verbatimModuleSyntax": true,
+
+		// Should be true for target ES2022+ including ESNext, but we use ES2020 for now
+		"useDefineForClassFields": false
+	},
+}
