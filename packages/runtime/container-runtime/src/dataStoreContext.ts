@@ -8,11 +8,11 @@ import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container
 import {
 	FluidObject,
 	IDisposable,
+	IEvent,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
-	IEvent,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
