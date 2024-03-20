@@ -7,10 +7,9 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
-	type ISummaryContent,
 	type ISummaryAck,
+	type ISummaryContent,
 	type ISummaryNack,
-	type IDocumentMessage,
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";

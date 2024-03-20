@@ -168,10 +168,7 @@ export class MockDeltaManager
 
 	public clientSequenceNumber = 0;
 
-	constructor(
-		private readonly getClientId?: () => string,
-	)
-	{
+	constructor(private readonly getClientId?: () => string) {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>(
