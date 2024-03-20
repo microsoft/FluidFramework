@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import type { IdCreationRange } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	IAttachMessage,
 	IEnvelope,
 	InboundAttachMessage,
-	IAttachMessage,
 } from "@fluidframework/runtime-definitions";
-import type { IdCreationRange } from "@fluidframework/id-compressor";
-import { IDataStoreAliasMessage } from "./dataStore";
-import { GarbageCollectionMessage } from "./gc";
-import { IChunkedOp } from "./opLifecycle";
+import { IDataStoreAliasMessage } from "./dataStore.js";
+import { GarbageCollectionMessage } from "./gc/index.js";
+import { IChunkedOp } from "./opLifecycle/index.js";
 
 /**
  * @alpha

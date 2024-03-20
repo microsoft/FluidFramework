@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { promises as fsPromises } from "fs";
 import { StatsCompilation } from "webpack";
 
@@ -25,7 +26,9 @@ export async function getBundlePathsFromFileSystem(
  * Gets and parses a BundleBuddyConfig  file from the filesystem
  * @param path - the full path to the file in the filesystem
  */
-export async function getBundleBuddyConfigFromFileSystem(path: string): Promise<BundleBuddyConfig> {
+export async function getBundleBuddyConfigFromFileSystem(
+	path: string,
+): Promise<BundleBuddyConfig> {
 	const file = await fsPromises.readFile(path);
 
 	return JSON.parse(file.toString());

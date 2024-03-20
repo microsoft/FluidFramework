@@ -14,8 +14,8 @@ import {
 	devtoolsMessageSource,
 } from "@fluidframework/devtools-core";
 
-import { extensionMessageSource } from "../messaging";
 import { type Globals } from "../Globals";
+import { extensionViewMessageSource } from "../messaging";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 type Port = chrome.runtime.Port;
@@ -179,7 +179,7 @@ describe("Content Script unit tests", () => {
 		// Post message from the Tab
 		const backgroundMessage = {
 			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
-			source: extensionMessageSource,
+			source: extensionViewMessageSource,
 		};
 		backgroundPort.postMessage(backgroundMessage);
 

@@ -1,9 +1,8 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"compilerOptions": {
 		"rootDir": "src",
-		"outDir": "dist",
-		"jsx": "react",
+		"outDir": "./lib",
 		"types": ["jest"],
 	},
 	"include": ["src/**/*"],

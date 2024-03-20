@@ -9,7 +9,7 @@
  * @packageDocumentation
  */
 
-export type { IDisposable } from "./disposable";
+export type { IDisposable } from "./disposable.js";
 export type {
 	ExtendEventProvider,
 	IErrorEvent,
@@ -19,7 +19,7 @@ export type {
 	IEventTransformer,
 	ReplaceIEventThisPlaceHolder,
 	TransformedEvent,
-} from "./events";
+} from "./events.js";
 export type {
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
@@ -32,4 +32,4 @@ export type {
 	ITelemetryProperties,
 	TelemetryEventCategory,
 	TelemetryEventPropertyType,
-} from "./logger";
+} from "./logger.js";

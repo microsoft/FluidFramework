@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ReadBuffer } from "../ReadBufferUtils";
-import { TreeBuilderSerializer } from "../WriteBufferUtils";
+import { ReadBuffer } from "../ReadBufferUtils.js";
+import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
 import {
-	TreeBuilder,
 	BlobCore,
+	BlobShallowCopy,
+	IStringElement,
 	NodeCore,
 	NodeTypes,
-	BlobShallowCopy,
+	TreeBuilder,
 	assertBlobCoreInstance,
+	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
-	assertBoolInstance,
-	IStringElement,
-} from "../zipItDataRepresentationUtils";
+} from "../zipItDataRepresentationUtils.js";
 
-function compareNodes(node1: NodeTypes, node2: NodeTypes) {
+function compareNodes(node1: NodeTypes, node2: NodeTypes): void {
 	if (node1 instanceof NodeCore) {
 		assert(node2 instanceof NodeCore, "Node 2 should be a NodeCore type");
 		assert.strictEqual(node1.length, node2.length, "Node lengths are not same");
@@ -31,7 +31,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
 	} else if (node1 instanceof BlobCore) {
 		assert(node2 instanceof BlobCore, "Node2 should also be a blob");
 		assert(
-			Uint8ArrayToString(node1.buffer, "utf-8") === Uint8ArrayToString(node2.buffer, "utf-8"),
+			Uint8ArrayToString(node1.buffer, "utf8") === Uint8ArrayToString(node2.buffer, "utf8"),
 			"Blob contents not same",
 		);
 	} else if (typeof node1 === "number") {
@@ -49,7 +49,7 @@ function compareNodes(node1: NodeTypes, node2: NodeTypes) {
 	}
 }
 
-function createLongBuffer(length: number) {
+function createLongBuffer(length: number): Uint8Array {
 	const buffer = new Uint8Array(length);
 	for (let i = 0; i < length; i++) {
 		buffer[i] = 30 + (i % 10); // 0-9
@@ -67,7 +67,7 @@ describe("Tree Representation tests", () => {
 		logger.assertMatchNone([{ category: "error" }]);
 	});
 
-	function validate(length = -1) {
+	function validate(length = -1): void {
 		const buffer = builder.serialize();
 		assert.strictEqual(buffer.length, length, "buffer size not equal");
 		const builder2 = TreeBuilder.load(
@@ -198,7 +198,7 @@ describe("Tree Representation tests", () => {
 		const nonBlobNode: NodeTypes = 5;
 		try {
 			assertBlobCoreInstance(nonBlobNode, "should be a blob");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
@@ -212,7 +212,7 @@ describe("Tree Representation tests", () => {
 		const nonNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
 		try {
 			assertNodeCoreInstance(nonNode, "should be a node");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
@@ -226,7 +226,7 @@ describe("Tree Representation tests", () => {
 		const nonNumberNode: NodeTypes = new BlobShallowCopy(new Uint8Array(), 0, 0);
 		try {
 			assertNumberInstance(nonNumberNode, "should be a number");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");
@@ -240,7 +240,7 @@ describe("Tree Representation tests", () => {
 		const nonBoolNode: NodeTypes = 0;
 		try {
 			assertBoolInstance(nonBoolNode, "should be a bool");
-		} catch (err) {
+		} catch {
 			success = false;
 		}
 		assert(!success, "Error should have occured");

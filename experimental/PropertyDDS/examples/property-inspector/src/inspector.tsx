@@ -6,7 +6,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import _ from "lodash";
 import {
 	IDataCreationOptions,
 	IInspectorRow,
@@ -17,9 +16,10 @@ import {
 	fetchRegisteredTemplates,
 	handlePropertyDataCreation,
 } from "@fluid-experimental/property-inspector-table";
+import _ from "lodash";
 
-import { makeStyles } from "@material-ui/styles";
 import { MuiThemeProvider } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/styles";
 
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 
@@ -27,7 +27,7 @@ import { DataBinder } from "@fluid-experimental/property-binder";
 import { SharedPropertyTree } from "@fluid-experimental/property-dds";
 import AutoSizer from "react-virtualized-auto-sizer";
 
-import { theme } from "./theme";
+import { theme } from "./theme.js";
 
 const useStyles = makeStyles(
 	{

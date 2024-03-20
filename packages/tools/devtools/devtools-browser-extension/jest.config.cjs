@@ -18,7 +18,12 @@ module.exports = {
 	testMatch: ["**/e2e-tests/?(*.)+(spec|test).[t]s"],
 	testPathIgnorePatterns: ["/node_modules/", "dist"],
 	transform: {
-		"^.+\\.test.ts?$": "ts-jest",
+		"^.+\\.test.ts?$": [
+			"ts-jest",
+			{
+				tsconfig: "e2e-tests/tsconfig.json",
+			},
+		],
 	},
 	// While we still have transitive dependencies on 'uuid<9.0.0', force the CJS entry point:
 	// See: https://stackoverflow.com/questions/73203367/jest-syntaxerror-unexpected-token-export-with-uuid-library

@@ -6,8 +6,8 @@
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React from "react";
-import { iconHeight, iconMarginRight, iconWidth, unit } from "./constants";
-import * as TableIcons from "./icons";
+import { iconHeight, iconMarginRight, iconWidth, unit } from "./constants.js";
+import * as TableIcons from "./icons.js";
 
 const useStyles = makeStyles(
 	{

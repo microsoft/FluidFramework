@@ -9,30 +9,6 @@ import { strict as assert, fail } from "assert";
 
 import { noopValidator } from "../../../codec/index.js";
 import {
-	LazyFieldNode,
-	LazyLeaf,
-	LazyMap,
-	LazyTreeNode,
-	buildLazyObjectNode,
-	propertyNameFromFieldKey,
-	reservedObjectNodeFieldPropertyNameSet,
-} from "../../../feature-libraries/flex-tree/lazyNode.js";
-import {
-	Any,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexFieldKind,
-	FlexAllowedTypes,
-	typeNameSymbol,
-	FlexTreeNodeSchema,
-	createMockNodeKeyManager,
-	nodeKeyFieldKey,
-	DefaultEditBuilder,
-	DefaultChangeFamily,
-	DefaultChangeset,
-	cursorForJsonableTreeNode,
-} from "../../../feature-libraries/index.js";
-import {
 	Anchor,
 	AnchorNode,
 	EmptyKey,
@@ -43,20 +19,44 @@ import {
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { brand, capitalize } from "../../../util/index.js";
+import { SchemaBuilder, leaf as leafDomain } from "../../../domains/index.js";
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import { TreeContent } from "../../../shared-tree/index.js";
-import { leaf as leafDomain, SchemaBuilder } from "../../../domains/index.js";
-import {
-	forestWithContent,
-	flexTreeViewWithContent,
-	failCodec,
-	testRevisionTagCodec,
-} from "../../utils.js";
 import {
 	PropertyNameFromFieldKey,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
+import {
+	LazyFieldNode,
+	LazyLeaf,
+	LazyMap,
+	LazyTreeNode,
+	buildLazyObjectNode,
+	propertyNameFromFieldKey,
+	reservedObjectNodeFieldPropertyNameSet,
+} from "../../../feature-libraries/flex-tree/lazyNode.js";
+import {
+	Any,
+	DefaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeNodeSchema,
+	createMockNodeKeyManager,
+	cursorForJsonableTreeNode,
+	nodeKeyFieldKey,
+	typeNameSymbol,
+} from "../../../feature-libraries/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
+import { brand, capitalize } from "../../../util/index.js";
+import {
+	failCodec,
+	flexTreeViewWithContent,
+	forestWithContent,
+	testRevisionTagCodec,
+} from "../../utils.js";
 import { contextWithContentReadonly } from "./utils.js";
 
 function collectPropertyNames(obj: object): Set<string> {

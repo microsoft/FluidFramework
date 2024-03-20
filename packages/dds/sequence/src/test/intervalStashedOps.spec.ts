@@ -2,20 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IntervalType } from "@fluidframework/sequence-previous";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IntervalType } from "@fluidframework/sequence-previous";
-import { IntervalOpType, SequenceInterval } from "../intervals";
-import { IIntervalCollection } from "../intervalCollection";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IMapValueTypeOperation } from "../defaultMap";
+import { IIntervalCollection } from "../intervalCollection.js";
+import type { IMapOperation } from "../intervalCollectionMap.js";
+import { IntervalOpType, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -61,7 +63,7 @@ describe("Interval Stashed Ops on client ", () => {
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 		// Connect the first SharedString.
-		dataStoreRuntime1.local = false;
+		dataStoreRuntime1.setAttachState(AttachState.Attached);
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
 			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
@@ -96,7 +98,7 @@ describe("Interval Stashed Ops on client ", () => {
 				sequenceNumber: sharedString.getCurrentSeq(),
 				intervalType: 2,
 			};
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
@@ -112,7 +114,7 @@ describe("Interval Stashed Ops on client ", () => {
 			]);
 		});
 		it("for delete interval", () => {
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
@@ -129,7 +131,7 @@ describe("Interval Stashed Ops on client ", () => {
 			assert.equal(collection.getIntervalById(intervalId), undefined);
 		});
 		it("for change interval", () => {
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {
@@ -149,7 +151,7 @@ describe("Interval Stashed Ops on client ", () => {
 		it("for interval property change", () => {
 			const interval = collection.getIntervalById(intervalId);
 			assert(interval !== undefined);
-			const opArgs: IMapValueTypeOperation = {
+			const opArgs: IMapOperation = {
 				key: label,
 				type: "act",
 				value: {

@@ -16,7 +16,7 @@ import {
 	LoaderContainerTracker,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import type { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
@@ -33,6 +33,8 @@ import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+// eslint-disable-next-line import/no-internal-modules
+import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -239,15 +241,13 @@ describeCompat(
 			return handle.get();
 		}
 
-		function getSnapshotInfoFromSerializedContainer(
-			container: IContainer,
-		): [ISnapshotTree, ISerializableBlobContents] {
+		function getSnapshotInfoFromSerializedContainer(container: IContainer): SnapshotWithBlobs {
 			const snapshot = container.serialize();
 			const deserializedSummary = JSON.parse(snapshot);
-			return [
-				deserializedSummary.baseSnapshot as ISnapshotTree,
-				deserializedSummary.snapshotBlobs as ISerializableBlobContents,
-			];
+			return {
+				baseSnapshot: deserializedSummary.baseSnapshot,
+				snapshotBlobs: deserializedSummary.snapshotBlobs,
+			};
 		}
 
 		beforeEach("createLoader", async function () {
@@ -271,18 +271,18 @@ describeCompat(
 			it("Dehydrated container snapshot", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
-				const [snapshotTree, snapshotBlobs] =
+				const { baseSnapshot, snapshotBlobs } =
 					getSnapshotInfoFromSerializedContainer(container);
 
 				// Check for protocol attributes
-				const protocolTree = assertProtocolTree(snapshotTree);
+				const protocolTree = assertProtocolTree(baseSnapshot);
 				assert.strictEqual(
 					Object.keys(protocolTree.blobs).length,
 					4,
 					"4 protocol blobs should be there.",
 				);
 
-				const protocolAttributes = assertProtocolAttributes(snapshotTree, snapshotBlobs);
+				const protocolAttributes = assertProtocolAttributes(baseSnapshot, snapshotBlobs);
 				assert.strictEqual(
 					protocolAttributes.sequenceNumber,
 					detachedContainerRefSeqNumber,
@@ -294,7 +294,7 @@ describeCompat(
 				);
 
 				// Check blobs contents for protocolAttributes
-				const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
+				const protocolAttributesBlobId = baseSnapshot.trees[".protocol"].blobs.attributes;
 				assert(
 					snapshotBlobs[protocolAttributesBlobId] !== undefined,
 					"Blobs should contain attributes blob",
@@ -302,7 +302,7 @@ describeCompat(
 
 				// Check for default dataStore
 				const { datastoreTree: snapshotDefaultDataStore } = assertDatastoreTree(
-					snapshotTree,
+					baseSnapshot,
 					defaultDataStore.runtime.id,
 				);
 				const datastoreAttributes = assertBlobContents<{ pkg: string }>(
@@ -320,26 +320,26 @@ describeCompat(
 			it("Dehydrated container snapshot 2 times with changes in between", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
-				const [snapshotTree1, snapshotBlobs1] =
+				const { baseSnapshot: baseSnapshot1, snapshotBlobs: snapshotBlobs1 } =
 					getSnapshotInfoFromSerializedContainer(container);
 				// Create a channel
 				const channel = defaultDataStore.runtime.createChannel(
 					"test1",
 					"https://graph.microsoft.com/types/map",
-				) as SharedMap;
+				) as ISharedMap;
 				channel.bindToContext();
-				const [snapshotTree2, snapshotBlobs2] =
+				const { baseSnapshot: baseSnapshot2, snapshotBlobs: snapshotBlobs2 } =
 					getSnapshotInfoFromSerializedContainer(container);
 
 				assert.strictEqual(
-					JSON.stringify(Object.keys(snapshotTree1.trees)),
-					JSON.stringify(Object.keys(snapshotTree2.trees)),
+					JSON.stringify(Object.keys(baseSnapshot1.trees)),
+					JSON.stringify(Object.keys(baseSnapshot2.trees)),
 					"2 trees should be there(protocol, default dataStore",
 				);
 
 				// Check for protocol attributes
-				const protocolAttributes1 = assertProtocolAttributes(snapshotTree1, snapshotBlobs1);
-				const protocolAttributes2 = assertProtocolAttributes(snapshotTree2, snapshotBlobs2);
+				const protocolAttributes1 = assertProtocolAttributes(baseSnapshot1, snapshotBlobs1);
+				const protocolAttributes2 = assertProtocolAttributes(baseSnapshot2, snapshotBlobs2);
 				assert.strictEqual(
 					JSON.stringify(protocolAttributes1),
 					JSON.stringify(protocolAttributes2),
@@ -348,14 +348,14 @@ describeCompat(
 
 				// Check for newly create channel
 				const defaultChannelsTree1 = assertChannelsTree(
-					assertDatastoreTree(snapshotTree1, defaultDataStore.runtime.id).datastoreTree,
+					assertDatastoreTree(baseSnapshot1, defaultDataStore.runtime.id).datastoreTree,
 				);
 				assert(
 					defaultChannelsTree1.trees.test1 === undefined,
 					"Test channel 1 should not be present in snapshot 1",
 				);
 				assertChannelTree(
-					assertDatastoreTree(snapshotTree2, defaultDataStore.runtime.id).datastoreTree,
+					assertDatastoreTree(baseSnapshot2, defaultDataStore.runtime.id).datastoreTree,
 					"test1",
 					"Test channel 1 should be present in snapshot 2",
 				);
@@ -373,17 +373,16 @@ describeCompat(
 
 				// Create a channel
 				const rootOfDataStore1 =
-					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				rootOfDataStore1.set("dataStore2", dataStore2.handle);
 
-				const [snapshotTree, snapshotBlobs] =
-					getSnapshotInfoFromSerializedContainer(container);
+				const { baseSnapshot } = getSnapshotInfoFromSerializedContainer(container);
 
-				assertProtocolTree(snapshotTree);
-				assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
+				assertProtocolTree(baseSnapshot);
+				assertDatastoreTree(baseSnapshot, defaultDataStore.runtime.id);
 
 				assertDatastoreTree(
-					snapshotTree,
+					baseSnapshot,
 					dataStore2.runtime.id,
 					"Handle Bounded dataStore should be in summary",
 				);
@@ -403,7 +402,7 @@ describeCompat(
 				const defaultDataStore = entryPoint as TestFluidObject;
 
 				// Check for dds
-				const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+				const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				const sharedDir =
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
@@ -455,7 +454,7 @@ describeCompat(
 				const defaultDataStore = entryPoint as TestFluidObject;
 
 				// Check for dds
-				const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+				const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				const sharedDir =
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
@@ -506,7 +505,7 @@ describeCompat(
 				const defaultDataStore = entryPoint as TestFluidObject;
 
 				// Check for dds
-				const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+				const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				const sharedDir =
 					await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 				const sharedString =
@@ -715,7 +714,7 @@ describeCompat(
 				const sharedStringBefore =
 					await defaultDataStoreBefore.getSharedObject<SharedString>(sharedStringId);
 				const sharedMapBefore =
-					await defaultDataStoreBefore.getSharedObject<SharedMap>(sharedMapId);
+					await defaultDataStoreBefore.getSharedObject<ISharedMap>(sharedMapId);
 				str += "BB";
 				sharedStringBefore.insertText(0, str);
 				sharedMapBefore.set("0", str);
@@ -725,7 +724,7 @@ describeCompat(
 				const sharedStringAfter =
 					await defaultComponentAfter.getSharedObject<SharedString>(sharedStringId);
 				const sharedMapAfter =
-					await defaultComponentAfter.getSharedObject<SharedMap>(sharedMapId);
+					await defaultComponentAfter.getSharedObject<ISharedMap>(sharedMapId);
 				assert.strictEqual(
 					JSON.stringify(sharedStringAfter.summarize()),
 					JSON.stringify(sharedStringBefore.summarize()),
@@ -753,7 +752,7 @@ describeCompat(
 					defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
 					await provider.ensureSynchronized();
 
-					const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
+					const sharedMap1 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
 					sharedMap1.set("0", "A");
 					const snapshotTree = container.serialize();
 					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
@@ -779,11 +778,11 @@ describeCompat(
 						dataStore2Key,
 					);
 					const sharedMapFromRC =
-						await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
+						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
 					sharedMapFromRC.set("1", "B");
 
 					const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
-					const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
+					const sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(sharedMapId);
 
 					await loaderContainerTracker.ensureSynchronized();
 					assert.strictEqual(sharedMap3.get("1"), "B", "Contents should be as required");
@@ -811,7 +810,7 @@ describeCompat(
 					defaultDataStore.root.set(dataStore2Key, dataStore2.handle);
 					await provider.ensureSynchronized();
 
-					const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
+					const sharedMap1 = await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
 					sharedMap1.set("0", "A");
 					const snapshotTree = container.serialize();
 					// close the container that we don't use any more, so it doesn't block ensureSynchronized()
@@ -833,7 +832,7 @@ describeCompat(
 
 					// Get the sharedString1 from dataStore2 in container2.
 					const dataStore3 = await getDataObjectFromContainer(container2, dataStore2Key);
-					const sharedMap3 = await dataStore3.getSharedObject<SharedMap>(sharedMapId);
+					const sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(sharedMapId);
 					sharedMap3.set("1", "B");
 
 					// Get the sharedString1 from dataStore2 in rehydrated container.
@@ -842,7 +841,7 @@ describeCompat(
 						dataStore2Key,
 					);
 					const sharedMapFromRC =
-						await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
+						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
 
 					await loaderContainerTracker.ensureSynchronized();
 					assert.strictEqual(
@@ -869,7 +868,7 @@ describeCompat(
 				const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
 
 				const rootOfDataStore1 =
-					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				const dataStore2Key = "dataStore2";
 				rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
 
@@ -880,7 +879,7 @@ describeCompat(
 				const rehydratedEntryPoint =
 					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rehydratedRootOfDataStore =
-					await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
+					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 				const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
 					rehydratedRootOfDataStore.get(dataStore2Key);
 				assert(dataStore2Handle !== undefined, `handle for [${dataStore2Key}] must exist`);
@@ -905,7 +904,7 @@ describeCompat(
 				);
 
 				const rootOfDataStore1 =
-					await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				const dds2Key = "dds2";
 				rootOfDataStore1.set(dds2Key, dds2.handle);
 
@@ -916,8 +915,8 @@ describeCompat(
 				const rehydratedEntryPoint =
 					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 				const rootOfDds2 =
-					await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
-				const dds2Handle: IFluidHandle<SharedMap> | undefined = rootOfDds2.get(dds2Key);
+					await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
+				const dds2Handle: IFluidHandle<ISharedMap> | undefined = rootOfDds2.get(dds2Key);
 				assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 				const dds2FromRC = await dds2Handle.get();
 				assert(dds2FromRC, "ddd2 should have been serialized properly");
@@ -943,12 +942,12 @@ describeCompat(
 					const dds2 = defaultDataStore.runtime.createChannel(
 						ddsId,
 						SharedMap.getFactory().type,
-					) as SharedMap;
+					) as ISharedMap;
 					const dataStore2Key = "dataStore2";
 					dds2.set(dataStore2Key, dataStore2.handle);
 
 					const rootOfDataStore1 =
-						await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+						await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 					const dds2Key = "dds2";
 					rootOfDataStore1.set(dds2Key, dds2.handle);
 
@@ -959,8 +958,9 @@ describeCompat(
 					const rehydratedEntryPoint =
 						(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 					const rootOfDds2 =
-						await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<SharedMap> | undefined = rootOfDds2.get(dds2Key);
+						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
+					const dds2Handle: IFluidHandle<ISharedMap> | undefined =
+						rootOfDds2.get(dds2Key);
 					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 					const dds2FromRC = await dds2Handle.get();
 
@@ -1002,14 +1002,14 @@ describeCompat(
 					const dds2 = dataStore2.runtime.createChannel(
 						ddsId,
 						SharedMap.getFactory().type,
-					) as SharedMap;
+					) as ISharedMap;
 					const rootOfDataStore2 =
-						await dataStore2.getSharedObject<SharedMap>(sharedMapId);
+						await dataStore2.getSharedObject<ISharedMap>(sharedMapId);
 					const dds2Key = "dds2";
 					rootOfDataStore2.set(dds2Key, dds2.handle);
 
 					const rootOfDataStore1 =
-						await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+						await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 					const dataStore2Key = "dataStore2";
 					rootOfDataStore1.set(dataStore2Key, dataStore2.handle);
 
@@ -1020,7 +1020,7 @@ describeCompat(
 					const rehydratedEntryPoint =
 						(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
 					const rehydratedRootOfDataStore2 =
-						await rehydratedEntryPoint.getSharedObject<SharedMap>(sharedMapId);
+						await rehydratedEntryPoint.getSharedObject<ISharedMap>(sharedMapId);
 					const dataStore2Handle: IFluidHandle<TestFluidObject> | undefined =
 						rehydratedRootOfDataStore2.get(dataStore2Key);
 					assert(
@@ -1030,8 +1030,9 @@ describeCompat(
 					const dataStore2FromRC = await dataStore2Handle.get();
 
 					const rootOfDds2 =
-						await dataStore2FromRC.getSharedObject<SharedMap>(sharedMapId);
-					const dds2Handle: IFluidHandle<SharedMap> | undefined = rootOfDds2.get(dds2Key);
+						await dataStore2FromRC.getSharedObject<ISharedMap>(sharedMapId);
+					const dds2Handle: IFluidHandle<ISharedMap> | undefined =
+						rootOfDds2.get(dds2Key);
 					assert(dds2Handle !== undefined, `handle for [${dds2Key}] must exist`);
 					const dds2FromRC = await dds2Handle.get();
 					assert(dds2FromRC, "ddd2 should have been serialized properly");
@@ -1054,11 +1055,10 @@ describeCompat(
 				// Create another not bounded dataStore
 				await createPeerDataStore(defaultDataStore.context.containerRuntime);
 
-				const [snapshotTree, snapshotBlobs] =
-					getSnapshotInfoFromSerializedContainer(container);
+				const { baseSnapshot } = getSnapshotInfoFromSerializedContainer(container);
 
-				assertProtocolTree(snapshotTree);
-				assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
+				assertProtocolTree(baseSnapshot);
+				assertDatastoreTree(baseSnapshot, defaultDataStore.runtime.id);
 			});
 		};
 

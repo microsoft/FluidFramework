@@ -6,7 +6,7 @@
 import { FluidObject } from "@fluidframework/core-interfaces";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { IFluidMountableView } from "./interface";
+import { IFluidMountableView } from "./interface.js";
 
 /**
  * Abstracts mounting of views for usage outside of their bundle.  Supports React elements.

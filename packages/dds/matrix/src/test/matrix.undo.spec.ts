@@ -4,16 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	MockFluidDataStoreRuntime,
-	MockEmptyDeltaConnection,
-	MockStorage,
 	MockContainerRuntimeFactory,
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
-import { extract, expectSize } from "./utils";
-import { TestConsumer } from "./testconsumer";
-import { UndoRedoStackManager } from "./undoRedoStackManager";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { TestConsumer } from "./testconsumer.js";
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
+import { expectSize, extract } from "./utils.js";
 
 [false, true].forEach((isSetCellPolicyFWW: boolean) => {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
@@ -410,8 +411,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 					);
 
 					// Create a local DataStoreRuntime since we only want to load the summary for a local client.
-					const dataStoreRuntime = new MockFluidDataStoreRuntime();
-					dataStoreRuntime.local = true;
+					const dataStoreRuntime = new MockFluidDataStoreRuntime({
+						attachState: AttachState.Detached,
+					});
 
 					// Load the summary into a newly created 2nd SharedMatrix.
 					const matrix2 = new SharedMatrix<T>(

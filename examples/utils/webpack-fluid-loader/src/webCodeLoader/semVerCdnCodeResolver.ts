@@ -4,13 +4,13 @@
  */
 
 import {
+	IFluidCodeDetails,
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
 	isFluidBrowserPackage,
-	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
-import { extractPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils";
+import { extractPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils.js";
 
 class FluidPackage {
 	private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;

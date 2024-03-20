@@ -6,16 +6,9 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert, Lazy } from "@fluidframework/core-utils";
-import {
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -23,19 +16,26 @@ import {
 	FileStorageDocumentName,
 	FluidFetchReaderFileSnapshotWriter,
 	ISnapshotWriterStorage,
-	Replayer,
 	ReplayFileDeltaConnection,
+	Replayer,
 } from "@fluidframework/file-driver";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
-	ITree,
-	TreeEntry,
-	MessageType,
-	ITreeEntry,
 	ISummaryTree,
+	ITree,
+	ITreeEntry,
+	MessageType,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import stringify from "json-stable-stringify";
 import {
 	compareWithReferenceSnapshot,
@@ -902,8 +902,7 @@ async function assertDdsEqual(
 		return;
 	}
 
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = true;
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 	const deltaConnection = new MockEmptyDeltaConnection();
 
 	async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
