@@ -9,6 +9,7 @@ import {
 	IClient,
 	makeBubble,
 	makeClient,
+	type IBubble,
 } from "@fluid-example/bubblebench-common";
 import { Change, SharedTree } from "@fluid-experimental/tree";
 import { TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
@@ -75,11 +76,11 @@ export class AppState implements IAppState {
 	}
 
 	public increaseBubbles() {
-		this.localClient.bubbles.push(this.makeBubble());
+		(this.localClient.bubbles as IBubble[]).push(this.makeBubble());
 	}
 
 	public decreaseBubbles() {
-		const bubbles = this.localClient.bubbles;
+		const bubbles = this.localClient.bubbles as IBubble[];
 		if (bubbles.length > 1) {
 			bubbles.pop();
 		}

@@ -26,17 +26,14 @@ export class Client
 	})
 	implements IClient {}
 
-export class Clients extends sf.array("Clients", Client) {}
-
 // Root type
 export class App extends sf.object("App", {
-	clients: Clients,
+	clients: sf.array("Clients", Client),
 }) {}
 
 export const appTreeConfiguration = new TreeConfiguration(
-	App, // root node
+	App,
 	() => ({
-		// initial tree
 		clients: [],
 	}),
 );
