@@ -15,15 +15,15 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts"
+				"types": "./lib/common-definitions-public.d.ts",
 			},
 			"require": {
-				"types": "./dist/index.d.ts"
+				"types": "./dist/common-definitions-public.d.ts",
 			}
 		}
 	},
 	"main": "",
-	"types": "dist/index.d.ts",
+	"types": "dist/common-definitions-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
@@ -59,7 +59,6 @@
 		"@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
 		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@microsoft/api-extractor": "^7.42.3",
-		"@types/node": "^16.18.38",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
