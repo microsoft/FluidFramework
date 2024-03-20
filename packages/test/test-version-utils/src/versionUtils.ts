@@ -428,14 +428,14 @@ function internalSchema(
 	if (prereleaseIdentifier === "rc" || prereleaseIdentifier === "dev-rc") {
 		if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
 			if (requested === -1) {
-				return `^2.0.0-internal.8.0.0`;
+				return `2.0.0-internal.8.0.0`;
 			}
 
 			if (requested === -2) {
-				return `^2.0.0-internal.7.0.0`;
+				return `2.0.0-internal.7.0.0`;
 			}
 		}
-	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
+	} else {
 		if (requested === -1) {
 			return `^1.0.0-0`;
 		}
