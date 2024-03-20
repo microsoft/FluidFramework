@@ -90,7 +90,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Replace the whole child; should fire events on the root node.
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = {
 			myInnerString: "initial string in new child",
 		};
@@ -182,7 +182,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myNumberSequence.moveRangeToEnd(0, 2);
 		// Other miscellaneous updates
 		root.child.myInnerString = "new string in child";
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = {
 			myInnerString: "original string in new child",
 		};
@@ -579,7 +579,7 @@ describe("beforeChange/afterChange events", () => {
 			afterCounter++;
 		});
 
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = { myInnerString: "something" };
 
 		// Events shouldn't have fired on the original child node

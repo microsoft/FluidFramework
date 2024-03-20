@@ -53,7 +53,7 @@ import { allowsValue, isFluidHandle } from "./valueUtilities.js";
  * APIs exposing data in this format should likely further constrain what is allowed.
  * For example guarantee which fields and nodes should be inlined, and that types will be required everywhere.
  *
- * This is from Editable tree one which has been deleted and should no longer be used!
+ * This is from Flex tree one which has been deleted and should no longer be used!
  */
 
 /**
@@ -259,7 +259,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys.
 	 *
-	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+	 * Allow explicit undefined for compatibility with FlexTree, and type-safety on read.
 	 */
 	// TODO: make sure explicit undefined is actually handled correctly.
 	[key: FieldKey]: ContextuallyTypedFieldData;
