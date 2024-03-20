@@ -65,10 +65,18 @@ export abstract class BaseCommand<T extends typeof Command>
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;
 
+	private _suppressLogging: boolean = false;
+
 	/**
 	 * If true, all logs except those sent using the .log function will be suppressed.
 	 */
-	private suppressLogging: boolean = false;
+	protected get suppressLogging(): boolean {
+		return this._suppressLogging;
+	}
+
+	private set suppressLogging(v) {
+		this._suppressLogging = v;
+	}
 
 	private _context: Context | undefined;
 	private _logger: CommandLogger | undefined;
