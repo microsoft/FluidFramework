@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { EventEmitter } from "./eventEmitter.cjs";
+
 export { Chronometer } from "./chronometer.js";
 export { ConsoleUtils } from "./consoleUtils.js";
 export { constants } from "./constants.js";
