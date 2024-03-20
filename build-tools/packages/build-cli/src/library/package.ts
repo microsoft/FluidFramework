@@ -774,6 +774,7 @@ export async function npmCheckUpdatesHomegrown(
 					independentPackages: false,
 					releaseGroups: [releaseGroup as ReleaseGroup],
 					releaseGroupRoots: [releaseGroup as ReleaseGroup],
+					changedSinceBranch: undefined,
 			  };
 
 	// Remove the filtered release group from the list if needed
@@ -785,7 +786,10 @@ export async function npmCheckUpdatesHomegrown(
 		}
 	}
 
-	const { filtered: packagesToUpdate } = selectAndFilterPackages(context, selectionCriteria);
+	const { filtered: packagesToUpdate } = await selectAndFilterPackages(
+		context,
+		selectionCriteria,
+	);
 	log?.info(
 		`Found ${Object.keys(dependencyVersionMap).length} dependencies to update across ${
 			packagesToUpdate.length
