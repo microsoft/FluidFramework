@@ -22,6 +22,10 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./test/utils": {
+			"types": "./dist/test/utils.d.ts",
+			"default": "./dist/test/utils.js"
 		}
 	},
 	"main": "dist/index.js",
