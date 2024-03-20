@@ -75,7 +75,7 @@
 		"ajv": "^8.12.0",
 		"async": "^3.2.2",
 		"base64-js": "^1.5.1",
-		"events": "^3.1.0",
+		"events_pkg": "npm:events@^3.1.0",
 		"fastest-json-copy": "^1.0.1",
 		"lodash": "^4.17.21",
 		"murmurhash3js": "3.0.1",
