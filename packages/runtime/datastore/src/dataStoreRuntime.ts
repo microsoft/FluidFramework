@@ -26,10 +26,10 @@ import {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
 	SummaryType,
-	type ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
