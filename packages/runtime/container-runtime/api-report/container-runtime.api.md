@@ -480,7 +480,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     get isLoaded(): boolean;
     // (undocumented)
     readonly isLocalDataStore: boolean;
-    isRoot(): Promise<boolean>;
+    isRoot(aliasedDataStores?: Set<string>): Promise<boolean>;
     // (undocumented)
     readonly loadingGroupId: string | undefined;
     // (undocumented)

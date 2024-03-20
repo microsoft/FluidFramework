@@ -1246,8 +1246,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	private async getOutboundRoutes(): Promise<string[]> {
 		const outboundRoutes: string[] = [];
+		// Getting this information is a performance optimization that reduces network calls for virtualized datastores
+		const aliasedDataStores = new Set(this.aliasMap.values());
 		for (const [contextId, context] of this.contexts) {
-			const isRootDataStore = await context.isRoot();
+			const isRootDataStore = await context.isRoot(aliasedDataStores);
 			if (isRootDataStore) {
 				outboundRoutes.push(`/${contextId}`);
 			}
