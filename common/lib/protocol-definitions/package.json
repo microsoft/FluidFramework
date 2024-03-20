@@ -56,7 +56,7 @@
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
-		"ci:build": "npm run build:compile",
+		"ci:build": "fluid-build --task ci:build",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
