@@ -210,6 +210,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					fieldKind: valueFieldKind.identifier,
 					change,
 				};
+				// @note this is where the assertion hits
 				this.modularBuilder.submitChanges([build, edit]);
 			},
 		};
