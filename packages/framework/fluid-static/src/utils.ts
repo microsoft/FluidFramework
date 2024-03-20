@@ -10,6 +10,7 @@ import {
 	type NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 
 /**
@@ -42,10 +43,20 @@ export function isDataObjectClass(
 	obj: LoadableObjectClass,
 ): obj is InternalDataObjectClass<IFluidLoadable> {
 	const maybe = obj as Partial<InternalDataObjectClass<IFluidLoadable>> | undefined;
-	return (
+	const isDataObject =
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
-		maybe?.factory?.IFluidDataStoreFactory === maybe?.factory
-	);
+		maybe.factory.IFluidDataStoreFactory === maybe.factory;
+
+	if (
+		isDataObject ===
+		((obj as Partial<ISharedObjectKind<IFluidLoadable>>).getFactory !== undefined)
+	) {
+		// TODO: Currently nothing in the types or docs requires an actual DataObjectClass to not have a member called "getFactory" so there is a risk of this being a false positive.
+		// Refactoring the use of LoadableObjectClass such that explicit down casting is not required (for example by having a single factory API shared by both cases) could avoid problems like this.
+		throw new UsageError("Invalid LoadableObjectClass");
+	}
+
+	return isDataObject;
 }
 
 /**
