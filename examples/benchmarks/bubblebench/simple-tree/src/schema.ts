@@ -31,9 +31,6 @@ export class App extends sf.object("App", {
 	clients: sf.array("Clients", Client),
 }) {}
 
-export const appTreeConfiguration = new TreeConfiguration(
-	App,
-	() => ({
-		clients: [],
-	}),
-);
+export const appTreeConfiguration = new TreeConfiguration(App, () => ({
+	clients: [],
+}));
