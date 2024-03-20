@@ -266,7 +266,7 @@ interface SharedTreeSchemaNode {
 
 interface SharedTreeNode extends SharedTreeNodeBase {
 	// TODO: Fix types.
-	fields:
+	fields?:
 		| Record<
 				string | number,
 				SharedTreeNode | SharedTreeLeafNode | SharedTreeSchemaNode | object | undefined
@@ -315,12 +315,12 @@ function objectFieldHelper(
 			const fieldName = arrayField[i].type;
 			const childSchema = contentSnapshot.schema.nodeSchema.get(fieldName);
 
+			const test = visualizeSharedTreeHelper(arrayField[i], childSchema, contentSnapshot);
+
+			console.log("test:", test);
+
 			result[i] = {
-				schema: {
-					name: fieldName,
-					allowedTypes: JSON.stringify("objectFieldHelper_FORLOOP_CHANGE"), // TODO: Figure out intended value.
-				},
-				fields: visualizeSharedTreeHelper(arrayField[i], childSchema, contentSnapshot),
+				...(test !== undefined && "fields" in test ? { ...test } : { fields: test }),
 			};
 		}
 	}
@@ -341,16 +341,18 @@ function objectNodeStoredSchemaHelper(
 	}
 
 	const objectVisualized = {};
+
 	const schemaName = tree.type;
 	const childSchema = contentSnapshot.schema.nodeSchema.get(schemaName);
 
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		const test = objectFieldHelper(childField, childSchema, contentSnapshot);
+		const fieldVisualized = objectFieldHelper(childField, childSchema, contentSnapshot);
+
 		objectVisualized[fieldKey] =
-			test !== undefined && "value" in test
-				? test
+			fieldVisualized !== undefined && "value" in fieldVisualized
+				? fieldVisualized
 				: {
-						fields: objectFieldHelper(childField, childSchema, contentSnapshot),
+						fields: fieldVisualized,
 				  };
 	}
 
@@ -367,7 +369,6 @@ function visualizeSharedTreeHelper(
 		return leafNodeStoredSchemaHelper(tree, schema);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		const schemaName = tree.type;
-
 		const allowedTypes =
 			schema.objectNodeFields.get(brand(tree.type)) === undefined
 				? {}
