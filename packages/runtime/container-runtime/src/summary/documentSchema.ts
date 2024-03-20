@@ -203,7 +203,8 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 			{
 				runtimeSchemaVersion: documentSchema.version,
 				currentRuntimeSchemaVersion: currentDocumentVersionSchema,
-			});
+			},
+		);
 	}
 
 	let unknownProperty: string | undefined;
@@ -233,7 +234,8 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 				codeVersion: currentDocumentVersionSchema,
 				property: unknownProperty,
 				value,
-			});
+			},
+		);
 	}
 }
 
