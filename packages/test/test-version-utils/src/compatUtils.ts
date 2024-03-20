@@ -96,12 +96,25 @@ function filterRuntimeOptionsForVersion(
 	} = options;
 
 	if (version.startsWith("1.")) {
-		options.compressionOptions = undefined;
-		options.enableGroupedBatching = false;
-		options.enableRuntimeIdCompressor = "off";
-		options.maxBatchSizeInBytes = undefined;
-		options.chunkSizeInBytes = Number.POSITIVE_INFINITY; // disabled
-	} else if (version.startsWith("2.0.0-rc.1.") || version.startsWith("2.0.0-rc.2.")) {
+		options = {
+			...options,
+			// None of these features are supported by 1.3
+			compressionOptions: undefined,
+			enableGroupedBatching: false,
+			enableRuntimeIdCompressor: undefined,
+			maxBatchSizeInBytes: undefined,
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+		};
+	} else if (version.startsWith("2.0.0-rc.1.")) {
+		options = {
+			...options,
+			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
+			// it was boolean in RC1, switched to enum in RC2
+			enableRuntimeIdCompressor: undefined,
+			enableGroupedBatching,
+		};
+	} else if (version.startsWith("2.0.0-rc.2.")) {
 		options = {
 			...options,
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
