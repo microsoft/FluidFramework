@@ -1287,6 +1287,7 @@ importers:
       '@fluidframework/server-services-core': workspace:~
       '@fluidframework/server-services-telemetry': workspace:~
       '@fluidframework/server-test-utils-previous': npm:@fluidframework/server-test-utils@2.0.0
+      '@types/ioredis-mock': ^8.2.1
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.1
       '@types/node': ^18.17.1
@@ -1299,6 +1300,8 @@ importers:
       debug: ^4.3.4
       eslint: ~8.55.0
       events: ^3.1.0
+      ioredis: ^5.2.3
+      ioredis-mock: ^8.2.3
       lodash: ^4.17.21
       mocha: ^10.2.0
       prettier: ~3.0.3
@@ -1315,9 +1318,12 @@ importers:
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
+      '@types/ioredis-mock': 8.2.2
       assert: 2.0.0
       debug: 4.3.4
       events: 3.3.0
+      ioredis: 5.3.2
+      ioredis-mock: 8.7.0_nevjj6jngqp4qe6g7n3cd7su4y
       lodash: 4.17.21
       string-hash: 1.1.3
       uuid: 9.0.0
@@ -3702,7 +3708,6 @@ packages:
 
   /@ioredis/as-callback/3.0.0:
     resolution: {integrity: sha512-Kqv1rZ3WbgOrS+hgzJ5xG5WQuhvzzSTRYvNeyPMLOAM78MHSnuKI20JeJGbpuAt//LCuP0vsexZcorqW7kWhJg==}
-    dev: true
 
   /@ioredis/commands/1.2.0:
     resolution: {integrity: sha512-Sx1pU8EM64o2BrqNpEO1CNLtKQwyhuXuqyfH7oGKCk+1a33d2r5saW8zNwm3j6BTExtjrv2BxTgzzkMwts6vGg==}
@@ -6039,7 +6044,6 @@ packages:
       ioredis: 5.3.2
     transitivePeerDependencies:
       - supports-color
-    dev: true
 
   /@types/is-ci/3.0.1:
     resolution: {integrity: sha512-mnb1ngaGQPm6LFZaNdh3xPOoQMkrQb/KBPhPPN2p2Wk8XgeUqWj6xPnvyQ8rvcK/VFritVmQG8tvQuy7g+9/nQ==}
@@ -9812,7 +9816,6 @@ packages:
       fengari: ^0.1.0
     dependencies:
       fengari: 0.1.4
-    dev: true
 
   /fengari/0.1.4:
     resolution: {integrity: sha512-6ujqUuiIYmcgkGz8MGAdERU57EIluGGPSUgGPTsco657EHa+srq0S3/YUl/r9kx1+D+d4rGfYObd+m8K22gB1g==}
@@ -9820,7 +9823,6 @@ packages:
       readline-sync: 1.4.10
       sprintf-js: 1.1.2
       tmp: 0.0.33
-    dev: true
 
   /figures/3.2.0:
     resolution: {integrity: sha512-yaduQFRKLXYOGgEn6AZau90j3ggSOyiqXU0F9JZfeXYhNa+Jk4X+s45A2zg5jns87GAFa34BBm2kXw4XpNcbdg==}
@@ -10908,7 +10910,6 @@ packages:
       fengari-interop: 0.1.3_fengari@0.1.4
       ioredis: 5.3.2
       semver: 7.5.3
-    dev: true
 
   /ioredis/5.3.2:
     resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
@@ -13464,7 +13465,6 @@ packages:
   /os-tmpdir/1.0.2:
     resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /outdent/0.5.0:
     resolution: {integrity: sha512-/jHxFIzoMXdqPzTaCpFzAAWhpkSjZPF4Vsn6jAfNpmbH/ymsmd7Qc6VE9BGn0L6YMj6uwpQLxCECpus4ukKS9Q==}
@@ -14490,7 +14490,6 @@ packages:
   /readline-sync/1.4.10:
     resolution: {integrity: sha512-gNva8/6UAe8QYepIQH/jQ2qn91Qj0B9sYjMBBs3QOB8F2CXcKgLxQaJRP76sWVRQt+QU+8fAkCbCvjjMFu7Ycw==}
     engines: {node: '>= 0.8.0'}
-    dev: true
 
   /rechoir/0.6.2:
     resolution: {integrity: sha512-HFM8rkZ+i3zrV+4LQjwQ0W+ez98pApMGM3HUrN04j3CqzPOzl9nmP15Y8YXNm8QHGv/eacOVEjqhmWpkRV0NAw==}
@@ -15421,7 +15420,6 @@ packages:
 
   /sprintf-js/1.1.2:
     resolution: {integrity: sha512-VE0SOVEHCk7Qc8ulkWw3ntAzXuqf7S2lvwQaDLRnUeIEaKNQJzV6BwmLKhOqT61aGhfUMrXeaBk+oDGCzvhcug==}
-    dev: true
 
   /ssri/10.0.4:
     resolution: {integrity: sha512-12+IR2CB2C28MMAw0Ncqwj5QbTcs0nGIhgJzYWzDkb21vWmfNI83KS4f3Ci6GI98WreIfG7o9UXp3C0qbpA8nQ==}
@@ -15910,7 +15908,6 @@ packages:
     engines: {node: '>=0.6.0'}
     dependencies:
       os-tmpdir: 1.0.2
-    dev: true
 
   /to-buffer/1.1.1:
     resolution: {integrity: sha512-lx9B5iv7msuFYE3dytT+KE5tap+rNYw+K4jVkb9R/asAb+pbBSM17jtunHplhBe6RRJdZx3Pn2Jph24O32mOVg==}
