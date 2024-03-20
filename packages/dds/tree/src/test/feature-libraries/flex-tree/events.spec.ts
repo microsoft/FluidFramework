@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 
-import { FieldKinds } from "../../../feature-libraries/index.js";
-import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
-import { flexTreeWithContent } from "../../utils.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { flexTreeWithContent } from "../../utils.js";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
@@ -89,7 +90,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Replace the whole child; should fire events on the root node.
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = {
 			myInnerString: "initial string in new child",
 		};
@@ -181,7 +182,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myNumberSequence.moveRangeToEnd(0, 2);
 		// Other miscellaneous updates
 		root.child.myInnerString = "new string in child";
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = {
 			myInnerString: "original string in new child",
 		};
@@ -578,7 +579,7 @@ describe("beforeChange/afterChange events", () => {
 			afterCounter++;
 		});
 
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = { myInnerString: "something" };
 
 		// Events shouldn't have fired on the original child node

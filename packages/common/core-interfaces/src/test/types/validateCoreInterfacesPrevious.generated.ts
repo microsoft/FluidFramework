@@ -384,98 +384,50 @@ use_old_TypeAliasDeclaration_IEventTransformer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidCodeDetails": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidCodeDetails": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFluidCodeDetails():
-    TypeOnly<old.IFluidCodeDetails>;
-declare function use_current_InterfaceDeclaration_IFluidCodeDetails(
-    use: TypeOnly<current.IFluidCodeDetails>): void;
-use_current_InterfaceDeclaration_IFluidCodeDetails(
-    get_old_InterfaceDeclaration_IFluidCodeDetails());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidCodeDetails": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidCodeDetails": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidCodeDetails():
-    TypeOnly<current.IFluidCodeDetails>;
-declare function use_old_InterfaceDeclaration_IFluidCodeDetails(
-    use: TypeOnly<old.IFluidCodeDetails>): void;
-use_old_InterfaceDeclaration_IFluidCodeDetails(
-    get_current_InterfaceDeclaration_IFluidCodeDetails());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidCodeDetailsComparer": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IFluidCodeDetailsComparer": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_IFluidCodeDetailsComparer():
-    TypeOnly<typeof old.IFluidCodeDetailsComparer>;
-declare function use_current_VariableDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<typeof current.IFluidCodeDetailsComparer>): void;
-use_current_VariableDeclaration_IFluidCodeDetailsComparer(
-    get_old_VariableDeclaration_IFluidCodeDetailsComparer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidCodeDetailsComparer": {"backCompat": false}
+* "RemovedVariableDeclaration_IFluidCodeDetailsComparer": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IFluidCodeDetailsComparer():
-    TypeOnly<typeof current.IFluidCodeDetailsComparer>;
-declare function use_old_VariableDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<typeof old.IFluidCodeDetailsComparer>): void;
-use_old_VariableDeclaration_IFluidCodeDetailsComparer(
-    get_current_VariableDeclaration_IFluidCodeDetailsComparer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidCodeDetailsComparer": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidCodeDetailsComparer": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFluidCodeDetailsComparer():
-    TypeOnly<old.IFluidCodeDetailsComparer>;
-declare function use_current_InterfaceDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<current.IFluidCodeDetailsComparer>): void;
-use_current_InterfaceDeclaration_IFluidCodeDetailsComparer(
-    get_old_InterfaceDeclaration_IFluidCodeDetailsComparer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidCodeDetailsComparer": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidCodeDetailsComparer": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidCodeDetailsComparer():
-    TypeOnly<current.IFluidCodeDetailsComparer>;
-declare function use_old_InterfaceDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<old.IFluidCodeDetailsComparer>): void;
-use_old_InterfaceDeclaration_IFluidCodeDetailsComparer(
-    get_current_InterfaceDeclaration_IFluidCodeDetailsComparer());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidCodeDetailsConfig": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidCodeDetailsConfig": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFluidCodeDetailsConfig():
-    TypeOnly<old.IFluidCodeDetailsConfig>;
-declare function use_current_InterfaceDeclaration_IFluidCodeDetailsConfig(
-    use: TypeOnly<current.IFluidCodeDetailsConfig>): void;
-use_current_InterfaceDeclaration_IFluidCodeDetailsConfig(
-    get_old_InterfaceDeclaration_IFluidCodeDetailsConfig());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidCodeDetailsConfig": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidCodeDetailsConfig": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidCodeDetailsConfig():
-    TypeOnly<current.IFluidCodeDetailsConfig>;
-declare function use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
-    use: TypeOnly<old.IFluidCodeDetailsConfig>): void;
-use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
-    get_current_InterfaceDeclaration_IFluidCodeDetailsConfig());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -624,50 +576,26 @@ use_old_InterfaceDeclaration_IFluidLoadable(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidPackage": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidPackage": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFluidPackage():
-    TypeOnly<old.IFluidPackage>;
-declare function use_current_InterfaceDeclaration_IFluidPackage(
-    use: TypeOnly<current.IFluidPackage>): void;
-use_current_InterfaceDeclaration_IFluidPackage(
-    get_old_InterfaceDeclaration_IFluidPackage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidPackage": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidPackage": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidPackage():
-    TypeOnly<current.IFluidPackage>;
-declare function use_old_InterfaceDeclaration_IFluidPackage(
-    use: TypeOnly<old.IFluidPackage>): void;
-use_old_InterfaceDeclaration_IFluidPackage(
-    get_current_InterfaceDeclaration_IFluidPackage());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidPackageEnvironment": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IFluidPackageEnvironment": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFluidPackageEnvironment():
-    TypeOnly<old.IFluidPackageEnvironment>;
-declare function use_current_InterfaceDeclaration_IFluidPackageEnvironment(
-    use: TypeOnly<current.IFluidPackageEnvironment>): void;
-use_current_InterfaceDeclaration_IFluidPackageEnvironment(
-    get_old_InterfaceDeclaration_IFluidPackageEnvironment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidPackageEnvironment": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IFluidPackageEnvironment": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFluidPackageEnvironment():
-    TypeOnly<current.IFluidPackageEnvironment>;
-declare function use_old_InterfaceDeclaration_IFluidPackageEnvironment(
-    use: TypeOnly<old.IFluidPackageEnvironment>): void;
-use_old_InterfaceDeclaration_IFluidPackageEnvironment(
-    get_current_InterfaceDeclaration_IFluidPackageEnvironment());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -768,26 +696,14 @@ use_old_InterfaceDeclaration_ILoggingError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
-    TypeOnly<old.IProvideFluidCodeDetailsComparer>;
-declare function use_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
-    use: TypeOnly<current.IProvideFluidCodeDetailsComparer>): void;
-use_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
-    get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
-    TypeOnly<current.IProvideFluidCodeDetailsComparer>;
-declare function use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
-    use: TypeOnly<old.IProvideFluidCodeDetailsComparer>): void;
-use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
-    get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -960,26 +876,14 @@ use_old_InterfaceDeclaration_IResponse(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType():
-    TypeOnly<old.ITaggedTelemetryPropertyType>;
-declare function use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    use: TypeOnly<current.ITaggedTelemetryPropertyType>): void;
-use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITaggedTelemetryPropertyType": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType():
-    TypeOnly<current.ITaggedTelemetryPropertyType>;
-declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    use: TypeOnly<old.ITaggedTelemetryPropertyType>): void;
-use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1032,26 +936,26 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ITelemetryBaseProperties": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ITelemetryBaseProperties": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ITelemetryBaseProperties():
     TypeOnly<old.ITelemetryBaseProperties>;
-declare function use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
+declare function use_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties(
     use: TypeOnly<current.ITelemetryBaseProperties>): void;
-use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
+use_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties(
     get_old_TypeAliasDeclaration_ITelemetryBaseProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ITelemetryBaseProperties": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ITelemetryBaseProperties": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ITelemetryBaseProperties():
+declare function get_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties():
     TypeOnly<current.ITelemetryBaseProperties>;
 declare function use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
     use: TypeOnly<old.ITelemetryBaseProperties>): void;
 use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
-    get_current_TypeAliasDeclaration_ITelemetryBaseProperties());
+    get_current_RemovedTypeAliasDeclaration_ITelemetryBaseProperties());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1104,26 +1008,14 @@ use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryProperties": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryProperties": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ITelemetryProperties():
-    TypeOnly<old.ITelemetryProperties>;
-declare function use_current_InterfaceDeclaration_ITelemetryProperties(
-    use: TypeOnly<current.ITelemetryProperties>): void;
-use_current_InterfaceDeclaration_ITelemetryProperties(
-    get_old_InterfaceDeclaration_ITelemetryProperties());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ITelemetryProperties": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ITelemetryProperties():
-    TypeOnly<current.ITelemetryProperties>;
-declare function use_old_InterfaceDeclaration_ITelemetryProperties(
-    use: TypeOnly<old.ITelemetryProperties>): void;
-use_old_InterfaceDeclaration_ITelemetryProperties(
-    get_current_InterfaceDeclaration_ITelemetryProperties());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1296,50 +1188,26 @@ use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_TelemetryEventCategory": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
-    TypeOnly<old.TelemetryEventCategory>;
-declare function use_current_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<current.TelemetryEventCategory>): void;
-use_current_TypeAliasDeclaration_TelemetryEventCategory(
-    get_old_TypeAliasDeclaration_TelemetryEventCategory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventCategory": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_TelemetryEventCategory": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_TelemetryEventCategory():
-    TypeOnly<current.TelemetryEventCategory>;
-declare function use_old_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<old.TelemetryEventCategory>): void;
-use_old_TypeAliasDeclaration_TelemetryEventCategory(
-    get_current_TypeAliasDeclaration_TelemetryEventCategory());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventPropertyType": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyType():
-    TypeOnly<old.TelemetryEventPropertyType>;
-declare function use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
-    use: TypeOnly<current.TelemetryEventPropertyType>): void;
-use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
-    get_old_TypeAliasDeclaration_TelemetryEventPropertyType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TelemetryEventPropertyType": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_TelemetryEventPropertyType": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyType():
-    TypeOnly<current.TelemetryEventPropertyType>;
-declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
-    use: TypeOnly<old.TelemetryEventPropertyType>): void;
-use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
-    get_current_TypeAliasDeclaration_TelemetryEventPropertyType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1368,47 +1236,23 @@ use_old_TypeAliasDeclaration_TransformedEvent(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidCodeDetails": {"forwardCompat": false}
+* "RemovedVariableDeclaration_isFluidCodeDetails": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_isFluidCodeDetails():
-    TypeOnly<typeof old.isFluidCodeDetails>;
-declare function use_current_VariableDeclaration_isFluidCodeDetails(
-    use: TypeOnly<typeof current.isFluidCodeDetails>): void;
-use_current_VariableDeclaration_isFluidCodeDetails(
-    get_old_VariableDeclaration_isFluidCodeDetails());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidCodeDetails": {"backCompat": false}
+* "RemovedVariableDeclaration_isFluidCodeDetails": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_isFluidCodeDetails():
-    TypeOnly<typeof current.isFluidCodeDetails>;
-declare function use_old_VariableDeclaration_isFluidCodeDetails(
-    use: TypeOnly<typeof old.isFluidCodeDetails>): void;
-use_old_VariableDeclaration_isFluidCodeDetails(
-    get_current_VariableDeclaration_isFluidCodeDetails());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidPackage": {"forwardCompat": false}
+* "RemovedVariableDeclaration_isFluidPackage": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_isFluidPackage():
-    TypeOnly<typeof old.isFluidPackage>;
-declare function use_current_VariableDeclaration_isFluidPackage(
-    use: TypeOnly<typeof current.isFluidPackage>): void;
-use_current_VariableDeclaration_isFluidPackage(
-    get_old_VariableDeclaration_isFluidPackage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidPackage": {"backCompat": false}
+* "RemovedVariableDeclaration_isFluidPackage": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_isFluidPackage():
-    TypeOnly<typeof current.isFluidPackage>;
-declare function use_old_VariableDeclaration_isFluidPackage(
-    use: TypeOnly<typeof old.isFluidPackage>): void;
-use_old_VariableDeclaration_isFluidPackage(
-    get_current_VariableDeclaration_isFluidPackage());

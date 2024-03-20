@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	readAndParse,
 	blobHeadersBlobName as blobNameForBlobHeaders,
+	readAndParse,
 } from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
@@ -15,11 +15,11 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { IGCMetadata } from "../gc";
+import { IGCMetadata } from "../gc/index.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -86,6 +86,20 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 }
 
 /**
+ * ID Compressor mode.
+ * "on" - compressor is On. It's loaded as part of container load. This mode is sticky - once on, compressor is On for all
+ * sessions for a given document. This results in IContainerRuntime.idCompressor to be always available.
+ * "delayed" - ID compressor bundle is loaded only on establishing of first delta connection, i.e. it does not impact boot of cotnainer.
+ * In such mode IContainerRuntime.idCompressor is not made available (unless previous sessions of same document had it "On").
+ * The only thing that is available is IContainerRuntime.generateDocumentUniqueId() that provides opportunistically short IDs.
+ * "off" - ID compressor is not laoded (unless it is "on" due to previous session for same document having it "on").
+ * While IContainerRuntime.generateDocumentUniqueId() is available, it will produce long IDs that are do not compress well.
+ *
+ * @alpha
+ */
+export type IdCompressorMode = "on" | "delayed" | "off";
+
+/**
  * @alpha
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
@@ -99,7 +113,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
 	/** True if the runtime IdCompressor is enabled */
-	readonly idCompressorEnabled?: boolean;
+	readonly idCompressorMode?: IdCompressorMode;
 }
 
 /**

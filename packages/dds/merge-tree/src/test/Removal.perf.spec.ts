@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { MergeTreeDeltaType } from "../ops";
-import { appendToMergeTreeDeltaRevertibles, MergeTreeDeltaRevertible } from "../revertibles";
-import { markRangeRemoved } from "./testUtils";
-import { loadSnapshot, TestString } from "./snapshot.utils";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { MergeTreeDeltaType } from "../ops.js";
+import { MergeTreeDeltaRevertible, appendToMergeTreeDeltaRevertibles } from "../revertibles.js";
+import { TestString, loadSnapshot } from "./snapshot.utils.js";
+import { markRangeRemoved } from "./testUtils.js";
 
 describe("MergeTree remove", () => {
 	let summary;

@@ -2,22 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/core-utils";
+
 import { IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	DriverHeader,
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { createOdspUrl } from "./createOdspUrl";
-import { getApiRoot } from "./odspUrlHelper";
-import { getOdspResolvedUrl } from "./odspUtils";
-import { getHashedDocumentId } from "./odspPublicUtils";
-import { ClpCompliantAppHeader } from "./contractsPublic";
-import { pkgVersion } from "./packageVersion";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { createOdspUrl } from "./createOdspUrl.js";
+import { getHashedDocumentId } from "./odspPublicUtils.js";
+import { getApiRoot } from "./odspUrlHelper.js";
+import { getOdspResolvedUrl } from "./odspUtils.js";
+import { pkgVersion } from "./packageVersion.js";
 
 function getUrlBase(
 	siteUrl: string,
@@ -96,7 +97,6 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
 	/**
 	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
-	 * @alpha
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
@@ -127,7 +127,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				type: "fluid",
 				odspResolvedUrl: true,
 				id: "odspCreateNew",
-				url: `fluid-odsp://${siteURL}?${queryString}&version=null`,
+				url: `https://${siteURL}?${queryString}&version=null`,
 				siteUrl: siteURL,
 				hashedDocumentId: "",
 				driveId: driveID,
@@ -148,7 +148,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 		const hashedDocumentId = await getHashedDocumentId(driveId, itemId);
 		assert(!hashedDocumentId.includes("/"), 0x0a8 /* "Docid should not contain slashes!!" */);
 
-		const documentUrl = `fluid-odsp://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
+		const documentUrl = `https://placeholder/placeholder/${hashedDocumentId}/${removeBeginningSlash(
 			path,
 		)}`;
 

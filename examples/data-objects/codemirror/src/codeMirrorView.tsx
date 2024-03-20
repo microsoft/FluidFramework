@@ -4,25 +4,23 @@
  */
 
 import {
-	getTextAndMarkers,
-	SharedString,
-	SequenceDeltaEvent,
-	MergeTreeDeltaType,
-	TextSegment,
-	ReferenceType,
-	reservedTileLabelsKey,
 	Marker,
+	MergeTreeDeltaType,
+	ReferenceType,
+	SequenceDeltaEvent,
+	SharedString,
+	TextSegment,
+	getTextAndMarkers,
+	reservedTileLabelsKey,
 } from "@fluidframework/sequence";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
-/* eslint-disable @typescript-eslint/no-require-imports,
-import/no-internal-modules, import/no-unassigned-import */
-require("codemirror/lib/codemirror.css");
-require("./style.css");
-require("codemirror/mode/javascript/javascript.js");
-/* eslint-enable @typescript-eslint/no-require-imports,
-import/no-internal-modules, import/no-unassigned-import */
+/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/javascript/javascript.js";
+import "./style.css";
+/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
 
 import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";
 

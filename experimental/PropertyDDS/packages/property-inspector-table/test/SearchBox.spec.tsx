@@ -5,7 +5,7 @@
 
 import { mount } from "enzyme";
 import * as React from "react";
-import { SearchBox } from "../src/SearchBox";
+import { SearchBox } from "../src/SearchBox.js";
 
 describe("SearchBox", () => {
 	const totalResults = 100;

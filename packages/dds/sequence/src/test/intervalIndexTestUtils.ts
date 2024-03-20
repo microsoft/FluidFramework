@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { Interval } from "../intervals";
+import { v4 as uuid } from "uuid";
+import { Interval } from "../intervals/index.js";
 
 const reservedIntervalIdKey = "intervalId";
 

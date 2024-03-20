@@ -1,6 +1,6 @@
 {
 	"name": "tinylicious",
-	"version": "3.1.0",
+	"version": "5.0.0",
 	"description": "Tiny, test implementation of the routerlicious reference service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,7 +39,7 @@
 		"@fluidframework/common-utils": "^3.1.0",
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-lambdas": "workspace:~",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-memory-orderer": "workspace:~",
@@ -72,9 +72,9 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",
 		"@types/cors": "^2.8.4",
@@ -92,7 +92,7 @@
 		"@types/uuid": "^9.0.2",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"eslint": "~8.6.0",
+		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",

@@ -4,19 +4,19 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IClient } from "@fluidframework/protocol-definitions";
 import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { stub, useFakeTimers, SinonFakeTimers, type SinonStub } from "sinon";
-import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection";
-import * as joinSession from "../vroom";
-import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory";
-import { LocalPersistentCache } from "../odspCache";
-import { OdspFluidDataStoreLocator } from "../contractsPublic";
-import { createOdspUrl } from "../createOdspUrl";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { OdspDocumentService } from "../odspDocumentService";
-import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection";
+import { SinonFakeTimers, SinonStub, stub, useFakeTimers } from "sinon";
+import { OdspFluidDataStoreLocator } from "../contractsPublic.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { LocalPersistentCache } from "../odspCache.js";
+import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
+import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
+import { OdspDocumentService } from "../odspDocumentService.js";
+import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import * as joinSession from "../vroom.js";
 
 describe("joinSessions Tests", () => {
 	let clock: SinonFakeTimers;

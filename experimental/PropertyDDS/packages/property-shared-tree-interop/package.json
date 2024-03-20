@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-shared-tree-interop",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "Utilities for migration from PropertyDDS to the new SharedTree DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -28,16 +28,21 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
@@ -50,13 +55,15 @@
 		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
+		"@arethetypeswrong/cli": "^0.13.3",
+		"@biomejs/biome": "^1.6.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "29.5.3",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"jest": "^29.6.2",
 		"jest-junit": "^10.0.0",
@@ -64,17 +71,6 @@
 		"rimraf": "^4.4.0",
 		"ts-jest": "^29.1.1",
 		"typescript": "~5.1.6"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"eslint": [
-				"build:esnext",
-				"build:test"
-			],
-			"build:test": [
-				"build:esnext"
-			]
-		}
 	},
 	"typeValidation": {
 		"disabled": true,
