@@ -7,7 +7,7 @@ import assert from "assert";
 import { v4 as uuid } from "uuid";
 import { SinonSpiedInstance, restore, spy } from "sinon";
 import { Provider } from "nconf";
-import IoRedisMock from "ioredis-mock";
+import { RedisOptions } from "ioredis-mock";
 import {
 	IWholeFlatSummary,
 	LatestSummaryId,
@@ -56,6 +56,7 @@ import {
 	ElaborateSecondContainerPayload,
 	ElaborateSecondContainerResult,
 } from "./examples2";
+import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 
 // Github Copilot wizardry.
 function permuteFlags(obj: Record<string, boolean>): Record<string, boolean>[] {
@@ -154,9 +155,18 @@ const getFsManagerFactory = (
 				keyExpireAfterSeconds: 60 * 60, // 1 hour
 			},
 		});
+		const redisOptions: RedisOptions = {
+			host: "localhost",
+			port: 6379,
+			connectTimeout: 10000,
+			maxRetriesPerRequest: 20,
+			enableAutoPipelining: false,
+			enableOfflineQueue: true,
+		};
+		const testRedisClientConnectionManager = new TestRedisClientConnectionManager(redisOptions);
 		const redisfsManagerFactory = new RedisFsManagerFactory(
 			redisConfig,
-			(options) => new IoRedisMock(options),
+			testRedisClientConnectionManager,
 		);
 		// Internally, this will create a new RedisFs instance that is shared across all `create` calls.
 		const redisFsManager = redisfsManagerFactory.create();
