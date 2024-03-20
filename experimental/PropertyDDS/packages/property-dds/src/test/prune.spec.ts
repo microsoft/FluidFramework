@@ -5,11 +5,11 @@
 
 import { expect } from "chai";
 import {
-	SharedPropertyTree,
 	IPropertyTreeMessage,
 	IRemotePropertyTreeMessage,
 	OpKind,
-} from "../propertyTree";
+	SharedPropertyTree,
+} from "../propertyTree.js";
 
 describe("PropertyTree", () => {
 	describe("Pruning History", () => {

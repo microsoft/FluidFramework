@@ -4,21 +4,21 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { mintRevisionTag } from "../../utils.js";
 import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionInfo,
 	RevisionTag,
+	TreeNodeSchemaIdentifier,
 	makeAnonChange,
 	tagChange,
-	TreeNodeSchemaIdentifier,
 	tagRollbackInverse,
-	ChangesetLocalId,
-	ChangeAtomId,
-	RevisionInfo,
 } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset, cases } from "./testEdits.js";
 import {
 	areComposable,
 	assertChangesetsEqual,

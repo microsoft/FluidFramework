@@ -3,182 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import {
-	FlexListToUnion,
-	FlexTreeNode,
-	Unenforced,
-	isFlexTreeNode,
-} from "../feature-libraries/index.js";
+import { FlexTreeNode, Unenforced, isFlexTreeNode } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
+import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import {
-	AllowedTypes,
-	ApplyKind,
 	FieldKind,
 	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
+	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	NodeFromSchema,
 	NodeKind,
-	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	WithType,
 } from "./schemaTypes.js";
-import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
-
-/*
- * TODO:
- * Below are a bunch of "unsafe" versions of types from "schemaTypes.ts".
- * These types duplicate the ones in "schemaTypes.ts", except with some of the extends clauses unenforced.
- * This is not great for type safety or maintainability.
- * Eventually it would be great to do at least one of the following:
- * 1. Find a way to avoid needing these entirely, possibly by improving TSC's recursive type support.
- * 2. Deduplicate the safe and unsafe types (possibly by having the safe one call the unsafe ones, or some other trick).
- * 3. Add type tests that check that the two copies of these types produce identical results.
- */
-
-/**
- * {@link Unenforced} version of {@link ObjectFromSchemaRecord}.
- * @internal
- */
-export type ObjectFromSchemaRecordUnsafe<
-	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-> = {
-	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
-};
-
-/**
- * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
- * @internal
- */
-export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
-	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
-		: TSchema extends ImplicitAllowedTypes
-		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
-		: unknown;
-
-/**
- * {@link Unenforced} version of {@link TreeNodeFromImplicitAllowedTypes}.
- * @internal
- */
-export type TreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes>,
-> = TSchema extends ImplicitAllowedTypes
-	? TreeNodeFromImplicitAllowedTypes<TSchema>
-	: TSchema extends TreeNodeSchema
-	? NodeFromSchema<TSchema>
-	: TSchema extends AllowedTypes
-	? NodeFromSchema<FlexListToUnion<TSchema>>
-	: unknown;
-
-/**
- * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @internal
- */
-export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-	TSchema extends Unenforced<ImplicitAllowedTypes>,
-> = TSchema extends AllowedTypes
-	? InsertableTypedNodeUnsafe<FlexListToUnion<TSchema>>
-	: InsertableTypedNodeUnsafe<TSchema>;
-
-/**
- * {@link Unenforced} version of {@link InsertableTypedNode}.
- * @internal
- */
-export type InsertableTypedNodeUnsafe<T extends Unenforced<TreeNodeSchema>> =
-	| Unhydrated<NodeFromSchemaUnsafe<T>>
-	| (T extends { implicitlyConstructable: true } ? NodeBuilderDataUnsafe<T> : never);
-
-/**
- * {@link Unenforced} version of {@link NodeFromSchema}.
- * @internal
- */
-export type NodeFromSchemaUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
-	string,
-	NodeKind,
-	infer TNode
->
-	? TNode
-	: never;
-
-/**
- * {@link Unenforced} version of {@link InsertableTreeNodeFromImplicitAllowedTypes}.
- * @internal
- */
-export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> = T extends TreeNodeSchema<
-	string,
-	NodeKind,
-	unknown,
-	infer TBuild
->
-	? TBuild
-	: never;
-
-/**
- * {@link Unenforced} version of {@link (TreeArrayNode:interface)}.
- * @internal
- */
-export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
-	extends TreeNode,
-		TreeArrayNodeBase<
-			TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
-			InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
-			TreeArrayNode
-		> {}
-
-/**
- * {@link Unenforced} version of {@link TreeMapNode}.
- * @internal
- */
-export interface TreeMapNodeUnsafe<T extends Unenforced<ImplicitAllowedTypes>>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
-		TreeNode {
-	/**
-	 * {@inheritdoc TreeMapNode.set}
-	 */
-	set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined): void;
-
-	/**
-	 * {@inheritdoc TreeMapNode.delete}
-	 */
-	delete(key: string): void;
-}
-
-/**
- * {@link Unenforced} version of {@link InsertableObjectFromSchemaRecord}.
- * @internal
- */
-export type InsertableObjectFromSchemaRecordUnsafe<
-	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-> = {
-	readonly [Property in keyof T]: InsertableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
-};
-
-/**
- * {@link Unenforced} version of {@link InsertableTreeFieldFromImplicitField}.
- * @internal
- */
-export type InsertableTreeFieldFromImplicitFieldUnsafe<
-	TSchema extends Unenforced<ImplicitFieldSchema>,
-> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
-	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
-	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
-
-/**
- * {@link Unenforced} version of {@link FieldSchema}.
- * @internal
- */
-export interface FieldSchemaUnsafe<
-	out Kind extends FieldKind,
-	out Types extends Unenforced<ImplicitAllowedTypes>,
-> {
-	readonly kind: Kind;
-	readonly allowedTypes: Types;
-}
+import { TreeNode } from "./types.js";
+import {
+	FieldSchemaUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	ObjectFromSchemaRecordUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+} from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
@@ -192,11 +40,57 @@ export function createFieldSchemaUnsafe<
 }
 
 /**
- * Extends SchemaFactory with utilities for recursive types.
+ * Extends SchemaFactory with utilities for recursive schema.
+ * @see {@link ValidateRecursiveSchema}
+ * @remarks
+ * This is separated from {@link SchemaFactory} as these APIs are more experimental and may be stabilized independently.
  *
- * @remarks This is separated from SchemaFactory as these APIs are more experimental, and may be stabilized independently.
+ * The non-recursive versions of the schema building methods will run into several issues when used recursively.
+ * Consider the following example:
  *
- * @sealed @internal
+ * ```typescript
+ * const Test = sf.array(Test); // Bad
+ * ```
+ *
+ * This has several issues:
+ *
+ * 1. It is a structurally named schema.
+ * Structurally named schema derive their name from the names of their child types, which is not possible when the type is recursive since its name would include itself.
+ * Instead a name must be explicitly provided.
+ *
+ * 2. The schema accesses itself before it's defined.
+ * This would be a runtime error if the TypeScript compiler allowed it.
+ * This can be fixed by wrapping the type in a function, which also requires explicitly listing the allowed types in an array (`[() => Test]`).
+ *
+ * 3. TypeScript fails to infer the recursive type and falls back to `any` with the warning or error (depending on the compiler configuration):
+ * `'Test' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.ts(7022)`.
+ * This issue is what the specialized recursive schema building methods fix.
+ * This fix comes at a cost: to make the recursive cases work, the `extends` clauses had to be removed.
+ * This means that mistakes declaring recursive schema often don't give compile errors in the schema.
+ * Additionally support for implicit construction had to be disabled.
+ * This means that new nested {@link Unhydrated} nodes can not be created like `new Test([[]])`.
+ * Instead the nested nodes must be created explicitly using the construction like`new Test([new Test([])])`.
+ *
+ * 4. It is using "POJO" mode since it's not explicitly declaring a new class.
+ * This means that if the schema generated d.ts files replace recursive references with `any`, breaking use of recursive schema across compilation boundaries.
+ * This is fixed by explicitly creating a class which extends the returned schema.
+ *
+ * All together, the fixed version looks like:
+ * ```typescript
+ * class Test extends sf.arrayRecursive("Test", [() => Test]) {} // Good
+ * ```
+ *
+ * Be very careful when declaring recursive schema.
+ * Due to the removed extends clauses, subtle mistakes will compile just fine but cause strange errors when the schema is used.
+ *
+ * For example if the square brackets around the allowed types are forgotten:
+ *
+ * ```typescript
+ * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * ```
+ * This schema will still compile, and some (but not all) usages of it may look like they work correctly while other usages will produce generally unintelligible compile errors.
+ * This issue can be partially mitigated using {@link ValidateRecursiveSchema}.
+ * @sealed @beta
  */
 export class SchemaFactoryRecursive<
 	TScope extends string,
@@ -283,7 +177,8 @@ export class SchemaFactoryRecursive<
 				 */
 				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 			},
-			false
+			false,
+			T
 		>;
 	}
 
@@ -342,7 +237,64 @@ export class SchemaFactoryRecursive<
 					[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
 				>;
 			},
-			false
+			false,
+			T
 		>;
 	}
 }
+
+/**
+ * Compile time check for validity of a recursive schema.
+ *
+ * @example
+ * ```typescript
+ * class Test extends sf.arrayRecursive("Test", [() => Test]) {}
+ * {
+ *     type _check = ValidateRecursiveSchema<typeof Test>;
+ * }
+ * ```
+ * @remarks
+ * The type of a recursive schema can be passed to this, and a compile error will be produced for some of the cases which the schema in malformed.
+ * This can be used to help mitigate the issue that recursive schema definitions are {@link Unenforced}.
+ * If an issue is encountered where a mistake in a recursive schema is made which produces an invalid schema but is not rejected by this checker,
+ * it should be considered a bug and this should be updated to handle that case (or have a disclaimer added to these docs that it misses that case).
+ * @privateRemarks
+ * There are probably mistakes this misses: it's hard to guess all the wrong things people will accidentally do and defend against them.
+ * Hopefully over time this can grow toward being robust, at least for common mistakes.
+ *
+ * This check duplicates logic that ideally would be entirely decided by the actual schema building methods.
+ * Therefore changes to those methods may require updating `ValidateRecursiveSchema`.
+ * @beta
+ */
+export type ValidateRecursiveSchema<
+	// Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as thats part of the requirements for the type to work across compilation boundaries correctly.
+	T extends TreeNodeSchemaClass<
+		// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
+		string,
+		// NodeKind: These are the NodeKinds which currently can be used recursively.
+		NodeKind.Array | NodeKind.Map | NodeKind.Object,
+		// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
+		TreeNode & WithType<T["identifier"]>,
+		// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
+		// These match whats defined in the methods on `SchemaFactoryRecursive` except they do not use `Unenforced`.
+		{
+			[NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<string, FieldSchema>
+				? InsertableObjectFromSchemaRecord<T["info"]>
+				: unknown;
+			[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
+				? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
+				: unknown;
+			[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
+				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
+				: unknown;
+		}[T["kind"]],
+		// ImplicitlyConstructable: recursive types are not implicitly constructable.
+		false,
+		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
+		{
+			[NodeKind.Object]: RestrictiveReadonlyRecord<string, FieldSchema>;
+			[NodeKind.Array]: ImplicitAllowedTypes;
+			[NodeKind.Map]: ImplicitAllowedTypes;
+		}[T["kind"]]
+	>,
+> = true;

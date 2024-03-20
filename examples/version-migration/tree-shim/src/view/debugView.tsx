@@ -5,9 +5,9 @@
 
 import React, { useEffect, useState } from "react";
 
-import type { IInventoryListAppModel } from "../modelInterfaces.js";
 // eslint-disable-next-line import/no-internal-modules
 import { InventoryList } from "../model/inventoryList.js";
+import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
 	model: IInventoryListAppModel;

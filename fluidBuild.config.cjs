@@ -107,7 +107,7 @@ module.exports = {
 			script: false,
 		},
 		"format": {
-			dependsOn: ["format:prettier", "format:biome"],
+			dependsOn: ["prettier:fix", "format:prettier", "format:biome"],
 			script: false,
 		},
 		"check:biome": [],
@@ -206,21 +206,10 @@ module.exports = {
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/test-utils/package.json",
-				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
-				"^azure/packages/azure-client/package.json",
-				"^azure/packages/azure-service-utils/package.json",
-				"^experimental/dds/tree2/package.json",
-				"^experimental/dds/sequence-deprecated/package.json",
-				"^experimental/framework/tree-react-api/package.json",
-				"^packages/common/.*/package.json",
-				"^packages/dds/.*/package.json",
-				"^packages/drivers/.*/package.json",
-				"^packages/framework/.*/package.json",
-				"^packages/loader/.*/package.json",
-				"^packages/runtime/.*/package.json",
-				"^packages/service-clients/.*/package.json",
-				"^packages/utils/.*/package.json",
-				"^packages/loader/container-loader/package.json",
+			],
+			"fluid-build-tasks-tsc": [
+				// TODO: AB#7460 fix tsconfig reference path match on Windows
+				"^packages/tools/devtools/devtools-view/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -230,7 +219,6 @@ module.exports = {
 				// These files all require a node shebang at the top of the file.
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
@@ -268,8 +256,8 @@ module.exports = {
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
-				// These packages use biome for formatting
-				"build-tools/",
+				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
+				".*",
 			],
 			"npm-package-json-scripts-args": [
 				// server/routerlicious and server/routerlicious/packages/routerlicious use
@@ -359,6 +347,7 @@ module.exports = {
 				"^experimental/PropertyDDS/",
 
 				// Tools packages that are not library packages
+				"^azure/packages/azure-local-service/",
 				"^packages/tools/fetch-tool/",
 				"^tools/test-tools/",
 
@@ -393,6 +382,7 @@ module.exports = {
 					"@fluidframework",
 					"fluid-framework",
 					"@fluid-internal/client-utils",
+					"@fluid-internal/mocha-test-setup",
 					"tinylicious",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
@@ -436,6 +426,7 @@ module.exports = {
 				["renamer", "renamer"],
 				["ts2esm", "ts2esm"],
 				["tsc-multi", "tsc-multi"],
+				["tinylicious", "tinylicious"],
 				["attw", "@arethetypeswrong/cli"],
 			],
 		},

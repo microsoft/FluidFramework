@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants.js";
-import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTree } from "../mergeTree.js";
+import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 import { countOperations, insertMarker, insertSegments, insertText } from "./testUtils.js";
