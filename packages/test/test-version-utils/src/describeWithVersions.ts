@@ -6,13 +6,20 @@
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
-	TestObjectProvider,
+	type TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
 import { driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { getVersionedTestObjectProvider } from "./compatUtils.js";
+import { getCompatVersionedTestObjectProviderFromApis } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
+import {
+	ensurePackageInstalled,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	getLoaderApi,
+	InstalledPackage,
+} from "./testApi.js";
 
 /**
  * Interface to hold the requested versions which should be installed
@@ -73,25 +80,41 @@ function createTestSuiteWithInstalledVersion(
 	timeoutMs: number = defaultTimeoutMs,
 ) {
 	return function (this: Mocha.Suite) {
-		let defaultProvider: TestObjectProvider;
+		let defaultProvider: TestObjectProviderWithVersionedLoad;
 		let resetAfterEach: boolean;
 		before(async function () {
 			this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
 
 			await installRequiredVersions(requiredVersions);
-			defaultProvider = await getVersionedTestObjectProvider(
-				pkgVersion, // baseVersion
-				pkgVersion, // loaderVersion
+			const baseVersion = pkgVersion;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const requiredVersion = requiredVersions.requestAbsoluteVersions![0];
+			const driverConfig = {
+				type: driver,
+				config: {
+					r11s: { r11sEndpointName },
+					odsp: { tenantIndex },
+				},
+			};
+			const dataRuntime = getDataRuntimeApi(baseVersion);
+			const dataRuntimeForLoad = getDataRuntimeApi(baseVersion, requiredVersion);
+			defaultProvider = await getCompatVersionedTestObjectProviderFromApis(
 				{
-					type: driver,
-					version: pkgVersion,
-					config: {
-						r11s: { r11sEndpointName },
-						odsp: { tenantIndex },
-					},
-				}, // driverConfig
-				pkgVersion, // runtimeVersion
-				pkgVersion, // dataRuntimeVersion
+					loader: getLoaderApi(baseVersion),
+					containerRuntime: getContainerRuntimeApi(baseVersion),
+					dataRuntime,
+					driver: getDriverApi(baseVersion),
+					dds: dataRuntime.dds,
+					driverForLoading: getDriverApi(baseVersion, requiredVersion),
+					loaderForLoading: getLoaderApi(baseVersion, requiredVersion),
+					containerRuntimeForLoading: getContainerRuntimeApi(
+						baseVersion,
+						requiredVersion,
+					),
+					dataRuntimeForLoading: dataRuntimeForLoad,
+					ddsForLoading: dataRuntimeForLoad.dds,
+				},
+				driverConfig,
 			);
 
 			Object.defineProperty(this, "__fluidTestProvider", { get: () => defaultProvider });

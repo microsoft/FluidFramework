@@ -46,46 +46,15 @@ describeInstallVersions(
 		registry,
 	};
 
-	/**
-	 * Create a container with old version of container runtime and data store runtime.
-	 */
-	const createOldContainer = async (): Promise<IContainer> => {
-		const oldDataRuntimeApi = getDataRuntimeApi(versionWithChunking);
-		const oldDataObjectFactory = new oldDataRuntimeApi.TestFluidObjectFactory(
-			[[mapId, oldDataRuntimeApi.dds.SharedMap.getFactory()]],
-			"default",
-		);
-
-		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
-			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new (ContainerRuntimeFactoryWithDefaultDataStore_Old as any)(
-			oldDataObjectFactory,
-			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
-			undefined,
-			{
-				// Chunking did not work with FlushMode.TurnBased,
-				// as it was breaking batching semantics. So we need
-				// to force the container to flush the ops as soon as
-				// they are produced.
-				flushMode: FlushMode.Immediate,
-				gcOptions: {
-					gcAllowed: true,
-				},
-			},
-		);
-
-		return provider.createContainer(oldRuntimeFactory);
-	};
-
 	const setupContainers = async () => {
-		const oldContainer = await createOldContainer();
+		const containerOnLatest = await provider.makeTestContainer(testContainerConfig);
+		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
+		newMap = await newDataObject.getSharedObject<ISharedMap>(mapId);
+
+		const oldContainer = await provider.loadTestContainer(testContainerConfig);
 		const oldDataObject =
 			await getContainerEntryPointBackCompat<ITestFluidObject>(oldContainer);
 		oldMap = await oldDataObject.getSharedObject<ISharedMap>(mapId);
-
-		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
-		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
-		newMap = await newDataObject.getSharedObject<ISharedMap>(mapId);
 
 		await provider.ensureSynchronized();
 	};
@@ -93,8 +62,7 @@ describeInstallVersions(
 	const generateStringOfSize = (sizeInBytes: number): string =>
 		new Array(sizeInBytes + 1).join("0");
 
-	// To be fixed in AB#6302 (the "old" container above is actually just an old runtime with the current version of loader/container)
-	it.skip("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
+	it("If an old container sends chunked ops, a new container is able to process them successfully", async () => {
 		await setupContainers();
 		const regularMessageSizeInBytes = 15 * 1024;
 		// Ops larger than 16k will end up chunked in older versions of fluid
