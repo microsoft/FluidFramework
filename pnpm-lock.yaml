@@ -2989,7 +2989,6 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
-      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
       '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
       '@fluidframework/routerlicious-driver': link:../../../../packages/drivers/routerlicious-driver
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
@@ -3004,6 +3003,7 @@ importers:
       '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
       '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
+      '@fluidframework/devtools': link:../../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server': 4.0.0
