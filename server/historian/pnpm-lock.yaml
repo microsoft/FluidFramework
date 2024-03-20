@@ -1335,6 +1335,7 @@ packages:
       nconf: 0.12.0
     transitivePeerDependencies:
       - supports-color
+    dev: false
 
   /@fluidframework/server-services-ordering-kafkanode/5.0.0-248224:
     resolution: {integrity: sha512-r5efW67Q9LI/rvi8EIEt9Zk0pmxpu1EPWlTgTsIDJtW9EVCSmDZor+G5zbo9/V73gO24JuUye5E1lx9mdbNRVQ==}
