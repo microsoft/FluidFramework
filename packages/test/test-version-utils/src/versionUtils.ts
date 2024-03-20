@@ -435,7 +435,7 @@ function internalSchema(
 				return `2.0.0-internal.7.4.7`;
 			}
 		}
-	} else {
+	} else if (semver.eq(publicVersion, "2.0.0") && semver.lt(internalVersion, "2.0.0")) {
 		if (requested === -1) {
 			return `^1.0.0-0`;
 		}
