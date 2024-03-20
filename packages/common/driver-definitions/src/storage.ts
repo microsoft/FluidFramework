@@ -239,6 +239,18 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 }
 
 /**
+ * This type is `unknown` but formally should only be what is passed as _T.
+ *
+ * @privateRemarks
+ * Use this where we don't want to create a type breaking change, have been
+ * handling `unknown` successfully, and will continue to do so. Once no longer
+ * alpha the more strict type can be used.
+ *
+ * @alpha
+ */
+export type UnknownShouldBe<_T> = unknown;
+
+/**
  * @alpha
  */
 export interface IDocumentDeltaConnection
@@ -313,10 +325,11 @@ export interface IDocumentDeltaConnection
 
 	/**
 	 * Submits a new signal to the server
+	 *
+	 * @privateRemarks
+	 * UnknownShouldBe<string> can be string if {@link IDocumentServiceFactory} becomes internal.
 	 */
-	// TODO: Use something other than `any`.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any, targetClientId?: string): void;
+	submitSignal: (content: UnknownShouldBe<string>, targetClientId?: string) => void;
 }
 
 /**

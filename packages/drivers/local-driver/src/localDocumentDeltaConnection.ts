@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import type { UnknownShouldBe } from "@fluidframework/driver-definitions";
 import {
 	IClient,
 	IConnect,
@@ -80,7 +81,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Submits a new signal to the server
 	 */
-	public submitSignal(message: any): void {
+	public submitSignal(message: UnknownShouldBe<string>): void {
 		this.emitMessages("submitSignal", [[message]]);
 	}
 

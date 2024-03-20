@@ -14,12 +14,14 @@ import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISentSignalMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import type { Socket } from 'socket.io-client';
+import { UnknownShouldBe } from '@fluidframework/driver-definitions';
 
 // @internal
 export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
@@ -50,7 +52,9 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected earlySignalHandler: (msg: ISignalMessage | ISignalMessage[]) => void;
     // (undocumented)
-    protected emitMessages(type: string, messages: IDocumentMessage[][]): void;
+    protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+    // (undocumented)
+    protected emitMessages(type: "submitSignal", messages: UnknownShouldBe<string>[][] | ISentSignalMessage[]): void;
     // (undocumented)
     static readonly eventsAlwaysForwarded: string[];
     // (undocumented)
@@ -82,7 +86,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected readonly socket: Socket;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(content: IDocumentMessage, targetClientId?: string): void;
+    submitSignal(content: UnknownShouldBe<string>, targetClientId?: string): void;
     get version(): string;
 }
 
