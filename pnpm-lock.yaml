@@ -10,11 +10,6 @@ overrides:
   '@oclif/core': ~2.4.0
   sharp: ^0.33.2
 
-patchedDependencies:
-  tsc-multi@1.1.0:
-    hash: 5vqev4kbz4ggrzgqvobqxx6cgq
-    path: patches/tsc-multi@1.1.0.patch
-
 importers:
 
   .:
@@ -3714,7 +3709,6 @@ importers:
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': workspace:~
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -3768,14 +3762,13 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
+      '@fluid-tools/build-cli': 0.34.0_fm2ot4uijanuclk6q664bxq22a
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -3784,7 +3777,7 @@ importers:
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
       jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
@@ -15299,6 +15292,70 @@ packages:
       '@fluid-tools/version-tools': 0.34.0
       '@fluidframework/build-tools': 0.34.0
       '@fluidframework/bundle-size-tools': 0.34.0
+      '@microsoft/api-extractor': 7.42.3
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.3.10
+      '@oclif/plugin-commands': 3.0.7
+      '@oclif/plugin-help': 6.0.7
+      '@oclif/plugin-not-found': 3.0.4
+      '@oclif/plugin-plugins': 3.9.4
+      '@oclif/test': 2.3.33
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0
+      async: 3.2.5
+      chalk: 2.4.2
+      danger: 11.3.0
+      date-fns: 2.30.0
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.0
+      inquirer: 8.2.6
+      jssm: 5.90.1
+      latest-version: 5.1.0
+      minimatch: 7.4.6
+      node-fetch: 2.7.0
+      npm-check-updates: 16.14.11
+      oclif: 4.0.4_bpztyfltmpuv6lhsgzfwtmxhte
+      prettier: 3.0.3
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      semver: 7.5.4
+      semver-utils: 1.1.4
+      simple-git: 3.21.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - astro-eslint-parser
+      - bluebird
+      - encoding
+      - esbuild
+      - eslint
+      - mem-fs
+      - supports-color
+      - svelte
+      - svelte-eslint-parser
+      - typescript
+      - uglify-js
+      - vue-eslint-parser
+      - webpack-cli
+    dev: true
+
+  /@fluid-tools/build-cli/0.34.0_fm2ot4uijanuclk6q664bxq22a:
+    resolution: {integrity: sha512-q9P1YRnGyGSg83++56BcbDHi4VkFEylyU/KtJCY8maPD7qIxwfZIcrNsradM0Reg+ISuv9zV/IiwFls1AyDJYw==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
+      '@fluidframework/bundle-size-tools': 0.34.0_webpack-cli@4.10.0
       '@microsoft/api-extractor': 7.42.3
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
