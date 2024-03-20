@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import {
-	IAppState,
+	type IAppState,
 	makeBubble,
 	randomColor,
 	type IBubble,
-	type ITreeClient,
+	type IClient,
 } from "@fluid-example/bubblebench-common";
-import type { TreeView } from "@fluidframework/tree";
+import type { InsertableTypedNode, TreeView } from "@fluidframework/tree";
 import { Client, type App, type Bubble } from "./schema.js";
 
 export class AppState implements IAppState {
@@ -35,7 +35,7 @@ export class AppState implements IAppState {
 
 	public applyEdits() {}
 
-	createInitialClientNode(numBubbles: number): ITreeClient {
+	createInitialClientNode(numBubbles: number): IClient {
 		const bubbles: IBubble[] = [];
 		// create and add initial bubbles to initial client json tree
 		for (let i = 0; i < numBubbles; i++) {
@@ -43,7 +43,7 @@ export class AppState implements IAppState {
 			bubbles.push(bubble);
 		}
 
-		const client: ITreeClient = {
+		const client: IClient = {
 			clientId: `${Math.random()}`,
 			color: randomColor(),
 			bubbles,
@@ -62,7 +62,9 @@ export class AppState implements IAppState {
 	}
 
 	public increaseBubbles() {
-		this.localClient.bubbles.insertAtEnd(makeBubble(this.width, this.height) as Bubble);
+		this.localClient.bubbles.insertAtEnd(
+			makeBubble(this.width, this.height) as InsertableTypedNode<typeof Bubble>,
+		);
 	}
 
 	public decreaseBubbles() {

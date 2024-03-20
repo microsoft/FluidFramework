@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IBubble, ITreeClient } from "@fluid-example/bubblebench-common";
+import type { IBubble, IClient } from "@fluid-example/bubblebench-common";
 import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
 
 const sf = new SchemaFactory("bubble-bench-simple-tree");
@@ -16,9 +16,7 @@ export class Bubble
 		vx: sf.number,
 		vy: sf.number,
 	})
-	implements IBubble
-{
-}
+	implements IBubble {}
 
 export class Client
 	extends sf.object("Client", {
@@ -26,9 +24,7 @@ export class Client
 		color: sf.string,
 		bubbles: sf.array("Bubbles", Bubble),
 	})
-	implements ITreeClient
-{
-}
+	implements IClient {}
 
 export class Clients extends sf.array("Clients", Client) {}
 

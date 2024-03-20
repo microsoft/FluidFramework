@@ -30,15 +30,6 @@ export interface IBubble {
 export interface IClient {
 	clientId: string;
 	color: string;
-	bubbles: IBubble[];
-}
-
-/**
- * @internal
- */
-export interface ITreeClient {
-	clientId: string;
-	color: string;
 	// Make the bubbles read-only, as SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
 	bubbles: readonly IBubble[];
 }
@@ -47,8 +38,8 @@ export interface ITreeClient {
  * @internal
  */
 export interface IAppState {
-	readonly localClient: IClient | ITreeClient;
-	readonly clients: IArrayish<IClient | ITreeClient>;
+	readonly localClient: IClient;
+	readonly clients: IArrayish<IClient>;
 	readonly width: number;
 	readonly height: number;
 	setSize(width?: number, height?: number);
