@@ -18,6 +18,7 @@ import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import { NodeId } from "./modularChangeTypes.js";
+import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -30,19 +31,13 @@ export interface FieldChangeHandler<
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (
-		childCodec: IJsonCodec<
-			NodeId,
-			JsonCompatibleReadOnly,
-			JsonCompatibleReadOnly,
-			ChangeEncodingContext
-		>,
 		revisionTagCodec: IJsonCodec<
 			RevisionTag,
 			EncodedRevisionTag,
 			EncodedRevisionTag,
 			ChangeEncodingContext
 		>,
-	) => ICodecFamily<TChangeset, ChangeEncodingContext>;
+	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
 	intoDelta(
 		change: TaggedChange<TChangeset>,
@@ -219,6 +214,12 @@ export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDet
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getBaseRevisions: () => RevisionTag[];
+}
+
+export interface FieldChangeEncodingContext {
+	readonly baseContext: ChangeEncodingContext;
+	encodeNode(nodeId: NodeId): JsonCompatibleReadOnly;
+	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 }
 
 /**

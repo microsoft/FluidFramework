@@ -10,7 +10,7 @@ import {
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, fail } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -56,10 +56,7 @@ export function testSnapshots() {
 		useSnapshotDirectory("optional-field");
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
-		const family = makeOptionalFieldCodecFamily(
-			TestChange.codec,
-			new RevisionTagCodec(snapshotCompressor),
-		);
+		const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
 
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
@@ -67,7 +64,11 @@ export function testSnapshots() {
 				for (const { name, change } of changesets) {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
-							originatorId: snapshotCompressor.localSessionId,
+							baseContext: {
+								originatorId: snapshotCompressor.localSessionId,
+							},
+							encodeNode: () => fail(""),
+							decodeNode: () => fail(""),
 						});
 						takeJsonSnapshot(encoded);
 					});

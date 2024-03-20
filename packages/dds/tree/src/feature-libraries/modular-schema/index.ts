@@ -40,6 +40,7 @@ export {
 	RelevantRemovedRootsFromChild,
 	ToDelta,
 	NodeExistenceState,
+	FieldChangeEncodingContext,
 } from "./fieldChangeHandler.js";
 export {
 	FieldChange,

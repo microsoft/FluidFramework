@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 
-import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
+import { JsonCompatibleReadOnly, brand, fail } from "../../../util/index.js";
 import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import {
 	OptionalChangeset,
@@ -16,8 +16,8 @@ import {
 } from "../../../feature-libraries/optional-field/index.js";
 import { IJsonCodec } from "../../../codec/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
+import { FieldChangeEncodingContext, NodeId } from "../../../feature-libraries/index.js";
 import { Change } from "./optionalFieldUtils.js";
-import { NodeId } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const nodeChange1: NodeId = { localId: brand(0) };
 
@@ -64,24 +64,27 @@ const clearEmpty = Change.reserve("self", brand(3));
 export function testCodecs() {
 	describe("Codecs", () => {
 		const sessionId = { originatorId: "session1" as SessionId };
+		const context: FieldChangeEncodingContext = {
+			baseContext: sessionId,
+			encodeNode: () => fail(""),
+			decodeNode: () => fail(""),
+		};
+
 		const encodingTestData: EncodingTestData<
 			OptionalChangeset,
 			unknown,
-			ChangeEncodingContext
+			FieldChangeEncodingContext
 		> = {
 			successes: [
-				["set from empty", change1, sessionId],
-				["set from non-empty", change2, sessionId],
-				["child change", changeWithChildChange, sessionId],
-				["field set with child change", change1WithChildChange, sessionId], // Note: should only get sent over the wire when using transaction APIs.
-				["undone field change", change2Inverted, sessionId],
-				["clear from empty", clearEmpty, sessionId],
+				["set from empty", change1, context],
+				["set from non-empty", change2, context],
+				["child change", changeWithChildChange, context],
+				["field set with child change", change1WithChildChange, context], // Note: should only get sent over the wire when using transaction APIs.
+				["undone field change", change2Inverted, context],
+				["clear from empty", clearEmpty, context],
 			],
 		};
 
-		makeEncodingTestSuite(
-			makeOptionalFieldCodecFamily(childCodec1, testRevisionTagCodec),
-			encodingTestData,
-		);
+		makeEncodingTestSuite(makeOptionalFieldCodecFamily(testRevisionTagCodec), encodingTestData);
 	});
 }

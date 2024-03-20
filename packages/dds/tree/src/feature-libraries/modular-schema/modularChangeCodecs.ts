@@ -16,7 +16,16 @@ import {
 	RevisionTag,
 	ChangeAtomIdMap,
 } from "../../core/index.js";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
+import {
+	brand,
+	fail,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	JsonCompatibleReadOnly,
+	Mutable,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util/index.js";
 import {
 	ICodecOptions,
 	IJsonCodec,
@@ -30,12 +39,12 @@ import {
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	FieldChangeMap,
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
+	NodeId,
 } from "./modularChangeTypes.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { genericFieldKind } from "./genericFieldKind.js";
@@ -48,6 +57,7 @@ import {
 	EncodedNodeChangeset,
 	EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
+import { FieldChangeEncodingContext } from "./fieldChangeHandler.js";
 
 export function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
@@ -66,21 +76,8 @@ export function makeV0Codec(
 	EncodedModularChangeset,
 	ChangeEncodingContext
 > {
-	const nodeChangesetCodec: IJsonCodec<
-		NodeChangeset,
-		EncodedNodeChangeset,
-		EncodedNodeChangeset,
-		ChangeEncodingContext
-	> = {
-		encode: encodeNodeChangesForJson,
-		decode: decodeNodeChangesetFromJson,
-		encodedSchema: EncodedNodeChangeset,
-	};
-
 	const getMapEntry = (field: FieldKindWithEditor) => {
-		const codec = field.changeHandler
-			.codecsFactory(makeChangeAtomIdCodec(revisionTagCodec), revisionTagCodec)
-			.resolve(0);
+		const codec = field.changeHandler.codecsFactory(revisionTagCodec).resolve(0);
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
@@ -93,7 +90,7 @@ export function makeV0Codec(
 		FieldChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		FieldChangeEncodingContext
 	>;
 
 	const fieldChangesetCodecs: Map<
@@ -122,8 +119,29 @@ export function makeV0Codec(
 	function encodeFieldChangesForJson(
 		change: FieldChangeMap,
 		context: ChangeEncodingContext,
+		nodeChanges: ChangeAtomIdMap<NodeChangeset>,
+	): EncodedFieldChangeMap {
+		const fieldContext: FieldChangeEncodingContext = {
+			baseContext: context,
+
+			encodeNode: (nodeId: NodeId): JsonCompatibleReadOnly => {
+				const node = tryGetFromNestedMap(nodeChanges, nodeId.revision, nodeId.localId);
+				assert(node !== undefined, "Unknown node ID");
+				return encodeNodeChangesForJson(node, fieldContext);
+			},
+
+			decodeNode: () => fail("Should not decode nodes during field encoding"),
+		};
+
+		return encodeFieldChangesForJsonI(change, fieldContext);
+	}
+
+	function encodeFieldChangesForJsonI(
+		change: FieldChangeMap,
+		context: FieldChangeEncodingContext,
 	): EncodedFieldChangeMap {
 		const encodedFields: EncodedFieldChangeMap = [];
+
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
 			const encodedChange = codec.json.encode(fieldChange.change, context);
@@ -146,13 +164,13 @@ export function makeV0Codec(
 
 	function encodeNodeChangesForJson(
 		change: NodeChangeset,
-		context: ChangeEncodingContext,
+		context: FieldChangeEncodingContext,
 	): EncodedNodeChangeset {
 		const encodedChange: EncodedNodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = change;
 
 		if (fieldChanges !== undefined) {
-			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges, context);
+			encodedChange.fieldChanges = encodeFieldChangesForJsonI(fieldChanges, context);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -165,6 +183,29 @@ export function makeV0Codec(
 	function decodeFieldChangesFromJson(
 		encodedChange: EncodedFieldChangeMap,
 		context: ChangeEncodingContext,
+		idAllocator: IdAllocator,
+	): [FieldChangeMap, ChangeAtomIdMap<NodeChangeset>] {
+		const decodedNodes: ChangeAtomIdMap<NodeChangeset> = new Map();
+		const fieldContext: FieldChangeEncodingContext = {
+			baseContext: context,
+
+			encodeNode: () => fail("Should not encode nodes during field decoding"),
+
+			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
+				const node = decodeNodeChangesetFromJson(encodedNode, fieldContext);
+				const nodeId: NodeId = { localId: brand(idAllocator.allocate()) };
+				setInNestedMap(decodedNodes, nodeId.revision, nodeId.localId, node);
+				return nodeId;
+			},
+		};
+
+		const decodedFields = decodeFieldChangesFromJsonI(encodedChange, fieldContext);
+		return [decodedFields, decodedNodes];
+	}
+
+	function decodeFieldChangesFromJsonI(
+		encodedChange: EncodedFieldChangeMap,
+		context: FieldChangeEncodingContext,
 	): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
@@ -187,13 +228,13 @@ export function makeV0Codec(
 
 	function decodeNodeChangesetFromJson(
 		encodedChange: EncodedNodeChangeset,
-		context: ChangeEncodingContext,
+		context: FieldChangeEncodingContext,
 	): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
 		const { fieldChanges, nodeExistsConstraint } = encodedChange;
 
 		if (fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges, context);
+			decodedChange.fieldChanges = decodeFieldChangesFromJsonI(fieldChanges, context);
 		}
 
 		if (nodeExistsConstraint !== undefined) {
@@ -318,19 +359,29 @@ export function makeV0Codec(
 					change.revisions === undefined
 						? change.revisions
 						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context),
+				changes: encodeFieldChangesForJson(
+					change.fieldChanges,
+					context,
+					change.nodeChanges,
+				),
 				builds: encodeDetachedNodes(change.builds, context),
 				refreshers: encodeDetachedNodes(change.refreshers, context),
 			};
 		},
+
 		decode: (change, context) => {
 			const encodedChange = change as unknown as EncodedModularChangeset;
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
 
-				// XXX
-				nodeChanges: new Map(),
+			const [fieldChanges, nodeChanges] = decodeFieldChangesFromJson(
+				encodedChange.changes,
+				context,
+				idAllocatorFromMaxId(encodedChange.maxId),
+			);
+			const decoded: Mutable<ModularChangeset> = {
+				fieldChanges,
+				nodeChanges,
 			};
+
 			if (encodedChange.builds !== undefined) {
 				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
 			}

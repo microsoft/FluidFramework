@@ -4,11 +4,13 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import {
+	FieldChangeEncodingContext,
+	SequenceField as SF,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { Changeset } from "../../../feature-libraries/sequence-field/index.js";
-import { ChangeEncodingContext } from "../../../core/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, fail } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
@@ -20,23 +22,33 @@ import {
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases } from "./testEdits.js";
 
-type TestCase = [string, Changeset<TestChange>, ChangeEncodingContext];
+type TestCase = [string, Changeset<TestChange>, FieldChangeEncodingContext];
 
 const sessionId = { originatorId: "session1" as SessionId };
-const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, ChangeEncodingContext> = {
+const context: FieldChangeEncodingContext = {
+	baseContext: sessionId,
+	encodeNode: () => fail(""),
+	decodeNode: () => fail(""),
+};
+
+const encodingTestData: EncodingTestData<
+	Changeset<TestChange>,
+	unknown,
+	FieldChangeEncodingContext
+> = {
 	successes: [
-		["with child change", Change.modify(1, TestChange.mint([], 1)), sessionId],
-		["without child change", Change.remove(2, 2), sessionId],
+		["with child change", Change.modify(1, TestChange.mint([], 1)), context],
+		["without child change", Change.remove(2, 2), context],
 		[
 			"with repair data",
 			Change.revive(0, 1, { revision: mintRevisionTag(), localId: brand(10) }),
-			sessionId,
+			context,
 		],
-		...Object.entries(cases).map<TestCase>(([name, change]) => [name, change, sessionId]),
+		...Object.entries(cases).map<TestCase>(([name, change]) => [name, change, context]),
 		...generatePopulatedMarks(testIdCompressor).map<TestCase>((mark) => [
 			"type" in mark ? mark.type : "NoOp",
 			[mark],
-			sessionId,
+			context,
 		]),
 	],
 };
@@ -44,7 +56,7 @@ const encodingTestData: EncodingTestData<Changeset<TestChange>, unknown, ChangeE
 export function testCodecs() {
 	describe("Codecs", () => {
 		makeEncodingTestSuite(
-			SF.sequenceFieldChangeCodecFactory(TestChange.codec, testRevisionTagCodec),
+			SF.sequenceFieldChangeCodecFactory(testRevisionTagCodec),
 			encodingTestData,
 		);
 	});

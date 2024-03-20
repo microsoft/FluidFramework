@@ -16,6 +16,7 @@ import {
 } from "../../core/rebase/index.js";
 import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange.js";
 import { mintRevisionTag } from "../utils.js";
+import { brand } from "../../index.js";
 
 function newCommit(
 	intention: number | number[],
@@ -130,8 +131,20 @@ describe("rebaseBranch", () => {
 		const newPath = getPath(n3, n5_1);
 		assertChanges(
 			newPath,
-			{ inputContext: [1, 2, 3], intentions: [4], outputContext: [1, 2, 3, 4] },
-			{ inputContext: [1, 2, 3, 4], intentions: [5], outputContext: [1, 2, 3, 4, 5] },
+			{
+				// XXX
+				localId: brand(0),
+				inputContext: [1, 2, 3],
+				intentions: [4],
+				outputContext: [1, 2, 3, 4],
+			},
+			{
+				// XXX
+				localId: brand(0),
+				inputContext: [1, 2, 3, 4],
+				intentions: [5],
+				outputContext: [1, 2, 3, 4, 5],
+			},
 		);
 		assertOutputContext(sourceChange, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
@@ -158,8 +171,20 @@ describe("rebaseBranch", () => {
 		const newPath = getPath(n2, n5_1);
 		assertChanges(
 			newPath,
-			{ inputContext: [1, 2], intentions: [4], outputContext: [1, 2, 4] },
-			{ inputContext: [1, 2, 4], intentions: [5], outputContext: [1, 2, 4, 5] },
+			{
+				// XXX
+				localId: brand(0),
+				inputContext: [1, 2],
+				intentions: [4],
+				outputContext: [1, 2, 4],
+			},
+			{
+				// XXX
+				localId: brand(0),
+				inputContext: [1, 2, 4],
+				intentions: [5],
+				outputContext: [1, 2, 4, 5],
+			},
 		);
 		assertOutputContext(sourceChange, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
@@ -187,6 +212,8 @@ describe("rebaseBranch", () => {
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n2, n4);
 		const newPath = getPath(n3, n5_1);
 		assertChanges(newPath, {
+			// XXX
+			localId: brand(0),
 			inputContext: [1, 2, 3],
 			intentions: [5],
 			outputContext: [1, 2, 3, 5],
@@ -217,6 +244,8 @@ describe("rebaseBranch", () => {
 		} = rebaseBranch(mintRevisionTag, new TestChangeRebaser(), n5, n4);
 		const newPath = getPath(n4, n5_1);
 		assertChanges(newPath, {
+			// XXX
+			localId: brand(0),
 			inputContext: [1, 2, 3, 4],
 			intentions: [5],
 			outputContext: [1, 2, 3, 4, 5],

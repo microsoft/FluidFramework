@@ -9,6 +9,7 @@ import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import { FieldChangeEncodingContext, NodeId } from "../index.js";
 import {
 	Attach,
 	AttachAndDetach,
@@ -27,12 +28,6 @@ import { Changeset as ChangesetSchema, Encoded } from "./format.js";
 import { isNoopMark } from "./utils.js";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(
-	childCodec: IJsonCodec<
-		TNodeChange,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -40,16 +35,11 @@ export const sequenceFieldChangeCodecFactory = <TNodeChange>(
 		ChangeEncodingContext
 	>,
 ) =>
-	makeCodecFamily<Changeset<TNodeChange>, ChangeEncodingContext>([
-		[0, makeV0Codec(childCodec, revisionTagCodec)],
+	makeCodecFamily<Changeset<TNodeChange>, FieldChangeEncodingContext>([
+		[0, makeV0Codec(revisionTagCodec)],
 	]);
+
 function makeV0Codec<TNodeChange>(
-	childCodec: IJsonCodec<
-		TNodeChange,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -60,7 +50,7 @@ function makeV0Codec<TNodeChange>(
 	Changeset<TNodeChange>,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	ChangeEncodingContext
+	FieldChangeEncodingContext
 > {
 	const changeAtomIdCodec = makeChangeAtomIdCodec(revisionTagCodec);
 	const markEffectCodec: IJsonCodec<
@@ -296,7 +286,7 @@ function makeV0Codec<TNodeChange>(
 	return {
 		encode: (
 			changeset: Changeset<TNodeChange>,
-			context: ChangeEncodingContext,
+			context: FieldChangeEncodingContext,
 		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
@@ -304,13 +294,14 @@ function makeV0Codec<TNodeChange>(
 					count: mark.count,
 				};
 				if (!isNoopMark(mark)) {
-					encodedMark.effect = markEffectCodec.encode(mark, context);
+					encodedMark.effect = markEffectCodec.encode(mark, context.baseContext);
 				}
 				if (mark.cellId !== undefined) {
-					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context);
+					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					encodedMark.changes = childCodec.encode(mark.changes, context);
+					// XXX
+					encodedMark.changes = context.encodeNode(mark.changes as NodeId);
 				}
 				jsonMarks.push(encodedMark);
 			}
@@ -318,7 +309,7 @@ function makeV0Codec<TNodeChange>(
 		},
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: ChangeEncodingContext,
+			context: FieldChangeEncodingContext,
 		): Changeset<TNodeChange> => {
 			const marks: Changeset<TNodeChange> = [];
 			for (const mark of changeset) {
@@ -327,18 +318,23 @@ function makeV0Codec<TNodeChange>(
 				};
 
 				if (mark.effect !== undefined) {
-					Object.assign(decodedMark, markEffectCodec.decode(mark.effect, context));
+					Object.assign(
+						decodedMark,
+						markEffectCodec.decode(mark.effect, context.baseContext),
+					);
 				}
 				if (mark.cellId !== undefined) {
-					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context);
+					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					decodedMark.changes = childCodec.decode(mark.changes, context);
+					// XXX
+					decodedMark.changes = context.decodeNode(mark.changes) as TNodeChange;
 				}
 				marks.push(decodedMark);
 			}
 			return marks;
 		},
-		encodedSchema: ChangesetSchema(childCodec.encodedSchema ?? Type.Any()),
+		// XXX
+		encodedSchema: ChangesetSchema(Type.Any()),
 	};
 }

@@ -19,9 +19,10 @@ import {
 } from "../core/index.js";
 import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
+import { NodeId } from "../feature-libraries/index.js";
 import { deepFreeze } from "./utils.js";
 
-export interface NonEmptyTestChange {
+export interface NonEmptyTestChange extends NodeId {
 	/**
 	 * Identifies the document state that the change should apply to.
 	 * Represented as the concatenation of all previous intentions.
@@ -41,7 +42,7 @@ export interface NonEmptyTestChange {
 	intentions: number[];
 }
 
-export interface EmptyTestChange {
+export interface EmptyTestChange extends NodeId {
 	intentions: [];
 }
 
@@ -56,6 +57,8 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
+		// XXX
+		localId: brand(0),
 		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
@@ -105,6 +108,8 @@ function composeList(changes: TestChange[], verify: boolean = true): TestChange 
 	}
 	if (inputContext !== undefined) {
 		return {
+			// XXX
+			localId: brand(0),
 			inputContext,
 			intentions,
 			outputContext: outputContext ?? fail(),
@@ -126,6 +131,8 @@ function getArrayWithoutUndefined<T>(array: (T | undefined)[]): T[] {
 function invert(change: TestChange): TestChange {
 	if (isNonEmptyChange(change)) {
 		return {
+			// XXX
+			localId: brand(0),
 			inputContext: change.outputContext,
 			outputContext: change.inputContext,
 			intentions: change.intentions.map((i) => -i).reverse(),
@@ -151,6 +158,8 @@ function rebase(
 			// Rebasing should only occur between two changes with the same input context
 			assert.deepEqual(change.inputContext, over.inputContext);
 			return {
+				// XXX
+				localId: brand(0),
 				inputContext: over.outputContext,
 				outputContext: composeIntentions(over.outputContext, change.intentions),
 				intentions: change.intentions,
@@ -200,7 +209,12 @@ export interface AnchorRebaseData {
 	intentions: number[];
 }
 
-const emptyChange: TestChange = { intentions: [] };
+const emptyChange: TestChange = {
+	// XXX
+	localId: brand(0),
+	intentions: [],
+};
+
 const codec: IJsonCodec<
 	TestChange,
 	JsonCompatibleReadOnly,
@@ -236,7 +250,13 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	}
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change) ?? { intentions: [] };
+		return (
+			rebase(change, over.change) ?? {
+				// XXX
+				localId: brand(0),
+				intentions: [],
+			}
+		);
 	}
 }
 

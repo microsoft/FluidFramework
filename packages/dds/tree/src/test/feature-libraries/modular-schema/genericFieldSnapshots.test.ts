@@ -10,6 +10,7 @@ import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { snapshotSessionId } from "../../snapshots/testTrees.js";
+import { fail } from "../../../index.js";
 
 const nodeChange = TestChange.mint([], 1);
 const testChangesets: { name: string; change: GenericChangeset<TestChange> }[] = [
@@ -34,14 +35,18 @@ const testChangesets: { name: string; change: GenericChangeset<TestChange> }[] =
 export function testSnapshots() {
 	describe("Snapshots", () => {
 		useSnapshotDirectory("generic-field");
-		const family = makeGenericChangeCodec(TestChange.codec);
+		const family = makeGenericChangeCodec();
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
 				const codec = family.resolve(version);
 				for (const { name, change } of testChangesets) {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
-							originatorId: snapshotSessionId,
+							baseContext: {
+								originatorId: snapshotSessionId,
+							},
+							encodeNode: () => fail(""),
+							decodeNode: () => fail(""),
 						});
 						takeJsonSnapshot(encoded);
 					});
