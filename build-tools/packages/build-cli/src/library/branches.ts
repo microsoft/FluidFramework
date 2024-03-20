@@ -9,6 +9,7 @@ import * as semver from "semver";
 import { Context } from "./context";
 
 import {
+	DEFAULT_PRERELEASE_IDENTIFIER,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionChangeTypeExtended,
@@ -132,7 +133,11 @@ export function generateReleaseBranchName(
 
 	let branchVersion: string;
 	if (schemeIsInternal === true) {
-		branchVersion = fromInternalScheme(version)[1].version;
+		const prereleaseId = fromInternalScheme(version, true)[2];
+		branchVersion =
+			prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER
+				? fromInternalScheme(version)[1].version
+				: version;
 	} else if (scheme === "virtualPatch") {
 		branchVersion = fromVirtualPatchScheme(version).version;
 	} else {
@@ -142,7 +147,12 @@ export function generateReleaseBranchName(
 	if (isReleaseGroup(releaseGroup)) {
 		if (releaseGroup === "client") {
 			if (schemeIsInternal) {
-				branchPath.push("v2int");
+				const prereleaseId = fromInternalScheme(version, true)[2];
+				// Checking the prerelease ID is necessary because we used "v2int" instead of "internal" in branch names. This
+				// was a bad decision in retrospect, but we're stuck with it for now.
+				branchPath.push(
+					prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER ? "v2int" : releaseGroup,
+				);
 			}
 		} else {
 			branchPath.push(releaseGroup);
@@ -151,11 +161,23 @@ export function generateReleaseBranchName(
 		branchPath.push(PackageName.getUnscopedName(releaseGroup));
 	}
 
-	const releaseBranchVersion =
-		scheme === "virtualPatch"
-			? toVirtualPatchScheme(`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`)
-					.version
-			: `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
+	let releaseBranchVersion: string;
+	if (schemeIsInternal) {
+		const [publicVersion, internalVersion, prereleaseId] = fromInternalScheme(version, true);
+		releaseBranchVersion =
+			prereleaseId === DEFAULT_PRERELEASE_IDENTIFIER
+				? `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`
+				: `${publicVersion.version}-${prereleaseId}.${semver.major(
+						internalVersion,
+				  )}.${semver.minor(internalVersion)}`;
+	} else if (scheme === "virtualPatch") {
+		releaseBranchVersion = toVirtualPatchScheme(
+			`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
+		).version;
+	} else {
+		releaseBranchVersion = `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`;
+	}
+
 	branchPath.push(releaseBranchVersion);
 
 	const releaseBranch = branchPath.join("/");

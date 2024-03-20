@@ -129,6 +129,12 @@ describe("generateReleaseBranchName", () => {
 		assert.equal(actual, expected);
 	});
 
+	it("Fluid RC version scheme", () => {
+		const actual = generateReleaseBranchName(MonoRepoKind.Client, "2.0.0-rc.1.0.0");
+		const expected = "release/client/2.0.0-rc.1.0";
+		assert.equal(actual, expected);
+	});
+
 	it("Independent package with standard semver", () => {
 		const actual = generateReleaseBranchName("@fluidframework/build-common", "1.2.1");
 		const expected = "release/build-common/1.2";
