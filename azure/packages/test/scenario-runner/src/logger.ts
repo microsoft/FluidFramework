@@ -6,16 +6,16 @@ import crypto from "crypto";
 import fs from "node:fs";
 import path from "node:path";
 
-import { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { type ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import type { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { getMainEntryPointForPackage } from "@fluid-private/test-version-utils";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import {
-	ScenarioRunnerTelemetryEventNames,
+	type ScenarioRunnerTelemetryEventNames,
 	getAzureClientConnectionConfigFromEnv,
 } from "./utils.js";
 
