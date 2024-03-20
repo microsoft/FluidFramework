@@ -665,7 +665,7 @@ export const handlers: Handler[] = [
 					}
 					const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
 					const previousUse = projectMap.get(configFile);
-					if (previousUse) {
+					if (previousUse !== undefined) {
 						return `'${previousUse}' and '${script}' tasks share use of ${configFile}`;
 					}
 					projectMap.set(configFile, script);
