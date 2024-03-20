@@ -8,10 +8,10 @@ import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
 import {
-	getRedisClusterRetryStrategy,
-	getRedisClient,
-} from "@fluidframework/server-services-utils";
-import { BaseTelemetryProperties, Lumberjack, LumberEventName } from "@fluidframework/server-services-telemetry";
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
 import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -75,6 +75,7 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly io: Server,
 		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -180,7 +181,11 @@ class SocketIoServer implements core.IWebSocketServer {
 					}
 				}
 				if (n + 1 < connectionCount) {
-					metricForTimeTaken.error(`Graceful shutdown finished incompletely. Missed ${connectionCount - n - 1} connections.`);
+					metricForTimeTaken.error(
+						`Graceful shutdown finished incompletely. Missed ${
+							connectionCount - n - 1
+						} connections.`,
+					);
 				} else {
 					metricForTimeTaken.success("Graceful shutdown finished");
 				}
@@ -256,13 +261,10 @@ export function create(
 		ioSetup(io);
 	}
 
-<<<<<<< HEAD
-	return new SocketIoServer(io, pub, sub, socketIoConfig);
-=======
 	return new SocketIoServer(
 		io,
 		redisClientConnectionManagerForPub,
 		redisClientConnectionManagerForSub,
+		socketIoConfig,
 	);
->>>>>>> e8b2dc1b606dbf2b66195c44b94844c480dec2dd
 }
