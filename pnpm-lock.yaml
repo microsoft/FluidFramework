@@ -10,11 +10,6 @@ overrides:
   '@oclif/core': ~2.4.0
   sharp: ^0.33.2
 
-patchedDependencies:
-  tsc-multi@1.1.0:
-    hash: 5vqev4kbz4ggrzgqvobqxx6cgq
-    path: patches/tsc-multi@1.1.0.patch
-
 importers:
 
   .:
