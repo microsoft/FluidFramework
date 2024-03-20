@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import type {
 	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
 } from "@fluidframework/id-compressor";
-import {
-	MockFluidDataStoreRuntime,
+import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type {
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**
  * @internal

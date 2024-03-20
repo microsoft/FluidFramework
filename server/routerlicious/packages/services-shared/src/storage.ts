@@ -249,6 +249,8 @@ export class DocumentStorage implements IDocumentStorage {
 			// summary is a service summary. However, initial summary _is_ a valid parent in this scenario.
 			validParentSummaries: [initialSummaryVersionId],
 			isCorrupt: false,
+			protocolHead: undefined,
+			checkpointTimestamp: Date.now(),
 		};
 
 		const session: ISession = {

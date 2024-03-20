@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint max-nested-callbacks: [0, 0] */
 const InMemoryByValue = require("../../src/materialized_history_service/query_pipeline/filtering/in_memory_by_value");
 const { OperationError } = require("@fluid-experimental/property-common");

@@ -4,9 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
-import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -15,8 +13,19 @@ import {
 	IResponse,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import {
+	IChannel,
+	IChannelServices,
+	IChannelStorageService,
+	IDeltaConnection,
+	IDeltaHandler,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -27,25 +36,16 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	IChannel,
-	IFluidDataStoreRuntime,
-	IDeltaConnection,
-	IDeltaHandler,
-	IChannelStorageService,
-	IChannelServices,
-} from "@fluidframework/datastore-definitions";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import {
 	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { MockDeltaManager } from "./mockDeltas";
-import { MockHandle } from "./mockHandle";
+import { MockDeltaManager } from "./mockDeltas.js";
+import { MockHandle } from "./mockHandle.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -796,6 +796,8 @@ export class MockFluidDataStoreRuntime
 	public createChannel(id: string, type: string): IChannel {
 		return null as any as IChannel;
 	}
+
+	public addChannel(channel: IChannel): void {}
 
 	public get isAttached(): boolean {
 		return this.attachState !== AttachState.Detached;

@@ -6,29 +6,29 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { strict as assert } from "node:assert";
-import { stub } from "sinon";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { OdspErrorTypes, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import {
-	createChildLogger,
-	MockLogger,
-	type ITelemetryLoggerExt,
-	type IFluidErrorBase,
-} from "@fluidframework/telemetry-utils";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { EpochTracker } from "../epochTracker";
-import { HostStoragePolicyInternal } from "../contracts";
-import * as fetchSnapshotImport from "../fetchSnapshot";
-import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils";
-import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId } from "../odspPublicUtils";
-import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
-import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
-import { convertToCompactSnapshot } from "../compactSnapshotWriter";
-import { createResponse } from "./mockFetch";
+import { ISnapshot } from "@fluidframework/driver-definitions";
+import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	type IFluidErrorBase,
+	type ITelemetryLoggerExt,
+	MockLogger,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
+import { stub } from "sinon";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
+import { HostStoragePolicyInternal } from "../contracts.js";
+import { createOdspUrl } from "../createOdspUrl.js";
+import { EpochTracker } from "../epochTracker.js";
+import * as fetchSnapshotImport from "../fetchSnapshot.js";
+import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
+import { getHashedDocumentId } from "../odspPublicUtils.js";
+import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
+import { createResponse } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

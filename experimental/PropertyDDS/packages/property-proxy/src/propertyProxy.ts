@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { PathHelper } from "@fluid-experimental/property-changeset";
 import {
-	PropertyFactory,
+	ArrayProperty,
 	BaseProperty,
 	ContainerProperty,
-	ValueProperty,
-	SetProperty,
 	MapProperty,
-	ArrayProperty,
+	PropertyFactory,
+	SetProperty,
+	ValueProperty,
 } from "@fluid-experimental/property-properties";
-import { PathHelper } from "@fluid-experimental/property-changeset";
 
 import { arrayProxyHandler } from "./arrayProxyHandler";
 import { proxyHandler } from "./proxyHandler";
@@ -23,8 +23,8 @@ import { ComponentSet } from "./componentSet";
 import { PropertyProxyErrors } from "./errors";
 
 import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
+import { PropertyTypes, ProxyType, ReferenceType } from "./interfaces";
 import { forceType } from "./utilities";
-import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
 
 /**
  * This symbol is available on properties proxied via {@link PropertyProxy.proxify}.

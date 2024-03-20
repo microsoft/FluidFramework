@@ -5,16 +5,16 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events/index.js";
-import { TreeStoredSchemaSubscription, FieldKey } from "../schema-stored/index.js";
+import { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/index.js";
 import {
 	Anchor,
 	AnchorSet,
 	DetachedField,
-	detachedFieldAsKey,
 	ITreeCursor,
 	ITreeCursorSynchronous,
-	rootField,
 	UpPath,
+	detachedFieldAsKey,
+	rootField,
 } from "../tree/index.js";
 import type { IEditableForest } from "./editableForest.js";
 

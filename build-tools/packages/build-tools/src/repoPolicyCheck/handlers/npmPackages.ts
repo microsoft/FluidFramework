@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as child_process from "child_process";
 import fs from "fs";
 import { EOL as newline } from "os";
@@ -11,7 +12,7 @@ import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
 import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import { getFluidBuildConfig } from "../../common/fluidUtils";
+import { loadFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 import { PackageNamePolicyConfig, ScriptRequirement } from "../../common/fluidRepo";
 
@@ -36,7 +37,10 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 /**
  * Whether the package is known to be a publicly published package for general use.
  */
-export function packageMustPublishToNPM(name: string, config: PackageNamePolicyConfig): boolean {
+export function packageMustPublishToNPM(
+	name: string,
+	config: PackageNamePolicyConfig,
+): boolean {
 	const mustPublish = config.mustPublish.npm;
 
 	if (mustPublish === undefined) {
@@ -138,7 +142,7 @@ export function packageMayChooseToPublishToInternalFeedOnly(
  * private to prevent publishing.
  */
 export function packageMustBePrivate(name: string, root: string): boolean {
-	const config = getFluidBuildConfig(root).policy?.packageNames;
+	const config = loadFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -157,7 +161,7 @@ export function packageMustBePrivate(name: string, root: string): boolean {
  * If we know a package needs to publish somewhere, then it must not be marked private to allow publishing.
  */
 export function packageMustNotBePrivate(name: string, root: string): boolean {
-	const config = getFluidBuildConfig(root).policy?.packageNames;
+	const config = loadFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages must be private
@@ -173,7 +177,7 @@ export function packageMustNotBePrivate(name: string, root: string): boolean {
  * Whether the package either belongs to a known Fluid package scope or is a known unscoped package.
  */
 function packageIsFluidPackage(name: string, root: string): boolean {
-	const config = getFluidBuildConfig(root).policy?.packageNames;
+	const config = loadFluidBuildConfig(root).policy?.packageNames;
 
 	if (config === undefined) {
 		// Unless configured, all packages are considered Fluid packages
@@ -673,10 +677,7 @@ export const handlers: Handler[] = [
 			const expectTrademark = fs.existsSync(path.join(packageDir, "Dockerfile"));
 			if (!readmeInfo.exists) {
 				if (expectTrademark) {
-					writeFile(
-						readmeInfo.filePath,
-						`${expectedTitle}${newline}${newline}${trademark}`,
-					);
+					writeFile(readmeInfo.filePath, `${expectedTitle}${newline}${newline}${trademark}`);
 				} else {
 					writeFile(readmeInfo.filePath, `${expectedTitle}${newline}`);
 				}
@@ -800,10 +801,7 @@ export const handlers: Handler[] = [
 					json.scripts,
 					"prettier:fix",
 				);
-				const hasFormatScript = Object.prototype.hasOwnProperty.call(
-					json.scripts,
-					"format",
-				);
+				const hasFormatScript = Object.prototype.hasOwnProperty.call(json.scripts, "format");
 				const isLernaFormat = json["scripts"]["format"]?.includes("lerna");
 
 				if (!isLernaFormat) {
@@ -908,7 +906,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-dep",
 		match,
 		handler: async (file, root) => {
-			const manifest = getFluidBuildConfig(root);
+			const manifest = loadFluidBuildConfig(root);
 			const commandPackages = manifest.policy?.dependencies?.commandPackages;
 			if (commandPackages === undefined) {
 				return;
@@ -1024,9 +1022,7 @@ export const handlers: Handler[] = [
 				const info = fs.readdirSync(testDir, { withFileTypes: true });
 				if (
 					info.some(
-						(e) =>
-							path.extname(e.name) === ".ts" ||
-							(e.isDirectory() && e.name !== "types"),
+						(e) => path.extname(e.name) === ".ts" || (e.isDirectory() && e.name !== "types"),
 					)
 				) {
 					return "Test files exists but no test scripts";
@@ -1443,7 +1439,7 @@ export const handlers: Handler[] = [
 			}
 
 			const requirements =
-				getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+				loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 			if (requirements === undefined) {
 				// If no requirements have been specified, we have nothing to validate.
 				return;
@@ -1483,10 +1479,9 @@ export const handlers: Handler[] = [
 			}
 
 			if (errors.length > 0) {
-				return [
-					`Policy violations for public package "${packageJson.name}":`,
-					...errors,
-				].join(`${newline}* `);
+				return [`Policy violations for public package "${packageJson.name}":`, ...errors].join(
+					`${newline}* `,
+				);
 			}
 		},
 		resolver: (packageJsonFilePath, rootDirectoryPath) => {
@@ -1498,7 +1493,7 @@ export const handlers: Handler[] = [
 				}
 
 				const requirements =
-					getFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+					loadFluidBuildConfig(rootDirectoryPath).policy?.publicPackageRequirements;
 				if (requirements === undefined) {
 					// If no requirements have been specified, we have nothing to validate.
 					return;

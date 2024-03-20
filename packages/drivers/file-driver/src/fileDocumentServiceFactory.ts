@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnection,
 	IDocumentService,
@@ -10,10 +11,9 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { FileDeltaStorageService } from "./fileDeltaStorageService";
-import { FileDocumentService } from "./fileDocumentService";
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
+import { FileDocumentService } from "./fileDocumentService.js";
 
 /**
  * Factory for creating the file document service. Use this if you want to

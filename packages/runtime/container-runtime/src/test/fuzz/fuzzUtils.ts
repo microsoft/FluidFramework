@@ -4,10 +4,10 @@
  */
 
 import {
-	createWeightedAsyncGenerator,
 	AsyncGenerator,
 	AsyncReducer,
 	combineReducersAsync,
+	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import type { SummarizerFuzzModel, SummarizerFuzzTestState } from "./summarizerFuzzSuite.js";

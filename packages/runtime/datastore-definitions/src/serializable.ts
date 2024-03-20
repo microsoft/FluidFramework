@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Jsonable } from "./jsonable";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Jsonable } from "./jsonable.js";
 
 /**
  * Used to constrain a type 'T' to types that Fluid can intrinsically serialize.  Produces a

@@ -3,45 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	type IMockContainerRuntimeOptions,
-	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createChildLogger,
-	raiseConnectedEvent,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import {
-	MessageType,
+	type IDocumentMessage,
 	type ISequencedDocumentMessage,
 	type ISummaryContent,
-	SummaryType,
+	type ISummaryAck,
 	type ISummaryNack,
 	type IDocumentMessage,
-	type ISummaryAck,
+	MessageType,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
+import {
+	type ITelemetryLoggerExt,
+	createChildLogger,
+	raiseConnectedEvent,
+} from "@fluidframework/telemetry-utils";
+import {
+	type IMockContainerRuntimeOptions,
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils";
 import { type ISummaryConfiguration } from "../../index.js";
 import {
 	IConnectableRuntime,
-	Summarizer,
-	ISummarizerClientElectionEvents,
-	SummaryManager,
-	ISummarizerClientElection,
-	type IConnectedState,
 	type IConnectedEvents,
-	SummaryCollection,
-	type ISummarizerRuntime,
-	type ISummarizerInternalsProvider,
-	type ISubmitSummaryOptions,
-	type SubmitSummaryResult,
-	type IRefreshSummaryAckOptions,
-	RunWhileConnectedCoordinator,
+	type IConnectedState,
 	type IGeneratedSummaryStats,
+	type IRefreshSummaryAckOptions,
+	type ISubmitSummaryOptions,
+	ISummarizerClientElection,
+	ISummarizerClientElectionEvents,
+	type ISummarizerInternalsProvider,
+	type ISummarizerRuntime,
+	RunWhileConnectedCoordinator,
+	type SubmitSummaryResult,
+	Summarizer,
+	SummaryCollection,
+	SummaryManager,
 } from "../../summary/index.js";
 import type { IThrottler } from "../../throttler.js";
 

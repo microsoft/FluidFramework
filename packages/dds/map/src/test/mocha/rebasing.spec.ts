@@ -4,16 +4,16 @@
  */
 
 import { strict as assert } from "node:assert";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeFactory,
 	MockContainerRuntime,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { MapFactory, SharedMap } from "../../map.js";
 import { DirectoryFactory, SharedDirectory } from "../../directory.js";
 import { IDirectory } from "../../interfaces.js";
+import { MapFactory, SharedMap } from "../../map.js";
 
 describe("Rebasing", () => {
 	let containerRuntimeFactory: MockContainerRuntimeFactory;

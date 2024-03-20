@@ -83,6 +83,12 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
     summarizer: ISummarizer;
 }>;
 
+// @internal (undocumented)
+export function createSummarizerCore(container: IContainer, loader: IHostLoader, summaryVersion?: string): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
 // @internal
 export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger, configProvider?: IConfigProviderBase): Promise<{
     container: IContainer;
@@ -183,6 +189,7 @@ export interface ITestConfigProvider extends IConfigProviderBase {
 export interface ITestContainerConfig {
     enableAttribution?: boolean;
     fluidDataObjectType?: DataObjectFactoryType;
+    forceUseCreateVersion?: true;
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
     runtimeOptions?: IContainerRuntimeOptions;
@@ -347,7 +354,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
     createDetachedContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps> | undefined): Promise<IContainer>;
     get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, forceUseCreateVersion?: true): Loader;
     get defaultCodeDetails(): IFluidCodeDetails;
     get documentId(): string;
     get documentServiceFactory(): IDocumentServiceFactory;

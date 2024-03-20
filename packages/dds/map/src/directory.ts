@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { RedBlackTree } from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	SharedObject,
 	ValueType,
 	parseHandles,
 } from "@fluidframework/shared-object-base";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import path from "path-browserify";
-import { RedBlackTree } from "@fluidframework/merge-tree";
 import {
 	IDirectory,
 	IDirectoryEvents,
@@ -274,7 +274,7 @@ export interface IDirectoryNewStorageFormat {
  * @sealed
  * @alpha
  */
-export class DirectoryFactory implements IChannelFactory {
+export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -467,8 +467,8 @@ export class SharedDirectory
 	 * @param id - Optional name of the shared directory
 	 * @returns Newly create shared directory (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory {
-		return runtime.createChannel(id, DirectoryFactory.Type) as SharedDirectory;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory {
+		return runtime.createChannel(id, DirectoryFactory.Type) as ISharedDirectory;
 	}
 
 	/**
@@ -476,7 +476,7 @@ export class SharedDirectory
 	 *
 	 * @returns A factory that creates and load SharedDirectory
 	 */
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ISharedDirectory> {
 		return new DirectoryFactory();
 	}
 
@@ -1544,7 +1544,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (this.index < subdirNames.length) {
 					const subdirName = subdirNames[this.index++];
 					const subdir = this.dirs.get(subdirName);
-					assert(subdir !== undefined, "Could not find expected sub-directory.");
+					assert(
+						subdir !== undefined,
+						0x8ac /* Could not find expected sub-directory. */,
+					);
 					return { value: [subdirName, subdir], done: false };
 				}
 				return { value: undefined, done: true };
@@ -2155,10 +2158,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 		} else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
 			const key: unknown = op.key;
-			assert(key !== undefined, '"key" property is missing from edit operation.');
+			assert(key !== undefined, 0x8ad /* "key" property is missing from edit operation. */);
 			assert(
 				typeof key === "string",
-				'"key" property in edit operation is misconfigured. Expected a string.',
+				0x8ae /* "key" property in edit operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.previousValue === undefined) {
@@ -2172,11 +2175,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "createSubDirectory" operation.',
+				0x8af /* "subdirName" property is missing from "createSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b0 /* "subdirName" property in "createSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			this.deleteSubDirectoryCore(subdirName, true);
@@ -2185,11 +2188,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const subdirName: unknown = op.subdirName;
 			assert(
 				subdirName !== undefined,
-				'"subdirName" property is missing from "deleteSubDirectory" operation.',
+				0x8b1 /* "subdirName" property is missing from "deleteSubDirectory" operation. */,
 			);
 			assert(
 				typeof subdirName === "string",
-				'"subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string.',
+				0x8b2 /* "subdirName" property in "deleteSubDirectory" operation is misconfigured. Expected a string. */,
 			);
 
 			if (localOpMetadata.subDirectory !== undefined) {

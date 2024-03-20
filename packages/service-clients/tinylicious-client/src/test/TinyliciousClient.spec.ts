@@ -14,12 +14,12 @@ import { AttachState, ContainerErrorTypes } from "@fluidframework/container-defi
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
-import { TinyliciousClient } from "../index";
-import { TestDataObject } from "./TestDataObject";
+import { TinyliciousClient } from "../index.js";
+import { TestDataObject } from "./TestDataObject.js";
 
 const corruptedAliasOp = async (
 	runtime: IContainerRuntime,

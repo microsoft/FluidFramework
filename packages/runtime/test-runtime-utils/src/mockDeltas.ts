@@ -3,6 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	IDeltaManager,
+	IDeltaManagerEvents,
+	IDeltaQueue,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -11,14 +19,6 @@ import {
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import {
-	IDeltaManager,
-	IDeltaManagerEvents,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing

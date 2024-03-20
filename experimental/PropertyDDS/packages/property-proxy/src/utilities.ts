@@ -2,26 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	ArrayProperty,
 	BaseProperty,
-	ReferenceProperty,
+	ContainerProperty,
+	EnumArrayProperty,
+	EnumProperty,
+	MapProperty,
+	PropertyFactory,
 	ReferenceArrayProperty,
 	ReferenceMapProperty,
-	ValueProperty,
-	ContainerProperty,
-	EnumProperty,
-	EnumArrayProperty,
-	MapProperty,
+	ReferenceProperty,
 	SetProperty,
+	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
 import { ComponentMap } from "./componentMap";
-import { PropertyProxy } from "./propertyProxy";
 import { PropertyProxyErrors } from "./errors";
 import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
+import { PropertyProxy } from "./propertyProxy";
 
 // TODO(marcus): this function should be removed in the future and a safer
 // way to determine the corrent types is useed

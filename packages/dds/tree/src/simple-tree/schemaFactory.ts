@@ -5,30 +5,34 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { leaf } from "../domains/index.js";
 import {
-	FlexTreeNode,
+	FlexFieldNodeSchema,
 	LeafNodeSchema as FlexLeafNodeSchema,
-	isFlexTreeNode,
+	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNode,
+	isFlexTreeNode,
+	isFluidHandle,
 	isLazy,
 	markEager,
-	FlexMapNodeSchema,
-	FlexFieldNodeSchema,
-	isFluidHandle,
+	typeNameSymbol,
+	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { leaf } from "../domains/index.js";
-import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
+import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import { setFlexNode } from "./flexNode.js";
 import {
-	createNodeProxy,
-	createRawNodeProxy,
+	arrayNodePrototypeProperties,
+	createArrayNodeProxy,
+	createMapProxy,
+	createObjectProxy,
 	getClassSchema,
 	getSequenceField,
-	arrayNodePrototypeProperties,
-	mapStaticDispatchMap,
 	isTreeNode,
+	mapStaticDispatchMap,
 } from "./proxies.js";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
+import { createRawNode } from "./rawNode.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -49,8 +53,9 @@ import {
 	WithType,
 	type,
 } from "./schemaTypes.js";
-import { TreeNode } from "./types.js";
+import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode } from "./types.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -68,7 +73,12 @@ class LeafNodeSchema<T extends FlexLeafNodeSchema>
 	public readonly kind = NodeKind.Leaf;
 	public readonly info: T["info"];
 	public readonly implicitlyConstructable = true as const;
-	public create(data: TreeValue<T["info"]>): TreeValue<T["info"]> {
+	public create(data: TreeValue<T["info"]> | FlexTreeNode): TreeValue<T["info"]> {
+		if (isFlexTreeNode(data)) {
+			const value = data.value;
+			assert(valueSchemaAllows(this.info, value), "invalid value");
+			return value;
+		}
 		return data;
 	}
 
@@ -359,27 +369,22 @@ export class SchemaFactory<
 				const customizable = this.constructor !== schema;
 				const proxyTarget = customizable ? this : undefined;
 
-				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
-				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawNodeProxy(
-						flexSchema as FlexObjectNodeSchema,
-						input,
-						customizable,
-						proxyTarget,
-					) as unknown as schema;
-				}
+				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+				assert(flexSchema instanceof FlexObjectNodeSchema, "invalid flex schema");
+				const flexNode: FlexTreeNode = isFlexTreeNode(input)
+					? input
+					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
+
+				const proxy: TreeNode = createObjectProxy(flexSchema, customizable, proxyTarget);
+				setFlexNode(proxy, flexNode);
+				return proxy as unknown as schema;
 			}
 		}
 
 		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			object &
-				TreeNode &
-				ObjectFromSchemaRecord<T> &
-				WithType<ScopedSchemaName<TScope, Name>>,
+			TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
 			T
@@ -412,11 +417,12 @@ export class SchemaFactory<
 	public map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
 	): TreeNodeSchema<
-		`${TScope}.Map<${string}>`,
+		ScopedSchemaName<TScope, `Map<${string}>`>,
 		NodeKind.Map,
-		TreeMapNode<T> & WithType<`${TScope}.Map<${string}>`>,
-		ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>>,
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		true,
+		T
 	>;
 
 	/**
@@ -436,19 +442,21 @@ export class SchemaFactory<
 		ScopedSchemaName<TScope, Name>,
 		NodeKind.Map,
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		true,
+		T
 	>;
 
 	public map<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
-		`${TScope}.${string}` | `${string}`,
+		string,
 		NodeKind.Map,
 		TreeMapNode<T>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -464,11 +472,12 @@ export class SchemaFactory<
 						true,
 					) as TreeNodeSchema,
 			) as TreeNodeSchemaClass<
-				`${TScope}.${string}`,
+				string,
 				NodeKind.Map,
 				TreeMapNode<T>,
-				ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				true
+				Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+				true,
+				T
 			>;
 		}
 		return this.namedMap_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -490,13 +499,7 @@ export class SchemaFactory<
 		allowedTypes: T,
 		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
-	): TreeNodeSchemaClass<
-		ScopedSchemaName<TScope, Name>,
-		NodeKind.Map,
-		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-		ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		ImplicitlyConstructable
-	> {
+	) {
 		class schema extends this.nodeSchema(
 			name,
 			NodeKind.Map,
@@ -504,35 +507,34 @@ export class SchemaFactory<
 			implicitlyConstructable,
 		) {
 			public constructor(
-				input: ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
+				input: Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
 			) {
 				super(input);
 
 				const proxyTarget = customizable ? this : undefined;
 
-				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
-				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawNodeProxy(
-						flexSchema as FlexMapNodeSchema,
-						input,
-						customizable,
-						proxyTarget,
-					) as unknown as schema;
-				}
+				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+				assert(flexSchema instanceof FlexMapNodeSchema, "invalid flex schema");
+				const flexNode: FlexTreeNode = isFlexTreeNode(input)
+					? input
+					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
+
+				const proxy: TreeNode = createMapProxy(customizable, proxyTarget);
+				setFlexNode(proxy, flexNode);
+				return proxy as unknown as schema;
 			}
 		}
 
 		// Setup map functionality
 		Object.defineProperties(schema.prototype, mapStaticDispatchMap);
 
-		return schema as unknown as TreeNodeSchemaClass<
+		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
-			ReadonlyMap<string, InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable
+			Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>,
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 
@@ -572,11 +574,12 @@ export class SchemaFactory<
 	public array<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
 	): TreeNodeSchema<
-		`${TScope}.Array<${string}>`,
+		ScopedSchemaName<TScope, `Array<${string}>`>,
 		NodeKind.Array,
-		TreeArrayNode<T> & WithType<`${TScope}.Array<${string}>`>,
+		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	/**
@@ -599,18 +602,20 @@ export class SchemaFactory<
 		NodeKind.Array,
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	>;
 
 	public array<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
 	): TreeNodeSchema<
-		`${TScope}.${string}` | `${string}`,
+		ScopedSchemaName<TScope, string>,
 		NodeKind.Array,
 		TreeArrayNode<T>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-		true
+		true,
+		T
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
@@ -618,11 +623,12 @@ export class SchemaFactory<
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedArray_internal(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
-				`${TScope}.${string}`,
+				ScopedSchemaName<TScope, string>,
 				NodeKind.Array,
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-				true
+				true,
+				T
 			>;
 		}
 		return this.namedArray_internal(nameOrAllowedTypes as TName, allowedTypes, true, true);
@@ -670,17 +676,15 @@ export class SchemaFactory<
 
 				const proxyTarget = customizable ? this : undefined;
 
-				if (isFlexTreeNode(input)) {
-					return createNodeProxy(input, customizable, proxyTarget) as schema;
-				} else {
-					const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
-					return createRawNodeProxy(
-						flexSchema as FlexFieldNodeSchema,
-						[...input],
-						customizable,
-						proxyTarget,
-					) as unknown as schema;
-				}
+				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
+				assert(flexSchema instanceof FlexFieldNodeSchema, "invalid flex schema");
+				const flexNode: FlexTreeNode = isFlexTreeNode(input)
+					? input
+					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
+
+				const proxy: TreeNode = createArrayNodeProxy(customizable, proxyTarget);
+				setFlexNode(proxy, flexNode);
+				return proxy as unknown as schema;
 			}
 		}
 
@@ -690,9 +694,10 @@ export class SchemaFactory<
 		return schema as unknown as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
-			TreeArrayNode<T> & WithType<`${TScope}.${string}`>,
+			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable
+			ImplicitlyConstructable,
+			T
 		>;
 	}
 
@@ -730,6 +735,7 @@ export class SchemaFactory<
 	 * 	recursive: [recursiveReference],
 	 * }) {}
 	 * ```
+	 * @deprecated Use special `recursive` versions of builders instead of relying on this.
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
@@ -773,4 +779,15 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
+}
+
+function copyContent<T extends object>(typeName: TreeNodeSchemaIdentifier, content: T): T {
+	const copy =
+		content instanceof Map
+			? (new Map(content) as T)
+			: Array.isArray(content)
+			? (content.slice() as T)
+			: { ...content };
+
+	return Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 }
