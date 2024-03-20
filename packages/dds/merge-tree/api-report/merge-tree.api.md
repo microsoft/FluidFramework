@@ -225,6 +225,12 @@ export function createMap<T>(): MapLike<T>;
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
 
 // @internal
+export function createPropertyTrackingAndInsertionAttributionPolicyFactory(...propNames: string[]): () => AttributionPolicy;
+
+// @internal (undocumented)
+export function createPropertyTrackingAttributionPolicyFactory(...propNames: string[]): () => AttributionPolicy;
+
+// @internal
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @internal
