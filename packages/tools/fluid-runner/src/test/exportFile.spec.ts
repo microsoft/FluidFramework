@@ -9,11 +9,11 @@ import path from "path";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
 /* eslint-disable import/no-internal-modules */
-import { createContainerAndExecute, exportFile } from "../exportFile";
-import { getSnapshotFileContent } from "../utils";
-import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader";
-import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";
-import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader";
+import { createContainerAndExecute, exportFile } from "../exportFile.js";
+import { getSnapshotFileContent } from "../utils.js";
+import { fluidExport as networkFetchFluidExport } from "./sampleCodeLoaders/networkFetchCodeLoader.js";
+import { executeResult, fluidExport } from "./sampleCodeLoaders/sampleCodeLoader.js";
+import { fluidExport as timeoutFluidExport } from "./sampleCodeLoaders/timeoutCodeLoader.js";
 /* eslint-enable import/no-internal-modules */
 
 describe("exportFile", () => {

@@ -4,15 +4,15 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle";
-export { createContainerAndExecute, exportFile, IExportFileResponse } from "./exportFile";
-export { fluidRunner } from "./fluidRunner";
-export { OutputFormat, ITelemetryOptions } from "./logger/fileLogger";
+export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
+export { createContainerAndExecute, exportFile, IExportFileResponse } from "./exportFile.js";
+export { fluidRunner } from "./fluidRunner.js";
+export { OutputFormat, ITelemetryOptions } from "./logger/fileLogger.js";
 export {
 	createLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
-} from "./logger/loggerUtils";
-export { parseBundleAndExportFile } from "./parseBundleAndExportFile";
-export { getSnapshotFileContent } from "./utils";
+} from "./logger/loggerUtils.js";
+export { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
+export { getSnapshotFileContent } from "./utils.js";
 /* eslint-enable import/no-internal-modules */

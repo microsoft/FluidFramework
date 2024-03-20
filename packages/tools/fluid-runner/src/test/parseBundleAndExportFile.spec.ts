@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { parseBundleAndExportFile } from "../parseBundleAndExportFile";
+import { parseBundleAndExportFile } from "../parseBundleAndExportFile.js";
 // eslint-disable-next-line import/no-internal-modules
-import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader";
+import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("parseBundleAndExportFile", () => {
 	const folderRoot = path.join(__dirname, "../../src/test");

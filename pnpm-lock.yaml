@@ -11050,6 +11050,7 @@ importers:
       '@types/node': ^18.19.0
       '@types/yargs': ^13
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       json2csv: ^5.0.7
@@ -11086,6 +11087,7 @@ importers:
       '@types/node': 18.19.1
       '@types/yargs': 13.0.12
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
