@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { CodeSpanNode, PlainTextNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { CodeSpanNode, PlainTextNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("CodeSpan Markdown rendering tests", () => {
 	it("Empty CodeSpan", () => {

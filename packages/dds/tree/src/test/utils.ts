@@ -7,126 +7,127 @@ import { strict as assert } from "assert";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { ISummarizer } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	ITestObjectProvider,
-	ChannelFactoryRegistry,
-	TestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	ITestFluidObject,
-	createSummarizer,
-	summarizeNow,
-	ITestContainerConfig,
-	SummaryInfo,
-} from "@fluidframework/test-utils";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummarizer } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import {
+	ChannelFactoryRegistry,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	SummaryInfo,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+	TestObjectProvider,
+	createSummarizer,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
-// eslint-disable-next-line import/no-internal-modules -- test import
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
+import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
-	ISharedTree,
-	ITreeCheckout,
-	SharedTreeFactory,
-	TreeContent,
-	CheckoutEvents,
-	createTreeCheckout,
-	SharedTree,
-	InitializeAndSchematizeConfiguration,
-	SharedTreeContentSnapshot,
-	CheckoutFlexTreeView,
-	TreeCheckout,
-} from "../shared-tree/index.js";
-import {
-	buildForest,
-	createMockNodeKeyManager,
-	FlexFieldSchema,
-	jsonableTreeFromFieldCursor,
-	mapTreeFromCursor,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
-	NodeKeyManager,
-	normalizeNewFieldContent,
-	FlexTreeTypedField,
-	jsonableTreeFromForest,
-	nodeKeyFieldKey as defaultNodeKeyFieldKey,
-	ContextuallyTypedNodeData,
-	mapRootChanges,
-	intoStoredSchema,
-	cursorForMapTreeNode,
-	SchemaBuilderBase,
-	FieldKinds,
-	ViewSchema,
-	defaultSchemaPolicy,
-} from "../feature-libraries/index.js";
-import {
-	moveToDetachedField,
-	mapCursorField,
-	JsonableTree,
-	TreeStoredSchema,
-	rootFieldKey,
-	compareUpPaths,
-	UpPath,
-	clonePath,
-	ChangeFamilyEditor,
-	ChangeFamily,
-	TaggedChange,
-	FieldUpPath,
-	TreeStoredSchemaRepository,
-	initializeForest,
 	AllowedUpdateType,
-	IEditableForest,
-	DeltaVisitor,
-	DetachedFieldIndex,
 	AnnouncedVisitor,
-	applyDelta,
-	makeDetachedFieldIndex,
-	announceDelta,
-	FieldKey,
-	Revertible,
-	RevertibleKind,
-	RevisionMetadataSource,
-	revisionMetadataSourceFromInfo,
-	RevisionInfo,
-	RevisionTag,
-	DeltaFieldChanges,
-	DeltaMark,
-	DeltaFieldMap,
-	DeltaRoot,
-	RevisionTagCodec,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	CommitKind,
+	CommitMetadata,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaMark,
+	DeltaRoot,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	FieldKey,
+	FieldUpPath,
+	IEditableForest,
+	JsonableTree,
+	Revertible,
+	RevisionInfo,
+	RevisionMetadataSource,
+	RevisionTag,
+	RevisionTagCodec,
+	TaggedChange,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	UpPath,
+	announceDelta,
+	applyDelta,
+	clonePath,
+	compareUpPaths,
+	initializeForest,
+	makeDetachedFieldIndex,
+	mapCursorField,
+	moveToDetachedField,
+	revisionMetadataSourceFromInfo,
+	rootFieldKey,
 } from "../core/index.js";
-import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
-import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorToJsonObject,
 	jsonRoot,
 	jsonSchema,
-	singleJsonCursor,
 	leaf,
+	singleJsonCursor,
 } from "../domains/index.js";
 import { HasListeners, IEmitter, ISubscribable } from "../events/index.js";
+import { typeboxValidator } from "../external-utilities/index.js";
+import {
+	ContextuallyTypedNodeData,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeTypedField,
+	NodeKeyManager,
+	SchemaBuilderBase,
+	ViewSchema,
+	buildForest,
+	createMockNodeKeyManager,
+	cursorForMapTreeNode,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	jsonableTreeFromFieldCursor,
+	jsonableTreeFromForest,
+	mapRootChanges,
+	mapTreeFromCursor,
+	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
+	normalizeNewFieldContent,
+} from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import {
+	CheckoutEvents,
+	CheckoutFlexTreeView,
+	ISharedTree,
+	ITreeCheckout,
+	InitializeAndSchematizeConfiguration,
+	SharedTree,
+	SharedTreeContentSnapshot,
+	SharedTreeFactory,
+	TreeCheckout,
+	TreeContent,
+	createTreeCheckout,
+} from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ensureSchema } from "../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { requireSchema } from "../shared-tree/schematizingTreeView.js";
+import { SchematizingSimpleTreeView, requireSchema } from "../shared-tree/schematizingTreeView.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import { ImplicitFieldSchema, TreeConfiguration, toFlexConfig } from "../simple-tree/index.js";
+import { JsonCompatible, Mutable, brand, nestedMapFromFlatList } from "../util/index.js";
 
 // Testing utilities
 
@@ -271,7 +272,7 @@ export class TestTreeProvider {
 								? { state: "disabled" }
 								: undefined,
 					},
-					enableRuntimeIdCompressor: true,
+					enableRuntimeIdCompressor: "on",
 				},
 			);
 
@@ -983,6 +984,8 @@ export function defaultRevInfosFromChanges(
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
+		// TODO: ADO#7366 assert to check if either all the changes have revision,
+		// or that all of the changes have undefined revision.
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
@@ -1053,8 +1056,8 @@ export function rootFromDeltaFieldMap(
 
 export function createTestUndoRedoStacks(
 	events: ISubscribable<{
-		newRevertible(type: Revertible): void;
-		revertibleDisposed(revertible: Revertible): void;
+		commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+		revertibleDisposed(revertible: Revertible, revision: RevisionTag): void;
 	}>,
 ): {
 	undoStack: Revertible[];
@@ -1064,25 +1067,25 @@ export function createTestUndoRedoStacks(
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribeFromNew = events.on("newRevertible", (revertible) => {
-		revertible.retain();
-		if (revertible.kind === RevertibleKind.Undo) {
-			redoStack.push(revertible);
-		} else {
-			undoStack.push(revertible);
+	const unsubscribeFromNew = events.on("commitApplied", ({ kind }, getRevertible) => {
+		if (getRevertible !== undefined) {
+			const revertible = getRevertible();
+			if (kind === CommitKind.Undo) {
+				redoStack.push(revertible);
+			} else {
+				undoStack.push(revertible);
+			}
 		}
 	});
 
 	const unsubscribeFromDisposed = events.on("revertibleDisposed", (revertible) => {
-		if (revertible.kind === RevertibleKind.Undo) {
-			const index = redoStack.indexOf(revertible);
-			if (index !== -1) {
-				redoStack.splice(index, 1);
-			}
+		const redoIndex = redoStack.indexOf(revertible);
+		if (redoIndex !== -1) {
+			redoStack.splice(redoIndex, 1);
 		} else {
-			const index = undoStack.indexOf(revertible);
-			if (index !== -1) {
-				undoStack.splice(index, 1);
+			const undoIndex = undoStack.indexOf(revertible);
+			if (undoIndex !== -1) {
+				undoStack.splice(undoIndex, 1);
 			}
 		}
 	});
@@ -1091,10 +1094,10 @@ export function createTestUndoRedoStacks(
 		unsubscribeFromNew();
 		unsubscribeFromDisposed();
 		for (const revertible of undoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 		for (const revertible of redoStack) {
-			revertible.discard();
+			revertible.release();
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1169,5 +1172,24 @@ export function treeTestFactory(
 		options.attributes ?? new SharedTreeFactory().attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
 		options.telemetryContextPrefix ?? "SharedTree",
+	);
+}
+
+/**
+ * Given the TreeConfiguration, returns a view.
+ *
+ * This works a much like the actual package public API as possible, while avoiding the actual SharedTree object.
+ * This should allow realistic (app like testing) of all the simple-tree APIs.
+ */
+export function getView<TSchema extends ImplicitFieldSchema>(
+	config: TreeConfiguration<TSchema>,
+): SchematizingSimpleTreeView<TSchema> {
+	const flexConfig = toFlexConfig(config);
+	const checkout = checkoutWithContent(flexConfig);
+	return new SchematizingSimpleTreeView<TSchema>(
+		checkout,
+		config,
+		createMockNodeKeyManager(),
+		brand(defaultNodeKeyFieldKey),
 	);
 }

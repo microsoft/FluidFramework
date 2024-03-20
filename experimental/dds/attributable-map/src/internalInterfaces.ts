@@ -4,8 +4,8 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { ISerializableValue } from "./interfaces";
-import { ILocalValue } from "./localValues";
+import { ISerializableValue } from "./interfaces.js";
+import { ILocalValue } from "./localValues.js";
 
 /**
  * Operation indicating a value should be set for a key.

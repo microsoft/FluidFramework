@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf } from "../../domains/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import {
-	FieldKey,
-	DeltaVisitor,
-	visitDelta,
-	DetachedFieldIndex,
-	makeDetachedFieldIndex,
-	DeltaRoot,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaMark,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeRename,
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeDestruction,
+	DeltaRoot,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	FieldKey,
+	makeDetachedFieldIndex,
+	visitDelta,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import { deepFreeze, rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
 

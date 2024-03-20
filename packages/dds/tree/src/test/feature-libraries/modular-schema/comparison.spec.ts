@@ -6,29 +6,29 @@
 import { strict as assert } from "assert";
 
 import {
+	FieldKindIdentifier,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	MutableTreeStoredSchema,
+	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeStoredSchemaRepository,
+	TreeTypeSet,
+	ValueSchema,
+	storedEmptyFieldSchema,
+} from "../../../core/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
+import {
 	allowsFieldSuperset,
-	allowsTreeSuperset,
 	allowsTreeSchemaIdentifierSuperset,
+	allowsTreeSuperset,
 	allowsValueSuperset,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison.js";
-import {
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	ValueSchema,
-	TreeTypeSet,
-	TreeNodeSchemaIdentifier,
-	storedEmptyFieldSchema,
-	FieldKindIdentifier,
-	MapNodeStoredSchema,
-	ObjectNodeStoredSchema,
-	LeafNodeStoredSchema,
-	MutableTreeStoredSchema,
-	TreeStoredSchemaRepository,
-} from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
-import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries/index.js";
 
 /**
  * Helper for building {@link TreeFieldStoredSchema}.

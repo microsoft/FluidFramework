@@ -5,6 +5,16 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
+import { ICodecOptions, noopValidator } from "../../codec/index.js";
+import { TreeStoredSchemaRepository } from "../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import/no-internal-modules
+import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	FieldBatch,
 	FieldBatchEncodingContext,
@@ -14,21 +24,11 @@ import {
 	fieldKinds,
 	makeV0Codec,
 } from "../../feature-libraries/index.js";
-import { TreeStoredSchemaRepository } from "../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
-import { ajvValidator } from "../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSharedTreeChangeCodec } from "../../shared-tree/sharedTreeChangeCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import { ajvValidator } from "../codec/index.js";
 import { testRevisionTagCodec } from "../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };

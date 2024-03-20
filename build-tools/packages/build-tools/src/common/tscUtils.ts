@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as path from "path";
 import * as fs from "fs";
 import * as ts from "typescript";
@@ -262,4 +263,10 @@ export function getTscUtils(path: string): TscUtil {
 	tscUtilPathCache.set(path, tscUtil);
 	tscUtilLibPathCache.set(tsPath, tscUtil);
 	return tscUtil;
+}
+
+// Any paths given by typescript will be normalized to forward slashes.
+// Local paths should be normalized to make any comparisons.
+export function normalizeSlashes(path: string): string {
+	return path.replace(/\\/g, "/");
 }

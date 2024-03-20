@@ -6,21 +6,21 @@
 import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 
+import { EditType } from "../CommonInterfaces.js";
 import {
-	createHandleNode,
-	defaultVisualizers,
 	DataVisualizerGraph,
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	VisualNodeKind,
+	createHandleNode,
 	defaultEditors,
+	defaultVisualizers,
 } from "../data-visualization/index.js";
-import { EditType } from "../CommonInterfaces.js";
 
 describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
@@ -73,7 +73,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 
 		// Create SharedMap
-		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
+		const sharedMap = SharedMap.getFactory().create(runtime, "test-map");
 
 		const visualizer = new DataVisualizerGraph(
 			{

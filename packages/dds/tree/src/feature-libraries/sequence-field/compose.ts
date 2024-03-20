@@ -10,64 +10,64 @@ import {
 	RevisionTag,
 	TaggedChange,
 } from "../../core/index.js";
-import { brand, fail, IdAllocator } from "../../util/index.js";
+import { IdAllocator, brand, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	NoopMarkType,
-	CellId,
-	NoopMark,
-	CellMark,
-	Detach,
-	MoveId,
-	MarkEffect,
-} from "./types.js";
+import { CellOrderingMethod, sequenceConfig } from "./config.js";
+import { EmptyInputCellMark, MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import {
-	getMoveEffect,
-	setMoveEffect,
-	MoveEffectTable,
 	MoveEffect,
-	isMoveIn,
-	isMoveOut,
-	getMoveIn,
+	MoveEffectTable,
 	getCrossFieldTargetFromMove,
+	getMoveEffect,
+	getMoveIn,
+	isMoveIn,
 	isMoveMark,
+	isMoveOut,
+	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
-	isNoopMark,
-	getOffsetInCellRange,
-	areOutputCellsEmpty,
-	areInputCellsEmpty,
-	compareLineages,
-	isDetach,
-	markHasCellEffect,
-	withNodeChange,
-	withRevision,
-	markEmptiesCells,
-	isNewAttach,
-	getInputCellId,
-	isAttach,
-	getOutputCellId,
-	markFillsCells,
-	extractMarkEffect,
-	getEndpoint,
+	CellId,
+	CellMark,
+	Changeset,
+	Detach,
+	Mark,
+	MarkEffect,
+	MarkList,
+	MoveId,
+	NoopMark,
+	NoopMarkType,
+} from "./types.js";
+import {
+	CellOrder,
 	areEqualCellIds,
-	normalizeCellRename,
+	areInputCellsEmpty,
+	areOutputCellsEmpty,
 	asAttachAndDetach,
-	isImpactfulCellRename,
-	settleMark,
-	compareCellsFromSameRevision,
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
-	CellOrder,
+	compareCellsFromSameRevision,
+	compareLineages,
+	extractMarkEffect,
+	getEndpoint,
+	getInputCellId,
+	getOffsetInCellRange,
+	getOutputCellId,
+	isAttach,
 	isAttachAndDetachEffect,
+	isDetach,
+	isImpactfulCellRename,
+	isNewAttach,
+	isNoopMark,
+	markEmptiesCells,
+	markFillsCells,
+	markHasCellEffect,
+	normalizeCellRename,
+	settleMark,
+	withNodeChange,
+	withRevision,
 } from "./utils.js";
-import { EmptyInputCellMark, MoveMarkEffect } from "./helperTypes.js";
-import { CellOrderingMethod, sequenceConfig } from "./config.js";
 
 /**
  * @internal
@@ -621,7 +621,7 @@ export class ComposeQueue<T> {
 		);
 
 		if (movedChanges !== undefined) {
-			assert(newMark.changes === undefined, "Unexpected node changeset collision");
+			assert(newMark.changes === undefined, 0x8da /* Unexpected node changeset collision */);
 			newMark = withNodeChange(newMark, movedChanges as T);
 		}
 
@@ -636,7 +636,7 @@ export class ComposeQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			"Cannot peek length unless both mark queues are non-empty",
+			0x8db /* Cannot peek length unless both mark queues are non-empty */,
 		);
 
 		return Math.min(newMark.count, baseMark.count);

@@ -16,22 +16,23 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager.js";
-import {
-	BatchMessage,
-	IBatch,
-	OpCompressor,
-	OpGroupingManager,
-	OpSplitter,
-	Outbox,
-	BatchSequenceNumbers,
-} from "../../opLifecycle/index.js";
 import {
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
 	makeLegacySendBatchFn,
 } from "../../containerRuntime.js";
 import { ContainerMessageType } from "../../messageTypes.js";
+import {
+	BatchMessage,
+	BatchSequenceNumbers,
+	IBatch,
+	OpCompressor,
+	OpGroupingManager,
+	type OpGroupingManagerConfig,
+	OpSplitter,
+	Outbox,
+} from "../../opLifecycle/index.js";
+import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager.js";
 
 describe("Outbox", () => {
 	const maxBatchSizeInBytes = 1024;
@@ -44,6 +45,8 @@ describe("Outbox", () => {
 		individualOpsSubmitted: any[];
 		pendingOpContents: any[];
 		opsSubmitted: number;
+		opsResubmitted: number;
+		isReentrant: boolean;
 	}
 	const state: State = {
 		deltaManagerFlushCalls: 0,
@@ -54,6 +57,8 @@ describe("Outbox", () => {
 		individualOpsSubmitted: [],
 		pendingOpContents: [],
 		opsSubmitted: 0,
+		opsResubmitted: 0,
+		isReentrant: false,
 	};
 
 	const mockLogger = new MockLogger();
@@ -129,7 +134,7 @@ describe("Outbox", () => {
 	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => ({
 		contents: JSON.stringify({ type, contents }),
 		type,
-		metadata: { test: true },
+		metadata: undefined,
 		localOpMetadata: {},
 		referenceSequenceNumber: Number.POSITIVE_INFINITY,
 	});
@@ -185,6 +190,7 @@ describe("Outbox", () => {
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
+		opGroupingConfig?: OpGroupingManagerConfig;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -207,7 +213,7 @@ describe("Outbox", () => {
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
-				{
+				params.opGroupingConfig ?? {
 					groupedBatchingEnabled: false,
 					opCountThreshold: Infinity,
 					reentrantBatchGroupingEnabled: false,
@@ -215,8 +221,10 @@ describe("Outbox", () => {
 				mockLogger,
 			),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
-			reSubmit: (message: IPendingBatchMessage) => {},
-			opReentrancy: () => false,
+			reSubmit: (message: IPendingBatchMessage) => {
+				state.opsResubmitted++;
+			},
+			opReentrancy: () => state.isReentrant,
 			closeContainer: (error?: ICriticalContainerError) => {},
 		});
 	};
@@ -230,6 +238,8 @@ describe("Outbox", () => {
 		state.individualOpsSubmitted.splice(0);
 		state.pendingOpContents.splice(0);
 		state.opsSubmitted = 0;
+		state.opsResubmitted = 0;
+		state.isReentrant = false;
 		currentSeqNumbers = {};
 		mockLogger.clear();
 	});
@@ -878,5 +888,138 @@ describe("Outbox", () => {
 				opMetadata: message.metadata,
 			})),
 		);
+	});
+
+	describe("flush", () => {
+		function validateCounts(
+			opsSubmitted: number,
+			batchesSubmitted: number,
+			opsResubmitted: number,
+		) {
+			assert.strictEqual(state.opsSubmitted, opsSubmitted, "unexpected opsSubmitted");
+			assert.strictEqual(
+				state.batchesSubmitted.length,
+				batchesSubmitted,
+				"unexpected batchesSubmitted",
+			);
+			assert.strictEqual(state.opsResubmitted, opsResubmitted, "unexpected opsResubmitted");
+		}
+
+		it("batch has reentrant ops, but grouped batching is off", () => {
+			const outbox = getOutbox({
+				context: getMockContext() as IContainerContext,
+				opGroupingConfig: {
+					groupedBatchingEnabled: false,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			];
+
+			outbox.submit(messages[0]);
+			outbox.submit(messages[1]);
+
+			outbox.flush();
+
+			validateCounts(2, 1, 0);
+		});
+
+		it("batch has reentrant ops", () => {
+			const outbox = getOutbox({
+				context: getMockContext() as IContainerContext,
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			];
+
+			state.isReentrant = true;
+			outbox.submit(messages[0]);
+			outbox.submit(messages[1]);
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			validateCounts(0, 0, 2);
+		});
+
+		it("should group the batch", () => {
+			const outbox = getOutbox({
+				context: getMockContext() as IContainerContext,
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			];
+
+			outbox.submit(messages[0]);
+			outbox.submit(messages[1]);
+
+			outbox.flush();
+
+			validateCounts(1, 1, 0);
+		});
+
+		it("should not group the batch", () => {
+			const outbox = getOutbox({
+				context: getMockContext() as IContainerContext,
+				opGroupingConfig: {
+					groupedBatchingEnabled: false,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
+				createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
+			];
+
+			outbox.submit(messages[0]);
+			outbox.submit(messages[1]);
+
+			outbox.flush();
+
+			validateCounts(2, 1, 0);
+		});
+
+		it("should not group blobAttach ops", () => {
+			const outbox = getOutbox({
+				context: getMockContext() as IContainerContext,
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.BlobAttach, "0"),
+				createMessage(ContainerMessageType.BlobAttach, "1"),
+			];
+
+			outbox.submitBlobAttach(messages[0]);
+			outbox.submitBlobAttach(messages[1]);
+
+			outbox.flush();
+
+			validateCounts(2, 1, 0);
+		});
 	});
 });

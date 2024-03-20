@@ -150,31 +150,30 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
 	/**
 	 * Gets the scribe protocol state
+	 * @param scrubUserData - whether to remove all user data from the quorum members. CAUTION: this will corrupt the quorum if used in a summary.
 	 */
-	public getProtocolState(): IScribeProtocolState {
+	public getProtocolState(scrubUserData = false): IScribeProtocolState {
 		// return a new object every time
 		// this ensures future state changes will not affect outside callers
-
 		const snapshot = this._quorum.snapshot();
 
-		const quorumMembers = snapshot.members;
-
-		// Removing any identifying client information
-		quorumMembers.forEach((member) => {
-			member[1] = {
-				...member[1],
-				client: {
-					...member[1].client,
-					user: { id: "" },
-				},
-			};
-		});
+		if (scrubUserData) {
+			// In place, remove any identifying client information
+			snapshot.members.forEach((member) => {
+				member[1] = {
+					...member[1],
+					client: {
+						...member[1].client,
+						user: { id: "" },
+					},
+				};
+			});
+		}
 
 		return {
 			sequenceNumber: this.sequenceNumber,
 			minimumSequenceNumber: this.minimumSequenceNumber,
-			...this._quorum.snapshot(),
-			members: quorumMembers,
+			...snapshot,
 		};
 	}
 }

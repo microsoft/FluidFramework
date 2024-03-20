@@ -14,21 +14,21 @@ import {
 	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
 
+import { leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UpdateType } from "../../shared-tree/schematizeTree.js";
 import {
 	SchematizeError,
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../simple-tree/index.js";
-import { brand, disposeSymbol } from "../../util/index.js";
-import { checkoutWithContent } from "../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { UpdateType } from "../../shared-tree/schematizeTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
+import { brand, disposeSymbol } from "../../util/index.js";
+import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
@@ -221,5 +221,29 @@ describe("SchematizingSimpleTreeView", () => {
 			() => view.upgradeSchema(),
 			(e) => e instanceof UsageError,
 		);
+	});
+
+	it("supports revertibles", () => {
+		const emptyContent = {
+			schema: emptySchema,
+			initialTree: undefined,
+		};
+		const checkout = checkoutWithContent(emptyContent);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config,
+			createMockNodeKeyManager(),
+			brand(nodeKeyFieldKey),
+		);
+
+		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
+
+		insert(checkout, 0, "a");
+		assert.equal(undoStack.length, 1);
+		assert.equal(redoStack.length, 0);
+
+		undoStack.pop()?.revert();
+		assert.equal(undoStack.length, 0);
+		assert.equal(redoStack.length, 1);
 	});
 });
