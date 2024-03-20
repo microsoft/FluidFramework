@@ -24,8 +24,9 @@ export interface ICommitEnricher<TChange> {
 	 * @param toResubmit - the commits that will be resubmitted (from oldest to newest).
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
+	 * Can be safely mutated after this call returns.
 	 */
-	startResubmitPhase(toResubmit: Iterable<GraphCommit<TChange>>): void;
+	startResubmitPhase(toResubmit: readonly GraphCommit<TChange>[]): void;
 
 	/**
 	 * Is true iff the commit enricher is currently in a resubmit phase.

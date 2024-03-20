@@ -44,6 +44,8 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	/**
 	 * Represents the index in the `inFlight` array of the most recent in flight commit that has
 	 * undergone rebasing but whose enrichments have not been updated.
+	 * All in-flight commits with an index inferior or equal to this number have stale enrichments.
+	 *
 	 * Is -1 when *any* of the following is true:
 	 * - There are no in-flight commits (i.e., no local commits have been made or they have all been sequenced)
 	 * - None of the in-flight commits have been rebased
@@ -69,7 +71,6 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 			assert(this.resubmitPhase !== undefined, "Invalid resubmit outside of resubmit phase");
 			const updatedCommit = this.resubmitPhase.updateCommit(commit);
 			if (this.resubmitPhase.isComplete) {
-				this.resubmitPhase[disposeSymbol]();
 				delete this.resubmitPhase;
 			}
 			return updatedCommit;
@@ -87,16 +88,24 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		}
 	}
 
-	public startResubmitPhase(rebased: Iterable<GraphCommit<TChange>>): void {
+	public startResubmitPhase(rebased: readonly GraphCommit<TChange>[]): void {
 		assert(
 			!this.isInResubmitPhase,
 			"Invalid resubmit phase start during incomplete resubmit phase",
+		);
+		assert(
+			rebased.length === this.inFlight.length,
+			"Unexpected resubmit of more or fewer commits than are in flight",
 		);
 		this.resubmitPhase = new ResubmitPhaseStateMachine(
 			this.inverter,
 			this.checkoutFactory(),
 			rebased,
+			this.latestInFlightCommitWithStaleEnrichments + 1,
 		);
+		if (this.resubmitPhase.isComplete) {
+			delete this.resubmitPhase;
+		}
 	}
 
 	public get isInResubmitPhase(): boolean {
@@ -130,31 +139,41 @@ class ResubmitPhaseStateMachine<TChange> {
 	private readonly stack: GraphCommit<TChange>[];
 
 	/**
-	 * The state before the next commit to be updated.
-	 */
-	private readonly checkout: ChangeEnricherCheckout<TChange>;
-
-	/**
 	 * @param inverter - a function that can generate inverses of `TChange` instances.
 	 * @param checkout - a checkout in the local tip state. Owned (and mutated) by this state machine.
 	 * @param toResubmit - the commits that are being resubmitted (oldest to newest).
 	 * This must be the most rebased version of these commits (i.e., rebased over all known concurrent edits)
 	 * as opposed to the version which was last submitted.
+	 * @param countWithStaleEnrichments - the number of commits have stale enrichments.
 	 */
 	public constructor(
 		inverter: ChangeRebaser<TChange>["invert"],
 		checkout: ChangeEnricherCheckout<TChange>,
 		toResubmit: Iterable<GraphCommit<TChange>>,
+		countWithStaleEnrichments: number,
 	) {
 		this.stack = Array.from(toResubmit).reverse();
-		for (const commit of this.stack) {
-			// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
-			// Either we have to make it possible to do so, or this logic will have to change to work
-			// forwards from an earlier fork instead of backwards.
-			const rollback = inverter(commit, true);
-			checkout.applyTipChange(rollback);
+		if (countWithStaleEnrichments > 0) {
+			// Roll back the checkout to the state before the oldest commit
+			for (const commit of this.stack) {
+				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
+				// Either we have to make it possible to do so, or this logic will have to change to work
+				// forwards from an earlier fork instead of backwards.
+				const rollback = inverter(commit, true);
+				checkout.applyTipChange(rollback);
+			}
+			for (let i = 0; i < countWithStaleEnrichments; i += 1) {
+				const iCommit = this.stack.length - (1 + i);
+				const commit = this.stack[iCommit];
+				const enrichedChange = checkout.updateChangeEnrichments(
+					commit.change,
+					commit.revision,
+				);
+				const enrichedCommit = { ...commit, change: enrichedChange };
+				this.stack[iCommit] = enrichedCommit;
+				checkout.applyTipChange(enrichedChange, commit.revision);
+			}
 		}
-		this.checkout = checkout;
 	}
 
 	public get isComplete(): boolean {
@@ -162,21 +181,15 @@ class ResubmitPhaseStateMachine<TChange> {
 	}
 
 	public updateCommit(commit: GraphCommit<TChange>): GraphCommit<TChange> {
-		const oldCommit = this.stack.pop();
+		const enrichedCommit = this.stack.pop();
 		assert(
-			oldCommit !== undefined,
+			enrichedCommit !== undefined,
 			"Invalid call to updateCommit after resubmit phase completion",
 		);
 		assert(
-			commit === oldCommit,
+			commit.revision === enrichedCommit.revision,
 			"Mismatch between resubmitted commit and commit passed when starting the resubmit phase",
 		);
-		const enriched = this.checkout.updateChangeEnrichments(commit.change, commit.revision);
-		this.checkout.applyTipChange(enriched, commit.revision);
-		return { ...commit, change: enriched };
-	}
-
-	public [disposeSymbol](): void {
-		this.checkout[disposeSymbol]();
+		return enrichedCommit;
 	}
 }
