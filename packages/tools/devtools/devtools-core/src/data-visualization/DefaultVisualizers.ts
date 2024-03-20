@@ -246,19 +246,30 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 	};
 };
 
+/**
+ * Base visualizer for SharedTree.
+ */
 interface SharedTreeNodeBase {
-	schema?: SharedTreeLeafNodeSchema;
+	schema: SharedTreeSchemaNode;
 }
-interface SharedTreeLeafNodeSchema {
+interface SharedTreeSchemaNode {
+	/**
+	 * Name of the SharedTree schema.
+	 */
 	name: string;
+
+	/**
+	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
+	 */
 	allowedTypes: string;
 }
 
 interface SharedTreeNode extends SharedTreeNodeBase {
+	// TODO: Fix types.
 	fields:
 		| Record<
 				string | number,
-				SharedTreeNode | SharedTreeLeafNode | SharedTreeLeafNodeSchema | object | undefined
+				SharedTreeNode | SharedTreeLeafNode | SharedTreeSchemaNode | object | undefined
 		  >
 		| object
 		| VisualSharedTreeNode
@@ -272,10 +283,14 @@ interface SharedTreeLeafNode extends SharedTreeNodeBase {
 type VisualSharedTreeNode = SharedTreeNode | SharedTreeLeafNode;
 
 function leafNodeStoredSchemaHelper(
-	tree: JsonableTree, // Assuming JsonableTree is defined elsewhere
-	schema: LeafNodeStoredSchema, // Assuming LeafNodeStoredSchema is defined elsewhere
+	tree: JsonableTree,
+	schema: LeafNodeStoredSchema,
 ): SharedTreeLeafNode {
 	return {
+		schema: {
+			name: "name",
+			allowedTypes: "allowedTypes",
+		},
 		value: JSON.stringify(tree.value),
 	};
 }
@@ -291,16 +306,7 @@ function objectFieldHelper(
 		const childField = field.fields;
 
 		if (childField === undefined) {
-			const fieldName = field.type;
-			const allowedTypes = "CHANGE";
-
-			return {
-				schema: {
-					name: fieldName,
-					allowedTypes: JSON.stringify(allowedTypes),
-				},
-				value: field.value,
-			};
+			return leafNodeStoredSchemaHelper(field, schema as LeafNodeStoredSchema);
 		}
 
 		const arrayField = childField[""]; // TODO: Validate this approach
@@ -312,7 +318,7 @@ function objectFieldHelper(
 			result[i] = {
 				schema: {
 					name: fieldName,
-					allowedTypes: JSON.stringify("CHANGE"), // TODO: Figure out intended value.
+					allowedTypes: JSON.stringify("objectFieldHelper_FORLOOP_CHANGE"), // TODO: Figure out intended value.
 				},
 				fields: visualizeSharedTreeHelper(arrayField[i], childSchema, contentSnapshot),
 			};
@@ -339,17 +345,13 @@ function objectNodeStoredSchemaHelper(
 	const childSchema = contentSnapshot.schema.nodeSchema.get(schemaName);
 
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		const allowedTypes = schema.objectNodeFields.get(brand(fieldKey));
-
-		console.log("allowedTypes:", allowedTypes);
-
-		objectVisualized[fieldKey] = {
-			schema: {
-				name: allowedTypes?.kind.identifier,
-				allowedTypes: JSON.stringify(allowedTypes),
-			},
-			fields: objectFieldHelper(childField, childSchema, contentSnapshot),
-		};
+		const test = objectFieldHelper(childField, childSchema, contentSnapshot);
+		objectVisualized[fieldKey] =
+			test !== undefined && "value" in test
+				? test
+				: {
+						fields: objectFieldHelper(childField, childSchema, contentSnapshot),
+				  };
 	}
 
 	return objectVisualized;
