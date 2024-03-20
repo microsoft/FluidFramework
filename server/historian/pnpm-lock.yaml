@@ -1319,7 +1319,10 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
+    dev: false
 
+  /@fluidframework/server-services-core/5.0.0-248224:
+    resolution: {integrity: sha512-N+wOVoiev9mCMvce7+V8kNaXtswsTKnTazslZTGUbWWdC04w6+g3Tw5+zGAvq5J5XnmFuSx3RE1b32mo0TeOEQ==}
   /@fluidframework/server-services-core/5.0.0-248224:
     resolution: {integrity: sha512-N+wOVoiev9mCMvce7+V8kNaXtswsTKnTazslZTGUbWWdC04w6+g3Tw5+zGAvq5J5XnmFuSx3RE1b32mo0TeOEQ==}
     dependencies:
