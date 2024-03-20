@@ -64,7 +64,7 @@ describe("DDS Handle Encoding", () => {
 	}
 
 	/** This takes care of creating the DDS behind the scenes so the ITestCase's code is ready to invoke */
-	function createTestCase<T extends IChannel>(
+	function createTestCase<T>(
 		factory: IChannelFactory<T>,
 		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],

@@ -29,7 +29,6 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import * as sequence from "@fluidframework/sequence";
 import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 
 // ContainerRuntime and Data Runtime API
 import {
@@ -125,15 +124,6 @@ export const ContainerRuntimeApi = {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
-// Provide explicit types for these cases to avoid:
-// `error TS2742: The inferred type of 'DataRuntimeApi' cannot be named without a reference to '../../../dds/register-collection/node_modules/@fluidframework/shared-object-base/dist/sharedObject.js'. This is likely not portable. A type annotation is necessary.`
-// TODO: SharedTree is not included included here. Perhaps it should be added?
-const ddsKinds: {
-	SharedMap: ISharedObjectKind<map.ISharedMap>;
-} = {
-	SharedMap,
-};
-
 /**
  * @internal
  */
@@ -142,8 +132,8 @@ export const DataRuntimeApi = {
 	DataObject,
 	DataObjectFactory,
 	TestFluidObjectFactory,
+	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
-		...ddsKinds,
 		SharedCell,
 		SharedCounter,
 		SharedDirectory,

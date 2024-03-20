@@ -18,7 +18,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
 import { ITestObjectProvider } from '@fluidframework/test-utils';
