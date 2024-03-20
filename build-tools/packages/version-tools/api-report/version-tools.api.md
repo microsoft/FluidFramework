@@ -7,6 +7,9 @@
 import * as semver from 'semver';
 
 // @public
+export const ALLOWED_PRERELEASE_IDENTIFIERS: readonly ["internal", "rc"];
+
+// @public
 export function bumpRange(range: string, bumpType: VersionBumpTypeExtended, prerelease?: boolean): string;
 
 // @public
@@ -17,6 +20,9 @@ export function changePreReleaseIdentifier(version: semver.SemVer | string, newI
 
 // @public
 export const DEFAULT_INTERDEPENDENCY_RANGE: InterdependencyRange;
+
+// @public
+export const DEFAULT_PRERELEASE_IDENTIFIER = "internal";
 
 // @public
 export function detectBumpType(v1: semver.SemVer | string | null, v2: semver.SemVer | string | null): VersionBumpType | undefined;
@@ -89,6 +95,9 @@ export const RangeOperators: readonly ["^", "~", ""];
 
 // @public
 export type RangeOperatorWithVersion = `${Exclude<RangeOperator, "">}${string}`;
+
+// @public
+export const RC_PRERELEASE_IDENTIFER = "rc";
 
 // @public
 export type ReleaseVersion = string;
