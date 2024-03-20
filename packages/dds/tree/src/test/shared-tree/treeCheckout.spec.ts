@@ -2,23 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
-import { leaf } from "../../domains/index.js";
-import {
-	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	emptyJsonSequenceConfig,
-	insert,
-	jsonSequenceRootSchema,
-	flexTreeViewWithContent,
-	checkoutWithContent,
-	validateTreeContent,
-	numberSequenceRootSchema,
-	schematizeFlexTree,
-	stringSequenceRootSchema,
-} from "../utils.js";
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -31,6 +17,7 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	ContextuallyTypedNodeData,
 	FieldKinds,
@@ -39,6 +26,20 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
+import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import {
+	TestTreeProviderLite,
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	emptyJsonSequenceConfig,
+	flexTreeViewWithContent,
+	insert,
+	jsonSequenceRootSchema,
+	numberSequenceRootSchema,
+	schematizeFlexTree,
+	stringSequenceRootSchema,
+	validateTreeContent,
+} from "../utils.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -592,9 +593,6 @@ describe("sharedTreeView", () => {
 		provider.processMessages();
 		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
 
-		// Simulate the presence of a host application that retains the revertibles in multiple ways
-		const checkout1RevertiblesReadonly = createTestUndoRedoStacks(checkout1.events);
-
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
@@ -626,8 +624,6 @@ describe("sharedTreeView", () => {
 		// The undo stack is not empty because it contains the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 0);
-		assert.equal(checkout1RevertiblesReadonly.undoStack.length, 1);
-		assert.equal(checkout1RevertiblesReadonly.redoStack.length, 0);
 		assert.deepEqual(checkout1.getRemovedRoots(), []);
 
 		provider.processMessages();

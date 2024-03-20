@@ -191,13 +191,15 @@ export interface IFluidDataStoreChannel extends IDisposable {
     request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
     updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @alpha
-export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreContextEvents>, IFluidParentContext {
+export interface IFluidDataStoreContext extends IFluidParentContext {
     addedGCOutboundRoute?(fromPath: string, toPath: string): void;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
@@ -209,18 +211,11 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly id: string;
     readonly isLocalDataStore: boolean;
     readonly packagePath: readonly string[];
-    setChannelDirty(address: string): void;
 }
 
 // @alpha (undocumented)
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<IDataStore>;
-}
-
-// @alpha (undocumented)
-export interface IFluidDataStoreContextEvents extends IEvent {
-    // (undocumented)
-    (event: "attaching" | "attached", listener: () => void): any;
 }
 
 // @alpha (undocumented)
@@ -259,7 +254,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly containerRuntime: IContainerRuntimeBase;
     // (undocumented)
-    deleteChildSummarizerNode?(id: string): void;
+    deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -283,6 +278,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
+    setChannelDirty(address: string): void;
     // (undocumented)
     readonly storage: IDocumentStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;

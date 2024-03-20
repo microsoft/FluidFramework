@@ -4,19 +4,21 @@
  */
 
 import {
-	bufferToString,
 	IsoBuffer,
-	stringToBuffer,
 	Uint8ArrayToString,
+	bufferToString,
+	stringToBuffer,
 } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
-	ISummaryContext,
-	type ISnapshotFetchOptions,
 	type ISnapshot,
+	type ISnapshotFetchOptions,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
@@ -24,14 +26,12 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	GitManager,
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { assert } from "@fluidframework/core-utils";
 import { createDocument } from "./localCreateDocument.js";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
@@ -104,7 +104,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 				groupIds,
 				false,
 			);
-			assert(hasFoundTree, "No tree found for the given groupIds");
+			assert(hasFoundTree, 0x8dd /* No tree found for the given groupIds */);
 		} else {
 			await this.stripTreeOfLoadingGroupIds(snapshotTree);
 		}
@@ -163,7 +163,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		loadingGroupIds: Set<string>,
 		ancestorGroupIdInLoadingGroup: boolean,
 	): Promise<boolean> {
-		assert(loadingGroupIds.size > 0, "loadingGroupIds should not be empty");
+		assert(loadingGroupIds.size > 0, 0x8de /* loadingGroupIds should not be empty */);
 		const groupId = await this.readGroupId(tree);
 
 		// Strip the tree if it has a groupId and it is not in the loadingGroupIds

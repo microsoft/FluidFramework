@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MonoRepo, MonoRepoKind, Package } from "@fluidframework/build-tools";
+
+import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 import { sortPackageJson as sortJson } from "sort-package-json";
 
-import { sortVersions } from "../../library";
+// eslint-disable-next-line import/no-deprecated
+import { sortVersions, MonoRepoKind } from "../../library";
 import { ReleaseGroup, ReleasePackage } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
 import { findPackageOrReleaseGroup } from "../../args";
@@ -152,6 +154,7 @@ const getReleaseTitle = (
 	version: semver.SemVer,
 	releaseType: VersionBumpType,
 ): string => {
+	// eslint-disable-next-line import/no-deprecated
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
 	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
 	return `${name} v${version.version} (${releaseType})`;

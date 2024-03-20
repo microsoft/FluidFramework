@@ -3,50 +3,50 @@
  * Licensed under the MIT License.
  */
 
-import Deque from "double-ended-queue";
+import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IEventThisPlaceHolder, IEventProvider, IEvent } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
 	IChannelAttributes,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	Client,
+	IJSONSegment,
+	IMergeTreeOp,
+	type LocalReferencePosition,
+	MergeTreeDeltaType,
+	ReferenceType,
+	SegmentGroup,
+} from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IMatrixProducer, IMatrixConsumer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
-import {
-	MergeTreeDeltaType,
-	IMergeTreeOp,
-	SegmentGroup,
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	IJSONSegment,
-	ReferenceType,
-	type LocalReferencePosition,
-} from "@fluidframework/merge-tree";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
-import { SparseArray2D } from "./sparsearray2d.js";
-import { SharedMatrixFactory } from "./runtime.js";
+import { IMatrixConsumer, IMatrixProducer, IMatrixReader, IMatrixWriter } from "@tiny-calc/nano";
+import Deque from "double-ended-queue";
 import { Handle, isHandleValid } from "./handletable.js";
-import { deserializeBlob } from "./serialization.js";
+import {
+	ISetOp,
+	MatrixItem,
+	MatrixOp,
+	MatrixSetOrVectorOp,
+	SnapshotPath,
+	VectorOp,
+} from "./ops.js";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
+import { SharedMatrixFactory } from "./runtime.js";
+import { deserializeBlob } from "./serialization.js";
+import { SparseArray2D } from "./sparsearray2d.js";
 import { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
-import {
-	MatrixOp,
-	MatrixItem,
-	SnapshotPath,
-	ISetOp,
-	VectorOp,
-	MatrixSetOrVectorOp,
-} from "./ops.js";
 
 interface ISetOpMetadata {
 	rowHandle: Handle;
@@ -358,7 +358,7 @@ export class SharedMatrix<T = any>
 		const segoff = vector.getContainingSegment(pos, undefined, localSeq);
 		assert(
 			segoff.segment !== undefined && segoff.offset !== undefined,
-			"expected valid position",
+			0x8b3 /* expected valid position */,
 		);
 		return vector.createLocalReferencePosition(
 			segoff.segment,
@@ -470,7 +470,7 @@ export class SharedMatrix<T = any>
 		}
 		this.protectAgainstReentrancy(() => {
 			const message = this.cols.insert(colStart, count);
-			assert(message !== undefined, "must be defined");
+			assert(message !== undefined, 0x8b4 /* must be defined */);
 			this.submitColMessage(message);
 		});
 	}
@@ -500,7 +500,7 @@ export class SharedMatrix<T = any>
 		}
 		this.protectAgainstReentrancy(() => {
 			const message = this.rows.insert(rowStart, count);
-			assert(message !== undefined, "must be defined");
+			assert(message !== undefined, 0x8b5 /* must be defined */);
 			this.submitRowMessage(message);
 		});
 	}
@@ -519,7 +519,7 @@ export class SharedMatrix<T = any>
 
 	public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
 		const { op, inserted } = reinsertSegmentIntoVector(this.rows, rowStart, spec);
-		assert(op !== undefined, "must be defined");
+		assert(op !== undefined, 0x8b6 /* must be defined */);
 		this.submitRowMessage(op);
 
 		// Generate setCell ops for each populated cell in the reinserted rows.
@@ -543,7 +543,7 @@ export class SharedMatrix<T = any>
 
 	/***/ public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
 		const { op, inserted } = reinsertSegmentIntoVector(this.cols, colStart, spec);
-		assert(op !== undefined, "must be defined");
+		assert(op !== undefined, 0x8b7 /* must be defined */);
 		this.submitColMessage(op);
 
 		// Generate setCell ops for each populated cell in the reinserted cols.
@@ -674,7 +674,7 @@ export class SharedMatrix<T = any>
 		assert(
 			segment.localRemovedSeq === undefined ||
 				(segment.localRemovedSeq !== undefined && segment.localRemovedSeq > localSeq),
-			"Attempted to set a cell which was removed locally before the original op applied.",
+			0x8b8 /* Attempted to set a cell which was removed locally before the original op applied. */,
 		);
 
 		return client.findReconnectionPosition(segment, localSeq) + offset;
@@ -682,7 +682,10 @@ export class SharedMatrix<T = any>
 
 	protected reSubmitCore(incoming: unknown, localOpMetadata: unknown) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
-		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
+		assert(
+			originalRefSeq !== undefined,
+			0x8b9 /* Expected a recorded refSeq when resubmitting an op */,
+		);
 		const content = incoming as MatrixSetOrVectorOp<T>;
 
 		if (content.type === MatrixOp.set && content.target === undefined) {
@@ -808,7 +811,7 @@ export class SharedMatrix<T = any>
 	) {
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
-			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
 			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
 			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
 			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { AllowedUpdateType } from "../../../core/index.js";
 import {
 	SchemaBuilder,
 	leaf,
@@ -12,27 +13,26 @@ import {
 	nodeKeySchema,
 	nodeKeyTreeSchema,
 } from "../../../domains/index.js";
-import {
-	FieldKinds,
-	NodeKeyIndex,
-	LocalNodeKey,
-	StableNodeKey,
-	nodeKeyFieldKey,
-	FlexTreeTypedField,
-	Any,
-	createMockNodeKeyManager,
-	FlexFieldSchema,
-	InsertableFlexField,
-} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeTypedField,
+	InsertableFlexField,
+	LocalNodeKey,
+	NodeKeyIndex,
+	StableNodeKey,
+	createMockNodeKeyManager,
+	nodeKeyFieldKey,
+} from "../../../feature-libraries/index.js";
 import {
 	SummarizeType,
 	TestTreeProvider,
 	flexTreeWithContent,
 	schematizeFlexTree,
 } from "../../utils.js";
-import { AllowedUpdateType } from "../../../core/index.js";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
 const nodeSchema = builder.objectRecursive("node", {
