@@ -15,7 +15,7 @@ import {
 	loadContainer,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
-import { SnapshotStorageService } from "./snapshotStorageService";
+import { SnapshotStorageService } from "./snapshotStorageService.js";
 
 const metadataBlobName = ".metadata";
 

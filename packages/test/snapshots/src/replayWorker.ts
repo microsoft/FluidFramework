@@ -4,7 +4,7 @@
  */
 
 import threads from "worker_threads";
-import { IWorkerArgs, processOneNode } from "./replayMultipleFiles";
+import { IWorkerArgs, processOneNode } from "./replayMultipleFiles.js";
 
 const data = threads.workerData as IWorkerArgs;
 processOneNode(data)

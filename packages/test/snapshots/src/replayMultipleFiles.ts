@@ -9,10 +9,11 @@ import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "./packageVersion";
-import { validateSnapshots } from "./validateSnapshots";
-import { getMetadata, writeMetadataFile } from "./metadata";
-import { getTestContent } from "./testContent";
+import { pkgVersion } from "./packageVersion.js";
+import { validateSnapshots } from "./validateSnapshots.js";
+import { getMetadata, writeMetadataFile } from "./metadata.js";
+import { getTestContent } from "./testContent.js";
+import { _dirname } from "./dirname.cjs";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {
@@ -23,7 +24,7 @@ function getFileLocations(): [string, string] {
 		return [testCollateral.path, workerPath];
 	}
 	// Relative to this generated js file being executed
-	workerPath = nodePath.join(__dirname, "..", workerPath);
+	workerPath = nodePath.join(_dirname, "..", workerPath);
 	assert(
 		fs.existsSync(workerPath),
 		`Cannot find worker js or test content file: ${workerPath}, ${testCollateral.path}`,

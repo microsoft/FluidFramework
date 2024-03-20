@@ -23,7 +23,7 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
-import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
+import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
