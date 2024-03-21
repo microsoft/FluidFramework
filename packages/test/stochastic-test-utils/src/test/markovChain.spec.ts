@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "../markovChain";
-import { makeRandom } from "../random";
+import { PerformanceWordMarkovChain, SpaceEfficientWordMarkovChain } from "../markovChain.js";
+import { makeRandom } from "../random.js";
 
 const testSentences = [
 	["hello", "my", "name", "is", "sean"],
