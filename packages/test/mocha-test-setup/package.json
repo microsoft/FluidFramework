@@ -42,6 +42,9 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./mocharc-common": {
+			"require": "./mocharc-common.js"
 		}
 	},
 	"main": "dist/index.js",
