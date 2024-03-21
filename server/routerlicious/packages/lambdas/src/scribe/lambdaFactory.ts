@@ -266,7 +266,7 @@ export class ScribeLambdaFactory
 						lumberProperties,
 					);
 				}
-				lastCheckpoint = latestSummaryCheckpoint ?? DefaultScribe;
+				lastCheckpoint = latestSummaryCheckpoint;
 				opMessages = latestSummary.messages;
 				// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
 				// Currently the lambda checkpoints only after updating the logOffset so setting this to lower
