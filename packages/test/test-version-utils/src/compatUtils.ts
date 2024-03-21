@@ -90,9 +90,9 @@ function filterRuntimeOptionsForVersion(
 			minimumBatchSizeInBytes: 200,
 			compressionAlgorithm: CompressionAlgorithms.lz4,
 		},
-		chunkSizeInBytes = 200,
-		enableRuntimeIdCompressor = "on",
 		enableGroupedBatching = true,
+		enableRuntimeIdCompressor = "on",
+		// chunkSizeInBytes = 200,
 	} = options;
 
 	if (version.startsWith("1.")) {
@@ -102,34 +102,37 @@ function filterRuntimeOptionsForVersion(
 			compressionOptions: undefined,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
-			maxBatchSizeInBytes: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
 		};
 	} else if (version.startsWith("2.0.0-rc.1.")) {
 		options = {
-			...options,
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
-			// it was boolean in RC1, switched to enum in RC2
-			enableRuntimeIdCompressor: undefined,
 			enableGroupedBatching,
+			enableRuntimeIdCompressor: undefined, // it was boolean in RC1, switched to enum in RC2
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
+			...options,
 		};
 	} else if (version.startsWith("2.0.0-rc.2.")) {
 		options = {
-			...options,
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
-			enableRuntimeIdCompressor,
 			enableGroupedBatching,
+			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
+			// This is very likely related to one of these bugfixes that missed that release:
+			// https://github.com/microsoft/FluidFramework/pull/20089
+			// https://github.com/microsoft/FluidFramework/pull/20080
+			enableRuntimeIdCompressor: undefined,
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
+			...options,
 		};
 	} else {
 		// "2.0.0-rc.3." ++
 		options = {
-			...options,
 			compressionOptions,
-			chunkSizeInBytes,
-			enableRuntimeIdCompressor,
 			enableGroupedBatching,
+			// need to investigate - some small number of t9s tests time out with this option on.
+			// chunkSizeInBytes,
+			enableRuntimeIdCompressor,
+			...options,
 		};
 	}
 
