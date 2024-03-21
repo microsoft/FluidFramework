@@ -4,23 +4,23 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { Loader } from "@fluidframework/container-loader";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
+import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,
-	createDocumentId,
 	ITestFluidObject,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
+	createDocumentId,
 } from "@fluidframework/test-utils";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { pkgVersion } from "../packageVersion.js";
 import { wrapObjectAndOverride } from "../mocking.js";
+import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?
 describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {

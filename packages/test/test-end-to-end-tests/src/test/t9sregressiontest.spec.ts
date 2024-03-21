@@ -4,15 +4,15 @@
  */
 
 import assert from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
-	createAndAttachContainer,
-	ITestFluidObject,
-	ITestContainerConfig,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	createAndAttachContainer,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 
 const mapId = "map";
 
