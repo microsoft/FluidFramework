@@ -10,6 +10,7 @@ import { parseBundleAndExportFile } from "../parseBundleAndExportFile.js";
 import { _dirname } from "./dirname.cjs";
 // eslint-disable-next-line import/no-internal-modules
 import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
+
 describe("parseBundleAndExportFile", () => {
 	const folderRoot = path.join(_dirname, "../../src/test");
 	const outputFolder = path.join(folderRoot, "outputFolder");
