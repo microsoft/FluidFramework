@@ -207,21 +207,32 @@ export class ScribeLambdaFactory
 			throw error;
 		}
 
-		// Mongodb casts undefined as null so we are checking both to be safe.
-		// Also, if the document is new, it will not have a local scribe checkpoint.
+		// For a new document, Summary, Global (document) DB and Local DB checkpoints will not exist.
+		// However, it is possible that the global checkpoint was cleared to an empty string
+		// due to a service summary, so specifically check if global is not defined at all.
+		// Lastly, a new document will also not have a summary checkpoint, so if one exists without a DB checkpoint,
+		// we should use the summary checkpoint because there was likely a DB failure.
 		const useDefaultCheckpointForNewDocument =
-			(document.scribe === undefined || document.scribe === null) && !latestDbCheckpoint;
-		// Empty string denotes a cache that was cleared due to a service summary.
+			// Mongodb casts undefined as null so we are checking both to be safe.
+			(document.scribe === undefined || document.scribe === null) &&
+			!latestDbCheckpoint &&
+			!latestSummaryCheckpoint;
+		// Empty string for document DB checkpoint denotes a cache that was cleared due to a service summary.
+		// This will only happen if IServiceConfiguration.scribe.clearCacheAfterServiceSummary is true. Defaults to false.
 		const documentCheckpointIsCleared = document.scribe === "";
 		// It's possible that a local checkpoint is written after global checkpoint was cleared for service summary.
+		// Similarly, it's possible that the summary checkpoint is ahead of the latest db checkpoint due to a failure.
 		const summaryCheckpointAheadOfLatestDbCheckpoint =
 			latestSummaryCheckpoint &&
 			latestSummaryCheckpoint.sequenceNumber > latestDbCheckpoint?.sequenceNumber;
 		// Scrubbed users indicate that the quorum members have been scrubbed for privacy compliance.
 		const dbCheckpointQuorumIsScrubbed = isScribeCheckpointQuorumScrubbed(latestDbCheckpoint);
+		// Only use the summary checkpoint when
+		// 1) summary checkpoint is more recent than any DB checkpoint
+		// 2) the document checkpoint is cleared and there is not a more recent local checkpoint
+		// 3) the latest db checkpoint quorum members are scrubbed for privacy compliance
 		const useLatestSummaryCheckpointForExistingDocument =
 			summaryCheckpointAheadOfLatestDbCheckpoint ||
-			// Only use the summary checkpoint because global checkpoint was cleared if the summary checkpoint is ahead.
 			(documentCheckpointIsCleared && summaryCheckpointAheadOfLatestDbCheckpoint) ||
 			dbCheckpointQuorumIsScrubbed;
 

@@ -218,7 +218,7 @@ export class CheckpointService implements ICheckpointService {
 		const parseCheckpointString = (
 			checkpointString: string | undefined,
 		): IDeliState | IScribe | undefined =>
-			checkpointString ? JSON.parse(checkpointString) : undefined;
+			checkpointString ? (JSON.parse(checkpointString) as IDeliState | IScribe) : undefined;
 
 		try {
 			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
