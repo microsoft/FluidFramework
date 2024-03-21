@@ -50,11 +50,11 @@ import { TreeConfiguration } from "./tree.js";
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
 export function cursorFromUnhydratedRoot(
-	rootSchema: ImplicitFieldSchema,
+	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
-	const allowedTypes = rootSchema instanceof FieldSchema ? rootSchema.allowedTypes : rootSchema;
+	const allowedTypes = schema instanceof FieldSchema ? schema.allowedTypes : schema;
 	return cursorFromNodeData(data.content, allowedTypes) ?? fail("failed to decode tree");
 }
 
