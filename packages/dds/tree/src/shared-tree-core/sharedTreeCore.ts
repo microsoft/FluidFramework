@@ -263,7 +263,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
-		this.commitEnricher?.commitSequenced(local);
+		this.commitEnricher?.onSequencedCommitApplied(local);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
@@ -288,9 +288,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const {
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
-
 		const [commit] = this.editManager.findLocalCommit(revision);
 		if (this.commitEnricher !== undefined) {
+			// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 			if (!this.commitEnricher.isInResubmitPhase) {
 				const toResubmit = this.editManager.getLocalCommits();
 				assert(

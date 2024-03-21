@@ -369,7 +369,7 @@ describe("SharedTreeCore", () => {
 
 			public readonly sequencingLog: boolean[] = [];
 
-			public commitSequenced(isLocal: boolean): void {
+			public onSequencedCommitApplied(isLocal: boolean): void {
 				this.sequencingLog.push(isLocal);
 			}
 		}

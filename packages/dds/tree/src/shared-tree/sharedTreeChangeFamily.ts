@@ -205,8 +205,8 @@ function mapDataChanges(
 
 /**
  * Produces an equivalent change with an updated set of appropriate refreshers.
- * @param change - The change to compute refreshers for.
- * @param getDetachedNode - retrieves a tree chunk for the corresponding detached node id.
+ * @param change - The change to compute refreshers for. Not mutated.
+ * @param getDetachedNode - retrieves a {@link TreeChunk} for the corresponding detached node id.
  * Is expected to read from a forest in a state that corresponds to the input context of the given change.
  * @returns An equivalent change with an updated set of appropriate refreshers.
  */
@@ -240,6 +240,8 @@ export function updateRefreshers(
 	// Set B is excluded because the `getDetachedNode` is bound to return `undefined` for them, which tell
 	// `defaultUpdateRefreshers` to ignore. One downside of this approach is that it prevents `defaultUpdateRefreshers`
 	// from detecting cases where a detached node is missing for another reason (which would be a bug).
+
+	// The roots that have been included as refreshers across all data changes so far.
 	const includedRoots: NestedSet<RevisionTag | undefined, number> = new Map();
 	function getAndRememberDetachedNode(id: DeltaDetachedNodeId): TreeChunk | undefined {
 		addToNestedSet(includedRoots, id.major, id.minor);

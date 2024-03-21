@@ -145,7 +145,7 @@ describe("DefaultCommitEnricher", () => {
 			currentRevision = revision2;
 			enricher.enrichCommit(commit2, false);
 			// Simulate the sequencing of commit 1
-			enricher.commitSequenced(true);
+			enricher.onSequencedCommitApplied(true);
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
@@ -168,9 +168,9 @@ describe("DefaultCommitEnricher", () => {
 			currentRevision = revision2;
 			enricher.enrichCommit(commit2, false);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commits 1 and 2.
-			enricher.commitSequenced(false);
+			enricher.onSequencedCommitApplied(false);
 			// Simulate the sequencing of commit 1
-			enricher.commitSequenced(true);
+			enricher.onSequencedCommitApplied(true);
 			const rebased2: GraphCommit<TestChange> = {
 				...commit2,
 				change: { ...commit2.change, rebased: true },
@@ -197,11 +197,11 @@ describe("DefaultCommitEnricher", () => {
 			currentRevision = revision2;
 			enricher.enrichCommit(commit2, false);
 			// Simulate the sequencing of commit 1
-			enricher.commitSequenced(true);
+			enricher.onSequencedCommitApplied(true);
 			// Simulate the sequencing of a peer commit. This would lead to the rebasing of commit 2.
-			enricher.commitSequenced(false);
+			enricher.onSequencedCommitApplied(false);
 			// Simulate the sequencing of commit2
-			enricher.commitSequenced(true);
+			enricher.onSequencedCommitApplied(true);
 
 			TestChangeEnricher.resetCounters();
 			assert.equal(enricher.isInResubmitPhase, false);
@@ -258,14 +258,14 @@ describe("DefaultCommitEnricher", () => {
 
 				if (scenario === "and before") {
 					// Simulate the sequencing of a peer commit
-					enricher.commitSequenced(false);
+					enricher.onSequencedCommitApplied(false);
 				}
 
 				currentRevision = revision2;
 				enricher.enrichCommit(commit2, false);
 
 				// Simulate the sequencing of a peer commit as part of the resubmit phase
-				enricher.commitSequenced(false);
+				enricher.onSequencedCommitApplied(false);
 
 				// This would lead to the rebasing of commits 1 and 2:
 				const rebased1: GraphCommit<TestChange> = {
@@ -329,7 +329,7 @@ describe("DefaultCommitEnricher", () => {
 			enricher.enrichCommit(commit2, false);
 
 			// Simulate the sequencing of a peer commit
-			enricher.commitSequenced(false);
+			enricher.onSequencedCommitApplied(false);
 
 			// This would lead to the rebasing of commits 1 and 2:
 			const rebased1: GraphCommit<TestChange> = {

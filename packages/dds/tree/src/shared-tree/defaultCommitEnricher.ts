@@ -34,8 +34,16 @@ export interface ChangeEnricherCheckout<TChange> {
 	[disposeSymbol](): void;
 }
 
+/**
+ * Default implementation of {@link ICommitEnricher}.
+ */
 export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> {
+	/**
+	 * Change enricher that represent the tip of the top-level local branch (i.e., the branch on which in-flight
+	 * commits are applied and automatically rebased).
+	 */
 	private tip: ChangeEnricherCheckout<TChange>;
+
 	/**
 	 * The list of commits (from oldest to most recent) that are have been submitted but not sequenced.
 	 */
@@ -59,7 +67,14 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 	private latestInFlightCommitWithStaleEnrichments: number = -1;
 
 	public constructor(
+		/**
+		 * A function that can invert a change.
+		 */
 		private readonly inverter: ChangeRebaser<TChange>["invert"],
+		/**
+		 * A factory that return a new {@link ChangeEnricherCheckout} that corresponds to the tip of the top-most local
+		 * branch.
+		 */
 		private readonly checkoutFactory: () => ChangeEnricherCheckout<TChange>,
 	) {
 		this.tip = this.checkoutFactory();
@@ -140,7 +155,7 @@ export class DefaultCommitEnricher<TChange> implements ICommitEnricher<TChange> 
 		return this.resubmitQueue.length !== 0;
 	}
 
-	public commitSequenced(isLocal: boolean): void {
+	public onSequencedCommitApplied(isLocal: boolean): void {
 		if (isLocal) {
 			// The oldest in-flight commit has been sequenced
 			assert(this.inFlightQueue.length > 0, "Sequencing of unknown local commit");
