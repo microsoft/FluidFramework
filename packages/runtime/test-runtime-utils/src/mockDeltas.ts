@@ -169,8 +169,11 @@ export class MockDeltaManager
 	public clientSequenceNumber = -1;
 
 	public process(message: ISequencedDocumentMessage): void {
-		assert(message.sequenceNumber !== undefined, "TODO");
-		assert(message.minimumSequenceNumber !== undefined, "TODO2");
+		assert(message.sequenceNumber !== undefined, "message missing sequenceNumber");
+		assert(
+			message.minimumSequenceNumber !== undefined,
+			"message missing minimumSequenceNumber",
+		);
 		this.lastSequenceNumber = message.sequenceNumber;
 		this.lastMessage = message;
 		this.minimumSequenceNumber = message.minimumSequenceNumber;
