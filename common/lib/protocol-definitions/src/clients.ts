@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "./users";
+import { IUser } from "./users.js";
 
 /**
  * A client's connection mode - either view-only ("read") or allowing edits ("write").
