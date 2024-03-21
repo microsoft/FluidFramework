@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// False positive: this is an import from the `events` package, not from Node.
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
-import { IClient } from "@fluidframework/protocol-definitions";
+import type { IClient } from "@fluidframework/protocol-definitions";
+import type { EventEmitter } from "events_pkg";
 
 /**
  * Manages the state and the members for {@link IAudience}
@@ -26,7 +24,10 @@ export interface IAudienceOwner extends IAudience {
 }
 
 /**
- * Audience represents all clients connected to the op stream, both read-only and read/write.
+ * Represents all clients connected to the op stream, both read-only and read/write.
+ *
+ * @remarks Access to the Audience when a container is disconnected is a tricky subject.
+ * See the remarks on specific methods for more details.
  *
  * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`
  * class.
@@ -42,13 +43,28 @@ export interface IAudience extends EventEmitter {
 	): this;
 
 	/**
-	 * List all clients connected to the op stream, keyed off their clientId
+	 * List all clients connected to the op stream, keyed off their clientId.
+	 *
+	 * @remarks When the container is disconnected, there are no guarantees about the correctness of what this method returns.
+	 * The default implementation in Fluid Framework continues to return the list of members as it last saw it before the
+	 * container disconnected, but this could change in the future. Other implementations could decide to return an empty
+	 * list, or a list that only includes the local client.
+	 *
+	 * Note that the clientId that a disconnected container might see for itself is an old one. A disconnected container
+	 * does not technically have a clientId tied to an active connection to the service.
 	 */
 	getMembers(): Map<string, IClient>;
 
 	/**
-	 * Get details about the connected client with the specified clientId,
-	 * or undefined if the specified client isn't connected
+	 * Get details about the connected client with the specified clientId, or undefined if the specified client isn't connected.
+	 *
+	 * @remarks When the container is disconnected, there are no guarantees about the correctness of what this method returns.
+	 * The default implementation in Fluid Framework continues to return members that were part of the audience when the
+	 * container disconnected, but this could change in the future. Other implementations could decide to always return
+	 * undefined, or only return an IClient when the local client is requested.
+	 *
+	 * Note that the clientId that a disconnected container might see for itself is an old one. A disconnected container
+	 * does not technically have a clientId tied to an active connection to the service.
 	 */
 	getMember(clientId: string): IClient | undefined;
 }

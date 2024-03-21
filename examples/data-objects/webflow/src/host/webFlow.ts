@@ -3,45 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import {
-	LazyLoadedDataObjectFactory,
-	LazyLoadedDataObject,
-} from "@fluidframework/data-object-base";
-import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";
 
-export class WebFlow extends LazyLoadedDataObject<ISharedDirectory> {
-	private static readonly factory = new LazyLoadedDataObjectFactory<WebFlow>(
+export class WebFlow extends DataObject {
+	private static readonly factory = new DataObjectFactory<WebFlow>(
 		hostType,
 		WebFlow,
-		/* root: */ SharedDirectory.getFactory(),
 		[],
-		[FlowDocument.getFactory()],
+		{},
+		new Map([FlowDocument.getFactory().registryEntry]),
 	);
 
 	public static getFactory(): IFluidDataStoreFactory {
 		return WebFlow.factory;
 	}
 
-	public static async create(parentContext: IFluidDataStoreContext, props?: any) {
-		return WebFlow.factory.create(parentContext, props);
-	}
-
-	public async create() {
-		const doc = (await FlowDocument.create(this.context)) as FlowDocument;
-		this.root.set("doc", doc.handle);
-	}
-
-	public async load() {}
-
 	protected async initializingFirstTime() {
-		await this.create();
+		const doc = await FlowDocument.getFactory().createChildInstance(this.context);
+		this.root.set("doc", doc.handle);
 	}
 
 	public async getFlowDocument() {

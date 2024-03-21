@@ -1,6 +1,6 @@
 nyc
 *.log
 **/*.tsbuildinfo
-src/test
-dist/test
+src/test/**/*.spec.ts
+dist/test/**/*.spec.js
 **/_api-extractor-temp/**

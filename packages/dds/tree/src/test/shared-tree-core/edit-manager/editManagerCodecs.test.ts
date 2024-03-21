@@ -5,16 +5,16 @@
 
 import { SessionId } from "@fluidframework/id-compressor";
 import { makeCodecFamily, withDefaultBinaryEncoding } from "../../../codec/index.js";
+import { ChangeEncodingContext } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { TestChange } from "../../testChange.js";
-import { brand } from "../../../util/index.js";
-import { ChangeEncodingContext, RevisionTagCodec } from "../../../core/index.js";
 import { SummaryData, makeEditManagerCodec } from "../../../shared-tree-core/index.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import {
 	EncodingTestData,
-	MockIdCompressor,
 	makeEncodingTestSuite,
 	mintRevisionTag,
+	testRevisionTagCodec,
 } from "../../utils.js";
 
 const tags = Array.from({ length: 3 }, mintRevisionTag);
@@ -44,12 +44,12 @@ const trunkCommits: SummaryData<TestChange>["trunk"] = [
 const dummyContext = { originatorId: "dummySessionID" as SessionId };
 const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
 	successes: [
-		["empty", { trunk: [], branches: new Map() }, dummyContext],
+		["empty", { trunk: [], peerLocalBranches: new Map() }, dummyContext],
 		[
 			"single commit",
 			{
 				trunk: trunkCommits.slice(0, 1),
-				branches: new Map(),
+				peerLocalBranches: new Map(),
 			},
 			dummyContext,
 		],
@@ -57,7 +57,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"multiple commits",
 			{
 				trunk: trunkCommits,
-				branches: new Map(),
+				peerLocalBranches: new Map(),
 			},
 			dummyContext,
 		],
@@ -65,7 +65,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"empty branch",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"3",
 						{
@@ -81,7 +81,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"non-empty branch",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"4",
 						{
@@ -103,7 +103,7 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"multiple branches",
 			{
 				trunk: trunkCommits,
-				branches: new Map([
+				peerLocalBranches: new Map([
 					[
 						"3",
 						{
@@ -164,7 +164,7 @@ export function testCodec() {
 	describe("Codec", () => {
 		const codec = makeEditManagerCodec(
 			withDefaultBinaryEncoding(TestChange.codec),
-			new RevisionTagCodec(new MockIdCompressor()),
+			testRevisionTagCodec,
 			{
 				jsonValidator: typeboxValidator,
 			},

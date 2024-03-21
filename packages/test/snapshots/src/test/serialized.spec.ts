@@ -14,10 +14,9 @@ import {
 } from "@fluidframework/test-utils";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { SharedMap, SharedDirectory, type ISharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
-import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedCounter } from "@fluidframework/counter";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -59,7 +58,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
@@ -70,7 +69,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const crc =
 				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 			const sharedMatrix =
 				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 			const sparseMatrix =
@@ -82,7 +80,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 			assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 			assert.strictEqual(coc.id, cocId, "COC should exist!!");
-			assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 			assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 			assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 		});
@@ -103,7 +100,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
@@ -114,7 +111,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			const crc =
 				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
-			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
 			const sharedMatrix =
 				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
 			const sparseMatrix =
@@ -126,7 +122,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(sharedCounter.id, sharedCounterId, "Shared counter should exist!!");
 			assert.strictEqual(crc.id, crcId, "CRC should exist!!");
 			assert.strictEqual(coc.id, cocId, "COC should exist!!");
-			assert.strictEqual(ink.id, sharedInkId, "Shared ink should exist!!");
 			assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 			assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
 		});
@@ -142,7 +137,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 		const sharedDirectoryId = "sd1Key";
 		const sharedCellId = "scell1Key";
 		const sharedMatrixId = "smatrix1Key";
-		const sharedInkId = "sink1Key";
 		const sparseMatrixId = "sparsematrixKey";
 		const sharedCounterId = "sharedcounterKey";
 
@@ -157,7 +151,6 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 				[crcId, ConsensusRegisterCollection.getFactory()],
 				[sharedDirectoryId, SharedDirectory.getFactory()],
 				[sharedCellId, SharedCell.getFactory()],
-				[sharedInkId, Ink.getFactory()],
 				[sharedMatrixId, SharedMatrix.getFactory()],
 				[cocId, ConsensusQueue.getFactory()],
 				[sparseMatrixId, SparseMatrix.getFactory()],

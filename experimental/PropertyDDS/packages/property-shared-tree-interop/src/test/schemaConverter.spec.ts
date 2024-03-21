@@ -4,30 +4,30 @@
  */
 
 import { strict as assert } from "assert";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	brand,
-	FieldKinds,
-	fail,
 	Any,
-	TreeNodeSchemaIdentifier,
-	FlexFieldSchema,
 	FieldKey,
+	FieldKinds,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	LeafNodeSchema,
+	TreeNodeSchemaIdentifier,
+	brand,
+	fail,
 	leaf,
 	schemaIsFieldNode,
 	schemaIsLeaf,
-	FlexObjectNodeSchema,
-	FlexMapNodeSchema,
-	LeafNodeSchema,
-	FlexFieldNodeSchema,
-} from "@fluidframework/tree";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
+} from "@fluidframework/tree/internal";
 import {
 	convertPropertyToSharedTreeSchema as convertSchema,
 	nodePropertyField,
 	nodePropertySchema,
-} from "../schemaConverter";
-import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
+} from "../schemaConverter.js";
+import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {

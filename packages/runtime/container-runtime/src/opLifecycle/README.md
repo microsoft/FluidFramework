@@ -13,6 +13,9 @@
 -   [Note about performance and latency](#note-about-performance-and-latency)
 -   [How it works](#how-it-works)
 -   [How grouped batching works](#how-grouped-batching-works)
+-   [How the overall op flow works](#How-the-overall-op-flow-works)
+    -   [Outbound](#outbound)
+    -   [Inbound](#inbound)
 
 ## Introduction
 
@@ -65,8 +68,6 @@ Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate`
 
 ## Grouped batching
 
-**Note: This feature is currently considered experimental and is not ready for production usage.**
-
 The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to the container runtime layer and is **off by default**. This option will group all batch messages under a new "grouped" message to be sent to the service. Upon receiving this new "grouped" message, the batch messages will be extracted and given the sequence number of the parent "grouped" message.
 
 The purpose for enabling grouped batching on top of compression is that regular compression won't include the empty messages in the chunks. Thus, if we have batches with many messages (i.e. more than 4k), we will go over the batch size limit just on empty op envelopes alone.
@@ -75,7 +76,7 @@ See [below](#how-grouped-batching-works) for an example.
 
 ### Risks
 
-This option is experimental and should not be enabled yet in production. This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.4.1.0" or later). Containers created with this option may not open in future versions of the framework.
+This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.7.0.0" or later). Containers created with this option may not open in future versions of the framework.
 
 This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
 and verifying that the following expectation changes won't have any effects:
@@ -91,7 +92,7 @@ Therefore, when grouped batching is enabled, all batches with reentrant ops are 
 
 ### How to enable
 
-**This feature is disabled by default, currently considered experimental and not ready for production usage.**
+**This feature is disabled by default**
 
 If all prerequisites in the previous section are met, enabling the feature can be done via the `IContainerRuntimeOptions` as following:
 
@@ -319,3 +320,89 @@ Ungrouped batch:
 | ClientSeqNum: 1 | ClientSeqNum: 2 | ClientSeqNum: 3 | ClientSeqNum: 4 | ClientSeqNum: 5 |
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
+
+## How the overall op flow works
+
+### Outbound
+
+The outbound view is how ops are accumulated and sent by the runtime with `FlushMode.TurnBased` (default).
+
+```mermaid
+stateDiagram-v2
+	state "* End of JS turn *" as jsTurn
+    state "opGroupingManager.groupBatch" as groupBatch
+    state "opCompressor.compress" as compress
+    state "outbox.flush" as flush
+    state "outbox.flushInternal" as flushInternal
+	state "Send batch over the wire" as post
+	state "Send chunks (partial ops) over the wire" as postChunks
+	state "Store original (uncompressed, unchunked, ungrouped) batch locally" as store
+    state if_compression <<choice>>
+	[*] --> ContainerRuntime.submit
+	ContainerRuntime.submit --> outbox.submitAttach
+	ContainerRuntime.submit --> outbox.submitBlobAttach
+	ContainerRuntime.submit --> outbox.submit
+	outbox.submit --> scheduleFlush
+	outbox.submitAttach --> scheduleFlush
+	outbox.submitBlobAttach --> scheduleFlush
+	scheduleFlush --> jsTurn
+	jsTurn --> flush
+	flush --> outbox.flushInternalMain
+	flush --> outbox.flushInternalAttach
+	flush --> outbox.flushInternalBlobAttach
+	outbox.flushInternalMain --> flushInternal
+	outbox.flushInternalAttach --> flushInternal
+	outbox.flushInternalBlobAttach --> flushInternal
+	flushInternal --> ContainerRuntime.reSubmit: if batch has reentrant ops and should group
+	ContainerRuntime.reSubmit --> flushInternal
+    flushInternal --> groupBatch: if should group
+    groupBatch --> if_compression
+	flushInternal --> if_compression
+    if_compression --> post
+	if_compression --> compress: if compression is enabled
+	compress --> post
+	compress --> opSplitter.split: if the compressed payload is larger than the chunk size
+	opSplitter.split --> post
+	opSplitter.split --> postChunks
+    post --> store
+```
+
+With `FlushMode.Immediate`(deprecated) the difference is that ops are no longer accumulated in batches, but flushed as they are submitted, instead of waiting for the end of the JS turn. All the other components work in the exact same manner with the difference that they operate on batches with length 1.
+
+### Inbound
+
+There is no concept of batch in the inbound view when we receive the ops. Ops are being received and processed one-by-one and the batch is reconstructed in the runtime layer. This requires individual components to maintain their own internal state in order to keep track of the batch.
+
+```mermaid
+stateDiagram-v2
+    [*] --> ContainerRuntime.process
+	ContainerRuntime.process --> remoteMessageProcessor
+    state remoteMessageProcessor {
+        state "process chunk" as processChunk
+        state "return nothing" as returnNothing
+        state "decompress and store" as decompress
+        state if_chunk <<choice>>
+        state if_compressed <<choice>>
+        state if_unrolling <<choice>>
+        state if_grouped <<choice>>
+        [*] --> if_chunk
+        if_chunk --> if_compressed
+        if_chunk --> processChunk: is chunk
+        processChunk --> returnNothing
+        processChunk --> if_compressed: is final chunk
+        if_compressed --> if_unrolling
+        if_compressed --> decompress: is compressed
+        decompress --> if_unrolling
+        if_unrolling --> if_grouped
+        if_unrolling --> unroll: if currently unrolling
+        unroll --> if_grouped
+        if_grouped --> return
+        if_grouped --> ungroup: is grouped batch
+        ungroup --> return
+        return --> [*]
+        returnNothing --> [*]
+    }
+    remoteMessageProcessor --> ContainerRuntime.procesCore
+```
+
+Note that a "system op" originating outside the ContainerRuntime will pass through this flow entirely.

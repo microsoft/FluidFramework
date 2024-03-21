@@ -3,24 +3,25 @@
  * Licensed under the MIT License.
  */
 
-const {
+import {
 	ApiItemKind,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
 	MarkdownRenderer,
+	ReleaseTag,
 	transformApiModel,
-} = require("@fluid-tools/api-markdown-documenter");
-const { PackageName } = require("@rushstack/node-core-library");
-const chalk = require("chalk");
-const fs = require("fs-extra");
-const path = require("path");
+} from "@fluid-tools/api-markdown-documenter";
+import { PackageName } from "@rushstack/node-core-library";
+import chalk from "chalk";
+import fs from "fs-extra";
+import path from "path";
 
-const { alertNodeType } = require("./alert-node");
-const { layoutContent } = require("./api-documentation-layout");
-const { buildNavBar } = require("./build-api-nav");
-const { renderAlertNode, renderBlockQuoteNode, renderTableNode } = require("./custom-renderers");
-const { createHugoFrontMatter } = require("./front-matter");
+import { alertNodeType } from "./alert-node.js";
+import { layoutContent } from "./api-documentation-layout.js";
+import { buildNavBar } from "./build-api-nav.js";
+import { renderAlertNode, renderBlockQuoteNode, renderTableNode } from "./custom-renderers.js";
+import { createHugoFrontMatter } from "./front-matter.js";
 
 /**
  * Generates a documentation suite for the API model saved under `inputDir`, saving the output to `outputDir`.
@@ -30,7 +31,7 @@ const { createHugoFrontMatter } = require("./front-matter");
  * @param {string} apiVersionNum - The API model version string used to differentiate different major versions of the
  * framework for which API documentation is presented on the website.
  */
-async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
+export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersionNum) {
 	/**
 	 * Logs a progress message, prefaced with the API version number to help differentiate parallel logging output.
 	 */
@@ -89,8 +90,7 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		},
 		frontMatter: (apiItem) =>
 			createHugoFrontMatter(apiItem, config, customRenderers, apiVersionNum),
-		// TODO: enable the following once we have finished gettings the repo's release tags sorted out for 2.0.
-		// minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
+		minimumReleaseLevel: ReleaseTag.Beta, // Don't include `@alpha` or `@internal` items in docs published to the public website.
 	});
 
 	logProgress("Generating API documentation...");
@@ -149,7 +149,3 @@ async function renderApiDocumentation(inputDir, outputDir, uriRootDir, apiVersio
 		}),
 	);
 }
-
-module.exports = {
-	renderApiDocumentation,
-};

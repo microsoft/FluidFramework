@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
-import { convertToCompactSnapshot } from "../compactSnapshotWriter";
+import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 
 const snapshotTree: ISnapshotTree = {
 	id: "SnapshotId",
@@ -118,6 +118,50 @@ const ops: ISequencedDocumentMessage[] = [
 	},
 ];
 
+const snapshotTreeWithGroupId: ISnapshotTree = {
+	id: "SnapshotId",
+	blobs: {},
+	trees: {
+		".protocol": {
+			blobs: {},
+			trees: {},
+		},
+		".app": {
+			blobs: { ".metadata": "bARD4RKvW4LL1KmaUKp6hUMSp" },
+			trees: {
+				".channels": {
+					blobs: {},
+					trees: {
+						default: {
+							blobs: {},
+							trees: {
+								dds: {
+									blobs: {},
+									trees: {},
+								},
+							},
+							groupId: "G3",
+						},
+					},
+					unreferenced: true,
+					groupId: "G2",
+					omitted: false,
+				},
+				".blobs": { blobs: {}, trees: {} },
+			},
+			unreferenced: true,
+			groupId: "G4",
+		},
+	},
+};
+
+const blobContents2 = new Map<string, ArrayBuffer>([
+	[
+		"bARD4RKvW4LL1KmaUKp6hUMSp",
+		stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
+	],
+]);
+
 describe("Snapshot Format Conversion Tests", () => {
 	it("Conversion test", async () => {
 		const snapshotContents: ISnapshot = {
@@ -165,6 +209,41 @@ describe("Snapshot Format Conversion Tests", () => {
 		assert.deepStrictEqual(result.snapshotTree, snapshotTree, "Tree structure should match");
 		assert.deepStrictEqual(result.blobContents, blobContents, "Blobs content should match");
 		assert.deepStrictEqual(result.ops, [], "Ops should match");
+		assert(result.sequenceNumber === 0, "Seq number should match");
+		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
+		assert(
+			(result.snapshotTree.id = snapshotContents.snapshotTree.id),
+			"Snapshot id should match",
+		);
+		// Convert to compact snapshot again and then match to previous one.
+		const compactSnapshot2 = convertToCompactSnapshot(result);
+		assert.deepStrictEqual(
+			compactSnapshot2.buffer,
+			compactSnapshot.buffer,
+			"Compact representation should remain same",
+		);
+		logger.assertMatchNone([{ category: "error" }]);
+	});
+
+	it("Conversion test for snapshot with GroupId", async () => {
+		const snapshotContents: ISnapshot = {
+			snapshotTree: snapshotTreeWithGroupId,
+			blobContents: blobContents2,
+			ops,
+			sequenceNumber: 0,
+			latestSequenceNumber: 2,
+			snapshotFormatV: 1,
+		};
+		const logger = new MockLogger();
+		const compactSnapshot = convertToCompactSnapshot(snapshotContents);
+		const result = parseCompactSnapshotResponse(compactSnapshot, logger.toTelemetryLogger());
+		assert.deepStrictEqual(
+			result.snapshotTree,
+			snapshotTreeWithGroupId,
+			"Tree structure should match",
+		);
+		assert.deepStrictEqual(result.blobContents, blobContents2, "Blobs content should match");
+		assert.deepStrictEqual(result.ops, ops, "Ops should match");
 		assert(result.sequenceNumber === 0, "Seq number should match");
 		assert(result.latestSequenceNumber === 2, "Latest sequence number should match");
 		assert(

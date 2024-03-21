@@ -2,7 +2,7 @@
 
 [Packages](docs/) &gt; [simple-suite-test](docs/simple-suite-test)
 
-Test package
+<b>Test package</b>
 
 # Remarks {#simple-suite-test-remarks}
 
@@ -408,7 +408,7 @@ export declare abstract class TestAbstractClass
 
 | Constructor | Description |
 | --- | --- |
-| [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) | This is a constructor. |
+| [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) | This is a _{@customTag constructor}_. |
 
 ### Properties
 
@@ -429,7 +429,7 @@ export declare abstract class TestAbstractClass
 
 #### (constructor) {#testabstractclass-_constructor_-constructor}
 
-This is a constructor.
+This is a _{@customTag constructor}_.
 
 ##### Signature {#_constructor_-signature}
 

@@ -15,6 +15,13 @@ import { NodeChangeset } from "../modular-schema/index.js";
  */
 export type RegisterId = ChangeAtomId | "self";
 
+export type Move = readonly [src: ChangeAtomId, dst: ChangeAtomId];
+
+export type ChildChange<TChildChange = NodeChangeset> = readonly [
+	register: RegisterId,
+	childChange: TChildChange,
+];
+
 /**
  * Changes to an optional field.
  *
@@ -26,34 +33,40 @@ export type RegisterId = ChangeAtomId | "self";
 export interface OptionalChangeset<TChildChange = NodeChangeset> {
 	/**
 	 * Each entry signifies the intent to move a node from `src` to `dst`.
+	 * Moves to or from the "self" register are represented in {@link valueReplace}.
 	 *
 	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
-	 * As such, changesets should not contain duplicated src or dst entries (lest they populate the same register twice,
-	 * or try to move a node to two different places).
-	 *
-	 * The third entry specifies whether the "intent" of the move is to target a specific source register ("cellTargeting") OR to
-	 * target the node that currently happens to occupy some source register ("nodeTargeting").
-	 * This is relevant when considering how changes should be rebased.
-	 *
-	 * Rebasing logic should only generate moves whose `src` is an occupied register.
+	 * As such, changesets should not contain duplicated src or dst entries.
 	 */
-	moves: (readonly [src: RegisterId, dst: RegisterId, kind: "nodeTargeting" | "cellTargeting"])[];
+	readonly moves: readonly Move[];
 
 	/**
 	 * Nested changes to nodes that occupy registers.
 	 *
 	 * Nodes are identified by the register they occupy in the *input* context of the changeset.
 	 */
-	childChanges: [register: RegisterId, childChange: TChildChange][];
+	readonly childChanges: readonly ChildChange<TChildChange>[];
 
 	/**
-	 * Set iff:
-	 * 1. This change intends to populate a register (call it `foo`)
-	 * 2. That register is currently unoccupied
-	 *
-	 * In such cases, this changeset should not include a move with source `foo`, since `foo` is empty.
-	 * However, if this changeset is then rebased over a change which populates `foo`, the rebased changeset must now empty `foo`.
-	 * This reserved id is used as the destination of that emptying move.
+	 * An optional description of how to replace the current value of the field.
 	 */
-	reservedDetachId?: RegisterId;
+	readonly valueReplace?: Replace;
+}
+
+export interface Replace {
+	/**
+	 * Whether the field is empty in the input context of this change.
+	 */
+	readonly isEmpty: boolean;
+
+	/**
+	 * The ID for the node to put in this field, or undefined if the field should be emptied.
+	 * Will be "self" when the intention is to keep the current node in this field.
+	 */
+	readonly src?: RegisterId;
+
+	/**
+	 * An ID to associate with the node (if any) which is detached by this edit.
+	 */
+	readonly dst: ChangeAtomId;
 }

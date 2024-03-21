@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/core-utils";
 import {
-	fail,
+	Any,
+	FlexFieldKind as FieldKind,
 	FieldKinds,
 	FlexFieldSchema,
-	SchemaBuilderBase,
-	FlexFieldKind as FieldKind,
-	Any,
-	FlexTreeNodeSchema as TreeNodeSchema,
 	LazyTreeNodeSchema,
+	SchemaBuilderBase,
+	FlexTreeNodeSchema as TreeNodeSchema,
+	fail,
 	leaf,
-} from "@fluidframework/tree";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+} from "@fluidframework/tree/internal";
 
 const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";

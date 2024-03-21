@@ -4,14 +4,14 @@
  */
 
 import type {
-	EditId,
 	Definition,
+	DetachedSequenceId,
+	EditId,
 	NodeId,
 	StableNodeId,
 	TraitLabel,
-	DetachedSequenceId,
 	UuidString,
-} from '../Identifiers';
+} from '../Identifiers.js';
 
 /**
  * Defines a place relative to sibling.

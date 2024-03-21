@@ -2,28 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as os from "os";
-import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
-import {
-	LocalNodeFactory,
-	LocalOrderManager,
-	NodeManager,
-	ReservationManager,
-} from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
-import * as bytes from "bytes";
 import { Provider } from "nconf";
-import * as Redis from "ioredis";
 import * as winston from "winston";
-import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
 import {
@@ -33,58 +19,6 @@ import {
 	DocumentDeleteService,
 } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
-
-class NodeWebSocketServer implements core.IWebSocketServer {
-	private readonly webSocketServer: ws.Server;
-
-	constructor(portNumber: number) {
-		this.webSocketServer = new ws.Server({ port: portNumber });
-	}
-	public on(event: string, listener: (...args: any[]) => void) {
-		this.webSocketServer.on(event, listener);
-	}
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public close(): Promise<void> {
-		this.webSocketServer.close();
-		return Promise.resolve();
-	}
-}
-
-/**
- * @internal
- */
-export class OrdererManager implements core.IOrdererManager {
-	constructor(
-		private readonly globalDbEnabled: boolean,
-		private readonly ordererUrl: string,
-		private readonly tenantManager: core.ITenantManager,
-		private readonly localOrderManager: LocalOrderManager,
-		private readonly kafkaFactory: KafkaOrdererFactory,
-	) {}
-
-	public async getOrderer(tenantId: string, documentId: string): Promise<core.IOrderer> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-
-		const messageMetaData = { documentId, tenantId };
-		winston.info(`tenant orderer: ${JSON.stringify(tenant.orderer)}`, { messageMetaData });
-		Lumberjack.info(
-			`tenant orderer: ${JSON.stringify(tenant.orderer)}`,
-			getLumberBaseProperties(documentId, tenantId),
-		);
-
-		if (tenant.orderer.url !== this.ordererUrl && !this.globalDbEnabled) {
-			Lumberjack.error(`Invalid ordering service endpoint`, { messageMetaData });
-			throw new Error("Invalid ordering service endpoint");
-		}
-
-		switch (tenant.orderer.type) {
-			case "kafka":
-				return this.kafkaFactory.create(tenantId, documentId);
-			default:
-				return this.localOrderManager.get(tenantId, documentId);
-		}
-	}
-}
 
 /**
  * @internal
@@ -96,16 +30,9 @@ export class AlfredResources implements core.IResources {
 		public config: Provider,
 		public producer: core.IProducer,
 		public redisConfig: any,
-		public clientManager: core.IClientManager,
-		public webSocketLibrary: string,
-		public orderManager: core.IOrdererManager,
 		public tenantManager: core.ITenantManager,
 		public restTenantThrottlers: Map<string, core.IThrottler>,
 		public restClusterThrottlers: Map<string, core.IThrottler>,
-		public socketConnectTenantThrottler: core.IThrottler,
-		public socketConnectClusterThrottler: core.IThrottler,
-		public socketSubmitOpThrottler: core.IThrottler,
-		public socketSubmitSignalThrottler: core.IThrottler,
 		public singleUseTokenCache: core.ICache,
 		public storage: core.IDocumentStorage,
 		public appTenants: IAlfredTenant[],
@@ -113,40 +40,22 @@ export class AlfredResources implements core.IResources {
 		public deltaService: core.IDeltaService,
 		public port: any,
 		public documentsCollectionName: string,
-		public metricClientConfig: any,
 		public documentRepository: core.IDocumentRepository,
 		public documentDeleteService: IDocumentDeleteService,
-		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
-		public verifyMaxMessageSize?: boolean,
-		public redisCache?: core.ICache,
-		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
+		public enableClientIPLogging?: boolean,
 	) {
-		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const socketIoConfig = config.get("alfred:socketIo");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
 			"alfred:nodeClusterConfig",
 		);
 		const useNodeCluster = config.get("alfred:useNodeCluster");
 		this.webServerFactory = useNodeCluster
-			? new services.SocketIoNodeClusterWebServerFactory(
-					redisConfig,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-					nodeClusterConfig,
-			  )
-			: new services.SocketIoWebServerFactory(
-					this.redisConfig,
-					socketIoAdapterConfig,
-					httpServerConfig,
-					socketIoConfig,
-			  );
+			? new services.NodeClusterWebServerFactory(httpServerConfig, nodeClusterConfig)
+			: new services.BasicWebServerFactory(httpServerConfig);
 	}
 
 	public async dispose(): Promise<void> {
@@ -180,7 +89,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const kafkaLibrary = config.get("kafka:lib:name");
 		const kafkaClientId = config.get("alfred:kafkaClientId");
 		const topic = config.get("alfred:topic");
-		const metricClientConfig = config.get("metric");
 		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
 		const kafkaReplicationFactor = config.get("kafka:lib:replicationFactor");
@@ -203,44 +111,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const redisConfig = config.get("redis");
-		const webSocketLibrary = config.get("alfred:webSocketLib");
 		const authEndpoint = config.get("auth:endpoint");
 
 		// Redis connection for client manager and single-use JWTs.
 		const redisConfig2 = config.get("redis2");
-		const redisOptions2: Redis.RedisOptions = {
-			host: redisConfig2.host,
-			port: redisConfig2.port,
-			password: redisConfig2.pass,
-			connectTimeout: redisConfig2.connectTimeout,
-			enableReadyCheck: true,
-			maxRetriesPerRequest: redisConfig2.maxRetriesPerRequest,
-			enableOfflineQueue: redisConfig2.enableOfflineQueue,
-		};
-		if (redisConfig2.enableAutoPipelining) {
-			/**
-			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-			 * More info: https://github.com/luin/ioredis#autopipelining
-			 */
-			redisOptions2.enableAutoPipelining = true;
-			redisOptions2.autoPipeliningIgnoredCommands = ["ping"];
-		}
-		if (redisConfig2.tls) {
-			redisOptions2.tls = {
-				servername: redisConfig2.host,
-			};
-		}
 
-		const redisParams2 = {
-			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
-		};
-
-		const redisClient = new Redis.default(redisOptions2);
-		const clientManager = new services.ClientManager(redisClient, redisParams2);
-
-		const redisClientForJwtCache = new Redis.default(redisOptions2);
-		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
+		const redisClientConnectionManagerForJwtCache =
+			customizations?.redisClientConnectionManagerForJwtCache
+				? customizations.redisClientConnectionManagerForJwtCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+				  );
+		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
 		// Database connection for global db if enabled
 		let globalDbMongoManager;
@@ -270,7 +155,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 
 		// Setup for checkpoint collection
-		const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
+
 		const operationsDb = await operationsDbMongoManager.getDatabase();
 		const checkpointsCollection =
 			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
@@ -293,52 +178,32 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
-		const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
+
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
-		const reservationManager = new ReservationManager(
-			nodeManager,
-			operationsDbMongoManager,
-			config.get("mongo:collectionNames:reservations"),
-		);
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
-		const redisOptionsForThrottling: Redis.RedisOptions = {
-			host: redisConfigForThrottling.host,
-			port: redisConfigForThrottling.port,
-			password: redisConfigForThrottling.pass,
-			connectTimeout: redisConfigForThrottling.connectTimeout,
-			enableReadyCheck: true,
-			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
-			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-		};
-		if (redisConfigForThrottling.enableAutoPipelining) {
-			/**
-			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-			 * More info: https://github.com/luin/ioredis#autopipelining
-			 */
-			redisOptionsForThrottling.enableAutoPipelining = true;
-			redisOptionsForThrottling.autoPipeliningIgnoredCommands = ["ping"];
-		}
-		if (redisConfigForThrottling.tls) {
-			redisOptionsForThrottling.tls = {
-				servername: redisConfigForThrottling.host,
-			};
-		}
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number
 				| undefined,
 		};
+		const redisClientConnectionManagerForThrottling =
+			customizations?.redisClientConnectionManagerForThrottling
+				? customizations.redisClientConnectionManagerForThrottling
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfigForThrottling,
+						redisConfigForThrottling.enableClustering,
+						redisConfigForThrottling.slotsRefreshTimeout,
+				  );
 
-		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
-				redisClientForThrottling,
+				redisClientConnectionManagerForThrottling,
 				redisParamsForThrottling,
 			);
 
@@ -418,54 +283,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
 		restClusterThrottlers.set(Constants.getSessionThrottleIdPrefix, restGetSessionThrottler);
 
-		// Socket Connection Throttler
-		const socketConnectionThrottleConfigPerTenant = utils.getThrottleConfig(
-			config.get("alfred:throttling:socketConnectionsPerTenant"),
-		);
-		const socketConnectTenantThrottler = configureThrottler(
-			socketConnectionThrottleConfigPerTenant,
-		);
-
-		const socketConnectionThrottleConfigPerCluster = utils.getThrottleConfig(
-			config.get("alfred:throttling:socketConnectionsPerCluster"),
-		);
-		const socketConnectClusterThrottler = configureThrottler(
-			socketConnectionThrottleConfigPerCluster,
-		);
-
-		// Socket SubmitOp Throttler
-		const submitOpThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:submitOps"),
-		);
-		const socketSubmitOpThrottler = configureThrottler(submitOpThrottleConfig);
-
-		// Socket SubmitSignal Throttler
-		const submitSignalThrottleConfig = utils.getThrottleConfig(
-			config.get("alfred:throttling:submitSignals"),
-		);
-		const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
 		const documentRepository =
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
-		const deliCheckpointRepository = new core.MongoCheckpointRepository(
-			checkpointsCollection,
-			"deli",
-		);
-		const scribeCheckpointRepository = new core.MongoCheckpointRepository(
-			checkpointsCollection,
-			"scribe",
-		);
-
-		const deliCheckpointService = new core.CheckpointService(
-			deliCheckpointRepository,
-			documentRepository,
-			localCheckpointEnabled,
-		);
-		const scribeCheckpointService = new core.CheckpointService(
-			scribeCheckpointRepository,
-			documentRepository,
-			localCheckpointEnabled,
-		);
 
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
@@ -492,75 +312,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			storageNameAllocator,
 		);
 
-		const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
-		// Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
-		// Therefore, default clients will ignore server's 16kb message size limit.
-		const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
-
-		// This cache will be used to store connection counts for logging connectionCount metrics.
-		let redisCache: core.ICache;
-		if (config.get("alfred:enableConnectionCountLogging")) {
-			const redisOptions: Redis.RedisOptions = {
-				host: redisConfig.host,
-				port: redisConfig.port,
-				password: redisConfig.pass,
-				connectTimeout: redisConfig.connectTimeout,
-				enableReadyCheck: true,
-				maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-				enableOfflineQueue: redisConfig.enableOfflineQueue,
-			};
-			if (redisConfig.enableAutoPipelining) {
-				/**
-				 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-				 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-				 * More info: https://github.com/luin/ioredis#autopipelining
-				 */
-				redisOptions.enableAutoPipelining = true;
-				redisOptions.autoPipeliningIgnoredCommands = ["ping"];
-			}
-			if (redisConfig.tls) {
-				redisOptions.tls = {
-					servername: redisConfig.host,
-				};
-			}
-			const redisClientForLogging = new Redis.default(redisOptions);
-			redisCache = new services.RedisCache(redisClientForLogging);
-		}
-
-		const address = `${await utils.getHostIp()}:4000`;
-		const nodeFactory = new LocalNodeFactory(
-			os.hostname(),
-			address,
-			storage,
-			databaseManager,
-			documentRepository,
-			deliCheckpointRepository,
-			scribeCheckpointRepository,
-			deliCheckpointService,
-			scribeCheckpointService,
-			60000,
-			() => new NodeWebSocketServer(cluster.isPrimary ? 4000 : 0),
-			maxSendMessageSize,
-			winston,
-		);
-
-		const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
-		const kafkaOrdererFactory = new KafkaOrdererFactory(
-			producer,
-			maxSendMessageSize,
-			core.DefaultServiceConfiguration,
-		);
-		const serverUrl = config.get("worker:serverUrl");
-
-		const orderManager = new OrdererManager(
-			globalDbEnabled,
-			serverUrl,
-			tenantManager,
-			localOrderManager,
-			kafkaOrdererFactory,
-		);
-
-		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
+		const enableClientIPLogging = config.get("alfred:enableClientIPLogging") ?? false;
 
 		// Tenants attached to the apps this service exposes
 		const appTenants = config.get("alfred:tenants") as { id: string; key: string }[];
@@ -586,10 +338,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			"tokenRevocation:enable",
 			config,
 		);
-		let socketTracker: core.IWebSocketTracker | undefined;
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
-			socketTracker = customizations?.webSocketTracker ?? new utils.WebSocketTracker();
 			tokenRevocationManager =
 				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
 			await tokenRevocationManager.initialize().catch((error) => {
@@ -602,16 +352,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			config,
 			producer,
 			redisConfig,
-			clientManager,
-			webSocketLibrary,
-			orderManager,
 			tenantManager,
 			restTenantThrottlers,
 			restClusterThrottlers,
-			socketConnectTenantThrottler,
-			socketConnectClusterThrottler,
-			socketSubmitOpThrottler,
-			socketSubmitSignalThrottler,
 			redisJwtCache,
 			storage,
 			appTenants,
@@ -619,18 +362,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			deltaService,
 			port,
 			documentsCollectionName,
-			metricClientConfig,
 			documentRepository,
 			documentDeleteService,
-			redisThrottleAndUsageStorageManager,
-			verifyMaxMessageSize,
-			redisCache,
-			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
-			collaborationSessionEvents,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
+			enableClientIPLogging,
 		);
 	}
 }
@@ -644,31 +382,21 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.webServerFactory,
 			resources.config,
 			resources.port,
-			resources.orderManager,
 			resources.tenantManager,
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
-			resources.socketConnectTenantThrottler,
-			resources.socketConnectClusterThrottler,
-			resources.socketSubmitOpThrottler,
-			resources.socketSubmitSignalThrottler,
 			resources.singleUseTokenCache,
 			resources.storage,
-			resources.clientManager,
 			resources.appTenants,
 			resources.deltaService,
 			resources.producer,
-			resources.metricClientConfig,
 			resources.documentRepository,
 			resources.documentDeleteService,
-			resources.throttleAndUsageStorageManager,
-			resources.verifyMaxMessageSize,
-			resources.redisCache,
-			resources.socketTracker,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			resources.collaborationSessionEvents,
+			null,
 			resources.clusterDrainingChecker,
+			resources.enableClientIPLogging,
 		);
 	}
 }

@@ -2,59 +2,49 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
-	FluidObject,
-	IFluidHandle,
-	IFluidHandleContext,
-	IRequest,
-	IResponse,
-	IProvideFluidHandleContext,
-	ISignalEnvelope,
-} from "@fluidframework/core-interfaces";
-import {
+	AttachState,
 	IAudience,
 	IBatchMessage,
 	IContainerContext,
-	IDeltaManager,
-	IRuntime,
 	ICriticalContainerError,
-	AttachState,
-	ILoader,
-	LoaderHeader,
+	IDeltaManager,
 	IGetPendingLocalStateProps,
+	ILoader,
+	IRuntime,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, delay, LazyPromise } from "@fluidframework/core-utils";
-import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	createChildLogger,
-	createChildMonitoringContext,
-	DataCorruptionError,
-	DataProcessingError,
-	GenericError,
-	raiseConnectedEvent,
-	PerformanceEvent,
-	// eslint-disable-next-line import/no-deprecated
-	TaggedLoggerAdapter,
-	MonitoringContext,
-	wrapError,
-	ITelemetryLoggerExt,
-	UsageError,
-	LoggingError,
-	createSampledLogger,
-	IEventSampler,
-} from "@fluidframework/telemetry-utils";
+	FluidObject,
+	IFluidHandle,
+	IFluidHandleContext,
+	IProvideFluidHandleContext,
+	IRequest,
+	IResponse,
+	ISignalEnvelope,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
+import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils";
 import {
 	DriverHeader,
 	FetchSource,
 	IDocumentStorageService,
+	type ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import type {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -68,135 +58,146 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
-	gcTreeKey,
-	InboundAttachMessage,
+	IDataStore,
+	IEnvelope,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IFluidDataStoreChannel,
 	IGarbageCollectionData,
-	IEnvelope,
 	IInboundSignalMessage,
-	NamedFluidDataStoreRegistryEntries,
-	ISummaryTreeWithStats,
 	ISummarizeInternalResult,
-	CreateChildSummarizerNodeParam,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	InboundAttachMessage,
+	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 	channelsTreeName,
-	IDataStore,
-	ITelemetryContext,
+	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
-import type {
-	SerializedIdCompressorWithNoSession,
-	IIdCompressor,
-	IIdCompressorCore,
-	IdCreationRange,
-	SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/id-compressor";
 import {
+	GCDataBuilder,
+	ReadAndParseBlob,
+	RequestParser,
+	TelemetryContext,
 	addBlobToSummary,
 	addSummarizeResultToSummary,
-	addTreeToSummary,
-	RequestParser,
+	calculateStats,
 	create404Response,
 	exceptionToResponse,
-	GCDataBuilder,
-	seqFromTree,
-	calculateStats,
-	TelemetryContext,
-	ReadAndParseBlob,
 	responseToException,
+	seqFromTree,
 } from "@fluidframework/runtime-utils";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	GenericError,
+	IEventSampler,
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	LoggingError,
+	MonitoringContext,
+	PerformanceEvent,
+	TaggedLoggerAdapter,
+	UsageError,
+	createChildLogger,
+	createChildMonitoringContext,
+	createSampledLogger,
+	loggerToMonitoringContext,
+	raiseConnectedEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { ContainerFluidHandleContext } from "./containerHandleContext";
-import { FluidDataStoreRegistry } from "./dataStoreRegistry";
-import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry";
+import { BindBatchTracker } from "./batchTracker.js";
+import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
+import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
+import { IPerfSignalReport, ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import { ContainerFluidHandleContext } from "./containerHandleContext.js";
+import { channelToDataStore } from "./dataStore.js";
+import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy.js";
 import {
-	IPendingBatchMessage,
-	IPendingLocalState,
-	PendingStateManager,
-} from "./pendingStateManager";
-import { pkgVersion } from "./packageVersion";
-import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
-import { DataStores, getSummaryForDatastores } from "./dataStores";
-import {
-	aliasBlobName,
-	blobsTreeName,
-	chunksBlobName,
-	createRootSummarizerNodeWithGC,
-	electedSummarizerBlobName,
-	extractSummaryMetadataMessage,
-	IContainerRuntimeMetadata,
-	ICreateContainerMetadata,
-	idCompressorBlobName,
-	IRootSummarizerNodeWithGC,
-	ISummaryMetadataMessage,
-	metadataBlobName,
-	Summarizer,
-	SummaryManager,
-	wrapSummaryInChannelsTree,
-	SummaryCollection,
-	ISerializedElection,
-	OrderedClientCollection,
-	OrderedClientElection,
-	SummarizerClientElection,
-	summarizerClientType,
-	SubmitSummaryResult,
-	IConnectableRuntime,
-	IGeneratedSummaryStats,
-	ISubmitSummaryOptions,
-	ISummarizerInternalsProvider,
-	ISummarizerRuntime,
-	IRefreshSummaryAckOptions,
-	RunWhileConnectedCoordinator,
-	IGenerateSummaryTreeResult,
-	RetriableSummaryError,
-	IOnDemandSummarizeOptions,
-	ISummarizeResults,
-	IEnqueueSummarizeOptions,
-	EnqueueSummarizeResult,
-	ISummarizerEvents,
-	IBaseSummarizeResult,
-	ISummarizer,
-} from "./summary";
-import { formExponentialFn, Throttler } from "./throttler";
-import {
-	GarbageCollector,
 	GCNodeType,
-	gcGenerationOptionName,
-	IGarbageCollector,
+	GarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-	trimLeadingAndTrailingSlashes,
-} from "./gc";
-import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import { BindBatchTracker } from "./batchTracker";
-import { ScheduleManager } from "./scheduleManager";
+	IGarbageCollector,
+	gcGenerationOptionName,
+} from "./gc/index.js";
+import {
+	ContainerMessageType,
+	ContainerRuntimeGCMessage,
+	type ContainerRuntimeIdAllocationMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
+	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeMessage,
+	type UnknownContainerRuntimeMessage,
+} from "./messageTypes.js";
+import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
 import {
 	BatchMessage,
 	IBatch,
 	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
-	Outbox,
-	OpSplitter,
-	RemoteMessageProcessor,
 	OpGroupingManager,
+	OpSplitter,
+	Outbox,
+	RemoteMessageProcessor,
 	getLongStack,
-} from "./opLifecycle";
-import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
-import { IBatchMetadata, IIdAllocationMetadata } from "./metadata";
+} from "./opLifecycle/index.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
-	ContainerMessageType,
-	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
-	type ContainerRuntimeIdAllocationMessage,
-	type LocalContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
-	type UnknownContainerRuntimeMessage,
-	ContainerRuntimeGCMessage,
-} from "./messageTypes";
+	IPendingBatchMessage,
+	IPendingLocalState,
+	PendingStateManager,
+} from "./pendingStateManager.js";
+import { ScheduleManager } from "./scheduleManager.js";
+import {
+	EnqueueSummarizeResult,
+	IBaseSummarizeResult,
+	IConnectableRuntime,
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
+	IEnqueueSummarizeOptions,
+	IGenerateSummaryTreeResult,
+	IGeneratedSummaryStats,
+	IOnDemandSummarizeOptions,
+	IRefreshSummaryAckOptions,
+	IRootSummarizerNodeWithGC,
+	ISerializedElection,
+	ISubmitSummaryOptions,
+	ISummarizeResults,
+	ISummarizer,
+	ISummarizerEvents,
+	ISummarizerInternalsProvider,
+	ISummarizerRuntime,
+	ISummaryMetadataMessage,
+	IdCompressorMode,
+	OrderedClientCollection,
+	OrderedClientElection,
+	RetriableSummaryError,
+	RunWhileConnectedCoordinator,
+	SubmitSummaryResult,
+	Summarizer,
+	SummarizerClientElection,
+	SummaryCollection,
+	SummaryManager,
+	aliasBlobName,
+	blobsTreeName,
+	chunksBlobName,
+	createRootSummarizerNodeWithGC,
+	electedSummarizerBlobName,
+	extractSummaryMetadataMessage,
+	idCompressorBlobName,
+	metadataBlobName,
+	rootHasIsolatedChannels,
+	summarizerClientType,
+	wrapSummaryInChannelsTree,
+} from "./summary/index.js";
+import { Throttler, formExponentialFn } from "./throttler.js";
 
 /**
  * Utility to implement compat behaviors given an unknown message type
@@ -415,7 +416,7 @@ export interface IContainerRuntimeOptions {
 	 * If specified, when in FlushMode.TurnBased, if the size of the ops between JS turns exceeds this value,
 	 * an error will be thrown and the container will close.
 	 *
-	 * If unspecified, the limit is 950 * 1024.
+	 * If unspecified, the limit is 700Kb.
 	 *
 	 * 'Infinity' will disable any limit.
 	 *
@@ -441,7 +442,7 @@ export interface IContainerRuntimeOptions {
 	 * Enable the IdCompressor in the runtime.
 	 * @experimental Not ready for use.
 	 */
-	readonly enableRuntimeIdCompressor?: boolean;
+	readonly enableRuntimeIdCompressor?: IdCompressorMode;
 
 	/**
 	 * If enabled, the runtime will block all attempts to send an op inside the
@@ -467,27 +468,6 @@ export interface IContainerRuntimeOptions {
 }
 
 /**
- * Accepted header keys for requests coming to the runtime.
- * @internal
- */
-export enum RuntimeHeaders {
-	/** True to wait for a data store to be created and loaded before returning it. */
-	wait = "wait",
-	/** True if the request is coming from an IFluidHandle. */
-	viaHandle = "viaHandle",
-}
-
-/** True if a tombstoned object should be returned without erroring
- * @alpha
- */
-export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
-/**
- * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
- * @internal
- */
-export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
-
-/**
  * Tombstone error responses will have this header set to true
  * @alpha
  */
@@ -500,6 +480,7 @@ export const InactiveResponseHeaderKey = "isInactive";
 
 /**
  * The full set of parsed header data that may be found on Runtime requests
+ * @internal
  */
 export interface RuntimeHeaderData {
 	wait?: boolean;
@@ -553,6 +534,7 @@ export interface IPendingRuntimeState {
 	 * Pending idCompressor state
 	 */
 	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
+
 	/**
 	 * Time at which session expiry timer started.
 	 */
@@ -771,7 +753,6 @@ export class ContainerRuntime
 		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
 		const passLogger =
 			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import/no-deprecated
 			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
 		const logger = createChildLogger({
 			logger: passLogger,
@@ -782,6 +763,8 @@ export class ContainerRuntime
 			},
 		});
 
+		const mc = loggerToMonitoringContext(logger);
+
 		const {
 			summaryOptions = {},
 			gcOptions = {},
@@ -789,7 +772,7 @@ export class ContainerRuntime
 			flushMode = defaultFlushMode,
 			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor = false,
+			enableRuntimeIdCompressor = "off",
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
@@ -858,10 +841,37 @@ export class ContainerRuntime
 			}
 		}
 
-		const idCompressorEnabled =
-			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
-		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
-		if (idCompressorEnabled) {
+		// Enabling the IdCompressor is a one-way operation and we only want to
+		// allow new containers to turn it on
+		let idCompressorMode: IdCompressorMode;
+		if (existing) {
+			// This setting has to be sticky for correctness:
+			// 1) if compressior is OFF, it can't be enabled, as already running clients (in given document session) do not know
+			//    how to process compressor ops
+			// 2) if it's ON, then all sessions should load compressor right away
+			// 3) Same logic applies for "delayed" mode
+			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
+			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
+			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
+			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
+			idCompressorMode = metadata?.idCompressorMode ?? "off";
+		} else {
+			// FG overwrite
+			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
+			switch (enabled) {
+				case true:
+					idCompressorMode = "on";
+					break;
+				case false:
+					idCompressorMode = "off";
+					break;
+				default:
+					idCompressorMode = enableRuntimeIdCompressor;
+					break;
+			}
+		}
+
+		const createIdCompressorFn = async () => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
 				"@fluidframework/id-compressor"
 			);
@@ -881,21 +891,22 @@ export class ContainerRuntime
 
 			const compressorLogger = createSampledLogger(logger, idCompressorEventSampler);
 			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+
 			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
-				idCompressor = deserializeIdCompressor(
+				return deserializeIdCompressor(
 					pendingLocalState.pendingIdCompressorState,
 					compressorLogger,
 				);
 			} else if (serializedIdCompressor !== undefined) {
-				idCompressor = deserializeIdCompressor(
+				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
 					compressorLogger,
 				);
 			} else {
-				idCompressor = createIdCompressor(compressorLogger);
+				return createIdCompressor(compressorLogger);
 			}
-		}
+		};
 
 		const runtime = new containerRuntimeCtor(
 			context,
@@ -921,7 +932,8 @@ export class ContainerRuntime
 			existing,
 			blobManagerSnapshot,
 			context.storage,
-			idCompressor,
+			createIdCompressorFn,
+			idCompressorMode,
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
@@ -951,6 +963,10 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
+	public get containerRuntime() {
+		return this;
+	}
+
 	private readonly submitFn: (
 		type: MessageType,
 		contents: any,
@@ -967,7 +983,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	private readonly submitSignalFn: (content: any, targetClientId?: string) => void;
+	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -988,7 +1004,47 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+
+	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
+	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
+	private pendingIdCompressorOps: IdCreationRange[] = [];
+
+	// Id Compressor serializes final state (see getPendingLocalState()). As result, it needs to skip all ops that preceeded that state
+	// (such ops will be marked by Loader layer as savedOp === true)
+	// That said, in "delayed" mode it's possible that Id Compressor was never initialized before getPendingLocalState() is called.
+	// In such case we have to process all ops, including those marked with saveOp === true.
+	private readonly skipSavedCompressorOps: boolean;
+
+	/**
+	 * See IContainerRuntimeBase.idCompressor() for details.
+	 */
+	public get idCompressor() {
+		// Expose ID Compressor only if it's On from the start.
+		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
+		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
+		// to reason over such things as session ID space.
+		if (this.idCompressorMode === "on") {
+			assert(
+				this._idCompressor !== undefined,
+				0x8ea /* compressor should have been loaded */,
+			);
+			return this._idCompressor;
+		}
+	}
+
+	/**
+	 * True if we have ID compressor loading in-flight (async operation). Useful only for
+	 * this.idCompressorMode === "delayed" mode
+	 */
+	protected compressorLoadInitiated = false;
+
+	/**
+	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
+	 */
+	public generateDocumentUniqueId() {
+		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
+	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this.handleContext;
@@ -1112,7 +1168,7 @@ export class ContainerRuntime
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
-	private readonly dataStores: DataStores;
+	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
 
 	/** The last message processed at the time of the last summary. */
@@ -1126,11 +1182,6 @@ export class ContainerRuntime
 	private readonly summariesDisabled: boolean;
 	private isSummariesDisabled(): boolean {
 		return this.summaryConfiguration.state === "disabled";
-	}
-
-	private readonly heuristicsDisabled: boolean;
-	private isHeuristicsDisabled(): boolean {
-		return this.summaryConfiguration.state === "disableHeuristics";
 	}
 
 	private readonly maxOpsSinceLastSummary: number;
@@ -1176,11 +1227,6 @@ export class ContainerRuntime
 	private readonly telemetryDocumentId: string;
 
 	/**
-	 * If true, the runtime has access to an IdCompressor
-	 */
-	private readonly idCompressorEnabled: boolean;
-
-	/**
 	 * Whether this client is the summarizer client itself (type is summarizerClientType)
 	 */
 	private readonly isSummarizerClient: boolean;
@@ -1190,11 +1236,19 @@ export class ContainerRuntime
 	 */
 	private readonly loadedFromVersionId: string | undefined;
 
+	/**
+	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
+	 * Starting with 1 min and based on recorded usage we can tweak it later on.
+	 */
+	private readonly snapshotCacheForLoadingGroupIds = new PromiseCache<string, ISnapshot>({
+		expiry: { policy: "absolute", durationMs: 60000 },
+	});
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
-		metadata: IContainerRuntimeMetadata | undefined,
+		private readonly metadata: IContainerRuntimeMetadata | undefined,
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
@@ -1204,7 +1258,8 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
+		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		private readonly idCompressorMode: IdCompressorMode,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
@@ -1291,20 +1346,12 @@ export class ContainerRuntime
 			// summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
 			// the count is reset to 0.
 			loadSummaryNumber = metadata?.summaryNumber ?? 0;
-
-			// Enabling the IdCompressor is a one-way operation and we only want to
-			// allow new containers to turn it on
-			this.idCompressorEnabled = metadata?.idCompressorEnabled ?? false;
 		} else {
 			this.createContainerMetadata = {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			};
 			loadSummaryNumber = 0;
-
-			this.idCompressorEnabled =
-				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-				idCompressor !== undefined;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
@@ -1372,13 +1419,8 @@ export class ContainerRuntime
 			disableOpReentryCheck !== true;
 
 		this.summariesDisabled = this.isSummariesDisabled();
-		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-
-		if (this.idCompressorEnabled) {
-			this.idCompressor = idCompressor;
-		}
 
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
@@ -1453,28 +1495,44 @@ export class ContainerRuntime
 			this.summarizerNode.updateBaseSummaryState(baseSnapshot);
 		}
 
-		this.dataStores = new DataStores(
+		const parentContext = wrapContext(this);
+
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need the
+		// downstream stores to wrap the signal.
+		parentContext.submitSignal = (type: string, content: any, targetClientId?: string) => {
+			const envelope1 = content as IEnvelope;
+			const envelope2 = this.createNewSignalEnvelope(
+				envelope1.address,
+				type,
+				envelope1.contents,
+			);
+			return this.submitSignalFn(envelope2, targetClientId);
+		};
+
+		this.channelCollection = new ChannelCollection(
 			getSummaryForDatastores(baseSnapshot, metadata),
-			this,
-			(attachMsg) => this.submit({ type: ContainerMessageType.Attach, contents: attachMsg }),
-			(id: string, createParam: CreateChildSummarizerNodeParam) =>
-				(
-					summarizeInternal: SummarizeInternalFn,
-					getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-				) =>
-					this.summarizerNode.createChild(
-						summarizeInternal,
-						id,
-						createParam,
-						undefined,
-						getGCDataFn,
-					),
-			(id: string) => this.summarizerNode.deleteChild(id),
+			parentContext,
 			this.mc.logger,
-			(path: string, timestampMs: number, packagePath?: readonly string[]) =>
-				this.garbageCollector.nodeUpdated(path, "Changed", timestampMs, packagePath),
+			(
+				path: string,
+				reason: "Loaded" | "Changed",
+				timestampMs?: number,
+				packagePath?: readonly string[],
+				request?: IRequest,
+				headerData?: RuntimeHeaderData,
+			) =>
+				this.garbageCollector.nodeUpdated(
+					path,
+					reason,
+					timestampMs,
+					packagePath,
+					request,
+					headerData,
+				),
 			(path: string) => this.garbageCollector.isNodeDeleted(path),
 			new Map<string, string>(dataStoreAliasMap),
+			async (runtime: ChannelCollection) => provideEntryPoint,
 		);
 
 		this.blobManager = new BlobManager(
@@ -1513,9 +1571,13 @@ export class ContainerRuntime
 				clientId: () => this.clientId,
 				close: this.closeFn,
 				connected: () => this.connected,
-				reSubmit: this.reSubmit.bind(this),
+				reSubmit: (message: IPendingBatchMessage) => {
+					this.reSubmit(message);
+					this.flush();
+				},
 				reSubmitBatch: this.reSubmitBatch.bind(this),
 				isActiveConnection: () => this.innerDeltaManager.active,
+				isAttached: () => this.attachState !== AttachState.Detached,
 			},
 			pendingRuntimeState?.pending,
 			this.logger,
@@ -1662,7 +1724,6 @@ export class ContainerRuntime
 					{
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
-					this.heuristicsDisabled,
 				);
 				this.summaryManager.on("summarize", (eventProps) => {
 					this.emit("summarize", eventProps);
@@ -1680,26 +1741,27 @@ export class ContainerRuntime
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
-			...this.dataStores.containerLoadStats,
+			...this.channelCollection.containerLoadStats,
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
+			idCompressorModeMetadata: metadata?.idCompressorMode,
+			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
 				disableCompression,
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				idCompressorEnabled: this.idCompressorEnabled,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this.deltaManager, this, this.logger);
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
@@ -1712,12 +1774,52 @@ export class ContainerRuntime
 			}
 			return provideEntryPoint(this);
 		});
+
+		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
+		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
+		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+	}
+
+	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
+		return (
+			summarizeInternal: SummarizeInternalFn,
+			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+		) =>
+			this.summarizerNode.createChild(
+				summarizeInternal,
+				id,
+				createParam,
+				undefined,
+				getGCDataFn,
+			);
+	}
+
+	public deleteChildSummarizerNode(id: string) {
+		return this.summarizerNode.deleteChild(id);
+	}
+
+	/* IFluidParentContext APIs that should not be called on Root */
+	public makeLocallyVisible() {
+		assert(false, 0x8eb /* should not be called */);
+	}
+
+	public setChannelDirty(address: string) {
+		assert(false, 0x909 /* should not be called */);
 	}
 
 	/**
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
 	private async initializeBaseState(): Promise<void> {
+		if (
+			this.idCompressorMode === "on" ||
+			(this.idCompressorMode === "delayed" && this.connected)
+		) {
+			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
+			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
+			this._idCompressor = await this.createIdCompressor();
+		}
+
 		await this.garbageCollector.initializeBaseState();
 	}
 
@@ -1742,10 +1844,143 @@ export class ContainerRuntime
 		}
 		this.garbageCollector.dispose();
 		this._summarizer?.dispose();
-		this.dataStores.dispose();
+		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
+	}
+
+	/**
+	 * Api to fetch the snapshot from the service for a loadingGroupIds.
+	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
+	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
+	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 */
+	public async getSnapshotForLoadingGroupId(
+		loadingGroupIds: string[],
+		pathParts: string[],
+	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }> {
+		const sortedLoadingGroupIds = loadingGroupIds.sort();
+		assert(
+			this.storage.getSnapshot !== undefined,
+			0x8ed /* getSnapshot api should be defined if used */,
+		);
+		let loadedFromCache = true;
+		// Lookup up in the cache, if not present then make the network call as multiple datastores could
+		// be in same loading group. So, once we have fetched the snapshot for that loading group on
+		// any request, then cache that as same group could be requested in future too.
+		const snapshot = await this.snapshotCacheForLoadingGroupIds.addOrGet(
+			sortedLoadingGroupIds.join(),
+			async () => {
+				assert(
+					this.storage.getSnapshot !== undefined,
+					0x8ee /* getSnapshot api should be defined if used */,
+				);
+				loadedFromCache = false;
+				return this.storage.getSnapshot({
+					cacheSnapshot: false,
+					scenarioName: "snapshotForLoadingGroupId",
+					loadingGroupIds: sortedLoadingGroupIds,
+				});
+			},
+		);
+
+		this.logger.sendTelemetryEvent({
+			eventName: "GroupIdSnapshotFetched",
+			details: JSON.stringify({
+				fromCache: loadedFromCache,
+				loadingGroupIds: loadingGroupIds.join(","),
+			}),
+		});
+		// Find the snapshotTree inside the returned snapshot based on the path as given in the request.
+		const hasIsolatedChannels = rootHasIsolatedChannels(this.metadata);
+		const snapshotTreeForPath = this.getSnapshotTreeForPath(
+			snapshot.snapshotTree,
+			pathParts,
+			hasIsolatedChannels,
+		);
+		assert(snapshotTreeForPath !== undefined, 0x8ef /* no snapshotTree for the path */);
+		const snapshotSeqNumber = snapshot.sequenceNumber;
+		assert(snapshotSeqNumber !== undefined, 0x8f0 /* snapshotSeqNumber should be present */);
+
+		// This assert fires if we get a snapshot older than the snapshot we loaded from. This is a service issue.
+		// Snapshots should only move forward. If we observe an older snapshot than the one we loaded from, then likely
+		// the file has been overwritten or service lost data.
+		if (snapshotSeqNumber < this.deltaManager.initialSequenceNumber) {
+			throw DataProcessingError.create(
+				"Downloaded snapshot older than snapshot we loaded from",
+				"getSnapshotForLoadingGroupId",
+				undefined,
+				{
+					loadingGroupIds: sortedLoadingGroupIds.join(","),
+					snapshotSeqNumber,
+					initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+				},
+			);
+		}
+
+		// If the snapshot is ahead of the last seq number of the delta manager, then catch up before
+		// returning the snapshot.
+		if (snapshotSeqNumber > this.deltaManager.lastSequenceNumber) {
+			// If this is a summarizer client, which is trying to load a group and it finds that there is
+			// another snapshot from which the summarizer loaded and it is behind, then just give up as
+			// the summarizer state is not up to date.
+			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
+			if (this.isSummarizerClient) {
+				throw new Error(
+					"Summarizer client behind, loaded newer snapshot with loadingGroupId",
+				);
+			}
+
+			// We want to catchup from sequenceNumber to targetSequenceNumber
+			const props: ITelemetryGenericEventExt = {
+				eventName: "GroupIdSnapshotCatchup",
+				loadingGroupIds: sortedLoadingGroupIds.join(","),
+				targetSequenceNumber: snapshotSeqNumber, // This is so we reuse some columns in telemetry
+				sequenceNumber: this.deltaManager.lastSequenceNumber, // This is so we reuse some columns in telemetry
+			};
+
+			const event = PerformanceEvent.start(this.mc.logger, {
+				...props,
+			});
+			// If the inbound deltas queue is paused or disconnected, we expect a reconnect and unpause
+			// as long as it's not a summarizer client.
+			if (this.deltaManager.inbound.paused) {
+				props.inboundPaused = this.deltaManager.inbound.paused; // reusing telemetry
+			}
+			const defP = new Deferred<boolean>();
+			this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
+				if (message.sequenceNumber >= snapshotSeqNumber) {
+					defP.resolve(true);
+				}
+			});
+			await defP.promise;
+			event.end(props);
+		}
+		return { snapshotTree: snapshotTreeForPath, sequenceNumber: snapshotSeqNumber };
+	}
+
+	/**
+	 * Api to find a snapshot tree inside a bigger snapshot tree based on the path in the pathParts array.
+	 * @param snapshotTree - snapshot tree to look into.
+	 * @param pathParts - Part of the path, which we want to extract from the snapshot tree.
+	 * @param hasIsolatedChannels - whether the channels are present inside ".channels" subtree. Older
+	 * snapshots will not have trees inside ".channels", so check that.
+	 * @returns - requested snapshot tree based on the path parts.
+	 */
+	private getSnapshotTreeForPath(
+		snapshotTree: ISnapshotTree,
+		pathParts: string[],
+		hasIsolatedChannels: boolean,
+	): ISnapshotTree | undefined {
+		let childTree = snapshotTree;
+		for (const part of pathParts) {
+			if (hasIsolatedChannels) {
+				childTree = childTree?.trees[channelsTreeName];
+			}
+			childTree = childTree?.trees[part];
+		}
+		return childTree;
 	}
 
 	/**
@@ -1804,19 +2039,7 @@ export class ContainerRuntime
 					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
-				// Differentiate between requesting the dataStore directly, or one of its children
-				const requestForChild = !requestParser.isLeaf(1);
-				const dataStore = await this.getDataStoreFromRequest(id, request, requestForChild);
-
-				const subRequest = requestParser.createSubRequest(1);
-				// We always expect createSubRequest to include a leading slash, but asserting here to protect against
-				// unintentionally modifying the url if that changes.
-				assert(
-					subRequest.url.startsWith("/"),
-					0x126 /* "Expected createSubRequest url to include a leading slash" */,
-				);
-				// eslint-disable-next-line @typescript-eslint/return-await -- Adding an await here causes test failures
-				return dataStore.request(subRequest);
+				return await this.channelCollection.request(request);
 			}
 
 			return create404Response(request);
@@ -1834,54 +2057,7 @@ export class ContainerRuntime
 	private readonly entryPoint: LazyPromise<FluidObject>;
 
 	private internalId(maybeAlias: string): string {
-		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
-	}
-
-	private async getDataStoreFromRequest(
-		id: string,
-		request: IRequest,
-		requestForChild: boolean,
-	): Promise<IFluidDataStoreChannel> {
-		const headerData: RuntimeHeaderData = {};
-		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
-			headerData.wait = request.headers[RuntimeHeaders.wait];
-		}
-		if (typeof request.headers?.[RuntimeHeaders.viaHandle] === "boolean") {
-			headerData.viaHandle = request.headers[RuntimeHeaders.viaHandle];
-		}
-		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
-			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
-		}
-		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
-			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
-		}
-
-		// We allow Tombstone requests for sub-DataStore objects
-		if (requestForChild) {
-			headerData.allowTombstone = true;
-		}
-
-		await this.dataStores.waitIfPendingAlias(id);
-		const internalId = this.internalId(id);
-		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-
-		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
-		// the same as GC nodes id.
-		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
-		// Get the initial snapshot details which contain the data store package path.
-		const details = await dataStoreContext.getInitialSnapshotDetails();
-
-		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
-		// is configured.
-		this.garbageCollector.nodeUpdated(
-			`/${urlWithoutQuery}`,
-			"Loaded",
-			undefined /* timestampMs */,
-			details.pkg,
-			request,
-			headerData,
-		);
-		return dataStoreContext.realize();
+		return this.channelCollection.internalId(maybeAlias);
 	}
 
 	/** Adds the container's metadata to the given summary tree. */
@@ -1898,7 +2074,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressorEnabled ? true : undefined,
+			idCompressorMode: this.idCompressorMode,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -1911,12 +2087,8 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this.idCompressorEnabled) {
-			assert(
-				this.idCompressor !== undefined,
-				0x67a /* IdCompressor should be defined if enabled */,
-			);
-			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
+		if (this._idCompressor) {
+			const idCompressorState = JSON.stringify(this._idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
 
@@ -1925,7 +2097,7 @@ export class ContainerRuntime
 			addBlobToSummary(summaryTree, chunksBlobName, content);
 		}
 
-		const dataStoreAliases = this.dataStores.aliases;
+		const dataStoreAliases = this.channelCollection.aliases;
 		if (dataStoreAliases.size > 0) {
 			addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
 		}
@@ -1941,7 +2113,7 @@ export class ContainerRuntime
 		// Some storage (like git) doesn't allow empty tree, so we can omit it.
 		// and the blob manager can handle the tree not existing when loading
 		if (Object.keys(blobManagerSummary.summary.tree).length > 0) {
-			addTreeToSummary(summaryTree, blobsTreeName, blobManagerSummary);
+			addSummarizeResultToSummary(summaryTree, blobsTreeName, blobManagerSummary);
 		}
 
 		const gcSummary = this.garbageCollector.summarize(fullTree, trackState, telemetryContext);
@@ -1982,14 +2154,8 @@ export class ContainerRuntime
 		return this.consecutiveReconnects < this.maxConsecutiveReconnects;
 	}
 
-	private resetReconnectCount(message?: ISequencedDocumentMessage) {
-		// Chunked ops don't count towards making progress as they are sent
-		// in their own batches before the originating batch is sent.
-		// Therefore, receiving them while attempting to send the originating batch
-		// does not mean that the container is making any progress.
-		if (message?.type !== ContainerMessageType.ChunkedOp) {
-			this.consecutiveReconnects = 0;
-		}
+	private resetReconnectCount() {
+		this.consecutiveReconnects = 0;
 	}
 
 	private replayPendingStates() {
@@ -2041,16 +2207,12 @@ export class ContainerRuntime
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(opContents.contents);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(opContents.contents);
-			case ContainerMessageType.IdAllocation:
-				assert(
-					this.idCompressor !== undefined,
-					0x67b /* IdCompressor should be defined if enabled */,
-				);
-				return;
 			case ContainerMessageType.Alias:
+				return this.channelCollection.applyStashedOp(opContents);
+			case ContainerMessageType.IdAllocation:
+				assert(this.idCompressorMode !== "off", 0x8f1 /* ID compressor should be in use */);
+				return;
 			case ContainerMessageType.BlobAttach:
 				return;
 			case ContainerMessageType.ChunkedOp:
@@ -2087,6 +2249,20 @@ export class ContainerRuntime
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && this.idCompressorMode === "delayed" && !this.compressorLoadInitiated) {
+			this.compressorLoadInitiated = true;
+			this.createIdCompressor()
+				.then((compressor) => {
+					this._idCompressor = compressor;
+					for (const range of this.pendingIdCompressorOps) {
+						this._idCompressor.finalizeCreationRange(range);
+					}
+					this.pendingIdCompressorOps = [];
+				})
+				.catch((error) => {
+					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+				});
+		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -2179,7 +2355,7 @@ export class ContainerRuntime
 			this.replayPendingStates();
 		}
 
-		this.dataStores.setConnectionState(connected, clientId);
+		this.channelCollection.setConnectionState(connected, clientId);
 		this.garbageCollector.setConnectionState(connected, clientId);
 
 		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
@@ -2235,12 +2411,17 @@ export class ContainerRuntime
 		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
+			// See commit that added this assert for more details.
+			// These calls should be made for all but chunked ops:
+			// 1) this.pendingStateManager.processPendingLocalMessage() below
+			// 2) this.resetReconnectCount() below
+			assert(
+				message.type !== ContainerMessageType.ChunkedOp,
+				"we should never get here with chunked ops",
+			);
+
 			let localOpMetadata: unknown;
-			if (
-				local &&
-				messageWithContext.modernRuntimeMessage &&
-				message.type !== ContainerMessageType.ChunkedOp
-			) {
+			if (local && messageWithContext.modernRuntimeMessage) {
 				localOpMetadata = this.pendingStateManager.processPendingLocalMessage(
 					messageWithContext.message,
 				);
@@ -2262,7 +2443,7 @@ export class ContainerRuntime
 				// If we have processed a local op, this means that the container is
 				// making progress and we can reset the counter for how many times
 				// we have consecutively replayed the pending states
-				this.resetReconnectCount(message);
+				this.resetReconnectCount();
 			}
 		} catch (e) {
 			this.scheduleManager.afterOpProcessing(e, message);
@@ -2282,17 +2463,9 @@ export class ContainerRuntime
 		const { local } = messageWithContext;
 		switch (messageWithContext.message.type) {
 			case ContainerMessageType.Attach:
-				this.dataStores.processAttachMessage(messageWithContext.message, local);
-				break;
 			case ContainerMessageType.Alias:
-				this.dataStores.processAliasMessage(
-					messageWithContext.message,
-					localOpMetadata,
-					local,
-				);
-				break;
 			case ContainerMessageType.FluidDataStoreOp:
-				this.dataStores.processFluidDataStoreOp(
+				this.channelCollection.process(
 					messageWithContext.message,
 					local,
 					localOpMetadata,
@@ -2303,23 +2476,32 @@ export class ContainerRuntime
 				this.blobManager.processBlobAttachOp(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.IdAllocation:
-				assert(
-					this.idCompressor !== undefined,
-					0x67c /* IdCompressor should be defined if enabled */,
-				);
-
 				// Don't re-finalize the range if we're processing a "savedOp" in
 				// stashed ops flow. The compressor is stashed with these ops already processed.
+				// That said, in idCompressorMode === "delayed", we might not serialize ID compressor, and
+				// thus we need to process all the ops.
 				if (
-					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
+					!(
+						this.skipSavedCompressorOps &&
+						(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp ===
+							true
+					)
 				) {
-					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+					const range = messageWithContext.message.contents;
+					if (this._idCompressor === undefined) {
+						this.pendingIdCompressorOps.push(range);
+					} else {
+						this._idCompressor.finalizeCreationRange(range);
+					}
 				}
 				break;
 			case ContainerMessageType.GC:
 				this.garbageCollector.processMessage(messageWithContext.message, local);
 				break;
 			case ContainerMessageType.ChunkedOp:
+				// From observability POV, we should not exppse the rest of the system (including "op" events on object) to these messages.
+				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
+				assert(false, "should not even get here");
 			case ContainerMessageType.Rejoin:
 				break;
 			default: {
@@ -2419,7 +2601,16 @@ export class ContainerRuntime
 			return;
 		}
 
-		this.dataStores.processSignal(envelope.address, transformed, local);
+		// Due to a mismatch between different layers in terms of
+		// what is the interface of passing signals, we need to adjust
+		// the signal envelope before sending it to the datastores to be processed
+		const envelope2: IEnvelope = {
+			address: envelope.address,
+			contents: transformed.content,
+		};
+		transformed.content = envelope2;
+
+		this.channelCollection.processSignal(transformed, local);
 	}
 
 	/**
@@ -2506,9 +2697,17 @@ export class ContainerRuntime
 	public async getAliasedDataStoreEntryPoint(
 		alias: string,
 	): Promise<IFluidHandle<FluidObject> | undefined> {
-		await this.dataStores.waitIfPendingAlias(alias);
+		// Back-comapatibility:
+		// There are old files that were created without using data store aliasing feature, but
+		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,
+		// and internalID provided by user. The expectation is that such files behave as new files, where
+		// same data store instances created using aliasing feature.
+		// Please also see note on name collisions in DataStores.createDataStoreId()
+		await this.channelCollection.waitIfPendingAlias(alias);
 		const internalId = this.internalId(alias);
-		const context = await this.dataStores.getDataStoreIfAvailable(internalId, { wait: false });
+		const context = await this.channelCollection.getDataStoreIfAvailable(internalId, {
+			wait: false,
+		});
 		// If the data store is not available or not an alias, return undefined.
 		if (context === undefined || !(await context.isRoot())) {
 			return undefined;
@@ -2529,37 +2728,26 @@ export class ContainerRuntime
 		return channel.entryPoint;
 	}
 
-	public createDetachedRootDataStore(
-		pkg: Readonly<string[]>,
-		rootDataStoreId: string,
-	): IFluidDataStoreContextDetached {
-		if (rootDataStoreId.includes("/")) {
-			throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-		}
-		return this.dataStores.createDetachedDataStoreCore(pkg, true, rootDataStoreId);
-	}
-
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
-		groupId?: string,
+		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached {
-		return this.dataStores.createDetachedDataStoreCore(pkg, false, undefined, groupId);
+		return this.channelCollection.createDetachedDataStore(pkg, loadingGroupId);
 	}
 
-	public async createDataStore(pkg: string | string[], groupId?: string): Promise<IDataStore> {
-		const id = uuid();
+	public async createDataStore(
+		pkg: Readonly<string | string[]>,
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
+		const context = this.channelCollection.createDataStoreContext(
+			Array.isArray(pkg) ? pkg : [pkg],
+			undefined, // props
+			loadingGroupId,
+		);
 		return channelToDataStore(
-			await this.dataStores
-				._createFluidDataStoreContext(
-					Array.isArray(pkg) ? pkg : [pkg],
-					id,
-					undefined,
-					groupId,
-				)
-				.realize(),
-			id,
-			this,
-			this.dataStores,
+			await context.realize(),
+			context.id,
+			this.channelCollection,
 			this.mc.logger,
 		);
 	}
@@ -2568,17 +2756,17 @@ export class ContainerRuntime
 	 * @deprecated 0.16 Issue #1537, #3631
 	 */
 	public async _createDataStoreWithProps(
-		pkg: string | string[],
+		pkg: Readonly<string | string[]>,
 		props?: any,
-		id = uuid(),
 	): Promise<IDataStore> {
+		const context = this.channelCollection.createDataStoreContext(
+			Array.isArray(pkg) ? pkg : [pkg],
+			props,
+		);
 		return channelToDataStore(
-			await this.dataStores
-				._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
-				.realize(),
-			id,
-			this,
-			this.dataStores,
+			await context.realize(),
+			context.id,
+			this.channelCollection,
 			this.mc.logger,
 		);
 	}
@@ -2634,6 +2822,7 @@ export class ContainerRuntime
 				}
 				break;
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.GC: {
 				return false;
 			}
@@ -2679,22 +2868,6 @@ export class ContainerRuntime
 		return this.submitSignalFn(envelope, targetClientId);
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
-	public submitDataStoreSignal(
-		address: string,
-		type: string,
-		content: any,
-		targetClientId?: string,
-	) {
-		const envelope = this.createNewSignalEnvelope(address, type, content);
-		return this.submitSignalFn(envelope, targetClientId);
-	}
-
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		if (attachState === AttachState.Attaching) {
 			assert(
@@ -2712,7 +2885,7 @@ export class ContainerRuntime
 		if (attachState === AttachState.Attached && !this.hasPendingMessages()) {
 			this.updateDocumentDirtyState(false);
 		}
-		this.dataStores.setAttachState(attachState);
+		this.channelCollection.setAttachState(attachState);
 	}
 
 	/**
@@ -2732,12 +2905,12 @@ export class ContainerRuntime
 		}
 
 		// We can finalize any allocated IDs since we're the only client
-		const idRange = this.idCompressor?.takeNextCreationRange();
+		const idRange = this._idCompressor?.takeNextCreationRange();
 		if (idRange !== undefined) {
-			this.idCompressor?.finalizeCreationRange(idRange);
+			this._idCompressor?.finalizeCreationRange(idRange);
 		}
 
-		const summarizeResult = this.dataStores.createSummary(telemetryContext);
+		const summarizeResult = this.channelCollection.getAttachSummary(telemetryContext);
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
 
@@ -2757,7 +2930,7 @@ export class ContainerRuntime
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
-		const summarizeResult = await this.dataStores.summarize(
+		const summarizeResult = await this.channelCollection.summarize(
 			fullTree,
 			trackState,
 			telemetryContext,
@@ -2848,11 +3021,11 @@ export class ContainerRuntime
 	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
 	 */
 	public async updateStateBeforeGC() {
-		return this.dataStores.updateStateBeforeGC();
+		return this.channelCollection.updateStateBeforeGC();
 	}
 
 	private async getGCDataInternal(fullGC?: boolean): Promise<IGarbageCollectionData> {
-		return this.dataStores.getGCData(fullGC);
+		return this.channelCollection.getGCData(fullGC);
 	}
 
 	/**
@@ -2882,25 +3055,7 @@ export class ContainerRuntime
 		this.summarizerNode.updateUsedRoutes([""]);
 
 		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(usedRoutes);
-		this.dataStores.updateUsedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * This is called to update objects whose routes are unused.
-	 * @param unusedRoutes - Data store and attachment blob routes that are unused in this Container.
-	 */
-	public updateUnusedRoutes(unusedRoutes: readonly string[]) {
-		const { blobManagerRoutes, dataStoreRoutes } =
-			this.getDataStoreAndBlobManagerRoutes(unusedRoutes);
-		this.blobManager.updateUnusedRoutes(blobManagerRoutes);
-		this.dataStores.updateUnusedRoutes(dataStoreRoutes);
-	}
-
-	/**
-	 * @deprecated Replaced by deleteSweepReadyNodes.
-	 */
-	public deleteUnusedNodes(unusedRoutes: readonly string[]): string[] {
-		throw new Error("deleteUnusedRoutes should not be called");
+		this.channelCollection.updateUsedRoutes(dataStoreRoutes);
 	}
 
 	/**
@@ -2912,7 +3067,7 @@ export class ContainerRuntime
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		const deletedRoutes = this.dataStores.deleteSweepReadyNodes(dataStoreRoutes);
+		const deletedRoutes = this.channelCollection.deleteSweepReadyNodes(dataStoreRoutes);
 		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
 	}
 
@@ -2928,7 +3083,7 @@ export class ContainerRuntime
 		const { blobManagerRoutes, dataStoreRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.blobManager.updateTombstonedRoutes(blobManagerRoutes);
-		this.dataStores.updateTombstonedRoutes(dataStoreRoutes);
+		this.channelCollection.updateTombstonedRoutes(dataStoreRoutes);
 	}
 
 	/**
@@ -2948,7 +3103,7 @@ export class ContainerRuntime
 		if (this.isBlobPath(nodePath)) {
 			return GCNodeType.Blob;
 		}
-		return this.dataStores.getGCNodeType(nodePath) ?? GCNodeType.Other;
+		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
 	}
 
 	/**
@@ -2967,7 +3122,7 @@ export class ContainerRuntime
 				return [BlobManager.basePath];
 			case GCNodeType.DataStore:
 			case GCNodeType.SubDataStore:
-				return this.dataStores.getDataStorePackagePath(nodePath);
+				return this.channelCollection.getDataStorePackagePath(nodePath);
 			default:
 				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
 		}
@@ -3046,7 +3201,13 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree = false, finalAttempt = false, refreshLatestAck, summaryLogger } = options;
+		const {
+			fullTree = false,
+			finalAttempt = false,
+			refreshLatestAck,
+			summaryLogger,
+			latestSummaryRefSeqNum,
+		} = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -3117,6 +3278,10 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
+		const shouldValidatePreSummaryState =
+			this.mc.config.getBoolean(
+				"Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState",
+			) === true;
 
 		let summaryRefSeqNum: number | undefined;
 
@@ -3131,7 +3296,33 @@ export class ContainerRuntime
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
 
-			this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
+			const startSummaryResult = this.summarizerNode.startSummary(
+				summaryRefSeqNum,
+				summaryNumberLogger,
+				latestSummaryRefSeqNum,
+			);
+
+			if (
+				startSummaryResult.invalidNodes > 0 ||
+				startSummaryResult.mismatchNumbers.size > 0
+			) {
+				summaryLogger.sendErrorEvent({
+					eventName: "LatestSummaryRefSeqNumMismatch",
+					details: {
+						...startSummaryResult,
+						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+					},
+				});
+
+				if (shouldValidatePreSummaryState && !finalAttempt) {
+					return {
+						stage: "base",
+						referenceSequenceNumber: summaryRefSeqNum,
+						minimumSequenceNumber,
+						error: `Summarizer node state inconsistent with summarizer state.`,
+					};
+				}
+			}
 
 			// Helper function to check whether we should still continue between each async step.
 			const checkContinue = (): { continue: true } | { continue: false; error: string } => {
@@ -3253,8 +3444,8 @@ export class ContainerRuntime
 				: undefined;
 
 			const summaryStats: IGeneratedSummaryStats = {
-				dataStoreCount: this.dataStores.size,
-				summarizedDataStoreCount: this.dataStores.size - handleCount,
+				dataStoreCount: this.channelCollection.size,
+				summarizedDataStoreCount: this.channelCollection.size - handleCount,
 				gcStateUpdatedDataStoreCount: this.garbageCollector.updatedDSCountSinceLastSummary,
 				gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
 				gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
@@ -3451,28 +3642,15 @@ export class ContainerRuntime
 		}
 	}
 
-	public submitDataStoreOp(
-		id: string,
+	public submitMessage(
+		type:
+			| ContainerMessageType.FluidDataStoreOp
+			| ContainerMessageType.Alias
+			| ContainerMessageType.Attach,
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
-		const envelope: IEnvelope = {
-			address: id,
-			contents,
-		};
-		this.submit(
-			{ type: ContainerMessageType.FluidDataStoreOp, contents: envelope },
-			localOpMetadata,
-		);
-	}
-
-	public submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void {
-		const aliasMessage = contents as IDataStoreAliasMessage;
-		if (!isDataStoreAliasMessage(aliasMessage)) {
-			throw new UsageError("malformedDataStoreAliasMessage");
-		}
-
-		this.submit({ type: ContainerMessageType.Alias, contents }, localOpMetadata);
+		this.submit({ type, contents }, localOpMetadata);
 	}
 
 	public async uploadBlob(
@@ -3483,35 +3661,22 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob, signal);
 	}
 
-	private maybeSubmitIdAllocationOp(type: ContainerMessageType) {
-		if (type !== ContainerMessageType.IdAllocation) {
-			let idAllocationBatchMessage: BatchMessage | undefined;
-			let idRange: IdCreationRange | undefined;
-			if (this.idCompressorEnabled) {
-				assert(
-					this.idCompressor !== undefined,
-					0x67d /* IdCompressor should be defined if enabled */,
-				);
-				idRange = this.idCompressor.takeNextCreationRange();
-				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids !== undefined ? idRange : undefined;
-			}
-
-			if (idRange !== undefined) {
+	private submitIdAllocationOpIfNeeded(): void {
+		if (this._idCompressor) {
+			const idRange = this._idCompressor.takeNextCreationRange();
+			// Don't include the idRange if there weren't any Ids allocated
+			if (idRange?.ids !== undefined) {
 				const idAllocationMessage: ContainerRuntimeIdAllocationMessage = {
 					type: ContainerMessageType.IdAllocation,
 					contents: idRange,
 				};
-				idAllocationBatchMessage = {
+				const idAllocationBatchMessage: BatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					metadata: undefined,
 					localOpMetadata: undefined,
 					type: ContainerMessageType.IdAllocation,
 				};
-			}
-
-			if (idAllocationBatchMessage !== undefined) {
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
 		}
@@ -3552,43 +3717,47 @@ export class ContainerRuntime
 		};
 
 		try {
-			// Submit an IdAllocation op if any Ids have been generated since
-			// the last op was submitted. Don't submit another if it's an IdAllocation
-			// op as that means we're in resubmission flow and we don't want to send
-			// IdRanges out of order.
-			this.maybeSubmitIdAllocationOp(type);
-
-			// If this is attach message for new data store, and we are in a batch, send this op out of order
-			// Is it safe:
-			//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
-			//    They become visible only when aliased, or handle to some sub-element of newly created datastore
-			//    is stored in some DDS, i.e. only after some other op.
-			// Why:
-			//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
-			//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
-			//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
-			//    these issues.
-			// Cons:
-			//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
-			//    This change creates new possibility of a lot of newly created data stores never being referenced
-			//    because client died before it had a change to submit the rest of the ops. This will create more
-			//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
-			//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
-			//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
-			//    issue than sending.
-			// Please note that this does not change file format, so it can be disabled in the future if this
-			// optimization no longer makes sense (for example, batch compression may make it less appealing).
-			if (
-				this.currentlyBatching() &&
-				type === ContainerMessageType.Attach &&
-				this.disableAttachReorder !== true
-			) {
-				this.outbox.submitAttach(message);
-			} else if (type === ContainerMessageType.BlobAttach) {
-				// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
-				this.outbox.submitBlobAttach(message);
+			// If `message` is an allocation op, then we are in the resubmit path and we must redirect the allocation
+			// op into the correct batch to avoid ranges being finalized out of order.
+			// Otherwise, submit an IdAllocation op if any IDs have been generated since the last op was submitted, as
+			// any of the other op types may contain those IDs and thus depend on the allocation op being sent first.
+			if (type === ContainerMessageType.IdAllocation) {
+				this.outbox.submitIdAllocation(message);
 			} else {
-				this.outbox.submit(message);
+				this.submitIdAllocationOpIfNeeded();
+
+				// If this is attach message for new data store, and we are in a batch, send this op out of order
+				// Is it safe:
+				//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
+				//    They become visible only when aliased, or handle to some sub-element of newly created datastore
+				//    is stored in some DDS, i.e. only after some other op.
+				// Why:
+				//    Attach ops are large, and expensive to process. Plus there are scenarios where a lot of new data
+				//    stores are created, causing issues like relay service throttling (too many ops) and catastrophic
+				//    failure (batch is too large). Pushing them earlier and outside of main batch should alleviate
+				//    these issues.
+				// Cons:
+				//    1. With large batches, relay service may throttle clients. Clients may disconnect while throttled.
+				//    This change creates new possibility of a lot of newly created data stores never being referenced
+				//    because client died before it had a change to submit the rest of the ops. This will create more
+				//    garbage that needs to be collected leveraging GC (Garbage Collection) feature.
+				//    2. Sending ops out of order means they are excluded from rollback functionality. This is not an issue
+				//    today as rollback can't undo creation of data store. To some extent not sending them is a bigger
+				//    issue than sending.
+				// Please note that this does not change file format, so it can be disabled in the future if this
+				// optimization no longer makes sense (for example, batch compression may make it less appealing).
+				if (
+					this.currentlyBatching() &&
+					type === ContainerMessageType.Attach &&
+					this.disableAttachReorder !== true
+				) {
+					this.outbox.submitAttach(message);
+				} else if (type === ContainerMessageType.BlobAttach) {
+					// BlobAttach ops must have their metadata visible and cannot be grouped (see opGroupingManager.ts)
+					this.outbox.submitBlobAttach(message);
+				} else {
+					this.outbox.submit(message);
+				}
 			}
 
 			if (!this.currentlyBatching()) {
@@ -3730,15 +3899,18 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		assert(!this.isSummarizerClient, "Summarizer never reconnects so should never resubmit");
+		assert(
+			!this.isSummarizerClient,
+			0x8f2 /* Summarizer never reconnects so should never resubmit */,
+		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				// For Operations, call resubmitDataStoreOp which will find the right store
-				// and trigger resubmission on it.
-				this.dataStores.resubmitDataStoreOp(message.contents, localOpMetadata);
-				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
+				// For Operations, call resubmitDataStoreOp which will find the right store
+				// and trigger resubmission on it.
+				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
+				break;
 			case ContainerMessageType.IdAllocation: {
 				this.submit(message, localOpMetadata);
 				break;
@@ -3790,7 +3962,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
+				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
 			default:
 				// Don't check message.compatDetails because this is for rolling back a local op so the type will be known
@@ -3879,7 +4051,7 @@ export class ContainerRuntime
 	 */
 	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
-		event: ITelemetryGenericEvent,
+		event: ITelemetryGenericEventExt,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
@@ -3930,51 +4102,65 @@ export class ContainerRuntime
 		);
 	}
 
-	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{
-				eventName: "getPendingLocalState",
-				notifyImminentClosure: props?.notifyImminentClosure,
-			},
-			async (event) => {
-				this.verifyNotClosed();
-				// in case imminentClosure is set to true by future code, we don't
-				// try to change its value
-				if (!this.imminentClosure) {
-					this.imminentClosure = props?.notifyImminentClosure ?? this.imminentClosure;
-				}
-				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
-				if (this._orderSequentiallyCalls !== 0) {
-					throw new UsageError("can't get state during orderSequentially");
-				}
-				// Flush pending batch.
-				// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
-				// to close current batch.
-				this.flush();
-				const pendingAttachmentBlobs = this.imminentClosure
-					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
-					: undefined;
-				const pending = this.pendingStateManager.getLocalState();
-				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
-					return; // no pending state to save
-				}
+	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		this.verifyNotClosed();
 
-				const pendingIdCompressorState = this.idCompressor?.serialize(true);
+		if (this._orderSequentiallyCalls !== 0) {
+			throw new UsageError("can't get state during orderSequentially");
+		}
+		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
 
-				const pendingState: IPendingRuntimeState = {
-					pending,
-					pendingAttachmentBlobs,
-					pendingIdCompressorState,
-					sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
-				};
-				event.end({
-					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
-					pendingOpsSize: pending?.pendingStates.length,
-				});
-				return pendingState;
-			},
-		);
+		const getSyncState = (
+			pendingAttachmentBlobs?: IPendingBlobs,
+		): IPendingRuntimeState | undefined => {
+			const pending = this.pendingStateManager.getLocalState();
+			if (pendingAttachmentBlobs === undefined && !this.hasPendingMessages()) {
+				return; // no pending state to save
+			}
+
+			const pendingIdCompressorState = this._idCompressor?.serialize(true);
+
+			return {
+				pending,
+				pendingIdCompressorState,
+				pendingAttachmentBlobs,
+				sessionExpiryTimerStarted: this.garbageCollector.sessionExpiryTimerStarted,
+			};
+		};
+		const perfEvent = {
+			eventName: "getPendingLocalState",
+			notifyImminentClosure: props?.notifyImminentClosure,
+		};
+		const logAndReturnPendingState = (
+			event: PerformanceEvent,
+			pendingState?: IPendingRuntimeState,
+		) => {
+			event.end({
+				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
+				pendingOpsSize: pendingState?.pending?.pendingStates.length,
+			});
+			return pendingState;
+		};
+
+		// Flush pending batch.
+		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// to close current batch.
+		this.flush();
+
+		return props?.notifyImminentClosure === true
+			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
+					logAndReturnPendingState(
+						event,
+						getSyncState(
+							await this.blobManager.attachAndGetPendingBlobs(
+								props?.stopBlobAttachingSignal,
+							),
+						),
+					),
+			  )
+			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
+					logAndReturnPendingState(event, getSyncState()),
+			  );
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

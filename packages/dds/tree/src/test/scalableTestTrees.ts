@@ -2,19 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import { FieldKey, UpPath, moveToDetachedField, rootFieldKey } from "../core/index.js";
+import { jsonSchema, leaf } from "../domains/index.js";
 import {
 	FieldKinds,
+	FlexFieldSchema,
 	InsertableFlexField,
 	InsertableFlexNode,
-	FlexFieldSchema,
-	typeNameSymbol,
 	SchemaBuilderBase,
+	typeNameSymbol,
 } from "../feature-libraries/index.js";
-import { leaf, jsonSchema } from "../domains/index.js";
-import { brand, requireAssignableTo } from "../util/index.js";
 import { FlexTreeView, TreeContent } from "../shared-tree/index.js";
-import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core/index.js";
+import { brand, requireAssignableTo } from "../util/index.js";
 
 /**
  * Test trees which can be parametrically scaled to any size.
@@ -234,7 +235,7 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -250,7 +251,7 @@ export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFi
 	return { nodesCount, sum };
 }
 
-export function readDeepEditableTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepFlexTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
 	depth: number;
 	value: number;
 } {

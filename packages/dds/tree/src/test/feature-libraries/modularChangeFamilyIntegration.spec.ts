@@ -12,22 +12,33 @@ import {
 	DeltaRoot,
 	FieldKey,
 	FieldKindIdentifier,
+	RevisionTag,
+	UpPath,
 	makeAnonChange,
 	revisionMetadataSourceFromInfo,
-	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultEditBuilder,
-	FieldKinds,
 	FieldKindWithEditor,
+	FieldKinds,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 
-import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util/index.js";
+import { leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+import {
+	ModularChangeFamily,
+	intoDelta,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
+import { IdAllocator, Mutable, brand, idAllocatorFromMaxId } from "../../util/index.js";
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
@@ -36,16 +47,6 @@ import {
 	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../utils.js";
-import {
-	intoDelta,
-	ModularChangeFamily,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -223,9 +224,145 @@ describe("ModularChangeFamily integration", () => {
 
 			assert.deepEqual(rebased, expected);
 		});
+
+		it("over change which moves node upward", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const nodeBPath: UpPath = {
+				parent: nodeAPath,
+				parentField: fieldB,
+				parentIndex: 0,
+			};
+
+			editor.move(
+				{ parent: nodeAPath, field: fieldB },
+				0,
+				1,
+				{ parent: undefined, field: fieldA },
+				0,
+			);
+
+			const nodeBPathAfterMove: UpPath = {
+				parent: undefined,
+				parentField: fieldA,
+				parentIndex: 0,
+			};
+
+			editor.sequenceField({ parent: nodeBPath, field: fieldC }).remove(0, 1);
+			editor.sequenceField({ parent: nodeBPathAfterMove, field: fieldC }).remove(0, 1);
+
+			const [move, remove, expected] = getChanges();
+			const baseTag = mintRevisionTag();
+			const rebased = family.rebase(
+				remove,
+				tagChange(move, baseTag),
+				revisionMetadataSourceFromInfo([{ revision: baseTag }]),
+			);
+
+			const rebasedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(rebased), family.fieldKinds),
+			);
+			const expectedDelta = normalizeDelta(
+				intoDelta(makeAnonChange(expected), family.fieldKinds),
+			);
+
+			assertDeltaEqual(rebasedDelta, expectedDelta);
+		});
 	});
 
 	describe("compose", () => {
+		it("nested moves", () => {
+			/**
+			 * This test is intended to demonstrate the necessity of doing more than two compose passes through a field.
+			 *
+			 * Starting state [A, B, C]
+			 * This test composes
+			 * 1) a change which moves A to the right in the root field, moves B into A, and moves C into B.
+			 * 2) a modification to C
+			 *
+			 */
+
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+			const nodeAPath: UpPath = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+
+			// Moves A to an adjacent cell to its right
+			editor.sequenceField({ parent: undefined, field: fieldA }).move(0, 1, 1);
+
+			// Moves B into A
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				1,
+				{ parent: nodeAPath, field: fieldB },
+				0,
+			);
+
+			const nodeBPath: UpPath = { parent: nodeAPath, parentField: fieldB, parentIndex: 0 };
+
+			// Moves C into B
+			editor.move(
+				{ parent: undefined, field: fieldA },
+				1,
+				1,
+				{ parent: nodeBPath, field: fieldC },
+				0,
+			);
+
+			const nodeCPath: UpPath = { parent: nodeBPath, parentField: fieldC, parentIndex: 0 };
+
+			// Modifies C by removing a node from it
+			editor.sequenceField({ parent: nodeCPath, field: fieldC }).remove(0, 1);
+
+			const [moveA, moveB, moveC, removeD] = getChanges();
+
+			const moves = makeAnonChange(
+				family.compose([
+					makeAnonChange(moveA),
+					makeAnonChange(moveB),
+					makeAnonChange(moveC),
+				]),
+			);
+
+			const remove = makeAnonChange(removeD);
+
+			const composed = family.compose([moves, remove]);
+			const composedDelta = intoDelta(makeAnonChange(composed), fieldKinds);
+
+			const nodeAChanges: DeltaFieldMap = new Map([
+				[fieldB, { local: [{ count: 1, attach: { minor: 1 } }] }],
+			]);
+
+			const nodeBChanges: DeltaFieldMap = new Map([
+				[
+					fieldC,
+					{
+						local: [{ count: 1, attach: { minor: 2 } }],
+					},
+				],
+			]);
+
+			const nodeCChanges: DeltaFieldMap = new Map([
+				[fieldC, { local: [{ count: 1, detach: { minor: 3 } }] }],
+			]);
+
+			const fieldAChanges: DeltaFieldChanges = {
+				local: [
+					{ count: 1, detach: { minor: 0 }, fields: nodeAChanges },
+					{ count: 1, attach: { minor: 0 } },
+					{ count: 1, detach: { minor: 1 }, fields: nodeBChanges },
+					{ count: 1, detach: { minor: 2 }, fields: nodeCChanges },
+				],
+			};
+
+			const expectedDelta: DeltaRoot = {
+				fields: new Map([[fieldA, fieldAChanges]]),
+			};
+
+			assertDeltaEqual(composedDelta, expectedDelta);
+		});
+
 		it("cross-field move and nested changes", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);

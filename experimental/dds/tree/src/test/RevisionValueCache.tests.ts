@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { fail } from '../Common';
-import { RevisionValueCache } from '../RevisionValueCache';
+import { expect } from 'chai';
+import { fail } from '../Common.js';
+import { RevisionValueCache } from '../RevisionValueCache.js';
 
 type DummyValue = number;
 const dummyValue = -1;

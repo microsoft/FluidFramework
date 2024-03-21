@@ -4,15 +4,15 @@
  */
 
 // eslint-disable-next-line import/no-internal-modules
-import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/dist/test";
-import { MersenneTwister19937, Random } from "random-js";
+import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/test";
 import * as mocks from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { MersenneTwister19937, Random } from "random-js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
 import {
 	SharedStringWithV1IntervalCollection,
 	V1IntervalCollectionSharedStringFactory,
-} from "./v1IntervalCollectionHelpers";
+} from "./v1IntervalCollectionHelpers.js";
 
 export const LocationBase: string = "src/test/snapshots/";
 

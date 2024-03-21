@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
+import {
+	IFluidMountableViewEntryPoint,
+	MountableView,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
-import {
-	IFluidMountableViewEntryPoint,
-	getDataStoreEntryPoint,
-} from "@fluid-example/example-utils";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 
 import * as React from "react";

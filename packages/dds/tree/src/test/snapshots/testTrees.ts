@@ -3,36 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { brand } from "../../util/index.js";
-import {
-	ISharedTree,
-	ITreeCheckout,
-	InitializeAndSchematizeConfiguration,
-	SharedTreeFactory,
-	runSynchronous,
-} from "../../shared-tree/index.js";
-import {
-	Any,
-	FieldKinds,
-	FlexFieldSchema,
-	cursorForJsonableTreeNode,
-	cursorForTypedTreeData,
-	FlexTreeNodeSchema,
-	InsertableFlexNode,
-	intoStoredSchema,
-	TreeCompressionStrategy,
-} from "../../feature-libraries/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import {
-	TestTreeProviderLite,
-	emptyJsonSequenceConfig,
-	expectJsonTree,
-	insert,
-	jsonSequenceRootSchema,
-	remove,
-} from "../utils.js";
+
+// eslint-disable-next-line import/no-internal-modules -- test import
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -42,9 +17,49 @@ import {
 	UpPath,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
+	InsertableFlexNode,
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
+	cursorForTypedTreeData,
+	intoStoredSchema,
+} from "../../feature-libraries/index.js";
+import {
+	ISharedTree,
+	ITreeCheckout,
+	InitializeAndSchematizeConfiguration,
+	SharedTreeFactory,
+	runSynchronous,
+} from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
+import { SharedTreeOptions, defaultSharedTreeOptions } from "../../shared-tree/sharedTree.js";
+import { brand } from "../../util/index.js";
+import {
+	TestTreeProviderLite,
+	emptyJsonSequenceConfig,
+	expectJsonTree,
+	insert,
+	jsonSequenceRootSchema,
+	remove,
+	schematizeFlexTree,
+	treeTestFactory,
+} from "../utils.js";
+
+// Session ids used for the created trees' IdCompressors must be deterministic.
+// TestTreeProviderLite does this by default.
+// Test trees which manually create their data store runtime must set up their trees'
+// session ids explicitly.
+export const snapshotSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
+
+export function createSnapshotCompressor() {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
+}
 
 const rootField: FieldUpPath = { parent: undefined, field: rootFieldKey };
 const rootNode: UpPath = {
@@ -61,24 +76,17 @@ function generateCompleteTree(
 	fields: FieldKey[],
 	height: number,
 	nodesPerField: number,
-	factory: SharedTreeFactory,
+	options: SharedTreeOptions,
 ): ISharedTree {
-	const idCompressor = createIdCompressor(sessionId);
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({
-			clientId: "test-client",
-			id: "test",
-			idCompressor,
-		}),
-		"test",
-	);
-	const view = tree.schematizeInternal({
-		allowedSchemaModifications: AllowedUpdateType.None,
+	const provider = new TestTreeProviderLite(1, new SharedTreeFactory(options), true);
+	const tree = provider.trees[0];
+	const view = schematizeFlexTree(tree, {
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 		schema: testSchema,
 		initialTree: [],
 	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
-	idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+	provider.processMessages();
 	return tree;
 }
 
@@ -128,25 +136,17 @@ function generateTreeRecursively(
 	}
 }
 
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-// Note: trees which simulate attach scenarios using the mocks should finalize ids created
-// while detached. This is only relevant for attach scenarios as the mocks set up appropriate
-// finalization when messages are processed.
-export const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(useUncompressedEncode?: boolean) {
 	const testEncodeType = useUncompressedEncode === true ? "uncompressed" : "default-compression";
-	const factory = new SharedTreeFactory({
+	const factoryOptions = {
 		jsonValidator: typeboxValidator,
 		treeEncodeType:
 			useUncompressedEncode === true
 				? TreeCompressionStrategy.Uncompressed
 				: defaultSharedTreeOptions.treeEncodeType,
-	});
+	};
+	const factory = new SharedTreeFactory(factoryOptions);
 	const testTrees: {
 		only?: boolean;
 		skip?: boolean;
@@ -158,9 +158,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "move-across-fields",
 			runScenario: async (takeSnapshot) => {
-				const provider = new TestTreeProviderLite(2, factory);
+				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree1 = provider.trees[0].checkout;
-				const tree2 = provider.trees[1].checkout;
 
 				// NOTE: we're using the old tree editing APIs here as the new
 				// flex-tree API doesn't support cross-field moves at the
@@ -223,11 +222,13 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
-				const provider = new TestTreeProviderLite(2, factory);
-				const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig);
+				const provider = new TestTreeProviderLite(2, factory, true);
+				const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 =
-					provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
+				const tree2 = schematizeFlexTree(
+					provider.trees[1],
+					emptyJsonSequenceConfig,
+				).checkout;
 				provider.processMessages();
 
 				// Insert node
@@ -260,7 +261,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
 
 				const config = {
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: docSchema,
 					initialTree: undefined,
 				} as const;
@@ -272,12 +273,12 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				): ITreeCursorSynchronous =>
 					cursorForTypedTreeData({ schema: docSchema }, schema, data);
 
-				const provider = new TestTreeProviderLite(2, factory);
-				const tree = provider.trees[0].schematizeInternal(config);
+				const provider = new TestTreeProviderLite(2, factory, true);
+				const tree = schematizeFlexTree(provider.trees[0], config);
 				const view = tree.checkout;
 				view.editor.optionalField(rootField).set(makeCursor(testNode, {}), true);
 				provider.processMessages();
-				const view2 = provider.trees[1].schematizeInternal(config).checkout;
+				const view2 = schematizeFlexTree(provider.trees[1], config).checkout;
 
 				view2.editor
 					.optionalField({ parent: rootNode, field: brand("root 1 child") })
@@ -312,17 +313,17 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			name: "competing-removes",
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
-					const provider = new TestTreeProviderLite(4, factory);
+					const provider = new TestTreeProviderLite(4, factory, true);
 					const config: InitializeAndSchematizeConfiguration = {
 						schema: jsonSequenceRootSchema,
 						initialTree: [0, 1, 2, 3],
-						allowedSchemaModifications: AllowedUpdateType.None,
+						allowedSchemaModifications: AllowedUpdateType.Initialize,
 					};
-					const tree1 = provider.trees[0].schematizeInternal(config).checkout;
+					const tree1 = schematizeFlexTree(provider.trees[0], config).checkout;
 					provider.processMessages();
-					const tree2 = provider.trees[1].schematizeInternal(config).checkout;
-					const tree3 = provider.trees[2].schematizeInternal(config).checkout;
-					const tree4 = provider.trees[3].schematizeInternal(config).checkout;
+					const tree2 = schematizeFlexTree(provider.trees[1], config).checkout;
+					const tree3 = schematizeFlexTree(provider.trees[2], config).checkout;
+					const tree4 = schematizeFlexTree(provider.trees[3], config).checkout;
 					provider.processMessages();
 					remove(tree1, index, 1);
 					remove(tree2, index, 1);
@@ -335,19 +336,14 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
-				const idCompressor = createIdCompressor(sessionId);
-				const runtime = new MockFluidDataStoreRuntime({
-					clientId: "test-client",
-					id: "test",
-					idCompressor,
-				});
-				const baseTree = factory.create(runtime, "test");
-
-				const tree1 = baseTree.schematizeInternal({
-					allowedSchemaModifications: AllowedUpdateType.None,
+				const provider = new TestTreeProviderLite(1, factory, true);
+				const baseTree = provider.trees[0];
+				const tree1 = schematizeFlexTree(baseTree, {
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: jsonSequenceRootSchema,
 					initialTree: [],
 				}).checkout;
+				provider.processMessages();
 
 				const tree2 = tree1.fork();
 				insert(tree1, 0, "y");
@@ -359,7 +355,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree2.rebaseOnto(tree1);
 				tree1.merge(tree2);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+				provider.processMessages();
 				await takeSnapshot(baseTree, `tree2-${testEncodeType}`);
 
 				const expected = ["x", "y", "a", "b", "c"];
@@ -372,7 +368,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				tree3.rebaseOnto(tree1);
 				tree1.merge(tree3);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+				provider.processMessages();
 				await takeSnapshot(baseTree, `tree3-${testEncodeType}`);
 			},
 		},
@@ -383,7 +379,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const fieldKeyB: FieldKey = brand("FieldB");
 				const fieldKeyC: FieldKey = brand("FieldC");
 				await takeSnapshot(
-					generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3, factory),
+					generateCompleteTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3, factoryOptions),
 					`final-${testEncodeType}`,
 				);
 			},
@@ -391,6 +387,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 		{
 			name: "has-handle",
 			runScenario: async (takeSnapshot) => {
+				const provider = new TestTreeProviderLite(1, factory, true);
+
 				const innerBuilder = new SchemaBuilder({
 					scope: "has-handle",
 					libraries: [leaf.library],
@@ -398,20 +396,14 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(leaf.handle));
 
 				const config = {
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: docSchema,
 					initialTree: undefined,
 				};
-				const idCompressor = createIdCompressor(sessionId);
-				const tree = factory.create(
-					new MockFluidDataStoreRuntime({
-						clientId: "test-client",
-						id: "test",
-						idCompressor,
-					}),
-					"test",
-				);
-				const view = tree.schematizeInternal(config).checkout;
+
+				const tree = provider.trees[0];
+				const view = schematizeFlexTree(tree, config).checkout;
+				provider.processMessages();
 
 				const field = view.editor.optionalField({
 					parent: undefined,
@@ -422,13 +414,16 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					true,
 				);
 
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+				provider.processMessages();
+
 				await takeSnapshot(tree, `final-${testEncodeType}`);
 			},
 		},
 		{
 			name: "nested-sequence-change",
 			runScenario: async (takeSnapshot) => {
+				const provider = new TestTreeProviderLite(1, factory, true);
+
 				const innerBuilder = new SchemaBuilder({
 					scope: "has-sequence-map",
 				});
@@ -439,21 +434,15 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 
 				const config = {
-					allowedSchemaModifications: AllowedUpdateType.None,
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
 					schema: docSchema,
 					initialTree: [],
 				};
 
-				const idCompressor = createIdCompressor(sessionId);
-				const tree = factory.create(
-					new MockFluidDataStoreRuntime({
-						clientId: "test-client",
-						id: "test",
-						idCompressor,
-					}),
-					`test-${testEncodeType}`,
-				);
-				const view = tree.schematizeInternal(config).checkout;
+				const tree = provider.trees[0];
+				const view = schematizeFlexTree(tree, config).checkout;
+				provider.processMessages();
+
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.
@@ -475,7 +464,8 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					})
 					.insert(0, cursorForJsonableTreeNode({ type: seqMapSchema.name }));
 				view.transaction.commit();
-				idCompressor.finalizeCreationRange(idCompressor.takeNextCreationRange());
+
+				provider.processMessages();
 				await takeSnapshot(tree, `final-${testEncodeType}`);
 			},
 		},
@@ -483,9 +473,31 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 			name: "empty-root",
 			runScenario: async (takeSnapshot) => {
 				await takeSnapshot(
-					generateCompleteTree([], 0, 0, factory),
+					generateCompleteTree([], 0, 0, factoryOptions),
 					`final-${testEncodeType}`,
 				);
+			},
+		},
+		{
+			name: "attachment-tree",
+			runScenario: async (takeSnapshot) => {
+				// This test makes changes only while detached to test EditManager's optimization of omitting
+				// changes outside the collab window (which is all changes when detached).
+				const baseTree = treeTestFactory({
+					runtime: new MockFluidDataStoreRuntime({
+						clientId: "test-client",
+						id: "test",
+						idCompressor: createSnapshotCompressor(),
+					}),
+					options: factoryOptions,
+				});
+				const tree1 = schematizeFlexTree(baseTree, {
+					allowedSchemaModifications: AllowedUpdateType.Initialize,
+					schema: jsonSequenceRootSchema,
+					initialTree: [],
+				}).checkout;
+				insert(tree1, 0, "y");
+				await takeSnapshot(baseTree, `${testEncodeType}`);
 			},
 		},
 	];

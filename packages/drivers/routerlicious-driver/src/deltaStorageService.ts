@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,
-	IDocumentDeltaStorageService,
 	IDeltasFetchResult,
+	IDocumentDeltaStorageService,
 	IStream,
 } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	emptyMessageStream,
 	readAndParse,
 	requestOps,
-	emptyMessageStream,
 	streamObserver,
 } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { DocumentStorageService } from "./documentStorageService";
-import { RestWrapper } from "./restWrapperBase";
+import { DocumentStorageService } from "./documentStorageService.js";
+import { RestWrapper } from "./restWrapperBase.js";
 
 /**
  * Maximum number of ops we can fetch at a time. This should be kept at 2k, as
@@ -62,7 +62,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		const requestCallback = async (
 			from: number,
 			to: number,
-			telemetryProps: ITelemetryProperties,
+			telemetryProps: ITelemetryBaseProperties,
 		) => {
 			this.snapshotOps = this.logtailSha
 				? await readAndParse<ISequencedDocumentMessage[]>(
@@ -92,7 +92,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		};
 
 		const stream = requestOps(
-			async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
+			async (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => {
 				const result = await requestCallback(from, to, telemetryProps);
 				// Catch all case, just in case
 				validateMessages("catch all", result.messages, from, this.logger);

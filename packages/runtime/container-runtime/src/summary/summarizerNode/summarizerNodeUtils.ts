@@ -3,15 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 export interface IRefreshSummaryResult {
 	/** Tells whether this summary is tracked by this client. */
 	isSummaryTracked: boolean;
 	/** Tells whether this summary is newer than the latest one tracked by this client. */
 	isSummaryNewer: boolean;
+}
+
+export interface IStartSummaryResult {
+	/** The number of summarizerNodes at the start of the summary. */
+	nodes: number;
+	/** The number of summarizerNodes in the wrong state. */
+	invalidNodes: number;
+	/** The invalid sequence numbers and their values. It should be in the format of validateSequenceNumber-nodeSequenceNumber */
+	mismatchNumbers: Set<string>;
 }
 
 /**
@@ -37,7 +46,11 @@ export type ValidateSummaryResult =
 	  };
 
 export interface ISummarizerNodeRootContract {
-	startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLoggerExt): void;
+	startSummary(
+		referenceSequenceNumber: number,
+		summaryLogger: ITelemetryLoggerExt,
+		latestSummaryRefSeqNum: number,
+	): IStartSummaryResult;
 	validateSummary(): ValidateSummaryResult;
 	completeSummary(proposalHandle: string, validate: boolean): void;
 	clearSummary(): void;

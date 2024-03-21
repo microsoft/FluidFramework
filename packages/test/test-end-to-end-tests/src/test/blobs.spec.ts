@@ -32,6 +32,10 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { Deferred } from "@fluidframework/core-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -427,6 +431,70 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	it("serialize while attaching and rehydrate container with blobs", async function () {
+		// build a fault injected driver to fail attach on the  summary upload
+		// after create that happens in the blob flow
+		const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createContainer: {
+					connectToStorage: {
+						uploadSummaryWithContext: () => assert.fail("fail on real summary upload"),
+					},
+				},
+			},
+		);
+		const loader = provider.makeTestLoader({
+			...testContainerConfig,
+			loaderProps: {
+				detachedBlobStorage: new MockDetachedBlobStorage(),
+				documentServiceFactory,
+				configProvider: {
+					getRawConfig: (name) =>
+						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+				},
+			},
+		});
+		const serializeContainer = await loader.createDetachedContainer(
+			provider.defaultCodeDetails,
+		);
+
+		const text = "this is some example text";
+		const serializeDataStore = (await serializeContainer.getEntryPoint()) as ITestDataObject;
+		const blobHandle = await serializeDataStore._runtime.uploadBlob(
+			stringToBuffer(text, "utf-8"),
+		);
+		assert.strictEqual(bufferToString(await blobHandle.get(), "utf-8"), text);
+
+		serializeDataStore._root.set("my blob", blobHandle);
+		assert.strictEqual(
+			bufferToString(await serializeDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+
+		await serializeContainer.attach(provider.driver.createCreateNewRequest()).then(
+			() => assert.fail("should fail"),
+			() => {},
+		);
+		assert.strictEqual(serializeContainer.closed, false);
+		// only drivers that support blobs will transition to attaching
+		// but for other drivers the test still ensures we can capture
+		// after an attach attempt
+		if (driverSupportsBlobs(provider.driver)) {
+			assert.strictEqual(serializeContainer.attachState, AttachState.Attaching);
+		} else {
+			assert.strictEqual(serializeContainer.attachState, AttachState.Detached);
+		}
+		const snapshot = serializeContainer.serialize();
+
+		const rehydratedContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+		const rehydratedDataStore = (await rehydratedContainer.getEntryPoint()) as ITestDataObject;
+		assert.strictEqual(
+			bufferToString(await rehydratedDataStore._root.get("my blob").get(), "utf-8"),
+			text,
+		);
+	});
+
 	itExpects("redirect table saved in snapshot", ContainerCloseUsageError, async function () {
 		// test with and without offline load enabled
 		const offlineCfg = configProvider({ "Fluid.Container.enableOfflineLoad": true });
@@ -620,28 +688,24 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("reconnection does not block ops when having pending blobs", async () => {
-		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
-		const runtimeStorage = (container1 as any).runtime.storage;
-
-		let resolveUploadBlob = () => {};
-		const uploadBlobPromise = new Promise<void>((resolve) => {
-			resolveUploadBlob = resolve;
-		});
-
-		const uploadBlobWithDelay = async (target, thisArg, args) => {
-			// Wait for the uploadBlobPromise to be resolved
-			await uploadBlobPromise;
-			const result = Reflect.apply(target, thisArg, args);
-			return result;
-		};
-
-		const delayedUploadBlob = new Proxy(runtimeStorage.createBlob.bind(runtimeStorage), {
-			async apply(target, thisArg, args) {
-				return uploadBlobWithDelay(target, thisArg, args);
+		const uploadBlobPromise = new Deferred<void>();
+		const container1 = await provider.makeTestContainer({
+			...testContainerConfig,
+			loaderProps: {
+				documentServiceFactory: wrapObjectAndOverride(provider.documentServiceFactory, {
+					createDocumentService: {
+						connectToStorage: {
+							createBlob: (dss) => async (blob) => {
+								// Wait for the uploadBlobPromise to be resolved
+								await uploadBlobPromise.promise;
+								return dss.createBlob(blob);
+							},
+						},
+					},
+				}),
 			},
 		});
-		runtimeStorage.createBlob = delayedUploadBlob;
+		const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 
 		const handleP = dataStore1._runtime.uploadBlob(stringToBuffer("test string", "utf8"));
 
@@ -659,8 +723,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(dataStore2._root.get("key"), "value");
 		assert.strictEqual(dataStore2._root.get("another key"), "another value");
 
-		resolveUploadBlob();
+		uploadBlobPromise.resolve();
 		await assert.doesNotReject(handleP);
-		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });

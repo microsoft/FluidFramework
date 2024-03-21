@@ -3,60 +3,60 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
 import { IsoBuffer } from '@fluid-internal/client-utils';
-import { assertWithMessage, fail } from './Common';
-import { EditLog } from './EditLog';
-import { convertTreeNodes, newEdit } from './EditUtilities';
-import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers';
-import { initialTree } from './InitialTree';
+import { assert } from '@fluidframework/core-utils';
+import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression.js';
+import { assertWithMessage, fail } from './Common.js';
+import { EditLog } from './EditLog.js';
+import { convertTreeNodes, newEdit } from './EditUtilities.js';
+import { convertEditIds, convertNodeDataIds } from './IdConversion.js';
+import { AttributionId, DetachedSequenceId, FinalNodeId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import { initialTree } from './InitialTree.js';
 import {
 	ContextualizedNodeIdNormalizer,
-	getNodeIdContext,
 	NodeIdContext,
 	NodeIdConverter,
 	NodeIdGenerator,
 	NodeIdNormalizer,
+	getNodeIdContext,
 	scopeIdNormalizer,
 	sequencedIdNormalizer,
-} from './NodeIdUtilities';
-import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities';
+} from './NodeIdUtilities.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromView, getChangeNode_0_0_2FromView } from './SerializationUtilities.js';
+import { MutableStringInterner, StringInterner } from './StringInterner.js';
+import { SummaryContents } from './Summary.js';
+import { InterningTreeCompressor } from './TreeCompressor.js';
 import {
-	CompressedChangeInternal,
-	ChangeInternal,
-	SharedTreeSummary_0_0_2,
-	WriteFormat,
-	ChangeNode,
-	Edit,
-	SharedTreeEditOp,
-	SharedTreeOpType,
-	SharedTreeSummary,
-	EditWithoutId,
-	ChangeTypeInternal,
-	ChangeInternal_0_0_2,
-	SharedTreeEditOp_0_0_2,
-	reservedIdCount,
-	ChangeNode_0_0_2,
-	EditChunkContents,
-	EditLogSummary,
-	EditChunkContents_0_1_1,
-	FluidEditHandle,
-	StablePlaceInternal,
-	Side,
-} from './persisted-types';
-import { RevisionView } from './RevisionView';
-import { MutableStringInterner, StringInterner } from './StringInterner';
-import { SummaryContents } from './Summary';
-import { InterningTreeCompressor } from './TreeCompressor';
-import {
-	createSessionId,
-	hasOngoingSession,
 	IdCompressor,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
-} from './id-compressor';
-import { ChangeCompressor, compressEdit, decompressEdit } from './ChangeCompression';
-import { convertEditIds, convertNodeDataIds } from './IdConversion';
+	createSessionId,
+	hasOngoingSession,
+} from './id-compressor/index.js';
+import {
+	ChangeInternal,
+	ChangeInternal_0_0_2,
+	ChangeNode,
+	ChangeNode_0_0_2,
+	ChangeTypeInternal,
+	CompressedChangeInternal,
+	Edit,
+	EditChunkContents,
+	EditChunkContents_0_1_1,
+	EditLogSummary,
+	EditWithoutId,
+	FluidEditHandle,
+	SharedTreeEditOp,
+	SharedTreeEditOp_0_0_2,
+	SharedTreeOpType,
+	SharedTreeSummary,
+	SharedTreeSummary_0_0_2,
+	Side,
+	StablePlaceInternal,
+	WriteFormat,
+	reservedIdCount,
+} from './persisted-types/index.js';
 
 /**
  * Object capable of converting between the current internal representation for 0.1.1 edits and their wire format.

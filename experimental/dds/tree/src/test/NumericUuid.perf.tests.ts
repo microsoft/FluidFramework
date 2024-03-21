@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { defaultClusterCapacity } from '../id-compressor/IdCompressor';
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { assertIsStableId, generateStableId } from '../UuidUtilities.js';
+import { defaultClusterCapacity } from '../id-compressor/IdCompressor.js';
 import {
 	getPositiveDelta,
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-} from '../id-compressor/NumericUuid';
-import { assertIsStableId, generateStableId } from '../UuidUtilities';
+} from '../id-compressor/NumericUuid.js';
 
 describe('NumericUuid Perf', () => {
 	const stableId = assertIsStableId('4779fbf2-2012-4510-b4f0-28a99a9f8946');

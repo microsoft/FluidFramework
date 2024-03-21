@@ -3,32 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IdCreationRange,
-	IIdCompressor,
-	IIdCompressorCore,
-	OpSpaceCompressedId,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-} from "./types";
-import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
-import {
-	createSessionId,
-	localIdFromGenCount,
-	genCountFromLocalId,
-	numericUuidFromStableId,
-	offsetNumericUuid,
-	stableIdFromNumericUuid,
-	subtractNumericUuids,
-} from "./utilities";
+import { FinalSpace } from "./finalSpace.js";
+import { FinalCompressedId, LocalCompressedId, NumericUuid, isFinalId } from "./identifiers.js";
 import {
 	Index,
 	readBoolean,
@@ -37,18 +17,38 @@ import {
 	writeBoolean,
 	writeNumber,
 	writeNumericUuid,
-} from "./persistanceUtilities";
+} from "./persistanceUtilities.js";
+import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
 import {
-	getAlignedLocal,
-	getAlignedFinal,
 	IdCluster,
-	lastFinalizedLocal,
 	Session,
 	Sessions,
+	getAlignedFinal,
+	getAlignedLocal,
 	lastFinalizedFinal,
-} from "./sessions";
-import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
-import { FinalSpace } from "./finalSpace";
+	lastFinalizedLocal,
+} from "./sessions.js";
+import {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	OpSpaceCompressedId,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./types/index.js";
+import {
+	createSessionId,
+	genCountFromLocalId,
+	localIdFromGenCount,
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+	subtractNumericUuids,
+} from "./utilities.js";
 
 /**
  * The version of IdCompressor that is currently persisted.
@@ -166,11 +166,25 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
+	public generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId {
+		const id = this.generateCompressedId();
+		return isFinalId(id) ? id : this.decompress(id);
+	}
+
+	/**
+	 * Starts a ghost session. Only exposed for test purposes (this class is not exported from the package).
+	 * @param ghostSessionId - The session ID to start the ghost session with.
+	 */
+	public startGhostSession(ghostSessionId: SessionId): void {
+		assert(!this.ongoingGhostSession, 0x8fe /* Ghost session already in progress. */);
+		this.ongoingGhostSession = { ghostSessionId };
+	}
+
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
-		this.ongoingGhostSession = { ghostSessionId };
+		this.startGhostSession(ghostSessionId);
 		try {
 			ghostSessionCallback();
 		} finally {

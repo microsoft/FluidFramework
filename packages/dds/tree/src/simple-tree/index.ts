@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { ITree, TreeView, TreeViewEvents, TreeConfiguration, WrapperTreeView } from "./tree.js";
+export { ITree, TreeView, TreeViewEvents, TreeConfiguration, SchemaIncompatible } from "./tree.js";
 export {
 	TreeNodeSchema,
 	NodeFromSchema,
@@ -30,10 +30,26 @@ export {
 	NodeBuilderData,
 	ObjectFromSchemaRecord,
 } from "./schemaTypes.js";
-export { SchemaFactory } from "./schemaFactory.js";
-export { nodeApi as Tree, TreeApi, TreeNodeEvents } from "./treeApi.js";
+export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export { getFlexNode } from "./flexNode.js";
+export { treeNodeApi, TreeNodeApi, TreeNodeEvents } from "./treeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
-export { SchemaFactoryRecursive } from "./schemaFactoryRecursive.js";
+export {
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
+} from "./typesUnsafe.js";
+export { SchemaFactoryRecursive, ValidateRecursiveSchema } from "./schemaFactoryRecursive.js";
+export { getProxyForField } from "./proxies.js";
 
 export {
 	adaptEnum,
@@ -47,6 +63,7 @@ export {
 export {
 	RecursiveObject as test_RecursiveObject,
 	base as test_RecursiveObject_base,
+	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
 } from "./testRecursiveDomain.js";
 
 export { TreeNode, Unhydrated, TreeArrayNodeBase } from "./types.js";

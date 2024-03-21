@@ -4,22 +4,22 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ReadBuffer } from "./ReadBufferUtils";
+import { ReadBuffer } from "./ReadBufferUtils.js";
+import { measure } from "./odspUtils.js";
 import {
+	NodeCore,
+	NodeTypes,
+	TreeBuilder,
 	assertBlobCoreInstance,
-	getStringInstance,
 	assertBoolInstance,
 	assertNodeCoreInstance,
 	assertNumberInstance,
 	getNodeProps,
-	NodeCore,
-	NodeTypes,
-	TreeBuilder,
-} from "./zipItDataRepresentationUtils";
-import { measure } from "./odspUtils";
+	getStringInstance,
+} from "./zipItDataRepresentationUtils.js";
 
 export const snapshotMinReadVersion = "1.0";
 export const currentReadVersion = "1.0";
@@ -37,7 +37,10 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
-function readBlobSection(node: NodeTypes) {
+function readBlobSection(node: NodeTypes): {
+	blobContents: Map<string, ArrayBuffer>;
+	slowBlobStructureCount: number;
+} {
 	assertNodeCoreInstance(node, "TreeBlobs should be of type NodeCore");
 	let slowBlobStructureCount = 0;
 	const blobContents: Map<string, ArrayBuffer> = new Map();
@@ -76,13 +79,14 @@ function readBlobSection(node: NodeTypes) {
  * Recreates ops section of the tree.
  * @param node - tree node to read ops section from
  */
-function readOpsSection(node: NodeTypes) {
+function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
 	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
 	for (let i = 0; i < records.deltas.length; ++i) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		ops.push(JSON.parse(records.deltas.getString(i)));
 	}
 	// Due to a bug at service side, in an edge case service was serializing deltas even
@@ -99,7 +103,10 @@ function readOpsSection(node: NodeTypes) {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readTreeSection(node: NodeCore) {
+function readTreeSection(node: NodeCore): {
+	snapshotTree: ISnapshotTree;
+	slowTreeStructureCount: number;
+} {
 	let slowTreeStructureCount = 0;
 	const trees = {};
 	const snapshotTree: ISnapshotTree = {
@@ -116,50 +123,59 @@ function readTreeSection(node: NodeCore) {
 		 */
 		const length = treeNode.length;
 		if (length > 0 && treeNode.getMaybeString(0) === "name") {
-			if (length === 4) {
-				const content = treeNode.getMaybeString(2);
-				// "name": <node name>
-				// "children": <blob id>
-				if (content === "children") {
-					const result = readTreeSection(treeNode.getNode(3));
-					trees[treeNode.getString(1)] = result.snapshotTree;
-					slowTreeStructureCount += result.slowTreeStructureCount;
-					continue;
+			switch (length) {
+				case 4: {
+					const content = treeNode.getMaybeString(2);
+					// "name": <node name>
+					// "children": <blob id>
+					if (content === "children") {
+						const result = readTreeSection(treeNode.getNode(3));
+						trees[treeNode.getString(1)] = result.snapshotTree;
+						slowTreeStructureCount += result.slowTreeStructureCount;
+						continue;
+					}
+					// "name": <node name>
+					// "value": <blob id>
+					if (content === "value") {
+						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
+						continue;
+					}
+					break;
 				}
-				// "name": <node name>
-				// "value": <blob id>
-				if (content === "value") {
-					snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(3);
-					continue;
+				case 6: {
+					// "name": <node name>
+					// "nodeType": 3
+					// "value": <blob id>
+					if (
+						treeNode.getMaybeString(2) === "nodeType" &&
+						treeNode.getMaybeString(4) === "value"
+					) {
+						snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
+						continue;
+					}
+
+					// "name": <node name>
+					// "unreferenced": true
+					// "children": <blob id>
+					if (
+						treeNode.getMaybeString(2) === "unreferenced" &&
+						treeNode.getMaybeString(4) === "children"
+					) {
+						const result = readTreeSection(treeNode.getNode(5));
+						trees[treeNode.getString(1)] = result.snapshotTree;
+						slowTreeStructureCount += result.slowTreeStructureCount;
+						assert(
+							treeNode.getBool(3),
+							0x3db /* Unreferenced if present should be true */,
+						);
+						snapshotTree.unreferenced = true;
+						continue;
+					}
+					break;
 				}
-			}
-
-			// "name": <node name>
-			// "nodeType": 3
-			// "value": <blob id>
-			if (
-				length === 6 &&
-				treeNode.getMaybeString(2) === "nodeType" &&
-				treeNode.getMaybeString(4) === "value"
-			) {
-				snapshotTree.blobs[treeNode.getString(1)] = treeNode.getString(5);
-				continue;
-			}
-
-			// "name": <node name>
-			// "unreferenced": true
-			// "children": <blob id>
-			if (
-				length === 6 &&
-				treeNode.getMaybeString(2) === "unreferenced" &&
-				treeNode.getMaybeString(4) === "children"
-			) {
-				const result = readTreeSection(treeNode.getNode(5));
-				trees[treeNode.getString(1)] = result.snapshotTree;
-				slowTreeStructureCount += result.slowTreeStructureCount;
-				assert(treeNode.getBool(3), 0x3db /* Unreferenced if present should be true */);
-				snapshotTree.unreferenced = true;
-				continue;
+				default: {
+					break;
+				}
 			}
 		}
 
@@ -175,12 +191,27 @@ function readTreeSection(node: NodeCore) {
 			snapshotTree.unreferenced = true;
 		}
 
+		if (records.groupId !== undefined) {
+			const groupId = getStringInstance(records.groupId, "groupId should be a string");
+			snapshotTree.groupId = groupId;
+		}
+
+		if (records.omitted !== undefined) {
+			assertBoolInstance(records.omitted, "omitted should be a boolean");
+			assert(
+				!records.omitted || snapshotTree.groupId !== undefined,
+				0x8df /* GroupId absent but omitted is true */,
+			);
+			snapshotTree.omitted = records.omitted;
+		}
+
 		const path = getStringInstance(records.name, "Path name should be string");
 		if (records.value !== undefined) {
 			snapshotTree.blobs[path] = getStringInstance(
 				records.value,
 				"Blob value should be string",
 			);
+			// eslint-disable-next-line unicorn/no-negated-condition
 		} else if (records.children !== undefined) {
 			assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
 			const result = readTreeSection(records.children);
@@ -197,7 +228,11 @@ function readTreeSection(node: NodeCore) {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-function readSnapshotSection(node: NodeTypes) {
+function readSnapshotSection(node: NodeTypes): {
+	sequenceNumber: number;
+	snapshotTree: ISnapshotTree;
+	slowTreeStructureCount: number;
+} {
 	assertNodeCoreInstance(node, "Snapshot should be of type NodeCore");
 	const records = getNodeProps(node);
 
@@ -236,11 +271,11 @@ export function parseCompactSnapshotResponse(
 	}
 
 	assert(
-		parseFloat(snapshotMinReadVersion) >= parseFloat(mrv),
+		Number.parseFloat(snapshotMinReadVersion) >= Number.parseFloat(mrv),
 		0x20f /* "Driver min read version should >= to server minReadVersion" */,
 	);
 	assert(
-		parseFloat(cv) >= parseFloat(snapshotMinReadVersion),
+		Number.parseFloat(cv) >= Number.parseFloat(snapshotMinReadVersion),
 		0x210 /* "Snapshot should be created with minReadVersion or above" */,
 	);
 	assert(
@@ -254,7 +289,7 @@ export function parseCompactSnapshotResponse(
 	return {
 		...snapshot,
 		...blobContents,
-		ops: records.deltas !== undefined ? readOpsSection(records.deltas) : [],
+		ops: records.deltas === undefined ? [] : readOpsSection(records.deltas),
 		latestSequenceNumber: records.lsn,
 		snapshotFormatV: 1,
 		telemetryProps: {

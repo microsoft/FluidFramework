@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { MountableView } from "@fluidframework/view-adapters";
 import {
 	IFluidMountableViewEntryPoint,
+	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import React from "react";
 import { Todo, TodoFactory, TodoView } from "./Todo/index.js";

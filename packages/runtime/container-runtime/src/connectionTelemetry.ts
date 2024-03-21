@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IEventProvider } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+import {
+	IDocumentMessage,
+	ISequencedDocumentMessage,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
 import {
 	IEventSampler,
 	ISampledTelemetryLogger,
@@ -11,14 +21,6 @@ import {
 	createSampledLogger,
 	formatTick,
 } from "@fluidframework/telemetry-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	MessageType,
-} from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/core-utils";
-import { performance } from "@fluid-internal/client-utils";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.
@@ -86,9 +88,34 @@ class OpPerfTelemetry {
 	private static readonly DELTA_LATENCY_SAMPLE_RATE = 100;
 	private readonly deltaLatencyLogger: ISampledTelemetryLogger;
 
+	/**
+	 * Create an instance of OpPerfTelemetry which starts monitoring and generating telemetry related to op performance.
+	 *
+	 * @param clientId - The clientId of the current container.
+	 * @param deltaManager - DeltaManager instance to monitor.
+	 * @param containerRuntimeEvents - Emitter of events for the container runtime.
+	 * @param logger - Telemetry logger to write events to.
+	 */
 	public constructor(
+		/**
+		 * The clientId of the current container.
+		 *
+		 * @remarks Until the container connects to the server and receives an ack for its own join op, this can be undefined.
+		 * It gets updated in response to event changes once the value provided by the server is available.
+		 * If the container loses its connection, this could be the last known clientId.
+		 */
 		private clientId: string | undefined,
+		/**
+		 * DeltaManager instance to monitor.
+		 */
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		/**
+		 * Emitter of events for the container runtime.
+		 */
+		containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
+		/**
+		 * Telemetry logger to write events to.
+		 */
 		logger: ITelemetryLoggerExt,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
@@ -121,7 +148,6 @@ class OpPerfTelemetry {
 		this.deltaManager.on("op", (message) => this.afterProcessingOp(message));
 
 		this.deltaManager.on("connect", (details, opsBehind) => {
-			this.clientId = details.clientId;
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
 				this.gap = opsBehind;
@@ -216,6 +242,10 @@ class OpPerfTelemetry {
 					duration,
 				});
 			}
+		});
+
+		containerRuntimeEvents.on("connected", (newClientId) => {
+			this.clientId = newClientId;
 		});
 	}
 
@@ -369,10 +399,19 @@ export interface IPerfSignalReport {
 	trackingSignalSequenceNumber: number | undefined;
 }
 
+/**
+ * Starts monitoring and generation of telemetry related to op performance.
+ *
+ * @param clientId - The clientId of the current container.
+ * @param deltaManager - DeltaManager instance to monitor.
+ * @param containerRuntimeEvents - Emitter of events for the container runtime.
+ * @param logger - Telemetry logger to write events to.
+ */
 export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
 	logger: ITelemetryLoggerExt,
-) {
-	new OpPerfTelemetry(clientId, deltaManager, logger);
+): void {
+	new OpPerfTelemetry(clientId, deltaManager, containerRuntimeEvents, logger);
 }

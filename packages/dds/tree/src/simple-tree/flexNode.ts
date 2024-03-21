@@ -4,21 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../util/index.js";
 import {
-	FlexObjectNodeSchema,
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
-	FlexTreeNode,
-	FlexTreeObjectNode,
+	FlexObjectNodeSchema,
 	FlexTreeFieldNode,
 	FlexTreeMapNode,
+	FlexTreeNode,
+	FlexTreeObjectNode,
 	assertFlexTreeEntityNotFreed,
 } from "../feature-libraries/index.js";
-import { TreeNode, TypedNode } from "./types.js";
-import { TreeArrayNode } from "./treeArrayNode.js";
-import { TreeMapNode } from "./schemaTypes.js";
+import { fail } from "../util/index.js";
 import { RawTreeNode } from "./rawNode.js";
+import { TreeMapNode } from "./schemaTypes.js";
+import { TreeArrayNode } from "./treeArrayNode.js";
+import { TreeNode, TypedNode } from "./types.js";
 
 /** Associates an FlexTreeNode with a target object  */
 const targetSymbol = Symbol("FlexNodeTarget");
@@ -63,10 +63,9 @@ export function getFlexNode(target: TreeNode, allowFreed = false): FlexTreeNode 
  * Retrieves the flex node associated with the given target via {@link setFlexNode}, if any.
  */
 export function tryGetFlexNode(target: unknown): FlexTreeNode | undefined {
-	if (typeof target === "object" && target !== null) {
-		return flexNodeMap.get(target as TreeNode);
-	}
-	return undefined;
+	// Calling 'WeakMap.get()' with primitives (numbers, strings, etc.) will return undefined.
+	// This is in contrast to 'WeakMap.set()', which will throw a TypeError if given a non-object key.
+	return flexNodeMap.get(target as TreeNode);
 }
 
 /**

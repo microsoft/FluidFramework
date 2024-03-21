@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { createIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor";
 import {
 	ChangeFamily,
-	ChangeRebaser,
 	ChangeFamilyEditor,
+	ChangeRebaser,
 	DeltaRoot,
 	emptyDelta,
 } from "../../../core/index.js";
-import {
-	TestChangeFamily,
-	TestChange,
-	testChangeFamilyFactory,
-	asDelta,
-} from "../../testChange.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
 import { RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
-import { mintRevisionTag } from "../../utils.js";
+import {
+	TestChange,
+	TestChangeFamily,
+	asDelta,
+	testChangeFamilyFactory,
+} from "../../testChange.js";
+import { mintRevisionTag, testIdCompressor } from "../../utils.js";
 export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 export function testChangeEditManagerFactory(options: {
@@ -33,7 +33,6 @@ export function testChangeEditManagerFactory(options: {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = editManagerFactory(family, {
 		sessionId: options.sessionId,
-		autoDiscardRevertibles: options.autoDiscardRevertibles,
 	});
 
 	return { manager, family };
@@ -43,24 +42,15 @@ export function editManagerFactory<TChange = TestChange>(
 	family: ChangeFamily<any, TChange>,
 	options: {
 		sessionId?: SessionId;
-		autoDiscardRevertibles?: boolean;
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange, ChangeFamily<ChangeFamilyEditor, TChange>> {
-	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
-	const idCompressor = createIdCompressor();
-	const genId = () => idCompressor.generateCompressedId();
+	const genId = () => testIdCompressor.generateCompressedId();
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TChange,
 		ChangeFamily<ChangeFamilyEditor, TChange>
 	>(family, options.sessionId ?? ("0" as SessionId), genId);
 
-	if (autoDiscardRevertibles === true) {
-		// by default, discard revertibles in the edit manager tests
-		manager.localBranch.on("newRevertible", (revertible) => {
-			revertible.discard();
-		});
-	}
 	return manager;
 }
 

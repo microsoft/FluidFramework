@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { UniversalSequenceNumber } from "../constants";
-import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes";
-import { ReferenceType } from "../ops";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
-import { insertSegments } from "./testUtils";
+import { UniversalSequenceNumber } from "../constants.js";
+import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes.js";
+import { ReferenceType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
+import { insertSegments } from "./testUtils.js";
 
 describe("TestClient", () => {
 	const localUserLongId = "localUser";

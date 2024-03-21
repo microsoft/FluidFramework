@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as api from "@fluidframework/protocol-definitions";
-import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshot } from "@fluidframework/driver-definitions";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
+import * as api from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-deprecated
+import { ISnapshotContents } from "./odspPublicUtils.js";
 
 /**
  * Interface for error responses for the WebSocket connection
@@ -34,7 +35,7 @@ export interface IOdspSocketError {
 	 * Any error supplied by the socket containing codes and inner errors with further
 	 * details about the error.
 	 */
-	error?: any;
+	error?: unknown;
 }
 
 /**
@@ -86,6 +87,7 @@ export interface IOdspSummaryTreeValueEntry extends IOdspSummaryTreeBaseEntry {
 	value: OdspSummaryTreeValue;
 	// Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
 	unreferenced?: true;
+	groupId?: string;
 }
 
 export interface IOdspSummaryTreeHandleEntry extends IOdspSummaryTreeBaseEntry {
@@ -116,6 +118,7 @@ export interface IOdspSnapshotTreeEntryTree {
 	type: "tree";
 	// Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
 	unreferenced?: true;
+	groupId?: string;
 }
 
 export interface IOdspSnapshotTreeEntryCommit {
@@ -178,12 +181,16 @@ export interface ICreateFileResponse {
 	"itemUrl": string;
 	"sequenceNumber": number;
 	// sharing object contains shareId, sharingLink data or error in the response
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	"sharing"?: any;
 	"sharingLink"?: string;
 	"sharingLinkErrorReason"?: string;
 }
 
 export interface IVersionedValueWithEpoch {
+	// TODO: use a stronger type
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
 	fluidEpoch: string;
 	// This is same as "persistedCacheValueVersion" below. This represents the version of data stored in cache.
@@ -195,7 +202,9 @@ export const persistedCacheValueVersion = 3;
 export interface IGetOpsResponse {
 	nonce: string;
 	code: number;
-	/** Time in seconds. Currently never set by PUSH */
+	/**
+	 * Time in seconds. Currently never set by PUSH
+	 */
 	retryAfter?: number;
 	messages?: api.ISequencedDocumentMessage[];
 }
@@ -203,7 +212,9 @@ export interface IGetOpsResponse {
 export interface IFlushOpsResponse {
 	nonce: string;
 	code: number;
-	/** Time in seconds */
+	/**
+	 * Time in seconds
+	 */
 	retryAfter?: number;
 	lastPersistedSequenceNumber?: number;
 }
@@ -213,6 +224,7 @@ export interface IFlushOpsResponse {
  * @deprecated - This will be replaced with ISnapshotCachedEntry2 which wraps the new ISnapshot interface.
  * For now, to support back compat from cache, we need to keep it for now.
  */
+// eslint-disable-next-line import/no-deprecated
 export interface ISnapshotCachedEntry extends ISnapshotContents {
 	cacheEntryTime: number;
 }

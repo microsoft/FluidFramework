@@ -5,15 +5,29 @@
 
 import { strict as assert } from "assert";
 import {
+	type BuildNode,
+	Change,
+	SharedTree as LegacySharedTree,
+	StablePlace,
+	type TraitLabel,
+	MigrationShimFactory,
+} from "@fluid-experimental/tree";
+import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	MockDeltaConnection,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils";
+import { CellFactory } from "@fluidframework/cell";
 import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
+import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
+import { SharedTree, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
+import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
+import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -35,9 +49,8 @@ describe("DDS Handle Encoding", () => {
 	 * @returns The list of handles found in the given contents object
 	 */
 	function findAllHandles(contents: unknown) {
-		const envelope = { contents, address: "envelope" };
 		const handlesFound: string[] = [];
-		detectOutboundReferences(envelope, (from, to) => {
+		detectOutboundReferences("envelope", contents, (from, to) => {
 			handlesFound.push(to);
 		});
 		return handlesFound;
@@ -61,11 +74,14 @@ describe("DDS Handle Encoding", () => {
 		factory: IChannelFactoryWithCreatedType<T>,
 		addHandleToDDS: (dds: T) => void,
 		expectedHandles: string[],
+		nameOverride?: string,
 	): ITestCase {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const name = factory.type.split("/").pop()!;
+		const name = nameOverride ?? factory.type.split("/").pop()!;
 
-		const dataStoreRuntime = new MockFluidDataStoreRuntime();
+		const dataStoreRuntime = new MockFluidDataStoreRuntime({
+			idCompressor: createIdCompressor("173cb232-53a2-4327-b690-afa954397989" as SessionId),
+		});
 		const deltaConnection = new MockDeltaConnection(
 			/* submitFn: */ (message) => {
 				messages.push(message);
@@ -90,7 +106,7 @@ describe("DDS Handle Encoding", () => {
 	const testCases: ITestCase[] = [
 		createTestCase(
 			new MapFactory(),
-			(dds: Map<string, any>) => {
+			(dds) => {
 				dds.set("whatever", handle);
 			},
 			[handle.absolutePath] /* expectedHandles */,
@@ -103,24 +119,144 @@ describe("DDS Handle Encoding", () => {
 			[handle.absolutePath] /* expectedHandles */,
 		),
 		createTestCase(
+			new SharedStringFactory(),
+			(dds) => {
+				dds.insertMarker(0, ReferenceType.Simple, { marker: handle });
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new SharedMatrixFactory(),
+			(dds: SharedMatrix) => {
+				dds.insertRows(0, 1);
+				dds.insertCols(0, 1);
+
+				dds.setCell(0, 0, handle);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			SharedTree.getFactory() as any,
+			(dds: ITree) => {
+				const builder = new SchemaFactory("test");
+				class Bar extends builder.object("bar", {
+					h: builder.optional(builder.handle),
+				}) {}
+
+				const config = new TreeConfiguration(Bar, () => ({
+					h: undefined,
+				}));
+
+				const treeView = dds.schematize(config);
+
+				treeView.root.h = handle;
+			},
+			[handle.absolutePath] /* expectedHandles */,
+			"tree2",
+		),
+		createTestCase(
+			LegacySharedTree.getFactory(),
+			(tree) => {
+				const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+				const handleNode: BuildNode = {
+					definition: legacyNodeId,
+					traits: {
+						handle: {
+							definition: "handle",
+							payload: 0,
+						},
+					},
+				};
+				tree.applyEdit(
+					Change.insertTree(
+						handleNode,
+						StablePlace.atStartOf({
+							parent: tree.currentView.root,
+							label: legacyNodeId,
+						}),
+					),
+				);
+
+				const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const nodeId = rootNode.traits.get(legacyNodeId)![0];
+				const change: Change = Change.setPayload(nodeId, handle);
+				tree.applyEdit(change);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+			"legacy-shared-tree",
+		),
+		createTestCase(
 			new ConsensusRegisterCollectionFactory(),
 			(dds) => {
-				dds.write("whatever", handle).catch(() => {
-					// We only care about errors before message submission, which will fail the message.length assert below.
-				});
+				dds.write("whatever", handle).catch(() => {});
 			},
-			[] /* expectedHandles */,
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new ConsensusQueueFactory(),
+			(dds) => {
+				dds.add(handle).catch(() => {});
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new CellFactory(),
+			(dds) => {
+				dds.set(handle);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+		),
+		createTestCase(
+			new MigrationShimFactory(
+				LegacySharedTree.getFactory(),
+				SharedTree.getFactory(),
+				(legacyTree, newTree) => {
+					throw new Error("unreachable");
+				},
+			),
+			(shim) => {
+				const tree = shim.currentTree as LegacySharedTree;
+				const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+				const handleNode: BuildNode = {
+					definition: legacyNodeId,
+					traits: {
+						handle: {
+							definition: "handle",
+							payload: 0,
+						},
+					},
+				};
+				tree.applyEdit(
+					Change.insertTree(
+						handleNode,
+						StablePlace.atStartOf({
+							parent: tree.currentView.root,
+							label: legacyNodeId,
+						}),
+					),
+				);
+
+				const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const nodeId = rootNode.traits.get(legacyNodeId)![0];
+				const change: Change = Change.setPayload(nodeId, { handle });
+				tree.applyEdit(change);
+			},
+			[handle.absolutePath] /* expectedHandles */,
+			"migration-shim",
 		),
 	];
 
 	testCases.forEach((testCase) => {
-		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should" : "should not";
+		const shouldOrShouldNot = testCase.expectedHandles.length > 0 ? "should not" : "should";
 		it(`${shouldOrShouldNot} obscure handles in ${testCase.name} message contents`, async () => {
 			testCase.addHandleToDDS();
 
-			assert.equal(messages.length, 1, "Expected a single message to be submitted");
 			assert.deepEqual(
-				findAllHandles(messages[0]),
+				messages.flatMap((m) => findAllHandles(m)),
 				testCase.expectedHandles,
 				`The handle ${shouldOrShouldNot} be detected`,
 			);

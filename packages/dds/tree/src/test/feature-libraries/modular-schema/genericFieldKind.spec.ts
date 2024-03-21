@@ -5,31 +5,35 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
-import {
-	NodeChangeset,
-	GenericChangeset,
-	genericFieldKind,
-	CrossFieldManager,
-	MemoizedIdRangeAllocator,
-} from "../../../feature-libraries/index.js";
-import {
-	makeAnonChange,
-	FieldKey,
-	DeltaFieldMap,
-	DeltaFieldChanges,
-	RevisionTagCodec,
-	ChangeEncodingContext,
-} from "../../../core/index.js";
-import { fakeIdAllocator, brand, JsonCompatibleReadOnly } from "../../../util/index.js";
-import {
-	EncodingTestData,
-	MockIdCompressor,
-	defaultRevisionMetadataFromChanges,
-	makeEncodingTestSuite,
-} from "../../utils.js";
 import { IJsonCodec } from "../../../codec/index.js";
+import {
+	ChangeEncodingContext,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	FieldKey,
+	makeAnonChange,
+} from "../../../core/index.js";
+import {
+	CrossFieldManager,
+	GenericChangeset,
+	MemoizedIdRangeAllocator,
+	NodeChangeset,
+	genericFieldKind,
+} from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	JsonCompatibleReadOnly,
+	brand,
+	fakeIdAllocator,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
+import {
+	EncodingTestData,
+	defaultRevisionMetadataFromChanges,
+	makeEncodingTestSuite,
+	testRevisionTagCodec,
+} from "../../utils.js";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers.js";
 import { testSnapshots } from "./genericFieldSnapshots.test.js";
 
@@ -97,19 +101,6 @@ const childComposer = (
 		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(valueChange);
-};
-
-const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
-	const valueChange = valueChangeFromNodeChange(nodeChange);
-	const taggedChange = makeAnonChange(valueChange);
-	const inverse = valueHandler.rebaser.invert(
-		taggedChange,
-		unexpectedDelegate,
-		fakeIdAllocator,
-		crossFieldManager,
-		defaultRevisionMetadataFromChanges([taggedChange]),
-	);
-	return nodeChangeFromValueChange(inverse);
 };
 
 const childRebaser = (
@@ -359,8 +350,17 @@ describe("GenericField", () => {
 		const taggedChange = makeAnonChange(forward);
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			taggedChange,
-			childInverter,
-			fakeIdAllocator,
+			(nodeChange: NodeChangeset): NodeChangeset => {
+				if (nodeChange === nodeChange0To1) {
+					return nodeChange1To0;
+				}
+				if (nodeChange === nodeChange1To2) {
+					return nodeChange2To1;
+				}
+				assert.fail("Unexpected child change");
+			},
+			true,
+			idAllocatorFromMaxId(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
@@ -434,10 +434,7 @@ describe("GenericField", () => {
 		};
 
 		makeEncodingTestSuite(
-			genericFieldKind.changeHandler.codecsFactory(
-				childCodec,
-				new RevisionTagCodec(new MockIdCompressor()),
-			),
+			genericFieldKind.changeHandler.codecsFactory(childCodec, testRevisionTagCodec),
 			encodingTestData,
 		);
 	});

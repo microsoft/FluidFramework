@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
@@ -18,7 +19,10 @@ interface ITsBuildInfo {
 	program: {
 		fileNames: string[];
 		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
+		affectedFilesPendingEmit?: any[];
+		emitDiagnosticsPerFile?: any[];
 		semanticDiagnosticsPerFile?: any[];
+		changeFileSet?: number[];
 		options: any;
 	};
 	version: string;
@@ -41,13 +45,72 @@ export class TscTask extends LeafTask {
 		return this._tscUtils;
 	}
 
+	protected get executionCommand() {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			// https://github.com/microsoft/TypeScript/issues/57780
+			// `tsc -b` by design doesn't rebuild if dependent packages changed
+			// but not a referenced project. Just force it if we detected the change and
+			// invoke the build.
+			return `${this.command} --force`;
+		}
+		return this.command;
+	}
 	protected get isIncremental() {
 		const config = this.readTsConfig();
 		return config?.options.incremental;
 	}
+
 	protected async checkLeafIsUpToDate() {
+		const parsedCommandLine = this.parsedCommandLine;
+		if (parsedCommandLine?.options.build) {
+			return this.checkReferencesIsUpToDate(
+				parsedCommandLine.fileNames.length === 0 ? ["."] : parsedCommandLine.fileNames,
+				new Set(),
+			);
+		}
+		// Check is Up to date without project references
+		return this.checkTscIsUpToDate();
+	}
+
+	private async checkReferencesIsUpToDate(checkDir: string[], checkedProjects: Set<string>) {
+		for (const dir of checkDir) {
+			if (checkedProjects.has(dir)) {
+				continue;
+			}
+			checkedProjects.add(dir);
+			const tempTscTask = new TscTask(this.node, `tsc -p ${dir}`, undefined, true);
+			if (!(await tempTscTask.checkTscIsUpToDate(checkedProjects))) {
+				this.traceTrigger(`project reference ${dir} is not up to date`);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private async checkTscIsUpToDate(checkedProjects?: Set<string>) {
+		const config = this.readTsConfig();
+		if (!config) {
+			this.traceTrigger("unable to read ts config");
+			return false;
+		}
+
+		// Only check project reference if we are in build mode
+		if (checkedProjects && config.projectReferences) {
+			const referencePaths = config.projectReferences.map((p) => p.path);
+			if (!(await this.checkReferencesIsUpToDate(referencePaths, checkedProjects))) {
+				return false;
+			}
+		}
+
+		if (config.fileNames.length === 0) {
+			// No file to build, no need to check the the build info.
+			return true;
+		}
+
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
+			this.traceTrigger("no tsBuildInfo file path");
 			return false;
 		}
 
@@ -60,15 +123,15 @@ export class TscTask extends LeafTask {
 			return false;
 		}
 
+		const program = tsBuildInfo.program;
 		// Check previous build errors
-		const diag = tsBuildInfo.program.semanticDiagnosticsPerFile;
-		if (diag?.some((item) => Array.isArray(item))) {
+		if (
+			program.changeFileSet?.length ||
+			(!config.options.noEmit
+				? program.affectedFilesPendingEmit?.length || program.emitDiagnosticsPerFile?.length
+				: program.semanticDiagnosticsPerFile?.some((item) => Array.isArray(item)))
+		) {
 			this.traceTrigger("previous build error");
-			return false;
-		}
-
-		const config = this.readTsConfig();
-		if (!config) {
 			return false;
 		}
 
@@ -82,8 +145,8 @@ export class TscTask extends LeafTask {
 		);
 
 		// Check dependencies file hashes
-		const fileNames = tsBuildInfo.program.fileNames;
-		const fileInfos = tsBuildInfo.program.fileInfos;
+		const fileNames = program.fileNames;
+		const fileInfos = program.fileInfos;
 		for (let i = 0; i < fileInfos.length; i++) {
 			const fileInfo = fileInfos[i];
 			const fileName = fileNames[i];
@@ -183,9 +246,7 @@ export class TscTask extends LeafTask {
 		);
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			this.traceTrigger(
-				`${this.node.pkg.nameColored}: ts option changed ${configFileFullPath}`,
-			);
+			this.traceTrigger(`ts option changed ${configFileFullPath}`);
 			this.traceTrigger("Config:");
 			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
 			this.traceTrigger("BuildInfo:");
@@ -305,7 +366,11 @@ export class TscTask extends LeafTask {
 		return this.remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
 	}
 
-	private remapOutFile(options: tsTypes.ParsedCommandLine, directory: string, fileName: string) {
+	private remapOutFile(
+		options: tsTypes.ParsedCommandLine,
+		directory: string,
+		fileName: string,
+	) {
 		if (options.options.outDir) {
 			if (options.options.rootDir) {
 				const relative = path.relative(options.options.rootDir, directory);
@@ -346,9 +411,7 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(
-						await readFileAsync(tsBuildInfoFileFullPath, "utf8"),
-					);
+					const tsBuildInfo = JSON.parse(await readFileAsync(tsBuildInfoFileFullPath, "utf8"));
 					if (
 						tsBuildInfo.program &&
 						tsBuildInfo.program.fileNames &&
@@ -370,37 +433,8 @@ export class TscTask extends LeafTask {
 	}
 
 	protected async markExecDone() {
+		// force reload
 		this._tsBuildInfo = undefined;
-
-		const config = this.readTsConfig();
-		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
-		const configFileFullPath = this.configFileFullPath;
-
-		// If there are no input, tsc doesn't update the build info file.  Do it manually so we use it for
-		// incremental build
-		if (tsBuildInfoFileFullPath && configFileFullPath && config?.fileNames.length === 0) {
-			const tscUtils = this.getTscUtils();
-			// Patch relative path based on the file directory where the config comes from
-			const options = tscUtils.filterIncrementalOptions(
-				tscUtils.convertOptionPaths(
-					config.options,
-					path.dirname(tsBuildInfoFileFullPath),
-					path.relative,
-				),
-			);
-			const dir = path.dirname(tsBuildInfoFileFullPath);
-			if (!existsSync(dir)) {
-				await fs.promises.mkdir(dir, { recursive: true });
-			}
-			await fs.promises.writeFile(
-				tsBuildInfoFileFullPath,
-				JSON.stringify({
-					program: { fileNames: [], fileInfos: [], options },
-					version: tscUtils.tsLib.version,
-				}),
-				"utf8",
-			);
-		}
 	}
 
 	protected get useWorker() {
@@ -466,6 +500,29 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	protected abstract getToolVersion(): Promise<string>;
 }
 
+interface TscMultiConfig {
+	targets: {
+		extName?: string;
+		packageOverrides?: Record<string, unknown>;
+	}[];
+	projects: string[];
+}
+
+// This function is mimiced from tsc-multi.
+function configKeyForPackageOverrides(overrides: Record<string, unknown> | undefined) {
+	if (overrides === undefined) return "";
+
+	const str = JSON.stringify(overrides);
+
+	// An implementation of DJB2 string hashing algorithm
+	let hash = 5381;
+	for (let i = 0; i < str.length; i++) {
+		hash = (hash << 5) + hash + str.charCodeAt(i); // hash * 33 + c
+		hash |= 0; // Convert to 32bit integer
+	}
+	return `.${hash}`;
+}
+
 /**
  * A fluid-build task definition for tsc-multi.
  *
@@ -475,6 +532,9 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
  *
  * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
  * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
+ *
+ * Jason-Ha observes that caching is only effective after the second build. But since tsc-multi is just orchestrating
+ * tsc, this should be able to derive from {@link TscTask} and override to get to the right config and tsbuildinfo.
  */
 export class TscMultiTask extends LeafWithDoneFileTask {
 	protected async getToolVersion() {
@@ -484,32 +544,54 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		const command = this.command;
 
-		/**
-		 * A list of files that should be considered part of the cache input, if they exist
-		 */
-		const commonFiles = [
-			"tsconfig.json",
-			"src/test/tsconfig.json",
-			"tsc-multi.json",
-			"tsc-multi.test.json",
-		]
-			.map((file) => path.resolve(this.package.directory, file))
-			.filter((file) => existsSync(file));
-
 		try {
-			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
-			// the command string to determine which file to use.
-			const tsbuildinfoPath = this.getPackageFileFullPath(
-				command.includes("tsc-multi.esm.json")
-					? "tsconfig.mjs.tsbuildinfo"
-					: "tsconfig.cjs.tsbuildinfo",
+			const commandArgs = command.split(/\s+/);
+			const configArg = commandArgs.findIndex((arg) => arg === "--config");
+			if (configArg === -1) {
+				throw new Error(`no --config argument for tsc-multi command: ${command}`);
+			}
+			const tscMultiConfigFile = path.resolve(
+				this.package.directory,
+				commandArgs[configArg + 1],
 			);
+			commandArgs.splice(configArg, 2);
+			commandArgs.shift(); // Remove "tsc-multi" from the command
+			// Assume that the remaining arguments are project paths
+			const tscMultiProjects = commandArgs.filter((arg) => !arg.startsWith("-"));
+			const tscMultiConfig = JSON.parse(
+				await readFileAsync(tscMultiConfigFile, "utf-8"),
+			) as TscMultiConfig;
+
+			// Command line projects replace any in config projects
+			if (tscMultiProjects.length > 0) {
+				tscMultiConfig.projects = tscMultiProjects;
+			}
+
+			if (tscMultiConfig.projects.length !== 1) {
+				throw new Error(
+					`TscMultiTask does not support ${command} that does not have exactly one project.`,
+				);
+			}
+
+			if (tscMultiConfig.targets.length !== 1) {
+				throw new Error(
+					`TscMultiTask does not support ${tscMultiConfigFile} that does not have exactly one target.`,
+				);
+			}
+
+			const project = tscMultiConfig.projects[0];
+			const projectExt = path.extname(project);
+			const target = tscMultiConfig.targets[0];
+			const relTsBuildInfoPath = `${project.substring(0, project.length - projectExt.length)}${
+				target.extName ?? ""
+			}${configKeyForPackageOverrides(target.packageOverrides)}.tsbuildinfo`;
+			const tsbuildinfoPath = this.getPackageFileFullPath(relTsBuildInfoPath);
 			if (!existsSync(tsbuildinfoPath)) {
 				// No tsbuildinfo file, so we need to build
 				throw new Error(`no tsbuildinfo file found: ${tsbuildinfoPath}`);
 			}
 
-			const files = [...commonFiles];
+			const files = [tscMultiConfigFile, path.resolve(this.package.directory, project)];
 
 			// Add src files
 			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));

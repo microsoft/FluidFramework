@@ -12,23 +12,23 @@ import {
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IGarbageCollectionData,
 	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";
-import { brand, JsonCompatibleReadOnly } from "../util/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
+import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
-import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
-import { DecodedMessage } from "./messageTypes.js";
+import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
+import { DecodedMessage } from "./messageTypes.js";
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
@@ -45,12 +45,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
-	/** Iff false, calls to `submitOp` will have no effect */
-	private submitOps = true;
-
 	/**
 	 * The sequence number that this instance is at.
-	 * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
+	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
@@ -206,10 +203,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param commit - the commit to submit
 	 */
 	private submitCommit(commit: GraphCommit<TChange>, isResubmit = false): void {
-		if (!this.submitOps) {
-			return;
-		}
-
 		// Edits should not be submitted until all transactions finish
 		assert(
 			!this.getLocalBranch().isTransacting() || isResubmit,
@@ -227,6 +220,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				newRevision,
 				this.detachedRevision,
 			);
+			this.editManager.advanceMinimumSequenceNumber(newRevision);
 		}
 
 		// Don't submit the op if it is not attached
@@ -243,7 +237,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				schema: this.schemaAndPolicy ?? undefined,
 			},
 		);
-		this.submitLocalMessage(this.serializer.encode(message, this.handle));
+		this.submitLocalMessage(message);
 	}
 
 	protected processCore(
@@ -251,9 +245,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const contents: unknown = this.serializer.decode(message.contents);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(contents, {});
+		const { commit, sessionId } = this.messageCodec.decode(message.contents, {});
+
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },
 			brand(message.sequenceNumber),
@@ -287,7 +281,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.submitCommit(commit, true);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
 		assert(
 			!this.getLocalBranch().isTransacting(),
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
@@ -296,10 +290,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, {});
-		this.submitOps = false;
 		this.editManager.localBranch.apply(change, revision);
-		this.submitOps = true;
-		return;
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {

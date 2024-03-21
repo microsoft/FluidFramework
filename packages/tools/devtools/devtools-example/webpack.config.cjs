@@ -20,6 +20,11 @@ module.exports = (env) => {
 				main: path.join(sourcePath, "index.tsx"),
 			},
 			resolve: {
+				extensionAlias: {
+					".cjs": [".cts", ".cjs"],
+					".js": [".ts", ".tsx", ".js"],
+					".mjs": [".mts", ".mjs"],
+				},
 				extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 			},
 			module: {
@@ -31,6 +36,8 @@ module.exports = (env) => {
 					{
 						test: /\.m?js/,
 						resolve: {
+							// Required until all transitive dependencies are fully ESM.
+							// https://webpack.js.org/configuration/module/#resolvefullyspecified
 							fullySpecified: false,
 						},
 					},
@@ -38,6 +45,8 @@ module.exports = (env) => {
 						test: /\.tsx?$/,
 						loader: require.resolve("ts-loader"),
 						resolve: {
+							// Required until all transitive dependencies are fully ESM.
+							// https://webpack.js.org/configuration/module/#resolvefullyspecified
 							fullySpecified: false,
 						},
 					},

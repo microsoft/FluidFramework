@@ -1,6 +1,6 @@
 ## simple-suite-test
 
-Test package
+<b>Test package</b>
 
 ### Remarks {#simple-suite-test-remarks}
 

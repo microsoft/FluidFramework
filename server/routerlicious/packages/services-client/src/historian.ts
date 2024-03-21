@@ -38,7 +38,7 @@ export const getAuthorizationTokenFromCredentials = (credentials: ICredentials):
  * @internal
  */
 export class Historian implements IHistorian {
-	private readonly defaultQueryString: Record<string, unknown> = {};
+	private readonly defaultQueryString: Record<string, string | number | boolean> = {};
 	private readonly cacheBust: boolean;
 
 	constructor(
@@ -91,7 +91,7 @@ export class Historian implements IHistorian {
 	public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
 		return this.restWrapper
 			.get<git.ICommitDetails[]>(`/commits`, this.getQueryString({ count, sha }))
-			.catch((error) =>
+			.catch(async (error) =>
 				error === 400 || error === 404
 					? ([] as git.ICommitDetails[])
 					: Promise.reject<git.ICommitDetails[]>(error),
@@ -188,7 +188,9 @@ export class Historian implements IHistorian {
 		};
 	}
 
-	private getQueryString(queryString?: Record<string, unknown>): Record<string, unknown> {
+	private getQueryString(
+		queryString?: Record<string, string | number | boolean>,
+	): Record<string, string | number | boolean> {
 		if (this.cacheBust) {
 			return {
 				cacheBust: Date.now(),

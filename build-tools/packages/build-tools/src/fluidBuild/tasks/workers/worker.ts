@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { parentPort } from "worker_threads";
 
 import { lint } from "./eslintWorker";
-import { compile } from "./tscWorker";
+import { compile, fluidCompile } from "./tscWorker";
 
 export interface WorkerMessage {
 	workerName: string;
@@ -20,8 +21,9 @@ export interface WorkerExecResult {
 }
 
 const workers: { [key: string]: (message: WorkerMessage) => Promise<WorkerExecResult> } = {
-	tsc: compile,
-	eslint: lint,
+	"tsc": compile,
+	"fluid-tsc": fluidCompile,
+	"eslint": lint,
 };
 
 let collectMemoryUsage = false;

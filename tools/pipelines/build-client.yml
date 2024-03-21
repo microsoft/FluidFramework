@@ -152,12 +152,8 @@ extends:
     - webpack
     - ci:test:mocha
     - ci:test:jest
-    - ${{ if eq(variables['System.TeamProject'], 'public') }}:
-      - ci:test:realsvc:local
-      - ci:test:realsvc:tinylicious
-    - ${{ if ne(variables['System.TeamProject'], 'public') }}:
-      - ci:test:realsvc:local:full
-      - ci:test:realsvc:tinylicious:full
+    - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
     - ci:test:stress:tinylicious
     - test:copyresults
     testResultDirs:
@@ -186,5 +182,5 @@ extends:
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
         targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-        artifactName: 'devtools-extension-bundle'
+        artifactName: 'devtools-extension-bundle_attempt-$(System.JobAttempt)'
         publishLocation: 'pipeline'

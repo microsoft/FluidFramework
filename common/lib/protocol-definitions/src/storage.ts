@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoDate } from "./date";
+import { IsoDate } from "./date.js";
 
 /**
  * @alpha
@@ -119,9 +119,10 @@ export interface ITree {
 	unreferenced?: true;
 
 	/**
-	 * Represents the group to which the tree belongs to. When the server returns the snapshot to
-	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
-	 * from the service.
+	 * Represents the loading group to which the tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
 	 */
 	groupId?: string;
 }
@@ -140,11 +141,18 @@ export interface ISnapshotTree {
 	unreferenced?: true;
 
 	/**
-	 * Represents the group to which the snapshot tree belongs to. When the server returns the snapshot to
-	 * the client, and this tree is missing in that snapshot, then this could be used to request the contents
-	 * from the service.
+	 * Represents the loading group to which the snapshot tree belongs to. Please refer to this readme for more context.
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
+	 * Also note that "groupId" is the same as "loadingGroupId" used elsewhere in the repo. The naming discrepancy is
+	 * intentional to minimize snapshot/summary size.
 	 */
 	groupId?: string;
+
+	/**
+	 * If true, then the service did not include the blobs content for the blobs in this snapshot tree. The service would
+	 * specify the groupId in that case, so that we can use that to fetch the latest content.
+	 */
+	omitted?: boolean;
 }
 
 /**

@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { INormalizedWholeSnapshot, IWholeFlatSnapshot, IWholeFlatSnapshotTree } from "./contracts";
+import { ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	INormalizedWholeSnapshot,
+	IWholeFlatSnapshot,
+	IWholeFlatSnapshotTree,
+} from "./contracts.js";
 
 /**
  * Build a tree hierarchy from a flat tree.
@@ -39,6 +43,7 @@ function buildHierarchy(
 				blobs: {},
 				trees: {},
 				unreferenced: entry.unreferenced,
+				groupId: entry.groupId,
 			};
 			node.trees[decodeURIComponent(entryPathBase)] = newTree;
 			lookup[entryPath] = newTree;

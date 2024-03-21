@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	IDeltaManager,
+	IDeltaManagerEvents,
+	IDeltaQueue,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -12,14 +19,6 @@ import {
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import {
-	IDeltaManager,
-	IDeltaManagerEvents,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 
 /**
  * Mock implementation of IDeltaQueue for testing that does nothing
@@ -162,12 +161,35 @@ export class MockDeltaManager
 		return 0;
 	}
 
-	public dispose() {}
+	public dispose() {
+		this.removeAllListeners();
+	}
+
+	public prepareInboundResponse(type: MessageType, contents: any) {
+		const callback = () => {
+			this.inbound.push({
+				// TODO
+				type,
+				contents,
+				clientId: null,
+				sequenceNumber: 0,
+				minimumSequenceNumber: 0,
+				clientSequenceNumber: 0,
+				referenceSequenceNumber: 0,
+				timestamp: 0,
+			});
+			this.outbound.off("push", callback);
+		};
+		this.outbound.on("push", callback);
+	}
 
 	constructor() {
 		super();
 
 		this._inbound = new MockDeltaQueue<ISequencedDocumentMessage>();
+		this._inbound.processCallback = (message: ISequencedDocumentMessage) => {
+			this.emit("op", message);
+		};
 		this._outbound = new MockDeltaQueue<IDocumentMessage[]>();
 		this._inboundSignal = new MockDeltaQueue<ISignalMessage>();
 	}

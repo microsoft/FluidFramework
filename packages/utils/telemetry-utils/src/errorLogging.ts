@@ -3,20 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ILoggingError,
 	ITelemetryBaseProperties,
-	TelemetryBaseEventPropertyType,
 	Tagged,
 } from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
 import {
-	hasErrorInstanceId,
 	IFluidErrorBase,
+	hasErrorInstanceId,
 	isFluidError,
 	isValidLegacyError,
-} from "./fluidErrorBase";
-import { ITelemetryLoggerExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
+} from "./fluidErrorBase.js";
+import { convertToBasePropertyType } from "./logger.js";
+import type {
+	ITelemetryLoggerExt,
+	ITelemetryPropertiesExt,
+	TelemetryEventPropertyTypeExt,
+} from "./telemetryTypes.js";
 
 /**
  * Determines if the provided value is an object but neither null nor an array.
@@ -87,8 +91,8 @@ export const isILoggingError = (x: unknown): x is ILoggingError =>
  * Copy props from source onto target, but do not overwrite an existing prop that matches
  */
 function copyProps(
-	target: ITelemetryBaseProperties | LoggingError,
-	source: ITelemetryBaseProperties,
+	target: ITelemetryPropertiesExt | LoggingError,
+	source: ITelemetryPropertiesExt,
 ): void {
 	for (const key of Object.keys(source)) {
 		if (target[key] === undefined) {
@@ -353,63 +357,6 @@ export function isTaggedTelemetryPropertyValue(
 }
 
 /**
- * Filter serializable telemetry properties
- * @param x - Any telemetry prop
- * @returns As-is if x is primitive. returns stringified if x is an array of primitive.
- * otherwise returns null since this is what we support at the moment.
- */
-function filterValidTelemetryProps(x: unknown, key: string): TelemetryBaseEventPropertyType {
-	if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
-		return JSON.stringify(x);
-	}
-	if (isTelemetryEventPropertyValue(x)) {
-		return x;
-	}
-	// We don't support logging arbitrary objects
-	console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
-	return "REDACTED (arbitrary object)";
-}
-
-// checking type of x, returns false if x is null
-function isTelemetryEventPropertyValue(x: unknown): x is TelemetryBaseEventPropertyType {
-	switch (typeof x) {
-		case "string":
-		case "number":
-		case "boolean":
-		case "undefined": {
-			return true;
-		}
-		default: {
-			return false;
-		}
-	}
-}
-
-/**
- * Walk an object's enumerable properties to find those fit for telemetry.
- */
-function getValidTelemetryProps(obj: object, keysToOmit: Set<string>): ITelemetryBaseProperties {
-	const props: ITelemetryBaseProperties = {};
-	for (const key of Object.keys(obj)) {
-		if (keysToOmit.has(key)) {
-			continue;
-		}
-		const val = obj[key] as
-			| TelemetryEventPropertyTypeExt
-			| Tagged<TelemetryEventPropertyTypeExt>;
-
-		// ensure only valid props get logged, since props of logging error could be in any shape
-		props[key] = isTaggedTelemetryPropertyValue(val)
-			? {
-					value: filterValidTelemetryProps(val.value, key),
-					tag: val.tag,
-			  }
-			: filterValidTelemetryProps(val, key);
-	}
-	return props;
-}
-
-/**
  * Borrowed from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples}
  * Avoids runtime errors with circular references.
@@ -503,7 +450,7 @@ export class LoggingError
 	/**
 	 * Add additional properties to be logged
 	 */
-	public addTelemetryProperties(props: ITelemetryBaseProperties): void {
+	public addTelemetryProperties(props: ITelemetryPropertiesExt): void {
 		copyProps(this, props);
 	}
 
@@ -511,10 +458,22 @@ export class LoggingError
 	 * Get all properties fit to be logged to telemetry for this error
 	 */
 	public getTelemetryProperties(): ITelemetryBaseProperties {
-		const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-		// Include non-enumerable props that are not returned by getValidTelemetryProps
+		// Only pick properties fit for telemetry out of all of this object's enumerable properties.
+		const telemetryProps: ITelemetryBaseProperties = {};
+		for (const key of Object.keys(this)) {
+			if (this.omitPropsFromLogging.has(key)) {
+				continue;
+			}
+			const val = this[key] as
+				| TelemetryEventPropertyTypeExt
+				| Tagged<TelemetryEventPropertyTypeExt>;
+
+			// Ensure only valid props get logged, since props of logging error could be in any shape
+			telemetryProps[key] = convertToBasePropertyType(val);
+		}
+		// Ensure a few extra props always exist
 		return {
-			...taggableProps,
+			...telemetryProps,
 			stack: this.stack,
 			message: this.message,
 			errorInstanceId: this._errorInstanceId,

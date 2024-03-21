@@ -27,7 +27,6 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
-import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -145,9 +144,6 @@ function createBreadcrumbParagraph(apiItem: ApiItem, config: Required<ApiItemTra
 function createDeprecationNoticeSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): ParagraphNode | undefined;
 
 // @public
-export function createDocumentWriter(): DocumentWriter;
-
-// @public
 function createExamplesSection(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingText?: string): SectionNode | undefined;
 
 // @public
@@ -200,6 +196,7 @@ export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TVal
 // @public
 export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
     protected constructor(value: TValue);
+    abstract get isEmpty(): boolean;
     readonly isLiteral = true;
     readonly isParent = false;
     abstract get singleLine(): boolean;
@@ -209,6 +206,7 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements 
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
+    readonly isEmpty: boolean;
     readonly isLiteral: boolean;
     readonly isParent: boolean;
     readonly singleLine: boolean;
@@ -250,6 +248,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
     get hasChildren(): boolean;
+    get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = true;
     get singleLine(): boolean;
@@ -292,7 +291,23 @@ export interface DocumentNodeProps {
     readonly frontMatter?: string;
 }
 
-export { DocumentWriter }
+// @public
+export interface DocumentWriter {
+    decreaseIndent(): void;
+    ensureNewLine(): void;
+    ensureSkippedLine(): void;
+    getText(): string;
+    increaseIndent(indentPrefix?: string): void;
+    peekLastCharacter(): string;
+    peekSecondLastCharacter(): string;
+    write(message: string): void;
+    writeLine(message?: string): void;
+}
+
+// @public
+export namespace DocumentWriter {
+    export function create(): DocumentWriter;
+}
 
 // @public
 function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
@@ -377,6 +392,7 @@ export type HierarchyBoundaries = ApiMemberKind[];
 // @public
 export class HorizontalRuleNode implements MultiLineDocumentationNode {
     constructor();
+    readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
     readonly singleLine = false;
@@ -446,6 +462,7 @@ export { LayoutUtilities }
 // @public
 export class LineBreakNode implements MultiLineDocumentationNode {
     constructor();
+    readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
     readonly singleLine = false;
@@ -545,6 +562,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     constructor(text: string, escaped?: boolean);
     static readonly Empty: PlainTextNode;
     readonly escaped: boolean;
+    get isEmpty(): boolean;
     readonly singleLine = true;
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;

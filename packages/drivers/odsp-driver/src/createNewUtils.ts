@@ -3,33 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	ISummaryBlob,
-	ISummaryTree,
-	SummaryType,
-	ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
-import { getGitType } from "@fluidframework/protocol-base";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { getGitType } from "@fluidframework/protocol-base";
+import {
+	ISnapshotTree,
+	ISummaryBlob,
+	ISummaryTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils";
-import { EpochTracker, FetchType } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { runWithRetry } from "./retryUtils";
+} from "./contracts.js";
+import { EpochTracker, FetchType } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
+import { runWithRetry } from "./retryUtils.js";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs
@@ -59,11 +60,12 @@ export function convertCreateNewSummaryTreeToTreeAndBlobs(
 function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 	summary: ISummaryTree,
 	blobs: Map<string, ArrayBuffer>,
-) {
+): ISnapshotTree {
 	const treeNode: ISnapshotTree = {
 		blobs: {},
 		trees: {},
 		unreferenced: summary.unreferenced,
+		groupId: summary.groupId,
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
@@ -92,14 +94,19 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 				throw new Error(`No ${summaryObject.type} should be present for detached summary!`);
 			}
 			default: {
-				unreachableCase(summaryObject, `Unknown tree type ${(summaryObject as any).type}`);
+				unreachableCase(
+					summaryObject,
+					`Unknown tree type ${(summaryObject as SummaryObject).type}`,
+				);
 			}
 		}
 	}
 	return treeNode;
 }
 
-export function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
+export function convertSummaryIntoContainerSnapshot(
+	createNewSummary: ISummaryTree,
+): IOdspSummaryPayload {
 	if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 		throw new Error("App and protocol summary required for create new path!!");
 	}
@@ -146,11 +153,13 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 		// property is not present, the tree entry is considered referenced. If the property is present and is true,
 		// the tree entry is considered unreferenced.
 		let unreferenced: true | undefined;
+		let groupId: string | undefined;
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				value = convertSummaryToSnapshotTreeForCreateNew(summaryObject);
 				unreferenced = summaryObject.unreferenced;
+				groupId = summaryObject.groupId;
 				break;
 			}
 			case SummaryType.Blob: {
@@ -180,6 +189,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 			type: getGitType(summaryObject),
 			value,
 			unreferenced,
+			groupId,
 		};
 		snapshotTree.entries?.push(entry);
 	}
@@ -271,7 +281,7 @@ export async function createNewFluidContainerCore<T>(args: {
 				validateResponseCallback?.(fetchResponse.content);
 
 				event.end({
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					attempts: options.refresh ? 2 : 1,
 					...fetchResponse.propsToLog,
 				});

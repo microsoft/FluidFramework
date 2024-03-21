@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf } from "../../domains/index.js";
-import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import {
-	FieldKey,
-	DeltaVisitor,
-	visitDelta,
-	DetachedFieldIndex,
-	makeDetachedFieldIndex,
-	DeltaRoot,
+	DeltaDetachedNodeBuild,
+	DeltaDetachedNodeChanges,
+	DeltaDetachedNodeDestruction,
+	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaMark,
-	DeltaDetachedNodeChanges,
-	DeltaDetachedNodeRename,
-	DeltaDetachedNodeBuild,
-	DeltaDetachedNodeDestruction,
+	DeltaRoot,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	FieldKey,
+	makeDetachedFieldIndex,
+	visitDelta,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
+import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import { deepFreeze, rootFromDeltaFieldMap, testRevisionTagCodec } from "../utils.js";
 
@@ -550,6 +550,91 @@ describe("visitDelta", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
+
+	it("changes under move-out of range", () => {
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
+		const buildId = { minor: 1 };
+		const moveId = { minor: 2 };
+
+		const attach: DeltaMark = { count: 1, attach: buildId };
+		const moveIn: DeltaMark = {
+			count: 2,
+			attach: moveId,
+		};
+
+		const moveOut1: DeltaMark = {
+			count: 1,
+			detach: moveId,
+		};
+
+		const moveOut2: DeltaMark = {
+			count: 1,
+			detach: { minor: 3 },
+			fields: new Map([[fooKey, { local: [attach] }]]),
+		};
+
+		const rootChanges: DeltaFieldChanges = { local: [moveOut1, moveOut2, moveIn] };
+
+		const delta: DeltaRoot = {
+			build: [{ id: buildId, trees: [content] }],
+			fields: new Map([[rootKey, rootChanges]]),
+		};
+
+		const expected: VisitScript = [
+			["create", [content], field0],
+			["enterField", rootKey],
+			["detach", { start: 0, end: 1 }, field1],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["detach", { start: 0, end: 1 }, field2],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["attach", field1, 1, 0],
+			["attach", field2, 1, 1],
+			["enterNode", 1],
+			["enterField", fooKey],
+			["attach", field0, 1, 0],
+			["exitField", fooKey],
+			["exitNode", 1],
+			["exitField", rootKey],
+		];
+
+		testVisit(delta, expected, index);
+		assert.equal(index.entries().next().done, true);
+	});
+
+	it("replace nodes", () => {
+		const buildId = { minor: 0 };
+
+		const replace: DeltaMark = {
+			count: 2,
+			detach: { minor: 2 },
+			attach: buildId,
+		};
+
+		const rootChanges: DeltaFieldChanges = { local: [replace] };
+		const delta: DeltaRoot = {
+			build: [{ id: buildId, trees: [content, content] }],
+			fields: new Map([[rootKey, rootChanges]]),
+		};
+
+		const expected: VisitScript = [
+			["create", [content], field0],
+			["create", [content], field1],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["replace", field0, { start: 0, end: 1 }, field2],
+			["replace", field1, { start: 1, end: 2 }, field3],
+			["exitField", rootKey],
+		];
+
+		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
+		testVisit(delta, expected, index);
+	});
+
 	it("changes under replaced node", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };
@@ -596,6 +681,7 @@ describe("visitDelta", () => {
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
+
 	it("changes under replacement node", () => {
 		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 		const moveId1 = { minor: 1 };

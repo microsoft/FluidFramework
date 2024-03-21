@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { LineBreakNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { LineBreakNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("LineBreak Markdown rendering tests", () => {
 	it("Standard context", () => {

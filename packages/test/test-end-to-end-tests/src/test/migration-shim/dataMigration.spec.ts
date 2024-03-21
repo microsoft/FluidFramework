@@ -62,7 +62,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	// A Test Data Object that exposes some basic functionality.

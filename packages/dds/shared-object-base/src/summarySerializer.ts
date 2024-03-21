@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidSerializer } from "./serializer";
+import { FluidSerializer } from "./serializer.js";
 
 /**
  * Serializer implementation for serializing handles during summary.

@@ -4,31 +4,31 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { take } from "@fluid-private/stochastic-test-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { take } from "@fluid-private/stochastic-test-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
+} from "..//index.js";
+import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
+import { createSessionId } from "../utilities.js";
 import {
-	performFuzzActions,
-	sessionIds,
-	IdCompressorTestNetwork,
 	Client,
+	CompressorFactory,
 	DestinationClient,
+	IdCompressorTestNetwork,
 	MetaClient,
 	expectSerializes,
-	roundtrip,
 	makeOpGenerator,
-	CompressorFactory,
-} from "./idCompressorTestUtilities";
-import { LocalCompressedId, incrementStableId, isFinalId, isLocalId, fail } from "./testCommon";
+	performFuzzActions,
+	roundtrip,
+	sessionIds,
+} from "./idCompressorTestUtilities.js";
+import { LocalCompressedId, fail, incrementStableId, isFinalId, isLocalId } from "./testCommon.js";
 
 describe("IdCompressor", () => {
 	it("reports the proper session ID", () => {
@@ -43,6 +43,19 @@ describe("IdCompressor", () => {
 			const id = compressor.generateCompressedId();
 			const uuid = compressor.decompress(id);
 			assert.equal(id, compressor.recompress(uuid));
+		});
+
+		it("can generate document unique IDs", () => {
+			const compressor = CompressorFactory.createCompressor(Client.Client1, 2);
+			let id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
+			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "number" && isFinalId(id));
+			id = compressor.generateDocumentUniqueId();
+			assert(typeof id === "string");
 		});
 
 		describe("Eager final ID allocation", () => {

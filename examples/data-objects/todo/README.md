@@ -39,7 +39,7 @@ A Todo Item is a singular todo entry. It has editable text as well as editable d
 
 ### [TodoView](./src/Todo/TodoView.tsx)
 
-The default view is a TodoView mapping to a Todo. It uses the CollaborativeInput control from the `@fluid-experimental/react-inputs` package to display its title, and TodoItemViews to display the data from its TodoItems. It also provides a text field and button for creating new TodoItems, and buttons for each TodoItem to delete or open directly.
+The default view is a TodoView mapping to a Todo. It uses the CollaborativeInput control from the `@fluid-example/example-utils` package to display its title, and TodoItemViews to display the data from its TodoItems. It also provides a text field and button for creating new TodoItems, and buttons for each TodoItem to delete or open directly.
 
 ### [TodoItemView](./src/TodoItem/TodoItemView.tsx)
 

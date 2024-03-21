@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
-	createDDSFuzzSuite,
-	DDSFuzzTestState,
 	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
-import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators.js";
+import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
@@ -78,9 +79,13 @@ describe("Fuzz - Top-Level", () => {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
 			},
-			reconnectProbability: 0,
-			// see AB#7030
-			skip: [37],
+			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
+			// and using the default number of ops before attach.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
+			},
+			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		};
 		createDDSFuzzSuite(model, options);
@@ -106,6 +111,11 @@ describe("Fuzz - Top-Level", () => {
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
+			},
+			// AB#7162: see comment above.
+			detachedStartOptions: {
+				numOpsBeforeAttach: 5,
+				rehydrateDisabled: true,
 			},
 			saveFailures: {
 				directory: failureDirectory,

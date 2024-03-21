@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
-	TaggedChange,
-	RevisionTag,
-	RevisionMetadataSource,
-	DeltaFieldMap,
-	DeltaFieldChanges,
-	DeltaDetachedNodeId,
-	EncodedRevisionTag,
-	ChangeEncodingContext,
-} from "../../core/index.js";
-import { fail, IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index.js";
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import {
+	ChangeEncodingContext,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	EncodedRevisionTag,
+	RevisionMetadataSource,
+	RevisionTag,
+	TaggedChange,
+} from "../../core/index.js";
+import { IdAllocator, Invariant, JsonCompatibleReadOnly } from "../../util/index.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import { NodeChangeset } from "./modularChangeTypes.js";
@@ -98,23 +98,13 @@ export interface FieldChangeRebaser<TChangeset> {
 	): TChangeset;
 
 	/**
-	 * Amend `composedChange` with respect to new data in `crossFieldManager`.
-	 */
-	amendCompose(
-		composedChange: TChangeset,
-		composeChild: NodeChangeComposer,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
-	): TChangeset;
-
-	/**
 	 * @returns the inverse of `changes`.
 	 * See `ChangeRebaser` for details.
 	 */
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
+		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
@@ -164,7 +154,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 }): FieldChangeRebaser<TChangeset> {
 	return {
 		...data,
-		amendCompose: () => fail("Not implemented"),
 		prune: (change) => change,
 	};
 }

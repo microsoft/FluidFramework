@@ -53,6 +53,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig.enableOfflineQueue,
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfig.enableAutoPipelining) {
 			/**
@@ -73,7 +77,12 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
-		const redisClient = new Redis.default(redisOptions);
+		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptions,
+			redisConfig.slotsRefreshTimeout,
+			redisConfig.enableClustering,
+		);
+
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
 			? undefined
@@ -99,6 +108,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
+			retryStrategy: utils.getRedisClusterRetryStrategy({
+				delayPerAttemptMs: 50,
+				maxDelayMs: 2000,
+			}),
 		};
 		if (redisConfigForThrottling.enableAutoPipelining) {
 			/**
@@ -114,7 +127,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				servername: redisConfigForThrottling.host,
 			};
 		}
-		const redisClientForThrottling = new Redis.default(redisOptionsForThrottling);
+		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
+			redisOptionsForThrottling,
+			redisConfigForThrottling.slotsRefreshTimeout,
+			redisConfigForThrottling.enableClustering,
+		);
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number

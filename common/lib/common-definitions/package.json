@@ -11,27 +11,32 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"default": "./dist/index.js"
+			"import": {
+				"types": "./lib/index.d.ts"
+			},
+			"require": {
+				"types": "./dist/index.d.ts"
+			}
 		}
 	},
-	"main": "dist/index.js",
-	"module": "lib/index.mjs",
+	"main": "",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
-		"build": "npm run build:compile && concurrently npm:lint npm:build:docs",
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
+		"build": "fluid-build . --task build",
 		"build:ci": "npm run build:compile",
-		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
-		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
-		"build:esnext": "tsc-multi --config ../../build/build-common/tsc-multi.esm.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
-		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",
+		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
 		"clean": "rimraf --glob _api-extractor-temp dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -42,37 +47,38 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
-		"tsc:watch": "tsc --watch",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir ."
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/common-definitions-previous": "npm:@fluidframework/common-definitions@0.20.1",
-		"@fluidframework/eslint-config-fluid": "^3.2.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/node": "^16.18.38",
 		"concurrently": "^6.2.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"prettier": "~3.0.3",
-		"renamer": "^4.0.0",
 		"rimraf": "^2.6.2",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"fluidBuild": {
-		"branchReleaseTypes": {
-			"main": "minor",
-			"release/**": "patch"
-		},
 		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			},
 			"tsc": [
 				"...",
 				"typetests:gen"
@@ -83,10 +89,6 @@
 		"commentsOverrides": [
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix"
 		],
-		"patchedDependencies": {
-			"@microsoft/api-extractor@7.39.1": "../../../patches/@microsoft__api-extractor@7.39.1.patch",
-			"tsc-multi@1.1.0": "../../../patches/tsc-multi@1.1.0.patch"
-		},
 		"overrides": {
 			"sharp": "^0.33.2"
 		}

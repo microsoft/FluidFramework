@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
+import { createRuntimeAttributor, mixinAttributor } from "@fluid-experimental/attributor";
 import {
 	IContainer,
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
-import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 

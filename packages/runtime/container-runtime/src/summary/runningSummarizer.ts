@@ -3,47 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	isFluidError,
-	MonitoringContext,
-	createChildMonitoringContext,
-	createChildLogger,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryConfiguration } from "../containerRuntime";
-import { opSize } from "../opProperties";
-import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
+	MonitoringContext,
+	UsageError,
+	createChildLogger,
+	createChildMonitoringContext,
+	isFluidError,
+} from "@fluidframework/telemetry-utils";
+import { ISummaryConfiguration } from "../containerRuntime.js";
+import { opSize } from "../opProperties.js";
+import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
+import {
+	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
-	ISummarizeOptions,
+	IOnDemandSummarizeOptions,
+	IRefreshSummaryAckOptions,
+	ISubmitSummaryOptions,
+	ISummarizeEventProps,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
-	IOnDemandSummarizeOptions,
-	EnqueueSummarizeResult,
-	SummarizerStopReason,
-	ISubmitSummaryOptions,
-	SubmitSummaryResult,
-	ISummaryCancellationToken,
+	ISummarizeOptions,
 	ISummarizeResults,
-	ISummarizeTelemetryProperties,
-	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
-	IRefreshSummaryAckOptions,
+	ISummarizeTelemetryProperties,
 	ISummarizerEvents,
-	ISummarizeEventProps,
-} from "./summarizerTypes";
-import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
+	ISummarizerRuntime,
+	ISummaryCancellationToken,
+	SubmitSummaryResult,
+	SummarizerStopReason,
+} from "./summarizerTypes.js";
+import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
-	raceTimer,
 	SummarizeReason,
 	SummarizeResultBuilder,
 	SummaryGenerator,
-} from "./summaryGenerator";
+	raceTimer,
+} from "./summaryGenerator.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
@@ -581,6 +581,8 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 					...options,
 					summaryLogger,
 					cancellationToken: this.cancellationToken,
+					latestSummaryRefSeqNum:
+						this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
@@ -676,6 +678,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				...summarizeOptions,
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
+				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 
 			// Note: no need to account for cancellationToken.waitCancelled here, as
@@ -747,6 +750,7 @@ export class RunningSummarizer extends TypedEventEmitter<ISummarizerEvents> impl
 				summaryLogger,
 				cancellationToken: this.cancellationToken,
 				finalAttempt,
+				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 			const summarizeResult = this.generator.summarize(summaryOptions);
 			return { summarizeProps, summarizeResult };

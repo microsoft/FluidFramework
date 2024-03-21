@@ -38,7 +38,8 @@ trigger:
     include:
     - .prettierignore
     - common/build/eslint-config-fluid
-    - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/markdown-magic # Required since eslint-config-fluid takes a `file:` dependency on this package
+    - tools/pipelines/build-eslint-config-fluid.yml 
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -62,7 +63,8 @@ pr:
     include:
     - .prettierignore
     - common/build/eslint-config-fluid
-    - tools/pipelines/build-eslint-config-fluid.yml
+    - tools/markdown-magic
+    - tools/pipelines/build-eslint-config-fluid.yml # Required since eslint-config-fluid takes a `file:` dependency on this package
     - tools/pipelines/templates/1ES/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml

@@ -4,14 +4,14 @@
  */
 
 import { expect } from 'chai';
-import { EditStatus, WriteFormat } from '../persisted-types';
-import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { Transaction, TransactionEvent } from '../Transaction';
-import { SharedTree } from '../SharedTree';
-import { TreeView } from '../TreeView';
-import { TestTree } from './utilities/TestNode';
-import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
-import { expectDefined } from './utilities/TestCommon';
+import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
+import { SharedTree } from '../SharedTree.js';
+import { Transaction, TransactionEvent } from '../Transaction.js';
+import { TreeView } from '../TreeView.js';
+import { EditStatus, WriteFormat } from '../persisted-types/index.js';
+import { expectDefined } from './utilities/TestCommon.js';
+import { TestTree } from './utilities/TestNode.js';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 describe('Transaction', () => {
 	function createTestTransaction(): { tree: SharedTree; testTree: TestTree; transaction: Transaction } {

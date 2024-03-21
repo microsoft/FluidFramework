@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
@@ -9,7 +10,7 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi.js";
 
 /**
  * @internal
@@ -25,8 +26,30 @@ export class LocalServerTestDriver implements ITestDriver {
 		return this._server;
 	}
 
-	constructor(private readonly api: LocalDriverApiType = LocalDriverApi) {
-		this._server = api.LocalDeltaConnectionServer.create();
+	/**
+	 * LocalServerTestDriver constructor
+	 * @param api - driver API
+	 * @param maxOpsBeforeSummary - tells how many ops service allows to be sequenced before requiring a summary.
+	 * If a test submits more ops, connection will disconnec with nack and error message "Submit a summary before inserting additional operations"
+	 */
+	constructor(
+		private readonly api: LocalDriverApiType = LocalDriverApi,
+		maxOpsBeforeSummary = 200,
+	) {
+		this._server = api.LocalDeltaConnectionServer.create(undefined, {
+			deli: {
+				summaryNackMessages: {
+					enable: true,
+					maxOps: maxOpsBeforeSummary,
+					nackContent: {
+						retryAfter: 0,
+					},
+				},
+			},
+			scribe: {
+				generateServiceSummary: false,
+			},
+		} as any); // Casting to "any" so we don't have to fill out all properties
 	}
 
 	createDocumentServiceFactory(): IDocumentServiceFactory {

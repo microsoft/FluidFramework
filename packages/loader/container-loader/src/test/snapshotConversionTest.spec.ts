@@ -8,7 +8,7 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import {
 	combineAppAndProtocolSummary,
 	getSnapshotTreeAndBlobsFromSerializedContainer,
-} from "../utils";
+} from "../utils.js";
 
 describe("Dehydrate Container", () => {
 	const protocolSummary: ISummaryTree = {
@@ -48,25 +48,31 @@ describe("Dehydrate Container", () => {
 						tree: {},
 						unreferenced: true,
 					},
+					"groupId": {
+						type: SummaryType.Tree,
+						tree: {},
+						groupId: "group",
+					},
 				},
 			},
 		},
 	};
 
-	it("Summary to snapshottree and snapshotBlobs conversion", async () => {
+	it("Summary to baseSnapshot and snapshotBlobs conversion", async () => {
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
-		const { tree, blobs } = getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
+		const { baseSnapshot, snapshotBlobs } =
+			getSnapshotTreeAndBlobsFromSerializedContainer(combinedSummary);
 
-		assert.strictEqual(Object.keys(tree.trees).length, 2, "2 trees should be there");
+		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
-			Object.keys(tree.trees[".protocol"].blobs).length,
+			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
 			2,
 			"2 protocol blobs should be there.",
 		);
 
 		// Validate the ".component" blob.
-		const defaultDataStoreBlobId = tree.trees.default.blobs[".component"];
-		const defaultDataStoreBlob = blobs[defaultDataStoreBlobId];
+		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
+		const defaultDataStoreBlob = snapshotBlobs[defaultDataStoreBlobId];
 		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
 			JSON.parse(defaultDataStoreBlob),
@@ -75,8 +81,8 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate "root" sub-tree.
-		const rootAttributesBlobId = tree.trees.default.trees.root.blobs.attributes;
-		const rootAttributesBlob = blobs[rootAttributesBlobId];
+		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlob = snapshotBlobs[rootAttributesBlobId];
 		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(
 			JSON.parse(rootAttributesBlob),
@@ -84,16 +90,30 @@ describe("Dehydrate Container", () => {
 			"The root sub-tree's content is incorrect",
 		);
 		assert.strictEqual(
-			tree.trees.default.trees.root.unreferenced,
+			baseSnapshot.trees.default.trees.root.unreferenced,
 			undefined,
 			"The root sub-tree should not be marked as unreferenced",
 		);
 
 		// Validate "unref" sub-tree.
 		assert.strictEqual(
-			tree.trees.default.trees.unref.unreferenced,
+			baseSnapshot.trees.default.trees.unref.unreferenced,
 			true,
 			"The unref sub-tree should be marked as unreferenced",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			baseSnapshot.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
+		);
+
+		// Validate "groupId" sub-tree.
+		assert.strictEqual(
+			baseSnapshot.trees.default.trees.groupId.groupId,
+			"group",
+			"The groupId sub-tree should have a groupId",
 		);
 	});
 });

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webflow",
-	"version": "2.0.0-rc.1.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "Collaborative markdown editor.",
 	"homepage": "https://fluidframework.com",
@@ -13,25 +13,25 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"main": "dist/index.js",
-	"module": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:copy": "copyfiles -u 1 \"src/**/*.css\" dist/",
-		"build:esnext": "tsc",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"dev": "npm run build:esnext -- --watch",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"start": "webpack serve --config webpack.config.cjs",
 		"start:docker": "webpack serve --config webpack.config.cjs --env mode=docker",
 		"start:r11s": "webpack serve --config webpack.config.cjs --env mode=r11s",
@@ -41,9 +41,9 @@
 		"start:tinylicious": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs \"dist/test/**/*.spec.js\"",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -53,7 +53,7 @@
 		"exclude": [
 			"**/*.d.*ts",
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"extension": [
@@ -64,7 +64,7 @@
 		],
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"require": [
@@ -77,25 +77,23 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/data-object-base": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/view-interfaces": "workspace:~",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
-		"events": "^3.1.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^1.6.1",
+		"@fluid-example/webpack-fluid-loader": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
-		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.29.0",
-		"@fluidframework/eslint-config-fluid": "^3.3.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@fluidframework/build-tools": "^0.34.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/debug": "^4.1.5",
@@ -107,7 +105,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"css-loader": "^1.0.0",
-		"eslint": "~8.50.0",
+		"eslint": "~8.55.0",
 		"esm-loader-css": "^1.0.4",
 		"file-loader": "^3.0.1",
 		"html-loader": "^3.1.0",
@@ -139,18 +137,6 @@
 				],
 				"library": "main"
 			}
-		}
-	},
-	"fluidBuild": {
-		"tasks": {
-			"eslint": [
-				"build:esnext",
-				"build:test"
-			],
-			"build:test": [
-				"...",
-				"build:esnext"
-			]
 		}
 	},
 	"typeValidation": {

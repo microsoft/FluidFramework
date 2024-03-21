@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/protocol-definitions';
 import {
@@ -13,17 +12,27 @@ import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from '@fluidframework/test-runtime-utils';
-import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common';
-import { EditId, NodeId, TraitLabel } from '../../Identifiers';
-import { CachingLogViewer } from '../../LogViewer';
-import { EditLog, OrderedEditSet } from '../../EditLog';
-import { initialTree } from '../../InitialTree';
-import { TreeNodeHandle } from '../../TreeNodeHandle';
-import { deserialize } from '../../SummaryBackCompatibility';
-import { useFailedSequencedEditTelemetry } from '../../MergeHealth';
-import { MutableStringInterner } from '../../StringInterner';
-import { getChangeNodeFromView } from '../../SerializationUtilities';
-import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree';
+import { expect } from 'chai';
+import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
+import { assertArrayOfOne, assertNotUndefined, fail, isSharedTreeEvent } from '../../Common.js';
+import { EditLog, OrderedEditSet } from '../../EditLog.js';
+import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities.js';
+import { SharedTreeEvent } from '../../EventTypes.js';
+import { convertNodeDataIds } from '../../IdConversion.js';
+import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
+import { initialTree } from '../../InitialTree.js';
+import { CachingLogViewer } from '../../LogViewer.js';
+import { useFailedSequencedEditTelemetry } from '../../MergeHealth.js';
+import { sequencedIdNormalizer } from '../../NodeIdUtilities.js';
+import { getChangeNodeFromView } from '../../SerializationUtilities.js';
+import { EditCommittedEventArguments, SequencedEditAppliedEventArguments, SharedTree } from '../../SharedTree.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder.js';
+import { MutableStringInterner } from '../../StringInterner.js';
+import { SummaryContents, serialize } from '../../Summary.js';
+import { deserialize } from '../../SummaryBackCompatibility.js';
+import { InterningTreeCompressor } from '../../TreeCompressor.js';
+import { TreeNodeHandle } from '../../TreeNodeHandle.js';
+import { generateStableId, nilUuid } from '../../UuidUtilities.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -35,35 +44,26 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
 	WriteFormat,
-} from '../../persisted-types';
-import { SharedTreeEvent } from '../../EventTypes';
-import { BuildNode, Change, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
-import { convertTreeNodes, deepCompareNodes } from '../../EditUtilities';
-import { serialize, SummaryContents } from '../../Summary';
-import { InterningTreeCompressor } from '../../TreeCompressor';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from '../../SharedTreeEncoder';
-import { sequencedIdNormalizer } from '../../NodeIdUtilities';
-import { convertNodeDataIds } from '../../IdConversion';
-import { generateStableId, nilUuid } from '../../UuidUtilities';
-import { buildLeaf, SimpleTestTree, TestTree } from './TestNode';
-import { TestFluidHandle, TestFluidSerializer } from './TestSerializer';
-import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests';
+} from '../../persisted-types/index.js';
+import { SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { TestFluidHandle, TestFluidSerializer } from './TestSerializer.js';
 import {
-	areNodesEquivalent,
-	assertNoDelta,
 	SharedTreeTestingComponents,
 	SharedTreeTestingOptions,
+	areNodesEquivalent,
+	assertNoDelta,
+	getEditLogInternal,
+	getIdNormalizerFromSharedTree,
+	normalizeEdit,
+	normalizeId,
+	normalizeIds,
 	setUpTestTree,
+	spyOnSubmittedOps,
 	testTrait,
 	testTraitLabel,
 	translateId,
-	spyOnSubmittedOps,
-	normalizeIds,
-	normalizeId,
-	normalizeEdit,
-	getIdNormalizerFromSharedTree,
-	getEditLogInternal,
-} from './TestUtilities';
+} from './TestUtilities.js';
+import { runSharedTreeUndoRedoTestSuite } from './UndoRedoTests.js';
 
 function revertEditInTree(tree: SharedTree, edit: EditId): EditId | undefined {
 	return tree.revert(edit);

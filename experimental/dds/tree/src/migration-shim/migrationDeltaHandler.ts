@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { assert } from '@fluidframework/core-utils';
+import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
+import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isBarrierOp, isStampedOp } from './utils.js';
 
@@ -82,10 +82,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	public process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		assert(!this.isPreAttachState(), 0x82c /* Can't process ops before attaching tree handler */);
-		if (
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-			message.type !== MessageType.Operation
-		) {
+		if (message.type !== MessageType.Operation) {
 			return;
 		}
 
@@ -119,16 +116,18 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return this.treeDeltaHandler.reSubmit(contents, localOpMetadata);
 	}
 
-	public applyStashedOp(contents: unknown): unknown {
+	public applyStashedOp(contents: unknown): void {
 		const opContents = contents as IOpContents;
 		if (this.isInV1StateAndIsBarrierOp(opContents)) {
-			return undefined;
+			this.submitLocalMessage(opContents);
+			return;
 		}
 
-		if (this.shouldDropOp(opContents)) {
-			return undefined;
-		}
-		return this.treeDeltaHandler.applyStashedOp(contents);
+		assert(
+			!this.shouldDropOp(opContents),
+			0x8aa /* MigrationShim should not be able to apply v1 ops as they shouldn't have been created locally. */
+		);
+		this.treeDeltaHandler.applyStashedOp(contents);
 	}
 
 	public rollback?(contents: unknown, localOpMetadata: unknown): void {

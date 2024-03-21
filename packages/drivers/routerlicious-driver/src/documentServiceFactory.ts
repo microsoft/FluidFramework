@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import {
@@ -13,33 +14,33 @@ import {
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
+	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
-	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ISession,
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
-import { DocumentService } from "./documentService";
-import { IRouterliciousDriverPolicies } from "./policies";
-import { ITokenProvider } from "./tokens";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ICache, InMemoryCache, NullCache } from "./cache.js";
+import { INormalizedWholeSnapshot } from "./contracts.js";
+import { ISnapshotTreeVersion } from "./definitions.js";
+import { DocumentService } from "./documentService.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { IRouterliciousDriverPolicies } from "./policies.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
-} from "./restWrapper";
-import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
-import { ICache, InMemoryCache, NullCache } from "./cache";
-import { pkgVersion as driverVersion } from "./packageVersion";
-import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSnapshot } from "./contracts";
+} from "./restWrapper.js";
+import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
+import { ITokenProvider } from "./tokens.js";
+import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -52,7 +53,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
-	isEphemeralContainer: false,
 };
 
 /**
@@ -107,7 +107,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			throw new Error("Empty file summary creation isn't supported in this driver.");
 		}
 		assert(!!resolvedUrl.endpoints.ordererUrl, 0x0b2 /* "Missing orderer URL!" */);
-		let parsedUrl = parseFluidUrl(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		if (!parsedUrl.pathname) {
 			throw new Error("Parsed url should contain tenant and doc Id!!");
 		}
@@ -138,6 +138,10 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			resolvedUrl.endpoints.ordererUrl,
 		);
 
+		const createAsEphemeral = isRouterliciousResolvedUrl(resolvedUrl)
+			? resolvedUrl.createAsEphemeral === true
+			: false;
+
 		const res = await PerformanceEvent.timedExecAsync(
 			logger2,
 			{
@@ -145,7 +149,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				details: JSON.stringify({
 					enableDiscovery: this.driverPolicies.enableDiscovery,
 					sequenceNumber: documentAttributes.sequenceNumber,
-					isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+					isEphemeralContainer: createAsEphemeral,
 				}),
 			},
 			async (event) => {
@@ -159,7 +163,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-						isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+						isEphemeralContainer: createAsEphemeral,
 						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
@@ -185,7 +189,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			token = res.token;
 			session = this.driverPolicies.enableDiscovery ? res.session : undefined;
 		}
-		parsedUrl = parseFluidUrl(resolvedUrl.url);
 
 		// @TODO: Remove token from the condition, checking the documentPostCreateCallback !== undefined
 		// is sufficient to determine if the token will be undefined or not.
@@ -206,7 +209,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			throw new DocumentPostCreateError(error);
 		}
 
-		parsedUrl.set("pathname", replaceDocumentIdInPath(parsedUrl.pathname, documentId));
+		parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
 		const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
 		if (!deltaStorageUrl) {
 			throw new Error(
@@ -246,7 +249,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		clientIsSummarizer?: boolean,
 		session?: ISession,
 	): Promise<IDocumentService> {
-		const parsedUrl = parseFluidUrl(resolvedUrl.url);
+		const parsedUrl = new URL(resolvedUrl.url);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");
 		if (!documentId || !tenantId) {
 			throw new Error(

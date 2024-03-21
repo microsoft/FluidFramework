@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	Brand,
 	IdAllocator,
@@ -16,13 +17,12 @@ import {
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { FieldKey } from "../schema-stored/index.js";
-import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
+import { FieldKey } from "../schema-stored/index.js";
 import * as Delta from "./delta.js";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
+import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -58,11 +58,11 @@ export class DetachedFieldIndex {
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
-			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+			idAllocatorFromMaxId(this.rootIdAllocator.getMaxId()) as IdAllocator<ForestRootId>,
 			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
+		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
 		return clone;
 	}
 
@@ -161,7 +161,7 @@ export class DetachedFieldIndex {
 	public encode(): JsonCompatibleReadOnly {
 		return this.codec.encode({
 			data: this.detachedNodeToField,
-			maxId: this.rootIdAllocator.getNextId(),
+			maxId: this.rootIdAllocator.getMaxId(),
 		}) as JsonCompatibleReadOnly;
 	}
 

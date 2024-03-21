@@ -1,12 +1,9 @@
 {
-	"extends": [
-		"../../../common/build/build-common/tsconfig.base.json",
-		"../../../common/build/build-common/tsconfig.cjs.json",
-	],
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"include": ["src/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "./lib",
 		// This is a test-only project so it uses these types
 		"types": ["mocha", "node"],
 	},

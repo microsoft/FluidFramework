@@ -7,13 +7,13 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	BlobCore,
-	codeToBytesMap,
-	getValueSafely,
 	MarkerCodes,
 	MarkerCodesEnd,
 	MarkerCodesStart,
 	NodeCore,
-} from "./zipItDataRepresentationUtils";
+	codeToBytesMap,
+	getValueSafely,
+} from "./zipItDataRepresentationUtils.js";
 
 /**
  * Buffer class, used to sequentially writ data.
@@ -23,7 +23,7 @@ export class WriteBuffer {
 	protected data?: Uint8Array = new Uint8Array(4096);
 	protected index = 0;
 
-	protected push(code: number) {
+	protected push(code: number): void {
 		assert(this.data !== undefined, 0x225 /* "Data should be there" */);
 		const length = this.data.length;
 		if (this.index === length) {
@@ -40,7 +40,7 @@ export class WriteBuffer {
 		this.index++;
 	}
 
-	public write(codeArg: number, lengthArg = 1) {
+	public write(codeArg: number, lengthArg = 1): void {
 		let code = codeArg;
 		let length = lengthArg;
 		while (length > 0) {
@@ -121,7 +121,7 @@ const boolToCodeMap = [
  * return 0 as it is usually just represented by marker code and we don't store the actual data.
  * @param num - number to encode.
  */
-export function calcLength(numArg: number) {
+export function calcLength(numArg: number): number {
 	if (numArg === 0) {
 		return 0;
 	}
@@ -148,7 +148,7 @@ function serializeDictionaryString(
 	buffer: WriteBuffer,
 	content: string,
 	dictionary: Map<string, number>,
-) {
+): void {
 	let id = dictionary.get(content);
 	let idLength: number;
 	if (id === undefined) {
@@ -187,7 +187,11 @@ function serializeDictionaryString(
 	buffer.write(id, idLength);
 }
 
-function serializeString(buffer: WriteBuffer, content: string, codeMap = binaryBytesToCodeMap) {
+function serializeString(
+	buffer: WriteBuffer,
+	content: string,
+	codeMap = binaryBytesToCodeMap,
+): void {
 	serializeBlob(buffer, IsoBuffer.from(content, "utf8"), utf8StringBytesToCodeMap);
 }
 
@@ -201,7 +205,7 @@ function serializeBlob(
 	buffer: WriteBuffer,
 	data: Uint8Array,
 	codeMap: Record<number, number> = binaryBytesToCodeMap,
-) {
+): void {
 	const lengthOfDataLen = calcLength(data.length);
 	// Write Marker code.
 	buffer.write(getValueSafely(codeMap, lengthOfDataLen));
@@ -224,7 +228,7 @@ function serializeNodeCore(
 	buffer: WriteBuffer,
 	nodeCore: NodeCore,
 	dictionary: Map<string, number>,
-) {
+): void {
 	for (const child of nodeCore.nodes) {
 		if (child instanceof NodeCore) {
 			// For a tree node start and end with set/list start and end marker codes.
@@ -264,7 +268,7 @@ class NodeCoreSerializer extends NodeCore {
 		super();
 	}
 
-	public serialize(buffer: WriteBuffer) {
+	public serialize(buffer: WriteBuffer): void {
 		serializeNodeCore(buffer, this, new Map<string, number>());
 	}
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LoggingError, ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
+import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,8 +19,8 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { runWithRetry } from "./retryUtils";
+import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { runWithRetry } from "./retryUtils.js";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {
 	private _disposed = false;
@@ -32,15 +32,11 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
 	}
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
-	}
-
-	public get repositoryUrl(): string {
-		return this.internalStorageService.repositoryUrl;
 	}
 
 	// eslint-disable-next-line @rushstack/no-new-null
@@ -111,7 +107,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		);
 	}
 
-	private checkStorageDisposed() {
+	private checkStorageDisposed(): void {
 		if (this._disposed) {
 			// pre-0.58 error message: storageServiceDisposedCannotRetry
 			throw new LoggingError("Storage Service is disposed. Cannot retry", {

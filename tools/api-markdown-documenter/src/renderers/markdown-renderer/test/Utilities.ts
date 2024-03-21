@@ -2,12 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { StringBuilder } from "@microsoft/tsdoc";
 
-import type { DocumentationNode } from "../../../documentation-domain";
-import { DocumentWriter } from "../../DocumentWriter";
-import { renderNode } from "../Render";
-import { type RenderContext, getContextWithDefaults } from "../RenderContext";
+import type { DocumentationNode } from "../../../documentation-domain/index.js";
+import { DocumentWriter } from "../../DocumentWriter.js";
+import { renderNode } from "../Render.js";
+import { type RenderContext, getContextWithDefaults } from "../RenderContext.js";
 
 /**
  * Tests the rendering of an individual {@link DocumentationNode}, returning the generated string content.
@@ -17,7 +16,7 @@ export function testRender(
 	partialContext?: Partial<RenderContext>,
 ): string {
 	const context = getContextWithDefaults(partialContext);
-	const writer = new DocumentWriter(new StringBuilder());
+	const writer = DocumentWriter.create();
 
 	renderNode(node, writer, context);
 

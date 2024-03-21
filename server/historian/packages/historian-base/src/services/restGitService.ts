@@ -4,7 +4,6 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import * as querystring from "querystring";
 import type { RawAxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
@@ -145,25 +144,24 @@ export class RestGitService {
 	}
 
 	public async getContent(path: string, ref: string): Promise<any> {
-		const query = querystring.stringify({ ref });
+		const query = new URLSearchParams({ ref }).toString();
 		return this.get(
 			`/repos/${this.getRepoPath()}/contents/${encodeURIComponent(path)}?${query}`,
 		);
 	}
 
 	public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
-		let config;
+		const queryParams: { count: string; sha: string; config?: string } = {
+			count: count.toString(),
+			sha,
+		};
 		if (this.writeToExternalStorage) {
 			const getRefParams: IGetRefParamsExternal = {
 				config: { enabled: true },
 			};
-			config = encodeURIComponent(JSON.stringify(getRefParams));
+			queryParams.config = encodeURIComponent(JSON.stringify(getRefParams));
 		}
-		const query = querystring.stringify({
-			count,
-			sha,
-			config,
-		});
+		const query = new URLSearchParams(queryParams).toString();
 		return this.get(`/repos/${this.getRepoPath()}/commits?${query}`);
 	}
 
@@ -357,7 +355,7 @@ export class RestGitService {
 		return this.resolve(
 			key,
 			async () => {
-				const query = querystring.stringify({ recursive: recursive ? 1 : 0 });
+				const query = new URLSearchParams({ recursive: recursive ? "1" : "0" }).toString();
 				return this.get<git.ITree>(
 					`/repos/${this.getRepoPath()}/git/trees/${encodeURIComponent(sha)}?${query}`,
 				);
@@ -490,7 +488,7 @@ export class RestGitService {
 	private async post<T>(
 		url: string,
 		requestBody: any,
-		query?: Record<string, unknown>,
+		query?: Record<string, string | number | boolean>,
 	): Promise<T> {
 		return this.restWrapper
 			.post<T>(url, requestBody, query, {

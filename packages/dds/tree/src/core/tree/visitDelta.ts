@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 
 import { FieldKey } from "../schema-stored/index.js";
 import * as Delta from "./delta.js";
-import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
-import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex.js";
+import { ProtoNodes } from "./delta.js";
 import {
 	areDetachedNodeIdsEqual,
 	isAttachMark,
@@ -15,7 +15,8 @@ import {
 	isReplaceMark,
 	offsetDetachId,
 } from "./deltaUtil.js";
-import { ProtoNodes } from "./delta.js";
+import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
+import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
 
 /**
  * Implementation notes:
@@ -442,6 +443,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					const offsetAttachId = offsetDetachId(mark.attach!, i);
 					const sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
+					const offsetIndex = index + i;
 					if (isReplaceMark(mark)) {
 						const rootDestination = config.detachedFieldIndex.createEntry(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -451,7 +453,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 							config.detachedFieldIndex.toFieldKey(rootDestination);
 						visitor.replace(
 							sourceField,
-							{ start: index, end: index + 1 },
+							{ start: offsetIndex, end: offsetIndex + 1 },
 							destinationField,
 						);
 						// We may need to do a second pass on the detached nodes
@@ -460,13 +462,13 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						}
 					} else {
 						// This a simple attach
-						visitor.attach(sourceField, 1, index + i);
+						visitor.attach(sourceField, 1, offsetIndex);
 					}
 					config.detachedFieldIndex.deleteEntry(offsetAttachId);
 					const fields = config.attachPassRoots.get(sourceRoot);
 					if (fields !== undefined) {
 						config.attachPassRoots.delete(sourceRoot);
-						visitNode(index, fields, visitor, config);
+						visitNode(offsetIndex, fields, visitor, config);
 					}
 				}
 			} else if (!isDetachMark(mark) && mark.fields !== undefined) {
