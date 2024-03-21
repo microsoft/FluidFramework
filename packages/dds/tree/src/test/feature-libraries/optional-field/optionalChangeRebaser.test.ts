@@ -381,8 +381,6 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 		const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
 			if ("inputContext" in change) {
 				return {
-					// XXX
-					localId: brand(0),
 					inputContext: change.outputContext,
 					outputContext: [...change.outputContext, undoIntention],
 					intentions: [undoIntention],

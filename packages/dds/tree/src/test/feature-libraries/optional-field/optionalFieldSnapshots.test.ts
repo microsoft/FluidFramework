@@ -56,7 +56,9 @@ export function testSnapshots() {
 		useSnapshotDirectory("optional-field");
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
-		const family = makeOptionalFieldCodecFamily(new RevisionTagCodec(snapshotCompressor));
+		const family = makeOptionalFieldCodecFamily<TestChange>(
+			new RevisionTagCodec(snapshotCompressor),
+		);
 
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {

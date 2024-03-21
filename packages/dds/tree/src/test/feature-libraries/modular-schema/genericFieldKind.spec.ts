@@ -294,6 +294,8 @@ describe("GenericField", () => {
 	});
 
 	describe("Encoding", () => {
+		const baseContext = { originatorId: "session1" as SessionId };
+
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
 			unknown,
@@ -313,9 +315,9 @@ describe("GenericField", () => {
 						},
 					],
 					{
-						baseContext: { originatorId: "session1" as SessionId },
-						encodeNode: TestNodeId.encode,
-						decodeNode: TestNodeId.decode,
+						baseContext,
+						encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+						decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 					},
 				],
 			],
