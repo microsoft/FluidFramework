@@ -6,6 +6,6 @@
 		"verbatimModuleSyntax": true,
 
 		// Should be true for target ES2022+ including ESNext, but we use ES2020 for now
-		"useDefineForClassFields": false
+		"useDefineForClassFields": false,
 	},
 }

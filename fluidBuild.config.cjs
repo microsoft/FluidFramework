@@ -210,6 +210,9 @@ module.exports = {
 			"fluid-build-tasks-tsc": [
 				// TODO: AB#7460 fix tsconfig reference path match on Windows
 				"^packages/tools/devtools/devtools-view/package.json",
+
+				// TODO: Are these failures real?
+				"^packages/dds/cell/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts

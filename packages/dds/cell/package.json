@@ -154,6 +154,13 @@
 					"api-extractor:esnext"
 				],
 				"script": false
+			},
+			"eslint": {
+				"dependsOn": [
+					"...",
+					"typecheck:cjs",
+					"typecheck:esm"
+				]
 			}
 		}
 	},
