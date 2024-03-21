@@ -1038,7 +1038,6 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-experimental/tree': workspace:~
-      '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -1048,17 +1047,10 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       best-random: ^1.0.0
-      c8: ^8.0.1
-      cross-env: ^7.0.3
       eslint: ~8.55.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -1079,21 +1071,13 @@ importers:
       use-resize-observer: 7.1.0_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      c8: 8.0.1
-      cross-env: 7.0.3
       eslint: 8.55.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
