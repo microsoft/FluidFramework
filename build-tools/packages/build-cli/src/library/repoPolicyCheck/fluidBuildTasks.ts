@@ -653,7 +653,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const projectMap = new Map<string, string>();
-			// Note: this does check tsc-multi commands which do very likely reuse project files
+			// Note: this does not check tsc-multi commands which do very likely reuse project files
 			return buildDepsHandler(
 				file,
 				root,
