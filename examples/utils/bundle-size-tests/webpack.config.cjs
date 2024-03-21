@@ -76,6 +76,7 @@ module.exports = {
 		loader: "./src/loader",
 		map: "./src/map",
 		matrix: "./src/matrix",
+		odspClient: "./src/odspClient",
 		odspDriver: "./src/odspDriver",
 		odspPrefetchSnapshot: "./src/odspPrefetchSnapshot",
 		sharedString: "./src/sharedString",

@@ -2992,6 +2992,7 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@cerner/duplicate-package-checker-webpack-plugin': ~2.3.0
+      '@fluid-experimental/odsp-client': workspace:~
       '@fluid-tools/version-tools': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/azure-client': workspace:~
@@ -3022,6 +3023,7 @@ importers:
       webpack-bundle-analyzer: ^4.5.0
       webpack-cli: ^4.9.2
     dependencies:
+      '@fluid-experimental/odsp-client': link:../../../packages/service-clients/odsp-client
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/azure-client': link:../../../packages/service-clients/azure-client
       '@fluidframework/container-loader': link:../../../packages/loader/container-loader

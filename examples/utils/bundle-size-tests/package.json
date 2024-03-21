@@ -31,6 +31,7 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
+		"@fluid-experimental/odsp-client": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
