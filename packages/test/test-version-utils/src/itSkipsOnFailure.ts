@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { TestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ExpectedEvents, createExpectsTest } from "./itExpects.js";
 
 function createSkippedTestsWithDriverType(

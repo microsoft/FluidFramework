@@ -10282,7 +10282,6 @@ importers:
 
   packages/test/test-version-utils:
     specifiers:
-      '@biomejs/biome': ^1.6.1
       '@fluid-experimental/attributor': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -10370,7 +10369,6 @@ importers:
       proper-lockfile: 4.1.2
       semver: 7.5.4
     devDependencies:
-      '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
       '@fluidframework/build-common': 2.0.3

@@ -25,16 +25,12 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-<<<<<<< HEAD
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
-=======
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
->>>>>>> main
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

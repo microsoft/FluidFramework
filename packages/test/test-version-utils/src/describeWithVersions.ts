@@ -4,15 +4,15 @@
  */
 
 import {
+	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-	getUnexpectedLogErrorException,
 } from "@fluidframework/test-utils";
 import { driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
-import { InstalledPackage, ensurePackageInstalled } from "./testApi.js";
+import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
 
 /**
  * Interface to hold the requested versions which should be installed

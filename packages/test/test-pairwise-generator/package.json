@@ -34,15 +34,10 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-<<<<<<< HEAD
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-=======
-		"build:esnext": "tsc --project ./tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
->>>>>>> main
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",

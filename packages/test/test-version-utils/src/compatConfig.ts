@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fromInternalScheme } from "@fluid-tools/version-tools";
 import { assert, Lazy } from "@fluidframework/core-utils";
+import { fromInternalScheme } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 import {
 	CompatKind,
@@ -12,22 +12,18 @@ import {
 	compatVersions,
 	driver,
 	r11sEndpointName,
-	reinstall,
 	tenantIndex,
+	reinstall,
 } from "../compatOptions.cjs";
+import { ensurePackageInstalled } from "./testApi.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	baseVersion,
 	baseVersionForMinCompat,
 	codeVersion,
 	testBaseVersion,
 } from "./baseVersion.js";
-<<<<<<< HEAD
-import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled } from "./testApi.js";
-import { getRequestedVersion } from "./versionUtils.js";
-=======
 import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
->>>>>>> main
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and

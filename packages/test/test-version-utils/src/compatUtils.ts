@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-<<<<<<< HEAD
-import { mixinAttributor } from "@fluid-experimental/attributor";
-=======
 import * as semver from "semver";
->>>>>>> main
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	FluidObject,
@@ -15,25 +11,22 @@ import {
 	IFluidLoadable,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { ISharedDirectory } from "@fluidframework/map";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
 	ITestContainerConfig,
+	DataObjectFactoryType,
+	ChannelFactoryRegistry,
+	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-	createTestContainerRuntimeFactory,
 } from "@fluidframework/test-utils";
-<<<<<<< HEAD
-=======
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
 import {
@@ -42,14 +35,13 @@ import {
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
 } from "@fluidframework/container-runtime";
->>>>>>> main
 import { pkgVersion } from "./packageVersion.js";
 import {
-	CompatApis,
+	getLoaderApi,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 	getDriverApi,
-	getLoaderApi,
+	CompatApis,
 } from "./testApi.js";
 
 /**

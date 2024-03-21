@@ -14,6 +14,7 @@ import type { SharedCell } from "@fluidframework/cell";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import {
+	CompressionAlgorithms,
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
@@ -24,17 +25,8 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-<<<<<<< HEAD
 import { Deferred } from "@fluidframework/core-utils";
 import type { SharedCounter } from "@fluidframework/counter";
-=======
-import {
-	ContainerRuntime,
-	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
-	CompressionAlgorithms,
-} from "@fluidframework/container-runtime";
->>>>>>> main
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
 import {

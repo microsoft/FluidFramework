@@ -23,18 +23,8 @@ import {
 	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils";
-<<<<<<< HEAD
 import { compare } from "semver";
-import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi";
-=======
-import {
-	getDriveId,
-	getDriveItemByRootFileName,
-	IClientConfig,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import { ITestDriver, OdspEndpoint } from "@fluidframework/test-driver-definitions";
-import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi.js";
->>>>>>> main
+import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 	type: "password",

@@ -18,17 +18,10 @@ import {
 	repeatAsync,
 	take,
 	takeAsync,
-<<<<<<< HEAD
-} from "../generators";
-import { makeRandom } from "../random";
-import { AsyncGenerator, Generator, IRandom, done } from "../types";
-import { Counter, chiSquaredCriticalValues, computeChiSquared } from "./utils";
-=======
 } from "../generators.js";
 import { makeRandom } from "../random.js";
 import { AsyncGenerator, Generator, IRandom, done } from "../types.js";
-import { chiSquaredCriticalValues, computeChiSquared, Counter } from "./utils.js";
->>>>>>> main
+import { Counter, chiSquaredCriticalValues, computeChiSquared } from "./utils.js";
 
 function assertGeneratorProduces<T>(generator: Generator<T, void>, results: T[]): void {
 	const actual: T[] = [];

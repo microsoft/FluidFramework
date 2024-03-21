@@ -11,12 +11,8 @@ import {
 	BaseFuzzTestState,
 	Generator,
 	Weights,
-<<<<<<< HEAD
 	done,
-} from "./types";
-=======
 } from "./types.js";
->>>>>>> main
 
 /**
  * Returns a generator which produces a categorial distribution with the provided weights.
