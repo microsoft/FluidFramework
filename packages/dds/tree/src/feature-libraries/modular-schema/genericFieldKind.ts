@@ -18,7 +18,6 @@ import {
 	FieldChangeHandler,
 	ToDelta,
 	NodeChangeComposer,
-	NodeChangeInverter,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
 	NodeChangePruner,

@@ -10,10 +10,11 @@ import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { snapshotSessionId } from "../../snapshots/testTrees.js";
-import { fail } from "../../../index.js";
+import { brand, fail } from "../../../index.js";
+import { TestNodeId } from "../../testNodeId.js";
 
-const nodeChange = TestChange.mint([], 1);
-const testChangesets: { name: string; change: GenericChangeset<TestChange> }[] = [
+const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
+const testChangesets: { name: string; change: GenericChangeset }[] = [
 	{
 		name: "empty",
 		change: [],
@@ -42,11 +43,9 @@ export function testSnapshots() {
 				for (const { name, change } of testChangesets) {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
-							baseContext: {
-								originatorId: snapshotSessionId,
-							},
-							encodeNode: () => fail(""),
-							decodeNode: () => fail(""),
+							baseContext,
+							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
+							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});
@@ -55,3 +54,7 @@ export function testSnapshots() {
 		}
 	});
 }
+
+const baseContext = {
+	originatorId: snapshotSessionId,
+};

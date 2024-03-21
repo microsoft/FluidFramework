@@ -2,37 +2,49 @@
   [
     0,
     {
-      "inputContext": [],
-      "intentions": [
-        1
-      ],
-      "outputContext": [
-        1
-      ]
+      "localId": 0,
+      "testChange": {
+        "localId": 0,
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
     }
   ],
   [
     1,
     {
-      "inputContext": [],
-      "intentions": [
-        1
-      ],
-      "outputContext": [
-        1
-      ]
+      "localId": 0,
+      "testChange": {
+        "localId": 0,
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
     }
   ],
   [
     42,
     {
-      "inputContext": [],
-      "intentions": [
-        1
-      ],
-      "outputContext": [
-        1
-      ]
+      "localId": 0,
+      "testChange": {
+        "localId": 0,
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
     }
   ]
 ]
