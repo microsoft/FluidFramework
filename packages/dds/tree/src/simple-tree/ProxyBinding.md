@@ -33,25 +33,29 @@ const rawPoint = new Point({ x: 3, y: 3 });
 ```
 
 Such a proxy will be raw until it is inserted into the tree and becomes "marinated" (see below).
-As of this writing raw proxies cannot be read or mutated, but in the future they will be capable of both.
+As of 2024-03-21 raw proxies cannot be read or mutated, but in the future they will be capable of both.
 
 ### Marinated Proxies
 
-Proxies become **marinated** as soon as they are inserted into the tree, whether directly or as part of a larger subtree:
+Proxies become **marinated** as soon as they are inserted into the tree.
+
+This happens whether proxies are inserted directly, as the root of the content subtree...
 
 ```ts
 // Upon insertion, `rawPoint` transitions from "raw" to the next state, "marinated"
 app.graph.curves[0].insertAtEnd(rawPoint);
 ```
 
+...or proxies are inserted indirectly, making up some arbitrary portion of the content subtree.
+
 ```ts
 // Upon insertion, `rawPoint` transitions from "raw" to the next state, "marinated"
 app.graph = {
-    curves: [
-        [new Point({ x: 2, y: 2 }, rawPoint, new Point({ x: 4, y: 4 }))],
-        [new Point({ x: 10, y: 10 }, new Point({x: 20, y: 20})],
-    ]
-}
+	curves: [
+		[new Point({ x: 10, y: 10 }), new Point({ x: 20, y: 20 })],
+		[new Point({ x: 2, y: 2 }), rawPoint, new Point({ x: 4, y: 4 })],
+	],
+};
 ```
 
 A marinated proxy, by definition, is bound bi-directionally to an `AnchorNode`.
@@ -62,7 +66,7 @@ Note that the `AnchorNode` does not yet have a `FlexTreeNode` associated with it
 ### Cooked Proxies
 
 A proxy is fully cooked when it finally associates itself with a `FlexTreeNode`.
-This happens lazily on demand, if/when proxy is read.
+This happens lazily on demand, if/when a marinated proxy is read or mutated.
 
 ```ts
 const point = new Point({ x: 3, y: 3 }); // `point` is raw
@@ -93,7 +97,7 @@ graph LR;
 Note that it is possible for the `Cooked` mappings between an `AnchorNode` and a `FlexTreeNode` to exist regardless of whether there is also a proxy yet created for that node.
 In that case, when that proxy is created it will immediately be given its `Marinated` mappings and therefore already be cooked.
 
-`RawTreeNode`s, which implement the `FlexTreeNode` interface (or at least, at time of writing, pretend to), are substitutes for the true `FlexTreeNode`s that don't yet exist for a TODO (raw or marinated vs just raw) node.
-The `Raw` mapping is removed when a proxy is TODO (marinated vs. cooked), and the `RawTreeNode` is forgotten.
+`RawTreeNode`s, which implement the `FlexTreeNode` interface (or at least, as of 2024-03-21, pretend to), are substitutes for the true `FlexTreeNode`s that don't yet exist for a raw node.
+The `Raw` mapping is removed when a proxy is marinated, and the `RawTreeNode` is forgotten.
 
 See [proxyBinding.ts](./proxyBinding.ts) for more details.
