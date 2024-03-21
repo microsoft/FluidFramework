@@ -109,12 +109,12 @@ describeCompat(
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
+					assert.strictEqual(rehydratedContainer.attachState, AttachState.Attached);
 				}
 
 				// Check for default data store
 				const entryPoint = await rehydratedContainer.getEntryPoint();
 				assert.notStrictEqual(entryPoint, undefined, "Component should exist!");
-				// Might need some other asserts, but not sure what
 			});
 			it(`Can serialize detached container with data stores after failed attach. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
 				const provider = getTestObjectProvider();
@@ -127,7 +127,7 @@ describeCompat(
 				const peerDataStore = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+				const dataStore2 = peerDataStore.peerDataStore;
 				const rootOfDataStore1 =
 					await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 				const dataStore2Key = "dataStore2";
@@ -141,6 +141,11 @@ describeCompat(
 
 				const rehydratedContainer =
 					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
+
+				if (attachAfterRehydrate) {
+					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
+					assert.strictEqual(rehydratedContainer.attachState, AttachState.Attached);
+				}
 
 				const rehydratedEntryPoint =
 					(await rehydratedContainer.getEntryPoint()) as TestFluidObject;
@@ -190,6 +195,7 @@ describeCompat(
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
+					assert.strictEqual(rehydratedContainer.attachState, AttachState.Attached);
 				}
 
 				const rehydratedEntryPoint =
@@ -217,7 +223,7 @@ describeCompat(
 				const peerDataStore = await createPeerDataStore(
 					defaultDataStore.context.containerRuntime,
 				);
-				const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
+				const dataStore2 = peerDataStore.peerDataStore;
 
 				// create a new dds
 				const ddsId = "notbounddds";
@@ -244,6 +250,7 @@ describeCompat(
 
 				if (attachAfterRehydrate) {
 					await rehydratedContainer.attach(provider.driver.createCreateNewRequest());
+					assert.strictEqual(rehydratedContainer.attachState, AttachState.Attached);
 				}
 
 				const rehydratedEntryPoint =
