@@ -69,8 +69,10 @@ webpackModuleRules.push(
 module.exports = {
 	entry: {
 		aqueduct: "./src/aqueduct",
+		azureClient: "./src/azureClient",
 		connectionState: "./src/connectionState",
 		containerRuntime: "./src/containerRuntime",
+		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
 		map: "./src/map",
 		matrix: "./src/matrix",

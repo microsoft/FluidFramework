@@ -32,6 +32,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -40,6 +41,7 @@
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"fluid-framework": "workspace:~",
 		"source-map-loader": "^2.0.0"
 	},
 	"devDependencies": {
