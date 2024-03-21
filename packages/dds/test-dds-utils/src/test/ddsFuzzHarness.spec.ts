@@ -10,7 +10,7 @@ import * as path from "node:path";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-unresolved
+// eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
