@@ -12,18 +12,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"type": "module",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		}
-	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
@@ -33,7 +21,6 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./e2e-tests/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
-		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
@@ -103,7 +90,6 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
 		"@biomejs/biome": "^1.6.1",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",

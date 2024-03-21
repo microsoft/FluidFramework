@@ -10462,7 +10462,6 @@ importers:
 
   packages/tools/devtools/devtools-browser-extension:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluentui/react': ^8.109.4
       '@fluid-example/example-utils': workspace:~
@@ -10550,7 +10549,6 @@ importers:
       tslib: 1.14.1
       uuid: 9.0.1
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
