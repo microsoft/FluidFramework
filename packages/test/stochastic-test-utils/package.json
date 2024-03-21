@@ -24,8 +24,14 @@
 			}
 		},
 		"./test/utils": {
-			"types": "./dist/test/utils.d.ts",
-			"default": "./dist/test/utils.js"
+			"import": {
+				"types": "./lib/test/utils.d.ts",
+				"default": "./lib/test/utils.js"
+			},
+			"require": {
+				"types": "./dist/test/utils.d.ts",
+				"default": "./dist/test/utils.js"
+			}
 		}
 	},
 	"main": "dist/index.js",
