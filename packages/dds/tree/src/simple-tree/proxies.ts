@@ -41,6 +41,10 @@ import {
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
+	type ImplicitFieldSchema,
+	type ImplicitAllowedTypes,
+	type AllowedTypes,
+	FieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
@@ -117,6 +121,12 @@ export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | un
 	return undefined;
 }
 
+function getSimpleSchemaOrFail(schema: FlexTreeNodeSchema): TreeNodeSchema {
+	const simpleSchema = getSimpleSchema(schema);
+	assert(simpleSchema !== undefined, "missing simple schema");
+	return simpleSchema;
+}
+
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
 	const cachedProxy = tryGetFlexNodeTarget(flexNode);
 	if (cachedProxy !== undefined) {
@@ -179,6 +189,10 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			assert(typeof key === "string", 0x7e1 /* invalid key */);
 			const field = getBoxedField(flexNode, brand(key), fieldSchema);
 
+			const simpleNodeSchema = getSimpleSchemaOrFail(flexNodeSchema);
+			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
+			assert(simpleNodeFields[key] !== undefined, `Field key '${key}' not found in schema.`);
+
 			switch (field.schema.kind) {
 				case FieldKinds.required:
 				case FieldKinds.optional: {
@@ -189,8 +203,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 					const { content, hydrateProxies } = extractFactoryContent(value);
 					const cursor = cursorFromNodeData(
 						content,
-						flexNode.context.schema,
-						fieldSchema.allowedTypeSet,
+						getAllowedTypes(simpleNodeFields[key]),
 					);
 					modifyChildren(
 						flexNode,
@@ -240,6 +253,14 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 		},
 	}) as TreeNode;
 	return proxy;
+}
+
+function getAllowedTypes(schema: ImplicitFieldSchema): AllowedTypes {
+	return normalizeAllowedTypes(schema instanceof FieldSchema ? schema.allowedTypes : schema);
+}
+
+function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
+	return isReadonlyArray(types) ? types : [types];
 }
 
 /**
@@ -294,17 +315,18 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(index, value);
-			const cursor = cursorFromFieldData(
-				content,
-				sequenceField.context.schema,
-				sequenceField.schema,
-			);
+
+			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
+			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const cursor = cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema);
 
 			modifyChildren(
-				getFlexNode(this),
+				sequenceNode,
 				() => sequenceField.insertAt(index, cursor),
 				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
@@ -315,17 +337,18 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			this: TreeArrayNode,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(0, value);
-			const cursor = cursorFromFieldData(
-				content,
-				sequenceField.context.schema,
-				sequenceField.schema,
-			);
+
+			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
+			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const cursor = cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema);
 
 			modifyChildren(
-				getFlexNode(this),
+				sequenceNode,
 				() => sequenceField.insertAtStart(cursor),
 				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
@@ -336,20 +359,21 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			this: TreeArrayNode,
 			...value: readonly (InsertableContent | IterableTreeArrayContent<InsertableContent>)[]
 		): void {
+			const sequenceNode = getFlexNode(this);
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedArrayContent(
 				this.length,
 				value,
 			);
-			const cursor = cursorFromFieldData(
-				content,
-				sequenceField.context.schema,
-				sequenceField.schema,
-			);
+
+			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
+			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+
+			const cursor = cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema);
 
 			modifyChildren(
-				getFlexNode(this),
+				sequenceNode,
 				() => sequenceField.insertAtEnd(cursor),
 				(listFlexNode) => hydrateProxies(listFlexNode),
 			);
@@ -717,11 +741,10 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 
 			const { content, hydrateProxies } = extractFactoryContent(value as FactoryContent);
-			const cursor = cursorFromNodeData(
-				content,
-				node.context.schema,
-				node.schema.mapFields.allowedTypeSet,
-			);
+
+			const classSchema = getSimpleSchemaOrFail(node.schema);
+			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
+
 			modifyChildren(
 				node,
 				(mapNode) => mapNode.set(key, cursor),

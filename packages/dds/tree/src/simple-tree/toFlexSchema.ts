@@ -50,23 +50,22 @@ import { TreeConfiguration } from "./tree.js";
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
 export function cursorFromUnhydratedRoot(
-	schema: FlexTreeSchema,
+	rootSchema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
-	return (
-		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
-		fail("failed to decode tree")
-	);
+	const allowedTypes = rootSchema instanceof FieldSchema ? rootSchema.allowedTypes : rootSchema;
+	return cursorFromNodeData(data.content, allowedTypes) ?? fail("failed to decode tree");
 }
 
 export function toFlexConfig(config: TreeConfiguration): TreeContent {
-	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
-		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
+		unhydrated === undefined
+			? undefined
+			: [cursorFromUnhydratedRoot(config.schema, unhydrated)];
 	return {
-		schema,
+		schema: toFlexSchema(config.schema),
 		initialTree,
 	};
 }
@@ -81,7 +80,7 @@ type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
 /**
  * Generate a {@link FlexTreeSchema} with `root` as the root field.
  *
- * This also has the side effect of populating the cached view schema on the class based schema.
+ * This also has the side effect of populating the cached view schema on the class-based schema.
  */
 export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const schemaMap: SchemaMap = new Map();

@@ -37,5 +37,48 @@
       "src/feature-libraries/flex-tree/unboxed.ts",
       "src/feature-libraries/flex-tree/lazyNode.ts"
     ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/simple-tree/proxies.ts",
+    "to": "src/simple-tree/toMapTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/simple-tree/toMapTree.ts",
+      "src/simple-tree/schemaFactory.ts",
+      "src/simple-tree/proxies.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/simple-tree/schemaFactory.ts",
+    "to": "src/simple-tree/toFlexSchema.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/simple-tree/toFlexSchema.ts",
+      "src/simple-tree/proxies.ts",
+      "src/simple-tree/toMapTree.ts",
+      "src/simple-tree/schemaFactory.ts"
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/simple-tree/toFlexSchema.ts",
+    "to": "src/simple-tree/toMapTree.ts",
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      "src/simple-tree/toMapTree.ts",
+      "src/simple-tree/schemaFactory.ts",
+      "src/simple-tree/toFlexSchema.ts"
+    ]
   }
 ]
