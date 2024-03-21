@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
 import {
+	type IDocumentAttributes,
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 	IVersion,
@@ -24,6 +25,7 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import { getDocumentAttributes } from "./utils.js";
 
 export interface SnapshotWithBlobs {
 	/**
@@ -66,9 +68,12 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 }
 
 export class SerializedStateManager {
-	private readonly processedOps: ISequencedDocumentMessage[] = [];
+	private processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot: SnapshotWithBlobs | undefined;
 	private readonly mc: MonitoringContext;
+	private latestSnapshot: ISnapshotTree | undefined = undefined;
+	private latestSnapshotSequenceNumber: number | undefined;
+	private latestSnapshotBlobs: ISerializableBlobContents | undefined;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -89,8 +94,24 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
+	private refreshOnCatchUpMaybe(message: ISequencedDocumentMessage) {
+		if (
+			this.latestSnapshotSequenceNumber !== undefined &&
+			message.sequenceNumber === this.latestSnapshotSequenceNumber + 1
+		) {
+			assert(this.latestSnapshot !== undefined, "no latest snapshot");
+			assert(this.latestSnapshotBlobs !== undefined, "no latest snapshot blobs");
+			this.snapshot = {
+				baseSnapshot: this.latestSnapshot,
+				snapshotBlobs: this.latestSnapshotBlobs,
+			};
+			this.processedOps = [];
+		}
+	}
+
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
+			this.refreshOnCatchUpMaybe(message);
 			this.processedOps.push(message);
 		}
 	}
@@ -119,7 +140,90 @@ export class SerializedStateManager {
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			this.snapshot = { baseSnapshot, snapshotBlobs };
+			this.refreshSnapshot(supportGetSnapshotApi).catch((error) => {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "Could_Not_Refresh_Snapshot",
+					},
+					error,
+				);
+				throw error;
+			});
 			return { baseSnapshot, version: undefined };
+		}
+	}
+
+	/**
+	 * Fetch latest snapshot available in storage and retry indefinetely
+	 * @param supportGetSnapshotApi -
+	 */
+	private async refreshSnapshot(supportGetSnapshotApi: boolean) {
+		// This need to be resilient to failure. We can use runWithRetry
+		const { snapshot } = supportGetSnapshotApi
+			? await fetchISnapshot(this.mc, this.storageAdapter, undefined)
+			: await fetchISnapshotTree(this.mc, this.storageAdapter, undefined);
+		const latestSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+			? snapshot.snapshotTree
+			: snapshot;
+		assert(latestSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
+		this.latestSnapshot = latestSnapshot;
+		await this.refreshPendingAttributes(latestSnapshot);
+	}
+
+	/**
+	 * Updates class snapshot and processedOps with the latest fetched snapshot
+	 *
+	 * @param latestSnapshot -
+	 */
+	private async refreshPendingAttributes(latestSnapshot: ISnapshotTree) {
+		const snapshotBlobs = await getBlobContentsFromTree(latestSnapshot, this.storageAdapter);
+		this.latestSnapshotBlobs = snapshotBlobs;
+		const attributes: IDocumentAttributes = await getDocumentAttributes(
+			this.storageAdapter,
+			latestSnapshot,
+		);
+		if (this.processedOps.length === 0) {
+			// weird edge case in which we don't have to do nothing to processedOps
+			// since we don't have any
+			this.snapshot = { baseSnapshot: latestSnapshot, snapshotBlobs };
+			return;
+		}
+		const snapshotSN = attributes.sequenceNumber;
+		const firstSavedOpSN = this.processedOps[0].sequenceNumber;
+		const lastSavedOpSN = this.processedOps[this.processedOps.length - 1].sequenceNumber;
+
+		if (snapshotSN < firstSavedOpSN - 1) {
+			this.mc.logger.sendErrorEvent({
+				eventName: "Old_Snapshot_Fetch_While_Refresing",
+				snapshotSequenceNumber: snapshotSN,
+				firstProcessedOpSequenceNumber: firstSavedOpSN,
+			});
+			throw new Error("Fetched snapshot is not latest available");
+		} else if (snapshotSN === firstSavedOpSN - 1) {
+			// Snapshot is exactly one less than the first processed op sequence number.
+			// Meaning new snapshot is the same as before refreshing. Do nothing.
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "Previous_Snapshot_Fetch_While_Refreshing",
+				snapshotSequenceNumber: snapshotSN,
+				firstProcessedOpSequenceNumber: firstSavedOpSN,
+			});
+			return;
+		} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
+			// Snapshot seq num is between the first and last processed op.
+			// Remove the ops that are already part of the snapshot
+			this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+			this.snapshot = { baseSnapshot: latestSnapshot, snapshotBlobs };
+		} else {
+			// snapshotSN > lastSavedOpSN
+			// Snapshot is newer than the latest processed op.
+			// We need to wait and catch up with ops to reach the snapshot's state.
+			// addProcessedOps will kick the refresh process later
+			this.latestSnapshotSequenceNumber = snapshotSN;
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "Newer_Snapshot_Fetch_While_Refresh",
+				snapshotSequenceNumber: snapshotSN,
+				firstProcessedOpSequenceNumber: firstSavedOpSN,
+			});
 		}
 	}
 
