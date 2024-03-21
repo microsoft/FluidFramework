@@ -12,8 +12,8 @@ import {
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { OpDecompressor } from "./opDecompressor.js";
-import { OpGroupingManager } from "./opGroupingManager.js";
-import { OpSplitter } from "./opSplitter.js";
+import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
+import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 
 /**
  * Stateful class for processing incoming remote messages as the virtualization measures are unwrapped,
@@ -44,6 +44,14 @@ export class RemoteMessageProcessor {
 	 * depends on this object instance.
 	 * Note remoteMessageCopy.contents (and other object props) MUST not be modified,
 	 * but may be overwritten (as is the case with contents).
+	 *
+	 * Incoming messages will always have compression, chunking, and grouped batching happen in a defined order and that order cannot be changed.
+	 * When processing these messages, the order is:
+	 * 1. If chunked, process the chunk and only continue if this is a final chunk
+	 * 2. If compressed, decompress the message and store for further unrolling of the decompressed content
+	 * 3. If grouped, ungroup the message
+	 * For more details, see https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/opLifecycle/README.md#inbound
+	 *
 	 * @returns the unchunked, decompressed, ungrouped, unpacked SequencedContainerRuntimeMessages encapsulated in the remote message.
 	 * For ops that weren't virtualized (e.g. System ops that the ContainerRuntime will ultimately ignore),
 	 * a singleton array [remoteMessageCopy] is returned
@@ -51,63 +59,38 @@ export class RemoteMessageProcessor {
 	public process(
 		remoteMessageCopy: ISequencedDocumentMessage,
 	): InboundSequencedContainerRuntimeMessageOrSystemMessage[] {
-		const result: InboundSequencedContainerRuntimeMessageOrSystemMessage[] = [];
+		let message = remoteMessageCopy;
+		ensureContentsDeserialized(message);
 
-		ensureContentsDeserialized(remoteMessageCopy);
+		if (isChunkedMessage(message)) {
+			const chunkProcessingResult = this.opSplitter.processChunk(message);
+			// Only continue further if current chunk is the final chunk
+			if (!chunkProcessingResult.isFinalChunk) {
+				return [];
+			}
+			// This message will always be compressed
+			message = chunkProcessingResult.message;
+		}
 
-		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(remoteMessageCopy)) {
-			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
+		if (this.opDecompressor.isCompressedMessage(message)) {
+			this.opDecompressor.decompressAndStore(message);
+		}
 
-			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
-				// unpack and unchunk the ungrouped message in place
-				unpackRuntimeMessage(ungroupedMessage2);
-				const chunkProcessingResult =
-					this.opSplitter.processRemoteMessage(ungroupedMessage2);
-				ungroupedMessage2 = chunkProcessingResult.message;
-
-				// if the splitter is still rebuilding the original message, there is no need to continue processing
-				if (chunkProcessingResult.state === "Accepted") {
-					continue;
-				}
-
-				// If the message is not chunked there is no need to continue processing
-				if (chunkProcessingResult.state !== "Processed") {
-					result.push(
-						ungroupedMessage2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
-					);
-					continue;
-				}
-
-				// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-				for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
-					ungroupedMessage2,
-				)) {
-					const decompressionAfterChunking = this.opDecompressor.processMessage(
-						ungroupedMessageAfterChunking,
-					);
-
-					for (const ungroupedMessageAfterChunking2 of this.opGroupingManager.ungroupOp(
-						decompressionAfterChunking.message,
-					)) {
-						if (decompressionAfterChunking.state === "Skipped") {
-							// After chunking, if the original message was not compressed,
-							// there is no need to continue processing
-							result.push(
-								ungroupedMessageAfterChunking2 as InboundSequencedContainerRuntimeMessageOrSystemMessage,
-							);
-							continue;
-						}
-
-						// The message needs to be unpacked after chunking + decompression
-						unpack(ungroupedMessageAfterChunking2);
-						result.push(ungroupedMessageAfterChunking2);
-					}
-				}
+		if (this.opDecompressor.currentlyUnrolling) {
+			message = this.opDecompressor.unroll(message);
+			// Need to unpack after unrolling if not a groupedBatch
+			if (!isGroupedBatch(message)) {
+				unpack(message);
 			}
 		}
 
-		return result;
+		if (isGroupedBatch(message)) {
+			return this.opGroupingManager.ungroupOp(message).map(unpack);
+		}
+
+		// Do a final unpack of runtime messages in case the message was not grouped, compressed, or chunked
+		unpackRuntimeMessage(message);
+		return [message as InboundSequencedContainerRuntimeMessageOrSystemMessage];
 	}
 }
 
@@ -128,9 +111,7 @@ function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMessage): 
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
  * (but there is no runtime validation of the 'type' or 'compatDetails' values).
  */
-function unpack(
-	message: ISequencedDocumentMessage,
-): asserts message is InboundSequencedContainerRuntimeMessage {
+function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
 	const contents = message.contents as InboundContainerRuntimeMessage;
 
@@ -143,6 +124,7 @@ function unpack(
 		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
 			contents.compatDetails;
 	}
+	return messageUnpacked;
 }
 
 /**
