@@ -33,11 +33,7 @@ import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	fuzzNode,
-	failureDirectory,
-	RevertibleSharedTreeView,
-	deterministicIdCompressorFactory,
 	initialFuzzSchema,
-	fuzzSchema,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";

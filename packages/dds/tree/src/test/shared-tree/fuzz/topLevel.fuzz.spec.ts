@@ -12,8 +12,6 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators.js";
 import { EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, failureDirectory, onCreate } from "./fuzzUtils.js";

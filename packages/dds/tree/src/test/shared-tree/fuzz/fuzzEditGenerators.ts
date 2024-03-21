@@ -21,9 +21,27 @@ import {
 	JsonableTree,
 	UpPath,
 } from "../../../core/index.js";
-import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
+import {
+	DownPath,
+	FlexTreeNode,
+	toDownPath,
+	treeSchemaFromStoredSchema,
+} from "../../../feature-libraries/index.js";
+import {
+	FlexTreeView,
+	ISharedTree,
+	ITreeViewFork,
+	SharedTreeFactory,
+	TreeContent,
+	brand,
+	fail,
+} from "../../../index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTree } from "../../../shared-tree/sharedTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getOrCreate } from "../../../util/utils.js";
 import { schematizeFlexTree } from "../../utils.js";
-import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
+import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -43,7 +61,6 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes.js";
-import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
 	/**

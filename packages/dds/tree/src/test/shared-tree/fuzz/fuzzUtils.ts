@@ -28,9 +28,9 @@ import {
 	FieldKinds,
 	FlexFieldSchema,
 	FlexTreeObjectNodeTyped,
-	intoStoredSchema,
 	LeafNodeSchema,
 	SchemaLibrary,
+	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
 import { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
 import { expectEqualPaths } from "../../utils.js";
