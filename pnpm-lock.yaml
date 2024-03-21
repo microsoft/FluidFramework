@@ -9582,6 +9582,8 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/test-driver-definitions': workspace:~
       '@microsoft/api-extractor': ^7.42.3
+      '@types/mocha': ^9.1.1
+      '@types/node': ^18.19.0
       copyfiles: ^2.4.1
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -9596,11 +9598,13 @@ importers:
       source-map-support: 0.5.21
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
-      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3
+      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
+      '@types/mocha': 9.1.1
+      '@types/node': 18.19.1
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
