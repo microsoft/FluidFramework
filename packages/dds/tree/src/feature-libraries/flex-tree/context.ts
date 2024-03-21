@@ -47,9 +47,9 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	readonly nodeKeys: NodeKeys;
 
 	/**
-	 * The anchor set for the flex tree associated with this context
+	 * The forest containing the tree data associated with this context
 	 */
-	readonly anchorSet: AnchorSet;
+	readonly forest: IForestSubscription;
 }
 
 /**

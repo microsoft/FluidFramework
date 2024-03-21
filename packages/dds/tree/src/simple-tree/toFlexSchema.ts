@@ -5,7 +5,11 @@
 
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { AnchorSet, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import {
+	IForestSubscription,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+} from "../core/index.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -52,22 +56,22 @@ import { TreeConfiguration } from "./tree.js";
 function cursorFromUnhydratedRoot(
 	schema: FlexTreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
-	anchors: AnchorSet,
+	forest: IForestSubscription,
 ): ITreeCursorSynchronous {
-	const data = prepareContentForInsert(tree as InsertableContent, anchors);
+	const data = prepareContentForInsert(tree as InsertableContent, forest);
 	return (
 		cursorFromNodeData(data, schema, schema.rootFieldSchema.allowedTypeSet) ??
 		fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration, anchors: AnchorSet): TreeContent {
+export function toFlexConfig(config: TreeConfiguration, forest: IForestSubscription): TreeContent {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
 		unhydrated === undefined
 			? undefined
-			: [cursorFromUnhydratedRoot(schema, unhydrated, anchors)];
+			: [cursorFromUnhydratedRoot(schema, unhydrated, forest)];
 	return {
 		schema,
 		initialTree,

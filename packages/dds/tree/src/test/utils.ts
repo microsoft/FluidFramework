@@ -659,7 +659,7 @@ export function validateSnapshotConsistency(
 
 export function checkoutFromConfig(treeConfiguration: TreeConfiguration): TreeCheckout {
 	const forest = buildForest();
-	const flexConfig = toFlexConfig(treeConfiguration, forest.anchors);
+	const flexConfig = toFlexConfig(treeConfiguration, forest);
 	return checkoutWithContent(flexConfig);
 }
 
@@ -1197,7 +1197,7 @@ export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
 	const forest = buildForest();
-	const flexConfig = toFlexConfig(config, forest.anchors);
+	const flexConfig = toFlexConfig(config, forest);
 	addContentToForest(forest, flexConfig);
 	const checkout = checkoutWithContent(flexConfig, { forest });
 	return new SchematizingSimpleTreeView<TSchema>(

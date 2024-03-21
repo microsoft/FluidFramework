@@ -103,7 +103,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 // @internal
 export interface AnchorSetRootEvents {
     childrenChanging(anchors: AnchorSet): void;
-    onCreate(fieldKey: FieldKey): void;
     treeChanging(anchors: AnchorSet): void;
 }
 
@@ -634,7 +633,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 
 // @internal
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
-    readonly anchorSet: AnchorSet;
+    readonly forest: IForestSubscription;
     // (undocumented)
     readonly nodeKeys: NodeKeys;
     get root(): FlexTreeField;
@@ -877,6 +876,7 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 // @internal
 export interface ForestEvents {
     afterChange(): void;
+    afterCreateRootField(key: FieldKey): void;
     beforeChange(): void;
 }
 

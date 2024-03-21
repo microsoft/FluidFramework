@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { AnchorSet, EmptyKey, FieldKey, TreeValue, UpPath } from "../core/index.js";
+import { EmptyKey, FieldKey, IForestSubscription, TreeValue, UpPath } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode.js";
@@ -177,7 +177,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 						| FlexTreeRequiredField<FlexAllowedTypes>
 						| FlexTreeOptionalField<FlexAllowedTypes>;
 
-					const content = prepareContentForInsert(value, flexNode.context.anchorSet);
+					const content = prepareContentForInsert(value, flexNode.context.forest);
 					const cursor = cursorFromNodeData(
 						content,
 						flexNode.context.schema,
@@ -243,7 +243,7 @@ function contextualizeInsertedArrayContent(
 		content.flatMap((c): InsertableContent[] =>
 			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		),
-		sequenceField.context.anchorSet,
+		sequenceField.context.forest,
 	);
 }
 
@@ -673,7 +673,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getFlexNode(this);
 			const content = prepareContentForInsert(
 				value as InsertableContent,
-				node.context.anchorSet,
+				node.context.forest,
 			);
 
 			const cursor = cursorFromNodeData(
@@ -773,10 +773,10 @@ interface RootedProxyPaths {
  */
 export function prepareContentForInsert(
 	content: InsertableContent,
-	anchors: AnchorSet,
+	forest: IForestSubscription,
 ): FactoryContent {
 	if (isReadonlyArray(content)) {
-		return prepareArrayContentForInsert(content, anchors);
+		return prepareArrayContentForInsert(content, forest);
 	}
 
 	const proxies: RootedProxyPaths = {
@@ -790,13 +790,13 @@ export function prepareContentForInsert(
 		},
 	});
 
-	bindProxies([proxies], anchors);
+	bindProxies([proxies], forest);
 	return extractedContent;
 }
 
 function prepareArrayContentForInsert(
 	content: readonly InsertableContent[],
-	anchors: AnchorSet,
+	forest: IForestSubscription,
 ): FactoryContent {
 	const proxies: RootedProxyPaths[] = [];
 	const extractedContent: FactoryContent[] = [];
@@ -819,21 +819,24 @@ function prepareArrayContentForInsert(
 		);
 	}
 
-	bindProxies(proxies, anchors);
+	bindProxies(proxies, forest);
 	return extractedContent;
 }
 
-function bindProxies(proxies: RootedProxyPaths[], anchors: AnchorSet): void {
-	let i = 0;
-	const off = anchors.on("onCreate", (field) => {
-		(proxies[i].rootPath as Mutable<UpPath>).parentField = field;
-		for (const { path, proxy } of proxies[i].proxyPaths) {
-			anchorProxy(anchors, path, proxy);
-		}
-		if (++i === proxies.length) {
-			off();
-		}
-	});
+function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): void {
+	if (proxies.length > 0) {
+		// Creating a new array emits one event per element in the array, so listen to the event once for each element
+		let i = 0;
+		const off = forest.on("afterCreateRootField", (fieldKey) => {
+			(proxies[i].rootPath as Mutable<UpPath>).parentField = fieldKey;
+			for (const { path, proxy } of proxies[i].proxyPaths) {
+				anchorProxy(forest.anchors, path, proxy);
+			}
+			if (++i === proxies.length) {
+				off();
+			}
+		});
+	}
 }
 
 /**
@@ -879,7 +882,6 @@ export function extractFactoryContent(
 		}
 		visitProxies?.onVisitProxy(visitProxies.path, input as TreeNode);
 		content = factoryContent;
-		// fromFactory = true;
 	} else {
 		content = input as FactoryContent;
 	}

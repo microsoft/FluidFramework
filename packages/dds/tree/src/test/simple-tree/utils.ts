@@ -26,7 +26,7 @@ export function hydrate<TSchema extends ImplicitFieldSchema>(
 ): TreeFieldFromImplicitField<TSchema> {
 	const config = new TreeConfiguration(schema, () => initialTree);
 	const forest = buildForest();
-	const flexConfig = toFlexConfig(config, forest.anchors);
+	const flexConfig = toFlexConfig(config, forest);
 	addContentToForest(forest, flexConfig);
 	const tree = flexTreeWithContent(flexConfig, {});
 	return getProxyForField(tree) as TreeFieldFromImplicitField<TSchema>;
