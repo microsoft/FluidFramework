@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
-import {
+import type { ITelemetryBaseLogger, IRequest } from "@fluidframework/core-interfaces";
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
