@@ -34,7 +34,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {

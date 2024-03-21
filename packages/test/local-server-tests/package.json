@@ -13,8 +13,6 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "commonjs",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -32,7 +30,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha dist/test -r node_modules/@fluid-internal/mocha-test-setup --exit",
+		"test:mocha": "mocha \"dist/test/**/*.spec.*js\"  --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
