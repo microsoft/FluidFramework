@@ -4,50 +4,50 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import {
-	ContainerRuntime,
-	ISummarizer,
-	ISummarizeResults,
-	ISummaryRuntimeOptions,
-	DefaultSummaryConfiguration,
-	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
-import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	channelsTreeName,
-	FlushMode,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	waitForContainerConnection,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	timeoutPromise,
-} from "@fluidframework/test-utils";
-import {
-	describeCompat,
 	ITestDataObject,
-	itExpects,
 	TestDataObjectType,
+	describeCompat,
+	itExpects,
 } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IContainer } from "@fluidframework/container-definitions";
+import {
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	ISummarizeResults,
+	ISummarizer,
+	ISummaryRuntimeOptions,
+	SummaryCollection,
+} from "@fluidframework/container-runtime";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	FlushMode,
+	IFluidDataStoreFactory,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions";
 import type { SharedString } from "@fluidframework/sequence";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createSummarizer,
+	createSummarizerFromFactory,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
