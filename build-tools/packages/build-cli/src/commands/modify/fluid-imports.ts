@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
-import { Project, type ImportDeclaration, type SourceFile, type CommentRange } from "ts-morph";
+import { Project, type ImportDeclaration, type SourceFile } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
 
@@ -104,16 +104,10 @@ async function updateImports(
 	for (const sourceFile of sourceFiles) {
 		log?.verbose(`Source file: ${sourceFile.getBaseName()}`);
 
-		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
-		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
-		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
-		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
-		const headerText = getCommentRangesText(removeFileHeaderComment(sourceFile));
-
 		/**
 		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
 		 */
-		const imports = sourceFile.getImportDeclarations();
+		let imports = sourceFile.getImportDeclarations();
 
 		// Skip source files with no imports.
 		if (imports.length === 0) {
@@ -193,6 +187,15 @@ async function updateImports(
 				}
 			}
 		}
+
+		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
+		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
+		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
+		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
+		const headerText = removeFileHeaderComment(sourceFile);
+
+		// Need to get declarations again because nodes are invalidated after calling replaceText above
+		imports = sourceFile.getImportDeclarations();
 
 		// Second pass: Update existing imports and add any missing ones
 		for (const importDeclaration of imports) {
@@ -329,20 +332,20 @@ async function loadData(dataFile: string): Promise<MapData> {
 }
 
 /**
- * Delete any header comments at the beginning of the file. Return the removed CommentRanges.
+ * Delete any header comments at the beginning of the file. Return the removed text.
  */
-function removeFileHeaderComment(sourceFile: SourceFile): CommentRange[] {
+function removeFileHeaderComment(sourceFile: SourceFile): string {
 	const firstNode = sourceFile.getChildAtIndex(0);
-	const headerComments = firstNode.getLeadingCommentRanges();
-	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
-	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
-	return headerComments;
-}
 
-function getCommentRangesText(ranges: CommentRange[]): string {
 	// Joins the comment ranges with double new lines so there is an empty line between each comment. This does mean that
 	// the ranges may be output in a slightly different way than it was ingested. However, there does not appear to be a
 	// way to get the text of multiple ranges, so the spacing information between the nodes seems to be lost.
-	const headerText = `${ranges.map((comment) => comment.getText()).join("\n\n")}\n\n`;
+	//
+	// This has to be done before the sourceFile is modified, because after that the comment ranges become invalid and
+	// ts-morph throws an exception.
+	const headerComments = firstNode.getLeadingCommentRanges();
+	const headerText = `${headerComments.map((comment) => comment.getText()).join("\n\n")}\n\n`;
+	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
+	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
 	return headerText;
 }

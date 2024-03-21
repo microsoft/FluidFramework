@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
@@ -31,8 +33,6 @@ import {
 	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
 import { assert } from "@fluidframework/core-utils";
 import {
 	type DataObjectTypes,

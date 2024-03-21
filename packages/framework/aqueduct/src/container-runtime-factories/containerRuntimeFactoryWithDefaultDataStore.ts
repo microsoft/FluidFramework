@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+} from "@fluidframework/container-runtime";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
 import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
