@@ -14,6 +14,7 @@ import {
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	AnchorSet,
 	JsonableTree,
 	RevisionTagCodec,
 	TreeStoredSchema,
@@ -48,8 +49,10 @@ import {
 	TreeView,
 } from "../simple-tree/index.js";
 import { brand } from "../util/index.js";
+import { DefaultCommitEnricher } from "./defaultCommitEnricher.js";
 import { InitializeAndSchematizeConfiguration, ensureSchema } from "./schematizeTree.js";
 import { SchematizingSimpleTreeView, requireSchema } from "./schematizingTreeView.js";
+import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -204,6 +207,15 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 			{ schema, policy: defaultSchemaPolicy },
+			new DefaultCommitEnricher(
+				changeFamily.rebaser.invert.bind(changeFamily.rebaser),
+				() => {
+					return new SharedTreeChangeEnricher(
+						forest.clone(schema, new AnchorSet()),
+						removedRoots.clone(),
+					);
+				},
+			),
 		);
 		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();

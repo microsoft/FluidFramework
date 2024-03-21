@@ -24,6 +24,7 @@ import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from 
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
+import { CommitEnricher } from "./commitEnricher.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
@@ -80,6 +81,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 
+	private readonly commitEnricher?: CommitEnricher<TChange>;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -99,6 +102,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
 		schemaAndPolicy: SchemaAndPolicy,
+		enricher?: CommitEnricher<TChange>,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -158,6 +162,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new RevisionTagCodec(runtime.idCompressor),
 			options,
 		);
+
+		this.commitEnricher = enricher;
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -228,9 +234,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			return;
 		}
 
+		const enrichedCommit = this.commitEnricher?.enrichCommit(commit, isResubmit) ?? commit;
 		const message = this.messageCodec.encode(
 			{
-				commit,
+				commit: enrichedCommit,
 				sessionId: this.editManager.localSessionId,
 			},
 			{
@@ -238,7 +245,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			},
 		);
 		this.submitLocalMessage(message);
+		this.onCommitSubmitted(enrichedCommit, isResubmit);
 	}
+
+	protected onCommitSubmitted(commit: GraphCommit<TChange>, isResubmit: boolean): void {}
 
 	protected processCore(
 		message: ISequencedDocumentMessage,
@@ -253,6 +263,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
+		this.commitEnricher?.onSequencedCommitApplied(local);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
@@ -278,6 +289,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { revision },
 		} = this.messageCodec.decode(content, {});
 		const [commit] = this.editManager.findLocalCommit(revision);
+		if (this.commitEnricher !== undefined) {
+			// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
+			if (!this.commitEnricher.isInResubmitPhase) {
+				const toResubmit = this.editManager.getLocalCommits();
+				assert(
+					commit === toResubmit[0],
+					"Resubmit phase should start with the oldest local commit",
+				);
+				this.commitEnricher.startResubmitPhase(toResubmit);
+			}
+		}
 		this.submitCommit(commit, true);
 	}
 

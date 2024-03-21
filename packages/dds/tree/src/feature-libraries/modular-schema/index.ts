@@ -65,5 +65,6 @@ export {
 	rebaseRevisionMetadataFromInfo,
 	intoDelta,
 	relevantRemovedRoots,
+	updateRefreshers,
 } from "./modularChangeFamily.js";
 export { makeV0Codec } from "./modularChangeCodecs.js";

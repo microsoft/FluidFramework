@@ -54,6 +54,7 @@ import {
 	FieldKey,
 	FieldUpPath,
 	IEditableForest,
+	IForestSubscription,
 	JsonableTree,
 	Revertible,
 	RevisionInfo,
@@ -781,9 +782,13 @@ export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
 /**
  * Assumes `tree` is in the json domain and returns its content as a json compatible object.
  */
-export function toJsonTree(tree: ITreeCheckout): JsonCompatible[] {
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+export function jsonTreeFromCheckout(tree: ITreeCheckout): JsonCompatible[] {
+	return jsonTreeFromForest(tree.forest);
+}
+
+export function jsonTreeFromForest(forest: IForestSubscription): JsonCompatible[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
 	const copy = mapCursorField(readCursor, cursorToJsonObject);
 	readCursor.free();
 	return copy;
@@ -824,7 +829,7 @@ export function expectJsonTree(
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
-		const roots = toJsonTree(tree);
+		const roots = jsonTreeFromCheckout(tree);
 		assert.deepEqual(roots, expected);
 	}
 	if (expectRemovedRootsAreSynchronized) {

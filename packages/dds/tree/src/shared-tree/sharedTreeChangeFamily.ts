@@ -9,7 +9,9 @@ import {
 	ChangeEncodingContext,
 	ChangeFamily,
 	ChangeRebaser,
+	DeltaDetachedNodeId,
 	RevisionMetadataSource,
+	RevisionTag,
 	RevisionTagCodec,
 	TaggedChange,
 	mapTaggedChange,
@@ -18,10 +20,11 @@ import {
 	FieldBatchCodec,
 	ModularChangeFamily,
 	ModularChangeset,
+	TreeChunk,
 	TreeCompressionStrategy,
 	fieldKinds,
 } from "../feature-libraries/index.js";
-import { Mutable, fail } from "../util/index.js";
+import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -181,4 +184,97 @@ export class SharedTreeChangeFamily
 
 function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
+}
+
+function mapDataChanges(
+	change: SharedTreeChange,
+	map: (change: ModularChangeset) => ModularChangeset,
+): SharedTreeChange {
+	return {
+		changes: change.changes.map((dataOrSchemaChange) => {
+			if (dataOrSchemaChange.type === "data") {
+				return {
+					type: "data",
+					innerChange: map(dataOrSchemaChange.innerChange),
+				};
+			}
+			return dataOrSchemaChange;
+		}),
+	};
+}
+
+/**
+ * Produces an equivalent change with an updated set of appropriate refreshers.
+ * @param change - The change to compute refreshers for. Not mutated.
+ * @param getDetachedNode - retrieves a {@link TreeChunk} for the corresponding detached node id.
+ * Is expected to read from a forest in a state that corresponds to the input context of the given change.
+ * @returns An equivalent change with an updated set of appropriate refreshers.
+ */
+export function updateRefreshers(
+	change: TaggedChange<SharedTreeChange>,
+	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+	relevantRemovedRootsFromDataChange: (
+		taggedChange: TaggedChange<ModularChangeset>,
+	) => Iterable<DeltaDetachedNodeId>,
+	updateDataChangeRefreshers: (
+		change: TaggedChange<ModularChangeset>,
+		getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+		removedRoots: Iterable<DeltaDetachedNodeId>,
+		allowMissingRefreshers: boolean,
+	) => ModularChangeset,
+): SharedTreeChange {
+	// Adding refreshers to a SharedTreeChange is not as simple as adding refreshers to each of its data changes.
+	// This is because earlier data changes affect the state of the forest in ways that can influence the refreshers
+	// needed for later data changes. This can happen in two ways:
+	// 1. By removing a tree that is a relevant root to a later data change.
+	// 2. By changing the contents of a tree that is a relevant root to a later data change.
+	// (Note that these two cases can compound)
+	// Thankfully, in both of these cases, refreshers can be omitted from the later data changes because the forest
+	// applying those data changes is guaranteed to still have have the relevant trees in memory.
+	// This means that for the first data change, all required refreshers should be added (and none should be missing).
+	// While for later data changes, we should not include refreshers that either:
+	// A) were already included in the earlier data changes
+	// B) correspond to trees that were removed by earlier data changes
+	// Set A is excluded by tracking which roots have already been included in the earlier data changes, and filtering
+	// them out from the relevant removed roots.
+	// Set B is excluded because the `getDetachedNode` is bound to return `undefined` for them, which tell
+	// `defaultUpdateRefreshers` to ignore. One downside of this approach is that it prevents `defaultUpdateRefreshers`
+	// from detecting cases where a detached node is missing for another reason (which would be a bug).
+
+	// The roots that have been included as refreshers across all data changes so far.
+	const includedRoots: NestedSet<RevisionTag | undefined, number> = new Map();
+	function getAndRememberDetachedNode(id: DeltaDetachedNodeId): TreeChunk | undefined {
+		addToNestedSet(includedRoots, id.major, id.minor);
+		return getDetachedNode(id);
+	}
+	function* filterIncludedRoots(
+		toFilter: Iterable<DeltaDetachedNodeId>,
+	): Iterable<DeltaDetachedNodeId> {
+		for (const id of toFilter) {
+			if (!nestedSetContains(includedRoots, id.major, id.minor)) {
+				yield id;
+			}
+		}
+	}
+	let isFirstDataChange = true;
+	return mapDataChanges(change.change, (dataChange) => {
+		const taggedDataChange = mapTaggedChange(change, dataChange);
+		const removedRoots = relevantRemovedRootsFromDataChange(taggedDataChange);
+		if (isFirstDataChange) {
+			isFirstDataChange = false;
+			return updateDataChangeRefreshers(
+				taggedDataChange,
+				getAndRememberDetachedNode,
+				removedRoots,
+				false,
+			);
+		} else {
+			return updateDataChangeRefreshers(
+				taggedDataChange,
+				getAndRememberDetachedNode,
+				filterIncludedRoots(removedRoots),
+				true,
+			);
+		}
+	});
 }

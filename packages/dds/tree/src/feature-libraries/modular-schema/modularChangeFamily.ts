@@ -1032,33 +1032,47 @@ function* relevantRemovedRootsFromFields(
 /**
  * Adds any refreshers missing from the provided change that are relevant to the change and
  * removes any refreshers from the provided change that are not relevant to the change.
- * This function enforces that all relevant removed roots have a corresponding build or refresher.
  *
  * @param change - The change that possibly has missing or superfluous refreshers. Not mutated by this function.
  * @param getDetachedNode - The function to retrieve a tree chunk from the corresponding detached node id.
  * @param removedRoots - The set of removed roots that should be in memory for the given change to be applied.
  * Can be retrieved by calling {@link relevantRemovedRoots}.
+ * @param allowMissingRefreshers - when false, this function enforces that all relevant removed roots have a
+ * corresponding build or refresher.
  */
 export function updateRefreshers(
 	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
+	allowMissingRefreshers: boolean = false,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
+	// This is a sad hack to circumvent bug AD#7241
+	const existingBuilds = new Set<string>();
+	if (change.builds !== undefined) {
+		forEachInNestedMap(change.builds, (chunk, majorOrUndefined, minor) => {
+			const major = majorOrUndefined ?? revision;
+			for (let i = 0; i < chunk.topLevelLength; i++) {
+				existingBuilds.add(`${major},${minor + i}`);
+			}
+		});
+	}
+
 	for (const root of removedRoots) {
 		if (change.builds !== undefined) {
-			const major = root.major === revision ? undefined : root.major;
 			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.builds, major, root.minor);
-			if (original !== undefined) {
+			if (existingBuilds.has(`${root.major},${root.minor}`)) {
 				continue;
 			}
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, 0x8cd /* detached node should exist */);
-		setInNestedMap(refreshers, root.major, root.minor, node);
+		if (node === undefined) {
+			assert(allowMissingRefreshers, 0x8cd /* detached node should exist */);
+		} else {
+			setInNestedMap(refreshers, root.major, root.minor, node);
+		}
 	}
 
 	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } = change;
