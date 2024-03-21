@@ -12,8 +12,8 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { createAzureClient } from "./AzureClientFactory";
-import { configProvider, waitForMember } from "./utils";
+import { createAzureClient } from "./AzureClientFactory.js";
+import { configProvider, waitForMember } from "./utils.js";
 
 describe("Fluid audience", () => {
 	const connectTimeoutMs = 10_000;
