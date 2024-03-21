@@ -105,14 +105,15 @@
 			"args": ["list", "--private", "-g", "build-tools", "-v"],
 		},
 		{
-			// Runs the `flub update fluid-imports` command with a debugger attached.
-			"name": "flub update fluid-imports",
+			// Runs the `flub modify fluid-imports` command with a debugger attached.
+			"name": "flub modify fluid-imports",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			// TODO: update this before merge
 			"cwd": "/Volumes/Code/rewrite-project",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["update", "fluid-imports", "-v"],
+			"args": ["modify", "fluid-imports", "-v"],
 		},
 		{
 			// Runs the `flub generate upcoming` command with a debugger attached.

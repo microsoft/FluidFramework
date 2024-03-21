@@ -230,6 +230,7 @@ async function updateImports(
 					moduleSpecifier: importSpecifier,
 					namedImports: [...newImportNames],
 				});
+				sourceFileChanged=true;
 			}
 		}
 
@@ -326,7 +327,6 @@ async function loadData(dataFile: string): Promise<MapData> {
 function removeFileHeaderComment(sourceFile: SourceFile): string {
 	const firstNode = sourceFile.getChildAtIndex(0);
 	const headerComments = firstNode.getLeadingCommentRanges();
-	// const headerComments = imports[0].getLeadingCommentRanges();
 	const headerText = `${headerComments.map((comment) => comment.getText()).join("\n\n")}\n\n`;
 	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
 	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
