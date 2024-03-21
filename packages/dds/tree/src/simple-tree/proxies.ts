@@ -37,8 +37,6 @@ import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "./flexNode.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
-	type AllowedTypes,
-	FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTypedNode,
@@ -46,7 +44,7 @@ import {
 	TreeMapNode,
 	type TreeNodeSchema,
 } from "./schemaTypes.js";
-import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
+import { cursorFromFieldData, cursorFromNodeData, normalizeFieldSchema } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
 
@@ -203,7 +201,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 					const { content, hydrateProxies } = extractFactoryContent(value);
 					const cursor = cursorFromNodeData(
 						content,
-						getAllowedTypes(simpleNodeFields[key]),
+						normalizeFieldSchema(simpleNodeFields[key]).allowedTypes,
 					);
 					modifyChildren(
 						flexNode,
@@ -253,14 +251,6 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 		},
 	}) as TreeNode;
 	return proxy;
-}
-
-function getAllowedTypes(schema: ImplicitFieldSchema): AllowedTypes {
-	return normalizeAllowedTypes(schema instanceof FieldSchema ? schema.allowedTypes : schema);
-}
-
-function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
-	return isReadonlyArray(types) ? types : [types];
 }
 
 /**

@@ -70,6 +70,7 @@ export function cursorFromNodeData(
 /**
  * Transforms an input {@link InsertableContent} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
+ * @param schema - Schema of the field with which the input `data` is associated.
  */
 export function cursorFromFieldData(
 	data: InsertableContent,
@@ -181,28 +182,28 @@ function mapValueWithFallbacks(
 	}
 }
 
-function arrayToMapTreeFields(data: InsertableContent[], childSchema: AllowedTypes): MapTree[] {
+function arrayToMapTreeFields(data: InsertableContent[], allowedTypes: AllowedTypes): MapTree[] {
 	const mappedData: MapTree[] = [];
 	for (const child of data) {
 		// We do not support undefined sequence entries.
 		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
 		let childWithFallback = child;
 		if (child === undefined) {
-			if (childSchema.includes(nullSchema)) {
+			if (allowedTypes.includes(nullSchema)) {
 				childWithFallback = null;
 			} else {
 				throw new TypeError(`Received unsupported array entry value: ${child}.`);
 			}
 		}
-		const mappedChild = nodeDataToMapTree(childWithFallback, childSchema);
+		const mappedChild = nodeDataToMapTree(childWithFallback, allowedTypes);
 		mappedData.push(mappedChild);
 	}
 
 	return mappedData;
 }
 
-function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTree {
-	const schema = getType(data, typeSet);
+function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): MapTree {
+	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Array) {
 		fail(`Provided array input is incompatible with schema "${schema.identifier}".`);
 	}
@@ -222,8 +223,8 @@ function arrayToMapTree(data: InsertableContent[], typeSet: AllowedTypes): MapTr
 	};
 }
 
-function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedTypes): MapTree {
-	const schema = getType(data, typeSet);
+function mapToMapTree(data: Map<string, InsertableContent>, allowedTypes: AllowedTypes): MapTree {
+	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Map) {
 		fail(`Provided map input is incompatible with schema "${schema.identifier}".`);
 	}
@@ -248,9 +249,9 @@ function mapToMapTree(data: Map<string, InsertableContent>, typeSet: AllowedType
 
 function objectToMapTree(
 	data: Record<string | number | symbol, InsertableContent>,
-	typeSet: AllowedTypes,
+	allowedTypes: AllowedTypes,
 ): MapTree {
-	const schema = getType(data, typeSet);
+	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Object) {
 		fail(`Provided object input is incompatible with schema "${schema.identifier}".`);
 	}
@@ -351,18 +352,14 @@ export function getPossibleTypes(typeSet: AllowedTypes, data: ContextuallyTypedN
 	return possibleTypes;
 }
 
-function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
-	return isReadonlyArray(types) ? types : [types];
-}
-
+/**
+ * Normalized {@link ImplicitFieldSchema}.
+ */
 export interface NormalizedFieldSchema {
 	kind: FieldKind;
 	allowedTypes: AllowedTypes;
 }
 
-/**
- * TODO
- */
 export function normalizeFieldSchema(schema: ImplicitFieldSchema): NormalizedFieldSchema {
 	return schema instanceof FieldSchema
 		? {
@@ -373,6 +370,10 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): NormalizedFie
 				kind: FieldKind.Required,
 				allowedTypes: normalizeAllowedTypes(schema),
 		  };
+}
+
+function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
+	return isReadonlyArray(types) ? types : [types];
 }
 
 /**
