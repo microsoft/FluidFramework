@@ -657,9 +657,16 @@ export function validateSnapshotConsistency(
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
+export function checkoutFromConfig(treeConfiguration: TreeConfiguration): TreeCheckout {
+	const forest = buildForest();
+	const flexConfig = toFlexConfig(treeConfiguration, forest.anchors);
+	return checkoutWithContent(flexConfig);
+}
+
 export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
+		forest?: IEditableForest;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -671,6 +678,7 @@ export function checkoutWithContent(
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
+		forest?: IEditableForest;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -678,7 +686,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
-	const forest = forestWithContent(content);
+	const forest = args?.forest ?? forestWithContent(content);
 	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
@@ -693,7 +701,10 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
-	const forest = buildForest();
+	return addContentToForest(buildForest(), content);
+}
+
+export function addContentToForest(forest: IEditableForest, content: TreeContent): IEditableForest {
 	const fieldCursor = normalizeNewFieldContent(
 		{ schema: content.schema },
 		content.schema.rootFieldSchema,
@@ -710,6 +721,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
+		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
@@ -717,7 +729,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = forestWithContent(content);
+	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
@@ -1184,8 +1196,10 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config);
-	const checkout = checkoutWithContent(flexConfig);
+	const forest = buildForest();
+	const flexConfig = toFlexConfig(config, forest.anchors);
+	addContentToForest(forest, flexConfig);
+	const checkout = checkoutWithContent(flexConfig, { forest });
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

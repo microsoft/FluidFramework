@@ -149,6 +149,12 @@ export interface AnchorEvents {
  */
 export interface AnchorSetRootEvents {
 	/**
+	 * Emitted when a new node is created.
+	 * @param fieldKey - the node will exist under a detached field with this key
+	 */
+	onCreate(fieldKey: FieldKey): void;
+
+	/**
 	 * What children are at the root is changing.
 	 */
 	childrenChanging(anchors: AnchorSet): void;
@@ -919,6 +925,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+				this.anchorSet.events.emit("onCreate", destination);
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
 			},

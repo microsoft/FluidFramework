@@ -103,6 +103,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 // @internal
 export interface AnchorSetRootEvents {
     childrenChanging(anchors: AnchorSet): void;
+    onCreate(fieldKey: FieldKey): void;
     treeChanging(anchors: AnchorSet): void;
 }
 
@@ -633,6 +634,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 
 // @internal
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+    readonly anchorSet: AnchorSet;
     // (undocumented)
     readonly nodeKeys: NodeKeys;
     get root(): FlexTreeField;
@@ -712,7 +714,7 @@ export const flexTreeMarker: unique symbol;
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
-    [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+    readonly anchorNode: AnchorNode;
     // (undocumented)
     boxedIterator(): IterableIterator<FlexTreeField>;
     is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
@@ -1467,7 +1469,7 @@ export const reservedObjectNodeFieldPropertyNamePrefixes: readonly ["set", "boxe
 export type ReservedObjectNodeFieldPropertyNames = (typeof reservedObjectNodeFieldPropertyNames)[number];
 
 // @internal
-export const reservedObjectNodeFieldPropertyNames: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
+export const reservedObjectNodeFieldPropertyNames: readonly ["anchorNode", "constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {

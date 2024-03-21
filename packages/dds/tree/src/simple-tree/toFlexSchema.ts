@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { AnchorSet, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -25,8 +25,8 @@ import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	InsertableContent,
-	extractFactoryContent,
 	getSimpleSchema,
+	prepareContentForInsert,
 	simpleSchemaSymbol,
 } from "./proxies.js";
 import {
@@ -49,22 +49,25 @@ import { TreeConfiguration } from "./tree.js";
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-export function cursorFromUnhydratedRoot(
+function cursorFromUnhydratedRoot(
 	schema: FlexTreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	anchors: AnchorSet,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
+	const data = prepareContentForInsert(tree as InsertableContent, anchors);
 	return (
-		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
+		cursorFromNodeData(data, schema, schema.rootFieldSchema.allowedTypeSet) ??
 		fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
+export function toFlexConfig(config: TreeConfiguration, anchors: AnchorSet): TreeContent {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
-		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
+		unhydrated === undefined
+			? undefined
+			: [cursorFromUnhydratedRoot(schema, unhydrated, anchors)];
 	return {
 		schema,
 		initialTree,
