@@ -235,7 +235,7 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
+export function readWideFlexTree(tree: FlexTreeView<typeof wideSchema.rootFieldSchema>): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -251,7 +251,7 @@ export function readWideEditableTree(tree: FlexTreeView<typeof wideSchema.rootFi
 	return { nodesCount, sum };
 }
 
-export function readDeepEditableTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
+export function readDeepFlexTree(tree: FlexTreeView<typeof deepSchema.rootFieldSchema>): {
 	depth: number;
 	value: number;
 } {

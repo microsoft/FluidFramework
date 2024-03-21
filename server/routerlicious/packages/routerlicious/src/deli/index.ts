@@ -16,6 +16,10 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
+import {
+	RedisClientConnectionManager,
+	type IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 
 export async function deliCreate(
 	config: Provider,
@@ -127,10 +131,15 @@ export async function deliCreate(
 			servername: redisConfig.host,
 		};
 	}
-	const publisher = new services.SocketIoRedisPublisher(
-		redisOptions,
-		redisConfig.enableClustering,
-	);
+	const redisClientConnectionManager: IRedisClientConnectionManager =
+		customizations?.redisClientConnectionManager ??
+		new RedisClientConnectionManager(
+			redisOptions,
+			undefined,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+		);
+	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
 		Lumberjack.error("Error with Redis Publisher:", undefined, err);

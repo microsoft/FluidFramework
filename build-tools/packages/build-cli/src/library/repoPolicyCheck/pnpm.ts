@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
-import { loadFluidBuildConfig } from "../../common/fluidUtils";
-
-import { PackageJson } from "../../common/npmPackage";
-import { Handler, readFile } from "../common";
+import fs from "node:fs";
+import path from "node:path";
+import { loadFluidBuildConfig, PackageJson } from "@fluidframework/build-tools";
+import { Handler, readFile } from "./common";
 
 const match = /(?:^|\/)pnpm-lock\.yaml$/i;
 export const handlers: Handler[] = [
@@ -16,24 +14,26 @@ export const handlers: Handler[] = [
 		// A workspace that uses pnpm must also have a preinstall script that tells the user to use pnpm.
 		name: "pnpm-npm-package-json-preinstall",
 		match,
-		handler: async (file, root) => {
+		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const dirname = path.dirname(file);
 			const packageJsonFile = path.join(dirname, "package.json");
 			const manifest = loadFluidBuildConfig(root);
 
 			let json: PackageJson;
 			try {
-				json = JSON.parse(readFile(packageJsonFile));
-			} catch (err) {
-				return "Error parsing JSON file: " + packageJsonFile;
+				json = JSON.parse(readFile(packageJsonFile)) as PackageJson;
+			} catch {
+				return `Error parsing JSON file: ${packageJsonFile}`;
 			}
 
 			// Ignore any paths in the policy configuration.
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (manifest.policy?.pnpmSinglePackageWorkspace?.includes(json.name)) {
 				return undefined;
 			}
 
 			const script: string | undefined = json.scripts?.preinstall;
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (script) {
 				const matchResult = script.match(/^node ((?:\.\.\/)*)scripts\/only-pnpm.cjs/);
 				if (matchResult) {
@@ -58,7 +58,7 @@ export const handlers: Handler[] = [
 		// This is needed because we have a workspace in the root so independent packages need one at the package level to override it.
 		name: "pnpm-lock-workspace",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			const dirname = path.dirname(file);
 			const workspaceFile = path.join(dirname, "pnpm-workspace.yaml");
 			if (!fs.existsSync(workspaceFile)) {
@@ -71,7 +71,7 @@ export const handlers: Handler[] = [
 		// A package or workspace that uses pnpm must not have an npm package-lock.json file.
 		name: "pnpm-lock-no-package-lock",
 		match,
-		handler: async (file) => {
+		handler: async (file: string): Promise<string | undefined> => {
 			const dirname = path.dirname(file);
 			const packageLockFile = path.join(dirname, "package-lock.json");
 			if (fs.existsSync(packageLockFile)) {

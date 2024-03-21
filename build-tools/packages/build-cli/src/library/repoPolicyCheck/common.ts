@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
+import fs from "node:fs";
 
 /**
  * each handler has a name for filtering and a match regex for matching which files it should resolve
@@ -18,10 +18,10 @@ export interface Handler {
 	final?: (root: string, resolve: boolean) => { error?: string } | undefined;
 }
 
-export function readFile(file: string) {
+export function readFile(file: string): string {
 	return fs.readFileSync(file, { encoding: "utf8" });
 }
 
-export function writeFile(file: string, data: string) {
+export function writeFile(file: string, data: string): void {
 	fs.writeFileSync(file, data, { encoding: "utf8" });
 }

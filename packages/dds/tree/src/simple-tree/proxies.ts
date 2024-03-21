@@ -40,7 +40,7 @@ import {
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
-	type TreeNodeSchema as TreeNodeSchemaClass,
+	type TreeNodeSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
@@ -106,13 +106,13 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 }
 
 /**
- * A symbol for storing TreeNodeSchemaClass on FlexTreeNode's schema.
+ * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
  */
 export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
 
-export function getClassSchema(schema: FlexTreeNodeSchema): TreeNodeSchemaClass | undefined {
+export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
 	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchemaClass;
+		return schema[simpleSchemaSymbol] as TreeNodeSchema;
 	}
 	return undefined;
 }
@@ -124,7 +124,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	const classSchema = getClassSchema(schema);
+	const classSchema = getSimpleSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
 	if (typeof classSchema === "function") {
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
@@ -530,7 +530,8 @@ function asIndex(key: string | symbol, length: number) {
  * Otherwise setting of unexpected properties will error.
  * @param customTargetObject - Target object of the proxy.
  * If not provided `[]` is used for the target and a separate object created to dispatch array methods.
- * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide `length` and the array functionality from {@link arrayNodePrototype}.
+ * If provided, the customTargetObject will be used as both the dispatch object and the proxy target, and therefor must provide an own `length` value property
+ * (which is not used but must exist for getOwnPropertyDescriptor invariants) and the array functionality from {@link arrayNodePrototype}.
  */
 export function createArrayNodeProxy(
 	allowAdditionalProperties: boolean,
@@ -547,11 +548,14 @@ export function createArrayNodeProxy(
 	const dispatch: object =
 		customTargetObject ??
 		Object.create(arrayNodePrototype, {
+			// This dispatch object's set of keys is used to implement `has` (for the `in` operator) for the non-numeric cases, and therefor must include `length`.
 			length: {
 				get(this: TreeArrayNode) {
-					return getSequenceField(this).length;
+					fail("Proxy should intercept length");
 				},
-				set() {},
+				set() {
+					fail("Proxy should intercept length");
+				},
 				enumerable: false,
 				configurable: false,
 			},
@@ -566,6 +570,10 @@ export function createArrayNodeProxy(
 			const maybeIndex = asIndex(key, field.length);
 
 			if (maybeIndex === undefined) {
+				if (key === "length") {
+					return field.length;
+				}
+
 				// Pass the proxy as the receiver here, so that any methods on
 				// the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatch, key, proxy) as unknown;
@@ -583,6 +591,14 @@ export function createArrayNodeProxy(
 			return getOrCreateNodeProxy(value);
 		},
 		set: (target, key, newValue, receiver) => {
+			if (key === "length") {
+				// To allow "length" to look like "length" on an array, getOwnPropertyDescriptor has to report it as a writable value.
+				// This means the proxy target must provide a length value, but since it can't use getters and setters, it can't be correct.
+				// Therefor length has to be handled in this proxy.
+				// Since its not actually mutable, return false so setting it will produce a type error.
+				return false;
+			}
+
 			// 'Symbol.isConcatSpreadable' may be set on an Array instance to modify the behavior of
 			// the concat method.  We allow this property to be added to the dispatch object.
 			if (key === Symbol.isConcatSpreadable) {
@@ -607,7 +623,17 @@ export function createArrayNodeProxy(
 
 			// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
 			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
-			return Array.from({ length: field.length }, (_, index) => `${index}`).concat("length");
+			const keys: (string | symbol)[] = Array.from(
+				{ length: field.length },
+				(_, index) => `${index}`,
+			);
+
+			if (allowAdditionalProperties) {
+				keys.push(...Reflect.ownKeys(target));
+			} else {
+				keys.push("length");
+			}
+			return keys;
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			const field = getSequenceField(proxy);
@@ -629,7 +655,7 @@ export function createArrayNodeProxy(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'length' must be a simple
 				// value property (as opposed to using getter) and be declared writable / non-configurable.
 				return {
-					value: getSequenceField(proxy).length,
+					value: field.length,
 					writable: true,
 					enumerable: false,
 					configurable: false,
@@ -686,7 +712,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: TreeMapNode,
 			key: string,
-			value: InsertableTypedNode<TreeNodeSchemaClass>,
+			value: InsertableTypedNode<TreeNodeSchema>,
 		): TreeMapNode {
 			const node = getFlexNode(this);
 
@@ -1053,7 +1079,7 @@ function modifyChildren<T extends FlexTreeNode>(
 // TODO: Replace this with calls to `Tree.schema(node).kind` when dependency cycles are no longer a problem.
 function getNodeKind(node: TreeNode): NodeKind {
 	return (
-		getClassSchema(getFlexNode(node).schema)?.kind ??
+		getSimpleSchema(getFlexNode(node).schema)?.kind ??
 		fail("NodeBase should always have class schema")
 	);
 }
