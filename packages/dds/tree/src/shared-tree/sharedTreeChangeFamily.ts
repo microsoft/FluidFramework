@@ -188,32 +188,6 @@ function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }
 
-/**
- * Returns the set of removed roots that should be in memory for the given change to be applied.
- * A removed root is relevant if any of the following is true:
- * - It is being inserted
- * - It is being restored
- * - It is being edited
- * - The ID it is associated with is being changed
- *
- * May be conservative by returning more removed roots than strictly necessary.
- *
- * Will never return IDs for non-root trees, even if they are removed.
- *
- * @param change - The change to be applied.
- */
-export function* relevantRemovedRoots(
-	taggedChange: TaggedChange<SharedTreeChange>,
-): Iterable<DeltaDetachedNodeId> {
-	for (const innerChange of taggedChange.change.changes) {
-		if (innerChange.type === "data") {
-			yield* defaultRelevantRemovedRoots(
-				mapTaggedChange(taggedChange, innerChange.innerChange),
-			);
-		}
-	}
-}
-
 function mapDataChanges(
 	change: SharedTreeChange,
 	map: (change: ModularChangeset) => ModularChangeset,
@@ -252,17 +226,27 @@ export function updateRefreshers(
 	// applying those data changes is guaranteed to still have have the relevant trees in memory.
 	// This means that for the first data change, all required refreshers should be added (and none should be missing).
 	// While for later data changes, we should not include refreshers that either:
-	// - were already included in the earlier data changes
-	// - correspond to trees that were removed by earlier data changes
+	// A) were already included in the earlier data changes
+	// B) correspond to trees that were removed by earlier data changes
+	// Set A is excluded by tracking which roots have already been included in the earlier data changes, and filtering
+	// them out from the relevant removed roots.
+	// Set B is excluded because the `getDetachedNode` is bound to return `undefined` for them, which tell
+	// `defaultUpdateRefreshers` to ignore. One downside of this approach is that it prevents `defaultUpdateRefreshers`
+	// from detecting cases where a detached node is missing for another reason (which would be a bug).
 	const includedRoots: NestedSet<RevisionTag | undefined, number> = new Map();
-	const monitoredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined => {
+	function getAndRememberDetachedNode(id: DeltaDetachedNodeId): TreeChunk | undefined {
 		addToNestedSet(includedRoots, id.major, id.minor);
 		return getDetachedNode(id);
-	};
-	const filteredDetachedNodes = (id: DeltaDetachedNodeId): TreeChunk | undefined =>
-		nestedSetContains(includedRoots, id.major, id.minor)
-			? undefined
-			: monitoredDetachedNodes(id);
+	}
+	function* filterIncludedRoots(
+		toFilter: Iterable<DeltaDetachedNodeId>,
+	): Iterable<DeltaDetachedNodeId> {
+		for (const id of toFilter) {
+			if (!nestedSetContains(includedRoots, id.major, id.minor)) {
+				yield id;
+			}
+		}
+	}
 	let isFirstDataChange = true;
 	return mapDataChanges(change.change, (innerChange) => {
 		const taggedInnerChange = mapTaggedChange(change, innerChange);
@@ -271,15 +255,15 @@ export function updateRefreshers(
 			isFirstDataChange = false;
 			return defaultUpdateRefreshers(
 				taggedInnerChange,
-				monitoredDetachedNodes,
+				getAndRememberDetachedNode,
 				removedRoots,
 				false,
 			);
 		} else {
 			return defaultUpdateRefreshers(
 				taggedInnerChange,
-				filteredDetachedNodes,
-				removedRoots,
+				getAndRememberDetachedNode,
+				filterIncludedRoots(removedRoots),
 				true,
 			);
 		}
