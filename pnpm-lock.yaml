@@ -9635,7 +9635,6 @@ importers:
 
   packages/test/snapshots:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@fluid-experimental/ink': workspace:~
       '@fluid-experimental/sequence-deprecated': workspace:~
       '@fluid-internal/mocha-test-setup': workspace:~
@@ -9701,7 +9700,6 @@ importers:
       '@fluidframework/test-utils': link:../test-utils
       mocha: 10.2.0
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@fluid-internal/mocha-test-setup': link:../mocha-test-setup
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluidframework/build-common': 2.0.3
