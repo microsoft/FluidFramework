@@ -7,25 +7,25 @@ import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	Brand,
+	type IRange,
 	IdAllocator,
 	JsonCompatibleReadOnly,
-	brand,
-	idAllocatorFromMaxId,
-	populateNestedRangeMap,
-	type IRange,
 	type NestedRangeMap,
-	tryGetFromNestedRangeMap,
+	brand,
 	deleteFromNestedRangeMap,
 	getFromRangeMap,
-	setInRangeMap,
+	idAllocatorFromMaxId,
+	populateNestedRangeMap,
 	setInNestedRangeMap,
+	setInRangeMap,
+	tryGetFromNestedRangeMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
+import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 
 /**
  * ID used to create a detached field key for a removed subtree.

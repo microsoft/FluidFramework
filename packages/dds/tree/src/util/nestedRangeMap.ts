@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { getOrAddInMap } from "./nestedMap.js";
 import {
 	RangeMap,
-	getFromRangeMap,
 	RangeQueryResult,
-	setInRangeMap,
 	deleteFromRangeMap,
+	getFromRangeMap,
+	setInRangeMap,
 } from "./rangeMap.js";
-import { getOrAddInMap } from "./nestedMap.js";
 
 export type NestedRangeMap<K, V> = Map<K, RangeMap<V>>;
 

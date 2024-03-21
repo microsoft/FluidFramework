@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IRange } from "../../util/index.js";
 import { RevisionTag } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
-import { IRange } from "../../util/index.js";
 import { ITreeCursorSynchronous } from "./cursor.js";
 
 /**
