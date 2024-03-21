@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 import { existsSync, readFile } from "fs-extra";
 import * as JSON5 from "json5";
 import path from "node:path";
-import { Project, type ImportDeclaration, type SourceFile } from "ts-morph";
+import { Project, type ImportDeclaration, type SourceFile, type CommentRange } from "ts-morph";
 import { BaseCommand } from "../../base";
 import type { CommandLogger } from "../../logging";
 
@@ -72,10 +72,10 @@ function getApiLevelForImportName(
 	defaultValue: ApiLevel,
 	onlyInternal: boolean,
 ): ApiLevel {
-	if (data.alpha?.includes(name) === true) return onlyInternal ? "internal" : "alpha";
-	if (data.beta?.includes(name) === true) return onlyInternal ? "internal" : "beta";
-	if (data.public?.includes(name) === true) return "public";
-	if (data.internal?.includes(name) === true) return "internal";
+	if (data.alpha?.includes(name) === true) return onlyInternal ? internalLevel : alphaLevel;
+	if (data.beta?.includes(name) === true) return onlyInternal ? internalLevel : alphaLevel;
+	if (data.public?.includes(name) === true) return publicLevel;
+	if (data.internal?.includes(name) === true) return internalLevel;
 	return defaultValue;
 }
 
@@ -104,10 +104,16 @@ async function updateImports(
 	for (const sourceFile of sourceFiles) {
 		log?.verbose(`Source file: ${sourceFile.getBaseName()}`);
 
+		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
+		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
+		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
+		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
+		const headerText = getCommentRangesText(removeFileHeaderComment(sourceFile));
+
 		/**
 		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
 		 */
-		let imports = sourceFile.getImportDeclarations();
+		const imports = sourceFile.getImportDeclarations();
 
 		// Skip source files with no imports.
 		if (imports.length === 0) {
@@ -147,6 +153,11 @@ async function updateImports(
 				}
 				const namedImports = importDeclaration.getNamedImports();
 
+				// Known issue: type-only import declarations lose the "type". Individual type imports retain theirs, but
+				// type-only ones are rewritten as regular imports, and type-only imports are not split out. Lint fixups should
+				// be able to restore the "type" if needed.
+				// const isTypeOnly = importDeclaration.isTypeOnly();
+
 				log?.logIndent(`Iterating named imports...`, 2);
 				for (const importSpecifier of namedImports) {
 					const name = importSpecifier.getName();
@@ -161,14 +172,19 @@ async function updateImports(
 					 * module/path.
 					 */
 					const fullImportSpecifierText = importSpecifier.getFullText().trim();
-					const expectedLevel = getApiLevelForImportName(name, data, "public", onlyInternal);
+					const expectedLevel = getApiLevelForImportName(
+						name,
+						data,
+						/* default */ publicLevel,
+						onlyInternal,
+					);
 
 					log?.logIndent(
 						`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
 						4,
 					);
 					const newSpecifier =
-						expectedLevel === "public" ? moduleName : `${moduleName}/${expectedLevel}`;
+						expectedLevel === publicLevel ? moduleName : `${moduleName}/${expectedLevel}`;
 
 					if (!newImports.has(newSpecifier)) {
 						newImports.set(newSpecifier, new Set());
@@ -177,15 +193,6 @@ async function updateImports(
 				}
 			}
 		}
-
-		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
-		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
-		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
-		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
-		const headerText = removeFileHeaderComment(sourceFile);
-
-		// Need to get declarations again because nodes are invalidated after calling replaceText above
-		imports = sourceFile.getImportDeclarations();
 
 		// Second pass: Update existing imports and add any missing ones
 		for (const importDeclaration of imports) {
@@ -322,13 +329,20 @@ async function loadData(dataFile: string): Promise<MapData> {
 }
 
 /**
- * Delete any header comments at the beginning of the file. Return the removed text.
+ * Delete any header comments at the beginning of the file. Return the removed CommentRanges.
  */
-function removeFileHeaderComment(sourceFile: SourceFile): string {
+function removeFileHeaderComment(sourceFile: SourceFile): CommentRange[] {
 	const firstNode = sourceFile.getChildAtIndex(0);
 	const headerComments = firstNode.getLeadingCommentRanges();
-	const headerText = `${headerComments.map((comment) => comment.getText()).join("\n\n")}\n\n`;
 	const [start, end] = [firstNode.getPos(), firstNode.getEnd()];
 	sourceFile.replaceText([start, end], sourceFile.getChildAtIndex(0).getText());
+	return headerComments;
+}
+
+function getCommentRangesText(ranges: CommentRange[]): string {
+	// Joins the comment ranges with double new lines so there is an empty line between each comment. This does mean that
+	// the ranges may be output in a slightly different way than it was ingested. However, there does not appear to be a
+	// way to get the text of multiple ranges, so the spacing information between the nodes seems to be lost.
+	const headerText = `${ranges.map((comment) => comment.getText()).join("\n\n")}\n\n`;
 	return headerText;
 }
