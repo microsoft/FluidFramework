@@ -9856,7 +9856,6 @@ importers:
       '@types/uuid': ^9.0.2
       agentkeepalive: ^4.5.0
       axios: ^1.6.2
-      c8: ^8.0.1
       copyfiles: ^2.4.1
       eslint: ~8.55.0
       prettier: ~3.0.3
@@ -9895,7 +9894,6 @@ importers:
       '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 8.0.1
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
