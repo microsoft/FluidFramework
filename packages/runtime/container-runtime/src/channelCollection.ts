@@ -34,6 +34,8 @@ import {
 	ITelemetryContext,
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
+	IDataStore,
+	IDataStoreCollection,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -56,6 +58,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	createChildLogger,
+	UsageError,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
@@ -236,7 +239,9 @@ export function wrapContextForInnerChannel(
  * but eventually could be hosted on any channel once we formalize the channel api boundary.
  * @internal
  */
-export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
+export class ChannelCollection
+	implements IFluidDataStoreChannel, IDataStoreCollection, IDisposable
+{
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
 	// 0.24 back-compat attachingBeforeSummary
@@ -605,6 +610,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return id;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.createDetachedDataStore}
+	 */
 	public createDetachedDataStore(
 		pkg: Readonly<string[]>,
 		loadingGroupId?: string,
@@ -663,6 +671,58 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 		this.contexts.addUnbound(context);
 		return context;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.createDataStore}
+	 */
+	public async createDataStore(
+		pkg: Readonly<string | string[]>,
+		loadingGroupId?: string,
+	): Promise<IDataStore> {
+		const context = this.createDataStoreContext(
+			Array.isArray(pkg) ? pkg : [pkg],
+			undefined,
+			loadingGroupId,
+		);
+		return channelToDataStore(await context.realize(), context.id, this, this.mc.logger);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStoreCollection.getAliasedDataStoreEntryPoint}
+	 */
+	public async getAliasedDataStoreEntryPoint(
+		alias: string,
+	): Promise<IFluidHandle<FluidObject> | undefined> {
+		// Back-comapatibility:
+		// There are old files that were created without using data store aliasing feature, but
+		// used createRoot*DataStore*() (already removed) API. Such data stores will have isRoot = true,
+		// and internalID provided by user. The expectation is that such files behave as new files, where
+		// same data store instances created using aliasing feature.
+		// Please also see note on name collisions in DataStores.createDataStoreId()
+		await this.waitIfPendingAlias(alias);
+		const internalId = this.internalId(alias);
+		const context = await this.getDataStoreIfAvailable(internalId, {
+			wait: false,
+		});
+		// If the data store is not available or not an alias, return undefined.
+		if (context === undefined || !(await context.isRoot())) {
+			return undefined;
+		}
+
+		const channel = await context.realize();
+		if (channel.entryPoint === undefined) {
+			throw new UsageError(
+				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
+			);
+		}
+		this.gcNodeUpdated(
+			`/${internalId}`,
+			"Loaded",
+			undefined /* timestampMs */,
+			context.packagePath,
+		);
+		return channel.entryPoint;
 	}
 
 	public get disposed() {
