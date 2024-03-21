@@ -67,8 +67,6 @@ export function cursorFromNodeData(
 	return cursorForMapTreeNode(mappedContent);
 }
 
-// TODO: this path has an off-by-one issue in terms of layering.
-// Need  to investigate and understand the expected form of output here + unit tests for the field entrypoint.
 /**
  * Transforms an input {@link InsertableContent} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
