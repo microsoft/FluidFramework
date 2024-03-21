@@ -44,7 +44,12 @@ import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { getClientIds, initializeProtocol, isCheckpointQuorumScrubbed, sendToDeli } from "./utils";
+import {
+	getClientIds,
+	initializeProtocol,
+	isScribeCheckpointQuorumScrubbed,
+	sendToDeli,
+} from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -105,6 +110,8 @@ export class ScribeLambdaFactory
 		let lastCheckpoint: IScribe;
 		let summaryReader: SummaryReader;
 		let latestSummary: ILatestSummaryState;
+		let latestSummaryCheckpoint: IScribe | undefined;
+		let latestDbCheckpoint: IScribe | undefined;
 		let opMessages: ISequencedDocumentMessage[] = [];
 
 		const { tenantId, documentId } = config;
@@ -119,6 +126,16 @@ export class ScribeLambdaFactory
 			LumberEventName.ScribeSessionResult,
 			this.serviceConfiguration,
 		);
+		const failCreation = async (error: unknown): Promise<void> => {
+			const errorMessage = "Scribe lambda creation failed.";
+			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
+			Lumberjack.error(errorMessage, lumberProperties, error);
+			await this.sendLambdaStartResult(tenantId, documentId, {
+				lambdaName: LambdaName.Scribe,
+				success: false,
+			});
+			scribeSessionMetric?.error("Scribe lambda creation failed", error);
+		};
 
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 
@@ -176,38 +193,39 @@ export class ScribeLambdaFactory
 				this.enableWholeSummaryUpload,
 			);
 			latestSummary = await summaryReader.readLastSummary();
+			latestSummaryCheckpoint = latestSummary.scribe
+				? JSON.parse(latestSummary.scribe)
+				: undefined;
+			latestDbCheckpoint = (await this.checkpointService.restoreFromCheckpoint(
+				documentId,
+				tenantId,
+				"scribe",
+				document,
+			)) as IScribe;
 		} catch (error) {
-			const errorMessage = "Scribe lambda creation failed.";
-			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
-			Lumberjack.error(errorMessage, lumberProperties, error);
-			await this.sendLambdaStartResult(tenantId, documentId, {
-				lambdaName: LambdaName.Scribe,
-				success: false,
-			});
-			scribeSessionMetric?.error("Scribe lambda creation failed", error);
-
+			await failCreation(error);
 			throw error;
 		}
 
+		// Mongodb casts undefined as null so we are checking both to be safe.
 		const useDefaultCheckpointForNewDocument =
 			document.scribe === undefined || document.scribe === null;
-		const checkpointIsBlank = document.scribe === "";
-		const checkpointQuorumIsScrubbed = isCheckpointQuorumScrubbed(document.scribe);
+		// Empty string denotes a cache that was cleared due to a service summary.
+		const dbCheckpointIsBlank = document.scribe === "";
+		// Scrubbed users indicate that the quorum members have been scrubbed for privacy compliance.
+		const dbCheckpointQuorumIsScrubbed = isScribeCheckpointQuorumScrubbed(latestDbCheckpoint);
 		const useLatestSummaryCheckpointForExistingDocument =
-			checkpointIsBlank || checkpointQuorumIsScrubbed;
+			dbCheckpointIsBlank || dbCheckpointQuorumIsScrubbed;
 
 		if (useDefaultCheckpointForNewDocument) {
-			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
-			// both to be safe. Empty sring denotes a cache that was cleared due to a service summary
+			// Restore scribe state if not present in the cache.
 			const message = "New document. Setting empty scribe checkpoint";
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
 			lastCheckpoint = DefaultScribe;
 		} else if (useLatestSummaryCheckpointForExistingDocument) {
 			const message = `Existing document${
-				!checkpointIsBlank && checkpointQuorumIsScrubbed
-					? " with invalid quorum members"
-					: ""
+				dbCheckpointQuorumIsScrubbed ? " with invalid quorum members" : ""
 			}. Fetching checkpoint from summary`;
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, lumberProperties);
@@ -216,13 +234,20 @@ export class ScribeLambdaFactory
 				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
 				lastCheckpoint = DefaultScribe;
 			} else {
-				if (isCheckpointQuorumScrubbed(latestSummary.scribe)) {
+				if (!latestSummaryCheckpoint) {
+					const error = new Error(
+						"Attempted to load from non-existent summary checkpoint.",
+					);
+					await failCreation(error);
+					throw error;
+				}
+				if (isScribeCheckpointQuorumScrubbed(latestSummaryCheckpoint)) {
 					Lumberjack.error(
-						"Quorum from summary is invalid. Continuing.",
+						"Quorum from summary is scrubbed. Continuing.",
 						lumberProperties,
 					);
 				}
-				lastCheckpoint = JSON.parse(latestSummary.scribe);
+				lastCheckpoint = latestSummaryCheckpoint ?? DefaultScribe;
 				opMessages = latestSummary.messages;
 				// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
 				// Currently the lambda checkpoints only after updating the logOffset so setting this to lower
@@ -234,12 +259,7 @@ export class ScribeLambdaFactory
 				Lumberjack.info(checkpointMessage, lumberProperties);
 			}
 		} else {
-			lastCheckpoint = (await this.checkpointService.restoreFromCheckpoint(
-				documentId,
-				tenantId,
-				"scribe",
-				document,
-			)) as IScribe;
+			lastCheckpoint = latestDbCheckpoint ?? DefaultScribe;
 
 			try {
 				opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
