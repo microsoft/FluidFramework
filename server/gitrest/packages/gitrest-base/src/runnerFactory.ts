@@ -47,7 +47,7 @@ export class GitrestResources implements core.IResources {
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
 	public async create(
 		config: Provider,
-		customizations: IGitrestResourcesCustomizations,
+		customizations?: IGitrestResourcesCustomizations,
 	): Promise<GitrestResources> {
 		const port = normalizePort(process.env.PORT || "3000");
 		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
@@ -72,7 +72,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 
 	private getFileSystemManagerFactories(
 		config: Provider,
-		customizations: IGitrestResourcesCustomizations,
+		customizations?: IGitrestResourcesCustomizations,
 	): IFileSystemManagerFactories {
 		const defaultFileSystemName: string = config.get("git:filesystem:name") ?? "nodeFs";
 		const ephemeralFileSystemName: string =
