@@ -125,12 +125,6 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 
 	const schema = flexNode.schema;
 
-	// if (schemaIsLeaf(schema)) {
-	// 	// Can't use `??` here since null is a valid TreeValue.
-	// 	assert(flexNode.value !== undefined, 0x887 /* Leaf must have value */);
-	// 	return flexNode.value;
-	// }
-
 	const classSchema = getClassSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
 	if (typeof classSchema === "function") {
