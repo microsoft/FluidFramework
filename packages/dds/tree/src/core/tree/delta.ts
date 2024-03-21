@@ -177,12 +177,13 @@ export interface DetachedNodeRangeId {
  */
 export function convertToRangeId(
 	id?: DetachedNodeId | DetachedNodeRangeId,
+	count?: number,
 ): DetachedNodeRangeId | undefined {
 	if (id === undefined) {
 		return undefined;
 	}
 	if (!instanceOfRangeId(id)) {
-		return { major: id.major, minor: { start: id.minor, length: 1 } };
+		return { major: id.major, minor: { start: id.minor, length: count ?? 1 } };
 	}
 	return id;
 }

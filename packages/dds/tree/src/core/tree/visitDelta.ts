@@ -378,7 +378,10 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (isDetachMark(mark)) {
-				const rangeId = Delta.convertToRangeId(mark.detach) as Delta.DetachedNodeRangeId;
+				const rangeId = Delta.convertToRangeId(
+					mark.detach,
+					mark.count,
+				) as Delta.DetachedNodeRangeId;
 				rangeId.minor.length = mark.count;
 				const root = config.detachedFieldIndex.createEntry(rangeId);
 				if (mark.fields !== undefined) {
@@ -449,12 +452,14 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
 				const attachRangeId = Delta.convertToRangeId(
 					mark.attach,
+					mark.count,
 				) as Delta.DetachedNodeRangeId;
 				const sourceRoot = config.detachedFieldIndex.getEntry(attachRangeId);
 				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 				if (isReplaceMark(mark)) {
 					const detachedRangeId = Delta.convertToRangeId(
 						mark.detach,
+						mark.count,
 					) as Delta.DetachedNodeRangeId;
 					const rootDestination = config.detachedFieldIndex.createEntry(detachedRangeId);
 					const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);

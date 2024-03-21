@@ -194,7 +194,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 	}
 
 	const iFirst = iBefore + 1;
-	const iLast = iAfter - 1;
+	let iLast = iAfter - 1;
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
@@ -205,6 +205,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 		// If the entry lies within the range to be deleted, remove it
 		if (entry.start >= start && entryLastKey <= end) {
 			map.splice(i, 1);
+			iLast--;
 		} else {
 			// If the entry partially or completely overlaps with the range to be deleted
 			if (entry.start < start) {
