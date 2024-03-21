@@ -13,7 +13,6 @@ import {
 	summarizeNow,
 	createSummarizerCore,
 } from "@fluidframework/test-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
@@ -37,6 +36,7 @@ interface IDataStores extends IFluidDataStoreChannel {
 }
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;

@@ -6,11 +6,6 @@
 import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
 	SummarizerStopReason,
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -50,22 +45,24 @@ const overrideResult = <T>(parent: any, fn: (...args: any[]) => Promise<T>, resu
 	parent[fn.name] = overrideFn;
 };
 
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
-	}
+describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObjectFactory, DataObject } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
-	public get containerRuntime() {
-		return this.context.containerRuntime as ContainerRuntime;
-	}
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
 
-	public get loadingGroupId() {
-		return this.context.loadingGroupId;
-	}
-}
+		public get containerRuntime() {
+			return this.context.containerRuntime as ContainerRuntime;
+		}
 
-describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider) => {
+		public get loadingGroupId() {
+			return this.context.loadingGroupId;
+		}
+	}
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -273,7 +270,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 				return;
 			}
 			// Load basic container stuff
-			const container = await provider.createContainer(runtimeFactory, { configProvider });
+			const container = await provider.createContainer(runtimeFactory, {
+				configProvider,
+			});
 			const mainObject = (await container.getEntryPoint()) as TestDataObject;
 			const containerRuntime = mainObject.containerRuntime;
 
