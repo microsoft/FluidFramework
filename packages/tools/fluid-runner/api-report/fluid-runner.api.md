@@ -15,8 +15,6 @@ import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 // @internal
 export function createContainerAndExecute(localOdspSnapshot: string | Uint8Array, fluidFileConverter: IFluidFileConverter, logger: ITelemetryLoggerExt, options?: string, timeout?: number, disableNetworkFetch?: boolean): Promise<string>;
 
-// Warning: (ae-unresolved-link) The @link reference could not be resolved: The package "@fluidframework/fluid-runner" does not have an export "IFileLogger"
-//
 // @internal
 export function createLogger(filePath: string, options?: ITelemetryOptions): {
     logger: ITelemetryLoggerExt;
@@ -40,11 +38,31 @@ export interface ICodeLoaderBundle {
     fluidExport: Promise<IFluidFileConverter>;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IExportFileResponseSuccess" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "IExportFileResponseFailure" needs to be exported by the entry point index.d.ts
-//
 // @alpha (undocumented)
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
+
+// @alpha (undocumented)
+export interface IExportFileResponseFailure {
+    // (undocumented)
+    error?: any;
+    // (undocumented)
+    errorMessage: string;
+    // (undocumented)
+    eventName: string;
+    // (undocumented)
+    success: false;
+}
+
+// @alpha (undocumented)
+export interface IExportFileResponseSuccess {
+    // (undocumented)
+    success: true;
+}
+
+// @internal
+export interface IFileLogger extends ITelemetryBaseLogger {
+    close(): Promise<void>;
+}
 
 // @alpha
 export interface IFluidFileConverter {
@@ -79,10 +97,6 @@ export function validateAndParseTelemetryOptions(format?: string, props?: (strin
     success: true;
     telemetryOptions: ITelemetryOptions;
 };
-
-// Warnings were encountered during analysis:
-//
-// src/logger/loggerUtils.ts:29:35 - (ae-forgotten-export) The symbol "IFileLogger" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

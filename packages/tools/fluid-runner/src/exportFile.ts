@@ -21,11 +21,17 @@ import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "
  */
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
-interface IExportFileResponseSuccess {
+/**
+ * @alpha
+ */
+export interface IExportFileResponseSuccess {
 	success: true;
 }
 
-interface IExportFileResponseFailure {
+/**
+ * @alpha
+ */
+export interface IExportFileResponseFailure {
 	success: false;
 	eventName: string;
 	errorMessage: string;
