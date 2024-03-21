@@ -230,7 +230,7 @@ async function updateImports(
 					moduleSpecifier: importSpecifier,
 					namedImports: [...newImportNames],
 				});
-				sourceFileChanged=true;
+				sourceFileChanged = true;
 			}
 		}
 
