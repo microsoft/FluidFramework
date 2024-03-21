@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import * as semver from "semver";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	FluidObject,
@@ -28,6 +29,12 @@ import {
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
+import {
+	IContainerRuntimeOptions,
+	DefaultSummaryConfiguration,
+	CompressionAlgorithms,
+	ICompressionRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,
@@ -41,6 +48,96 @@ import {
  * @internal
  */
 export const TestDataObjectType = "@fluid-example/test-dataStore";
+
+/**
+ * This function modifies container runtime options according to a version of runtime used.
+ * If a version of runtime does not support some options, they are removed.
+ * If a version runtime supports some options, such options are enabled to increase a chance of
+ * hitting feature set controlled by such options, and thus increase chances of finding product bugs.
+ *
+ * @param version - a version of container runtime to be used in test
+ * @param optionsArg - input runtime options (optional)
+ * @returns - runtime options that should be used with a given version of container runtime
+ * @internal
+ */
+function filterRuntimeOptionsForVersion(
+	version: string,
+	optionsArg: IContainerRuntimeOptions = {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				...DefaultSummaryConfiguration,
+				...{
+					initialSummarizerDelayMs: 0,
+				},
+			},
+		},
+	},
+) {
+	let options = { ...optionsArg };
+
+	// No test fails with this option, it allows us to validate properly expectations and
+	// implementation of services
+	options.loadSequenceNumberVerification = "close";
+
+	const compressorDisabled: ICompressionRuntimeOptions = {
+		minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+		compressionAlgorithm: CompressionAlgorithms.lz4,
+	};
+
+	// These is the "maximum" config.
+	const {
+		compressionOptions = {
+			minimumBatchSizeInBytes: 200,
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		},
+		enableGroupedBatching = true,
+		enableRuntimeIdCompressor = "on",
+		// chunkSizeInBytes = 200,
+	} = options;
+
+	if (version.startsWith("1.")) {
+		options = {
+			...options,
+			// None of these features are supported by 1.3
+			compressionOptions: undefined,
+			enableGroupedBatching: false,
+			enableRuntimeIdCompressor: undefined,
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+		};
+	} else if (version.startsWith("2.0.0-rc.1.")) {
+		options = {
+			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
+			enableGroupedBatching,
+			enableRuntimeIdCompressor: undefined, // it was boolean in RC1, switched to enum in RC2
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
+			...options,
+		};
+	} else if (version.startsWith("2.0.0-rc.2.")) {
+		options = {
+			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
+			enableGroupedBatching,
+			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
+			// This is very likely related to one of these bugfixes that missed that release:
+			// https://github.com/microsoft/FluidFramework/pull/20089
+			// https://github.com/microsoft/FluidFramework/pull/20080
+			enableRuntimeIdCompressor: undefined,
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
+			...options,
+		};
+	} else {
+		// "2.0.0-rc.3." ++
+		options = {
+			compressionOptions,
+			enableGroupedBatching,
+			// need to investigate - some small number of t9s tests time out with this option on.
+			// chunkSizeInBytes,
+			enableRuntimeIdCompressor,
+			...options,
+		};
+	}
+
+	return options;
+}
 
 /**
  * @internal
@@ -138,7 +235,10 @@ export async function getVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			containerOptions?.runtimeOptions,
+			filterRuntimeOptionsForVersion(
+				apis.containerRuntime.version,
+				containerOptions?.runtimeOptions,
+			),
 		);
 	};
 
@@ -207,6 +307,28 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		apis.dataRuntimeForLoading,
 	);
 
+	// We want to ensure that we are testing all latest runtime features, but only if both runtimes
+	// (one that creates containers and one that loads them) support them.
+	//
+	// Theoretically it should be fine to use config for apis.containerRuntimeForLoading?.version.
+	// If it's higher then apis.containerRuntime, then unknown to lower version of apis.containerRuntime
+	// would be ignored.
+	//
+	// But TestObjectProviderWithVersionedLoad.createLoader() implementation is dumb - it resets this.useCreateApi
+	// on first call and thus uses apis.containerRuntimeForLoading for any container created after.
+	// Many use non-first container instance to send ops, so that screws things up.
+	//
+	// As result, we absolutly need to use the min between two versions!
+	const versionForCreating = apis.containerRuntime?.version;
+	assert(versionForCreating !== undefined, "versionForCreating");
+	const versionForLoading = apis.containerRuntimeForLoading?.version;
+	assert(versionForLoading !== undefined, "versionForLoading");
+
+	const minVersion =
+		semver.compare(versionForCreating, versionForLoading) < 0
+			? versionForCreating
+			: versionForLoading;
+
 	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
 		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
 		const factoryCtor = createTestContainerRuntimeFactory(
@@ -215,11 +337,15 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			containerOptions?.runtimeOptions,
+			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);
 	};
 	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		if (containerOptions?.forceUseCreateVersion === true) {
+			return createContainerFactoryFn(containerOptions);
+		}
+
 		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
 		assert(
 			apis.containerRuntimeForLoading !== undefined,
@@ -231,7 +357,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			containerOptions?.runtimeOptions,
+			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
 			[innerRequestHandler],
 		);
 	};

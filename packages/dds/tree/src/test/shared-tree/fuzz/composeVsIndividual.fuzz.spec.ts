@@ -2,27 +2,28 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator,
 	combineReducersAsync,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
-	viewFromState,
-	FuzzView,
 	FuzzTransactionView,
+	FuzzView,
+	makeOpGenerator,
+	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
 	applyFieldEdit,

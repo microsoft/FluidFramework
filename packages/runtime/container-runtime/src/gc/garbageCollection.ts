@@ -3,65 +3,65 @@
  * Licensed under the MIT License.
  */
 
-import { assert, LazyPromise, Timer } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
+import { assert, LazyPromise, Timer } from "@fluidframework/core-utils";
 import {
-	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	ITelemetryContext,
+	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
 import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
-	createChildLogger,
-	createChildMonitoringContext,
 	DataProcessingError,
 	ITelemetryLoggerExt,
 	MonitoringContext,
 	PerformanceEvent,
+	createChildLogger,
+	createChildMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
-import { BlobManager } from "../blobManager";
+import { BlobManager } from "../blobManager.js";
 import {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
 	TombstoneResponseHeaderKey,
-} from "../containerRuntime";
-import { ClientSessionExpiredError } from "../error";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes";
-import { IRefreshSummaryResult } from "../summary";
-import { generateGCConfigs } from "./gcConfigs";
+} from "../containerRuntime.js";
+import { ClientSessionExpiredError } from "../error.js";
+import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
+import { IRefreshSummaryResult } from "../summary/index.js";
+import { generateGCConfigs } from "./gcConfigs.js";
 import {
 	GCNodeType,
-	IGarbageCollector,
-	IGarbageCollectorCreateParams,
-	IGarbageCollectionRuntime,
-	IGCResult,
-	IGCStats,
-	UnreferencedState,
-	IGCMetadata,
-	IGarbageCollectorConfigs,
-	IMarkPhaseStats,
-	ISweepPhaseStats,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
+	IGCMetadata,
+	IGCResult,
+	IGCStats,
+	IGarbageCollectionRuntime,
+	IGarbageCollector,
+	IGarbageCollectorConfigs,
+	IGarbageCollectorCreateParams,
+	IMarkPhaseStats,
+	ISweepPhaseStats,
+	UnreferencedState,
 	disableAutoRecoveryKey,
-} from "./gcDefinitions";
+} from "./gcDefinitions.js";
 import {
 	cloneGCData,
 	compatBehaviorAllowsGCMessageType,
 	concatGarbageCollectionData,
 	getGCDataFromSnapshot,
-} from "./gcHelpers";
-import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
-import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
-import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
+} from "./gcHelpers.js";
+import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions.js";
+import { GCSummaryStateTracker } from "./gcSummaryStateTracker.js";
+import { GCTelemetryTracker } from "./gcTelemetry.js";
 import {
 	UnreferencedStateTracker,
 	UnreferencedStateTrackerMap,
-} from "./gcUnreferencedStateTracker";
-import { GCTelemetryTracker } from "./gcTelemetry";
+} from "./gcUnreferencedStateTracker.js";
 
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
@@ -684,8 +684,8 @@ export class GarbageCollector implements IGarbageCollector {
 		 */
 
 		if (this.configs.testMode) {
-			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted.
-			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
+			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted immediately.
+			this.runtime.deleteSweepReadyNodes(gcResult.deletedNodeIds);
 			return;
 		}
 

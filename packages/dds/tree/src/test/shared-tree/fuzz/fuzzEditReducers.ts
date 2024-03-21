@@ -6,11 +6,11 @@
 import { strict as assert } from "assert";
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { Revertible } from "../../../core/index.js";
 import {
 	DownPath,
 	FlexTreeField,
 	FlexTreeNode,
-	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
 	SchemaBuilderInternal,
 	intoStoredSchema,
@@ -21,8 +21,8 @@ import { ISharedTree, SharedTree, SharedTreeFactory } from "../../../shared-tree
 import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
 	FieldEdit,
-	FuzzRemove,
 	FuzzFieldChange,
+	FuzzRemove,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
@@ -30,6 +30,11 @@ import {
 	FuzzSchemaChange,
 } from "./operationTypes.js";
 import { createTreeStoredSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+	cursorForJsonableTreeNode,
+} from "../../../feature-libraries/index.js";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { fail } from "../../../util/index.js";
+import { validateTreeConsistency } from "../../utils.js";
 import {
 	FuzzTestState,
 	FuzzTransactionView,
@@ -37,6 +42,16 @@ import {
 	getAllowableNodeTypes,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
+import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import {
+	FieldEdit,
+	FuzzFieldChange,
+	FuzzRemove,
+	FuzzSet,
+	FuzzTransactionType,
+	FuzzUndoRedoType,
+	Operation,
+} from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {

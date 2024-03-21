@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 const Joi = require("joi");
 const OperationError = require("@fluid-experimental/property-common").OperationError;
 const HTTPStatus = require("http-status");

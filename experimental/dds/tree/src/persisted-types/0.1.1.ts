@@ -4,13 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
-import { assertNotUndefined, ReplaceRecursive } from '../Common.js';
-// These are re-exported from a persisted-types file.
-import type {
-	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-} from '../id-compressor/index.js';
+import { ReplaceRecursive, assertNotUndefined } from '../Common.js';
 import type {
 	Definition,
 	DetachedSequenceId,
@@ -23,6 +17,12 @@ import type {
 	TraitLabel,
 	UuidString,
 } from '../Identifiers.js';
+// These are re-exported from a persisted-types file.
+import type {
+	IdCreationRange,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+} from '../id-compressor/index.js';
 import {
 	BuildInternal_0_0_2,
 	ChangeTypeInternal,

@@ -21,7 +21,7 @@ import {
 	IOpsCachingPolicy,
 	ICollabSessionOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * @internal
@@ -76,6 +76,7 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
 		enableShareLinkWithCreate: [false],
 		enableSingleRequestForShareLinkWithCreate: [false],
 		avoidPrefetchSnapshotCache: booleanCases,
+		disableRetriesOnStorageThrottlingError: booleanCases,
 	};
 	return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

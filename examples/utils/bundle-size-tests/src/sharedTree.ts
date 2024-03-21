@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { SharedTreeFactory } from "@fluidframework/tree";
+
+import { SharedTree } from "@fluidframework/tree";
 
 export function apisToBundle() {
-	new SharedTreeFactory();
+	SharedTree.getFactory();
 }

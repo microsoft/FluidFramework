@@ -5,65 +5,63 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	Value,
 	Anchor,
-	FieldKey,
-	TreeNavigationResult,
-	ITreeSubscriptionCursor,
-	mapCursorFields,
-	CursorLocationType,
-	anchorSlot,
 	AnchorNode,
-	inCursorField,
-	rootFieldKey,
+	CursorLocationType,
 	EmptyKey,
+	FieldKey,
+	ITreeSubscriptionCursor,
+	TreeNavigationResult,
 	TreeNodeSchemaIdentifier,
-	forEachField,
 	TreeValue,
+	Value,
+	anchorSlot,
+	forEachField,
+	inCursorField,
+	mapCursorFields,
+	rootFieldKey,
 } from "../../core/index.js";
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { LocalNodeKey } from "../node-key/index.js";
 import {
+	Any,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
 	FlexFieldSchema,
-	FlexTreeNodeSchema,
 	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	LeafNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	FlexFieldNodeSchema,
-	LeafNodeSchema,
-	FlexObjectNodeSchema,
-	Any,
-	FlexAllowedTypes,
 } from "../typed-schema/index.js";
-import { FieldKinds } from "../default-schema/index.js";
-import { LocalNodeKey } from "../node-key/index.js";
-import { EditableTreeEvents, TreeEvent } from "./treeEvents.js";
 import { Context } from "./context.js";
 import {
+	FlexTreeEntityKind,
+	FlexTreeField,
 	FlexTreeFieldNode,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
+	FlexTreeNode,
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeUnboxField,
-	FlexTreeField,
-	FlexTreeNode,
-	TreeStatus,
-	FlexTreeRequiredField,
-	FlexTreeOptionalField,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	onNextChange,
-	FlexTreeEntityKind,
-	flexTreeMarker,
 	PropertyNameFromFieldKey,
+	TreeStatus,
+	flexTreeMarker,
+	onNextChange,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	reservedObjectNodeFieldPropertyNames,
 } from "./flexTreeTypes.js";
-import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -71,6 +69,8 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
+import { LazyNodeKeyField, makeField } from "./lazyField.js";
+import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -163,9 +163,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
-		// Setup JS Object API:
-		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
-		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 	}
 
@@ -232,7 +229,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			if (key === rootFieldKey) {
 				fieldSchema = this.context.schema.rootFieldSchema;
 			} else {
-				// All fields (in the editable tree API) have a schema.
+				// All fields (in the flex tree API) have a schema.
 				// Since currently there is no known schema for detached field other than the special default root:
 				// give all other detached fields a schema of sequence of any.
 				// That schema is the only one that is safe since its the only field schema that allows any possible field content.
@@ -242,7 +239,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				// 1. Editing APIs start exposing user created detached sequences.
 				// 2. Remove (and its inverse) start working on subsequences or fields contents (like everything in a sequence or optional field) and not just single nodes.
 				// 3. Possibly other unknown cases.
-				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
+				// Additionally this approach makes it possible for a user to take a FlexTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
 				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [Any]);
@@ -270,9 +267,9 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
 	}
 
-	public on<K extends keyof EditableTreeEvents>(
+	public on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void {
 		switch (eventName) {
 			case "changing": {

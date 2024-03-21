@@ -2,20 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-deprecated */
 
 import { Client } from "@fluidframework/merge-tree";
+import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
+import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {
-	IntervalType,
 	IIntervalHelpers,
 	ISerializableInterval,
-	sequenceIntervalHelpers,
+	IntervalType,
 	SequenceInterval,
-} from "../intervals";
-import { IntervalNode, IntervalTree } from "../intervalTree";
-import { SharedString } from "../sharedString";
-import { SequencePlace, endpointPosAndSide } from "../intervalCollection";
-import { IntervalIndex } from "./intervalIndex";
+	sequenceIntervalHelpers,
+} from "../intervals/index.js";
+import { SharedString } from "../sharedString.js";
+import { IntervalIndex } from "./intervalIndex.js";
 
 /**
  * @alpha
@@ -147,7 +148,9 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 		if (
 			startPos === undefined ||
 			endPos === undefined ||
-			endPos < startPos ||
+			(typeof startPos === "number" && typeof endPos === "number" && endPos < startPos) ||
+			(startPos === "end" && endPos !== "end") ||
+			(startPos !== "start" && endPos === "start") ||
 			this.intervalTree.intervals.isEmpty()
 		) {
 			return [];

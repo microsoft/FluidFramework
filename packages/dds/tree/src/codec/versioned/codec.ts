@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { TSchema } from "@sinclair/typebox";
-import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
 import { Versioned } from "./format.js";
 
 export function makeVersionedCodec<

@@ -2,10 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import * as path from "node:path";
 
-import { PackageJson, readPackageJsonAndIndent, updatePackageJsonFile } from "../common/npmPackage";
+import {
+	PackageJson,
+	readPackageJsonAndIndent,
+	updatePackageJsonFile,
+} from "../common/npmPackage";
 
 /**
  * Path to the test data. It's rooted two directories up because the tests get executed from dist/.

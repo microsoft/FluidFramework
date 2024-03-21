@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-	MockLogger,
-} from "@fluidframework/telemetry-utils";
+import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClient,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
+import {
+	ITelemetryLoggerExt,
+	MockLogger,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { ConnectionManager } from "../connectionManager.js";
+import { IConnectionManagerFactoryArgs } from "../contracts.js";
 import { DeltaManager } from "../deltaManager.js";
 import { NoopHeuristic } from "../noopHeuristic.js";
-import { IConnectionManagerFactoryArgs } from "../contracts.js";
-import { ConnectionManager } from "../connectionManager.js";
 
 describe("Loader", () => {
 	describe("Container Loader", () => {

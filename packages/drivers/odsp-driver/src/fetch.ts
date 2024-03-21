@@ -4,9 +4,9 @@
  */
 
 import {
-	default as nodeFetch,
 	RequestInfo as FetchRequestInfo,
 	RequestInit as FetchRequestInit,
+	default as nodeFetch,
 } from "node-fetch";
 
 // The only purpose of this helper is to work around the slight misalignments between the

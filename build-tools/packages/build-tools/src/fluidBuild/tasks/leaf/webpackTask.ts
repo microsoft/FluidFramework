@@ -2,52 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as path from "path";
 import * as fs from "fs";
 
-import { globFn, toPosixPath } from "../../../common/utils";
+import { globFn, loadModule, toPosixPath } from "../../../common/utils";
 import { LeafWithDoneFileTask } from "./leafTask";
-import { TscTask } from "./tscTask";
+import * as assert from "assert";
 
 interface DoneFileContent {
 	version: string;
 	config: any;
 	sources: { [srcFile: string]: string };
-	dependencies: { [pkgName: string]: { [command: string]: any } };
 }
 export class WebpackTask extends LeafWithDoneFileTask {
 	protected get taskWeight() {
 		return 5; // generally expensive relative to other tasks
 	}
 	protected async getDoneFileContent() {
+		// We don't know all the input dependencies of webpack, Make sure recheckLeafIsUpToDate is false
+		// so we will always execute if any of the dependencies not up-to-date at the beginning of the build
+		// where their output might change the webpack's input.
+		assert.strictEqual(this.recheckLeafIsUpToDate, false);
 		try {
-			// eslint-disable-next-line @typescript-eslint/no-var-requires
-			const config = require(this.configFileFullPath);
+			const config = await loadModule(this.configFileFullPath, this.package.packageJson.type);
 			const content: DoneFileContent = {
 				version: await this.getVersion(),
 				config: typeof config === "function" ? config(this.getEnvArguments()) : config,
 				sources: {},
-				dependencies: {},
 			};
 
+			// TODO: this is specific to the microsoft/FluidFramework repo set up.
 			const srcGlob = toPosixPath(this.node.pkg.directory) + "/src/**/*.*";
 			const srcFiles = await globFn(srcGlob);
 			for (const srcFile of srcFiles) {
 				content.sources[srcFile] =
 					await this.node.buildContext.fileHashCache.getFileHash(srcFile);
-			}
-
-			for (const dep of this.allDependentTasks) {
-				if (dep.executable === "tsc") {
-					if (!content.dependencies[dep.package.name]) {
-						content.dependencies[dep.package.name] = {};
-					}
-					const tsBuildInfo = await (dep as TscTask).readTsBuildInfo();
-					if (tsBuildInfo === undefined) {
-						return undefined;
-					}
-					content.dependencies[dep.package.name][dep.command] = tsBuildInfo;
-				}
 			}
 
 			return JSON.stringify(content);

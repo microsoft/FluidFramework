@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import {
 	CompressionAlgorithms,
@@ -34,7 +35,11 @@ import {
 	isDocumentMatrixPlainInfo,
 } from "@fluid-private/test-version-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.

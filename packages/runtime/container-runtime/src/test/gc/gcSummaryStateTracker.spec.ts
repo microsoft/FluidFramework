@@ -7,13 +7,13 @@ import { strict as assert } from "assert";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { gcDeletedBlobKey, gcTombstoneBlobKey } from "@fluidframework/runtime-definitions";
 import {
-	nextGCVersion,
-	gcStateBlobKey,
 	GCSummaryStateTracker,
 	GCVersion,
-	IGarbageCollectionState,
 	IGCStats,
-} from "../../gc";
+	IGarbageCollectionState,
+	gcStateBlobKey,
+	nextGCVersion,
+} from "../../gc/index.js";
 
 type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
 	latestSummaryGCVersion: GCVersion;

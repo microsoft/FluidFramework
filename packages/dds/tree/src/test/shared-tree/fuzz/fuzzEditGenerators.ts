@@ -2,26 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
-	Generator,
-	done,
-	IRandom,
-	createWeightedGenerator,
 	BaseFuzzTestState,
+	Generator,
+	IRandom,
 	Weights,
+	createWeightedGenerator,
+	done,
 } from "@fluid-private/stochastic-test-utils";
 import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import {
-	FlexTreeView,
-	SharedTreeFactory,
-	TreeContent,
-	ITreeViewFork,
-	SharedTree,
-	ISharedTree,
-} from "../../../shared-tree/index.js";
-import { brand, fail, getOrCreate } from "../../../util/index.js";
 import {
 	AllowedUpdateType,
 	FieldKey,
@@ -29,13 +21,9 @@ import {
 	JsonableTree,
 	UpPath,
 } from "../../../core/index.js";
-import {
-	DownPath,
-	FlexTreeNode,
-	toDownPath,
-	treeSchemaFromStoredSchema,
-} from "../../../feature-libraries/index.js";
+import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
 import { schematizeFlexTree } from "../../utils.js";
+import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,

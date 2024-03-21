@@ -4,14 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IVersion,
-	ISnapshotTree,
-	MessageType,
-	ISequencedDocumentMessage,
-	IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,10 +13,15 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
-import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IPendingContainerState } from "../container.js";
-import { SerializedStateManager } from "../serializedStateManager.js";
+import {
+	IDocumentAttributes,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	IVersion,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
@@ -176,32 +175,9 @@ describe("serializedStateManager", () => {
 		);
 	});
 
-	it("can't get pending local state when there is no base snapshot", async () => {
-		const storageAdapter = new MockStorageAdapter();
-		const serializedStateManager = new SerializedStateManager(
-			undefined,
-			logger,
-			storageAdapter,
-			true,
-		);
-
-		await assert.rejects(
-			async () =>
-				serializedStateManager.getPendingLocalStateCore(
-					{
-						notifyImminentClosure: false,
-					},
-					"clientId",
-					new MockRuntime(),
-					resolvedUrl,
-				),
-			(error: Error) => errorFn(error, "no base data"),
-			"container can get local state with no base snapshot",
-		);
-	});
-
 	it("can get snapshot from previous local state", async () => {
 		const pendingLocalState: IPendingContainerState = {
+			attached: true,
 			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
 			snapshotBlobs: {},
 			pendingRuntimeState: {},
@@ -215,11 +191,11 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
-		assert(snapshotTree);
+		assert(baseSnapshot);
 		assert.strictEqual(version, undefined);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
@@ -239,9 +215,12 @@ describe("serializedStateManager", () => {
 			true,
 		);
 		// equivalent to attach
-		serializedStateManager.setSnapshot({ tree: { trees: {}, blobs: {} }, blobs: {} });
+		serializedStateManager.setSnapshot({
+			baseSnapshot: { trees: {}, blobs: {} },
+			snapshotBlobs: {},
+		});
 		for (let num = 0; num < 10; ++num) {
-			serializedStateManager.addSavedOp(generateSavedOp());
+			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
 		await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
@@ -259,11 +238,11 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
-		assert(snapshotTree);
+		assert(baseSnapshot);
 		assert.strictEqual(version?.id, "test");
 		assert.strictEqual(version.treeId, "test");
 		const state = await serializedStateManager.getPendingLocalStateCore(

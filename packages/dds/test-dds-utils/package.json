@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-dds-utils",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,33 +11,74 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "commonjs",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/test-dds-utils-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/test-dds-utils-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "fluid-build . --task api",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
+		"check:biome": "biome check .",
+		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp lib",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run check:release-tags && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"format": "fluid-build --task format .",
+		"format:biome": "biome check --apply .",
+		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
+		"lint": "fluid-build . --task lint",
+		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:base -- \"dist/test/**/*.spec.*js\"",
-		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:suite": "npm run test:mocha:base -- \"dist/test/ddsSuiteCases/*js\"",
+		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
+		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" --ignore \"lib/test/types/*\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:cjs": "pnpm test:mocha:base --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "pnpm test:mocha:base --recursive \"lib/test/**/*.spec.*js\"",
+		"test:mocha:suite": "pnpm test:mocha:base \"lib/test/ddsSuiteCases/*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,
@@ -63,23 +104,25 @@
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
+		"@biomejs/biome": "^1.6.1",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
@@ -92,7 +135,6 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -100,11 +142,16 @@
 			"build:docs": {
 				"dependsOn": [
 					"...",
-					"api-extractor:commonjs"
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
 				],
 				"script": false
 			},
-			"tsc": [
+			"build:test:cjs": [
+				"...",
+				"@fluid-private/stochastic-test-utils#build:test"
+			],
+			"build:test:esm": [
 				"...",
 				"@fluid-private/stochastic-test-utils#build:test"
 			]

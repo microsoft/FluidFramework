@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -12,17 +12,27 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"main": "dist/index.js",
-	"module": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		},
+		"./mocharc-common": {
+			"require": "./mocharc-common.cjs"
+		}
+	},
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp node_modules/.legacy nyc",
@@ -34,21 +44,20 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha  --recursive \"dist/test/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup --timeout=10000",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"test:mocha": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout=10000",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -78,7 +87,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0-237840",
+		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
@@ -90,13 +99,12 @@
 		"semver": "^7.5.3"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
-		"@microsoft/api-extractor": "^7.39.1",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
+		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
@@ -118,6 +126,17 @@
 		"uuid": "^9.0.0",
 		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"disabled": true,

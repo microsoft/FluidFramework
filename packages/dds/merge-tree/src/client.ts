@@ -5,31 +5,40 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import {
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
+import type {
+	IMergeTreeClientSequenceArgs,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+} from "./mergeTreeDeltaCallback.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	CollaborationWindow,
-	compareStrings,
 	IMoveInfo,
-	ISegmentLeaf,
 	ISegment,
 	ISegmentAction,
+	ISegmentLeaf,
 	Marker,
 	// eslint-disable-next-line import/no-deprecated
 	SegmentGroup,
+	compareStrings,
 } from "./mergeTreeNodes.js";
 import {
 	createAnnotateMarkerOp,
@@ -47,30 +56,21 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
+	// eslint-disable-next-line import/no-deprecated
+	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
+	IMergeTreeRemoveMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	IMergeTreeObliterateMsg,
 } from "./ops.js";
 import { PropertySet } from "./properties.js";
-import { SnapshotLegacy } from "./snapshotlegacy.js";
+import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
+import { SnapshotV1 } from "./snapshotV1.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 // eslint-disable-next-line import/no-deprecated
 import { IMergeTreeTextHelper } from "./textSegment.js";
-import { SnapshotV1 } from "./snapshotV1.js";
-import { ReferencePosition, DetachedReferencePosition } from "./referencePositions.js";
-import { IMergeTreeOptions, MergeTree } from "./mergeTree.js";
-import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import {
-	IMergeTreeClientSequenceArgs,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-} from "./index.js";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
@@ -262,10 +262,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			return undefined;
 		}
 		const insertOp = createInsertSegmentOp(pos, segment);
-		if (this.applyInsertOp({ op: insertOp })) {
-			return insertOp;
-		}
-		return undefined;
+		this.applyInsertOp({ op: insertOp });
+		return insertOp;
 	}
 
 	/**
@@ -283,13 +281,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 
 		if (pos === DetachedReferencePosition) {
-			return undefined;
+			throw new UsageError("Cannot insert at detached local reference.");
 		}
-		const op = createInsertSegmentOp(pos, segment);
-
-		if (this.applyInsertOp({ op })) {
-			return op;
-		}
+		return this.insertSegmentLocal(pos, segment);
 	}
 
 	public walkSegments<TClientData>(
@@ -429,6 +423,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	/**
 	 * Resolves a `ReferencePosition` into a character position using this client's perspective.
+	 *
+	 * Reference positions that point to a character that has been removed will
+	 * always return the position of the nearest non-removed character, regardless
+	 * of {@link ReferenceType}. To handle this case specifically, one may wish
+	 * to look at the segment returned by {@link ReferencePosition.getSegment}.
 	 */
 	public localReferencePositionToPosition(lref: ReferencePosition): number {
 		return this._mergeTree.referencePositionToLocalPosition(lref);
@@ -528,7 +527,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param opArgs - The ops args for the op
 	 * @returns True if the insert was applied. False if it could not be.
 	 */
-	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+	private applyInsertOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.INSERT,
 			0x02f /* "Unexpected op type on range insert!" */,
@@ -537,14 +536,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
 
-		let segments: ISegment[] | undefined;
-		if (op.seg) {
-			segments = [this.specToSegment(op.seg)];
-		}
-
-		if (!segments || segments.length === 0) {
-			return false;
-		}
+		const segments = [this.specToSegment(op.seg)];
 
 		this._mergeTree.insertSegments(
 			range.start,
@@ -554,8 +546,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.sequenceNumber,
 			opArgs,
 		);
-
-		return true;
 	}
 
 	/**
