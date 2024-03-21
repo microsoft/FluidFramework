@@ -92,7 +92,7 @@ function filterRuntimeOptionsForVersion(
 		},
 		enableGroupedBatching = true,
 		enableRuntimeIdCompressor = "on",
-		// chunkSizeInBytes = 200,
+		chunkSizeInBytes = 200,
 	} = options;
 
 	if (version.startsWith("1.")) {
@@ -129,8 +129,7 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions,
 			enableGroupedBatching,
-			// need to investigate - some small number of t9s tests time out with this option on.
-			// chunkSizeInBytes,
+			chunkSizeInBytes,
 			enableRuntimeIdCompressor,
 			...options,
 		};
