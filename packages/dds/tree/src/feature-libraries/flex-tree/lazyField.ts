@@ -155,7 +155,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	public isSameAs(other: FlexTreeField): boolean {
 		assert(
 			other.context === this.context,
-			0x77d /* Content from different editable trees should not be used together */,
+			0x77d /* Content from different flex trees should not be used together */,
 		);
 		return this.key === other.key && this.parent === other.parent;
 	}

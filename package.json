@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -388,9 +388,6 @@
 				"fluid-framework",
 				"markdown-magic"
 			]
-		},
-		"patchedDependencies": {
-			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}
 }

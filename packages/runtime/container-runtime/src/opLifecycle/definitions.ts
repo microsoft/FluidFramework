@@ -4,7 +4,7 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import { CompressionAlgorithms } from "../containerRuntime.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
@@ -72,18 +72,3 @@ export interface IChunkedOp {
  * will make the processor return `Processed`.
  */
 export type ProcessingState = "Processed" | "Skipped" | "Accepted";
-
-/**
- * Return type for functions which process remote messages
- */
-export interface IMessageProcessingResult {
-	/**
-	 * A shallow copy of the input message if processing happened, or
-	 * the original message otherwise
-	 */
-	readonly message: ISequencedDocumentMessage;
-	/**
-	 * Processing result of the input message.
-	 */
-	readonly state: ProcessingState;
-}

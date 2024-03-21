@@ -133,6 +133,15 @@ export interface IScribeServerConfiguration {
 
 	// Controls how often scribe should checkpoint
 	checkpointHeuristics: ICheckpointHeuristicsServerConfiguration;
+
+	// Enables scrubbing user data from protocol state quorum in Summaries
+	scrubUserDataInSummaries: boolean;
+
+	// Enables scrubbing user data from protocol state quorum in local checkpoints
+	scrubUserDataInLocalCheckpoints: boolean;
+
+	// Enables scrubbing user data from protocol state quorum in global checkpoints
+	scrubUserDataInGlobalCheckpoints: boolean;
 }
 
 /**
@@ -274,6 +283,9 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 			maxTime: 1 * 60 * 1000,
 			maxMessages: 500,
 		},
+		scrubUserDataInSummaries: false,
+		scrubUserDataInLocalCheckpoints: false,
+		scrubUserDataInGlobalCheckpoints: false,
 	},
 	moira: {
 		enable: false,
