@@ -883,6 +883,7 @@ describe("DDS Fuzz Harness", () => {
 					reject: false,
 				},
 			);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const testResults: MochaReport = JSON.parse(result.stdout);
 			return testResults;
 		}
