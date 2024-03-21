@@ -13,8 +13,8 @@ import {
 	Generator,
 	Reducer,
 	SaveInfo,
-} from "./types";
-import { combineReducers, combineReducersAsync } from "./combineReducers";
+} from "./types.js";
+import { combineReducers, combineReducersAsync } from "./combineReducers.js";
 
 /**
  * Performs random actions on a set of clients.

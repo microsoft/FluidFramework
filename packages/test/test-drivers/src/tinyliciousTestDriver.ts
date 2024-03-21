@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/tinylicious-driver";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi.js";
 
 /**
  * @internal
