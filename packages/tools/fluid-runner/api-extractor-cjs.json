@@ -4,18 +4,5 @@
 	// CJS is actually secondary; so, no report.
 	"apiReport": {
 		"enabled": false
-	},
-	"messages": {
-		"extractorMessageReporting": {
-			// TODO: fix violations and remove overrides
-			"ae-forgotten-export": {
-				"logLevel": "warning",
-				"addToApiReportFile": true
-			},
-			"ae-unresolved-link": {
-				"logLevel": "warning",
-				"addToApiReportFile": true
-			}
-		}
 	}
 }
