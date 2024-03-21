@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { TreeValue } from "../core/index.js";
 import {
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	LeafNodeSchema,
 	Multiplicity,
 	TreeStatus,
@@ -103,10 +103,10 @@ export const treeNodeApi: TreeNodeApi = {
 		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
 		return parentField.parent.key;
 	},
-	on: <K extends keyof EditableTreeEvents>(
+	on: <K extends keyof FlexTreeNodeEvents>(
 		node: TreeNode,
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	) => {
 		return getFlexNode(node).on(eventName, listener);
 	},

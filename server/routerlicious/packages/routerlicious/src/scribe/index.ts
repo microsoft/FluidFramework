@@ -142,10 +142,25 @@ export async function scribeCreate(
 
 	const externalOrdererUrl = config.get("worker:serverUrl");
 	const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+	const scrubUserDataInGlobalCheckpoints: boolean =
+		config.get("scribe:scrubUserDataInGlobalCheckpoints") ??
+		DefaultServiceConfiguration.scribe.scrubUserDataInGlobalCheckpoints;
+	const scrubUserDataInLocalCheckpoints: boolean =
+		config.get("scribe:scrubUserDataInLocalCheckpoints") ??
+		DefaultServiceConfiguration.scribe.scrubUserDataInLocalCheckpoints;
+	const scrubUserDataInSummaries: boolean =
+		config.get("scribe:scrubUserDataInSummaries") ??
+		DefaultServiceConfiguration.scribe.scrubUserDataInSummaries;
 	const serviceConfiguration: IServiceConfiguration = {
 		...DefaultServiceConfiguration,
 		externalOrdererUrl,
 		enforceDiscoveryFlow,
+		scribe: {
+			...DefaultServiceConfiguration.scribe,
+			scrubUserDataInGlobalCheckpoints,
+			scrubUserDataInLocalCheckpoints,
+			scrubUserDataInSummaries,
+		},
 	};
 
 	const checkpointService = new core.CheckpointService(

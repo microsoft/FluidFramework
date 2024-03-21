@@ -15,6 +15,7 @@ export enum LumberEventName {
 
 	// Fluid server infrastructure
 	RunService = "RunService",
+	GracefulShutdown = "GracefulShutdown",
 
 	// Unit Testing
 	UnitTestEvent = "UnitTestEvent",

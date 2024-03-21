@@ -37,6 +37,7 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - fluidBuild.config.cjs
     - common/build/build-common
     - common/lib/common-definitions
     - tools/pipelines/build-common-definitions.yml

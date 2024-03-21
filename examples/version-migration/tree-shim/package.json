@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -67,7 +67,6 @@
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
-		"@types/node": "^18.19.0",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",
 		"@types/uuid": "^9.0.2",

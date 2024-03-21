@@ -1983,6 +1983,7 @@ declare function get_old_InterfaceDeclaration_IScribeServerConfiguration():
 declare function use_current_InterfaceDeclaration_IScribeServerConfiguration(
     use: TypeOnly<current.IScribeServerConfiguration>): void;
 use_current_InterfaceDeclaration_IScribeServerConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IScribeServerConfiguration());
 
 /*

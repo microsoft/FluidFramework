@@ -44,7 +44,6 @@ export {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
 	getRedisClusterRetryStrategy,
-	getRedisClient,
 	IRedisParameters,
 } from "./redisUtils";
 export {
@@ -57,3 +56,7 @@ export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { DummyTokenRevocationManager, DummyRevokedTokenChecker } from "./tokenRevocationManager";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export { WebSocketTracker } from "./webSocketTracker";
+export {
+	RedisClientConnectionManager,
+	IRedisClientConnectionManager,
+} from "./redisClientConnectionManager";

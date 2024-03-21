@@ -96,7 +96,7 @@ describe("domains - SchemaBuilder", () => {
 						>
 					>
 				>;
-				// TODO: this should compile: ideally EditableTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
+				// TODO: this should compile: ideally FlexTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
 				type _check2 = requireTrue<
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<

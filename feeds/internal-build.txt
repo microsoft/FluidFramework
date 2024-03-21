@@ -9,6 +9,7 @@
 @fluid-internal/test-service-load
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
+@fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests

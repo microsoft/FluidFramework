@@ -388,9 +388,6 @@
 				"fluid-framework",
 				"markdown-magic"
 			]
-		},
-		"patchedDependencies": {
-			"tsc-multi@1.1.0": "patches/tsc-multi@1.1.0.patch"
 		}
 	}
 }

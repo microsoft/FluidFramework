@@ -547,7 +547,7 @@ Using the interval collection API has two main benefits:
 
 ### Attribution
 
-**Important: Attribution is currently in alpha: expect breaking changes in minor releases as we get feedback on the API shape.**
+**Important: Attribution is currently in alpha development and is marked internal: expect breaking changes in minor releases as we get feedback on the API shape.**
 
 SharedString supports storing information attributing each character position to the user who inserted it and the time at which that insertion happened.
 This functionality is off by default.

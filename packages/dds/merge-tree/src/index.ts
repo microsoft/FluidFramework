@@ -10,7 +10,11 @@ export {
 	SerializedAttributionCollection,
 	SequenceOffsets,
 } from "./attributionCollection.js";
-export { createInsertOnlyAttributionPolicy } from "./attributionPolicy.js";
+export {
+	createInsertOnlyAttributionPolicy,
+	createPropertyTrackingAttributionPolicyFactory,
+	createPropertyTrackingAndInsertionAttributionPolicyFactory,
+} from "./attributionPolicy.js";
 export { Client, IClientEvents } from "./client.js";
 export {
 	ConflictAction,

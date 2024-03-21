@@ -36,10 +36,10 @@ import {
 	createContainer,
 	createLoader,
 	loadExistingContainer,
-} from "./ClientUtilities";
-import { type IAppModel } from "./Container";
-import { type AppData } from "./FluidObject";
-import { CounterWidget, EmojiGrid } from "./widgets";
+} from "./ClientUtilities.js";
+import { type IAppModel } from "./Container.js";
+import { type AppData } from "./FluidObject.js";
+import { CounterWidget, EmojiGrid } from "./widgets/index.js";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";

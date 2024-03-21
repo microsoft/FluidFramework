@@ -36,10 +36,11 @@ import {
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { Container, IPendingContainerState } from "./container.js";
+import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { IPendingContainerState } from "./serializedStateManager.js";
 import { tryParseCompatibleResolvedUrl } from "./utils.js";
 
 function ensureResolvedUrlDefined(

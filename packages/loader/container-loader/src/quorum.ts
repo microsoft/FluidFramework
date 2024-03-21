@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/core-interfaces";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ICommittedProposal } from "@fluidframework/protocol-definitions";
 
 export function initQuorumValuesFromCodeDetails(

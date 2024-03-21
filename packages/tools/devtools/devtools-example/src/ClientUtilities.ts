@@ -7,8 +7,8 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import { type IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type IDevtoolsLogger } from "@fluidframework/devtools-core";
-import { type IAppModel, RuntimeFactory } from "./Container";
-import { type AppData } from "./FluidObject";
+import { type IAppModel, RuntimeFactory } from "./Container.js";
+import { type AppData } from "./FluidObject.js";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.

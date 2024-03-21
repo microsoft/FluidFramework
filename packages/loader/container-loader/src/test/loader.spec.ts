@@ -17,8 +17,8 @@ import {
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
 import { isFluidError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { IPendingDetachedContainerState } from "../container.js";
 import { IDetachedBlobStorage, Loader } from "../loader.js";
+import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {

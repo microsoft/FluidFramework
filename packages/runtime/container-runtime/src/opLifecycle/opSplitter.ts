@@ -14,7 +14,20 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 import { estimateSocketSize } from "./batchManager.js";
-import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions.js";
+import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
+
+export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
+	return isChunkedContents(message.contents);
+}
+
+interface IChunkedContents {
+	type: typeof ContainerMessageType.ChunkedOp;
+	contents: IChunkedOp;
+}
+
+function isChunkedContents(contents: any): contents is IChunkedContents {
+	return contents?.type === ContainerMessageType.ChunkedOp;
+}
 
 /**
  * Responsible for creating and reconstructing chunked messages.
@@ -43,44 +56,6 @@ export class OpSplitter {
 
 	public get chunks(): ReadonlyMap<string, string[]> {
 		return this.chunkMap;
-	}
-
-	public processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-		if (message.type !== ContainerMessageType.ChunkedOp) {
-			return {
-				message,
-				state: "Skipped",
-			};
-		}
-
-		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-		const clientId = message.clientId as string;
-		const chunkedContent = message.contents as IChunkedOp;
-		this.addChunk(clientId, chunkedContent, message);
-
-		if (chunkedContent.chunkId < chunkedContent.totalChunks) {
-			// We are processing the op in chunks but haven't reached
-			// the last chunk yet in order to reconstruct the original op
-			return {
-				message,
-				state: "Accepted",
-			};
-		}
-
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const serializedContent = this.chunkMap.get(clientId)!.join("");
-		this.clearPartialChunks(clientId);
-
-		const newMessage = { ...message };
-		newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
-		newMessage.type = chunkedContent.originalType;
-		newMessage.metadata = chunkedContent.originalMetadata;
-		newMessage.compression = chunkedContent.originalCompression;
-		return {
-			message: newMessage,
-			state: "Processed",
-		};
 	}
 
 	public clearPartialChunks(clientId: string) {
@@ -203,7 +178,49 @@ export class OpSplitter {
 			referenceSequenceNumber: batch.referenceSequenceNumber,
 		};
 	}
+
+	public processChunk(message: ISequencedDocumentMessage): ProcessChunkResult {
+		assert(isChunkedContents(message.contents), "message not of type ChunkedOp");
+		const contents: IChunkedContents = message.contents;
+
+		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+		const clientId = message.clientId as string;
+		const chunkedContent = contents.contents;
+		this.addChunk(clientId, chunkedContent, message);
+
+		if (chunkedContent.chunkId < chunkedContent.totalChunks) {
+			// We are processing the op in chunks but haven't reached
+			// the last chunk yet in order to reconstruct the original op
+			return {
+				isFinalChunk: false,
+			};
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const serializedContent = this.chunkMap.get(clientId)!.join("");
+		this.clearPartialChunks(clientId);
+
+		const newMessage = { ...message };
+		newMessage.contents = serializedContent === "" ? undefined : JSON.parse(serializedContent);
+		newMessage.type = chunkedContent.originalType;
+		newMessage.metadata = chunkedContent.originalMetadata;
+		newMessage.compression = chunkedContent.originalCompression;
+		return {
+			message: newMessage,
+			isFinalChunk: true,
+		};
+	}
 }
+
+type ProcessChunkResult =
+	| {
+			readonly isFinalChunk: false;
+	  }
+	| {
+			readonly isFinalChunk: true;
+			readonly message: ISequencedDocumentMessage;
+	  };
 
 const chunkToBatchMessage = (
 	chunk: IChunkedOp,

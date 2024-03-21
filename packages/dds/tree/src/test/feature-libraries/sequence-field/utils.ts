@@ -256,10 +256,9 @@ export function rebase(
 
 	const metadata =
 		config.metadata ??
-		rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
-			[cleanBase.revision],
-		);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
+			cleanBase.revision,
+		]);
 
 	const childRebaser = config.childRebaser ?? TestChange.rebase;
 

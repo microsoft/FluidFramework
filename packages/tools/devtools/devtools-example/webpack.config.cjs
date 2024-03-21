@@ -20,6 +20,11 @@ module.exports = (env) => {
 				main: path.join(sourcePath, "index.tsx"),
 			},
 			resolve: {
+				extensionAlias: {
+					".cjs": [".cts", ".cjs"],
+					".js": [".ts", ".tsx", ".js"],
+					".mjs": [".mts", ".mjs"],
+				},
 				extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 			},
 			module: {

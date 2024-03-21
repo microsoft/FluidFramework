@@ -81,12 +81,12 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 			);
 			assert(
 				this[anchorSymbol] !== undefined,
-				0x779 /* EditableTree should have an anchor if it does not have a cursor */,
+				0x779 /* FlexTree should have an anchor if it does not have a cursor */,
 			);
 			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
-				0x77a /* It is invalid to access an EditableTree node which no longer exists */,
+				0x77a /* It is invalid to access a FlexTree node which no longer exists */,
 			);
 			this.context.withCursors.add(this);
 		}

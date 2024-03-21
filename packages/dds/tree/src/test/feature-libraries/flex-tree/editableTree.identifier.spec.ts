@@ -15,7 +15,7 @@ import {
 import { flexTreeWithContent } from "../../utils.js";
 
 const builder = new SchemaBuilder({
-	scope: "EditableTree Node Keys",
+	scope: "FlexTree Node Keys",
 	libraries: [nodeKeySchema],
 });
 const childNodeSchema = builder.object("ChildNode", {

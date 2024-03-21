@@ -76,7 +76,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
     get attributes(): IDocumentAttributes;
     // (undocumented)
     close(): void;
-    getProtocolState(): IScribeProtocolState;
+    getProtocolState(scrubUserData?: boolean): IScribeProtocolState;
     // (undocumented)
     minimumSequenceNumber: number;
     // (undocumented)

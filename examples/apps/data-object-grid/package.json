@@ -30,7 +30,6 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
 		"start": "webpack serve",
-		"start:server": "tinylicious",
 		"start:test": "webpack serve --config webpack.test.cjs",
 		"test": "npm run test:jest",
 		"test:jest": "jest",

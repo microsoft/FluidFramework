@@ -18,8 +18,8 @@ export {
 	IClientJoin,
 	ISequencedClient,
 	ISignalClient,
-} from "./clients";
-export { IClientConfiguration } from "./config";
+} from "./clients.js";
+export { IClientConfiguration } from "./config.js";
 export {
 	IApprovedProposal,
 	ICommittedProposal,
@@ -33,8 +33,8 @@ export {
 	IQuorumProposals,
 	IQuorumProposalsEvents,
 	ISequencedProposal,
-} from "./consensus";
-export { IsoDate } from "./date";
+} from "./consensus.js";
+export { IsoDate } from "./date.js";
 export {
 	IBranchOrigin,
 	IDocumentMessage,
@@ -58,9 +58,9 @@ export {
 	MessageType,
 	NackErrorType,
 	SignalType,
-} from "./protocol";
-export { ScopeType } from "./scopes";
-export { IConnect, IConnected } from "./sockets";
+} from "./protocol.js";
+export { ScopeType } from "./scopes.js";
+export { IConnect, IConnected } from "./sockets.js";
 export {
 	FileMode,
 	IAttachment,
@@ -73,7 +73,7 @@ export {
 	ITreeEntry,
 	IVersion,
 	TreeEntry,
-} from "./storage";
+} from "./storage.js";
 export {
 	ISummaryAttachment,
 	ISummaryBlob,
@@ -83,12 +83,12 @@ export {
 	SummaryTree,
 	SummaryType,
 	SummaryTypeNoHandle,
-} from "./summary";
+} from "./summary.js";
 export {
 	IActorClient,
 	ISummaryTokenClaims,
 	ITokenClaims,
 	ITokenProvider,
 	ITokenService,
-} from "./tokens";
-export { IUser } from "./users";
+} from "./tokens.js";
+export { IUser } from "./users.js";

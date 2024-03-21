@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const {
+import {
 	ApiItemUtilities,
 	HeadingNode,
 	LayoutUtilities,
@@ -11,9 +11,9 @@ const {
 	SectionNode,
 	SpanNode,
 	transformTsdocNode,
-} = require("@fluid-tools/api-markdown-documenter");
+} from "@fluid-tools/api-markdown-documenter";
 
-const { AlertNode } = require("./alert-node");
+import { AlertNode } from "./alert-node.js";
 
 const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
@@ -56,7 +56,7 @@ const betaWarning = SpanNode.createFromPlainText(
  *
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
  */
-function layoutContent(apiItem, itemSpecificContent, config) {
+export function layoutContent(apiItem, itemSpecificContent, config) {
 	const sections = [];
 
 	// Render summary comment (if any)
@@ -162,7 +162,3 @@ function createDeprecationNoticeSection(apiItem, config) {
 		"This API is deprecated and will be removed in a future release.",
 	);
 }
-
-module.exports = {
-	layoutContent,
-};
