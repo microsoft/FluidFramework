@@ -108,8 +108,7 @@
 			// Runs the `flub modify fluid-imports` command with a debugger attached.
 			"name": "flub modify fluid-imports",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
-			// TODO: update this before merge
-			"cwd": "/Volumes/Code/rewrite-project",
+			"cwd": "${workspaceFolder}/packages/framework/aqueduct",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
