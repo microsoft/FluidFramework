@@ -1,4 +1,5 @@
 #!/usr/bin/env node
-const fluidRunnerModule = require("../../../dist/fluidRunner.js");
-const sampleCodeLoadeModule = require("../../../dist/test/sampleCodeLoaders/sampleCodeLoader.js");
-fluidRunnerModule.fluidRunner(sampleCodeLoadeModule.fluidExport);
+import { fluidRunner } from "../../../dist/fluidRunner.js";
+import { fluidExport } from "../../../dist/test/sampleCodeLoaders/sampleCodeLoader.js";
+
+fluidRunner(fluidExport);
