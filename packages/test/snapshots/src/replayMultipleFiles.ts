@@ -19,7 +19,7 @@ import { _dirname } from "./dirname.cjs";
 function getFileLocations(): [string, string] {
 	// Correct if executing from working directory of package root
 	const testCollateral = getTestContent("snapshotTestContent");
-	let workerPath = "./dist/replayWorker.js";
+	let workerPath = "./lib/replayWorker.js";
 	if (fs.existsSync(workerPath) && testCollateral.exists) {
 		return [testCollateral.path, workerPath];
 	}
