@@ -1,10 +1,10 @@
 import { IContainer, IContainerEvents } from "@fluidframework/container-definitions";
 import {
 	ContainerConnectedTelemetry,
-	ContainerTelemetryEventName,
+	ContainerTelemetryEventNames,
 	IContainerTelemetry,
 } from "./containerTelemetry";
-import { ContainerSystemEventName } from "./containerSystemEvents";
+import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents";
 
 /**
  * This class produces {@link IContainerTelemetry} from raw container system events {@link IContainerEvents}.
@@ -20,7 +20,7 @@ export class ContainerEventTelemetryProducer {
 		payload?: any,
 	): IContainerTelemetry | undefined {
 		switch (eventName) {
-			case ContainerSystemEventName.CONNECTED:
+			case ContainerSystemEventNames.CONNECTED:
 				const telemetry = this.produceConnectedTelemetry(payload);
 				return telemetry;
 			default:
@@ -32,7 +32,7 @@ export class ContainerEventTelemetryProducer {
 		clientId: string;
 	}): ContainerConnectedTelemetry => {
 		return {
-			eventName: ContainerTelemetryEventName.CONNECTED,
+			eventName: ContainerTelemetryEventNames.CONNECTED,
 			containerId: payload?.clientId ?? this.getContainerId(),
 			documentId: this.getDocumentId(),
 		};

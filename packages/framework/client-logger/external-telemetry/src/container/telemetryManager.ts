@@ -1,8 +1,8 @@
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerTelemetry } from "./containerTelemetry";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer";
-import { ITelemetryConsumer } from "../common/consumers";
-import { ContainerSystemEventName } from "./containerSystemEvents";
+import { ITelemetryConsumer } from "../common";
+import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents";
 
 /**
  * This class manages container telemetry intended for customers to consume.
@@ -22,8 +22,8 @@ export class ContainerTelemetryManager {
 	 * Subscribes to the raw container system events and routes them to telemetry producers.
 	 */
 	private setupEventHandlers(container: IContainer) {
-		container.on(ContainerSystemEventName.CONNECTED, (clientId) =>
-			this.handleContainerSystemEvent(ContainerSystemEventName.CONNECTED, { clientId }),
+		container.on(ContainerSystemEventNames.CONNECTED, (clientId) =>
+			this.handleContainerSystemEvent(ContainerSystemEventNames.CONNECTED, { clientId }),
 		);
 	}
 
