@@ -12,7 +12,14 @@ import {
 	tagChange,
 	visitDelta,
 } from "../core/index.js";
-import { TreeChunk, chunkTree, defaultChunkPolicy, intoDelta } from "../feature-libraries/index.js";
+import {
+	TreeChunk,
+	chunkTree,
+	defaultChunkPolicy,
+	intoDelta,
+	relevantRemovedRoots,
+	updateRefreshers as updateDataChangeRefreshers,
+} from "../feature-libraries/index.js";
 import { disposeSymbol } from "../util/index.js";
 import { ChangeEnricherCheckout } from "./defaultCommitEnricher.js";
 import { updateRefreshers } from "./sharedTreeChangeFamily.js";
@@ -35,7 +42,12 @@ export class SharedTreeChangeEnricher implements ChangeEnricherCheckout<SharedTr
 		revision: RevisionTag,
 	): SharedTreeChange {
 		const taggedChange = tagChange(change, revision);
-		return updateRefreshers(taggedChange, this.getDetachedRoot);
+		return updateRefreshers(
+			taggedChange,
+			this.getDetachedRoot,
+			relevantRemovedRoots,
+			updateDataChangeRefreshers,
+		);
 	}
 
 	private readonly getDetachedRoot = (id: DeltaDetachedNodeId): TreeChunk | undefined => {

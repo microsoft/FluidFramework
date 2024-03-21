@@ -22,8 +22,6 @@ import {
 	ModularChangeset,
 	TreeChunk,
 	TreeCompressionStrategy,
-	relevantRemovedRoots as defaultRelevantRemovedRoots,
-	updateRefreshers as defaultUpdateRefreshers,
 	fieldKinds,
 } from "../feature-libraries/index.js";
 import { Mutable, NestedSet, addToNestedSet, fail, nestedSetContains } from "../util/index.js";
@@ -215,6 +213,15 @@ function mapDataChanges(
 export function updateRefreshers(
 	change: TaggedChange<SharedTreeChange>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+	relevantRemovedRootsFromDataChange: (
+		taggedChange: TaggedChange<ModularChangeset>,
+	) => Iterable<DeltaDetachedNodeId>,
+	updateDataChangeRefreshers: (
+		change: TaggedChange<ModularChangeset>,
+		getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
+		removedRoots: Iterable<DeltaDetachedNodeId>,
+		allowMissingRefreshers: boolean,
+	) => ModularChangeset,
 ): SharedTreeChange {
 	// Adding refreshers to a SharedTreeChange is not as simple as adding refreshers to each of its data changes.
 	// This is because earlier data changes affect the state of the forest in ways that can influence the refreshers
@@ -248,20 +255,20 @@ export function updateRefreshers(
 		}
 	}
 	let isFirstDataChange = true;
-	return mapDataChanges(change.change, (innerChange) => {
-		const taggedInnerChange = mapTaggedChange(change, innerChange);
-		const removedRoots = defaultRelevantRemovedRoots(taggedInnerChange);
+	return mapDataChanges(change.change, (dataChange) => {
+		const taggedDataChange = mapTaggedChange(change, dataChange);
+		const removedRoots = relevantRemovedRootsFromDataChange(taggedDataChange);
 		if (isFirstDataChange) {
 			isFirstDataChange = false;
-			return defaultUpdateRefreshers(
-				taggedInnerChange,
+			return updateDataChangeRefreshers(
+				taggedDataChange,
 				getAndRememberDetachedNode,
 				removedRoots,
 				false,
 			);
 		} else {
-			return defaultUpdateRefreshers(
-				taggedInnerChange,
+			return updateDataChangeRefreshers(
+				taggedDataChange,
 				getAndRememberDetachedNode,
 				filterIncludedRoots(removedRoots),
 				true,
