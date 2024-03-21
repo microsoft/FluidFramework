@@ -44,7 +44,7 @@
 			}
 		},
 		"./mocharc-common": {
-			"require": "./mocharc-common.js"
+			"require": "./mocharc-common.cjs"
 		}
 	},
 	"main": "dist/index.js",
