@@ -90,6 +90,29 @@ describe("treeApi", () => {
 		assert.equal(Tree.parent(root[1].x), root[1]);
 	});
 
+	it("child", () => {
+		class Root extends schema.object("Root", {
+			x: schema.required(Point, { stableName: "stable-name" }),
+		}) {}
+		const config = new TreeConfiguration(Root, () => ({ x: {} }));
+		const root = getView(config).root;
+
+		const child = Tree.child(root, "stable-name");
+		assert.equal(child, root.x);
+	});
+
+	it("stableName", () => {
+		class Root extends schema.object("Root", {
+			foo: schema.required(Point, { stableName: "stable-foo" }),
+			bar: Point,
+		}) {}
+		const config = new TreeConfiguration(Root, () => ({ foo: {}, bar: {} }));
+		const root = getView(config).root;
+
+		assert.equal(Tree.stableName(root.foo), "stable-foo");
+		assert.equal(Tree.stableName(root.bar), "bar");
+	});
+
 	it("treeStatus", () => {
 		class Root extends schema.object("Root", { x: Point }) {}
 		const config = new TreeConfiguration(Root, () => ({ x: {} }));
