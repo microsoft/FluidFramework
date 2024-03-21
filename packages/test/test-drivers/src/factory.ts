@@ -7,13 +7,13 @@ import http from "http";
 import Agent from "agentkeepalive";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { LocalServerTestDriver } from "./localServerTestDriver";
-import { TinyliciousTestDriver } from "./tinyliciousTestDriver";
-import { RouterliciousTestDriver } from "./routerliciousTestDriver";
-import { OdspTestDriver } from "./odspTestDriver";
-import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi";
-import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi";
-import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
+import { LocalServerTestDriver } from "./localServerTestDriver.js";
+import { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";
+import { RouterliciousTestDriver } from "./routerliciousTestDriver.js";
+import { OdspTestDriver } from "./odspTestDriver.js";
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi.js";
+import { OdspDriverApiType, OdspDriverApi } from "./odspDriverApi.js";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi.js";
 
 /**
  * @internal
