@@ -261,6 +261,8 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
+    process(message: ISequencedDocumentMessage): void;
+    // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
     get serviceConfiguration(): IClientConfiguration;
@@ -274,7 +276,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
 
 // @alpha
 export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
-    constructor(callbackAfterEveryProcess?: ((el: T) => void) | undefined);
+    constructor();
     // (undocumented)
     dispose(): void;
     // (undocumented)

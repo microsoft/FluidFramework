@@ -233,7 +233,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
 
-		// this.deltaManager.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
@@ -396,9 +395,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public process(message: ISequencedDocumentMessage) {
-		this.deltaManager.lastSequenceNumber = message.sequenceNumber;
-		this.deltaManager.lastMessage = message;
-		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
+		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
 		if (this.isSequencedAllocationMessage(message)) {
