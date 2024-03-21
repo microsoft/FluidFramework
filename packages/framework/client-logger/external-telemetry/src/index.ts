@@ -3,15 +3,11 @@
  * Licensed under the MIT License.
  */
 
+export { IExternalTelemetry } from "./common";
 export {
-	ContainerTelemetryEventName,
-	ContainerTelemetryEventNames,
 	IContainerTelemetry,
 	ContainerConnectedTelemetry,
 	ContainerClosedTelemetry,
 	ContainerDisconnectedTelemetry,
-} from "./containerTelemetry";
-
-export { ContainerTelemetryManager } from "./telemetryManager";
-
-export { ContainerEventTelemetryProducer } from "./telemetryProducer";
+} from "./container";
+export { createTelemetryManagers, TelemetryManagerConfig } from "./factory";

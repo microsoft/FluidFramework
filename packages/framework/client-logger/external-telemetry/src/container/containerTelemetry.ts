@@ -1,5 +1,10 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { IExternalTelemetry } from "../common";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, type ICriticalContainerError } from "@fluidframework/container-definitions";
 
 /**
  * This file contains the types for container telemetry that can be produced.
@@ -11,70 +16,23 @@ import { IContainer } from "@fluidframework/container-definitions";
  */
 export const ContainerTelemetryEventNames = {
 	/**
-	 * Name for the container telemetry event that is intended to be produced from the internal "connected" {@link IContainerEvents} event
+	 * Name for the container telemetry event that is intended to be produced from the internal container "connected" system event
 	 *
 	 * @see {@link ContainerConnectedTelemetry}
 	 */
 	CONNECTED: "container.connected",
 	/**
-	 * Name for the container telemetry event that is intended to be produced from the internal "disconnected"
-	 * container system event which is emitted when the {@link IContainer} becomes disconnected from the Fluid service.
+	 * Name for the container telemetry event that is intended to be produced from the internal container "disconnected" system event
 	 *
-	 * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
-	 *
-	 * @see
-	 *
-	 * - {@link IContainer.connectionState}
-	 *
-	 * - {@link IContainer.disconnect}
+	 * @see {@link ContainerDisconnectedTelemetry}
 	 */
 	DISCONNECTED: "container.disconnected",
 	/**
-	 * Emitted when a {@link AttachState.Detached | detached} container begins the process of
-	 * {@link AttachState.Attaching | attached} to the Fluid service.
+	 * Name for the container telemetry event that is intended to be produced from the internal container "closed" system event
 	 *
-	 * @see
-	 *
-	 * - {@link IContainer.attachState}
-	 *
-	 * - {@link IContainer.attach}
-	 */
-	ATTACHING: "container.attaching",
-	/**
-	 * Emitted when the {@link AttachState.Attaching | attaching} process is complete and the container is
-	 * {@link AttachState.Attached | attached} to the Fluid service.
-	 *
-	 * @see
-	 *
-	 * - {@link IContainer.attachState}
-	 *
-	 * - {@link IContainer.attach}
-	 */
-	ATTACHED: "container.attached",
-	/**
-	 * Emitted when the {@link IContainer} is closed, which permanently disables it.
-	 *
-	 * @remarks Listener parameters:
-	 *
-	 * - `error`: If the container was closed due to error, this will contain details about the error that caused it.
-	 *
-	 * @see {@link IContainer.close}
+	 * @see {@link ContainerClosedTelemetry}
 	 */
 	CLOSED: "container.closed",
-	/**
-	 * Emitted when the container encounters a state which may lead to errors, which may be actionable by the consumer.
-	 *
-	 * @remarks
-	 *
-	 * Note: this event is not intended for general use.
-	 * The longer-term intention is to surface warnings more directly on the APIs that produce them.
-	 * For now, use of this should be avoided when possible.
-	 *
-	 * Listener parameters:
-	 *
-	 * - `error`: The warning describing the encountered state.
-	 */
-	WARNING: "container.warning",
 } as const;
 
 /**
@@ -108,4 +66,37 @@ export interface IContainerTelemetry extends IExternalTelemetry {
  */
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {
 	eventName: "container.connected";
+}
+
+/**
+ * The container "disconnected" telemetry event.
+ * This telemetry is produced from an internal Fluid container system event {@link IContainerEvents} which is
+ * emitted when the {@link IContainer} becomes disconnected from the Fluid service.
+ *
+ * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+ *
+ * @see
+ *
+ * - {@link IContainer.connectionState}
+ *
+ * - {@link IContainer.disconnect}
+ */
+export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
+	eventName: "container.disconnected";
+}
+
+/**
+ * The container "closed" telemetry event.
+ * This telemetry is produced from an internal Fluid container system event {@link IContainerEvents} that is
+ * Emitted when the {@link IContainer} is closed, which permanently disables it.
+ *
+ * @remarks Listener parameters:
+ *
+ * - `error`: If the container was closed due to error, this will contain details about the error that caused it.
+ *
+ * @see {@link IContainer.close}
+ */
+export interface ContainerClosedTelemetry extends IContainerTelemetry {
+	eventName: "container.closed";
+	error?: ICriticalContainerError;
 }

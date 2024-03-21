@@ -1,8 +1,19 @@
-import { IContainer, IContainerEvents } from "@fluidframework/container-definitions";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+	IContainer,
+	IContainerEvents,
+	type ICriticalContainerError,
+} from "@fluidframework/container-definitions";
 import {
 	ContainerConnectedTelemetry,
 	ContainerTelemetryEventNames,
 	IContainerTelemetry,
+	type ContainerDisconnectedTelemetry,
+	type ContainerClosedTelemetry,
 } from "./containerTelemetry";
 import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents";
 
@@ -19,13 +30,21 @@ export class ContainerEventTelemetryProducer {
 		eventName: ContainerSystemEventName,
 		payload?: any,
 	): IContainerTelemetry | undefined {
+		let telemetry: IContainerTelemetry | undefined = undefined;
 		switch (eventName) {
 			case ContainerSystemEventNames.CONNECTED:
-				const telemetry = this.produceConnectedTelemetry(payload);
+				telemetry = this.produceConnectedTelemetry(payload);
 				return telemetry;
+			case ContainerSystemEventNames.DISCONNECTED:
+				telemetry = this.produceDisconnectedTelemetry();
+				break;
+			case ContainerSystemEventNames.CLOSED:
+				telemetry = this.produceClosedTelemetry(payload);
+				break;
 			default:
-				return undefined;
+				break;
 		}
+		return telemetry;
 	}
 
 	private produceConnectedTelemetry = (payload?: {
@@ -36,6 +55,28 @@ export class ContainerEventTelemetryProducer {
 			containerId: payload?.clientId ?? this.getContainerId(),
 			documentId: this.getDocumentId(),
 		};
+	};
+
+	private produceDisconnectedTelemetry = (): ContainerDisconnectedTelemetry => {
+		return {
+			eventName: ContainerTelemetryEventNames.DISCONNECTED,
+			containerId: this.getContainerId(),
+			documentId: this.getDocumentId(),
+		};
+	};
+
+	private produceClosedTelemetry = (payload?: {
+		error?: ICriticalContainerError;
+	}): ContainerClosedTelemetry => {
+		const telemetry: ContainerClosedTelemetry = {
+			eventName: ContainerTelemetryEventNames.CLOSED,
+			containerId: this.getContainerId(),
+			documentId: this.getDocumentId(),
+		};
+		if (payload?.error !== undefined) {
+			telemetry.error = payload.error;
+		}
+		return telemetry;
 	};
 
 	private getContainerId(): string | undefined {

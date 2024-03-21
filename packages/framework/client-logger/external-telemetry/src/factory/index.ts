@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { IContainer } from "@fluidframework/container-definitions";
 import { ContainerTelemetryManager } from "../container";
 import { ContainerEventTelemetryProducer } from "../container/telemetryProducer";
@@ -52,7 +57,9 @@ export class TelemetryManagerFactory {
 	}
 }
 
-// This function is intended to be exposed and used by customers.
+/**
+ * Creates external telemetry managers for one or more areas of the Fluid Framework.
+ */
 export const createTelemetryManagers = (config: TelemetryManagerConfig) => {
 	return TelemetryManagerFactory.createTelemetryManagers(config);
 };

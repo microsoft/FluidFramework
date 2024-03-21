@@ -1,4 +1,9 @@
-import { IContainer } from "@fluidframework/container-definitions";
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { IContainer, type ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IContainerTelemetry } from "./containerTelemetry";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer";
 import { ITelemetryConsumer } from "../common";
@@ -24,6 +29,12 @@ export class ContainerTelemetryManager {
 	private setupEventHandlers(container: IContainer) {
 		container.on(ContainerSystemEventNames.CONNECTED, (clientId) =>
 			this.handleContainerSystemEvent(ContainerSystemEventNames.CONNECTED, { clientId }),
+		);
+		container.on(ContainerSystemEventNames.DISCONNECTED, () =>
+			this.handleContainerSystemEvent(ContainerSystemEventNames.DISCONNECTED),
+		);
+		container.on(ContainerSystemEventNames.CLOSED, (error?: ICriticalContainerError) =>
+			this.handleContainerSystemEvent(ContainerSystemEventNames.CLOSED, { error }),
 		);
 	}
 

@@ -5,19 +5,25 @@
 	"homepage": "https://fluidframework.com",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "npm run test:mocha",
+		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.*js\" -r node_modules/@fluid-internal/mocha-test-setup",
 		"build": "fluid-build . --task build"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
+		"@fluid-internal/client-utils": "workspace:2.0.0-rc.2.0.0",
+		"@fluid-internal/mocha-test-setup": "workspace:2.0.0-rc.2.0.0",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:2.0.0-rc.2.0.0",
+		"@types/mocha": "^9.1.1",
+		"mocha": "^10.2.0",
+		"sinon": "^17.0.1",
 		"tslib": "^1.10.0",
 		"typescript": "~5.1.6"
 	},
 	"dependencies": {
-		"@microsoft/applicationinsights-web": "^2.8.11",
-		"mocha": "^10.2.0"
+		"@microsoft/applicationinsights-web": "^2.8.11"
 	}
 }
