@@ -734,6 +734,34 @@ describe("SharedTreeMap", () => {
 		]);
 	});
 
+	it("forEach", () => {
+		const root = hydrate(schema, initialTree);
+		const result: [string, string][] = [];
+		root.map.forEach((v, k, m) => {
+			result.push([k, v]);
+			assert.equal(m, root.map);
+		});
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	it("forEach (bound)", () => {
+		const root = hydrate(schema, initialTree);
+		const result: [string, string][] = [];
+		root.map.forEach(function (this: typeof result, v, k, m) {
+			this.push([k, v]); // Accessing `result` via `this` to ensure that `thisArg` is respected
+			assert.equal(m, root.map);
+		}, result);
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
 	it("has", () => {
 		const root = hydrate(schema, initialTree);
 		assert.equal(root.map.has("foo"), true);

@@ -742,6 +742,21 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 			}
 		},
 	},
+	forEach: {
+		value(
+			this: TreeMapNode,
+			callbackFn: (value: unknown, key: string, map: ReadonlyMap<string, unknown>) => void,
+			thisArg?: any,
+		): void {
+			if (thisArg === undefined) {
+				// We can't pass `callbackFn` to `FlexTreeMapNode` directly, or else the third argument ("map") will be a flex node instead of the proxy.
+				getFlexNode(this).forEach((v, k, _) => callbackFn(v, k, this), thisArg);
+			} else {
+				const boundCallbackFn = callbackFn.bind(thisArg);
+				getFlexNode(this).forEach((v, k, _) => boundCallbackFn(v, k, this), thisArg);
+			}
+		},
+	},
 	// TODO: add `clear` once we have established merge semantics for it.
 };
 

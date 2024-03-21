@@ -21,7 +21,7 @@ import {
 	IOpsCachingPolicy,
 	ICollabSessionOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * @internal

@@ -12,7 +12,7 @@ import {
 	done,
 	Generator,
 	Weights,
-} from "./types";
+} from "./types.js";
 
 /**
  * Returns a generator which produces a categorial distribution with the provided weights.

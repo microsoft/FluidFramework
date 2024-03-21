@@ -44,6 +44,7 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type RecentlyAddedContainerRuntimeMessageDetails,
+	CompressionAlgorithms,
 } from "@fluidframework/container-runtime";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -89,6 +90,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		runtimeOptions: {
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+			compressionOptions: {
+				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
 			summaryOptions: {
 				summaryConfigOverrides: {
 					...DefaultSummaryConfiguration,

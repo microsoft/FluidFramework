@@ -6,10 +6,10 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from "assert";
-import { makeRandom } from "..";
-import { integer } from "../distributions";
-import { makeUuid4 } from "../random";
-import { computeChiSquared, chiSquaredCriticalValues, Counter, parseUuid } from "./utils";
+import { makeRandom } from "../index.js";
+import { integer } from "../distributions/index.js";
+import { makeUuid4 } from "../random.js";
+import { computeChiSquared, chiSquaredCriticalValues, Counter, parseUuid } from "./utils.js";
 
 // For stochastic tests, we use the following predetermined seeds.
 const testSeeds: [number, number, number, number][] = [

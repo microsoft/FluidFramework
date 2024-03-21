@@ -5,8 +5,8 @@
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { MersenneTwister19937, integer, real } from "random-js";
-import { makeRandom } from "../random";
-import { XSadd } from "../xsadd";
+import { makeRandom } from "../random.js";
+import { XSadd } from "../xsadd.js";
 
 let next: () => number;
 

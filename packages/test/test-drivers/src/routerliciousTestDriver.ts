@@ -11,7 +11,7 @@ import { v4 as uuid } from "uuid";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
 import { ITestDriver, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
-import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi.js";
 
 interface IServiceEndpoint {
 	deltaStreamUrl: string;

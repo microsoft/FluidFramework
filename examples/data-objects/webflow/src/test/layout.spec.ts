@@ -45,7 +45,7 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 	before(async function () {
-		// Initialization of 'compat LTS ^1.3.4 - old loader' compat variant can take a couple seconds.
+		// Initialization of 'compat LTS ^1.3.x - old loader' compat variant can take a couple seconds.
 		this.timeout(10000);
 
 		provider = getTestObjectProvider({ resetAfterEach: false });
