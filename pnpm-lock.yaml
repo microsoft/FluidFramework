@@ -146,87 +146,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  azure/packages/test/end-to-end-tests:
-    specifiers:
-      '@biomejs/biome': ^1.6.1
-      '@fluid-internal/mocha-test-setup': workspace:~
-      '@fluidframework/aqueduct': workspace:~
-      '@fluidframework/azure-client': workspace:~
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.34.0
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ^5.1.0
-      '@fluidframework/fluid-static': workspace:~
-      '@fluidframework/map': workspace:~
-      '@fluidframework/matrix': workspace:~
-      '@fluidframework/sequence': workspace:~
-      '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@fluidframework/test-utils': workspace:~
-      '@types/mocha': ^9.1.1
-      '@types/nock': ^9.3.0
-      '@types/node': ^18.19.0
-      '@types/sinon': ^17.0.3
-      '@types/uuid': ^9.0.2
-      c8: ^8.0.1
-      cross-env: ^7.0.3
-      eslint: ~8.55.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      nock: ^13.3.3
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      sinon: ^17.0.1
-      start-server-and-test: ^1.11.7
-      tinylicious: ^4.0.0
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-    dependencies:
-      '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
-      '@fluidframework/azure-client': link:../../../../packages/service-clients/azure-client
-      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
-      '@fluidframework/container-loader': link:../../../../packages/loader/container-loader
-      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
-      '@fluidframework/counter': link:../../../../packages/dds/counter
-      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
-      '@fluidframework/map': link:../../../../packages/dds/map
-      '@fluidframework/matrix': link:../../../../packages/dds/matrix
-      '@fluidframework/sequence': link:../../../../packages/dds/sequence
-      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
-      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-utils': link:../../../../packages/test/test-utils
-      cross-env: 7.0.3
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      sinon: 17.0.1
-      start-server-and-test: 1.15.5
-      tinylicious: 4.0.0
-      uuid: 9.0.1
-    devDependencies:
-      '@biomejs/biome': 1.6.1
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
-      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/mocha': 9.1.1
-      '@types/nock': 9.3.1
-      '@types/node': 18.19.1
-      '@types/sinon': 17.0.3
-      '@types/uuid': 9.0.7
-      c8: 8.0.1
-      eslint: 8.55.0
-      nock: 13.4.0
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
   azure/packages/test/scenario-runner:
     specifiers:
       '@biomejs/biome': ^1.6.1
@@ -1038,7 +957,6 @@ importers:
     specifiers:
       '@biomejs/biome': ^1.6.1
       '@fluid-experimental/tree': workspace:~
-      '@fluid-internal/mocha-test-setup': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -1048,17 +966,10 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/map': workspace:~
-      '@types/mocha': ^9.1.1
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       best-random: ^1.0.0
-      c8: ^8.0.1
-      cross-env: ^7.0.3
       eslint: ~8.55.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
       moment: ^2.21.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -1079,21 +990,13 @@ importers:
       use-resize-observer: 7.1.0_sfoxds7t5ydpegc3knd667wn6m
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/mocha': 9.1.1
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      c8: 8.0.1
-      cross-env: 7.0.3
       eslint: 8.55.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -9159,6 +9062,87 @@ importers:
       typescript: 5.1.6
       uuid: 9.0.1
 
+  packages/service-clients/end-to-end-tests/azure-client:
+    specifiers:
+      '@biomejs/biome': ^1.6.1
+      '@fluid-internal/mocha-test-setup': workspace:~
+      '@fluidframework/aqueduct': workspace:~
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.34.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/counter': workspace:~
+      '@fluidframework/eslint-config-fluid': ^5.1.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/map': workspace:~
+      '@fluidframework/matrix': workspace:~
+      '@fluidframework/sequence': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
+      '@types/mocha': ^9.1.1
+      '@types/nock': ^9.3.0
+      '@types/node': ^18.19.0
+      '@types/sinon': ^17.0.3
+      '@types/uuid': ^9.0.2
+      c8: ^8.0.1
+      cross-env: ^7.0.3
+      eslint: ~8.55.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nock: ^13.3.3
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      sinon: ^17.0.1
+      start-server-and-test: ^1.11.7
+      tinylicious: ^4.0.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluid-internal/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/aqueduct': link:../../../framework/aqueduct
+      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../test/test-utils
+      cross-env: 7.0.3
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      sinon: 17.0.1
+      start-server-and-test: 1.15.5
+      tinylicious: 4.0.0
+      uuid: 9.0.1
+    devDependencies:
+      '@biomejs/biome': 1.6.1
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
+      '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
+      '@types/mocha': 9.1.1
+      '@types/nock': 9.3.1
+      '@types/node': 18.19.1
+      '@types/sinon': 17.0.3
+      '@types/uuid': 9.0.7
+      c8: 8.0.1
+      eslint: 8.55.0
+      nock: 13.4.0
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
   packages/service-clients/end-to-end-tests/odsp-client:
     specifiers:
       '@biomejs/biome': ^1.6.1
@@ -9856,7 +9840,6 @@ importers:
       '@types/uuid': ^9.0.2
       agentkeepalive: ^4.5.0
       axios: ^1.6.2
-      c8: ^8.0.1
       copyfiles: ^2.4.1
       eslint: ~8.55.0
       prettier: ~3.0.3
@@ -9895,7 +9878,6 @@ importers:
       '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
-      c8: 8.0.1
       copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
@@ -10970,7 +10952,6 @@ importers:
 
   packages/tools/fetch-tool:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluid-internal/client-utils': workspace:~
       '@fluid-tools/build-cli': ^0.34.0
@@ -10993,6 +10974,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/tool-utils': workspace:~
       '@types/node': ^18.19.0
+      copyfiles: ^2.4.1
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -11014,7 +10996,6 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/tool-utils': link:../../utils/tool-utils
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
       '@fluid-tools/fetch-tool-previous': /@fluid-tools/fetch-tool/2.0.0-internal.8.0.0
@@ -11022,6 +11003,7 @@ importers:
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@types/node': 18.19.1
+      copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
