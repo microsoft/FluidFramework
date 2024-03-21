@@ -8,7 +8,7 @@ import { GraphCommit } from "../core/index.js";
 /**
  * A component that can be used to enrich outbound commits.
  */
-export interface ICommitEnricher<TChange> {
+export interface CommitEnricher<TChange> {
 	/**
 	 * Enriches a commit with adequate refreshers.
 	 * Assumes that the commit will be submitted.

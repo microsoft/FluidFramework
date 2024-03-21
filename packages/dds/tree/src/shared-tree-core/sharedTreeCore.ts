@@ -24,7 +24,7 @@ import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from 
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
-import { ICommitEnricher } from "./commitEnricher.js";
+import { CommitEnricher } from "./commitEnricher.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
@@ -81,7 +81,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	private readonly schemaAndPolicy: SchemaAndPolicy;
 
-	private readonly commitEnricher?: ICommitEnricher<TChange>;
+	private readonly commitEnricher?: CommitEnricher<TChange>;
 
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
@@ -102,7 +102,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
 		schemaAndPolicy: SchemaAndPolicy,
-		enricher?: ICommitEnricher<TChange>,
+		enricher?: CommitEnricher<TChange>,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 

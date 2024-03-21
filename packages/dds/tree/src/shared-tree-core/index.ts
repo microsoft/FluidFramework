@@ -18,7 +18,7 @@ export {
 	SummaryElementStringifier,
 } from "./sharedTreeCore.js";
 
-export { ICommitEnricher } from "./commitEnricher.js";
+export { CommitEnricher as ICommitEnricher } from "./commitEnricher.js";
 
 export { TransactionStack } from "./transactionStack.js";
 
