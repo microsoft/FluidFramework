@@ -95,7 +95,7 @@ function filterRuntimeOptionsForVersion(
 		enableRuntimeIdCompressor = "on",
 		// Some t9s tests timeout with small settings. This is likely due to too many ops going through.
 		// Reduce chunking cut-off for such tests.
-		chunkSizeInBytes = driverType === "local" ? 200: 1000,
+		chunkSizeInBytes = driverType === "local" ? 200 : 1000,
 	} = options;
 
 	if (version.startsWith("1.")) {
@@ -222,11 +222,7 @@ export async function getVersionedTestObjectProviderFromApis(
 ) {
 	const type = driverConfig?.type ?? "local";
 
-	const driver = await createFluidTestDriver(
-		type,
-		driverConfig?.config,
-		apis.driver,
-	);
+	const driver = await createFluidTestDriver(type, driverConfig?.config, apis.driver);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
@@ -342,7 +338,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions, driverConfig.type),
+			filterRuntimeOptionsForVersion(
+				minVersion,
+				containerOptions?.runtimeOptions,
+				driverConfig.type,
+			),
 			[innerRequestHandler],
 		);
 	};
@@ -362,7 +362,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions, driverConfig.type),
+			filterRuntimeOptionsForVersion(
+				minVersion,
+				containerOptions?.runtimeOptions,
+				driverConfig.type,
+			),
 			[innerRequestHandler],
 		);
 	};
