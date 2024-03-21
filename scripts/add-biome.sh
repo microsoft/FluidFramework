@@ -28,12 +28,14 @@ npe scripts.check:format "fluid-build --task check:format ."
 npe scripts.lint "fluid-build . --task lint"
 npe scripts.lint:fix "fluid-build . --task eslint:fix --task format"
 
+configPath=$(realpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.json)
+
 # Add local biome config file. Note that the `extends` property should point to the root biome.json file and may need to
 # be updated depending on the project.
 cat << EOF > biome.jsonc
 {
 	"\$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["../../../biome.json"],
+	"extends": ["$configPath"],
 	"formatter": {
 		"enabled": true
 	}

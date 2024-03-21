@@ -16,7 +16,8 @@
 			"**/localOdspSnapshots/**",
 			"**/_package.json",
 			"**/biome.jsonc",
-			"**/oclif.manifest.json"
+			"**/oclif.manifest.json",
+			"**/*.cts"
 		],
 		"maxSize": 2097152
 	},
