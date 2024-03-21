@@ -122,7 +122,7 @@ export class ChunkedForest implements IEditableForest {
 			create(content: ProtoNodes, destination: FieldKey): void {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.forest.chunker));
 				this.forest.roots.fields.set(destination, chunks);
-				this.forest.events.emit("afterCreateRootField", destination);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);

@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	AnchorSet,
 	FieldKey,
 	ForestEvents,
 	IForestSubscription,
@@ -139,10 +138,6 @@ export class Context implements FlexTreeContext, IDisposable {
 	 */
 	// TODO: Use this to automatically provide node keys where required.
 	public fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
-
-	public get anchorSet(): AnchorSet {
-		return this.forest.anchors;
-	}
 }
 
 /**

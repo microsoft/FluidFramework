@@ -839,10 +839,11 @@ function prepareArrayContentForInsert(
 }
 
 function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): void {
+	// Only subscribe to the event if there is at least one proxy tree to hydrate - this is not the case when inserting an empty array [].
 	if (proxies.length > 0) {
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
-		const off = forest.on("afterCreateRootField", (fieldKey) => {
+		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
 			(proxies[i].rootPath as Mutable<UpPath>).parentField = fieldKey;
 			for (const { path, proxy } of proxies[i].proxyPaths) {
 				anchorProxy(forest.anchors, path, proxy);

@@ -37,7 +37,7 @@ export interface ForestEvents {
 	/**
 	 * A new root field was just created in this forest.
 	 */
-	afterCreateRootField(key: FieldKey): void;
+	afterRootFieldCreated(key: FieldKey): void;
 
 	/**
 	 * The forest is about to be changed.
