@@ -11,21 +11,53 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./lib/mocha-test-setup-public.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/mocha-test-setup-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "api-extractor run --config ./api-extractor-esm.json",
+		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
+		"api-extractor:esnext": "api-extractor run --local",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"check:are-the-types-wrong": "attw --pack",
+		"check:are-the-types-wrong": "attw --pack . --entrypoints .",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
@@ -36,7 +68,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -53,8 +85,6 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
@@ -72,8 +102,9 @@
 				"script": false
 			},
 			"tsc": [
-				"...",
-				"typetests:gen"
+				"typetests:gen",
+				"build:genver",
+				"^tsc"
 			]
 		}
 	},
