@@ -293,7 +293,7 @@ function getType(data: InsertableContent, allowedTypes: AllowedTypes): TreeNodeS
 	if (possibleTypes.length === 0) {
 		throw new UsageError(
 			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${JSON.stringify(
-				[...allowedTypes.map((schema) => evaluateLazy(schema).identifier)],
+				[...allowedTypes.map((schema) => evaluateLazySchema(schema).identifier)],
 				undefined,
 			)}.`,
 		);
@@ -330,8 +330,7 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 	}
 }
 
-// TODO: deduplicate this with helper elsewhere
-function evaluateLazy(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
+function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 	if (isLazy(value)) {
 		return (value as () => TreeNodeSchema)();
 	}
@@ -344,7 +343,7 @@ function evaluateLazy(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 export function getPossibleTypes(typeSet: AllowedTypes, data: ContextuallyTypedNodeData) {
 	const possibleTypes: TreeNodeSchema[] = [];
 	for (const typeSetEntry of typeSet) {
-		const schema = evaluateLazy(typeSetEntry);
+		const schema = evaluateLazySchema(typeSetEntry);
 		if (shallowCompatibilityTest(schema, data)) {
 			possibleTypes.push(schema);
 		}
