@@ -10,11 +10,6 @@ overrides:
   '@oclif/core': ~2.4.0
   sharp: ^0.33.2
 
-patchedDependencies:
-  tsc-multi@1.1.0:
-    hash: 5vqev4kbz4ggrzgqvobqxx6cgq
-    path: patches/tsc-multi@1.1.0.patch
-
 importers:
 
   .:
@@ -206,6 +201,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
+      cross-env: 7.0.3
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -225,7 +221,6 @@ importers:
       '@types/sinon': 17.0.3
       '@types/uuid': 9.0.7
       c8: 8.0.1
-      cross-env: 7.0.3
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -294,6 +289,7 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       commander: 5.1.0
+      cross-env: 7.0.3
       js-yaml: 4.1.0
       mocha: 10.2.0
       sinon: 17.0.1
@@ -314,7 +310,6 @@ importers:
       '@types/uuid': 9.0.7
       c8: 8.0.1
       copyfiles: 2.4.1
-      cross-env: 7.0.3
       eslint: 8.55.0
       nock: 13.4.0
       prettier: 3.0.3
@@ -397,7 +392,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -484,7 +479,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
@@ -581,7 +576,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/prop-types': ^15
       '@types/react': ^17.0.44
@@ -702,7 +697,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-client': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       cross-env: ^7.0.3
       eslint: ~8.55.0
@@ -785,7 +780,7 @@ importers:
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
@@ -878,7 +873,7 @@ importers:
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -966,7 +961,6 @@ importers:
 
   examples/benchmarks/bubblebench/baseline:
     specifiers:
-      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluid-example/bubblebench-common': workspace:~
       '@fluid-example/example-utils': workspace:~
@@ -981,11 +975,9 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
-      '@types/node': ^18.19.0
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       expect-puppeteer: ^9.0.2
@@ -1014,23 +1006,20 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       react: 17.0.2
     devDependencies:
-      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../../packages/test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
       jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
@@ -1128,7 +1117,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1210,7 +1199,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1291,7 +1280,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1609,7 +1598,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1691,7 +1680,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1839,7 +1828,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -1910,8 +1899,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
-      '@types/node': ^18.19.0
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       cross-env: ^7.0.3
@@ -1944,18 +1932,17 @@ importers:
       '@biomejs/biome': 1.6.1
       '@fluid-example/webpack-fluid-loader': link:../../utils/webpack-fluid-loader
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       cross-env: 7.0.3
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
       jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
@@ -2125,7 +2112,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2606,7 +2593,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -2820,7 +2807,7 @@ importers:
       '@types/express': ^4.11.0
       '@types/fs-extra': ^9.0.11
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/lodash.isequal': ^4.5.6
       '@types/node-fetch': ^2.6.11
       '@types/react': ^17.0.44
@@ -2955,7 +2942,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/uuid': ^9.0.2
       assert: ^2.0.0
@@ -3193,7 +3180,6 @@ importers:
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
       '@microsoft/api-extractor': ^7.42.3
-      '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -3203,7 +3189,6 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -3232,17 +3217,15 @@ importers:
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      tsc-multi: 1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6
       uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
-      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
-      '@types/node': 18.19.1
+      '@microsoft/api-extractor': 7.42.3
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -3385,7 +3368,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
@@ -3482,7 +3465,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -3601,7 +3584,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -3717,8 +3700,7 @@ importers:
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/tree': workspace:~
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
-      '@types/node': ^18.19.0
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^9.0.2
@@ -3772,14 +3754,13 @@ importers:
       uuid: 9.0.1
     devDependencies:
       '@biomejs/biome': 1.6.1
-      '@fluid-tools/build-cli': 0.34.0_wct7gbpa3rmr6xmk4uo7pbrani
+      '@fluid-tools/build-cli': 0.34.0_fm2ot4uijanuclk6q664bxq22a
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-tools': 1.0.195075
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../packages/test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/uuid': 9.0.7
@@ -3788,7 +3769,7 @@ importers:
       eslint: 8.55.0
       expect-puppeteer: 9.0.2
       html-webpack-plugin: 5.5.3_webpack@5.89.0
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
       jest-environment-puppeteer: 9.0.2_typescript@5.1.6
       jest-junit: 10.0.0
       jest-puppeteer: 9.0.2_45yw4b353ouaepujuapfecneom
@@ -3824,7 +3805,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -3906,7 +3887,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       clean-webpack-plugin: ^4.0.0
       cross-env: ^7.0.3
@@ -3983,7 +3964,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/node': ^18.19.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
@@ -4093,7 +4074,7 @@ importers:
       '@material-ui/lab': 4.0.0-alpha.61
       '@material-ui/styles': 4.11.5
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/uuid': ^9.0.2
       clean-webpack-plugin: ^4.0.0
       concurrently: ^8.2.1
@@ -4118,6 +4099,7 @@ importers:
       sass-loader: ^7.1.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
+      tinylicious: ^4.0.0
       ts-loader: ^9.3.0
       typescript: ~5.1.6
       webpack: ^5.82.0
@@ -4185,6 +4167,7 @@ importers:
       sass-loader: 7.3.1_webpack@5.89.0
       source-map-loader: 2.0.2_webpack@5.89.0
       style-loader: 1.3.0_webpack@5.89.0
+      tinylicious: 4.0.0
       ts-loader: 9.5.1_535b6rdv6xzubhvm4whegmtnju
       typescript: 5.1.6
       webpack: 5.89.0_webpack-cli@4.10.0
@@ -4878,6 +4861,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-shared-tree-interop:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-properties': workspace:~
@@ -4903,6 +4887,7 @@ importers:
       '@fluidframework/core-utils': link:../../../../packages/common/core-utils
       '@fluidframework/tree': link:../../../../packages/dds/tree
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
@@ -5414,7 +5399,7 @@ importers:
       '@types/base64-js': ^1.3.0
       '@types/events_pkg': npm:@types/events@^3.0.0
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       '@types/rewire': ^2.5.28
@@ -9113,7 +9098,6 @@ importers:
       '@fluidframework/protocol-definitions': ^3.2.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/server-services-client': ^4.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -9145,7 +9129,6 @@ importers:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/server-services-client': 4.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 1.6.2
     devDependencies:
@@ -10036,6 +10019,7 @@ importers:
       '@fluidframework/tree': link:../../dds/tree
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       '@types/sinon': 17.0.3
+      cross-env: 7.0.3
       mocha: 10.2.0
       semver: 7.5.4
       sinon: 17.0.1
@@ -10052,7 +10036,6 @@ importers:
       '@types/node': 18.19.1
       '@types/uuid': 9.0.7
       c8: 8.0.1
-      cross-env: 7.0.3
       eslint: 8.55.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -10504,7 +10487,7 @@ importers:
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/jsdom': ^21.1.1
       '@types/jsdom-global': ^3.0.4
       '@types/mocha': ^9.1.1
@@ -10746,14 +10729,12 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/tree': workspace:~
-      '@microsoft/api-extractor': ^7.42.3
       '@testing-library/dom': ^8.2.0
       '@testing-library/jest-dom': ^5.16.5
       '@testing-library/react': ^12.0.0
       '@testing-library/user-event': ^14.4.3
       '@types/jest': 29.5.3
-      '@types/jest-environment-puppeteer': 'workspace:'
-      '@types/node': ^18.19.0
+      '@types/jest-environment-puppeteer': workspace:~
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
@@ -10815,17 +10796,15 @@ importers:
     devDependencies:
       '@biomejs/biome': 1.6.1
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_h467wi3sy6j67ifywrn7x7qf4m
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@testing-library/dom': 8.20.1
       '@testing-library/jest-dom': 5.17.0
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/user-event': 14.5.1_szfc7t2zqsdonxwckqxkjn2the
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': link:../../../test/types_jest-environment-puppeteer
-      '@types/node': 18.19.1
       '@types/react': 17.0.71
       '@types/react-dom': 17.0.25
       '@types/testing-library__jest-dom': 5.14.9
@@ -10836,7 +10815,7 @@ importers:
       eslint-plugin-react: 7.33.2_eslint@8.55.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.55.0
       html-webpack-plugin: 5.5.3_webpack@5.89.0
-      jest: 29.7.0_@types+node@18.19.1
+      jest: 29.7.0
       jest-dev-server: 9.0.2
       jest-environment-jsdom: 29.7.0
       jest-environment-puppeteer: 9.0.2_typescript@5.1.6
@@ -15303,6 +15282,70 @@ packages:
       '@fluid-tools/version-tools': 0.34.0
       '@fluidframework/build-tools': 0.34.0
       '@fluidframework/bundle-size-tools': 0.34.0
+      '@microsoft/api-extractor': 7.42.3
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.3.10
+      '@oclif/plugin-commands': 3.0.7
+      '@oclif/plugin-help': 6.0.7
+      '@oclif/plugin-not-found': 3.0.4
+      '@oclif/plugin-plugins': 3.9.4
+      '@oclif/test': 2.3.33
+      '@octokit/core': 4.2.4
+      '@rushstack/node-core-library': 3.63.0
+      async: 3.2.5
+      chalk: 2.4.2
+      danger: 11.3.0
+      date-fns: 2.30.0
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.0
+      inquirer: 8.2.6
+      jssm: 5.90.1
+      latest-version: 5.1.0
+      minimatch: 7.4.6
+      node-fetch: 2.7.0
+      npm-check-updates: 16.14.11
+      oclif: 4.0.4_bpztyfltmpuv6lhsgzfwtmxhte
+      prettier: 3.0.3
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      semver: 7.5.4
+      semver-utils: 1.1.4
+      simple-git: 3.21.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - astro-eslint-parser
+      - bluebird
+      - encoding
+      - esbuild
+      - eslint
+      - mem-fs
+      - supports-color
+      - svelte
+      - svelte-eslint-parser
+      - typescript
+      - uglify-js
+      - vue-eslint-parser
+      - webpack-cli
+    dev: true
+
+  /@fluid-tools/build-cli/0.34.0_fm2ot4uijanuclk6q664bxq22a:
+    resolution: {integrity: sha512-q9P1YRnGyGSg83++56BcbDHi4VkFEylyU/KtJCY8maPD7qIxwfZIcrNsradM0Reg+ISuv9zV/IiwFls1AyDJYw==}
+    engines: {node: '>=14.17.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.34.0
+      '@fluidframework/build-tools': 0.34.0_webpack-cli@4.10.0
+      '@fluidframework/bundle-size-tools': 0.34.0_webpack-cli@4.10.0
       '@microsoft/api-extractor': 7.42.3
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
@@ -25556,6 +25599,7 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
+    dev: true
 
   /clone-buffer/1.0.0:
     resolution: {integrity: sha512-KLLTJWrvwIP+OPfMn0x2PheDEP20RPUcGXj/ERegTgdmPEZylALQldygiqrPPu8P45uNuPs7ckmReLY6v/iA5g==}
@@ -26311,7 +26355,6 @@ packages:
     hasBin: true
     dependencies:
       cross-spawn: 7.0.3
-    dev: true
 
   /cross-fetch/3.1.8:
     resolution: {integrity: sha512-cvA+JwZoU0Xq+h6WkMvAUqPEYy92Obet6UdKLfW60qn99ftItKjB5T+BkyWOFWe2pUyfQ+IJHmpOTznqk1M6Kg==}
@@ -29718,6 +29761,7 @@ packages:
   /get-stdin/8.0.0:
     resolution: {integrity: sha512-sY22aA6xchAzprjyqmSEQv4UbAAzRN0L2dQB0NlN5acTTK9Don6nhoc3eAbUnpZiCANAMfd/+40kVdKfFygohg==}
     engines: {node: '>=10'}
+    dev: true
 
   /get-stream/3.0.0:
     resolution: {integrity: sha512-GlhdIUuVakc8SJ6kK0zAFbiGzRFzNnY4jUuEbV9UROo4Y+0Ny4fjvcZFVTeDA4odpFyOQzaw6hXukJSq/f28sQ==}
@@ -36278,13 +36322,6 @@ packages:
       p-map: 2.1.0
     dev: true
 
-  /p-all/3.0.0:
-    resolution: {integrity: sha512-qUZbvbBFVXm6uJ7U/WDiO0fv6waBMbjlCm4E66oZdRR+egswICarIdHyVSZZHudH8T5SF8x/JG0q0duFzPnlBw==}
-    engines: {node: '>=10'}
-    dependencies:
-      p-map: 4.0.0
-    dev: false
-
   /p-cancelable/1.1.0:
     resolution: {integrity: sha512-s73XxOZ4zpt1edZYZzvhqFa6uvQc1vwUa0K0BdtIZgQMAJj9IbebH+JkgKZc9h+B05PKHLOTl4ajG1BmNrVZlw==}
     engines: {node: '>=6'}
@@ -40599,12 +40636,6 @@ packages:
       webpack: 5.89.0_webpack-cli@4.10.0
     dev: true
 
-  /string-to-stream/3.0.1:
-    resolution: {integrity: sha512-Hl092MV3USJuUCC6mfl9sPzGloA3K5VwdIeJjYIkXY/8K+mUvaeEabWJgArp+xXrsWxCajeT2pc4axbVhIZJyg==}
-    dependencies:
-      readable-stream: 3.6.2
-    dev: false
-
   /string-width/1.0.2:
     resolution: {integrity: sha512-0XsVpQLnVCXHJfyEs8tC0zpTVIr5PKKsQtkT29IwupnPTjtPmQ3xT/4yCREF9hYkV/3M3kzcUTSAZT6a6h81tw==}
     engines: {node: '>=0.10.0'}
@@ -40898,11 +40929,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-
-  /superstruct/1.0.3:
-    resolution: {integrity: sha512-8iTn3oSS8nRGn+C2pgXSKPI3jmpm6FExNazNpjvqS6ZUJQCej3PUXEKM8NjHBOs54ExM+LPW/FBRhymrdcCiSg==}
-    engines: {node: '>=14.0.0'}
-    dev: false
 
   /supertest/3.4.2:
     resolution: {integrity: sha512-WZWbwceHUo2P36RoEIdXvmqfs47idNNZjCuJOqDz6rvtkk8ym56aU5oglORCpPeXGxT7l9rkJ41+O1lffQXYSA==}
@@ -41845,29 +41871,6 @@ packages:
       ts-morph: 20.0.0
       typescript: 5.3.3
     dev: true
-
-  /tsc-multi/1.1.0_5vqev4kbz4ggrzgqvobqxx6cgq_typescript@5.1.6:
-    resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
-    engines: {node: '>=14'}
-    hasBin: true
-    peerDependencies:
-      typescript: '>=4.3.0'
-    dependencies:
-      debug: 4.3.4
-      fast-glob: 3.3.2
-      get-stdin: 8.0.0
-      p-all: 3.0.0
-      picocolors: 1.0.0
-      signal-exit: 3.0.7
-      string-to-stream: 3.0.1
-      superstruct: 1.0.3
-      tslib: 2.6.2
-      typescript: 5.1.6
-      yargs: 17.7.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-    patched: true
 
   /tsconfck/2.1.2_typescript@5.1.6:
     resolution: {integrity: sha512-ghqN1b0puy3MhhviwO2kGF8SeMDNhEbnKxjK7h6+fvY9JAxqvXi8y5NAHSQv687OVboS2uZIByzGd45/YxrRHg==}
@@ -44128,6 +44131,7 @@ packages:
   /yargs-parser/21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
+    dev: true
 
   /yargs-parser/7.0.0:
     resolution: {integrity: sha512-WhzC+xgstid9MbVUktco/bf+KJG+Uu6vMX0LN1sLJvwmbCQVxb4D8LzogobonKycNasCZLdOzTAk1SK7+K7swg==}
@@ -44199,6 +44203,7 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+    dev: true
 
   /yargs/3.32.0:
     resolution: {integrity: sha512-ONJZiimStfZzhKamYvR/xvmgW3uEkAUFSP91y2caTEPhzF6uP2JfPiVZcq66b/YR0C3uitxSV7+T1x8p5bkmMg==}

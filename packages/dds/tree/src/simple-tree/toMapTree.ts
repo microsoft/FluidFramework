@@ -474,7 +474,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys.
 	 *
-	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+	 * Allow explicit undefined for compatibility with FlexTree, and type-safety on read.
 	 */
 	// TODO: make sure explicit undefined is actually handled correctly.
 	[key: FieldKey]: ContextuallyTypedFieldData;
