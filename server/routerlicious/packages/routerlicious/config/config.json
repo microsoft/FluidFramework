@@ -161,7 +161,8 @@
 			"shouldDisableDefaultNamespace": false
 		},
 		"socketIo": {
-			"perMessageDeflate": false
+			"perMessageDeflate": false,
+			"gracefulShutdownEnabled": false
 		},
 		"jwtTokenCache": {
 			"enable": true
