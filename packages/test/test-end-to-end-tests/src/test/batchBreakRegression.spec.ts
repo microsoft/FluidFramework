@@ -18,8 +18,13 @@ import {
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
+<<<<<<< HEAD
 import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
+=======
+import { IContainerRuntimeOptions, CompressionAlgorithms } from "@fluidframework/container-runtime";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+>>>>>>> main
 import { wrapObjectAndOverride } from "../mocking.js";
 
 /**
@@ -149,6 +154,11 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 
 			await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
 				enableGroupedBatching,
+				chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+				compressionOptions: {
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disable
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
 			});
 			assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
 

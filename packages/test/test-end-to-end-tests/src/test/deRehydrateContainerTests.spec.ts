@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/test-utils";
 import * as semver from "semver";
 // eslint-disable-next-line import/no-internal-modules
-import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager";
+import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 
 const detachedContainerRefSeqNumber = 0;
 

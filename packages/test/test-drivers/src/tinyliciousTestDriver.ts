@@ -12,7 +12,13 @@ import {
 	createTinyliciousCreateNewRequest,
 	defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
+<<<<<<< HEAD
 import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi";
+=======
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi.js";
+>>>>>>> main
 
 /**
  * @internal

@@ -21,9 +21,13 @@ import {
 	codeVersion,
 	testBaseVersion,
 } from "./baseVersion.js";
+<<<<<<< HEAD
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
+=======
+import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
+>>>>>>> main
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -70,7 +74,7 @@ const defaultCompatVersions = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
 	// we are currently supporting 1.3.X long-term
-	ltsVersions: ["^1.3.4"],
+	ltsVersions: [resolveVersion("^1.3", false)],
 };
 
 // This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.

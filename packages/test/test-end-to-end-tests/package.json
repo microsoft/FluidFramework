@@ -16,9 +16,14 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:genver": "gen-version",
+<<<<<<< HEAD
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+=======
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+>>>>>>> main
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -167,6 +172,11 @@
 			"build:test": [
 				"...",
 				"^build:esnext"
+			],
+			"build:test:esm": [
+				"...",
+				"^tsc",
+				"build:genver"
 			]
 		}
 	},

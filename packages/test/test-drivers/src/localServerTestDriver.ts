@@ -10,7 +10,11 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
+<<<<<<< HEAD
 import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi";
+=======
+import { LocalDriverApiType, LocalDriverApi } from "./localDriverApi.js";
+>>>>>>> main
 
 /**
  * @internal

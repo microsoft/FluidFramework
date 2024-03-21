@@ -24,8 +24,17 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
+<<<<<<< HEAD
 import { Deferred } from "@fluidframework/core-utils";
 import type { SharedCounter } from "@fluidframework/counter";
+=======
+import {
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	type RecentlyAddedContainerRuntimeMessageDetails,
+	CompressionAlgorithms,
+} from "@fluidframework/container-runtime";
+>>>>>>> main
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
 import {
@@ -89,6 +98,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		runtimeOptions: {
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+			compressionOptions: {
+				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
 			summaryOptions: {
 				summaryConfigOverrides: {
 					...DefaultSummaryConfiguration,

@@ -13,8 +13,13 @@ import {
 	Generator,
 	Reducer,
 	SaveInfo,
+<<<<<<< HEAD
 	done,
 } from "./types";
+=======
+} from "./types.js";
+import { combineReducers, combineReducersAsync } from "./combineReducers.js";
+>>>>>>> main
 
 /**
  * Performs random actions on a set of clients.

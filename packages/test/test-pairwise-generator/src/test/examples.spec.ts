@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+<<<<<<< HEAD
 import { OptionsMatrix, generatePairwiseOptions } from "../index";
+=======
+import { generatePairwiseOptions, OptionsMatrix } from "../index.js";
+>>>>>>> main
 
 describe("generatePairwiseOptions.examples", () => {
 	it("Testing a function", () => {

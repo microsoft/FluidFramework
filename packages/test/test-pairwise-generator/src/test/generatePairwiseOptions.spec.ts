@@ -6,7 +6,11 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { strict as assert } from "assert";
+<<<<<<< HEAD
 import { OptionsMatrix, generatePairwiseOptions } from "../index";
+=======
+import { generatePairwiseOptions, OptionsMatrix } from "../index.js";
+>>>>>>> main
 
 interface SimpleOptions {
 	oBoolean?: boolean;
