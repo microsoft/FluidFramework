@@ -115,6 +115,11 @@ describe("Routerlicious", () => {
 					"getLocalCheckpointEnabled",
 					Sinon.fake.returns(false),
 				);
+				Sinon.replace(
+					testCheckpointService,
+					"restoreFromCheckpoint",
+					Sinon.fake.returns(undefined),
+				);
 
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
