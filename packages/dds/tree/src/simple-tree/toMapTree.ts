@@ -99,29 +99,29 @@ export function cursorFromFieldData(
  * * `-0` =\> `+0`
  *
  * @param globalSchema - Schema for the whole tree for interperting `Any`.
- * @param nodeSchema - The set of types allowed by the parent context. Used to validate the input tree.
+ * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
  */
-export function nodeDataToMapTree(data: InsertableContent, nodeSchema: AllowedTypes): MapTree {
+export function nodeDataToMapTree(data: InsertableContent, allowedTypes: AllowedTypes): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
 	if (data === null) {
-		return valueToMapTree(data, nodeSchema);
+		return valueToMapTree(data, allowedTypes);
 	}
 	switch (typeof data) {
 		case "number":
 		case "string":
 		case "boolean":
-			return valueToMapTree(data, nodeSchema);
+			return valueToMapTree(data, allowedTypes);
 		default: {
 			if (isFluidHandle(data)) {
-				return valueToMapTree(data, nodeSchema);
+				return valueToMapTree(data, allowedTypes);
 			} else if (Array.isArray(data)) {
-				return arrayToMapTree(data, nodeSchema);
+				return arrayToMapTree(data, allowedTypes);
 			} else if (data instanceof Map) {
-				return mapToMapTree(data, nodeSchema);
+				return mapToMapTree(data, allowedTypes);
 			} else {
 				// Assume record-like object
-				return objectToMapTree(data as Record<string, InsertableContent>, nodeSchema);
+				return objectToMapTree(data as Record<string, InsertableContent>, allowedTypes);
 			}
 		}
 	}
@@ -130,11 +130,11 @@ export function nodeDataToMapTree(data: InsertableContent, nodeSchema: AllowedTy
 function valueToMapTree(
 	// eslint-disable-next-line @rushstack/no-new-null
 	value: boolean | number | string | IFluidHandle | null,
-	typeSet: AllowedTypes,
+	allowedTypes: AllowedTypes,
 ): MapTree {
-	const mappedValue = mapValueWithFallbacks(value, typeSet);
+	const mappedValue = mapValueWithFallbacks(value, allowedTypes);
 
-	const schema = getType(mappedValue, typeSet);
+	const schema = getType(mappedValue, allowedTypes);
 	assert(
 		schema.kind === NodeKind.Leaf && allowsValue(schema, mappedValue),
 		0x84a /* Unsupported schema for provided primitive. */,
