@@ -9,10 +9,7 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions";
-import {
-	type ContainerRuntime,
-	disabledCompressionConfig,
-} from "@fluidframework/container-runtime";
+import { type ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	type FluidObject,
@@ -230,20 +227,14 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
+			// WARNING: These settigs are not compatible with FF 1.3 clients!
 			runtimeOptions: {
 				// temporary workaround to disable message batching until the message batch size issue is resolved
 				// resolution progress is tracked by the Feature 465 work item in AzDO
 				flushMode: FlushMode.Immediate,
-				// While runtime compressor is required to be on to use @fluidframework/tree,
-				// it can't be enabled for 1.3 documents (as they do not understand ID compressor ops; neither they understand Tree ops)
-				// Clients have two choices when it comes to enabling Tree scenarios:
-				// 1) If client has no 1.3 documents / sessions (i.e. it's a new client who is starting with 2.0), such client should supply different
-				//    config that enables ID compressor, Tree, Op compression, Op grouping, FlushMode.TurnBased, etc. I.e. get all the benefits of 2.0 at once!
-				// 2) if client has 1.3 in production, it will require proper data migration story from old schema to new, and only after
-				//    it is safe to do so, i.e. application with FF 2.0 has been deployed and saturated in the market.
-				// enableRuntimeIdCompressor: "on",
+				// The runtime compressor is required to be on to use @fluidframework/tree.
+				enableRuntimeIdCompressor: "on",
 				explicitSchemaControl: true,
-				compressionOptions: disabledCompressionConfig,
 			},
 			provideEntryPoint,
 		});
