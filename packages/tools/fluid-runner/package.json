@@ -108,12 +108,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"lib/test/**/*.*js"
+			"dist/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"lib/**/*.*js"
+			"dist/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
