@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IChannelServices,
-	type IFluidDataStoreRuntime,
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { SharedCell } from "./cell.js";
-import { type ISharedCell } from "./interfaces.js";
+import type { ISharedCell } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

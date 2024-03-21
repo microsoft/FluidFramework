@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedCell } from "../cell.js";
 import { CellFactory } from "../cellFactory.js";
-import { type ICellOptions, type ISharedCell } from "../interfaces.js";
+import type { ICellOptions, ISharedCell } from "../interfaces.js";
 
 function createConnectedCell(
 	id: string,

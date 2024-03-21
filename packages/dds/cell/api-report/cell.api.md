@@ -4,18 +4,18 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import type { AttributionKey } from '@fluidframework/runtime-definitions';
+import type { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelServices } from '@fluidframework/datastore-definitions';
+import type { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { Serializable } from '@fluidframework/datastore-definitions';
+import type { ISharedObject } from '@fluidframework/shared-object-base';
+import type { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import type { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import type { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @internal @sealed

@@ -4,30 +4,27 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import {
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IChannelStorageService,
-	type IFluidDataStoreRuntime,
-	type Serializable,
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+	Serializable,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import {
-	type AttributionKey,
-	type ISummaryTreeWithStats,
-} from "@fluidframework/runtime-definitions";
+import type { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	type IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory.js";
-import {
-	type ICellLocalOpMetadata,
-	type ICellOptions,
-	type ISharedCell,
-	type ISharedCellEvents,
+import type {
+	ICellLocalOpMetadata,
+	ICellOptions,
+	ISharedCell,
+	ISharedCellEvents,
 } from "./interfaces.js";
 
 /**
