@@ -14,6 +14,7 @@
 			"**/test/snapshots/content/**",
 			"**/localOdspSnapshots/**",
 			"**/_package.json",
+			"**/biome.jsonc",
 			"**/oclif.manifest.json"
 		],
 		"maxSize": 2097152
@@ -52,7 +53,7 @@
 	},
 	"overrides": [
 		{
-			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json", "**/*.jsonc"],
+			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
 			"json": {
 				"parser": {
 					"allowComments": true,

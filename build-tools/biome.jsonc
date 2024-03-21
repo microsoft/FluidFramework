@@ -3,9 +3,9 @@
 	"extends": ["../biome.json"],
 	"organizeImports": {
 		// TODO: Will be enabled in a separate change.
-		"enabled": false,
+		"enabled": false
 	},
 	"formatter": {
-		"enabled": true,
-	},
+		"enabled": true
+	}
 }
