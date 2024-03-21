@@ -208,14 +208,22 @@ export class ScribeLambdaFactory
 		}
 
 		// Mongodb casts undefined as null so we are checking both to be safe.
+		// Also, if the document is new, it will not have a local scribe checkpoint.
 		const useDefaultCheckpointForNewDocument =
-			document.scribe === undefined || document.scribe === null;
+			(document.scribe === undefined || document.scribe === null) && !latestDbCheckpoint;
 		// Empty string denotes a cache that was cleared due to a service summary.
-		const dbCheckpointIsBlank = document.scribe === "";
+		const documentCheckpointIsCleared = document.scribe === "";
+		// It's possible that a local checkpoint is written after global checkpoint was cleared for service summary.
+		const summaryCheckpointAheadOfLatestDbCheckpoint =
+			latestSummaryCheckpoint &&
+			latestSummaryCheckpoint.sequenceNumber > latestDbCheckpoint?.sequenceNumber;
 		// Scrubbed users indicate that the quorum members have been scrubbed for privacy compliance.
 		const dbCheckpointQuorumIsScrubbed = isScribeCheckpointQuorumScrubbed(latestDbCheckpoint);
 		const useLatestSummaryCheckpointForExistingDocument =
-			dbCheckpointIsBlank || dbCheckpointQuorumIsScrubbed;
+			summaryCheckpointAheadOfLatestDbCheckpoint ||
+			// Only use the summary checkpoint because global checkpoint was cleared if the summary checkpoint is ahead.
+			(documentCheckpointIsCleared && summaryCheckpointAheadOfLatestDbCheckpoint) ||
+			dbCheckpointQuorumIsScrubbed;
 
 		if (useDefaultCheckpointForNewDocument) {
 			// Restore scribe state if not present in the cache.
@@ -259,7 +267,12 @@ export class ScribeLambdaFactory
 				Lumberjack.info(checkpointMessage, lumberProperties);
 			}
 		} else {
-			lastCheckpoint = latestDbCheckpoint ?? DefaultScribe;
+			if (!latestDbCheckpoint) {
+				const error = new Error("Attempted to load from non-existent DB checkpoint.");
+				await failCreation(error);
+				throw error;
+			}
+			lastCheckpoint = latestDbCheckpoint;
 
 			try {
 				opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
