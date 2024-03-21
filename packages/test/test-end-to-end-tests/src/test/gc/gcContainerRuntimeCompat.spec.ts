@@ -165,7 +165,6 @@ describeCompat("GC summary compatibility tests", "FullCompat", (getTestObjectPro
 				reason: "end-to-end test",
 				fullTree: true,
 			});
-			// if (summaryResult3.summaryTree.tree[gcTreeKey].type !== SummaryType.Handle) {
 			const timestamps3 = await getUnreferencedTimestamps(summaryResult3.summaryTree);
 			const dsBTimestamp3 = timestamps3.get(dataObjectB.context.id);
 			assert(
