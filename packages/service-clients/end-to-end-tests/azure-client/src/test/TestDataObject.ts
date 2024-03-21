@@ -6,7 +6,7 @@
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
-import { IFluidHandle, type IErrorEvent } from "@fluidframework/core-interfaces";
+import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
@@ -81,7 +81,7 @@ export class SignalerTestDataObject extends DataObject<{ Events: IErrorEvent }> 
 		{},
 	);
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {
 			const clientId = message.clientId;
 			/**
@@ -106,7 +106,7 @@ export class SignalerTestDataObject extends DataObject<{ Events: IErrorEvent }> 
 		return this;
 	}
 
-	public submitSignal<T>(signalName: string, payload?: Jsonable<T>) {
+	public submitSignal<T>(signalName: string, payload?: Jsonable<T>): void {
 		this.runtime.submitSignal(signalName, payload);
 	}
 }

@@ -179,17 +179,19 @@ describe("Fluid Signals", () => {
 		const { signaler: readSignaler } = await getOrCreateSignalerContainer(
 			containerId,
 			user2,
-			configProvider({
-				"Fluid.Container.ForceReadConnection": true,
-			}),
+			// configProvider({
+			// 	"Fluid.Container.ForceReadConnection": true,
+			// }),
+			undefined,
 			[ScopeType.DocRead],
 		);
 		const { signaler: readSignaler2 } = await getOrCreateSignalerContainer(
 			containerId,
 			user3,
-			configProvider({
-				"Fluid.Container.ForceReadConnection": true,
-			}),
+			// configProvider({
+			// 	"Fluid.Container.ForceReadConnection": true,
+			// }),
+			undefined,
 			[ScopeType.DocRead],
 		);
 

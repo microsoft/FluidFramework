@@ -190,9 +190,10 @@ describe("Fluid audience", () => {
 			"test-user-id-2",
 			"test-user-name-2",
 			undefined,
-			configProvider({
-				"Fluid.Container.ForceReadConnection": true,
-			}),
+			// configProvider({
+			// 	"Fluid.Container.ForceReadConnection": true,
+			// }),
+			undefined,
 			[ScopeType.DocRead],
 		);
 		const { container: partnerContainer, services: partnerServices } =
@@ -268,9 +269,10 @@ describe("Fluid audience", () => {
 			"test-user-id-2",
 			"test-user-name-2",
 			undefined,
-			configProvider({
-				"Fluid.Container.ForceReadConnection": true,
-			}),
+			// configProvider({
+			// 	"Fluid.Container.ForceReadConnection": true,
+			// }),
+			undefined,
 			[ScopeType.DocRead],
 		);
 		const { container: partnerContainer, services: partnerServices } =
@@ -313,9 +315,10 @@ describe("Fluid audience", () => {
 			"test-user-id-3",
 			"test-user-name-3",
 			undefined,
-			configProvider({
-				"Fluid.Container.ForceReadConnection": true,
-			}),
+			// configProvider({
+			// 	"Fluid.Container.ForceReadConnection": true,
+			// }),
+			undefined,
 			[ScopeType.DocRead],
 		);
 		const { container: partnerContainer2, services: partnerServices2 } =
