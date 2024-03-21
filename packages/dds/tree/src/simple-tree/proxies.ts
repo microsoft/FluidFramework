@@ -37,14 +37,14 @@ import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { getFlexNode, setFlexNode, tryGetFlexNode, tryGetFlexNodeTarget } from "./flexNode.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
+	type AllowedTypes,
+	FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
 	type InsertableTypedNode,
 	NodeKind,
 	TreeMapNode,
 	type TreeNodeSchema,
-	type ImplicitFieldSchema,
-	type ImplicitAllowedTypes,
-	type AllowedTypes,
-	FieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
