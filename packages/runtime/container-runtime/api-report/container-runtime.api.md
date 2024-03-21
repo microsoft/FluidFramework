@@ -20,6 +20,7 @@ import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDataStore } from '@fluidframework/runtime-definitions';
+import { IDataStoreCollection } from '@fluidframework/runtime-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -76,7 +77,7 @@ export const AllowInactiveRequestHeaderKey = "allowInactive";
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @internal
-export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
+export class ChannelCollection implements IFluidDataStoreChannel, IDataStoreCollection, IDisposable {
     constructor(baseSnapshot: ISnapshotTree | undefined, parentContext: IFluidParentContext, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (nodePath: string, reason: "Loaded" | "Changed", timestampMs?: number, packagePath?: readonly string[], request?: IRequest, headerData?: RuntimeHeaderData) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, provideEntryPoint: (runtime: ChannelCollection) => Promise<FluidObject>);
     // (undocumented)
     get aliases(): ReadonlyMap<string, string>;
@@ -97,10 +98,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     protected readonly contexts: DataStoreContexts;
     // (undocumented)
     protected createContext<T extends LocalFluidDataStoreContext>(id: string, pkg: Readonly<string[]>, contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T, createProps?: any, loadingGroupId?: string): T;
+    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // (undocumented)
     createDataStoreContext(pkg: Readonly<string[]>, props?: any, loadingGroupId?: string): IFluidDataStoreContextInternal;
     protected createDataStoreId(): string;
-    // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     deleteChild(dataStoreId: string): void;
@@ -111,6 +112,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     get disposed(): boolean;
     // (undocumented)
     readonly entryPoint: IFluidHandle<FluidObject>;
+    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
     getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal>;
@@ -234,11 +236,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get connected(): boolean;
     // (undocumented)
     get containerRuntime(): this;
-    // (undocumented)
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any): Promise<IDataStore>;
-    // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     // (undocumented)
@@ -289,6 +289,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     get isDirty(): boolean;
+    // (undocumented)
+    readonly level: number;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -481,6 +483,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     readonly isLocalDataStore: boolean;
     isRoot(): Promise<boolean>;
+    // (undocumented)
+    readonly level: number;
     // (undocumented)
     readonly loadingGroupId: string | undefined;
     // (undocumented)
@@ -738,6 +742,8 @@ export interface IFluidDataStoreContextProps {
     readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
     // (undocumented)
     readonly id: string;
+    // (undocumented)
+    readonly level: number;
     // (undocumented)
     readonly loadingGroupId?: string;
     // (undocumented)

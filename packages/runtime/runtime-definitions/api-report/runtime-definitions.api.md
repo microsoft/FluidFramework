@@ -118,13 +118,11 @@ export interface IAttachMessage {
 }
 
 // @alpha
-export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
+export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents>, IDataStoreCollection {
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     // @deprecated (undocumented)
     _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any, id?: string): Promise<IDataStore>;
-    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
     generateDocumentUniqueId(): number | string;
@@ -161,6 +159,13 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 export interface IDataStore {
     readonly entryPoint: IFluidHandle<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
+}
+
+// @alpha
+export interface IDataStoreCollection {
+    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+    createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
+    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 }
 
 // @alpha
@@ -271,6 +276,8 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly idCompressor?: IIdCompressor;
+    // (undocumented)
+    readonly level: number;
     readonly loadingGroupId?: string;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;

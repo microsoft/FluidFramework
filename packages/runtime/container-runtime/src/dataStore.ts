@@ -68,6 +68,10 @@ class DataStore implements IDataStore {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
 
+		if (this.parentContext.level > 1) {
+			throw new UsageError("Aliasing is not supported for nested data stores");
+		}
+
 		switch (this.aliasState) {
 			// If we're already aliasing, check if it's for the same value and return
 			// the stored promise, otherwise return 'AlreadyAliased'

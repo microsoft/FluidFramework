@@ -16,6 +16,7 @@ export type {
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
+	IDataStoreCollection,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidParentContext,
