@@ -26,11 +26,6 @@ import {
 	TreeConfiguration,
 } from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -42,21 +37,6 @@ import {
 } from "@fluidframework/test-utils";
 
 const treeKey = "treeKey";
-
-class TestDataObject extends DataObject {
-	// Allows us to get the SharedObject with whatever type we want
-	public async getShim(): Promise<IShim> {
-		const handle: IFluidHandle<IChannel> | undefined =
-			this.root.get<IFluidHandle<IChannel>>(treeKey);
-		assert(handle !== undefined, "No handle found");
-		return (await handle.get()) as IShim;
-	}
-
-	public createTree(type: string): void {
-		const channel = this.runtime.createChannel(treeKey, type);
-		this.root.set(treeKey, channel.handle);
-	}
-}
 
 // New tree schema
 const builder = new SchemaFactory("test");
@@ -104,7 +84,10 @@ function getQuantity(tree: LegacySharedTree): number {
 
 const testValue = 5;
 
-describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
+describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -114,6 +97,21 @@ describeCompat("MigrationShim", "NoCompat", (getTestObjectProvider) => {
 		},
 		enableRuntimeIdCompressor: true,
 	};
+
+	class TestDataObject extends DataObject {
+		// Allows us to get the SharedObject with whatever type we want
+		public async getShim(): Promise<IShim> {
+			const handle: IFluidHandle<IChannel> | undefined =
+				this.root.get<IFluidHandle<IChannel>>(treeKey);
+			assert(handle !== undefined, "No handle found");
+			return (await handle.get()) as IShim;
+		}
+
+		public createTree(type: string): void {
+			const channel = this.runtime.createChannel(treeKey, type);
+			this.root.set(treeKey, channel.handle);
+		}
+	}
 
 	// V2 of the registry (the migration registry) -----------------------------------------
 	// V2 of the code: Registry setup to migrate the document

@@ -27,6 +27,7 @@ module.exports = {
 					"@fluidframework/register-collection",
 					"@fluidframework/sequence",
 					"@fluid-experimental/sequence-deprecated",
+					"@fluidframework/aqueduct",
 				].map((importName) => ({
 					name: importName,
 					message:

@@ -28,11 +28,6 @@ import {
 } from "@fluidframework/tree";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	type ContainerRuntime,
@@ -64,74 +59,6 @@ function getHandle(tree: LegacySharedTree): IFluidHandle | undefined {
 	return legacyNode.payload.handle as IFluidHandle | undefined;
 }
 
-class ChildDataObject extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-}
-
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
-
-	public get _root() {
-		return this.root;
-	}
-
-	public get containerRuntime(): ContainerRuntime {
-		return this.context.containerRuntime as ContainerRuntime;
-	}
-
-	public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
-		const buffer = stringToBuffer(content, "utf8");
-		return this.runtime.uploadBlob(buffer);
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const legacyTree = this.runtime.createChannel(
-			"tree",
-			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
-
-		const handleNode: BuildNode = {
-			definition: legacyNodeId,
-			traits: {
-				handle: {
-					definition: "handle",
-					payload: 0,
-				},
-			},
-		};
-		legacyTree.applyEdit(
-			Change.insertTree(
-				handleNode,
-				StablePlace.atStartOf({
-					parent: legacyTree.currentView.root,
-					label: legacyNodeId,
-				}),
-			),
-		);
-
-		this.root.set("tree", legacyTree.handle);
-		this.channel = legacyTree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
-}
-
 const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
 class HandleType extends builder.object("handleObj", {
@@ -146,7 +73,10 @@ function getNewTreeView(tree: ITree): TreeView<HandleType> {
 	);
 }
 
-describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Storing handles", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -156,6 +86,74 @@ describeCompat("Storing handles", "NoCompat", (getTestObjectProvider) => {
 		},
 		enableRuntimeIdCompressor: true,
 	};
+
+	class ChildDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+	}
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		public get containerRuntime(): ContainerRuntime {
+			return this.context.containerRuntime as ContainerRuntime;
+		}
+
+		public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
+			const buffer = stringToBuffer(content, "utf8");
+			return this.runtime.uploadBlob(buffer);
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const legacyTree = this.runtime.createChannel(
+				"tree",
+				LegacySharedTree.getFactory().type,
+			) as LegacySharedTree;
+
+			const handleNode: BuildNode = {
+				definition: legacyNodeId,
+				traits: {
+					handle: {
+						definition: "handle",
+						payload: 0,
+					},
+				},
+			};
+			legacyTree.applyEdit(
+				Change.insertTree(
+					handleNode,
+					StablePlace.atStartOf({
+						parent: legacyTree.currentView.root,
+						label: legacyNodeId,
+					}),
+				),
+			);
+
+			this.root.set("tree", legacyTree.handle);
+			this.channel = legacyTree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			// TODO: handle tests
+			const tree = await this.runtime.getChannel("tree");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
+	}
 
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document

@@ -34,11 +34,6 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -99,18 +94,21 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-class TestDataObject1 extends DataObject {
-	protected async initializingFromExisting(): Promise<void> {
-		// This test data object will verify full initialization does not happen for summarizer client.
-		if (this.context.clientDetails.capabilities.interactive === false) {
-			throw Error(
-				"Non interactive/summarizer client's data object should not be initialized",
-			);
+describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject1 extends DataObject {
+		protected async initializingFromExisting(): Promise<void> {
+			// This test data object will verify full initialization does not happen for summarizer client.
+			if (this.context.clientDetails.capabilities.interactive === false) {
+				throw Error(
+					"Non interactive/summarizer client's data object should not be initialized",
+				);
+			}
 		}
 	}
-}
 
-describeCompat("Summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();

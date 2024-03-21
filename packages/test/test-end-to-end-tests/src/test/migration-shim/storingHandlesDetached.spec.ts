@@ -16,11 +16,6 @@ import {
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
@@ -28,67 +23,70 @@ import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
 
-const newSharedTreeFactory = SharedTree.getFactory();
-const builder = new SchemaFactory("test");
-// For now this is the schema of the view.root
-class HandleType extends builder.object("handleObj", {
-	handle: builder.optional(builder.handle),
-}) {}
+describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
-function getNewTreeView(tree: ITree): TreeView<HandleType> {
-	return tree.schematize(
-		new TreeConfiguration(HandleType, () => ({
-			handle: undefined,
-		})),
-	);
-}
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
+	const newSharedTreeFactory = SharedTree.getFactory();
+	const builder = new SchemaFactory("test");
+	// For now this is the schema of the view.root
+	class HandleType extends builder.object("handleObj", {
+		handle: builder.optional(builder.handle),
+	}) {}
 
-	public get _root() {
-		return this.root;
+	function getNewTreeView(tree: ITree): TreeView<HandleType> {
+		return tree.schematize(
+			new TreeConfiguration(HandleType, () => ({
+				handle: undefined,
+			})),
+		);
+	}
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		public get containerRuntime(): ContainerRuntime {
+			return this.context.containerRuntime as ContainerRuntime;
+		}
+
+		public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
+			const buffer = stringToBuffer(content, "utf8");
+			return this.runtime.uploadBlob(buffer);
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const tree = this.runtime.createChannel("tree", newSharedTreeFactory.type);
+
+			this.root.set("tree", tree.handle);
+			this.channel = tree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			// TODO: handle tests
+			const tree = await this.runtime.getChannel("tree");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
 	}
 
-	public get containerRuntime(): ContainerRuntime {
-		return this.context.containerRuntime as ContainerRuntime;
+	class ChildDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
 	}
 
-	public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {
-		const buffer = stringToBuffer(content, "utf8");
-		return this.runtime.uploadBlob(buffer);
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const tree = this.runtime.createChannel("tree", newSharedTreeFactory.type);
-
-		this.root.set("tree", tree.handle);
-		this.channel = tree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
-}
-
-class ChildDataObject extends DataObject {
-	public get _root() {
-		return this.root;
-	}
-}
-
-describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

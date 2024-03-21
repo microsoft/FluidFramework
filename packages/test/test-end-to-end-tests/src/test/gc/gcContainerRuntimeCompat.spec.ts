@@ -4,19 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
-	TestFluidObjectFactory,
 	createSummarizerFromFactory,
 	waitForContainerConnection,
 	summarizeNow,
+	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	ensurePackageInstalled,
+	getContainerRuntimeApi,
+} from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -25,8 +28,9 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  * versions. A version of container runtime generates the summary and then we validate that another version can
  * read and process it successfully.
  */
-// Issue #10053
-describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObjectProvider) => {
+describeCompat("GC summary compatibility tests", "FullCompat", (getTestObjectProvider, apis) => {
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+	const { TestFluidObjectFactory } = apis.dataRuntime;
 	const currentVersionNumber = 0;
 	const oldVersionNumbers = [-1, -2];
 	const dataObjectFactory = new TestFluidObjectFactory([]);
@@ -44,18 +48,38 @@ describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObje
 			},
 			gcOptions: { gcAllowed: true },
 		};
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory: dataObjectFactory,
-			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			runtimeOptions,
-		});
+		const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+			ContainerRuntimeFactoryWithDefaultDataStore,
+			{
+				defaultFactory: dataObjectFactory,
+				registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+				runtimeOptions,
+			},
+		);
 		return provider.createContainer(runtimeFactory);
 	}
 
-	beforeEach("setupContainer", async () => {
+	beforeEach("ensure old versions are installed", async function () {
+		this.timeout(20_000);
+		await Promise.all(
+			oldVersionNumbers.map(async (version) =>
+				ensurePackageInstalled(pkgVersion, version, false),
+			),
+		);
+	});
+
+	beforeEach("setupContainer", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await createContainer();
-		dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+		if (mainContainer.getEntryPoint !== undefined) {
+			dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
+		} else {
+			// Back-compat: versions of container-loader before 2.0.0-internal.3.3.0 don't have a getEntryPoint API.
+			// The test could be adapted to use the request pattern in such cases, but this also changed other
+			// APIs in the test body, and the extra compat matrix isn't particularly meaningful to test (GC wasn't
+			// fully implemented for LTS).
+			this.skip();
+		}
 		await waitForContainerConnection(mainContainer);
 	});
 
@@ -133,8 +157,15 @@ describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObje
 			summarizer1.close();
 			const summarizer2 = await createSummarizer(version2);
 
+			dataStoreA.root.set("forceNonIncremental", "dummy value");
 			await provider.ensureSynchronized();
-			const summaryResult3 = await summarizeNow(summarizer2);
+			// `getUnreferencedTimestamps` assumes that the GC result isn't incremental.
+			// Passing fullTree explicitly ensures that.
+			const summaryResult3 = await summarizeNow(summarizer2, {
+				reason: "end-to-end test",
+				fullTree: true,
+			});
+			// if (summaryResult3.summaryTree.tree[gcTreeKey].type !== SummaryType.Handle) {
 			const timestamps3 = await getUnreferencedTimestamps(summaryResult3.summaryTree);
 			const dsBTimestamp3 = timestamps3.get(dataObjectB.context.id);
 			assert(

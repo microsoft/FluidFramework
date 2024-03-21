@@ -4,6 +4,7 @@
 
 ```ts
 
+import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import * as cell from '@fluidframework/cell';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
@@ -65,6 +66,7 @@ export interface CompatApis {
 // @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
+    BaseContainerRuntimeFactory: typeof BaseContainerRuntimeFactory;
     ContainerRuntime: typeof ContainerRuntime;
     ContainerRuntimeFactoryWithDefaultDataStore: typeof ContainerRuntimeFactoryWithDefaultDataStore;
 };

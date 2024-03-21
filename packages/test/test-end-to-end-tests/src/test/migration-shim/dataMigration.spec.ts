@@ -25,11 +25,6 @@ import {
 	SchemaFactory,
 } from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -41,61 +36,6 @@ import {
 } from "@fluidframework/test-utils";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
-
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	private channel?: IChannel;
-
-	public get _root() {
-		return this.root;
-	}
-
-	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: unknown): Promise<void> {
-		const legacyTree = this.runtime.createChannel(
-			"tree",
-			LegacySharedTree.getFactory().type,
-		) as LegacySharedTree;
-
-		const inventoryNode: BuildNode = {
-			definition: legacyNodeId,
-			traits: {
-				quantity: {
-					definition: "quantity",
-					payload: 0,
-				},
-			},
-		};
-		legacyTree.applyEdit(
-			Change.insertTree(
-				inventoryNode,
-				StablePlace.atStartOf({
-					parent: legacyTree.currentView.root,
-					label: "inventory" as TraitLabel,
-				}),
-			),
-		);
-
-		this.root.set("tree", legacyTree.handle);
-		this.channel = legacyTree;
-	}
-
-	// Makes it so we can get the tree stored as "tree"
-	public async hasInitialized(): Promise<void> {
-		// We are using runtime.getChannel here instead of fetching the handle
-		const handle: IFluidHandle<IChannel> | undefined =
-			this.root.get<IFluidHandle<IChannel>>("tree");
-		const tree = await handle?.get();
-		assert(tree !== undefined, "Tree channel should be defined");
-		this.channel = tree;
-	}
-
-	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>(): T {
-		assert(this.channel !== undefined, "Channel should be defined");
-		return this.channel as T;
-	}
-}
 
 const builder = new SchemaFactory("test");
 // For now this is the schema of the view.root
@@ -111,7 +51,10 @@ function getNewTreeView(tree: ITree): TreeView<InventorySchema> {
 	);
 }
 
-describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
+describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -121,6 +64,61 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider) => {
 		},
 		enableRuntimeIdCompressor: true,
 	};
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		private channel?: IChannel;
+
+		public get _root() {
+			return this.root;
+		}
+
+		// The object starts with a LegacySharedTree
+		public async initializingFirstTime(props?: unknown): Promise<void> {
+			const legacyTree = this.runtime.createChannel(
+				"tree",
+				LegacySharedTree.getFactory().type,
+			) as LegacySharedTree;
+
+			const inventoryNode: BuildNode = {
+				definition: legacyNodeId,
+				traits: {
+					quantity: {
+						definition: "quantity",
+						payload: 0,
+					},
+				},
+			};
+			legacyTree.applyEdit(
+				Change.insertTree(
+					inventoryNode,
+					StablePlace.atStartOf({
+						parent: legacyTree.currentView.root,
+						label: "inventory" as TraitLabel,
+					}),
+				),
+			);
+
+			this.root.set("tree", legacyTree.handle);
+			this.channel = legacyTree;
+		}
+
+		// Makes it so we can get the tree stored as "tree"
+		public async hasInitialized(): Promise<void> {
+			// We are using runtime.getChannel here instead of fetching the handle
+			const handle: IFluidHandle<IChannel> | undefined =
+				this.root.get<IFluidHandle<IChannel>>("tree");
+			const tree = await handle?.get();
+			assert(tree !== undefined, "Tree channel should be defined");
+			this.channel = tree;
+		}
+
+		// Allows us to get the SharedObject with whatever type we want
+		public getTree<T>(): T {
+			assert(this.channel !== undefined, "Channel should be defined");
+			return this.channel as T;
+		}
+	}
 
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document

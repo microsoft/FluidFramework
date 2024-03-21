@@ -7,36 +7,34 @@ import { strict as assert } from "assert";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { BuildNode, Change, SharedTree, StablePlace, TraitLabel } from "@fluid-experimental/tree";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-
-class TestDataObject extends DataObject {
-	public get _context() {
-		return this.context;
-	}
-	public get _runtime() {
-		return this.runtime;
-	}
-	public get _root() {
-		return this.root;
-	}
-}
-
-const dataObjectFactory = new DataObjectFactory(
-	"test",
-	TestDataObject,
-	[SharedTree.getFactory()],
-	undefined,
-);
-const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-	defaultFactory: dataObjectFactory,
-	registryEntries: [["test", Promise.resolve(dataObjectFactory)]],
-});
 
 describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject extends DataObject {
+		public get _context() {
+			return this.context;
+		}
+		public get _runtime() {
+			return this.runtime;
+		}
+		public get _root() {
+			return this.root;
+		}
+	}
+
+	const dataObjectFactory = new DataObjectFactory(
+		"test",
+		TestDataObject,
+		[SharedTree.getFactory()],
+		undefined,
+	);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		registryEntries: [["test", Promise.resolve(dataObjectFactory)]],
+	});
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
