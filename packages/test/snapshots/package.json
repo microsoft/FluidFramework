@@ -33,7 +33,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --experimental-worker --ignore \"dist/test/generate/*\" --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --experimental-worker --ignore \"dist/test/generate/*\" --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:esm": "mocha --experimental-worker --ignore \"lib/test/generate/*\" --recursive \"lib/test/**/*.spec.*js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:new": "mocha --experimental-worker \"dist/test/generate/new.spec.*js\" --exit",
 		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit",
