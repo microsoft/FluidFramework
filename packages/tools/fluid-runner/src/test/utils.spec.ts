@@ -7,11 +7,12 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
 import { isJsonSnapshot, timeoutPromise, validateCommandLineArgs } from "../utils.js";
+import { _dirname } from "./dirname.cjs";
 // eslint-disable-next-line import/no-internal-modules
 import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("utils", () => {
-	const snapshotFolder = path.join(__dirname, "../../src/test/localOdspSnapshots");
+	const snapshotFolder = path.join(_dirname, "../../src/test/localOdspSnapshots");
 
 	describe("isJsonSnapshot", () => {
 		const jsonSnapshots = new Set(["odspSnapshot1.json", "odspSnapshot2.json"]);

@@ -7,16 +7,17 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
 import { parseBundleAndExportFile } from "../parseBundleAndExportFile.js";
+import { _dirname } from "./dirname.cjs";
 // eslint-disable-next-line import/no-internal-modules
 import { executeResult } from "./sampleCodeLoaders/sampleCodeLoader.js";
 
 describe("parseBundleAndExportFile", () => {
-	const folderRoot = path.join(__dirname, "../../src/test");
+	const folderRoot = path.join(_dirname, "../../src/test");
 	const outputFolder = path.join(folderRoot, "outputFolder");
 	const outputFilePath = path.join(outputFolder, "result.txt");
 	const telemetryFile = path.join(outputFolder, "telemetry.txt");
 	const snapshotFolder = path.join(folderRoot, "localOdspSnapshots");
-	const sampleCodeLoadersFolder = path.join(__dirname, "sampleCodeLoaders");
+	const sampleCodeLoadersFolder = path.join(_dirname, "sampleCodeLoaders");
 
 	beforeEach(() => {
 		fs.mkdirSync(outputFolder);

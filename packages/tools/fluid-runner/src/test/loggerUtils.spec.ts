@@ -13,9 +13,10 @@ import {
 	validateAndParseTelemetryOptions,
 } from "../logger/loggerUtils.js";
 /* eslint-enable import/no-internal-modules */
+import { _dirname } from "./dirname.cjs";
 
 describe("logger utils", () => {
-	const folderRoot = path.join(__dirname, "../../src/test");
+	const folderRoot = path.join(_dirname, "../../src/test");
 	const telemetryFile = path.join(folderRoot, "outputFolder", "telemetryFile.txt");
 	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
 
