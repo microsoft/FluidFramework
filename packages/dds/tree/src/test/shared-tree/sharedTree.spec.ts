@@ -1439,7 +1439,7 @@ describe("SharedTree", () => {
 	// TODO:
 	// These tests should either be tests of SharedTreeView, EditManager, or the relevant field kind's rebase function.
 	// Keeping a couple integration tests for rebase at this level might be ok (for example schema vs other edits), but that should be minimal,
-	// and those tests should setup proper schema, and use the high levels editing APIs (editable tree) if they are serving as integration tests of SharedTree,
+	// and those tests should setup proper schema, and use the high levels editing APIs (Flex tree) if they are serving as integration tests of SharedTree,
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);

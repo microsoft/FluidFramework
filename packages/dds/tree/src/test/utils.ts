@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/test-utils";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules -- test import
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
@@ -985,6 +984,8 @@ export function defaultRevInfosFromChanges(
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
+		// TODO: ADO#7366 assert to check if either all the changes have revision,
+		// or that all of the changes have undefined revision.
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,

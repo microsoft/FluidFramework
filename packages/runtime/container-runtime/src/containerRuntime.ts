@@ -416,7 +416,7 @@ export interface IContainerRuntimeOptions {
 	 * If specified, when in FlushMode.TurnBased, if the size of the ops between JS turns exceeds this value,
 	 * an error will be thrown and the container will close.
 	 *
-	 * If unspecified, the limit is 950 * 1024.
+	 * If unspecified, the limit is 700Kb.
 	 *
 	 * 'Infinity' will disable any limit.
 	 *
@@ -983,7 +983,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	private readonly submitSignalFn: (content: any, targetClientId?: string) => void;
+	private readonly submitSignalFn: (content: ISignalEnvelope, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 

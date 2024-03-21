@@ -761,6 +761,13 @@ export function configureWebSocketServices(
 							// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 							// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 							clientIdClientsDisconnected.add(clientId);
+						})
+						.catch((error) => {
+							Lumberjack.error(
+								`Failed to remove client ${clientId} from client manager`,
+								getLumberBaseProperties(room.documentId, room.tenantId),
+								error,
+							);
 						}),
 				);
 				socket

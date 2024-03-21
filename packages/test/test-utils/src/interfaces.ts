@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
 import {
-	IFluidDataStoreContext,
 	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
  * @alpha

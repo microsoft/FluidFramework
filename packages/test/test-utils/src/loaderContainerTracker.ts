@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import {
+	IContainerCreateProps,
+	IContainerLoadProps,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-loader/test/container";
+import { assert } from "@fluidframework/core-utils";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import {
-	IContainerCreateProps,
-	IContainerLoadProps,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-loader/test/container";
 import { waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
