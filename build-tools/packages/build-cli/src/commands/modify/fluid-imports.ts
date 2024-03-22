@@ -104,10 +104,16 @@ async function updateImports(
 	for (const sourceFile of sourceFiles) {
 		log.verbose(`Source file: ${sourceFile.getBaseName()}`);
 
+		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
+		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
+		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
+		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
+		const headerText = removeFileHeaderComment(sourceFile);
+
 		/**
 		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
 		 */
-		let imports = sourceFile.getImportDeclarations();
+		const imports = sourceFile.getImportDeclarations();
 
 		// Skip source files with no imports.
 		if (imports.length === 0) {
@@ -164,12 +170,10 @@ async function updateImports(
 
 					/**
 					 * fullImportSpecifierText includes surrounding text like "type" and whitespace. The surrounding whitespace is
-					 * trimmed, but leading or trailing text like "type" or "as foo" is still included. This is the string that
-					 * will be used in the new imports.
+					 * trimmed, but leading or trailing text like "type" or "as foo" (an alias) is still included. This is the
+					 * string that will be used in the new imports.
 					 *
-					 * This text also includes an alias if defined. Imports that are aliased are updated but the alias should not
-					 * be changed; they should remain the same after import cleanup, just possibly imported from a different
-					 * module/path.
+					 * This ensures aliases abd individual type-only imports are maintained when rewritten.
 					 */
 					const fullImportSpecifierText = importSpecifier.getFullText().trim();
 					const expectedLevel = getApiLevelForImportName(
@@ -203,15 +207,6 @@ async function updateImports(
 				}
 			}
 		} /* FIRST PASS */
-
-		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
-		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
-		// the removal will not be persisted unless there are import changes. In that case we re-add the header before we
-		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
-		const headerText = removeFileHeaderComment(sourceFile);
-
-		// Need to get declarations again because nodes are invalidated after calling replaceText above.
-		imports = sourceFile.getImportDeclarations();
 
 		// SECOND PASS: Update existing imports and add any missing ones
 		for (const importDeclaration of imports) {
