@@ -199,7 +199,7 @@ describe("toMapTree", () => {
 					],
 					[
 						brand("c"),
-						[{ type: brand(nullSchema.identifier), value: null, fields: new Map() }],
+						[{ type: brand(nullSchemaIdentifier), value: null, fields: new Map() }],
 					],
 					[
 						brand("e"),
