@@ -395,7 +395,7 @@ extends:
                           script: |
                             sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
                         condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                      - task: PublishCodeCoverageResults@1
+                      - task: PublishCodeCoverageResults@2
                         displayName: Publish Code Coverage
                         inputs:
                           codeCoverageTool: Cobertura
