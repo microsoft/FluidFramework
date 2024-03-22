@@ -807,18 +807,18 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * @returns Newly created shared object.
 	 *
 	 * @example
-	 * To create a `SharedMap`, call the static create method:
+	 * To create a `SharedTree`, call the static create method:
 	 *
 	 * ```typescript
-	 * const myMap = SharedMap.create(this.runtime, id);
+	 * const myTree = SharedTree.create(this.runtime, id);
 	 * ```
 	 * @remarks
 	 * If using `@fluidframework/fluid-static` (for example via `@fluidframework/azure-client`), use {@link @fluidframework/fluid-static#IFluidContainer.create} instead of calling this directly.
 	 *
 	 * @privateRemarks
 	 * TODO:
-	 * This returns null when used with MockFluidDataStoreRuntime, so its unclear how tests should create SharedMap instances unless using `RootDataObject.create` (which most tests shouldn't to minimize dependencies).
-	 * In practice tests either avoid mock runtimes, use getFactory(), or call the map constructor directly. It is unclear (from docs) how getFactory().create differs but it does not rely on runtime.createChannel so it works with mock runtimes.
+	 * This returns null when used with MockFluidDataStoreRuntime, so its unclear how tests should create DDS instances unless using `RootDataObject.create` (which most tests shouldn't to minimize dependencies).
+	 * In practice tests either avoid mock runtimes, use getFactory(), or call the DDS constructor directly. It is unclear (from docs) how getFactory().create differs but it does not rely on runtime.createChannel so it works with mock runtimes.
 	 * TODO:
 	 * See note on ISharedObjectKind.getFactory.
 	 */
