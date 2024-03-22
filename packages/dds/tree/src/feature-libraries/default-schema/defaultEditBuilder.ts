@@ -195,12 +195,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		return {
 			set: (newContent: ITreeCursorSynchronous): void => {
 				const fillId = this.modularBuilder.generateId();
+				const detachId = this.modularBuilder.generateId();
 
 				const build = this.modularBuilder.buildTrees(fillId, newContent);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
 						fill: fillId,
-						detach: this.modularBuilder.generateId(),
+						detach: detachId,
 					}),
 				);
 
@@ -210,7 +211,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					fieldKind: valueFieldKind.identifier,
 					change,
 				};
-				this.modularBuilder.submitChanges([build, edit]);
+				this.modularBuilder.submitChanges([build, edit], detachId);
 			},
 		};
 	}
@@ -244,10 +245,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				edits.push(edit);
 
-				this.modularBuilder.submitChanges(
-					edits,
-					newContent === undefined ? detachId : fillId,
-				);
+				this.modularBuilder.submitChanges(edits, fillId ?? detachId);
 			},
 		};
 	}
@@ -260,6 +258,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destIndex: number,
 	): void {
 		const moveId = this.modularBuilder.generateId(count);
+		const maxId: ChangesetLocalId = brand(moveId + count - 1);
 		if (compareFieldUpPaths(sourceField, destinationField)) {
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
@@ -267,7 +266,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				destIndex,
 				moveId,
 			);
-			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
+			this.modularBuilder.submitChange(
+				sourceField,
+				sequence.identifier,
+				brand(change),
+				maxId,
+			);
 		} else {
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
@@ -325,7 +329,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						change: brand(moveIn),
 					},
 				],
-				moveId,
+				maxId,
 			);
 		}
 	}
@@ -359,20 +363,22 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					return;
 				}
 				const id = this.modularBuilder.generateId(count);
+				const maxId: ChangesetLocalId = brand(id + count - 1);
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.remove(index, count, id),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change);
+				this.modularBuilder.submitChange(field, sequence.identifier, change, maxId);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const moveId = this.modularBuilder.generateId(count);
+				const maxId: ChangesetLocalId = brand(moveId + count - 1);
 				const change = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,
 					destIndex,
 					moveId,
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
+				this.modularBuilder.submitChange(field, sequence.identifier, brand(change), maxId);
 			},
 		};
 	}
