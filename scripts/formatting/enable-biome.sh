@@ -15,8 +15,8 @@ npe scripts.format "fluid-build . --task format"
 npe scripts.check:biome "biome check . --formatter-enabled=true"
 npe scripts.format:biome "biome check . --apply --formatter-enabled=true"
 
-sd --fixed-strings '"check:prettier": ' '"check:prettier:old": ' package.json
-sd --fixed-strings '"prettier": ' '"prettier:old": ' package.json
+sd --fixed-strings '"check:prettier": "p' '"check:prettier:old": "p' package.json
+sd --fixed-strings '"format:prettier": "p' '"format:prettier:old": "p' package.json
 
 # dot-json package.json fluidBuild.tasks.format '{"script": true}' --json-value
 # dot-json package.json fluidBuild.tasks.check:format '{"script": true}' --json-value
