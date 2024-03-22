@@ -105,6 +105,7 @@ export interface DDSFuzzSuiteOptions {
         attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+    handles: boolean;
     idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;

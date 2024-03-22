@@ -110,6 +110,13 @@ export interface StashClient {
 /**
  * @internal
  */
+export interface Handle {
+	type: "handle";
+}
+
+/**
+ * @internal
+ */
 export interface Attach {
 	type: "attach";
 }
@@ -371,6 +378,11 @@ export interface DDSFuzzSuiteOptions {
 	};
 
 	/**
+	 * Defines whether or not ops can be submitted with handles.
+	 */
+	handles: boolean;
+
+	/**
 	 * Event emitter which allows hooking into interesting points of DDS harness execution.
 	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
 	 * do so, and pass it in when creating the suite.
@@ -507,6 +519,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
+handles: false,
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
@@ -1124,6 +1137,52 @@ export function mixinStashedClient<
 	};
 }
 
+export function mixinHandle<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | Handle, TState> {
+	if (options.handles === false) {
+		return model as DDSFuzzModel<TChannelFactory, TOperation | Handle, TState>;
+	}
+
+	const generatorFactory: () => AsyncGenerator<TOperation | Handle, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | Handle | typeof done> => {
+			const baseOp = baseGenerator(state);
+			if (state.random.bool(0.5)) {
+				return {
+					type: "handle",
+				};
+			}
+			return baseOp;
+		};
+	};
+
+	const reducer: AsyncReducer<TOperation | Handle, TState> = async (state, operation) => {
+		if (isOperationType<Handle>("handle", operation)) {
+			const clientFromHandle = await state.client.channel.handle.get();
+			return {
+				...state,
+				client: clientFromHandle,
+			};
+		}
+		return model.reducer(state, operation);
+	};
+
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
+			TOperation | Handle
+		>[],
+	};
+}
+
 /**
  * This modifies the value of "client" while callback is running, then restores it.
  * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
@@ -1558,6 +1617,7 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	| AddClient
 	| Attach
 	| Attaching
+| Handle
 	| Rehydrate
 	| ChangeConnectionState
 	| TriggerRebase
@@ -1569,7 +1629,10 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
+mixinHandle(
 						mixinReconnect(mixinRebase(ddsModel, options), options),
+options,
+						),
 						options,
 					),
 					options,
