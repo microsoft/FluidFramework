@@ -31,10 +31,11 @@ cat << EOF > biome.jsonc
 	"\$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["$configPath"],
 	"formatter": {
-		"enabled": true
+		"enabled": false
 	}
 }
 
 EOF
 fi
 
+pnpm run format
