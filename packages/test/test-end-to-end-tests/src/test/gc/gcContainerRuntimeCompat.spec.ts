@@ -4,6 +4,12 @@
  */
 
 import { strict as assert } from "assert";
+import {
+	describeCompat,
+	type getContainerRuntimeApi,
+	type getDataRuntimeApi,
+	type getLoaderApi,
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntimeOptions,
@@ -18,12 +24,6 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	type getContainerRuntimeApi,
-	type getDataRuntimeApi,
-	type getLoaderApi,
-} from "@fluid-private/test-version-utils";
 import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { getGCStateFromSummary, getGCFeatureFromSummary } from "./gcTestSummaryUtils.js";
 

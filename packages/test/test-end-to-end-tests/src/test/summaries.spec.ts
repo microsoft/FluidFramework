@@ -4,45 +4,45 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { bufferToString } from "@fluid-internal/client-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	ISummarizer,
-	ISummarizeResults,
-	ISummaryRuntimeOptions,
 	DefaultSummaryConfiguration,
+	ISummarizeResults,
+	ISummarizer,
+	ISummaryRuntimeOptions,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	channelsTreeName,
 	FlushMode,
 	IFluidDataStoreFactory,
+	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
+import type { SharedString } from "@fluidframework/sequence";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
-	waitForContainerConnection,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	createSummarizerFromFactory,
-	summarizeNow,
-	createSummarizer,
-	getContainerEntryPointBackCompat,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createSummarizer,
+	createSummarizerFromFactory,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
 	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import type { SharedString } from "@fluidframework/sequence";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {

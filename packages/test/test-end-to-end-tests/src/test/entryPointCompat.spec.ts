@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import {
-	describeInstallVersions,
 	describeCompat,
+	describeInstallVersions,
 	getVersionedTestObjectProvider,
 } from "@fluid-private/test-version-utils";
 // TODO:AB#6558: describeInstallVersions doesn't support dynamically providing package APIs.

@@ -9,32 +9,32 @@ import {
 	type BuildNode,
 	Change,
 	type IShim,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
+	type NodeId,
 	SharedTreeShimFactory,
 	StablePlace,
 	type TraitLabel,
-	type NodeId,
 } from "@fluid-experimental/tree";
-import {
-	type ITree,
-	type TreeView,
-	SharedTree,
-	disposeSymbol,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 
 const treeKey = "treeKey";
 

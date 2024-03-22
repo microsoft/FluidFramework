@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 import {
 	type BuildNode,
 	Change,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	type SharedTreeShim,
 	SharedTreeShimFactory,
 	StablePlace,
@@ -17,13 +17,6 @@ import {
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
-import {
-	SharedTree,
-	disposeSymbol,
-	SchemaFactory,
-	TreeConfiguration,
-	ITree,
-} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerExperimental } from "@fluidframework/container-loader";
@@ -31,11 +24,18 @@ import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+import {
+	ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	disposeSymbol,
+} from "@fluidframework/tree";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
