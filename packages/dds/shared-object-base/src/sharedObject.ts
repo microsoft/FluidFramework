@@ -789,6 +789,7 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * To create new shared objects use:
 	 *
 	 * - {@link @fluidframework/fluid-static#IFluidContainer.create} if using `@fluidframework/fluid-static`, for example via `@fluidframework/azure-client`.
+	 *
 	 * - {@link ISharedObjectKind.create} if using a custom container definitions (and thus not using {@link @fluidframework/fluid-static#IFluidContainer}).
 	 *
 	 * @privateRemarks
