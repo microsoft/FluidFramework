@@ -61,6 +61,19 @@ export function getGCStateFromSummary(
 }
 
 /**
+ * Returns the `gcFeature` metadata from the summary.
+ * Tests may have different expectations for GC's behavior when runtimes involved in the test have different
+ * values for gcFeature.
+ */
+export function getGCFeatureFromSummary(summaryTree: ISummaryTree): number {
+	const metadata = summaryTree.tree[".metadata"];
+	assert.equal(metadata.type, SummaryType.Blob, "Expected to find metadata blob in summary");
+	assert(typeof metadata.content === "string", "Expected metadata to be a string");
+	const content = JSON.parse(metadata.content) as { gcFeature: number };
+	return content.gcFeature;
+}
+
+/**
  * Returns the tombstone data from the GC tree in the summary.
  * Note that it assumes that the tombstone data in the GC tree is a summary blob and not summary handle.
  * @param summaryTree - The summary tree that contains the GC summary.
