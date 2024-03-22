@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
+	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
 	IRequest,
-	FluidObject,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { responseToException } from "@fluidframework/runtime-utils";
 
 /**

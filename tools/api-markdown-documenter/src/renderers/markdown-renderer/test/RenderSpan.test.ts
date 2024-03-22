@@ -9,8 +9,8 @@ import {
 	PlainTextNode,
 	SpanNode,
 	type TextFormatting,
-} from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+} from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("Span Markdown rendering tests", () => {
 	describe("Standard context", () => {

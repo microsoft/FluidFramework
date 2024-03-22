@@ -6,7 +6,7 @@
 import type { ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
-import { IInsecureUser } from "./insecureUsers";
+import { IInsecureUser } from "./insecureUsers.js";
 
 /**
  * IMPORTANT: This function is duplicated in ./azure/packages/azure-service-utils/src/generateToken.ts. There is no need

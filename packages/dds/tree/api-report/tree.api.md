@@ -167,7 +167,7 @@ export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInpu
 export type Brand<ValueType, Name extends string | ErasedType<string>> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Assume<Name, string>>;
 
 // @internal
-export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+export function brand<T>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
 
 // @internal
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
@@ -189,6 +189,7 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 
 // @internal @sealed
 export abstract class BrandedType<out ValueType, Name extends string> {
+    static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
     // (undocumented)
     protected _typeCheck?: Covariant<ValueType>;
@@ -203,7 +204,7 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 // @internal
 export interface CheckoutEvents {
     afterBatch(): void;
-    newRevertible(revertible: Revertible): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
     revertibleDisposed(revertible: Revertible): void;
 }
 
@@ -227,6 +228,19 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
 } & (TValueSchema extends ValueSchema ? {
     [valueSymbol]: TreeValue<TValueSchema>;
 } : EmptyObject)> & TTypedFields : TValueSchema extends ValueSchema ? TreeValue<TValueSchema> : undefined;
+
+// @public
+export enum CommitKind {
+    Default = 0,
+    Redo = 2,
+    Undo = 1
+}
+
+// @public
+export interface CommitMetadata {
+    isLocal: boolean;
+    kind: CommitKind;
+}
 
 // @internal
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
@@ -395,14 +409,6 @@ export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRa
 export const disposeSymbol: unique symbol;
 
 // @internal
-export interface EditableTreeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
-    changing(upPath: UpPath): void;
-    subtreeChanging(upPath: UpPath): PathVisitor | void;
-}
-
-// @internal
 export const EmptyKey: FieldKey;
 
 // @internal
@@ -429,6 +435,7 @@ export interface ErasedTreeNodeSchemaDataFormat extends Erased<"TreeNodeSchemaDa
 
 // @internal @sealed
 export abstract class ErasedType<out Name extends string> {
+    static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
 }
 
@@ -626,6 +633,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 
 // @internal
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+    readonly forest: IForestSubscription;
     // (undocumented)
     readonly nodeKeys: NodeKeys;
     get root(): FlexTreeField;
@@ -705,17 +713,25 @@ export const flexTreeMarker: unique symbol;
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
-    [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+    readonly anchorNode: AnchorNode;
     // (undocumented)
     boxedIterator(): IterableIterator<FlexTreeField>;
     is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
-    on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
+    on<K extends keyof FlexTreeNodeEvents>(eventName: K, listener: FlexTreeNodeEvents[K]): () => void;
     readonly parentField: {
         readonly parent: FlexTreeField;
         readonly index: number;
     };
     tryGetField(key: FieldKey): undefined | FlexTreeField;
     readonly value?: TreeValue;
+}
+
+// @internal
+export interface FlexTreeNodeEvents {
+    afterChange(event: TreeEvent): void;
+    beforeChange(event: TreeEvent): void;
+    changing(upPath: UpPath): void;
+    subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 // @internal
@@ -860,6 +876,7 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 // @internal
 export interface ForestEvents {
     afterChange(): void;
+    afterRootFieldCreated(key: FieldKey): void;
     beforeChange(): void;
 }
 
@@ -1193,12 +1210,30 @@ export class LeafNodeSchema<const out Name extends string = string, const out Sp
     protected _typeCheck2?: MakeNominal;
 }
 
+// @internal (undocumented)
+export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(leafValue: ValueSchema);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly leafValue: ValueSchema;
+}
+
 // @internal
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
 }
 
 // @public
 export interface MakeNominal {
+}
+
+// @internal (undocumented)
+export class MapNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(mapFields: TreeFieldStoredSchema);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly mapFields: TreeFieldStoredSchema;
 }
 
 // @internal
@@ -1230,7 +1265,7 @@ export interface Named<TName> {
 }
 
 // @internal
-export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
+export type NameFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<unknown, infer Name> ? Name : never;
 
 // @internal
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
@@ -1317,6 +1352,15 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
 export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+// @internal (undocumented)
+export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+}
 
 // @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
@@ -1425,40 +1469,21 @@ export const reservedObjectNodeFieldPropertyNamePrefixes: readonly ["set", "boxe
 export type ReservedObjectNodeFieldPropertyNames = (typeof reservedObjectNodeFieldPropertyNames)[number];
 
 // @internal
-export const reservedObjectNodeFieldPropertyNames: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
+export const reservedObjectNodeFieldPropertyNames: readonly ["anchorNode", "constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
 
-// @internal
+// @public
 export interface Revertible {
-    discard(): RevertibleResult;
-    readonly kind: RevertibleKind;
-    readonly origin: {
-        readonly isLocal: boolean;
-    };
-    retain(): RevertibleResult;
-    revert(): RevertibleResult;
+    release(): void;
+    revert(): void;
     readonly status: RevertibleStatus;
 }
 
-// @internal
-export enum RevertibleKind {
-    Default = 0,
-    Rebase = 3,
-    Redo = 2,
-    Undo = 1
-}
-
-// @internal
-export enum RevertibleResult {
-    Failure = 1,
-    Success = 0
-}
-
-// @internal
+// @public
 export enum RevertibleStatus {
     Disposed = 1,
     Valid = 0
@@ -1735,7 +1760,7 @@ export interface TreeApi extends TreeNodeApi {
 }
 
 // @public
-export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>, TreeArrayNode> {
+export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypes<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>, TreeArrayNode> {
 }
 
 // @public
@@ -1765,7 +1790,7 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
 }
 
 // @beta
-export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeNode, TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, TreeArrayNode> {
+export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, TreeArrayNode> {
 }
 
 // @internal
@@ -1981,6 +2006,8 @@ export interface TreeView<in out TRoot> extends IDisposable {
 // @public
 export interface TreeViewEvents {
     afterBatch(): void;
+    commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+    revertibleDisposed(revertible: Revertible): void;
     rootChanged(): void;
 }
 
@@ -2048,7 +2075,7 @@ export interface ValueFieldEditBuilder {
 }
 
 // @internal
-export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
+export type ValueFromBranded<T extends BrandedType<unknown, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
 // @internal
 export enum ValueSchema {

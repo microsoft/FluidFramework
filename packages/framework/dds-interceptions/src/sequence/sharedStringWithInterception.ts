@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { SharedString } from "@fluidframework/sequence";
 
 /**
  * - Create a new object from the passed SharedString.

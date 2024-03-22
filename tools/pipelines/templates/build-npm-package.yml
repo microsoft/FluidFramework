@@ -166,6 +166,9 @@ extends:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022
         os: windows
+      # Tentative workaround for the occasional Credscan failures
+      credscan:
+        batchSize: 4
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
@@ -359,11 +362,11 @@ extends:
                     # CopyFiles@2 failed with OOM for some reason so doing it "by hand".
                     - task: Bash@3
                       displayName: Copy tinylicious.log to artifact staging directory
+                      condition: succeededOrFailed()
+                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                       inputs:
                         targetType: inline
                         workingDirectory: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests'
-                        condition: succeededOrFailed()
-                        continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
                         script: |
                           mkdir -p $(Build.ArtifactStagingDirectory)/tinyliciousLog
                           cp tinylicious.log $(Build.ArtifactStagingDirectory)/tinyliciousLog/tinylicious.log

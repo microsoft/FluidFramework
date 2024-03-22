@@ -11,10 +11,10 @@ window.performance.mark ??= () => undefined as unknown as PerformanceMark;
 window.performance.measure ??= () => undefined as unknown as PerformanceMeasure;
 
 import { strict as assert } from "assert";
-import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { htmlFormatter } from "../index.js";
+import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { FlowDocument } from "../document/index.js";
+import { htmlFormatter } from "../index.js";
 import { Layout } from "../view/layout.js";
 
 interface ISnapshotNode {
@@ -45,7 +45,7 @@ describeCompat("Layout", "LoaderCompat", (getTestObjectProvider) => {
 
 	let provider: ITestObjectProvider;
 	before(async function () {
-		// Initialization of 'compat LTS ^1.3.4 - old loader' compat variant can take a couple seconds.
+		// Initialization of 'compat LTS ^1.3.x - old loader' compat variant can take a couple seconds.
 		this.timeout(10000);
 
 		provider = getTestObjectProvider({ resetAfterEach: false });

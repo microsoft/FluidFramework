@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../util/index.js";
 import { Context } from "../feature-libraries/index.js";
-import { TreeNode, TreeNodeApi, TreeView, treeNodeApi, getFlexNode } from "../simple-tree/index.js";
+import { TreeNode, TreeNodeApi, TreeView, getFlexNode, treeNodeApi } from "../simple-tree/index.js";
+import { fail } from "../util/index.js";
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { TreeCheckout } from "./treeCheckout.js";
 import { contextToTreeView } from "./treeView.js";
@@ -75,7 +76,7 @@ export const treeApi: TreeApi = {
 			const node = treeOrNode as TNode;
 			const t = transaction as (node: TNode) => void | "rollback";
 			const context = getFlexNode(node).context;
-			assert(context instanceof Context, "Unsupported context");
+			assert(context instanceof Context, 0x901 /* Unsupported context */);
 			const treeView =
 				contextToTreeView.get(context) ??
 				fail("Expected view to be registered for context");

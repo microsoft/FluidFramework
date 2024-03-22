@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 import { Config } from "@oclif/core";
-import { MonoRepoKind } from "@fluidframework/build-tools";
 import chalk from "chalk";
 import { strict as assert } from "node:assert";
 
@@ -25,6 +25,8 @@ import { PromptWriter } from "../instructionalPromptWriter";
 import { FluidReleaseMachine } from "../machines";
 import { getRunPolicyCheckDefault } from "../repoConfig";
 import { StateMachineCommand } from "../stateMachineCommand";
+// eslint-disable-next-line import/no-deprecated
+import { MonoRepoKind } from "../library";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,
@@ -90,6 +92,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
+		// eslint-disable-next-line import/no-deprecated
 		if (flags.releaseGroup === MonoRepoKind.Server && flags.bumpType === "minor") {
 			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
 		}

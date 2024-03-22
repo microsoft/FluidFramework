@@ -2,45 +2,76 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import { IContainerExperimental } from "@fluidframework/container-loader";
 import { createIdCompressor } from "@fluidframework/id-compressor";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
-import { IContainerExperimental } from "@fluidframework/container-loader";
-import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	cursorForJsonableTreeNode,
-	Any,
-	TreeStatus,
-	FlexFieldSchema,
-	SchemaBuilderInternal,
-	FieldKinds,
-	typeNameSymbol,
-	FlexTreeSchema,
-	intoStoredSchema,
-	SchemaBuilderBase,
-	FlexTreeTypedField,
-	ViewSchema,
-	defaultSchemaPolicy,
-	createMockNodeKeyManager,
-	nodeKeyFieldKey,
-	TreeCompressionStrategy,
-} from "../../feature-libraries/index.js";
+	AllowedUpdateType,
+	CommitKind,
+	JsonableTree,
+	Revertible,
+	UpPath,
+	compareUpPaths,
+	moveToDetachedField,
+	rootFieldKey,
+	storedEmptyFieldSchema,
+} from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	ChunkedForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeSchema,
+	FlexTreeTypedField,
+	SchemaBuilderBase,
+	SchemaBuilderInternal,
+	TreeCompressionStrategy,
+	TreeStatus,
+	ViewSchema,
+	createMockNodeKeyManager,
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	nodeKeyFieldKey,
+	typeNameSymbol,
+} from "../../feature-libraries/index.js";
+import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
+import { EditManager } from "../../shared-tree-core/index.js";
+import {
+	CheckoutFlexTreeView,
+	FlexTreeView,
+	ForestType,
+	ISharedTree,
+	InitializeAndSchematizeConfiguration,
+	SharedTree,
+	SharedTreeFactory,
+	runSynchronous,
+} from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
+	ConnectionSetter,
+	type ITestTreeProvider,
 	SharedTreeTestFactory,
+	SharedTreeWithConnectionStateSetter,
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
@@ -48,45 +79,14 @@ import {
 	emptyStringSequenceConfig,
 	expectSchemaEqual,
 	jsonSequenceRootSchema,
+	numberSequenceRootSchema,
+	schematizeFlexTree,
 	stringSequenceRootSchema,
+	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
-	numberSequenceRootSchema,
-	ConnectionSetter,
-	SharedTreeWithConnectionStateSetter,
-	type ITestTreeProvider,
-	treeTestFactory,
-	schematizeFlexTree,
 } from "../utils.js";
-import {
-	ForestType,
-	ISharedTree,
-	FlexTreeView,
-	InitializeAndSchematizeConfiguration,
-	SharedTree,
-	SharedTreeFactory,
-	CheckoutFlexTreeView,
-	runSynchronous,
-} from "../../shared-tree/index.js";
-import {
-	compareUpPaths,
-	rootFieldKey,
-	UpPath,
-	moveToDetachedField,
-	AllowedUpdateType,
-	storedEmptyFieldSchema,
-	Revertible,
-	RevertibleKind,
-	RevertibleResult,
-	JsonableTree,
-} from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import { EditManager } from "../../shared-tree-core/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
-import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
 
 describe("SharedTree", () => {
 	describe("schematize", () => {
@@ -1141,11 +1141,10 @@ describe("SharedTree", () => {
 			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
 				const unsubscribe = peer.view.checkout.events.on(
-					"newRevertible",
-					(revertible: Revertible) => {
-						if (revertible.kind !== RevertibleKind.Undo) {
-							revertible.retain();
-							undos.push(revertible);
+					"commitApplied",
+					({ kind }, getRevertible) => {
+						if (kind !== CommitKind.Undo && getRevertible !== undefined) {
+							undos.push(getRevertible());
 						}
 					},
 				);
@@ -1231,19 +1230,19 @@ describe("SharedTree", () => {
 
 					resubmitter.setConnected(false);
 
-					assert.equal(s2.revert(), RevertibleResult.Success);
-					assert.equal(s1.revert(), RevertibleResult.Success);
+					s2.revert();
+					s1.revert();
 					submitter.assertOuterListEquals([]);
 					submitter.assertInnerListEquals(["a", "r"]);
 
 					provider.processMessages();
 
 					if (scenario === "restore and edit") {
-						assert.equal(rRemove.revert(), RevertibleResult.Success);
-						assert.equal(rEdit.revert(), RevertibleResult.Success);
+						rRemove.revert();
+						rEdit.revert();
 					} else {
-						assert.equal(rEdit.revert(), RevertibleResult.Success);
-						assert.equal(rRemove.revert(), RevertibleResult.Success);
+						rEdit.revert();
+						rRemove.revert();
 					}
 					resubmitter.assertOuterListEquals([["a", "s1", "s2"]]);
 
@@ -1274,18 +1273,18 @@ describe("SharedTree", () => {
 					resubmitter.setConnected(false);
 
 					if (scenario === "restore and edit") {
-						assert.equal(sRemove.revert(), RevertibleResult.Success);
-						assert.equal(sEdit.revert(), RevertibleResult.Success);
+						sRemove.revert();
+						sEdit.revert();
 					} else {
-						assert.equal(sEdit.revert(), RevertibleResult.Success);
-						assert.equal(sRemove.revert(), RevertibleResult.Success);
+						sEdit.revert();
+						sRemove.revert();
 					}
 					submitter.assertOuterListEquals([["a", "r1", "r2"]]);
 
 					provider.processMessages();
 
-					assert.equal(r2.revert(), RevertibleResult.Success);
-					assert.equal(r1.revert(), RevertibleResult.Success);
+					r2.revert();
+					r1.revert();
 					resubmitter.assertOuterListEquals([]);
 					resubmitter.assertInnerListEquals(["a", "s"]);
 
@@ -1320,7 +1319,7 @@ describe("SharedTree", () => {
 				resubmitter.assertOuterListEquals([]);
 				resubmitter.assertInnerListEquals(["a", "f"]);
 
-				assert.equal(rRemove.revert(), RevertibleResult.Success);
+				rRemove.revert();
 				resubmitter.assertOuterListEquals([["a", "f"]]);
 
 				resubmitter.setConnected(true);
@@ -1440,7 +1439,7 @@ describe("SharedTree", () => {
 	// TODO:
 	// These tests should either be tests of SharedTreeView, EditManager, or the relevant field kind's rebase function.
 	// Keeping a couple integration tests for rebase at this level might be ok (for example schema vs other edits), but that should be minimal,
-	// and those tests should setup proper schema, and use the high levels editing APIs (editable tree) if they are serving as integration tests of SharedTree,
+	// and those tests should setup proper schema, and use the high levels editing APIs (Flex tree) if they are serving as integration tests of SharedTree,
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);

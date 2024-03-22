@@ -4,24 +4,24 @@
  */
 
 import {
+	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
-	OptionsMatrix,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
 import {
 	OdspDocumentServiceFactory,
+	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
-	OdspDriverUrlResolver,
 } from "@fluidframework/odsp-driver";
 import {
 	HostStoragePolicy,
-	ISnapshotOptions,
-	IOpsCachingPolicy,
 	ICollabSessionOptions,
+	IOpsCachingPolicy,
+	ISnapshotOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import { pkgVersion } from "./packageVersion";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * @internal
@@ -76,6 +76,7 @@ export const generateOdspHostStoragePolicy = (seed: number) => {
 		enableShareLinkWithCreate: [false],
 		enableSingleRequestForShareLinkWithCreate: [false],
 		avoidPrefetchSnapshotCache: booleanCases,
+		disableRetriesOnStorageThrottlingError: booleanCases,
 	};
 	return generatePairwiseOptions<HostStoragePolicy>(odspHostPolicyMatrix, seed);
 };

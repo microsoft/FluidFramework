@@ -4,14 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IVersion,
-	ISnapshotTree,
-	MessageType,
-	ISequencedDocumentMessage,
-	IDocumentAttributes,
-} from "@fluidframework/protocol-definitions";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -19,10 +13,15 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions";
-import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IPendingContainerState } from "../container.js";
-import { SerializedStateManager } from "../serializedStateManager.js";
+import {
+	IDocumentAttributes,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+	IVersion,
+	MessageType,
+} from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
@@ -192,11 +191,11 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
-		assert(snapshotTree);
+		assert(baseSnapshot);
 		assert.strictEqual(version, undefined);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
@@ -216,7 +215,10 @@ describe("serializedStateManager", () => {
 			true,
 		);
 		// equivalent to attach
-		serializedStateManager.setSnapshot({ tree: { trees: {}, blobs: {} }, blobs: {} });
+		serializedStateManager.setSnapshot({
+			baseSnapshot: { trees: {}, blobs: {} },
+			snapshotBlobs: {},
+		});
 		for (let num = 0; num < 10; ++num) {
 			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
@@ -236,11 +238,11 @@ describe("serializedStateManager", () => {
 			storageAdapter,
 			true,
 		);
-		const { snapshotTree, version } = await serializedStateManager.fetchSnapshot(
+		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
-			undefined,
+			false,
 		);
-		assert(snapshotTree);
+		assert(baseSnapshot);
 		assert.strictEqual(version?.id, "test");
 		assert.strictEqual(version.treeId, "test");
 		const state = await serializedStateManager.getPendingLocalStateCore(

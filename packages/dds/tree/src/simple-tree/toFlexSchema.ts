@@ -2,33 +2,37 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	FlexTreeSchema,
-	FlexFieldSchema,
-	FlexFieldKind,
+	IForestSubscription,
+	ITreeCursorSynchronous,
+	TreeNodeSchemaIdentifier,
+} from "../core/index.js";
+import {
 	FieldKinds,
 	FlexAllowedTypes,
-	TreeNodeSchemaBase,
-	FlexTreeNodeSchema,
-	defaultSchemaPolicy,
-	FlexMapNodeSchema,
+	FlexFieldKind,
 	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	TreeNodeSchemaBase,
+	defaultSchemaPolicy,
 	schemaIsLeaf,
 } from "../feature-libraries/index.js";
-import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
-import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import { TreeContent } from "../shared-tree/index.js";
+import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	InsertableContent,
-	extractFactoryContent,
-	getClassSchema,
+	getSimpleSchema,
+	prepareContentForInsert,
 	simpleSchemaSymbol,
 } from "./proxies.js";
-import { cursorFromNodeData } from "./toMapTree.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -38,6 +42,7 @@ import {
 	NodeKind,
 	TreeNodeSchema,
 } from "./schemaTypes.js";
+import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
 
 /**
@@ -48,22 +53,25 @@ import { TreeConfiguration } from "./tree.js";
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-export function cursorFromUnhydratedRoot(
+function cursorFromUnhydratedRoot(
 	schema: FlexTreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
+	forest: IForestSubscription,
 ): ITreeCursorSynchronous {
-	const data = extractFactoryContent(tree as InsertableContent);
+	const data = prepareContentForInsert(tree as InsertableContent, forest);
 	return (
-		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
+		cursorFromNodeData(data, schema, schema.rootFieldSchema.allowedTypeSet) ??
 		fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration): TreeContent {
+export function toFlexConfig(config: TreeConfiguration, forest: IForestSubscription): TreeContent {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
-		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
+		unhydrated === undefined
+			? undefined
+			: [cursorFromUnhydratedRoot(schema, unhydrated, forest)];
 	return {
 		schema,
 		initialTree,
@@ -88,7 +96,7 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const nodeSchema = new Map(
 		mapIterable(schemaMap, ([key, value]) => {
 			const schema = value.toFlex();
-			const classSchema = getClassSchema(schema);
+			const classSchema = getSimpleSchema(schema);
 			if (classSchema === undefined) {
 				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
@@ -248,7 +256,6 @@ export function convertNodeSchema(
 				setFlexSchemaFromClassSchema(schema, out);
 			}
 		}
-		(out as any)[simpleSchemaSymbol] = schema;
 		return out;
 	};
 	schemaMap.set(brand(schema.identifier), { original: schema, toFlex });
@@ -271,5 +278,8 @@ export function setFlexSchemaFromClassSchema(
 	simple: TreeNodeSchema,
 	flex: TreeNodeSchemaBase,
 ): void {
+	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
+	assert(!(simpleSchemaSymbol in flex), "flex schema already marked");
 	(simple as any)[flexSchemaSymbol] = flex;
+	(flex as any)[simpleSchemaSymbol] = simple;
 }

@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+
 import { OdspClient, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
+import { IConfigProviderBase, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { OdspTestTokenProvider } from "./OdspTokenFactory.js";

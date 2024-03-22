@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { delay } from "@fluidframework/core-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
 import {
-	benchmarkAll,
-	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoaderAndSummarizer,
 	ISummarizeResult,
+	benchmarkAll,
+	createDocument,
 } from "./DocumentCreator.js";
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {

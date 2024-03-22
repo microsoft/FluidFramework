@@ -3,61 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import Deque from "double-ended-queue";
-import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
-import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	Client,
-	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
-	createGroupOp,
-	createInsertOp,
-	createRemoveRangeOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
 	IMergeTreeGroupMsg,
+	IMergeTreeObliterateMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	matchProperties,
 	MergeTreeDeltaType,
+	MergeTreeRevertibleDriver,
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	MergeTreeRevertibleDriver,
 	SegmentGroup,
-	IMergeTreeObliterateMsg,
-	createObliterateRangeOp,
 	SlidingPreference,
+	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
+	createGroupOp,
+	createInsertOp,
+	createObliterateRangeOp,
+	createRemoveRangeOp,
+	matchProperties,
 } from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
-	SharedObject,
 	ISharedObjectEvents,
+	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { DefaultMap, IMapOperation } from "./defaultMap.js";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces.js";
+import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
+import Deque from "double-ended-queue";
+import { IIntervalCollection, SequenceIntervalCollectionValueType } from "./intervalCollection.js";
+import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
+import { IMapMessageLocalMetadata, IValueChanged } from "./intervalCollectionMapInterfaces.js";
 import { SequenceInterval } from "./intervals/index.js";
-import {
-	IIntervalCollection,
-	IntervalCollection,
-	SequenceIntervalCollectionValueType,
-} from "./intervalCollection.js";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent.js";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
@@ -257,7 +253,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
 
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: DefaultMap<IntervalCollection<SequenceInterval>>;
+	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
 	constructor(
 		private readonly dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
@@ -307,7 +303,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.emit("maintenance", new SequenceMaintenanceEvent(opArgs, args, this.client), this);
 		});
 
-		this.intervalCollections = new DefaultMap(
+		this.intervalCollections = new IntervalCollectionMap(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => {
@@ -647,7 +643,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
-		assert(originalRefSeq !== undefined, "Expected a recorded refSeq when resubmitting an op");
+		assert(
+			originalRefSeq !== undefined,
+			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
+		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
 			if (
 				!this.intervalCollections.tryResubmitMessage(
@@ -739,7 +738,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	) {
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
-			assert(recordedRefSeq !== undefined, "No pending recorded refSeq found");
+			assert(recordedRefSeq !== undefined, 0x8bc /* No pending recorded refSeq found */);
 			// TODO: AB#7076: Some equivalent assert should be enabled. This fails some e2e stashed op tests because
 			// the deltaManager may have seen more messages than the runtime has processed while amidst the stashed op
 			// flow, so e.g. when `applyStashedOp` is called and the DDS is put in a state where it expects an ack for

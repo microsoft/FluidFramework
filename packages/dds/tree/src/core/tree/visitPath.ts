@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { ProtoNodes } from "./delta.js";
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
@@ -9,7 +11,6 @@ import {
 	RangeUpPath,
 	UpPath,
 } from "./pathTree.js";
-import { ProtoNodes } from "./delta.js";
 
 /**
  * Delta visitor for the path tree.
