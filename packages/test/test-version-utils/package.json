@@ -91,6 +91,7 @@
 		"@fluidframework/register-collection": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-driver-definitions": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",

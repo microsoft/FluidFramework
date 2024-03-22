@@ -56,7 +56,7 @@
 	},
 	"overrides": [
 		{
-			"include": ["**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
+			"include": ["**/*.jsonc", "**/.vscode/*.json", "**/tsconfig*.json", "**/api-extractor*.json"],
 			"json": {
 				"parser": {
 					"allowComments": true,

@@ -123,14 +123,14 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T> &
 }
 
 // @alpha
-export class SharedMatrixFactory implements IChannelFactory {
+export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(document: IFluidDataStoreRuntime, id: string): SharedMatrix;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<IChannel>;
+    create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMatrix & IChannel>;
     // (undocumented)
     static Type: string;
     // (undocumented)

@@ -4,7 +4,7 @@
  */
 
 export { FluidSerializer, IFluidSerializer } from "./serializer.js";
-export { SharedObject, SharedObjectCore } from "./sharedObject.js";
+export { SharedObject, SharedObjectCore, ISharedObjectKind } from "./sharedObject.js";
 export { SummarySerializer } from "./summarySerializer.js";
 export { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {

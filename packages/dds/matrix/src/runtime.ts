@@ -10,14 +10,14 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SharedMatrix } from "./matrix.js";
+import { type ISharedMatrix, SharedMatrix } from "./matrix.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
  * @alpha
  */
-export class SharedMatrixFactory implements IChannelFactory {
+export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -42,13 +42,13 @@ export class SharedMatrixFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<IChannel> {
+	): Promise<ISharedMatrix & IChannel> {
 		const matrix = new SharedMatrix(runtime, id, attributes);
 		await matrix.load(services);
 		return matrix;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): SharedMatrix {
+	public create(document: IFluidDataStoreRuntime, id: string): ISharedMatrix & IChannel {
 		const matrix = new SharedMatrix(document, id, this.attributes);
 		matrix.initializeLocal();
 		return matrix;

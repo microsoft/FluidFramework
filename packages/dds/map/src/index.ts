@@ -50,41 +50,20 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { ISharedMap } from "./interfaces.js";
 import { MapFactory } from "./map.js";
 
 /**
  * {@inheritDoc ISharedMap}
  * @public
- * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
+ * @deprecated Please use SharedTree for new containers. SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
-export const SharedMap = {
-	/**
-	 * Get a factory for SharedMap to register with the data store.
-	 * @returns A factory that creates SharedMaps and loads them from storage.
-	 */
+export const SharedMap: ISharedObjectKind<ISharedMap> = {
 	getFactory(): IChannelFactory<ISharedMap> {
 		return new MapFactory();
 	},
 
-	/**
-	 * Create a new shared map.
-	 * @param runtime - The data store runtime that the new shared map belongs to.
-	 * @param id - Optional name of the shared map.
-	 * @returns Newly created shared map.
-	 *
-	 * @example
-	 * To create a `SharedMap`, call the static create method:
-	 *
-	 * ```typescript
-	 * const myMap = SharedMap.create(this.runtime, id);
-	 * ```
-	 * @privateRemarks
-	 * TODO:
-	 * Clarify how this differs from `MapFactory.create`.
-	 * They are different since making this forward to MapFactory.create breaks some things,
-	 * but the difference is unclear from the documentation.
-	 */
 	create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap {
 		return runtime.createChannel(id, MapFactory.Type) as ISharedMap;
 	},

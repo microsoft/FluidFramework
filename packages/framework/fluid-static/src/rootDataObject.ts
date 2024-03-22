@@ -21,18 +21,18 @@ import { type IDirectory } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ContainerSchema,
 	type IRootDataObject,
 	type LoadableObjectClass,
 	type LoadableObjectClassRecord,
 	type LoadableObjectRecord,
-	type SharedObjectClass,
 } from "./types.js";
 import {
 	type InternalDataObjectClass,
 	isDataObjectClass,
-	isSharedObjectClass,
+	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
 
@@ -129,9 +129,9 @@ class RootDataObject
 	 */
 	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
 		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject<T>(objectClass);
-		} else if (isSharedObjectClass(objectClass)) {
-			return this.createSharedObject<T>(objectClass);
+			return this.createDataObject(objectClass);
+		} else if (isSharedObjectKind(objectClass)) {
+			return this.createSharedObject(objectClass);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
@@ -147,7 +147,7 @@ class RootDataObject
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
-		sharedObjectClass: SharedObjectClass<T>,
+		sharedObjectClass: ISharedObjectKind<T>,
 	): T {
 		const factory = sharedObjectClass.getFactory();
 		const obj = this.runtime.createChannel(undefined, factory.type);

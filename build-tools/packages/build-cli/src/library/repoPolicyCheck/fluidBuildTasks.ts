@@ -537,6 +537,73 @@ function getTscCommandDependencies(
 	return deps.concat(defaultDeps);
 }
 
+interface BuildDepsCallbackContext {
+	packageDir: string;
+	json: PackageJson;
+	script: string;
+	command: string;
+	deps: string[];
+	root: string;
+}
+
+function buildDepsHandler(
+	file: string,
+	root: string,
+	check: (context: BuildDepsCallbackContext) => string | undefined,
+): string | undefined {
+	let json: PackageJson;
+	try {
+		json = JSON.parse(readFile(file)) as PackageJson;
+	} catch {
+		return `Error parsing JSON file: ${file}`;
+	}
+
+	if (!isFluidBuildEnabled(root, json)) {
+		return;
+	}
+	if (json.scripts === undefined) {
+		return;
+	}
+	const packageDir = path.dirname(file);
+	const errors: string[] = [];
+	const deps = getDefaultTscTaskDependencies(root, json);
+	const ignore = getFluidBuildTasksTscIgnore(root);
+	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
+		if (scriptCommands === undefined) {
+			continue;
+		}
+		for (const commandUntrimmed of scriptCommands.split("&&")) {
+			const command = commandUntrimmed.trim();
+			if (!shouldProcessScriptForTsc(script, command, ignore)) {
+				continue;
+			}
+			try {
+				const error = check({ packageDir, json, script, command, deps, root });
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				if (error) {
+					errors.push(error);
+				}
+			} catch (error: unknown) {
+				return (error as Error).message;
+			}
+		}
+	}
+	return errors.length > 0 ? errors.join("\n") : undefined;
+}
+
+function checkTscDependencies({
+	packageDir,
+	json,
+	script,
+	command,
+	deps,
+	root,
+}: BuildDepsCallbackContext): string | undefined {
+	const checkDeps = getTscCommandDependencies(packageDir, json, script, command, deps);
+	// Check the dependencies
+	return checkTaskDeps(root, json, script, checkDeps);
+}
+
 const match = /(^|\/)package\.json/i;
 export const handlers: Handler[] = [
 	{
@@ -577,56 +644,40 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
-		name: "fluid-build-tasks-tsc",
+		/**
+		 * Checks that all tsc project files (tsconfig.json), are only used once as the main
+		 * configuration among scripts.
+		 * Multiple uses may indicate a collision during build.
+		 */
+		name: "tsc-project-single-use",
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
-			let json: PackageJson;
-			try {
-				json = JSON.parse(readFile(file)) as PackageJson;
-			} catch {
-				return `Error parsing JSON file: ${file}`;
-			}
-
-			if (!isFluidBuildEnabled(root, json)) {
-				return;
-			}
-			if (json.scripts === undefined) {
-				return;
-			}
-			const packageDir = path.dirname(file);
-			const errors: string[] = [];
-			const deps = getDefaultTscTaskDependencies(root, json);
-			const ignore = getFluidBuildTasksTscIgnore(root);
-			for (const [script, scriptCommands] of Object.entries(json.scripts)) {
-				if (scriptCommands === undefined) {
-					continue;
-				}
-				for (const commandUntrimmed of scriptCommands.split("&&")) {
-					const command = commandUntrimmed.trim();
-					if (!shouldProcessScriptForTsc(script, command, ignore)) {
-						continue;
+			const projectMap = new Map<string, string>();
+			// Note: this does not check tsc-multi commands which do very likely reuse project files
+			return buildDepsHandler(
+				file,
+				root,
+				({ packageDir, script, command }: BuildDepsCallbackContext) => {
+					// If the project has a referenced project, depend on that instead of the default
+					const parsedCommand = TscUtils.parseCommandLine(command);
+					if (!parsedCommand) {
+						throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 					}
-					try {
-						const checkDeps = getTscCommandDependencies(
-							packageDir,
-							json,
-							script,
-							command,
-							deps,
-						);
-						// Check the dependencies
-						const error = checkTaskDeps(root, json, script, checkDeps);
-						// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-						if (error) {
-							errors.push(error);
-						}
-					} catch (error: unknown) {
-						return (error as Error).message;
+					const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
+					const previousUse = projectMap.get(configFile);
+					if (previousUse !== undefined) {
+						return `'${previousUse}' and '${script}' tasks share use of ${configFile}`;
 					}
-				}
-			}
-			return errors.length > 0 ? errors.join("\n") : undefined;
+					projectMap.set(configFile, script);
+				},
+			);
 		},
+	},
+	{
+		name: "fluid-build-tasks-tsc",
+		match,
+		handler: async (file: string, root: string) =>
+			buildDepsHandler(file, root, checkTscDependencies),
 		resolver: (file: string, root: string): { resolved: boolean; message?: string } => {
 			let result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {

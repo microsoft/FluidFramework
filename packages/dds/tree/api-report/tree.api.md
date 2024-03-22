@@ -13,6 +13,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
 import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
@@ -1656,9 +1657,7 @@ export interface SequenceFieldEditBuilder {
 }
 
 // @public
-export const SharedTree: {
-    getFactory(): IChannelFactory<ITree>;
-};
+export const SharedTree: ISharedObjectKind<ITree>;
 
 // @internal
 export interface SharedTreeContentSnapshot {
@@ -1822,19 +1821,6 @@ export interface TreeDataContext {
 // @internal
 export interface TreeEvent {
     readonly target: FlexTreeNode;
-}
-
-// @internal
-export class TreeFactory implements IChannelFactory<ITree> {
-    constructor(options: SharedTreeOptions);
-    // (undocumented)
-    readonly attributes: IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ITree;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ITree>;
-    // (undocumented)
-    readonly type: string;
 }
 
 // @public
