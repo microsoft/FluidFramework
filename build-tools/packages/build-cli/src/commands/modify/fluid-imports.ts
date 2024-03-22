@@ -84,7 +84,7 @@ async function updateImports(
 	mappingData: MapData,
 	onlyInternal: boolean,
 	organizeImports: boolean,
-	log?: CommandLogger,
+	log: CommandLogger,
 ): Promise<void> {
 	const project = new Project({
 		tsConfigFilePath,
@@ -102,7 +102,7 @@ async function updateImports(
 
 	// Iterate over each source file, looking for Fluid imports
 	for (const sourceFile of sourceFiles) {
-		log?.verbose(`Source file: ${sourceFile.getBaseName()}`);
+		log.verbose(`Source file: ${sourceFile.getBaseName()}`);
 
 		/**
 		 * All of the import declarations. This is basically every `import foo from bar` statement in the file.
@@ -146,19 +146,19 @@ async function updateImports(
 
 			// Skip modules with no mapping
 			if (data === undefined) {
-				log?.verbose(`Skipping ${importDeclaration.getModuleSpecifierValue()}`);
+				log.verbose(`Skipping ${importDeclaration.getModuleSpecifierValue()}`);
 			} else {
 				// TODO: Handle default import.
 				const defaultImport = importDeclaration.getDefaultImport();
 				if (defaultImport !== undefined) {
-					log?.warning(
+					log.warning(
 						`Found a default import (not yet implemented): ${defaultImport.getText().trim()}`,
 					);
 				}
 				const namedImports = importDeclaration.getNamedImports();
 				const isTypeOnly = importDeclaration.isTypeOnly();
 
-				log?.logIndent(`Iterating named imports...`, 2);
+				log.logIndent(`Iterating named imports...`, 2);
 				for (const importSpecifier of namedImports) {
 					const name = importSpecifier.getName();
 
@@ -179,7 +179,7 @@ async function updateImports(
 						onlyInternal,
 					);
 
-					log?.logIndent(
+					log.logIndent(
 						`Found import named: '${fullImportSpecifierText}' (${expectedLevel})`,
 						4,
 					);
@@ -210,7 +210,7 @@ async function updateImports(
 		// save. Therefore it's safe to remove the header here even before we know if we need to write the file.
 		const headerText = removeFileHeaderComment(sourceFile);
 
-		// Need to get declarations again because nodes are invalidated after calling replaceText above
+		// Need to get declarations again because nodes are invalidated after calling replaceText above.
 		imports = sourceFile.getImportDeclarations();
 
 		// SECOND PASS: Update existing imports and add any missing ones
@@ -279,7 +279,7 @@ async function updateImports(
 			sourceFile.insertText(0, headerText);
 
 			if (organizeImports) {
-				log?.info(`Organized imports in: ${sourceFile.getBaseName()}`);
+				log.info(`Organized imports in: ${sourceFile.getBaseName()}`);
 				sourceFile.organizeImports();
 			}
 
@@ -300,11 +300,11 @@ async function updateImports(
  */
 function parseImport(importDeclaration: ImportDeclaration): [string, string] {
 	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-	// log?.verbose(`Found a Fluid import: '${moduleSpecifier}'`);
+	// log.verbose(`Found a Fluid import: '${moduleSpecifier}'`);
 	const modulePieces = moduleSpecifier.split("/");
 	const moduleName = modulePieces.slice(0, 2).join("/");
 	const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
-	// log?.verbose(`subpath: ${subpath}`);
+	// log.verbose(`subpath: ${subpath}`);
 	return [moduleName, subpath];
 }
 
