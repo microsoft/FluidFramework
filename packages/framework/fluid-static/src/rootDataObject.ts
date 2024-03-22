@@ -9,7 +9,11 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions";
-import { type ContainerRuntime } from "@fluidframework/container-runtime";
+import {
+	CompressionAlgorithms,
+	type ContainerRuntime,
+	type IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	type FluidObject,
@@ -17,12 +21,13 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { type IDirectory } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
-
 import {
 	type ContainerSchema,
+	FluidRuntimeMinVersion,
 	type IRootDataObject,
 	type LoadableObjectClass,
 	type LoadableObjectClassRecord,
@@ -165,8 +170,9 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
+	minRuntimeVersion?: FluidRuntimeMinVersion;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.minRuntimeVersion);
 }
 
 /**
@@ -189,7 +195,10 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	public constructor(schema: ContainerSchema) {
+	public constructor(
+		schema: ContainerSchema,
+		minRuntimeVersion: FluidRuntimeMinVersion = FluidRuntimeMinVersion.V2,
+	) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -224,16 +233,52 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			}
 			return undefined; // continue search
 		};
+
+		let runtimeOptions: IContainerRuntimeOptions;
+
+		switch (minRuntimeVersion) {
+			case FluidRuntimeMinVersion.V1: {
+				runtimeOptions = {
+					// Legacy - work around for inability to send over 1Mb batches.
+					// Very risky, as exposes app (remote clients) to intermidiate states.
+					flushMode: FlushMode.Immediate,
+					// New type of op - not compatible
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					// New type of op - not compatible
+					enableGroupedBatching: false,
+				};
+				break;
+			}
+			case FluidRuntimeMinVersion.V2: {
+				runtimeOptions = {
+					// FlushMode.Immediate has been depreceated. It leads to subtle bugs in applications, as
+					// intermidiate states are exposed to remote clients half way through operations.
+					// It also results in op compressionto to not be very effective (as it compresses individual ops, not batches of ops)
+					flushMode: FlushMode.TurnBased,
+					// Id Compressor is required for SharedTree scenarios. This is breaking change (even if SharedTree is not used) - this
+					// setting results in new type of ops that 1.3.x clients do not understand.
+					enableRuntimeIdCompressor: "on",
+					// Enable op grouping. This allows us to substantially reduce number of ops on the wire,
+					// and thus reduce cost for users. A batch of 1000 ops is very likely (with op compresison and op chunking) to be just
+					// couple ops on the wire.
+					// This also ensures that client does not trip (with relatively small to medium payloads) over service throttling limits easily.
+					enableGroupedBatching: true,
+					// chunkSizeInBytes - is on by default.
+					// compressionOptions - default is on
+				};
+				break;
+			}
+			default: {
+				unreachableCase(minRuntimeVersion, "unknown version");
+			}
+		}
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			requestHandlers: [getDefaultObject],
-			runtimeOptions: {
-				// temporary workaround to disable message batching until the message batch size issue is resolved
-				// resolution progress is tracked by the Feature 465 work item in AzDO
-				flushMode: FlushMode.Immediate,
-				// The runtime compressor is required to be on to use @fluidframework/tree.
-				enableRuntimeIdCompressor: "on",
-			},
+			runtimeOptions,
 			provideEntryPoint,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
