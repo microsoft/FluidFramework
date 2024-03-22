@@ -10,18 +10,17 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/fluidFetch.js",
-	"types": "dist/fluidFetch.d.ts",
+	"type": "module",
 	"bin": {
 		"fluid-fetch": "bin/fluid-fetch"
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"check:are-the-types-wrong": "attw --pack",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
@@ -29,7 +28,7 @@
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "tsc"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
@@ -49,7 +48,6 @@
 		"@fluidframework/tool-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.13.3",
 		"@biomejs/biome": "^1.6.1",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0-internal.8.0.0",
@@ -57,6 +55,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@types/node": "^18.19.0",
+		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",

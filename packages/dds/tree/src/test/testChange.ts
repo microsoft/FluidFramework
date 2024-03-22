@@ -103,7 +103,7 @@ function composeList(changes: TestChange[], verify: boolean = true): TestChange 
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
-	if (inputContext !== undefined) {
+	if (intentions.length !== 0 && inputContext !== undefined) {
 		return {
 			inputContext,
 			intentions,
