@@ -78,7 +78,7 @@
 		"react-virtualized-auto-sizer": "^1.0.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@types/jest": "29.5.3",

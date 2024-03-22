@@ -64,7 +64,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@commitlint/cli": "^17.6.6",
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
