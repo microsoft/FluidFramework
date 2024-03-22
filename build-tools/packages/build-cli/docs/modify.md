@@ -1,7 +1,7 @@
 `flub modify`
 =============
 
-Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc..
+Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.
 
 * [`flub modify fluid-imports`](#flub-modify-fluid-imports)
 

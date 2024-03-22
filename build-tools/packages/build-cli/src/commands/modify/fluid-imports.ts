@@ -152,7 +152,9 @@ async function updateImports(
 
 			// Skip modules with no mapping
 			if (data === undefined) {
-				log.verbose(`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`);
+				log.verbose(
+					`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`,
+				);
 			} else {
 				// TODO: Handle default import.
 				const defaultImport = importDeclaration.getDefaultImport();
