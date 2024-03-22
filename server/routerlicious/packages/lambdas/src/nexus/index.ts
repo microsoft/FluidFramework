@@ -427,6 +427,7 @@ export function configureWebSocketServices(
 			const isSummarizer = messageClient.details?.type === summarizerClientType;
 			messageClient.user = claims.user;
 			messageClient.scopes = claims.scopes;
+			messageClient.mode = hasWriteAccess(claims.scopes) ? "write" : "read";
 
 			// 1. Do not give SummaryWrite scope to clients that are not summarizers.
 			// 2. Store connection timestamp for all clients but the summarizer.

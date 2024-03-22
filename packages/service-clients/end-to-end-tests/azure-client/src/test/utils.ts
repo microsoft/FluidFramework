@@ -4,6 +4,7 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IMember } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 
@@ -46,3 +47,7 @@ export const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
 		map.on("valueChanged", handler);
 	});
 };
+
+export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
