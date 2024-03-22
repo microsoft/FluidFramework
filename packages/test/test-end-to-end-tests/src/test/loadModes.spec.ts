@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";

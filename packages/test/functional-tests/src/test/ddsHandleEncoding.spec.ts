@@ -14,9 +14,9 @@ import {
 } from "@fluid-experimental/tree";
 import { CellFactory } from "@fluidframework/cell";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-import { DirectoryFactory, MapFactory } from "@fluidframework/map";
+import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map";
 import { SharedMatrixFactory } from "@fluidframework/matrix";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
@@ -119,7 +119,7 @@ describe("DDS Handle Encoding", () => {
 			},
 			[handle.absolutePath] /* expectedHandles */,
 		),
-		createTestCase<ISharedMatrix & IChannel>(
+		createTestCase(
 			new SharedMatrixFactory(),
 			(dds) => {
 				dds.insertRows(0, 1);
