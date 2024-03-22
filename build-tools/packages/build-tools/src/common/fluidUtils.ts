@@ -7,13 +7,15 @@ import * as childProcess from "node:child_process";
 import * as path from "node:path";
 import { existsSync } from "node:fs";
 import { cosmiconfigSync } from "cosmiconfig";
-import findUp from "find-up";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { realpathAsync } from "./utils";
 import { readJson } from "fs-extra";
 import { getPackages } from "@manypkg/get-packages";
+
+// switch to regular import once building ESM
+const findUp = import("find-up");
 
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
@@ -34,7 +36,7 @@ async function isFluidRootPackage(dir: string) {
 }
 
 async function inferRoot(buildRoot: boolean) {
-	const config = await findUp("fluidBuild.config.cjs", {
+	const config = await (await findUp).findUp("fluidBuild.config.cjs", {
 		cwd: process.cwd(),
 		type: "file",
 	});

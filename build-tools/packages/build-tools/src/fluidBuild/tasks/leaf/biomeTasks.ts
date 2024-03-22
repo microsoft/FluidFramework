@@ -7,7 +7,9 @@ import path from "path";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
 import { getResolvedFluidRoot } from "../../../common/fluidUtils";
-import findUp from "find-up";
+
+// switch to regular import once building ESM
+const findUp = import("find-up");
 
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	// performance note: having individual tasks each acquire repo root and GitRepo
@@ -45,29 +47,13 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	 * parse the config files anyway to extract ignore paths, at which point this implementation can change.
 	 */
 	private async getBiomeConfigPaths(cwd: string): Promise<string[]> {
-		const config = await findUp(["biome.json", "biome.jsonc"], { cwd });
-		if (config === undefined) {
-			if (isPathAbove(cwd, await this.repoRoot)) {
-				// The version of find-up we're using (5.0) doesn't support a stop directory and upgrading is challenging since
-				// it's now ESM-only. This works around by stopping once we've stepped beyond the repo root.
-				return [];
-			}
-			this.traceError(`Can't find biome config file`);
-			return [];
-		}
-
-		const parentDir = path.dirname(path.dirname(config));
-		return [config].concat(await this.getBiomeConfigPaths(parentDir));
+		return (await findUp)
+			.findUpMultiple(["biome.json", "biome.jsonc"], { cwd, stopAt: await this.repoRoot })
+			.then((configs) => {
+				if (configs.length === 0) {
+					this.traceError(`Can't find biome config file`);
+				}
+				return configs;
+			});
 	}
-}
-
-/**
- * Returns true if path 1 is a parent path of path2 in the file tree.
- */
-function isPathAbove(path1: string, path2: string): boolean {
-	// If path1 is above path2 in the file tree, the relative path won't start with .. (which indicates a parent
-	// directory) and won't be an absolute path. So, the function returns true if the relative path exists, doesn't start
-	// with .., and isn't an absolute path. Otherwise, it returns false.
-	const relative = path.relative(path1, path2);
-	return !relative.startsWith("..") && !path.isAbsolute(relative);
 }
