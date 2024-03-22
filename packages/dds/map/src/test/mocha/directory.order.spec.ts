@@ -39,9 +39,7 @@ function createConnectedDirectory(
 
 class TestSharedDirectory extends SharedDirectory {
 	private lastMetadata?: DirectoryLocalOpMetadata;
-	public testApplyStashedOp(
-		content: IDirectoryOperation,
-	): DirectoryLocalOpMetadata | undefined {
+	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata | undefined {
 		this.lastMetadata = undefined;
 		this.applyStashedOp(content);
 		return this.lastMetadata;
@@ -210,27 +208,26 @@ describe("Directory Iteration Order", () => {
 			assertDirectoryIterationOrder(directory2, ["b", "a", "d"]);
 
 			assert.notEqual(directory1.getWorkingDirectory("/d"), undefined);
-			assertDirectoryIterationOrder(directory1.getWorkingDirectory("/d") as ISharedDirectory, [
-				"d-b",
-				"d-a",
-			]);
+			assertDirectoryIterationOrder(
+				directory1.getWorkingDirectory("/d") as ISharedDirectory,
+				["d-b", "d-a"],
+			);
 
 			assert.notEqual(directory2.getWorkingDirectory("/d"), undefined);
-			assertDirectoryIterationOrder(directory2.getWorkingDirectory("/d") as ISharedDirectory, [
-				"d-b",
-				"d-a",
-			]);
+			assertDirectoryIterationOrder(
+				directory2.getWorkingDirectory("/d") as ISharedDirectory,
+				["d-b", "d-a"],
+			);
 
 			directory1.deleteSubDirectory("d");
 			directory2.getWorkingDirectory("/d")?.createSubDirectory("d-c");
 
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
 			assertDirectoryIterationOrder(directory2, ["b", "a", "d"]);
-			assertDirectoryIterationOrder(directory2.getWorkingDirectory("/d") as ISharedDirectory, [
-				"d-b",
-				"d-a",
-				"d-c",
-			]);
+			assertDirectoryIterationOrder(
+				directory2.getWorkingDirectory("/d") as ISharedDirectory,
+				["d-b", "d-a", "d-c"],
+			);
 
 			containerRuntimeFactory.processAllMessages();
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
@@ -375,10 +372,10 @@ describe("Directory Iteration Order", () => {
 
 			assertDirectoryIterationOrder(directory1, ["c", "b", "a"]);
 			assert(directory1.getWorkingDirectory("/c"));
-			assertDirectoryIterationOrder(directory1.getWorkingDirectory("/c") as ISharedDirectory, [
-				"c_b",
-				"c_a",
-			]);
+			assertDirectoryIterationOrder(
+				directory1.getWorkingDirectory("/c") as ISharedDirectory,
+				["c_b", "c_a"],
+			);
 		});
 
 		it("serialize the contents, load it into another directory and maintain the order", async () => {
@@ -461,7 +458,11 @@ describe("Directory Iteration Order", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			directory1 = new SharedDirectory("dir1", dataStoreRuntime1, DirectoryFactory.Attributes);
+			directory1 = new SharedDirectory(
+				"dir1",
+				dataStoreRuntime1,
+				DirectoryFactory.Attributes,
+			);
 			directory1.connect(services1);
 
 			// Create the second SharedDirectory
@@ -471,7 +472,11 @@ describe("Directory Iteration Order", () => {
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
-			directory2 = new SharedDirectory("dir1", dataStoreRuntime2, DirectoryFactory.Attributes);
+			directory2 = new SharedDirectory(
+				"dir1",
+				dataStoreRuntime2,
+				DirectoryFactory.Attributes,
+			);
 			directory2.connect(services2);
 		});
 

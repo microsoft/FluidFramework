@@ -34,11 +34,7 @@ async function loadSharedDirectory(
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 	};
-	const sharedDirectory = new SharedDirectory(
-		id,
-		dataStoreRuntime,
-		DirectoryFactory.Attributes,
-	);
+	const sharedDirectory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
 	await sharedDirectory.load(services);
 	return sharedDirectory;
 }
@@ -72,7 +68,11 @@ function generateTestScenarios(): TestScenario[] {
 		{
 			name: "random-create-delete",
 			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory("A", dataStoreRuntime, factory.attributes);
+				const testDirectory = new SharedDirectory(
+					"A",
+					dataStoreRuntime,
+					factory.attributes,
+				);
 				const dir1 = testDirectory.createSubDirectory("a");
 				const dir2 = testDirectory.createSubDirectory("b");
 				dir1.set("key1", "value1");
@@ -87,7 +87,11 @@ function generateTestScenarios(): TestScenario[] {
 		{
 			name: "long-property-value",
 			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory("A", dataStoreRuntime, factory.attributes);
+				const testDirectory = new SharedDirectory(
+					"A",
+					dataStoreRuntime,
+					factory.attributes,
+				);
 				// 40K word
 				let longWord = "0123456789";
 				for (let i = 0; i < 12; i++) {
@@ -106,7 +110,11 @@ function generateTestScenarios(): TestScenario[] {
 		{
 			name: "old-format-directory",
 			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory("A", dataStoreRuntime, factory.attributes);
+				const testDirectory = new SharedDirectory(
+					"A",
+					dataStoreRuntime,
+					factory.attributes,
+				);
 				const dir1 = testDirectory.createSubDirectory("a");
 				const dir2 = testDirectory.createSubDirectory("b");
 				dir1.set("key3", "value3");

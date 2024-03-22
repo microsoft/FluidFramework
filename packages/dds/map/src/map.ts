@@ -285,7 +285,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 				}
 				headerBlob[key] = {
 					type: value.type,
-					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
+					value:
+						value.value === undefined
+							? undefined
+							: (JSON.parse(value.value) as unknown),
 				};
 			}
 		}
@@ -346,7 +349,11 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		localOpMetadata: unknown,
 	): void {
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata);
+			this.kernel.tryProcessMessage(
+				message.contents as IMapOperation,
+				local,
+				localOpMetadata,
+			);
 		}
 	}
 

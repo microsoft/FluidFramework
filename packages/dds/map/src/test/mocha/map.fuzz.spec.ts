@@ -12,11 +12,7 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzTestState,
-	createDDSFuzzSuite,
-} from "@fluid-private/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { ISharedMap } from "../../interfaces.js";
@@ -76,9 +72,7 @@ const defaultOptions: GeneratorOptions = {
 	keyPoolSize: 20,
 };
 
-function makeGenerator(
-	optionsParam?: Partial<GeneratorOptions>,
-): AsyncGenerator<Operation, State> {
+function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
 	const { setWeight, deleteWeight, clearWeight, keyPoolSize } = {
 		...defaultOptions,
 		...optionsParam,

@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 import { IDirectory } from "../../interfaces.js";
 
 export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
-	assertEventualConsistencyCore(
-		first.getWorkingDirectory("/"),
-		second.getWorkingDirectory("/"),
-	);
+	assertEventualConsistencyCore(first.getWorkingDirectory("/"), second.getWorkingDirectory("/"));
 }
 
 function assertEventualConsistencyCore(
