@@ -12,8 +12,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedDirectory } from "../../directory.js";
-import { DirectoryFactory, type ISharedDirectory } from "../../index.js";
+import { type ISharedDirectory, SharedDirectory } from "../../index.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 
@@ -35,9 +34,10 @@ async function loadSharedDirectory(
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 	};
-	const sharedDirectory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
-	await sharedDirectory.load(services);
-	return sharedDirectory;
+
+	const factory = SharedDirectory.getFactory();
+	const directory = await factory.load(dataStoreRuntime, id, services, factory.attributes);
+	return directory;
 }
 
 interface TestScenario {
@@ -58,7 +58,7 @@ function generateTestScenarios(): TestScenario[] {
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "A" });
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
-	const factory = new DirectoryFactory();
+	const factory = SharedDirectory.getFactory();
 
 	/**
 	 * @remarks - This test suite isn't set up to be easily augmented when map's document format changes.
@@ -68,12 +68,8 @@ function generateTestScenarios(): TestScenario[] {
 	const testScenarios: TestScenario[] = [
 		{
 			name: "random-create-delete",
-			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory(
-					"A",
-					dataStoreRuntime,
-					factory.attributes,
-				);
+			runScenario: (): ISharedDirectory => {
+				const testDirectory = factory.create(dataStoreRuntime, "A");
 				const dir1 = testDirectory.createSubDirectory("a");
 				const dir2 = testDirectory.createSubDirectory("b");
 				dir1.set("key1", "value1");
@@ -87,12 +83,8 @@ function generateTestScenarios(): TestScenario[] {
 		},
 		{
 			name: "long-property-value",
-			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory(
-					"A",
-					dataStoreRuntime,
-					factory.attributes,
-				);
+			runScenario: (): ISharedDirectory => {
+				const testDirectory = factory.create(dataStoreRuntime, "A");
 				// 40K word
 				let longWord = "0123456789";
 				for (let i = 0; i < 12; i++) {
@@ -110,12 +102,8 @@ function generateTestScenarios(): TestScenario[] {
 		},
 		{
 			name: "old-format-directory",
-			runScenario: (): SharedDirectory => {
-				const testDirectory = new SharedDirectory(
-					"A",
-					dataStoreRuntime,
-					factory.attributes,
-				);
+			runScenario: (): ISharedDirectory => {
+				const testDirectory = factory.create(dataStoreRuntime, "A");
 				const dir1 = testDirectory.createSubDirectory("a");
 				const dir2 = testDirectory.createSubDirectory("b");
 				dir1.set("key3", "value3");

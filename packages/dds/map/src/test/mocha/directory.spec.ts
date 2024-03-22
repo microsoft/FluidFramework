@@ -17,22 +17,28 @@ import {
 } from "@fluidframework/test-runtime-utils";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory.js";
-import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces.js";
+import { IDirectoryNewStorageFormat } from "../../directory.js";
+import { SharedDirectory } from "../../index.js";
+import {
+	IDirectory,
+	IDirectoryValueChanged,
+	type ISharedDirectory,
+	ISharedMap,
+} from "../../interfaces.js";
 import { MapFactory } from "../../map.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): SharedDirectory {
+): ISharedDirectory {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
+	const directory = SharedDirectory.getFactory().create(dataStoreRuntime, id);
 	directory.connect(services);
 	return directory;
 }
@@ -42,14 +48,48 @@ function createLocalMap(id: string): ISharedMap {
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
-async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
-	const storage = new MockSharedObjectServices({
-		header: JSON.stringify(content),
+async function populate(content: unknown): Promise<ISharedDirectory> {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({
+		attachState: AttachState.Detached,
 	});
-	return directory.load(storage);
+	const factory = SharedDirectory.getFactory();
+
+	const directory = await factory.load(
+		dataStoreRuntime,
+		"A",
+		new MockSharedObjectServices({
+			header: JSON.stringify(content),
+		}),
+		factory.attributes,
+	);
+
+	return directory;
 }
 
-function serialize(directory1: SharedDirectory): string {
+async function loadFromAnotherDirectory(
+	containerRuntimeFactory: MockContainerRuntimeFactory,
+	source: ISharedDirectory,
+	id?: string,
+): Promise<ISharedDirectory> {
+	// Load a new SharedDirectory in connected state from the summary of the source
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services = MockSharedObjectServices.createFromSummary(source.getAttachSummary().summary);
+	services.deltaConnection = dataStoreRuntime.createDeltaConnection();
+
+	const factory = SharedDirectory.getFactory();
+
+	const directory = await factory.load(
+		dataStoreRuntime,
+		id ?? "directory",
+		services,
+		factory.attributes,
+	);
+
+	return directory;
+}
+
+function serialize(directory1: ISharedDirectory): string {
 	const summaryTree = directory1.getAttachSummary().summary;
 	const summaryObjectKeys = Object.keys(summaryTree.tree);
 	assert.strictEqual(summaryObjectKeys.length, 1, "summary tree should only have one blob");
@@ -66,16 +106,12 @@ function serialize(directory1: SharedDirectory): string {
 
 describe("Directory", () => {
 	describe("Local state", () => {
-		let directory: SharedDirectory;
+		let directory: ISharedDirectory;
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
 			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-			directory = new SharedDirectory(
-				"directory",
-				dataStoreRuntime,
-				DirectoryFactory.Attributes,
-			);
+			directory = SharedDirectory.getFactory().create(dataStoreRuntime, "directory");
 		});
 
 		describe("API", () => {
@@ -374,7 +410,7 @@ describe("Directory", () => {
 				directory.createSubDirectory("rock2");
 				const childSubDirectory = subDirectory.createSubDirectory("rock1Child");
 				assert.strictEqual(
-					directory.countSubDirectory(),
+					directory.countSubDirectory?.(),
 					2,
 					"Should have 2 sub directories",
 				);
@@ -475,7 +511,7 @@ describe("Directory", () => {
 
 		describe("Populate", () => {
 			it("Should populate the directory from an empty JSON object (old format)", async () => {
-				await populate(directory, {});
+				directory = await populate({});
 				assert.equal(directory.size, 0, "Failed to initialize to empty directory storage");
 				directory.set("testKey", "testValue");
 				assert.equal(directory.get("testKey"), "testValue", "Failed to set testKey");
@@ -486,7 +522,7 @@ describe("Directory", () => {
 			});
 
 			it("Should populate the directory from a basic JSON object (old format)", async () => {
-				await populate(directory, {
+				directory = await populate({
 					storage: {
 						testKey: {
 							type: "Plain",
@@ -537,7 +573,7 @@ describe("Directory", () => {
 			});
 
 			it("Should populate the directory with undefined values (old format)", async () => {
-				await populate(directory, {
+				directory = await populate({
 					storage: {
 						testKey: {
 							type: "Plain",
@@ -638,13 +674,15 @@ describe("Directory", () => {
 				);
 				assert(header.content.length >= 200, "header's length is incorrect");
 
-				const directory2 = new SharedDirectory(
-					"test",
-					dataStoreRuntime,
-					DirectoryFactory.Attributes,
-				);
 				const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
-				await directory2.load(storage);
+				const factory = SharedDirectory.getFactory();
+
+				const directory2 = await factory.load(
+					dataStoreRuntime,
+					"test",
+					storage,
+					factory.attributes,
+				);
 
 				assert.equal(directory2.get("first"), "second");
 				assert.equal(directory2.get("long1"), longWord);
@@ -659,20 +697,12 @@ describe("Directory", () => {
 			it("Should lead to eventual consistency 1", async () => {
 				// Load a new SharedDirectory in connected state from the summarize of the first one.
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2 = MockSharedObjectServices.createFromSummary(
-					directory.getAttachSummary().summary,
-				);
-				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-				const directory2 = new SharedDirectory(
+				const directory2 = await loadFromAnotherDirectory(
+					containerRuntimeFactory,
+					directory,
 					"directory2",
-					dataStoreRuntime2,
-					DirectoryFactory.Attributes,
 				);
-				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
 				dataStoreRuntime.setAttachState(AttachState.Attached);
@@ -733,39 +763,21 @@ describe("Directory", () => {
 
 			it("Should populate with csn as 0 and then process the create op", async () => {
 				directory.createSubDirectory("nested");
-				const serialized = serialize(directory);
 
 				// Now populate a new directory with contents of above to simulate processing of attach op
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2 = MockSharedObjectServices.createFromSummary(
-					directory.getAttachSummary().summary,
-				);
-				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-				const directory2 = new SharedDirectory(
+				const directory2 = await loadFromAnotherDirectory(
+					containerRuntimeFactory,
+					directory,
 					"directory2",
-					dataStoreRuntime2,
-					DirectoryFactory.Attributes,
 				);
-				await directory2.load(services2);
-
-				// Now load another directory to send op from that.
-				const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
-				const services3 = MockSharedObjectServices.createFromSummary(
-					directory.getAttachSummary().summary,
-				);
-				services3.deltaConnection = dataStoreRuntime3.createDeltaConnection();
-
-				const directory3 = new SharedDirectory(
+				const directory3 = await loadFromAnotherDirectory(
+					containerRuntimeFactory,
+					directory,
 					"directory3",
-					dataStoreRuntime3,
-					DirectoryFactory.Attributes,
 				);
-				await directory3.load(services3);
+
 				containerRuntimeFactory.processAllMessages();
 
 				// Now send create op
@@ -802,20 +814,11 @@ describe("Directory", () => {
 
 				// Load a new SharedDirectory in connected state from the summarize of the first one.
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2 = MockSharedObjectServices.createFromSummary(
-					directory.getAttachSummary().summary,
-				);
-				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
-
-				const directory2 = new SharedDirectory(
+				const directory2 = await loadFromAnotherDirectory(
+					containerRuntimeFactory,
+					directory,
 					"directory2",
-					dataStoreRuntime2,
-					DirectoryFactory.Attributes,
 				);
-				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
 				dataStoreRuntime.setAttachState(AttachState.Attached);
@@ -868,20 +871,12 @@ describe("Directory", () => {
 
 				// Load a new SharedDirectory in connected state from the summarize of the first one.
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
-				const containerRuntime2 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-				const services2 = MockSharedObjectServices.createFromSummary(
-					directory.getAttachSummary().summary,
-				);
-				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-				const directory2 = new SharedDirectory(
+				const directory2 = await loadFromAnotherDirectory(
+					containerRuntimeFactory,
+					directory,
 					"directory2",
-					dataStoreRuntime2,
-					DirectoryFactory.Attributes,
 				);
-				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
 				dataStoreRuntime.setAttachState(AttachState.Attached);
@@ -930,8 +925,8 @@ describe("Directory", () => {
 
 	describe("Connected state", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		let directory1: SharedDirectory;
-		let directory2: SharedDirectory;
+		let directory1: ISharedDirectory;
+		let directory2: ISharedDirectory;
 
 		beforeEach("createDirectory", async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
