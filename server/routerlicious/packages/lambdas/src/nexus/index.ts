@@ -1045,10 +1045,7 @@ export function configureWebSocketServices(
 			},
 		);
 
-		/**
-		 * Message sent when a new signal is submitted to the router.
-		 * @see {@link DocumentDeltaConnection.emitMessages} for client-side emission of signals.
-		 */
+		// Message sent when a new signal is submitted to the router.
 		socket.on(
 			"submitSignal",
 			/**
@@ -1060,60 +1057,63 @@ export function configureWebSocketServices(
 			 * but actual content is passed-thru and not decoded.
 			 */
 			(clientId: string, contentBatches: unknown[]) => {
-			// Verify the user has subscription to the room.
-			const room = roomMap.get(clientId);
-			if (!room) {
-				const nackMessage = createNackMessage(
-					400,
-					NackErrorType.BadRequestError,
-					"Nonexistent client",
-				);
-				socket.emit("nack", "", [nackMessage]);
-			} else {
-				let messageCount = 0;
-				for (const contentBatch of contentBatches) {
-					// Count all messages in each batch for accurate throttling calculation.
-					messageCount += Array.isArray(contentBatch) ? contentBatch.length : 1;
-				}
-				const signalUsageData: core.IUsageData = {
-					value: 0,
-					tenantId: room.tenantId,
-					documentId: room.documentId,
-					clientId,
-				};
-				const throttleError = checkThrottleAndUsage(
-					submitSignalThrottler,
-					getSubmitSignalThrottleId(clientId, room.tenantId),
-					room.tenantId,
-					logger,
-					isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
-					isSignalUsageCountingEnabled ? signalUsageData : undefined,
-					messageCount /* incrementWeight */,
-				);
-				if (throttleError) {
+				// Verify the user has subscription to the room.
+				const room = roomMap.get(clientId);
+				if (!room) {
 					const nackMessage = createNackMessage(
-						throttleError.code,
-						NackErrorType.ThrottlingError,
-						throttleError.message,
-						throttleError.retryAfter,
+						400,
+						NackErrorType.BadRequestError,
+						"Nonexistent client",
 					);
 					socket.emit("nack", "", [nackMessage]);
-					return;
-				}
-				contentBatches.forEach((contentBatch) => {
-					const contents = Array.isArray(contentBatch) ? contentBatch : [contentBatch];
-
-					for (const content of contents) {
-						const signalMessage: ISignalMessage = {
-							clientId,
-							content,
-						};
-
-						socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+				} else {
+					let messageCount = 0;
+					for (const contentBatch of contentBatches) {
+						// Count all messages in each batch for accurate throttling calculation.
+						messageCount += Array.isArray(contentBatch) ? contentBatch.length : 1;
 					}
-				});
-			}
-		});
+					const signalUsageData: core.IUsageData = {
+						value: 0,
+						tenantId: room.tenantId,
+						documentId: room.documentId,
+						clientId,
+					};
+					const throttleError = checkThrottleAndUsage(
+						submitSignalThrottler,
+						getSubmitSignalThrottleId(clientId, room.tenantId),
+						room.tenantId,
+						logger,
+						isSignalUsageCountingEnabled ? core.signalUsageStorageId : undefined,
+						isSignalUsageCountingEnabled ? signalUsageData : undefined,
+						messageCount /* incrementWeight */,
+					);
+					if (throttleError) {
+						const nackMessage = createNackMessage(
+							throttleError.code,
+							NackErrorType.ThrottlingError,
+							throttleError.message,
+							throttleError.retryAfter,
+						);
+						socket.emit("nack", "", [nackMessage]);
+						return;
+					}
+					contentBatches.forEach((contentBatch) => {
+						const contents = Array.isArray(contentBatch)
+							? contentBatch
+							: [contentBatch];
+
+						for (const content of contents) {
+							const signalMessage: ISignalMessage = {
+								clientId,
+								content,
+							};
+
+							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+						}
+					});
+				}
+			},
+		);
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
