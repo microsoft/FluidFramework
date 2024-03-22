@@ -67,13 +67,16 @@ export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
 	pendingRuntimeState?: unknown;
 }
 
+interface SnapshotInfo extends SnapshotWithBlobs {
+	snapshotSequenceNumber: number;
+}
+
 export class SerializedStateManager {
 	private processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot: SnapshotWithBlobs | undefined;
 	private readonly mc: MonitoringContext;
-	private latestSnapshot: ISnapshotTree | undefined = undefined;
-	private latestSnapshotSequenceNumber: number | undefined;
-	private latestSnapshotBlobs: ISerializableBlobContents | undefined;
+	private latestSnapshot: SnapshotInfo | undefined;
+	private refreshSnapshotLock: boolean = false;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -96,15 +99,11 @@ export class SerializedStateManager {
 
 	private refreshOnCatchUpMaybe(message: ISequencedDocumentMessage) {
 		if (
-			this.latestSnapshotSequenceNumber !== undefined &&
-			message.sequenceNumber === this.latestSnapshotSequenceNumber + 1
+			this.latestSnapshot?.snapshotSequenceNumber !== undefined &&
+			message.sequenceNumber === this.latestSnapshot.snapshotSequenceNumber + 1
 		) {
-			assert(this.latestSnapshot !== undefined, "no latest snapshot");
-			assert(this.latestSnapshotBlobs !== undefined, "no latest snapshot blobs");
-			this.snapshot = {
-				baseSnapshot: this.latestSnapshot,
-				snapshotBlobs: this.latestSnapshotBlobs,
-			};
+			const { baseSnapshot, snapshotBlobs } = this.latestSnapshot;
+			this.snapshot = { baseSnapshot, snapshotBlobs };
 			this.processedOps = [];
 		}
 	}
@@ -121,71 +120,75 @@ export class SerializedStateManager {
 		supportGetSnapshotApi: boolean,
 	) {
 		if (this.pendingLocalState === undefined) {
-			const { snapshot, version } = supportGetSnapshotApi
-				? await fetchISnapshot(this.mc, this.storageAdapter, specifiedVersion)
-				: await fetchISnapshotTree(this.mc, this.storageAdapter, specifiedVersion);
-			const baseSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-				? snapshot.snapshotTree
-				: snapshot;
-			assert(baseSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
+			const { snapshotTree, version } = await getSnapshotTree(
+				this.mc,
+				this.storageAdapter,
+				supportGetSnapshotApi,
+				specifiedVersion,
+			);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const snapshotBlobs = await getBlobContentsFromTree(
-					baseSnapshot,
+					snapshotTree,
 					this.storageAdapter,
 				);
-				this.snapshot = { baseSnapshot, snapshotBlobs };
+				this.snapshot = { baseSnapshot: snapshotTree, snapshotBlobs };
 			}
-			return { baseSnapshot, version };
+			return { baseSnapshot: snapshotTree, version };
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			this.snapshot = { baseSnapshot, snapshotBlobs };
-			this.refreshSnapshot(supportGetSnapshotApi).catch((error) => {
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: "Could_Not_Refresh_Snapshot",
-					},
-					error,
-				);
-				throw error;
-			});
+			this.refreshSnapshot(supportGetSnapshotApi)
+				.catch((error) => {
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: "Could_Not_Refresh_Snapshot",
+						},
+						error,
+					);
+					throw error;
+				})
+				.finally(() => {
+					this.refreshSnapshotLock = false;
+				});
 			return { baseSnapshot, version: undefined };
 		}
 	}
 
 	/**
-	 * Fetch latest snapshot available in storage and retry indefinetely
+	 * Fetch latest snapshot available in storage and refresh class snapshot and processedOps
 	 * @param supportGetSnapshotApi -
 	 */
 	private async refreshSnapshot(supportGetSnapshotApi: boolean) {
-		// This need to be resilient to failure. We can use runWithRetry
-		const { snapshot } = supportGetSnapshotApi
-			? await fetchISnapshot(this.mc, this.storageAdapter, undefined)
-			: await fetchISnapshotTree(this.mc, this.storageAdapter, undefined);
-		const latestSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
-			? snapshot.snapshotTree
-			: snapshot;
-		assert(latestSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
-		this.latestSnapshot = latestSnapshot;
-		await this.refreshPendingAttributes(latestSnapshot);
+		if (this.refreshSnapshotLock) {
+			// refreshSnapshot is already being executed. Ignoring this call
+			return;
+		}
+		this.refreshSnapshotLock = true;
+		const { snapshotTree } = await getSnapshotTree(
+			this.mc,
+			this.storageAdapter,
+			supportGetSnapshotApi,
+			undefined,
+		);
+		await this.refreshPendingAttributes(snapshotTree);
 	}
 
 	/**
 	 * Updates class snapshot and processedOps with the latest fetched snapshot
 	 *
-	 * @param latestSnapshot -
+	 * @param baseSnapshot -
 	 */
-	private async refreshPendingAttributes(latestSnapshot: ISnapshotTree) {
-		const snapshotBlobs = await getBlobContentsFromTree(latestSnapshot, this.storageAdapter);
-		this.latestSnapshotBlobs = snapshotBlobs;
+	private async refreshPendingAttributes(baseSnapshot: ISnapshotTree) {
+		const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, this.storageAdapter);
 		const attributes: IDocumentAttributes = await getDocumentAttributes(
 			this.storageAdapter,
-			latestSnapshot,
+			baseSnapshot,
 		);
 		if (this.processedOps.length === 0) {
 			// weird edge case in which we don't have to do nothing to processedOps
 			// since we don't have any
-			this.snapshot = { baseSnapshot: latestSnapshot, snapshotBlobs };
+			this.snapshot = { baseSnapshot, snapshotBlobs };
 			return;
 		}
 		const snapshotSN = attributes.sequenceNumber;
@@ -212,13 +215,17 @@ export class SerializedStateManager {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
-			this.snapshot = { baseSnapshot: latestSnapshot, snapshotBlobs };
+			this.snapshot = { baseSnapshot, snapshotBlobs };
 		} else {
 			// snapshotSN > lastSavedOpSN
 			// Snapshot is newer than the latest processed op.
 			// We need to wait and catch up with ops to reach the snapshot's state.
 			// addProcessedOps will kick the refresh process later
-			this.latestSnapshotSequenceNumber = snapshotSN;
+			this.latestSnapshot = {
+				baseSnapshot,
+				snapshotBlobs,
+				snapshotSequenceNumber: snapshotSN,
+			};
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "Newer_Snapshot_Fetch_While_Refresh",
 				snapshotSequenceNumber: snapshotSN,
@@ -275,11 +282,30 @@ export class SerializedStateManager {
 	}
 }
 
+async function getSnapshotTree(
+	mc: MonitoringContext,
+	storageAdapter: Pick<
+		IDocumentStorageService,
+		"getSnapshot" | "getSnapshotTree" | "getVersions"
+	>,
+	supportGetSnapshotApi: boolean,
+	specifiedVersion: string | undefined,
+): Promise<{ snapshotTree: ISnapshotTree; version?: IVersion }> {
+	const { snapshot, version } = supportGetSnapshotApi
+		? await fetchISnapshot(mc, storageAdapter, specifiedVersion)
+		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
+	const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+		? snapshot.snapshotTree
+		: snapshot;
+	assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
+	return { snapshotTree, version };
+}
+
 export async function fetchISnapshot(
 	mc: MonitoringContext,
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
 	specifiedVersion: string | undefined,
-): Promise<{ snapshot?: ISnapshot | ISnapshotTree; version?: IVersion }> {
+): Promise<{ snapshot?: ISnapshot; version?: IVersion }> {
 	const snapshot = await storageAdapter.getSnapshot?.({ versionId: specifiedVersion });
 	const version: IVersion | undefined =
 		snapshot?.snapshotTree.id === undefined
