@@ -138,12 +138,12 @@ for (const oldTypeData of previousData) {
 					...oldTypeData,
 					kind: `Removed${oldTypeData.kind}`,
 					removed: true,
-			  }
+				}
 			: {
 					prefix: "current",
 					...currentTypeData,
 					removed: false,
-			  };
+				};
 
 	// look for settings not under version, then fall back to version for back compat
 	const brokenData = broken?.[getFullTypeName(currentType)];

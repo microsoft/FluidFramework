@@ -69,7 +69,7 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 			namespacePrefix !== undefined
 				? `${namespacePrefix}.${node.getName()}`
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  node.getName()!;
+					node.getName()!;
 
 		const typeData: TypeData[] = [
 			{

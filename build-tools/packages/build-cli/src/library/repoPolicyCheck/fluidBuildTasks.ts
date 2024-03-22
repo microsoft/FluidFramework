@@ -399,7 +399,7 @@ function checkTaskDeps(
 	return missingTaskDependencies.length > 0
 		? `'${taskName}' task is missing the following dependency: \n\t${missingTaskDependencies.join(
 				"\n\t",
-		  )}`
+			)}`
 		: undefined;
 }
 
