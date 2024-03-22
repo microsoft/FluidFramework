@@ -95,11 +95,11 @@ function makeLeaf<T extends FlexLeafNodeSchema>(
 }
 
 // Leaf schema shared between all SchemaFactory instances.
-export const stringSchema = makeLeaf(leaf.string);
-export const numberSchema = makeLeaf(leaf.number);
-export const booleanSchema = makeLeaf(leaf.boolean);
-export const nullSchema = makeLeaf(leaf.null);
-export const handleSchema = makeLeaf(leaf.handle);
+const stringSchema = makeLeaf(leaf.string);
+const numberSchema = makeLeaf(leaf.number);
+const booleanSchema = makeLeaf(leaf.boolean);
+const nullSchema = makeLeaf(leaf.null);
+const handleSchema = makeLeaf(leaf.handle);
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.

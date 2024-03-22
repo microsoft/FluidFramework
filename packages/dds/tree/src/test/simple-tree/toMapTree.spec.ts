@@ -19,27 +19,22 @@ import {
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 import {
 	SchemaFactory,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactory.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 
-const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = brand(booleanSchema.identifier);
-const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(handleSchema.identifier);
-const numberSchemaIdentifier: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
-const nullSchemaIdentifier: TreeNodeSchemaIdentifier = brand(nullSchema.identifier);
-const stringSchemaIdentifier: TreeNodeSchemaIdentifier = brand(stringSchema.identifier);
+const _ = new SchemaFactory(undefined);
+const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.boolean.identifier);
+const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.handle.identifier);
+const numberSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.number.identifier);
+const nullSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.null.identifier);
+const stringSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.string.identifier);
 
 describe("toMapTree", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
-
 		const tree = "Hello world";
 
 		const actual = nodeDataToMapTree(tree, [schemaFactory.string]);
