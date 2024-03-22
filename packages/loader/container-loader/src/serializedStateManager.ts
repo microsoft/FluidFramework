@@ -72,11 +72,11 @@ interface SnapshotInfo extends SnapshotWithBlobs {
 }
 
 export class SerializedStateManager {
-	private processedOps: ISequencedDocumentMessage[] = [];
+	private readonly processedOps: ISequencedDocumentMessage[] = [];
 	private snapshot: SnapshotWithBlobs | undefined;
 	private readonly mc: MonitoringContext;
 	private latestSnapshot: SnapshotInfo | undefined;
-	private refreshSnapshotLock: boolean = false;
+	private refreshSnapshot: Promise<void> | undefined;
 
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
@@ -97,21 +97,10 @@ export class SerializedStateManager {
 		return this._offlineLoadEnabled;
 	}
 
-	private refreshOnCatchUpMaybe(message: ISequencedDocumentMessage) {
-		if (
-			this.latestSnapshot?.snapshotSequenceNumber !== undefined &&
-			message.sequenceNumber === this.latestSnapshot.snapshotSequenceNumber + 1
-		) {
-			const { baseSnapshot, snapshotBlobs } = this.latestSnapshot;
-			this.snapshot = { baseSnapshot, snapshotBlobs };
-			this.processedOps = [];
-		}
-	}
-
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
-			this.refreshOnCatchUpMaybe(message);
 			this.processedOps.push(message);
+			this.refreshPendingAttributes();
 		}
 	}
 
@@ -138,40 +127,17 @@ export class SerializedStateManager {
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			this.snapshot = { baseSnapshot, snapshotBlobs };
-			this.refreshSnapshot(supportGetSnapshotApi)
-				.catch((error) => {
-					this.mc.logger.sendErrorEvent(
-						{
-							eventName: "Could_Not_Refresh_Snapshot",
-						},
-						error,
-					);
-					throw error;
-				})
-				.finally(() => {
-					this.refreshSnapshotLock = false;
-				});
+			this.refreshSnapshot ??= (async () => {
+				this.latestSnapshot = await getLatestSnapshotInfo(
+					this.mc,
+					this.storageAdapter,
+					supportGetSnapshotApi,
+				);
+				this.refreshPendingAttributes();
+			})();
+
 			return { baseSnapshot, version: undefined };
 		}
-	}
-
-	/**
-	 * Fetch latest snapshot available in storage and refresh class snapshot and processedOps
-	 * @param supportGetSnapshotApi -
-	 */
-	private async refreshSnapshot(supportGetSnapshotApi: boolean) {
-		if (this.refreshSnapshotLock) {
-			// refreshSnapshot is already being executed. Ignoring this call
-			return;
-		}
-		this.refreshSnapshotLock = true;
-		const { snapshotTree } = await getSnapshotTree(
-			this.mc,
-			this.storageAdapter,
-			supportGetSnapshotApi,
-			undefined,
-		);
-		await this.refreshPendingAttributes(snapshotTree);
 	}
 
 	/**
@@ -179,19 +145,16 @@ export class SerializedStateManager {
 	 *
 	 * @param baseSnapshot -
 	 */
-	private async refreshPendingAttributes(baseSnapshot: ISnapshotTree) {
-		const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, this.storageAdapter);
-		const attributes: IDocumentAttributes = await getDocumentAttributes(
-			this.storageAdapter,
-			baseSnapshot,
-		);
+	private refreshPendingAttributes() {
+		if (this.latestSnapshot === undefined) {
+			return;
+		}
+		const snapshotSN = this.latestSnapshot?.snapshotSequenceNumber;
 		if (this.processedOps.length === 0) {
 			// weird edge case in which we don't have to do nothing to processedOps
 			// since we don't have any
-			this.snapshot = { baseSnapshot, snapshotBlobs };
 			return;
 		}
-		const snapshotSN = attributes.sequenceNumber;
 		const firstSavedOpSN = this.processedOps[0].sequenceNumber;
 		const lastSavedOpSN = this.processedOps[this.processedOps.length - 1].sequenceNumber;
 
@@ -201,7 +164,7 @@ export class SerializedStateManager {
 				snapshotSequenceNumber: snapshotSN,
 				firstProcessedOpSequenceNumber: firstSavedOpSN,
 			});
-			throw new Error("Fetched snapshot is not latest available");
+			this.latestSnapshot = undefined;
 		} else if (snapshotSN === firstSavedOpSN - 1) {
 			// Snapshot is exactly one less than the first processed op sequence number.
 			// Meaning new snapshot is the same as before refreshing. Do nothing.
@@ -215,22 +178,8 @@ export class SerializedStateManager {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
-			this.snapshot = { baseSnapshot, snapshotBlobs };
-		} else {
-			// snapshotSN > lastSavedOpSN
-			// Snapshot is newer than the latest processed op.
-			// We need to wait and catch up with ops to reach the snapshot's state.
-			// addProcessedOps will kick the refresh process later
-			this.latestSnapshot = {
-				baseSnapshot,
-				snapshotBlobs,
-				snapshotSequenceNumber: snapshotSN,
-			};
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "Newer_Snapshot_Fetch_While_Refresh",
-				snapshotSequenceNumber: snapshotSN,
-				firstProcessedOpSequenceNumber: firstSavedOpSN,
-			});
+			this.snapshot = this.latestSnapshot;
+			this.latestSnapshot = undefined;
 		}
 	}
 
@@ -280,6 +229,29 @@ export class SerializedStateManager {
 			},
 		);
 	}
+}
+
+async function getLatestSnapshotInfo(
+	mc: MonitoringContext,
+	storageAdapter: Pick<
+		IDocumentStorageService,
+		"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
+	>,
+	supportGetSnapshotApi: boolean,
+): Promise<SnapshotInfo> {
+	const { snapshotTree } = await getSnapshotTree(
+		mc,
+		storageAdapter,
+		supportGetSnapshotApi,
+		undefined,
+	);
+	const snapshotBlobs = await getBlobContentsFromTree(snapshotTree, storageAdapter);
+	const attributes: IDocumentAttributes = await getDocumentAttributes(
+		storageAdapter,
+		snapshotTree,
+	);
+	const snapshotSN = attributes.sequenceNumber;
+	return { baseSnapshot: snapshotTree, snapshotBlobs, snapshotSequenceNumber: snapshotSN };
 }
 
 async function getSnapshotTree(

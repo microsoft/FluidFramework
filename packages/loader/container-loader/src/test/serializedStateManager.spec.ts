@@ -142,27 +142,6 @@ const getAttributesFromPendingState = (
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 
-// const getAttributesFromStorage = async (
-// 	storage: IDocumentStorageService,
-// 	tree: ISnapshotTree | undefined,
-// ) => {
-// 	if (tree === undefined) {
-// 		return {
-// 			minimumSequenceNumber: 0,
-// 			sequenceNumber: 0,
-// 		};
-// 	}
-
-// 	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
-// 	const attributesHash =
-// 		".protocol" in tree.trees
-// 			? tree.trees[".protocol"].blobs.attributes
-// 			: tree.blobs[".attributes"];
-// 	const attributesBlob = await storage.readBlob(attributesHash);
-// 	const decoded = bufferToString(attributesBlob, "utf8");
-// 	return JSON.parse(decoded) as IDocumentAttributes;
-// };
-
 describe("serializedStateManager", () => {
 	let seq: number;
 	let logger: ITelemetryLoggerExt;
@@ -290,10 +269,24 @@ describe("serializedStateManager", () => {
 	});
 
 	it("fetched snapshot is the same as pending snapshot", async () => {
+		const pendingSnapshot: ISnapshotTree = {
+			id: "fromPending",
+			blobs: {},
+			trees: {
+				".protocol": {
+					blobs: { attributes: "attributesId" },
+					trees: {},
+				},
+				".app": {
+					blobs: {},
+					trees: {},
+				},
+			},
+		};
 		const pendingLocalState: IPendingContainerState = {
 			attached: true,
-			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
-			snapshotBlobs: {},
+			baseSnapshot: pendingSnapshot,
+			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 			pendingRuntimeState: {},
 			savedOps: [],
 			url: "fluid",
@@ -325,16 +318,30 @@ describe("serializedStateManager", () => {
 		const parsed = JSON.parse(state);
 		// We keep using the pending snapshot since it is the same based on its sequence number 0
 		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
-		// const attributes = getAttributesFromPendingState(parsed);
-		// assert.strictEqual(attributes.sequenceNumber, 0);
-		// assert.strictEqual(attributes.minimumSequenceNumber, 0);
+		const attributes = getAttributesFromPendingState(parsed);
+		assert.strictEqual(attributes.sequenceNumber, 0);
+		assert.strictEqual(attributes.minimumSequenceNumber, 0);
 	});
 
-	it("refresh snapshot", async () => {
+	it("refresh snapshot when snapshot sequence number is among processed ops", async () => {
+		const pendingSnapshot: ISnapshotTree = {
+			id: "fromPending",
+			blobs: {},
+			trees: {
+				".protocol": {
+					blobs: { attributes: "attributesId" },
+					trees: {},
+				},
+				".app": {
+					blobs: {},
+					trees: {},
+				},
+			},
+		};
 		const pendingLocalState: IPendingContainerState = {
 			attached: true,
-			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
-			snapshotBlobs: {},
+			baseSnapshot: pendingSnapshot,
+			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
 			pendingRuntimeState: {},
 			savedOps: [],
 			url: "fluid",

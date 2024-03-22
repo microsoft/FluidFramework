@@ -449,57 +449,5 @@ describeCompat(
 			const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
 			assert.strictEqual(string3.getText(), "ab");
 		});
-
-		it("refresh only while processing new ops", async () => {
-			let failSnapshot = false;
-			(provider as any)._documentServiceFactory =
-				wrapObjectAndOverride<IDocumentServiceFactory>(provider.documentServiceFactory, {
-					createDocumentService: {
-						connectToStorage: {
-							getSnapshotTree: (dss) => async () => {
-								if (failSnapshot) {
-									throw new Error("fake error");
-								}
-								return dss.getSnapshotTree();
-							},
-						},
-					},
-				});
-			const wrapLoader = provider.makeTestLoader(testContainerConfig);
-			const pendingState = await getPendingState(
-				provider,
-				async (s) => {
-					s.insertText(s.getLength(), "a");
-				},
-				async (s) => {
-					s.insertText(s.getLength(), "b");
-				},
-			);
-			const attributes = getAndAssertAttributes(pendingState.parsed);
-			failSnapshot = true;
-			const container2: IContainerExperimental = await wrapLoader.resolve(
-				{ url },
-				pendingState.pendingState,
-			);
-			await waitForContainerConnection(container2);
-			failSnapshot = false;
-			// bunch of ops to trigger refreshAttributes at addProcessedOps time.
-			for (let i = 0; i < 50; i++) {
-				string1.insertText(string1.getLength(), "c");
-				string1.removeText(string1.getLength() - 1, string1.getLength());
-			}
-			await provider.ensureSynchronized();
-			await new Promise(setImmediate);
-			const pendingState2 = await container2.closeAndGetPendingLocalState?.();
-			assert.ok(pendingState2);
-
-			const attributes2 = getAndAssertAttributes(pendingState2);
-			// the base snapshot was not refreshed at loading but refreshed while processing new ops
-			assert(attributes.sequenceNumber < attributes2.sequenceNumber);
-			const container3: IContainerExperimental = await loader.resolve({ url }, pendingState2);
-			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
-			const string3 = await dataStore3.getSharedObject<SharedString>(stringId);
-			assert.strictEqual(string3.getText(), "ab");
-		});
 	},
 );
