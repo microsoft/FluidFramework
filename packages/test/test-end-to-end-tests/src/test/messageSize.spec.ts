@@ -3,34 +3,34 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { strict as assert } from "assert";
-import type { ISharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
 	FluidErrorTypes,
 	IConfigProviderBase,
 	IErrorBase,
 } from "@fluidframework/core-interfaces";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { GenericError } from "@fluidframework/telemetry-utils";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 
 describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
