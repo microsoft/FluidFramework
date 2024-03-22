@@ -2970,4 +2970,23 @@ describe("Editing", () => {
 			abortTransaction(child);
 		});
 	});
+
+	it("invert a composite change that include a mix of nested changes in a field that requires an amend pass", () => {
+		const tree = makeTreeFromJson([{}]);
+
+		tree.transaction.start();
+		tree.transaction.start();
+		tree.editor
+			.optionalField({ parent: rootNode, field: brand("foo") })
+			.set(singleJsonCursor("A"), true);
+		tree.editor.sequenceField(rootField).move(0, 1, 0);
+		tree.editor.sequenceField(rootField).insert(0, singleJsonCursor({}));
+		tree.editor
+			.optionalField({ parent: rootNode, field: brand("bar") })
+			.set(singleJsonCursor("B"), true);
+		tree.transaction.commit();
+		tree.transaction.abort();
+
+		expectJsonTree(tree, [{}]);
+	});
 });
