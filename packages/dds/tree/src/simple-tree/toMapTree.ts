@@ -26,8 +26,8 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
+import { nullSchema } from "./leafNodeSchema.js";
 import { InsertableContent } from "./proxies.js";
-import { SchemaFactory } from "./schemaFactory.js";
 import {
 	type AllowedTypes,
 	FieldKind,
@@ -48,13 +48,6 @@ import {
  * array of key/value tuples to instantiate a map) we may need to rethink the structure here to be based more on the
  * schema than on the input data.
  */
-
-/**
- * Null schema definition used for checks in the code below.
- * @remarks The API exposes the null schema as an instance member on SchemaFactory, but it returns
- * a singleton value, which is safe to do object comparison on. If the API structure changes such that we can access the definition statically, this should probably be updated.
- */
-const nullSchema = new SchemaFactory(undefined).null;
 
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}, and wraps the tree in a {@link CursorWithNode}.
