@@ -180,7 +180,9 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 
 			const simpleNodeSchema = getSimpleSchemaOrFail(flexNodeSchema);
 			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
-			assert(simpleNodeFields[key] !== undefined, `Field key '${key}' not found in schema.`);
+			if (simpleNodeFields[key] === undefined) {
+				fail(`Field key '${key}' not found in schema.`);
+			}
 
 			switch (field.schema.kind) {
 				case FieldKinds.required:
