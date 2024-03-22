@@ -294,7 +294,6 @@ function getType(data: InsertableContent, allowedTypes: AllowedTypes): TreeNodeS
 		throw new UsageError(
 			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${JSON.stringify(
 				[...allowedTypes.map((schema) => evaluateLazySchema(schema).identifier)],
-				undefined,
 			)}.`,
 		);
 	}
@@ -306,10 +305,9 @@ function getType(data: InsertableContent, allowedTypes: AllowedTypes): TreeNodeS
 		possibleTypes.length === 1,
 		() =>
 			`The provided data is compatible with more than one type allowed by the schema.
-The set of possible types is ${JSON.stringify(
-				[...possibleTypes.map((schema) => schema.identifier)],
-				undefined,
-			)}.
+The set of possible types is ${JSON.stringify([
+				...possibleTypes.map((schema) => schema.identifier),
+			])}.
 Explicitly construct an unhydrated node of the desired type to disambiguate.
 For class-based schema, this can be done by replacing an expression like "{foo: 1}" with "new MySchema({foo: 1})".`,
 	);
