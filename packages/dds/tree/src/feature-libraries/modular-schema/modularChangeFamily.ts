@@ -1522,10 +1522,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(modularChange);
 	}
 
-	public buildChanges(
-		changes: EditDescription[],
-		maxId: ChangesetLocalId = brand(-1),
-	): ModularChangeset {
+	public buildChanges(changes: EditDescription[]): ModularChangeset {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
@@ -1542,6 +1539,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
+
+		const maxId: ChangesetLocalId = brand(this.idAllocator.getMaxId());
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}
