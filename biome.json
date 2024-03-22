@@ -17,7 +17,6 @@
 			"**/_package.json",
 			"**/biome.jsonc",
 			"**/oclif.manifest.json",
-			"**/*.cts"
 			"packages/test/snapshots/content/**"
 		],
 		"maxSize": 2097152

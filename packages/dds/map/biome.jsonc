@@ -3,9 +3,9 @@
 	"extends": ["../../../biome.json"],
 	"formatter": {
 		"enabled": true,
-		"ignore": ["**/snapshots/*.json"]
+		"ignore": ["**/snapshots/*.json"],
 	},
 	"files": {
-		"ignore": ["./src/test/mocha/dirname.cts"]
-	}
+		"ignore": [],
+	},
 }
