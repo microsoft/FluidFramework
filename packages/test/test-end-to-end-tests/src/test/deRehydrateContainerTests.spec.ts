@@ -4,37 +4,37 @@
  */
 
 import { strict as assert } from "assert";
-import * as semver from "semver";
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import type { SharedCell } from "@fluidframework/cell";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-	ITestFluidObject,
-	TestFluidObject,
-	createDocumentId,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-} from "@fluidframework/test-utils";
-import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import type { SharedCounter } from "@fluidframework/counter";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedMatrix } from "@fluidframework/matrix";
+import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence";
-import type { SharedCell } from "@fluidframework/cell";
-import type { SharedMatrix } from "@fluidframework/matrix";
-import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import type { SharedCounter } from "@fluidframework/counter";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+	createDocumentId,
+} from "@fluidframework/test-utils";
+import * as semver from "semver";
 // eslint-disable-next-line import/no-internal-modules
-import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager";
+import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 
 const detachedContainerRefSeqNumber = 0;
 

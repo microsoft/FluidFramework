@@ -3,36 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
-import {
-	ChannelFactoryRegistry,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-
 import {
-	CompressionAlgorithms,
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
+	ChannelFactoryRegistry,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
+
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
