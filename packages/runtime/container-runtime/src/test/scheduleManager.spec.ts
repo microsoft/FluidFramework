@@ -24,9 +24,9 @@ describe("ScheduleManager", () => {
 			emitter = new EventEmitter();
 			deltaManager = new MockDeltaManager();
 			deltaManager.inbound.processCallback = (message: ISequencedDocumentMessage) => {
-				deltaManager.process(message);
 				scheduleManager.beforeOpProcessing(message);
 				scheduleManager.afterOpProcessing(undefined, message);
+				deltaManager.emit("op", message);
 			};
 			scheduleManager = new ScheduleManager(
 				deltaManager,
@@ -69,7 +69,7 @@ describe("ScheduleManager", () => {
 		 */
 		function pushOp(partialMessage: Partial<ISequencedDocumentMessage>) {
 			sequenceNumber++;
-			const message = { ...partialMessage, sequenceNumber, minimumSequenceNumber: 0 };
+			const message = { ...partialMessage, sequenceNumber };
 			deltaManager.inbound.push(message as ISequencedDocumentMessage);
 		}
 
