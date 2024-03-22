@@ -152,7 +152,7 @@ async function updateImports(
 
 			// Skip modules with no mapping
 			if (data === undefined) {
-				log.verbose(`Skipping ${importDeclaration.getModuleSpecifierValue()}`);
+				log.verbose(`Skipping (no entry in data file): ${importDeclaration.getModuleSpecifierValue()}`);
 			} else {
 				// TODO: Handle default import.
 				const defaultImport = importDeclaration.getDefaultImport();
@@ -174,7 +174,7 @@ async function updateImports(
 					 * trimmed, but leading or trailing text like "type" or "as foo" (an alias) is still included. This is the
 					 * string that will be used in the new imports.
 					 *
-					 * This ensures aliases abd individual type-only imports are maintained when rewritten.
+					 * This ensures aliases and individual type-only imports are maintained when rewritten.
 					 */
 					const fullImportSpecifierText = importSpecifier.getFullText().trim();
 					const expectedLevel = getApiLevelForImportName(
@@ -192,7 +192,7 @@ async function updateImports(
 						expectedLevel === publicLevel ? moduleName : `${moduleName}/${expectedLevel}`;
 
 					// Track the type-only and regular imports separately. In the second pass through the imports, we'll
-					// create new type-only imports for the ones that were originally type-only. Separate lists is a little
+					// create new type-only imports for the ones that were originally type-only. Using separate lists is a little
 					// more verbose but easier to reason about.
 					if (isTypeOnly) {
 						if (!newTypeOnlyImports.has(newSpecifier)) {
@@ -242,6 +242,7 @@ async function updateImports(
 			if (newImportNames.size > 0) {
 				importDeclaration.removeNamedImports();
 				importDeclaration.addNamedImports([...newImportNames]);
+				// We need to set this because we completely removed the declaration earlier, so this is effectively now a new declaration
 				importDeclaration.setIsTypeOnly(isTypeOnly);
 				// Need to clear the list of new named imports since we just added them.
 				newImportNames.clear();
@@ -296,11 +297,9 @@ async function updateImports(
  */
 function parseImport(importDeclaration: ImportDeclaration): [string, string] {
 	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-	// log.verbose(`Found a Fluid import: '${moduleSpecifier}'`);
 	const modulePieces = moduleSpecifier.split("/");
 	const moduleName = modulePieces.slice(0, 2).join("/");
 	const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
-	// log.verbose(`subpath: ${subpath}`);
 	return [moduleName, subpath];
 }
 
