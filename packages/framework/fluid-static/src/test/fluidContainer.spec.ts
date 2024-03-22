@@ -5,13 +5,9 @@
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import type { InitialObjects } from "../index.js";
-import type {
-	ContainerSchema,
-	DataObjectClass,
-	LoadableObjectClass,
-	SharedObjectClass,
-} from "../types.js";
+import type { ContainerSchema, DataObjectClass, LoadableObjectClass } from "../types.js";
 
 /**
  * Compile time assert that A is assignable to (extends) B.
@@ -32,7 +28,7 @@ export type requireAssignableTo<_A extends B, B> = true;
 	interface TestSharedObject extends IChannel {
 		x: number;
 	}
-	interface TestSharedObjectFactory extends SharedObjectClass<TestSharedObject> {
+	interface TestSharedObjectFactory extends ISharedObjectKind<TestSharedObject> {
 		y: number;
 	}
 
