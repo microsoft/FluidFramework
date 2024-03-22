@@ -6,11 +6,11 @@
 import fs from "fs";
 import util from "util";
 import { IOdspDriveItem, isOdspHostname } from "@fluidframework/odsp-doclib-utils/internal";
-import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs";
-import { connectionInfo, fluidFetchInit } from "./fluidFetchInit";
-import { fluidFetchMessages } from "./fluidFetchMessages";
-import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint";
-import { fluidFetchSnapshot } from "./fluidFetchSnapshot";
+import { paramSaveDir, paramURL, parseArguments } from "./fluidFetchArgs.js";
+import { connectionInfo, fluidFetchInit } from "./fluidFetchInit.js";
+import { fluidFetchMessages } from "./fluidFetchMessages.js";
+import { getSharepointFiles, getSingleSharePointFile } from "./fluidFetchSharePoint.js";
+import { fluidFetchSnapshot } from "./fluidFetchSnapshot.js";
 
 async function fluidFetchOneFile(urlStr: string, name?: string) {
 	const documentService = await fluidFetchInit(urlStr);
