@@ -105,6 +105,16 @@
 			"args": ["list", "--private", "-g", "build-tools", "-v"],
 		},
 		{
+			// Runs the `flub modify fluid-imports` command with a debugger attached.
+			"name": "flub modify fluid-imports",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}/packages/framework/aqueduct",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["modify", "fluid-imports", "-v"],
+		},
+		{
 			// Runs the `flub generate upcoming` command with a debugger attached.
 			"name": "flub generate upcoming",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",

@@ -220,6 +220,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				maxId: brand(2),
 			};
 
 			assert.deepEqual(rebased, expected);
@@ -631,6 +632,7 @@ describe("ModularChangeFamily integration", () => {
 				fieldChanges: new Map([
 					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
 				]),
+				maxId: brand(2),
 			};
 
 			assert.deepEqual(inverse, expected);
