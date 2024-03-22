@@ -120,12 +120,22 @@ async function updateImports(
 		let sourceFileChanged = false;
 
 		/**
-		 * A mapping of new module specifier to named import. We'll populate this as we scan the existing imports, then
-		 * write new remapped imports to the file.
+		 * We'll populate the maps defined below this as we scan the existing imports, then write new remapped imports to
+		 * the file.
 		 */
-		const newImports: Map<string, Set<string>> = new Map();
 
-		// First pass: collect the existing declarations
+		/**
+		 * A mapping of new module specifier to named import. This map only contains "regular" imports; that it, it excludes
+		 * type-only imports.
+		 */
+		const newRegularImports: Map<string, Set<string>> = new Map();
+
+		/**
+		 * A mapping of new module specifier to named import. This map only contains type-only imports.
+		 */
+		const newTypeOnlyImports: Map<string, Set<string>> = new Map();
+
+		// FIRST PASS: collect the existing declarations
 		for (const importDeclaration of imports) {
 			// Skip non-Fluid imports
 			if (!isFluidImport(importDeclaration)) {
@@ -146,11 +156,7 @@ async function updateImports(
 					);
 				}
 				const namedImports = importDeclaration.getNamedImports();
-
-				// Known issue: type-only import declarations lose the "type". Individual type imports retain theirs, but
-				// type-only ones are rewritten as regular imports, and type-only imports are not split out. Lint fixups should
-				// be able to restore the "type" if needed.
-				// const isTypeOnly = importDeclaration.isTypeOnly();
+				const isTypeOnly = importDeclaration.isTypeOnly();
 
 				log?.logIndent(`Iterating named imports...`, 2);
 				for (const importSpecifier of namedImports) {
@@ -180,13 +186,23 @@ async function updateImports(
 					const newSpecifier =
 						expectedLevel === publicLevel ? moduleName : `${moduleName}/${expectedLevel}`;
 
-					if (!newImports.has(newSpecifier)) {
-						newImports.set(newSpecifier, new Set());
+					// Track the type-only and regular imports separately. In the second pass through the imports, we'll
+					// create new type-only imports for the ones that were originally type-only. Separate lists is a little
+					// more verbose but easier to reason about.
+					if (isTypeOnly) {
+						if (!newTypeOnlyImports.has(newSpecifier)) {
+							newTypeOnlyImports.set(newSpecifier, new Set());
+						}
+						newTypeOnlyImports.get(newSpecifier)?.add(fullImportSpecifierText);
+					} else {
+						if (!newRegularImports.has(newSpecifier)) {
+							newRegularImports.set(newSpecifier, new Set());
+						}
+						newRegularImports.get(newSpecifier)?.add(fullImportSpecifierText);
 					}
-					newImports.get(newSpecifier)?.add(fullImportSpecifierText);
 				}
 			}
-		}
+		} /* FIRST PASS */
 
 		// Delete any header comments at the beginning of the file. Save the text so we can re-insert it at the end of
 		// processing. Note that this does modify the source file, but we only save changes if the imports are updated, so
@@ -197,7 +213,7 @@ async function updateImports(
 		// Need to get declarations again because nodes are invalidated after calling replaceText above
 		imports = sourceFile.getImportDeclarations();
 
-		// Second pass: Update existing imports and add any missing ones
+		// SECOND PASS: Update existing imports and add any missing ones
 		for (const importDeclaration of imports) {
 			// Skip non-Fluid imports
 			if (!isFluidImport(importDeclaration)) {
@@ -206,6 +222,7 @@ async function updateImports(
 
 			const [moduleName] = parseImport(importDeclaration);
 			const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+			const isTypeOnly = importDeclaration.isTypeOnly();
 
 			// Skip Fluid imports that aren't in the data file
 			if (!mappingData.has(moduleName)) {
@@ -213,7 +230,9 @@ async function updateImports(
 			}
 
 			// Check if there are supposed to be any new imports from the module specifier
-			const newImportNames = newImports.get(moduleSpecifier);
+			const newImportNames = isTypeOnly
+				? newTypeOnlyImports.get(moduleSpecifier)
+				: newRegularImports.get(moduleSpecifier);
 
 			// Since there are no imports from this module specifier, remove it.
 			if (newImportNames === undefined) {
@@ -227,18 +246,29 @@ async function updateImports(
 			if (newImportNames.size > 0) {
 				importDeclaration.removeNamedImports();
 				importDeclaration.addNamedImports([...newImportNames]);
+				importDeclaration.setIsTypeOnly(isTypeOnly);
 				// Need to clear the list of new named imports since we just added them.
 				newImportNames.clear();
 				sourceFileChanged = true;
 			}
-		}
+		} /* SECOND PASS */
 
 		// Add any imports from a specifier that wasn't already in the file
-		for (const [importSpecifier, newImportNames] of newImports) {
+		for (const [importSpecifier, newImportNames] of newRegularImports) {
 			if (newImportNames.size > 0) {
 				sourceFile.addImportDeclaration({
 					moduleSpecifier: importSpecifier,
 					namedImports: [...newImportNames],
+				});
+				sourceFileChanged = true;
+			}
+		}
+		for (const [importSpecifier, newImportNames] of newTypeOnlyImports) {
+			if (newImportNames.size > 0) {
+				sourceFile.addImportDeclaration({
+					moduleSpecifier: importSpecifier,
+					namedImports: [...newImportNames],
+					isTypeOnly: true,
 				});
 				sourceFileChanged = true;
 			}
