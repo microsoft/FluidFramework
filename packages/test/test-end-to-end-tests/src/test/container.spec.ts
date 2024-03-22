@@ -4,8 +4,28 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	getDataStoreFactory,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import {
+	ContainerErrorTypes,
+	IContainer,
+	IFluidCodeDetails,
+	LoaderHeader,
+} from "@fluidframework/container-definitions";
+import {
+	ConnectionState,
+	IContainerExperimental,
+	ILoaderProps,
+	Loader,
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -13,19 +33,7 @@ import {
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
-import {
-	ContainerErrorTypes,
-	IFluidCodeDetails,
-	IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
-import {
-	ConnectionState,
-	Loader,
-	ILoaderProps,
-	waitContainerToCatchUp,
-	IContainerExperimental,
-} from "@fluidframework/container-loader";
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	DriverErrorTypes,
 	FiveDaysMs,
@@ -33,31 +41,23 @@ import {
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions";
 import {
-	LocalCodeLoader,
-	TestObjectProvider,
-	LoaderContainerTracker,
-	TestContainerRuntimeFactory,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-	timeoutPromise,
-	ITestContainerConfig,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
-import {
-	getDataStoreFactory,
-	ITestDataObject,
-	TestDataObjectType,
-	describeCompat,
-	itExpects,
-} from "@fluid-private/test-version-utils";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IClient } from "@fluidframework/protocol-definitions";
-import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
-import { Deferred } from "@fluidframework/core-utils";
+import { IClient } from "@fluidframework/protocol-definitions";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils";
+import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestContainerRuntimeFactory,
+	TestFluidObjectFactory,
+	TestObjectProvider,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
+import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const id = "https://localhost/containerTest";
