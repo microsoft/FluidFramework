@@ -10,21 +10,23 @@ import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import findUp from "find-up";
 
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
-	private repoRoot: string | undefined;
-	private gitRepo: GitRepo | undefined;
+	// performance note: having individual tasks each acquire repo root and GitRepo
+	// is quite inefficient. recommend passing such common things in a context object
+	// to task constructors.
+	private readonly repoRoot = getResolvedFluidRoot(true);
+	private readonly gitRepo = this.repoRoot.then((repoRoot) => new GitRepo(repoRoot));
 
 	/**
 	 * Includes all files in the task's package directory and any biome config files in the directory tree. Files ignored
 	 * by git are excluded.
 	 */
 	protected async getInputFiles(): Promise<string[]> {
-		this.repoRoot ??= await getResolvedFluidRoot(true);
-		this.gitRepo ??= new GitRepo(this.repoRoot);
+		const repoRoot = await this.repoRoot;
+		const gitRepo = await this.gitRepo;
 
 		const configFiles = await this.getBiomeConfigPaths(this.node.pkg.directory);
-		const files = (await this.gitRepo.getFiles(this.node.pkg.directory)).map((file) =>
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			path.join(this.repoRoot!, file),
+		const files = (await gitRepo.getFiles(this.node.pkg.directory)).map((file) =>
+			path.join(repoRoot, file),
 		);
 
 		return [...new Set([...configFiles, ...files])];
@@ -43,11 +45,9 @@ export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	 * parse the config files anyway to extract ignore paths, at which point this implementation can change.
 	 */
 	private async getBiomeConfigPaths(cwd: string): Promise<string[]> {
-		this.repoRoot ??= await getResolvedFluidRoot(true);
-
 		const config = await findUp(["biome.json", "biome.jsonc"], { cwd });
 		if (config === undefined) {
-			if (isPathAbove(cwd, this.repoRoot)) {
+			if (isPathAbove(cwd, await this.repoRoot)) {
 				// The version of find-up we're using (5.0) doesn't support a stop directory and upgrading is challenging since
 				// it's now ESM-only. This works around by stopping once we've stepped beyond the repo root.
 				return [];
