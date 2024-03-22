@@ -6,10 +6,7 @@ set -eux -o pipefail
 # ENABLE BIOME
 ###############
 
-# Add biome and dependencies if needed
-# source ./add-biome.sh
-
-npe scripts.check:format "fluid-build . --task check:format"
+# Add format script if needed
 npe scripts.format "fluid-build . --task format"
 
 npe scripts.check:biome "biome check . --formatter-enabled=true"
@@ -17,9 +14,6 @@ npe scripts.format:biome "biome check . --apply --formatter-enabled=true"
 
 sd --fixed-strings '"check:prettier": "p' '"check:prettier:old": "p' package.json
 sd --fixed-strings '"format:prettier": "p' '"format:prettier:old": "p' package.json
-
-# dot-json package.json fluidBuild.tasks.format '{"script": true}' --json-value
-# dot-json package.json fluidBuild.tasks.check:format '{"script": true}' --json-value
 
 if [[ "$(uname)" == "Darwin" ]]; then
 	configPath=$(grealpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.json)
