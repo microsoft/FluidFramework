@@ -410,7 +410,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 		class RootNodeSchema extends builder.object("root-item", {
 			foo: builder.array(ChildSchema),
-			bar: builder.number,
+			bar: [builder.number, builder.string],
 		}) {}
 
 		sharedTree.schematize(
