@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.0.0-internal.8.0.8",
+	"version": "2.0.0-internal.8.0.9",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {

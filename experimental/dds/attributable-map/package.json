@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/attributable-map",
-	"version": "2.0.0-internal.8.0.8",
+	"version": "2.0.0-internal.8.0.9",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {
