@@ -35,10 +35,16 @@ export class RedisTenantCache {
 	}
 
 	public async exists(item: string): Promise<boolean> {
-		const result = await this.redisClientConnectionManager
-			.getRedisClient()
-			.exists(this.getKey(item));
-		return result >= 1;
+		try {
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.exists(this.getKey(item));
+			return result >= 1;
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in exists", undefined, error);
+			// Calling class also has a catch block
+			throw error;
+		}
 	}
 
 	public async set(
@@ -46,11 +52,17 @@ export class RedisTenantCache {
 		value: string = "",
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		const result = await this.redisClientConnectionManager
-			.getRedisClient()
-			.set(this.getKey(key), value, "EX", expireAfterSeconds);
-		if (result !== "OK") {
-			throw new Error(result);
+		try {
+			const result = await this.redisClientConnectionManager
+				.getRedisClient()
+				.set(this.getKey(key), value, "EX", expireAfterSeconds);
+			if (result !== "OK") {
+				throw new Error(result);
+			}
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in set", undefined, error);
+			// Calling class also has a catch block
+			throw error;
 		}
 	}
 
@@ -61,14 +73,20 @@ export class RedisTenantCache {
 				.del(this.getKey(key));
 			return result === 1;
 		} catch (error) {
-			winston.error("Redis Tenant Cache delete Error:", error);
-			Lumberjack.error("Redis Tenant Cache delete Error", undefined, error);
+			Lumberjack.error("Redis Tenant Cache error in delete", undefined, error);
+			// Calling class does not have a catch block
 			return false;
 		}
 	}
 
 	public async get(key: string): Promise<string> {
-		return this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
+		try {
+			return await this.redisClientConnectionManager.getRedisClient().get(this.getKey(key));
+		} catch (error) {
+			Lumberjack.error("Redis Tenant Cache error in get", undefined, error);
+			// Calling class also has a catch block
+			throw error;
+		}
 	}
 
 	/**
