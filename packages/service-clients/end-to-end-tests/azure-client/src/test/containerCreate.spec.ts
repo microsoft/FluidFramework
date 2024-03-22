@@ -13,7 +13,7 @@ import { SharedMap } from "@fluidframework/map";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { createAzureClient } from "./AzureClientFactory";
+import { createAzureClient } from "./AzureClientFactory.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
