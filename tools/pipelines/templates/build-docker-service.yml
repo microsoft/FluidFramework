@@ -416,9 +416,7 @@ extends:
               - task: PublishCodeCoverageResults@2
                 displayName: Publish Code Coverage
                 inputs:
-                  codeCoverageTool: Cobertura
                   summaryFileLocation: '$(hostPathToTestResultsArtifact)/**/report/cobertura-coverage.xml'
-                  reportDirectory: '$(hostPathToTestResultsArtifact)/**/report'
                   failIfCoverageEmpty: true
                 condition: succeededOrFailed()
             # Test - No coverage
