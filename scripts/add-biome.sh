@@ -11,8 +11,12 @@
 
 set -eux -o pipefail
 
+# clean up lint tasks to use fluid-build
+npe scripts.lint "fluid-build . --task lint"
+npe scripts.lint:fix "fluid-build . --task eslint:fix --task format"
+
 ############
-# Add biome
+# ADD BIOME
 ############
 
 # add biome dependency if needed
@@ -24,14 +28,11 @@ npe scripts.format:biome "biome check --apply ."
 npe scripts.check:biome "biome check ."
 npe scripts.check:format "fluid-build --task check:format ."
 
-# clean up lint task
-npe scripts.lint "fluid-build . --task lint"
-npe scripts.lint:fix "fluid-build . --task eslint:fix --task format"
-
 configPath=$(realpath --relative-to=$(pwd) $(git rev-parse --show-toplevel)/biome.json)
 
-# Add local biome config file. Note that the `extends` property should point to the root biome.json file and may need to
-# be updated depending on the project.
+if [ ! -f "biome.jsonc" ]; then
+	# Add local biome config file. Note that the `extends` property should point to the root biome.json file and may need
+	# to be updated depending on the project.
 cat << EOF > biome.jsonc
 {
 	"\$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
@@ -42,6 +43,13 @@ cat << EOF > biome.jsonc
 }
 
 EOF
+fi
+
+###############
+# ENABLE BIOME
+###############
+
+npe fluidBuild.tasks
 
 ##################
 # REMOVE PRETTIER
