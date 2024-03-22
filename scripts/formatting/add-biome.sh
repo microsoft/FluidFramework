@@ -11,7 +11,7 @@ npe scripts.lint "fluid-build . --task lint"
 npe scripts.lint:fix "fluid-build . --task eslint:fix --task format"
 
 # add biome dependency if needed
-npe "devDependencies.@biomejs/biome" "^1.6.1"
+npe "devDependencies.@biomejs/biome" "^1.6.2"
 
 # add biome formatting and check scripts
 npe scripts.format:biome "biome check --apply ."
