@@ -7,7 +7,6 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
@@ -102,7 +101,7 @@ export class AppData extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 		const counter = SharedCounter.create(this.runtime, this.sharedCounterKey);
-		const sharedTree = this.generateSharedTree(this.runtime);
+		const sharedTree = SharedTree.create(this.runtime);
 
 		const emojiMatrix = SharedMatrix.create(this.runtime, this.emojiMatrixKey);
 		const matrixDimension = 2; // Height and Width
@@ -172,11 +171,6 @@ export class AppData extends DataObject {
 
 			await Promise.all(loadInitialObjectsP);
 		}
-	}
-
-	private generateSharedTree(runtime: IFluidDataStoreRuntime): ITree {
-		const factory = SharedTree.getFactory();
-		return runtime.createChannel(undefined, factory.type) as ITree;
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
