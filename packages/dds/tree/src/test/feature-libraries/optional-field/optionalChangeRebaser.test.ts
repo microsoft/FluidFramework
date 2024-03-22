@@ -9,7 +9,6 @@ import { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
-	emptyDelta,
 	makeAnonChange,
 	RevisionMetadataSource,
 	RevisionTag,
@@ -49,8 +48,10 @@ import {
 	NodeId,
 	RebaseRevisionMetadata,
 	rebaseRevisionMetadataFromInfo,
+	ToDelta,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 
 type RevisionTagMinter = () => RevisionTag;
@@ -91,13 +92,12 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): DeltaFieldChanges {
-	return optionalFieldIntoDelta(
-		tagChange(change, revision),
-		// XXX
-		(childChange) => TestChange.toDelta(tagChange(TestChange.mint([], 0), revision)),
-		// TestChange.toDelta(tagChange(childChange, revision)),
-	);
+function toDelta(
+	change: OptionalChangeset,
+	revision?: RevisionTag,
+	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
+): DeltaFieldChanges {
+	return optionalFieldIntoDelta(tagChange(change, revision), deltaFromChild);
 }
 
 function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined {
@@ -477,7 +477,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invert(change, true);
 				const actual = compose(change, tagRollbackInverse(inv, tag1, change.revision));
-				const delta = toDelta(actual);
+				const delta = toDelta(actual, undefined, (id) => new Map());
 				assert.equal(isDeltaVisible(delta), false);
 			});
 		}
@@ -488,7 +488,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const inv = tagRollbackInverse(invert(change, true), tag1, change.revision);
 				const actual = compose(inv, change);
-				const delta = toDelta(actual);
+				const delta = toDelta(actual, undefined, (id) => new Map());
 				assert.equal(isDeltaVisible(delta), false);
 			});
 		}
