@@ -25,6 +25,8 @@ module.exports = {
 				caughtErrorsIgnorePattern: "^_",
 			},
 		],
+		// This rule can be removed once the client release group has eslint-config-fluid 5.2.0+
+		"import/order": "off",
 	},
 	overrides: [
 		{
