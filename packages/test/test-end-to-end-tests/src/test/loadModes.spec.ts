@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
@@ -28,7 +28,7 @@ import {
 const counterKey = "count";
 
 // REVIEW: enable compat testing?
-describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
+describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis) => {
 	const { SharedCounter } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
