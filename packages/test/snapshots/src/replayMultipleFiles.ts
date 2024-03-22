@@ -9,11 +9,11 @@ import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "./packageVersion.js";
-import { validateSnapshots } from "./validateSnapshots.js";
-import { getMetadata, writeMetadataFile } from "./metadata.js";
-import { getTestContent } from "./testContent.js";
 import { _dirname } from "./dirname.cjs";
+import { getMetadata, writeMetadataFile } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
+import { getTestContent } from "./testContent.js";
+import { validateSnapshots } from "./validateSnapshots.js";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {

@@ -727,6 +727,7 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<TChannelFactory> = state.clients[0];
+			finalizeAllocatedIds(clientA);
 			clientA.dataStoreRuntime.setAttachState(AttachState.Attached);
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
@@ -769,6 +770,7 @@ export function mixinAttach<
 		} else if (isOperationType<Rehydrate>("rehydrate", operation)) {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
+			finalizeAllocatedIds(clientA);
 
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
@@ -791,6 +793,7 @@ export function mixinAttach<
 		} else if (isOperationType<Attaching>("attaching", operation)) {
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<IChannelFactory> = state.clients[0];
+			finalizeAllocatedIds(clientA);
 
 			if (operation.beforeRehydrate === true) {
 				clientA.stashData = createLoadData(clientA);
@@ -1295,6 +1298,18 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 	return newClient;
 }
 
+function finalizeAllocatedIds(client: {
+	dataStoreRuntime: { idCompressor?: IIdCompressorCore };
+}): void {
+	const compressor = client.dataStoreRuntime.idCompressor;
+	if (compressor !== undefined) {
+		const range = compressor.takeNextCreationRange();
+		if (range.ids !== undefined) {
+			compressor.finalizeCreationRange(range);
+		}
+	}
+}
+
 /**
  * Gets a friendly ID for a client based on its index in the client list.
  * This exists purely for easier debugging--reasoning about client "A" is easier than reasoning
@@ -1331,6 +1346,7 @@ export async function runTestForSeed<
 		options,
 	);
 	if (!startDetached) {
+		finalizeAllocatedIds(initialClient);
 		initialClient.dataStoreRuntime.setAttachState(AttachState.Attached);
 		const services: IChannelServices = {
 			deltaConnection: initialClient.dataStoreRuntime.createDeltaConnection(),
