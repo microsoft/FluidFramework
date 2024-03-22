@@ -6,13 +6,6 @@
 import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
-import {
-	type ITree,
-	type TreeView,
-	SharedTree,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -26,7 +19,14 @@ import {
 } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
-import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
+import { type ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+} from "@fluidframework/tree";
 
 const newSharedTreeFactory = SharedTree.getFactory();
 const builder = new SchemaFactory("test");

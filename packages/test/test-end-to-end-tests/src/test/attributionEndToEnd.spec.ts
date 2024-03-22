@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import {
+	IRuntimeAttributor,
 	createRuntimeAttributor,
 	enableOnNewFileKey,
-	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import type { SharedString } from "@fluidframework/sequence";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+import { AttributionInfo } from "@fluidframework/runtime-definitions";
+import type { SharedString } from "@fluidframework/sequence";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 
 const stringId = "sharedStringKey";
 

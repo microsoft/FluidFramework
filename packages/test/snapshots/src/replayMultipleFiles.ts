@@ -9,10 +9,10 @@ import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { pkgVersion } from "./packageVersion";
-import { validateSnapshots } from "./validateSnapshots";
 import { getMetadata, writeMetadataFile } from "./metadata";
+import { pkgVersion } from "./packageVersion";
 import { getTestContent } from "./testContent";
+import { validateSnapshots } from "./validateSnapshots";
 
 // Determine relative file locations
 function getFileLocations(): [string, string] {

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import child_process from "child_process";
 import assert from "assert";
+import child_process from "child_process";
 
 const childArgs: string[] = [
 	"./dist/nodeStressTest.js",

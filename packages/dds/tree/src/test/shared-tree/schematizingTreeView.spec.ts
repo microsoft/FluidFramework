@@ -24,17 +24,20 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-import { SchemaFactory, TreeConfiguration, toFlexConfig } from "../../simple-tree/index.js";
+import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toFlexSchema } from "../../simple-tree/toFlexSchema.js";
 import { brand, disposeSymbol } from "../../util/index.js";
-import { checkoutWithContent, createTestUndoRedoStacks, insert } from "../utils.js";
+import {
+	checkoutFromConfig,
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	insert,
+} from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 const config = new TreeConfiguration(schema.number, () => 5);
 const configGeneralized = new TreeConfiguration([schema.number, schema.string], () => 6);
-const flexConfig = toFlexConfig(config);
-const flexConfigGeneralized = toFlexConfig(configGeneralized);
 
 // Schema for tree that must always be empty.
 const emptySchema = new SchemaBuilderBase(FieldKinds.required, {
@@ -70,7 +73,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open and close existing document", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutFromConfig(config);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -104,7 +107,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Modify root", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutFromConfig(config);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -130,7 +133,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Schema becomes incompatible then comparable", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutFromConfig(config);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,
@@ -170,7 +173,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open upgradable document, then upgrade schema", () => {
-		const checkout = checkoutWithContent(flexConfig);
+		const checkout = checkoutFromConfig(config);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			configGeneralized,
@@ -199,7 +202,7 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	it("Open incompatible document", () => {
-		const checkout = checkoutWithContent(flexConfigGeneralized);
+		const checkout = checkoutFromConfig(configGeneralized);
 		const view = new SchematizingSimpleTreeView(
 			checkout,
 			config,

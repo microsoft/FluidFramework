@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
+import { Anchor, AnchorNode, FieldKey, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FlexFieldNodeSchema,
 	FlexMapNodeSchema,
@@ -24,7 +24,6 @@ import {
 	LocalNodeKey,
 	TreeStatus,
 	flexTreeMarker,
-	onNextChange,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { InsertableContent } from "./proxies.js";
@@ -84,6 +83,8 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 	public readonly [flexTreeMarker] = FlexTreeEntityKind.Node as const;
 	public readonly [nodeContent]: TContent;
 
+	#anchor: Anchor | undefined;
+
 	public readonly type: TreeNodeSchemaIdentifier;
 	public constructor(
 		public readonly schema: TSchema,
@@ -129,8 +130,8 @@ export abstract class RawTreeNode<TSchema extends FlexTreeNodeSchema, TContent>
 		throw rawError("Event registration");
 	}
 
-	public [onNextChange](fn: (node: FlexTreeNode) => void): () => void {
-		throw rawError("onNextChange event registration");
+	public get anchorNode(): AnchorNode {
+		throw rawError("Reading anchor node");
 	}
 }
 

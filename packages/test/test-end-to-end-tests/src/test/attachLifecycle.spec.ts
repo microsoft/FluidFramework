@@ -6,19 +6,19 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import {
-	ITestFluidObject,
-	timeoutPromise,
-	getContainerEntryPointBackCompat,
-	getDataStoreEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AttachState } from "@fluidframework/container-definitions";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import {
+	ITestFluidObject,
+	getContainerEntryPointBackCompat,
+	getDataStoreEntryPointBackCompat,
+	timeoutPromise,
+} from "@fluidframework/test-utils";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;

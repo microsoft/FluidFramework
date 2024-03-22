@@ -4,14 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { benchmark } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { benchmark } from "@fluid-tools/benchmark";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { bufferToString } from "@fluid-internal/client-utils";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {

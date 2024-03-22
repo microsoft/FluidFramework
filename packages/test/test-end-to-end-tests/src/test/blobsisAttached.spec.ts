@@ -4,22 +4,22 @@
  */
 
 import assert from "assert";
-import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	DataObjectFactoryType,
-	createAndAttachContainer,
-} from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState, IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { type IPendingRuntimeState } from "@fluidframework/container-runtime/test/containerRuntime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
+} from "@fluidframework/test-utils";
 import { MockDetachedBlobStorage, driverSupportsBlobs } from "./mockDetachedBlobStorage.js";
 
 const mapId = "map";

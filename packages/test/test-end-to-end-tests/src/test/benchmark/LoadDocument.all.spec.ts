@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { delay } from "@fluidframework/core-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
-	benchmarkAll,
-	createDocument,
 	IBenchmarkParameters,
 	IDocumentLoader,
+	benchmarkAll,
+	createDocument,
 } from "./DocumentCreator.js";
 
 describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {

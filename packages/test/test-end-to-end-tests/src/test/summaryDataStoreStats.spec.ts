@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -11,15 +12,14 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
-	IContainerRuntimeOptions,
-	SummaryCollection,
-	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
+	IContainerRuntimeOptions,
+	ISummaryConfiguration,
+	SummaryCollection,
 } from "@fluidframework/container-runtime";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 
 class TestDataObject extends DataObject {
 	public get _root() {

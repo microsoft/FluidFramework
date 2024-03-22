@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	FluidObjectHandle,
 	FluidDataStoreRuntime,
+	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
-import { SharedMap, ISharedMap } from "@fluidframework/map";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
+	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { assert } from "@fluidframework/core-utils";
 import { create404Response } from "@fluidframework/runtime-utils";
 import { ITestFluidObject } from "./interfaces.js";
 

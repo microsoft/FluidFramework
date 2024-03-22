@@ -4,24 +4,24 @@
  */
 
 import { strict as assert } from "assert";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
-import {
-	ITestFluidObject,
-	ChannelFactoryRegistry,
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+// TODO:AB#6558: This should be provided based on the compatibility configuration.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 
 const versionWithChunking = "0.56.0";
 

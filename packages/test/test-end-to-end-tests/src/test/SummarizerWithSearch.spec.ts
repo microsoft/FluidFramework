@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -13,16 +13,16 @@ import {
 	IAckedSummary,
 	IContainerRuntimeOptions,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummaryCollection,
+	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
 import {
 	DriverHeader,
-	ISummaryContext,
 	type IDocumentServiceFactory,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import {
@@ -31,13 +31,13 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
 	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { wrapObjectAndOverride } from "../mocking.js";
 
