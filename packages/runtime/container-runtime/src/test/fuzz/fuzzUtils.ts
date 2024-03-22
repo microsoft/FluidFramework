@@ -91,16 +91,21 @@ function makeReducer(): AsyncReducer<SummarizerOperation, SummarizerFuzzTestStat
 			state.containerRuntimeFactory.processAllMessages();
 		};
 
+	const newSummarizer = (state: SummarizerFuzzTestState) => {
+		state.containerRuntime.disposeFn();
+		state.containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
+			new MockFluidDataStoreRuntime(),
+		);
+	};
+
 	const reducer = combineReducersAsync<SummarizerOperation, SummarizerFuzzTestState>({
 		reconnect: async (state: SummarizerFuzzTestState, _op: Reconnect) => {
 			state.containerRuntime.connected = false;
 			state.containerRuntime.connected = true;
+			newSummarizer(state);
 		},
 		newSummarizer: async (state: SummarizerFuzzTestState, _op: NewSummarizer) => {
-			state.containerRuntime.disposeFn();
-			state.containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
-				new MockFluidDataStoreRuntime(),
-			);
+			newSummarizer(state);
 		},
 		summaryNack: async (state: SummarizerFuzzTestState, _op: SummaryNack) => {
 			state.containerRuntime.prepareSummaryNack();

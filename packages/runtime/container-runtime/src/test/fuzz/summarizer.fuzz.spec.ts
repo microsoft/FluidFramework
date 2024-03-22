@@ -22,7 +22,7 @@ describe("Summarizer fuzz testing", () => {
 		workloadName: "summarizer",
 		generatorFactory: () =>
 			takeAsync(
-				10,
+				100,
 				summarizerOperationGenerator({
 					weights: {
 						reconnect: 1,
@@ -34,5 +34,7 @@ describe("Summarizer fuzz testing", () => {
 			),
 	};
 
-	createSummarizerFuzzSuite(model);
+	createSummarizerFuzzSuite(model, {
+		defaultTestCount: 25,
+	});
 });

@@ -25,6 +25,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
+import { v4 as uuid } from "uuid";
 import { type ISummaryConfiguration } from "../../index.js";
 import {
 	IConnectableRuntime,
@@ -147,8 +148,9 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
+		const handle = uuid();
 		const summaryMessage: ISummaryContent = {
-			handle: "",
+			handle,
 			head: "",
 			message: "",
 			parents: [],
@@ -170,7 +172,12 @@ export class MockContainerRuntimeForSummarizer
 			summarizeMessage.clientSequenceNumber,
 		);
 
-		this.scheduleAckNack(this.nackScheduled /* isNack */);
+		this.factory.processAllMessages();
+		this.scheduleAckNack(
+			this.nackScheduled /* isNack */,
+			handle,
+			this.deltaManager.lastSequenceNumber,
+		);
 		this.nackScheduled = false;
 
 		const summaryStats: IGeneratedSummaryStats = {
@@ -182,7 +189,7 @@ export class MockContainerRuntimeForSummarizer
 
 		return {
 			stage: "submit",
-			handle: "",
+			handle,
 			clientSequenceNumber,
 			referenceSequenceNumber,
 			minimumSequenceNumber,
@@ -198,13 +205,13 @@ export class MockContainerRuntimeForSummarizer
 		};
 	}
 
-	private scheduleAckNack(isNack: boolean) {
+	private scheduleAckNack(isNack: boolean, handle: string, summarySequenceNumber: number) {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		Promise.resolve().then(() => {
 			const contents: ISummaryAck | ISummaryNack = {
-				handle: "",
+				handle,
 				summaryProposal: {
-					summarySequenceNumber: this.deltaManager.lastSequenceNumber,
+					summarySequenceNumber,
 				},
 			};
 
@@ -220,6 +227,7 @@ export class MockContainerRuntimeForSummarizer
 				undefined,
 				summaryAckMessage.clientSequenceNumber,
 			);
+			this.factory.processAllMessages();
 		});
 	}
 

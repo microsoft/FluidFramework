@@ -4,6 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { createChildLogger, raiseConnectedEvent } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
 	IMockContainerRuntimeOptions,
@@ -35,6 +36,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			return;
 		}
 
+		raiseConnectedEvent(createChildLogger(), this, connected);
 		this._connected = connected;
 
 		if (connected) {
