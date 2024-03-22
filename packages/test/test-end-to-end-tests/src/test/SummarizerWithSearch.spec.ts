@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -13,13 +13,17 @@ import {
 	IAckedSummary,
 	IContainerRuntimeOptions,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummaryCollection,
+	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
-import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	DriverHeader,
+	type IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
@@ -27,15 +31,15 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
-	wrapDocumentServiceFactory,
-	waitForContainerConnection,
-	summarizeNow,
 	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;
@@ -359,10 +363,21 @@ describeCompat(
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
-				(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-					provider.documentServiceFactory,
-					uploadSummaryCb,
-				);
+				(provider as any)._documentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									uploadSummaryWithContext: (dss) => async (summary, context) => {
+										uploadSummaryCb(summary, context);
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+										return dss.uploadSummaryWithContext(summary, context);
+									},
+								},
+							},
+						},
+					);
 
 				mainContainer = await createContainer();
 				// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is

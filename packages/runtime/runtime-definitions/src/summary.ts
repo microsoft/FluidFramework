@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryEventPropertyType } from "@fluidframework/core-interfaces";
-import {
-	SummaryTree,
-	ISummaryTree,
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISummaryTree,
 	ITree,
+	SummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
+import type {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollectionDefinitions.js";
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
@@ -225,7 +228,9 @@ export interface ISummarizerNode {
 
 	getChild(id: string): ISummarizerNode | undefined;
 
-	/** True if a summary is currently in progress */
+	/**
+	 * True if a summary is currently in progress
+	 */
 	isSummaryInProgress?(): boolean;
 }
 
@@ -326,7 +331,7 @@ export interface ITelemetryContext {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @param value - value to attribute to this summary telemetry data
 	 */
-	set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+	set(prefix: string, property: string, value: TelemetryBaseEventPropertyType): void;
 
 	/**
 	 * Sets multiple values for telemetry data being tracked.
@@ -337,7 +342,7 @@ export interface ITelemetryContext {
 	setMultiple(
 		prefix: string,
 		property: string,
-		values: Record<string, TelemetryEventPropertyType>,
+		values: Record<string, TelemetryBaseEventPropertyType>,
 	): void;
 
 	/**
@@ -349,7 +354,7 @@ export interface ITelemetryContext {
 	 * @param property - property name of the telemetry data being tracked (ex: "DirectoryCount")
 	 * @returns undefined if item not found
 	 */
-	get(prefix: string, property: string): TelemetryEventPropertyType;
+	get(prefix: string, property: string): TelemetryBaseEventPropertyType;
 
 	/**
 	 * Returns a serialized version of all the telemetry data.

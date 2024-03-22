@@ -4,18 +4,20 @@
  */
 
 import assert from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	DefaultSummaryConfiguration,
+	IContainerRuntimeOptions,
+	ISummaryConfiguration,
+} from "@fluidframework/container-runtime";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	IContainerRuntimeOptions,
-	ISummaryConfiguration,
-	DefaultSummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { AttachState } from "@fluidframework/container-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 
 describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, apis) => {
 	const {
@@ -144,13 +146,13 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		);
 		mainDataStore._root.set("dataStore2", dataStore2.handle);
 
-		// second client loads the container
-		const mockDocumentServiceFactory = Object.create(provider.documentServiceFactory);
-		// Mock storage token fetch to throw so that we can mock offline case.
-		mockDocumentServiceFactory.getStorageToken = (options) => {
-			throw new Error("TokenFail");
-		};
-		provider.documentServiceFactory = mockDocumentServiceFactory;
+		provider.documentServiceFactory = wrapObjectAndOverride<
+			IDocumentServiceFactory & { getStorageToken?() }
+		>(provider.documentServiceFactory, {
+			getStorageToken: () => () => {
+				throw new Error("TokenFail");
+			},
+		});
 
 		const container2 = await provider.loadContainer(runtimeFactory, { logger: mockLogger });
 		const defaultDataStore = (await container2.getEntryPoint()) as TestDataObject;

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { compress } from "lz4js";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "../containerRuntime";
-import { estimateSocketSize } from "./batchManager";
-import { IBatch, BatchMessage } from "./definitions";
+import { assert } from "@fluidframework/core-utils";
+import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils";
+import { compress } from "lz4js";
+import { CompressionAlgorithms } from "../containerRuntime.js";
+import { estimateSocketSize } from "./batchManager.js";
+import { BatchMessage, IBatch } from "./definitions.js";
 
 /**
  * Compresses batches of ops. It generates a single compressed op that contains

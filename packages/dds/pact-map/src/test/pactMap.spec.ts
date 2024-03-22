@@ -5,15 +5,15 @@
 
 import { strict as assert } from "node:assert";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { PactMap } from "../pactMap";
-import { PactMapFactory } from "../pactMapFactory";
-import { type IPactMap } from "../interfaces";
+import { type IPactMap } from "../interfaces.js";
+import { PactMap } from "../pactMap.js";
+import { PactMapFactory } from "../pactMapFactory.js";
 
 function createConnectedPactMap(id: string, runtimeFactory: MockContainerRuntimeFactory): PactMap {
 	// Create and connect a PactMap.

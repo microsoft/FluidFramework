@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { ITelemetryProperties } from "@fluidframework/core-interfaces";
-import { validateMessages } from "@fluidframework/driver-base";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	type IStream,
 } from "@fluidframework/driver-definitions";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
-import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
-import { EpochTracker } from "./epochTracker";
-import { getWithRetryForTokenRefresh } from "./odspUtils";
-import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
+import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -43,7 +43,7 @@ export class OdspDeltaStorageService {
 	public async get(
 		from: number,
 		to: number,
-		telemetryProps: ITelemetryProperties,
+		telemetryProps: ITelemetryBaseProperties,
 		scenarioName?: string,
 	): Promise<IDeltasFetchResult> {
 		return getWithRetryForTokenRefresh(async (options) => {
@@ -139,7 +139,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		private readonly getFromStorage: (
 			from: number,
 			to: number,
-			telemetryProps: ITelemetryProperties,
+			telemetryProps: ITelemetryBaseProperties,
 			fetchReason?: string,
 		) => Promise<IDeltasFetchResult>,
 		private readonly getCached: (
@@ -175,7 +175,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		const requestCallback = async (
 			from: number,
 			to: number,
-			telemetryProps: ITelemetryProperties,
+			telemetryProps: ITelemetryBaseProperties,
 		): Promise<IDeltasFetchResult> => {
 			if (this.snapshotOps !== undefined && this.snapshotOps.length > 0) {
 				const messages = this.snapshotOps.filter(
@@ -222,7 +222,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 		};
 
 		const stream = requestOps(
-			async (from: number, to: number, telemetryProps: ITelemetryProperties) => {
+			async (from: number, to: number, telemetryProps: ITelemetryBaseProperties) => {
 				const result = await requestCallback(from, to, telemetryProps);
 				// Catch all case, just in case
 				validateMessages("catch all", result.messages, from, this.logger);

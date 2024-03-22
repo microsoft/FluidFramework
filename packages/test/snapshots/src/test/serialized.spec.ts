@@ -5,24 +5,24 @@
 
 import { strict as assert } from "assert";
 import fs from "fs";
-import { Loader } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-	TestFluidObject,
-	LoaderContainerTracker,
-} from "@fluidframework/test-utils";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
-import { SharedCell } from "@fluidframework/cell";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedCounter } from "@fluidframework/counter";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
-import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { SharedCell } from "@fluidframework/cell";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
+import { SharedCounter } from "@fluidframework/counter";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { ConsensusOrderedCollection, ConsensusQueue } from "@fluidframework/ordered-collection";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { SharedString } from "@fluidframework/sequence";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import {
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+} from "@fluidframework/test-utils";
 import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
@@ -58,7 +58,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =
@@ -100,7 +100,7 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 			assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
 			// Check for dds
-			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
+			const sharedMap = await defaultDataStore.getSharedObject<ISharedMap>(sharedMapId);
 			const sharedDir =
 				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
 			const sharedString =

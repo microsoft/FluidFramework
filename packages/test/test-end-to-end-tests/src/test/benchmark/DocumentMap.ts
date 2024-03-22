@@ -3,36 +3,36 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { SharedMap } from "@fluidframework/map";
-import {
-	ChannelFactoryRegistry,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-
 import {
-	CompressionAlgorithms,
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
+	ChannelFactoryRegistry,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
+
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
@@ -54,13 +54,13 @@ const maxMessageSizeInBytes = 1 * 1024 * 1024; // 1MB
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");
 
-function setMapKeys(map: SharedMap, count: number, item: string): void {
+function setMapKeys(map: ISharedMap, count: number, item: string): void {
 	for (let i = 0; i < count; i++) {
 		map.set(`key${i}`, item);
 	}
 }
 
-function validateMapKeys(map: SharedMap, count: number, expectedSize: number): void {
+function validateMapKeys(map: ISharedMap, count: number, expectedSize: number): void {
 	for (let i = 0; i < count; i++) {
 		const value = map.get(`key${i}`);
 		assert(value !== undefined);
@@ -82,7 +82,7 @@ class TestDataObject extends DataObject {
 	}
 
 	private readonly mapKey = mapId;
-	public map!: SharedMap;
+	public map!: ISharedMap;
 
 	protected async initializingFirstTime() {
 		const sharedMap = SharedMap.create(this.runtime, this.mapKey);
@@ -90,7 +90,7 @@ class TestDataObject extends DataObject {
 	}
 
 	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+		const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
 	}

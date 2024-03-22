@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import sinon from "sinon";
-import { Deferred } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -23,29 +25,27 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISummaryConfiguration } from "../../containerRuntime";
+import sinon from "sinon";
+import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
-	getFailMessage,
-	neverCancelledSummaryToken,
-	RunningSummarizer,
-	SummaryCollection,
-	SummarizeHeuristicData,
-	ISummarizerRuntime,
-	ISummarizeHeuristicData,
-	SubmitSummaryResult,
-	RetriableSummaryError,
 	IGeneratedSummaryStats,
 	ISummarizeEventProps,
+	ISummarizeHeuristicData,
+	ISummarizerRuntime,
 	ISummaryCancellationToken,
-} from "../../summary";
+	RetriableSummaryError,
+	RunningSummarizer,
+	SubmitSummaryResult,
+	SummarizeHeuristicData,
+	SummaryCollection,
+	getFailMessage,
+	neverCancelledSummaryToken,
+} from "../../summary/index.js";
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../summary/runningSummarizer";
+} from "../../summary/runningSummarizer.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;

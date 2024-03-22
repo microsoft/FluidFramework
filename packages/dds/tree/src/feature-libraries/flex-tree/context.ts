@@ -5,25 +5,25 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	moveToDetachedField,
-	ForestEvents,
-	TreeFieldStoredSchema,
 	FieldKey,
+	ForestEvents,
 	IForestSubscription,
+	TreeFieldStoredSchema,
+	moveToDetachedField,
 } from "../../core/index.js";
 import { ISubscribable } from "../../events/index.js";
+import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { IDefaultEditBuilder } from "../default-schema/index.js";
-import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
 import { FieldGenerator } from "../fieldGenerator.js";
+import { NodeKeyIndex, NodeKeyManager } from "../node-key/index.js";
 import { FlexTreeSchema } from "../typed-schema/index.js";
-import { disposeSymbol, IDisposable } from "../../util/index.js";
 import { FlexTreeField } from "./flexTreeTypes.js";
-import { makeField } from "./lazyField.js";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity.js";
+import { makeField } from "./lazyField.js";
 import { NodeKeys, SimpleNodeKeys } from "./nodeKeys.js";
 
 /**
- * A common context of a "forest" of EditableTrees.
+ * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
  * @internal
  */
@@ -44,12 +44,17 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	// - branching APIs
 
 	readonly nodeKeys: NodeKeys;
+
+	/**
+	 * The forest containing the tree data associated with this context
+	 */
+	readonly forest: IForestSubscription;
 }
 
 /**
- * Implementation of `EditableTreeContext`.
+ * Implementation of `FlexTreeContext`.
  *
- * @remarks An editor is required to edit the EditableTrees.
+ * @remarks An editor is required to edit the FlexTree.
  */
 export class Context implements FlexTreeContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
@@ -143,7 +148,7 @@ export class Context implements FlexTreeContext, IDisposable {
  * @param nodeKeyManager - an object which handles node key generation and conversion.
  * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
  * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
- * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
+ * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(

@@ -4,19 +4,15 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/core-utils";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
+	IMergeTreeRemoveMsg,
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
-	IMergeTreeRemoveMsg,
 	refGetTileLabels,
 } from "@fluidframework/merge-tree";
 import {
-	SharedString,
-	SharedStringSegment,
-	SequenceMaintenanceEvent,
-	SequenceDeltaEvent,
 	ISegment,
 	LocalReferencePosition,
 	Marker,
@@ -24,12 +20,16 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	reservedTileLabelsKey,
+	SequenceDeltaEvent,
+	SequenceMaintenanceEvent,
+	SharedString,
+	SharedStringSegment,
 	TextSegment,
+	reservedTileLabelsKey,
 } from "@fluidframework/sequence";
-import { clamp, TagName, TokenList } from "../util/index.js";
-import { IHTMLAttributes } from "../util/attr.js";
 import { documentType } from "../package.js";
+import { IHTMLAttributes } from "../util/attr.js";
+import { TagName, TokenList, clamp } from "../util/index.js";
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";
 

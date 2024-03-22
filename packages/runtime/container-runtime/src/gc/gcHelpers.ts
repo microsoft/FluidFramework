@@ -6,18 +6,18 @@
 import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
-	IGarbageCollectionData,
-	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
+import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions.js";
 import {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
-} from "./gcSummaryDefinitions";
+} from "./gcSummaryDefinitions.js";
 
 export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	if (!metadata) {

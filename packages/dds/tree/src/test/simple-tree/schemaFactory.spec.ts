@@ -5,26 +5,28 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor";
 import { unreachableCase } from "@fluidframework/core-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
-import { TreeNode, Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
+import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { isTreeNode } from "../../simple-tree/proxies.js";
 import {
-	ImplicitFieldSchema,
-	InsertableTreeFieldFromImplicitField,
+	SchemaFactory,
+	schemaFromValue,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/schemaFactory.js";
+import {
 	NodeFromSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
-import {
-	SchemaFactory,
-	schemaFromValue,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaFactory.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import { hydrate } from "./utils.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -208,7 +210,7 @@ describe("schemaFactory", () => {
 			});
 
 			assert(root instanceof Point);
-			assert(root instanceof TreeNode);
+			assert(isTreeNode(root));
 			assert(Reflect.has(root, "selected"));
 			assert.equal(root.selected, false);
 			// Ensure modification works
@@ -377,7 +379,7 @@ describe("schemaFactory", () => {
 
 			const listNode = view.root.child;
 			assert(listNode instanceof NamedList);
-			assert(listNode instanceof TreeNode);
+			assert(isTreeNode(listNode));
 			assert(Reflect.has(listNode, "testProperty"));
 			assert.equal(listNode.testProperty, false);
 			listNode.testProperty = true;
@@ -435,7 +437,7 @@ describe("schemaFactory", () => {
 
 			const mapNode = view.root.child;
 			assert(mapNode instanceof NamedMap);
-			assert(mapNode instanceof TreeNode);
+			assert(isTreeNode(mapNode));
 			assert(Reflect.has(mapNode, "testProperty"));
 			assert.equal(mapNode.testProperty, false);
 			mapNode.testProperty = true;
@@ -470,7 +472,8 @@ describe("schemaFactory", () => {
 			comboSchemaFactory.null,
 		) {}
 		class ComboParentObject extends comboSchemaFactory.object("comboObjectParent", {
-			child: [ComboChildObject, ComboChildList, ComboChildMap],
+			childA: [ComboChildObject, ComboChildList, ComboChildMap],
+			childB: [ComboChildObject, ComboChildList, ComboChildMap],
 		}) {}
 		class ComboParentList extends comboSchemaFactory.array("comboListParent", [
 			ComboChildObject,
@@ -509,7 +512,9 @@ describe("schemaFactory", () => {
 			yield combo;
 
 			if (combo instanceof ComboParentObject) {
-				yield* walkComboObjectTree(combo.child);
+				for (const child of Object.values(combo)) {
+					yield* walkComboObjectTree(child);
+				}
 			} else if (combo instanceof ComboParentList) {
 				for (const c of combo) {
 					yield* walkComboObjectTree(c);
@@ -553,17 +558,23 @@ describe("schemaFactory", () => {
 		function createComboTree(layout: ComboTreeLayout) {
 			const nodes: ComboNode[] = [];
 			function createComboParent(): ComboParent {
-				const child = createComboChild();
+				const childA = createComboChild();
+				const childB = createComboChild();
 				let parent: ComboParent;
 				switch (layout.parentType) {
 					case "object":
-						parent = new ComboParentObject({ child });
+						parent = new ComboParentObject({ childA, childB });
 						break;
 					case "list":
-						parent = new ComboParentList([child]);
+						parent = new ComboParentList([childA, childB]);
 						break;
 					case "map":
-						parent = new ComboParentMap(new Map([["child", child]]));
+						parent = new ComboParentMap(
+							new Map([
+								["childA", childA],
+								["childB", childB],
+							]),
+						);
 						break;
 					default:
 						unreachableCase(layout.parentType);
@@ -595,23 +606,35 @@ describe("schemaFactory", () => {
 		}
 
 		const objectTypes = ["object", "list", "map"] as const;
+		function test(
+			parentType: (typeof objectTypes)[number],
+			childType: (typeof objectTypes)[number],
+			validate: (view: TreeView<ComboRoot>, nodes: ComboNode[]) => void,
+		) {
+			const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
+			const factory = new TreeFactory({});
+			const tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			const view = tree.schematize(config);
+			const { parent, nodes } = createComboTree({
+				parentType,
+				childType,
+			});
+
+			// Ensure that the proxies can be read during the change, as well as after
+			Tree.on(view.root, "afterChange", () => validate(view, nodes));
+			view.events.on("afterBatch", () => validate(view, nodes));
+			view.root.root = parent;
+			validate(view, nodes);
+		}
+
 		for (const parentType of objectTypes) {
 			for (const childType of objectTypes) {
 				// Generate a test for all permutations of object, list and map
 				it(`${parentType} → ${childType}`, () => {
-					const config = new TreeConfiguration(ComboRoot, () => ({ root: undefined }));
-					const factory = new TreeFactory({});
-					const tree = factory.create(
-						new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-						"tree",
-					);
-					const view = tree.schematize(config);
-					const { parent, nodes } = createComboTree({
-						parentType,
-						childType,
-					});
-
-					function validate(): void {
+					test(parentType, childType, (view, nodes) => {
 						assert(view.root.root !== undefined);
 						const treeObjects = [...walkComboObjectTree(view.root.root)];
 						assert.equal(treeObjects.length, nodes.length);
@@ -622,13 +645,34 @@ describe("schemaFactory", () => {
 							// Each raw object should be reference equal to the corresponding object in the tree.
 							assert.equal(nodes[i], treeObjects[i]);
 						}
-					}
+					});
+				});
 
-					// Ensure that the proxies can be read during the change, as well as after
-					Tree.on(view.root, "afterChange", () => validate());
-					view.events.on("afterBatch", () => validate());
-					view.root.root = parent;
-					validate();
+				it(`${parentType} → ${childType} (bottom up)`, () => {
+					test(parentType, childType, (_, nodes) => {
+						// Sort the nodes bottom up, so that we will observe the children before demanding the parents.
+						nodes.sort(compareComboNodes);
+						for (let i = nodes.length - 1; i >= 0; i--) {
+							const node = nodes[i];
+							if (
+								node instanceof ComboChildObject ||
+								node instanceof ComboParentObject
+							) {
+								Object.entries(node);
+							} else if (
+								node instanceof ComboChildList ||
+								node instanceof ComboParentList
+							) {
+								for (const __ of node.entries());
+							} else if (
+								node instanceof ComboChildMap ||
+								node instanceof ComboParentMap
+							) {
+								for (const __ of node.entries());
+							}
+							assert.equal(Tree.status(node), TreeStatus.InDocument);
+						}
+					});
 				});
 			}
 		}
@@ -642,21 +686,38 @@ describe("schemaFactory", () => {
 		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
 		assert.equal(schemaFromValue(false), f.boolean);
 	});
-});
 
-/**
- * Create a tree and use it to hydrate the input.
- */
-function hydrate<TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	data: InsertableTreeFieldFromImplicitField<TSchema>,
-): TreeFieldFromImplicitField<TSchema> {
-	const config = new TreeConfiguration(schema, () => data);
-	const factory = new TreeFactory({});
-	const tree = factory.create(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		"tree",
-	);
-	const root = tree.schematize(config).root;
-	return root;
-}
+	it("extra fields in object constructor", () => {
+		const f = new SchemaFactory("");
+
+		class Empty extends f.object("C", {}) {}
+
+		// TODO: should not build
+		// BUG: object schema with no fields permit construction with any object, not just empty object.
+		// TODO: this should runtime error when constructed (not just when hydrated)
+		const c2 = new Empty({ x: {} });
+
+		class NonEmpty extends f.object("C", { a: f.null }) {}
+
+		// @ts-expect-error Invalid extra field
+		// TODO: this should error when constructed (not just when hydrated)
+		new NonEmpty({ a: null, b: 0 });
+	});
+
+	it("object nested implicit construction", () => {
+		const f = new SchemaFactory("");
+
+		class C extends f.object("C", {}) {
+			public readonly c = "X";
+		}
+		class B extends f.object("B", {
+			b: C,
+		}) {}
+		class A extends f.object("A", {
+			a: B,
+		}) {}
+
+		const tree = hydrate(A, { a: { b: {} } });
+		assert.equal(tree.a.b.c, "X");
+	});
+});

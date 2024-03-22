@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PropertyProxy } from "@fluid-experimental/property-proxy";
-import { PropertyFactory } from "@fluid-experimental/property-properties";
+
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
-import { InputValidator } from "./InputValidator";
-import { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
+import { PropertyProxy } from "@fluid-experimental/property-proxy";
+import { InputValidator } from "./InputValidator.js";
+import type { IDataCreationOptions, IInspectorRow } from "./InspectorTableTypes.js";
 
 const EXCLUDE_PROPS = ["BaseProperty", "Enum", "ContainerProperty"];
 

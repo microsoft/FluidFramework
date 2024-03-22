@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
+import type { ISharedMap } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
-import type { SharedMap } from "@fluidframework/map";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	ITestObjectProvider,
-	waitForContainerConnection,
-	summarizeNow,
-	createSummarizerFromFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	createSummarizerFromFactory,
+	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;
@@ -83,7 +83,7 @@ describeCompat(
 				return this.context;
 			}
 			private readonly mapKey = "SharedMap";
-			public map!: SharedMap;
+			public map!: ISharedMap;
 
 			protected async initializingFirstTime() {
 				const sharedMap = SharedMap.create(this.runtime, this.mapKey);
@@ -91,7 +91,7 @@ describeCompat(
 			}
 
 			protected async hasInitialized() {
-				const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+				const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 				assert(mapHandle !== undefined, "SharedMap not found");
 				this.map = await mapHandle.get();
 			}

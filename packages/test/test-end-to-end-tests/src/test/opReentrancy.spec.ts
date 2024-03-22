@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -14,12 +20,6 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedString } from "@fluidframework/sequence";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",
@@ -43,8 +43,8 @@ describeCompat(
 		let container2: IContainer;
 		let dataObject1: ITestFluidObject;
 		let dataObject2: ITestFluidObject;
-		let sharedMap1: SharedMap;
-		let sharedMap2: SharedMap;
+		let sharedMap1: ISharedMap;
+		let sharedMap2: ISharedMap;
 		let sharedString1: SharedString;
 		let sharedString2: SharedString;
 		let sharedDirectory1: SharedDirectory;
@@ -54,7 +54,7 @@ describeCompat(
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
 
-		const mapsAreEqual = (a: SharedMap, b: SharedMap) =>
+		const mapsAreEqual = (a: ISharedMap, b: ISharedMap) =>
 			a.size === b.size && [...a.entries()].every(([key, value]) => b.get(key) === value);
 
 		beforeEach("getTestObjectProvider", async () => {
@@ -75,8 +75,8 @@ describeCompat(
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
-			sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
-			sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
+			sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
 			sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
 			sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);

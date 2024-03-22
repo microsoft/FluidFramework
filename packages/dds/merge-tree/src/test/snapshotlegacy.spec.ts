@@ -2,20 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SnapshotLegacy } from "../snapshotlegacy";
+import { MockStorage } from "@fluidframework/test-runtime-utils";
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
-} from "../attributionPolicy";
-import { TestSerializer } from "./testSerializer";
-import { createClientsAtInitialState } from "./testClientLogger";
-import { TestClient } from "./testClient";
+} from "../attributionPolicy.js";
+import { SnapshotLegacy } from "../snapshotlegacy.js";
+import { TestClient } from "./testClient.js";
+import { createClientsAtInitialState } from "./testClientLogger.js";
+import { TestSerializer } from "./testSerializer.js";
 
 describe("snapshot", () => {
 	it("header only", async () => {

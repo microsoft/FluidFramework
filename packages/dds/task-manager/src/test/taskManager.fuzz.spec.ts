@@ -3,20 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
 import {
+	AsyncGenerator as Generator,
+	AsyncReducer as Reducer,
 	combineReducersAsync as combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
-	AsyncGenerator as Generator,
 	makeRandom,
-	AsyncReducer as Reducer,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { TaskManagerFactory } from "../taskManagerFactory";
-import { ITaskManager } from "../interfaces";
+import { ITaskManager } from "../interfaces.js";
+import { TaskManagerFactory } from "../taskManagerFactory.js";
+import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<TaskManagerFactory>;
 
@@ -204,17 +205,17 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager) {
 	const queue1 = (a as any).taskQueues;
 	const queue2 = (b as any).taskQueues;
-	assert(queue1.size === queue2.size, "The number of tasks queues are not the same");
+	assert.strictEqual(queue1.size, queue2.size, "The number of tasks queues are not the same");
 	for (const [key, val] of queue1) {
 		const testVal = queue2.get(key);
 		if (testVal === undefined) {
 			assert(val === undefined, "Task queues are not both undefined");
 			continue;
 		}
-		assert(testVal.length === val.length, "Task queues are not the same size");
+		assert.strictEqual(testVal.length, val.length, "Task queues are not the same size");
 		if (testVal.length > 0) {
 			testVal.forEach((task: string, index: number) => {
-				assert(task === val[index], `Task queues are not identical`);
+				assert.strictEqual(task, val[index], `Task queues are not identical`);
 			});
 		}
 	}
@@ -240,13 +241,21 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
+		detachedStartOptions: {
+			numOpsBeforeAttach: 5,
+			// similar to reconnect there are eventual consistency errors when we enter attaching before rehydrate
+			// when fixed, detachedStartOptions can be removed from this config, and attachingBeforeRehydrateDisable
+			// can be completely removed, as it is only used by this test. Rather than file more bugs. I'll just combine
+			// this with AB#3985, as it looks like the dds has fundamental issue around lifecycle handling
+			attachingBeforeRehydrateDisable: true,
+		},
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.05,
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: defaultOptions.testCount,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
@@ -280,7 +289,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 			stashableClientProbability: 0.2,
 		},
 		defaultTestCount: defaultOptions.testCount,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 		// AB#5341: enabling 'start from detached' within the fuzz harness demonstrates eventual consistency failures.
 		detachedStartOptions: {
 			numOpsBeforeAttach: 0,

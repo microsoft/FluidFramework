@@ -4,21 +4,21 @@
  */
 
 import {
+	OptionsMatrix,
 	booleanCases,
 	generatePairwiseOptions,
-	OptionsMatrix,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
+import { ILoaderOptions } from "@fluidframework/container-loader";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { ILoaderOptions } from "@fluidframework/container-loader";
+import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
@@ -104,7 +104,7 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
-		enableRuntimeIdCompressor: [undefined, true],
+		enableRuntimeIdCompressor: ["on", "off", "delayed"],
 		enableGroupedBatching: [true, false],
 	};
 

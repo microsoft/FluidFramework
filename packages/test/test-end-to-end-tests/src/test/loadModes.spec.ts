@@ -4,26 +4,26 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
-	createAndAttachContainer,
-	createLoader,
-	createDocumentId,
-	LoaderContainerTracker,
-	ITestObjectProvider,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	createAndAttachContainer,
+	createDocumentId,
+	createLoader,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { SharedMap } from "@fluidframework/map";
 
 const counterKey = "count";
 
@@ -338,7 +338,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 		};
 		const created = await provider.makeTestContainer(testContainerConfig);
 		const do1 = (await created.getEntryPoint()) as ITestFluidObject;
-		const map1 = await do1.getSharedObject<SharedMap>(mapId);
+		const map1 = await do1.getSharedObject<ISharedMap>(mapId);
 
 		const headers: IRequestHeader = {
 			[LoaderHeader.cache]: false,
@@ -353,7 +353,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis) => {
 		const do2 = (await loaded.getEntryPoint()) as ITestFluidObject;
 		loaded.connect();
 		loaded.forceReadonly?.(true);
-		const map2 = await do2.getSharedObject<SharedMap>(mapId);
+		const map2 = await do2.getSharedObject<ISharedMap>(mapId);
 		map2.set("key1", "1");
 		map2.set("key2", "2");
 		await provider.ensureSynchronized();

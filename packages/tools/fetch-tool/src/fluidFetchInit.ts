@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { URL } from "url";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils/internal";
@@ -16,8 +15,8 @@ import { FluidAppOdspUrlResolver, OdspUrlResolver } from "@fluidframework/odsp-u
 import * as r11s from "@fluidframework/routerlicious-driver";
 import { RouterliciousUrlResolver } from "@fluidframework/routerlicious-urlresolver";
 import { getMicrosoftConfiguration } from "@fluidframework/tool-utils";
-import { localDataOnly, paramJWT } from "./fluidFetchArgs";
-import { resolveWrapper } from "./fluidFetchSharePoint";
+import { localDataOnly, paramJWT } from "./fluidFetchArgs.js";
+import { resolveWrapper } from "./fluidFetchSharePoint.js";
 
 export let latestVersionsId: string = "";
 export let connectionInfo: any;

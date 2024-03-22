@@ -2,11 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { parseISO } from "date-fns";
 import { exec, execNoError } from "./utils";
-
 import registerDebug from "debug";
+import { statSync } from "fs-extra";
+import path from "node:path";
+
 const traceGitRepo = registerDebug("fluid-build:gitRepo");
+
 export class GitRepo {
 	constructor(public readonly resolvedRoot: string) {}
 
@@ -194,10 +198,7 @@ export class GitRepo {
 		const results =
 			pattern === undefined || pattern.length === 0
 				? await this.exec(`tag -l --sort=-committerdate`, `get all tags`)
-				: await this.exec(
-						`tag -l "${pattern}" --sort=-committerdate`,
-						`get tags ${pattern}`,
-				  );
+				: await this.exec(`tag -l "${pattern}" --sort=-committerdate`, `get tags ${pattern}`);
 		const tags = results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
 
 		traceGitRepo(`Found ${tags.length} tags.`);
@@ -213,6 +214,21 @@ export class GitRepo {
 			.split("\n")
 			.filter((t) => t !== "" && !t.startsWith(" D "))
 			.map((t) => t.substring(3));
+	}
+
+	/**
+	 * Returns an array containing all the files in the the provided path.
+	 * Returned paths are rooted at the root of the repo.
+	 */
+	public async getFiles(directory: string): Promise<string[]> {
+		const results = await this.exec(
+			`ls-files -co --exclude-standard --full-name -- ${directory}`,
+			`get files`,
+		);
+		return results
+			.split("\n")
+			.map((line) => line.trim())
+			.filter((file) => statSync(path.resolve(this.resolvedRoot, file)).isFile());
 	}
 
 	/**

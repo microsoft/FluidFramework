@@ -2,43 +2,48 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "node:assert";
-import fs from "node:fs";
-import path from "node:path";
 
-import execa from "execa";
+import { strict as assert } from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-private/stochastic-test-utils/test/utils";
-import {
+import execa from "execa";
+import { type Client, hasStashData } from "../clientLoading.js";
+import type {
 	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
-	defaultDDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-	DDSFuzzSuiteOptions,
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+	Synchronize,
+	TriggerRebase,
+} from "../ddsFuzzHarness.js";
+import {
+	defaultDDSFuzzSuiteOptions,
+	mixinAttach,
 	mixinClientSelection,
 	mixinNewClient,
+	mixinRebase,
 	mixinReconnect,
+	mixinStashedClient,
 	mixinSynchronization,
 	runTestForSeed,
-	Synchronize,
-	DDSFuzzHarnessEvents,
-	mixinRebase,
-	TriggerRebase,
-	mixinAttach,
-	mixinStashedClient,
-	type Client,
-	hasStashData,
-} from "../ddsFuzzHarness";
-import { Operation, SharedNothingFactory, baseModel, isNoopOp } from "./sharedNothing";
+} from "../ddsFuzzHarness.js";
+import { _dirname } from "./dirname.cjs";
+import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
+import { baseModel, isNoopOp } from "./sharedNothing.js";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
 
@@ -868,7 +873,7 @@ describe("DDS Fuzz Harness", () => {
 					"--silent",
 					"--",
 					"--reporter=json",
-					path.join(__dirname, `./ddsSuiteCases/${name}.js`),
+					path.join(_dirname, `./ddsSuiteCases/${name}.js`),
 				],
 				{
 					env: {
@@ -992,7 +997,7 @@ describe("DDS Fuzz Harness", () => {
 
 		describe("failure", () => {
 			let runResults: MochaReport;
-			const jsonDir = path.join(__dirname, "./ddsSuiteCases/failing-configuration");
+			const jsonDir = path.join(_dirname, "./ddsSuiteCases/failing-configuration");
 			before(async function () {
 				this.timeout(5000);
 				fs.rmSync(jsonDir, { force: true, recursive: true });

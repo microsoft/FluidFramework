@@ -5,7 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import type { SharedCell } from "@fluidframework/cell";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import type { SharedCounter } from "@fluidframework/counter";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import type { SharedMatrix } from "@fluidframework/matrix";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -13,14 +21,6 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedString } from "@fluidframework/sequence";
-import { IContainer } from "@fluidframework/container-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import type { SharedCell } from "@fluidframework/cell";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { SharedCounter } from "@fluidframework/counter";
-import type { SharedMatrix } from "@fluidframework/matrix";
 
 describeCompat(
 	"Op reentry and rebasing during pending batches",
@@ -49,7 +49,7 @@ describeCompat(
 		let provider: ITestObjectProvider;
 		let container: IContainer;
 		let dataObject: ITestFluidObject;
-		let sharedMap: SharedMap;
+		let sharedMap: ISharedMap;
 		let sharedString: SharedString;
 		let sharedDirectory: SharedDirectory;
 		let sharedCell: SharedCell;
@@ -67,7 +67,7 @@ describeCompat(
 			};
 			container = await provider.makeTestContainer(configWithFeatureGates);
 			dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			sharedMap = await dataObject.getSharedObject<SharedMap>("map");
+			sharedMap = await dataObject.getSharedObject<ISharedMap>("map");
 			sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
 			sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
 			sharedCell = await dataObject.getSharedObject<SharedCell>("sharedCell");

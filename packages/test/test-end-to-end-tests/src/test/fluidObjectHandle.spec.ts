@@ -4,20 +4,20 @@
  */
 
 import assert from "assert";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SharedMap } from "@fluidframework/map";
 import {
-	TestFluidObject,
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map";
+import {
 	ITestObjectProvider,
+	TestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -101,7 +101,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const sharedMapHandle = sharedMap.handle;
 
 		// The expected absolute path.
-		const absolutePath = `/default/${sharedMap.id}`;
+		const absolutePath = `/${firstContainerObject1._runtime.id}/${sharedMap.id}`;
 
 		// Verify that the local client's handle has the correct absolute path.
 		assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");
@@ -113,7 +113,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Get the handle in the remote client.
 		const remoteSharedMapHandle =
-			secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+			secondContainerObject1._root.get<IFluidHandle<ISharedMap>>("sharedMap");
 		assert(remoteSharedMapHandle);
 
 		// Verify that the remote client's handle has the correct absolute path.
@@ -153,7 +153,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 
 		// Get the handle in the remote client.
 		const remoteSharedMapHandle =
-			secondContainerObject1._root.get<IFluidHandle<SharedMap>>("sharedMap");
+			secondContainerObject1._root.get<IFluidHandle<ISharedMap>>("sharedMap");
 		assert(remoteSharedMapHandle);
 
 		// Verify that the remote client's handle has the correct absolute path.

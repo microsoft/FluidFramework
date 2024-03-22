@@ -18,21 +18,21 @@
  * Messages must match known structures when scrubbing for Fluid Preview.
  */
 
-import * as Validator from "jsonschema";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import * as Validator from "jsonschema";
 import {
 	attachContentsSchema,
 	chunkedOpContentsSchema,
 	joinContentsSchema,
 	joinDataSchema,
 	opContentsMapSchema,
-	opContentsSchema,
 	opContentsMergeTreeDeltaOpSchema,
 	opContentsMergeTreeGroupOpSchema,
 	opContentsRegisterCollectionSchema,
+	opContentsSchema,
 	proposeContentsSchema,
-} from "./messageSchema";
+} from "./messageSchema.js";
 
 enum TextType {
 	Generic,

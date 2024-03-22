@@ -8,26 +8,26 @@ import {
 	type BuildNode,
 	Change,
 	SharedTree as LegacySharedTree,
+	MigrationShimFactory,
 	StablePlace,
 	type TraitLabel,
-	MigrationShimFactory,
 } from "@fluid-experimental/tree";
-import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	MockDeltaConnection,
-	MockHandle,
-} from "@fluidframework/test-runtime-utils";
 import { CellFactory } from "@fluidframework/cell";
-import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
-import { SharedMatrixFactory, SharedMatrix } from "@fluidframework/matrix";
-import { SharedTree, SchemaFactory, ITree, TreeConfiguration } from "@fluidframework/tree";
-import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
-import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
+import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { DirectoryFactory, IDirectory, MapFactory } from "@fluidframework/map";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
+import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
+import { ReferenceType, SharedStringFactory } from "@fluidframework/sequence";
+import {
+	MockDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockHandle,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles
@@ -49,9 +49,8 @@ describe("DDS Handle Encoding", () => {
 	 * @returns The list of handles found in the given contents object
 	 */
 	function findAllHandles(contents: unknown) {
-		const envelope = { contents, address: "envelope" };
 		const handlesFound: string[] = [];
-		detectOutboundReferences(envelope, (from, to) => {
+		detectOutboundReferences("envelope", contents, (from, to) => {
 			handlesFound.push(to);
 		});
 		return handlesFound;

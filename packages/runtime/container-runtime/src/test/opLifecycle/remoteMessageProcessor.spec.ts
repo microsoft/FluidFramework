@@ -4,138 +4,189 @@
  */
 
 import { strict as assert } from "assert";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import type { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { ContainerMessageType } from "../../index.js";
 import {
-	IMessageProcessingResult,
+	type BatchMessage,
+	type IBatch,
+	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
 	RemoteMessageProcessor,
-} from "../../opLifecycle";
-import { ContainerMessageType } from "../..";
+} from "../../opLifecycle/index.js";
 
 describe("RemoteMessageProcessor", () => {
-	const stamp = (
-		message: ISequencedDocumentMessage,
-		value: string,
-	): ISequencedDocumentMessage => {
-		const newMessage = { ...message };
-		newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
-		(newMessage.metadata as { history?: string[] }).history ??= [];
-		(newMessage.metadata as { history: string[] }).history.push(value);
-		return newMessage;
-	};
-
-	const getMockSplitter = (): Partial<OpSplitter> => ({
-		processRemoteMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-			return {
-				message: stamp(message, "reconstruct"),
-				state: "Skipped",
-			};
-		},
-	});
-
-	const getMockDecompressor = (): Partial<OpDecompressor> => ({
-		processMessage(message: ISequencedDocumentMessage): IMessageProcessingResult {
-			return {
-				message: stamp(message, "decompress"),
-				state: "Skipped",
-			};
-		},
-	});
-
-	const getMessageProcessor = (
-		mockSpliter: Partial<OpSplitter> = getMockSplitter(),
-		mockDecompressor: Partial<OpDecompressor> = getMockDecompressor(),
-	): RemoteMessageProcessor =>
-		new RemoteMessageProcessor(
-			mockSpliter as OpSplitter,
-			mockDecompressor as OpDecompressor,
+	function getMessageProcessor(): RemoteMessageProcessor {
+		const logger = new MockLogger();
+		return new RemoteMessageProcessor(
+			new OpSplitter([], undefined, 1, 1, logger),
+			new OpDecompressor(logger),
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: Infinity,
 					reentrantBatchGroupingEnabled: false,
 				},
-				new MockLogger(),
+				logger,
 			),
 		);
+	}
 
-	it("Invokes internal processors in order", () => {
-		const messageProcessor = getMessageProcessor();
-		const message = {
-			contents: {
+	function getOutboundMessage(value: string, batchMetadata?: boolean): BatchMessage {
+		return {
+			type: ContainerMessageType.FluidDataStoreOp,
+			metadata:
+				batchMetadata === undefined
+					? undefined
+					: {
+							batch: batchMetadata,
+					  },
+			localOpMetadata: undefined,
+			referenceSequenceNumber: Infinity,
+			contents: JSON.stringify({
 				contents: {
-					key: "value",
+					key: value,
 				},
 				type: ContainerMessageType.FluidDataStoreOp,
-			},
-			clientId: "clientId",
-			type: MessageType.Operation,
-			metadata: { meta: "data" },
+			}),
 		};
-		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+	}
 
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
+	function getProcessedMessage(
+		value: string,
+		seqNum: number,
+		clientSeqNum: number,
+		batchMetadata?: boolean,
+	): ISequencedDocumentMessage {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		return {
+			type: ContainerMessageType.FluidDataStoreOp,
+			metadata:
+				batchMetadata === undefined
+					? undefined
+					: {
+							batch: batchMetadata,
+					  },
+			compression: undefined,
+			sequenceNumber: seqNum,
+			clientSequenceNumber: clientSeqNum,
+			referenceSequenceNumber: Infinity,
+			contents: {
+				key: value,
+			},
+		} as ISequencedDocumentMessage;
+	}
 
-		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
-			"decompress",
-			"reconstruct",
-		]);
-		assert.deepStrictEqual(result.contents, message.contents.contents);
+	const messageGenerationOptions = generatePairwiseOptions<{
+		/** chunking cannot happen without compression */
+		compressionAndChunking:
+			| {
+					compression: false;
+					chunking: false;
+			  }
+			| {
+					compression: true;
+					chunking: boolean;
+			  };
+		grouping: boolean;
+	}>({
+		compressionAndChunking: [
+			{ compression: false, chunking: false },
+			{ compression: true, chunking: false },
+			{ compression: true, chunking: true },
+		],
+		grouping: [true, false],
 	});
 
-	it("Invokes internal processors in order if the message is compressed and chunked", () => {
-		let decompressCalls = 0;
-		const messageProcessor = getMessageProcessor(
-			{
-				processRemoteMessage(
-					original: ISequencedDocumentMessage,
-				): IMessageProcessingResult {
-					return {
-						message: stamp(original, "reconstruct"),
-						state: "Processed",
-					};
-				},
-			},
-			{
-				processMessage(original: ISequencedDocumentMessage): IMessageProcessingResult {
-					return {
-						message: stamp(original, "decompress"),
-						state: decompressCalls++ % 2 === 0 ? "Skipped" : "Processed",
-					};
-				},
-			},
-		);
+	messageGenerationOptions.forEach((option) => {
+		it(`Correctly processes incoming messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
+			let batch: IBatch = {
+				contentSizeInBytes: 1,
+				referenceSequenceNumber: Infinity,
+				content: [
+					getOutboundMessage("a", true),
+					getOutboundMessage("b"),
+					getOutboundMessage("c"),
+					getOutboundMessage("d"),
+					getOutboundMessage("e", false),
+				],
+			};
 
-		const message = {
-			contents: {
-				contents: {
-					contents: {
-						key: "value",
+			const mockLogger = new MockLogger();
+			if (option.grouping) {
+				const groupingManager = new OpGroupingManager(
+					{
+						groupedBatchingEnabled: true,
+						opCountThreshold: 2,
+						reentrantBatchGroupingEnabled: false,
 					},
-				},
-				type: ContainerMessageType.FluidDataStoreOp,
-			},
-			clientId: "clientId",
-			type: MessageType.Operation,
-			metadata: { meta: "data" },
-		};
-		const documentMessage = message as ISequencedDocumentMessage;
-		const processResult = messageProcessor.process(documentMessage);
+					mockLogger,
+				);
+				batch = groupingManager.groupBatch(batch);
+			}
 
-		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
-		const result = processResult[0];
+			const outboundMessages: IBatchMessage[] = [];
+			if (option.compressionAndChunking.compression) {
+				const compressor = new OpCompressor(mockLogger);
+				batch = compressor.compressBatch(batch);
 
-		assert.deepStrictEqual((result.metadata as { history?: unknown }).history, [
-			"decompress",
-			"reconstruct",
-			"decompress",
-		]);
-		assert.deepStrictEqual(result.contents, message.contents.contents.contents);
+				if (option.compressionAndChunking.chunking) {
+					const splitter = new OpSplitter(
+						[],
+						(messages: IBatchMessage[], refSeqNum?: number) => {
+							outboundMessages.push(...messages);
+							return 0;
+						},
+						2,
+						Infinity,
+						mockLogger,
+					);
+					batch = splitter.splitFirstBatchMessage(batch);
+				}
+			}
+			let startSeqNum = outboundMessages.length + 1;
+			outboundMessages.push(...batch.content);
+
+			const messageProcessor = getMessageProcessor();
+			const actual: ISequencedDocumentMessage[] = [];
+			let seqNum = 1;
+			for (const message of outboundMessages) {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				const inboundMessage = {
+					type: MessageType.Operation,
+					contents: message.contents,
+					metadata: message.metadata,
+					compression: message.compression,
+					sequenceNumber: seqNum,
+					clientSequenceNumber: seqNum++,
+					referenceSequenceNumber: message.referenceSequenceNumber,
+				} as ISequencedDocumentMessage;
+
+				actual.push(...messageProcessor.process(inboundMessage));
+			}
+
+			const expected = option.grouping
+				? [
+						getProcessedMessage("a", startSeqNum, 1, true),
+						getProcessedMessage("b", startSeqNum, 2),
+						getProcessedMessage("c", startSeqNum, 3),
+						getProcessedMessage("d", startSeqNum, 4),
+						getProcessedMessage("e", startSeqNum, 5, false),
+				  ]
+				: [
+						getProcessedMessage("a", startSeqNum, startSeqNum++, true),
+						getProcessedMessage("b", startSeqNum, startSeqNum++),
+						getProcessedMessage("c", startSeqNum, startSeqNum++),
+						getProcessedMessage("d", startSeqNum, startSeqNum++),
+						getProcessedMessage("e", startSeqNum, startSeqNum, false),
+				  ];
+
+			assert.deepStrictEqual(actual, expected, "unexpected output");
+		});
 	});
 
 	it("Processes legacy string-content message", () => {
@@ -214,9 +265,7 @@ describe("RemoteMessageProcessor", () => {
 				sequenceNumber: 10,
 				clientSequenceNumber: 1,
 				compression: undefined,
-				metadata: {
-					history: ["decompress", "reconstruct"],
-				},
+				metadata: undefined,
 				contents: {
 					contents: "a",
 				},
@@ -226,9 +275,7 @@ describe("RemoteMessageProcessor", () => {
 				sequenceNumber: 10,
 				clientSequenceNumber: 2,
 				compression: undefined,
-				metadata: {
-					history: ["decompress", "reconstruct"],
-				},
+				metadata: undefined,
 				contents: {
 					contents: "b",
 				},

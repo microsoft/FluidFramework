@@ -4,10 +4,10 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { PropertyTreeInstantiationFactory, IPropertyTree } from "./dataObject";
+import { type IPropertyTree, PropertyTreeInstantiationFactory } from "./dataObject.js";
 
 /**
  * The data model for our application.

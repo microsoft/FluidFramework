@@ -11,6 +11,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"scripts": {
 		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
 		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",

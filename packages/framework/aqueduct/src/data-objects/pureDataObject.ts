@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import {
 	type IEvent,
 	type IFluidHandle,
@@ -13,11 +12,12 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { create404Response } from "@fluidframework/runtime-utils";
-import { type DataObjectTypes, type IDataObjectProps } from "./types";
+import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
+import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
 
 /**
  * This is a bare-bones base class that does basic setup and enables for factory on an initialize call.

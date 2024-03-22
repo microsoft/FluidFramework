@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -14,22 +14,26 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryCancellationToken,
 	ISummaryNackMessage,
-	neverCancelledSummaryToken,
 	SummarizerStopReason,
 	SummaryCollection,
+	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
-import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	DriverHeader,
+	IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	wrapDocumentServiceFactory,
-	waitForContainerConnection,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { wrapObjectAndOverride } from "../../mocking.js";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -304,10 +308,21 @@ describeCompat(
 				provider = getTestObjectProvider({ syncSummarizer: true });
 				// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
 				// time the summarizer client uploads a summary.
-				(provider as any)._documentServiceFactory = wrapDocumentServiceFactory(
-					provider.documentServiceFactory,
-					uploadSummaryCb,
-				);
+				(provider as any)._documentServiceFactory =
+					wrapObjectAndOverride<IDocumentServiceFactory>(
+						provider.documentServiceFactory,
+						{
+							createDocumentService: {
+								connectToStorage: {
+									uploadSummaryWithContext: (dss) => async (summary, context) => {
+										uploadSummaryCb(summary, context);
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+										return dss.uploadSummaryWithContext(summary, context);
+									},
+								},
+							},
+						},
+					);
 
 				mainContainer = await createContainer();
 				dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;

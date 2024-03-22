@@ -12,15 +12,15 @@ import {
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { printMessageStats } from "./fluidAnalyzeMessages";
+import { printMessageStats } from "./fluidAnalyzeMessages.js";
 import {
 	connectToWebSocket,
-	dumpMessages,
 	dumpMessageStats,
+	dumpMessages,
+	messageTypeFilter,
 	overWrite,
 	paramActualFormatting,
-	messageTypeFilter,
-} from "./fluidFetchArgs";
+} from "./fluidFetchArgs.js";
 
 function filenameFromIndex(index: number): string {
 	return index === 0 ? "" : index.toString(); // support old tools...

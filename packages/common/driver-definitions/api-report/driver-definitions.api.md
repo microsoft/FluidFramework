@@ -50,7 +50,7 @@ export const DriverErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @public (undocumented)
+// @public
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @alpha
@@ -125,7 +125,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(content: any, targetClientId?: string): void;
+    submitSignal: (content: string, targetClientId?: string) => void;
     version: string;
 }
 

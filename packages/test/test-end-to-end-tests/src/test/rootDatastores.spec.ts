@@ -4,26 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
-	ContainerRuntime,
+	DefaultSummaryConfiguration,
 	IAckedSummary,
 	SummaryCollection,
-	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { IDataStore } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IDataStore } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -295,18 +294,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult3, "Success");
 
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject1, alias));
-		});
-
-		it("Sending a bad alias message returns error", async () => {
-			try {
-				(runtimeOf(dataObject1) as ContainerRuntime).submitDataStoreAliasOp(
-					{ id: alias },
-					undefined,
-				);
-				assert.fail("Expected exception from sending invalid alias");
-			} catch (err) {
-				assert.equal((err as Error).message, "malformedDataStoreAliasMessage");
-			}
 		});
 
 		it("Assign multiple data stores to the same alias, first write wins, different containers", async function () {
