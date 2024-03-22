@@ -10,23 +10,23 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import {
-	SummarizerStopReason,
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
+	SummarizerStopReason,
 } from "@fluidframework/container-runtime";
-import {
-	createSummarizerFromFactory,
-	summarizeNow,
-	type ITestObjectProvider,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils";
 import type { ISnapshot } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	createTestConfigProvider,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
 const interceptResult = <T>(
 	parent: any,

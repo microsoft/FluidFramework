@@ -5,6 +5,6 @@
 		"enabled": true
 	},
 	"formatter": {
-		"enabled": true
-	}
+		"enabled": true,
+	},
 }

@@ -1040,16 +1040,17 @@ function* relevantRemovedRootsFromFields(
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function updateRefreshers(
-	change: TaggedChange<ModularChangeset>,
+	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
-		if (change.change.builds !== undefined) {
+		if (change.builds !== undefined) {
+			const major = root.major === revision ? undefined : root.major;
 			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			const original = tryGetFromNestedMap(change.builds, major, root.minor);
 			if (original !== undefined) {
 				continue;
 			}
@@ -1060,8 +1061,7 @@ export function updateRefreshers(
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
-	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } =
-		change.change;
+	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } = change;
 	return makeModularChangeset(
 		fieldChanges,
 		maxId,
@@ -1496,9 +1496,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
-		maxId: ChangesetLocalId = brand(-1),
 	): void {
-		const modularChange = this.buildChange(field, fieldKind, change, maxId);
+		const modularChange = this.buildChange(field, fieldKind, change);
 		this.applyChange(modularChange);
 	}
 
@@ -1513,21 +1512,17 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
-		maxId: ChangesetLocalId = brand(-1),
 	): ModularChangeset {
 		const changeMap = this.buildChangeMap(field, fieldKind, change);
-		return makeModularChangeset(changeMap, maxId);
+		return makeModularChangeset(changeMap, this.idAllocator.getMaxId());
 	}
 
-	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
-		const modularChange = this.buildChanges(changes, maxId);
+	public submitChanges(changes: EditDescription[]) {
+		const modularChange = this.buildChanges(changes);
 		this.applyChange(modularChange);
 	}
 
-	public buildChanges(
-		changes: EditDescription[],
-		maxId: ChangesetLocalId = brand(-1),
-	): ModularChangeset {
+	public buildChanges(changes: EditDescription[]): ModularChangeset {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
@@ -1544,6 +1539,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
+
+		const maxId: ChangesetLocalId = brand(this.idAllocator.getMaxId());
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}
