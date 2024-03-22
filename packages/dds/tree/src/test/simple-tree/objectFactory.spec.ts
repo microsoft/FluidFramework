@@ -209,10 +209,12 @@ describe("SharedTreeObject factories", () => {
 		getFlexNode(root).on("beforeChange", () => {
 			readData();
 		});
+		getFlexNode(root).on("afterChange", () => {
+			readData();
+		});
 		Tree.on(root, "afterDeepChange", () => {
 			readData();
 		});
-		// TODO: Fix that this causes `root.child = ` to crash. Issue is likely that afterShallowChange can run before onNextChange causing issues.
 		// TODO: Add more targeted tests for this kind of thing, and/or improved validation that detects this kind of issue better, and/or make the hydration more robust.
 		Tree.on(root, "afterShallowChange", () => {
 			readData();

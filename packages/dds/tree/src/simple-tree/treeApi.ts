@@ -187,13 +187,13 @@ export interface TreeChangeEvents {
 	 * if a node is moved, inserted or removed, events are fired for the parent of the node, not the node itself.
 	 *
 	 * These events occur whenever the apparent contents of the node instance change, regardless of what caused the change.
-	 * For example these events will when the local client reassigns a child, when part of a remote edit is applied to the node,
-	 * or when the node has to be updated due to resolution of a merge conflict
+	 * For example these events will fire when the local client reassigns a child, when part of a remote edit is applied
+	 * to the node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 *
 	 * For remote edits these events are not guaranteed to occur in the same order or quantity that the edits were originally made:
-	 * While batch of edits will get events for each change, and will as a whole update the tree to the appropriate end state,
-	 * no guarantees are made about the intermediate states other than the tree being in schema.
+	 * While a batch of edits will get events for each change, and will as a whole update the tree to the appropriate end
+	 * state, no guarantees are made about the intermediate states other than the tree being in schema.
 	 *
 	 * @privateRemarks
 	 * Triggered by {@link AnchorEvents.childrenChanged}.
@@ -201,9 +201,12 @@ export interface TreeChangeEvents {
 	afterShallowChange(): void;
 
 	/**
-	 * Raised after a batch of changes is applied to a subtree.
+	 * Raised on a node after a batch of changes is applied to the subtree (including itself) rooted at the node.
+	 * I.e., after changes are applied to the node's fields and/or the fields of one or more of its descendants.
+	 *
 	 * @remarks
-	 * Occurs after more specific {@link TreeChangeEvents.afterShallowChange} events were fired for this node or its decedents.
+	 * Occurs after more specific {@link TreeChangeEvents.afterShallowChange} events were fired for this node or its
+	 * descendants.
 	 *
 	 * @privateRemarks
 	 * Triggered by {@link AnchorEvents.afterChange}

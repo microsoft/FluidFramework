@@ -169,7 +169,7 @@ describe("schemaFactory", () => {
 			assert.equal(root.y, 2);
 
 			const values: number[] = [];
-			Tree.on(root, "afterDeepChange", () => {
+			Tree.on(root, "afterShallowChange", () => {
 				values.push(root.x);
 			});
 			root.x = 5;
@@ -205,7 +205,7 @@ describe("schemaFactory", () => {
 			assert.equal(root.x, 1);
 
 			const values: number[] = [];
-			Tree.on(root, "afterDeepChange", () => {
+			Tree.on(root, "afterShallowChange", () => {
 				values.push(root.x);
 			});
 
@@ -624,6 +624,7 @@ describe("schemaFactory", () => {
 			});
 
 			// Ensure that the proxies can be read during the change, as well as after
+			Tree.on(view.root, "afterShallowChange", () => validate(view, nodes));
 			Tree.on(view.root, "afterDeepChange", () => validate(view, nodes));
 			view.events.on("afterBatch", () => validate(view, nodes));
 			view.root.root = parent;
