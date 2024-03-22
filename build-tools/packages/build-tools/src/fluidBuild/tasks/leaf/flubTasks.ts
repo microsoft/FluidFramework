@@ -58,7 +58,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 					packageJson: Array.from(this.node.buildContext.repoPackageMap.values()).map(
 						(pkg) => pkg.packageJson,
 					),
-			  })
+				})
 			: undefined;
 	}
 }

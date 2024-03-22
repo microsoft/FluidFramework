@@ -106,8 +106,8 @@ export abstract class ReleaseReportBaseCommand<
 		return date === undefined
 			? false
 			: this.numberBusinessDaysToConsiderRecent === undefined
-			  ? true
-			  : differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
+				? true
+				: differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
 	}
 
 	/**
@@ -402,10 +402,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			flags.highest === true
 				? "version"
 				: flags.mostRecent === true
-				  ? "date"
-				  : flags.interactive
-					  ? "interactive"
-					  : this.defaultMode;
+					? "date"
+					: flags.interactive
+						? "interactive"
+						: this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
 		this.releaseGroupName = flags.releaseGroup;
@@ -672,7 +672,7 @@ async function writeReport(
 	const version =
 		releaseGroup === undefined
 			? // Use container-runtime as a proxy for the client release group.
-			  report["@fluidframework/container-runtime"].version
+				report["@fluidframework/container-runtime"].version
 			: context.getVersion(releaseGroup);
 
 	const reportName = generateReportFileName(kind, version, releaseGroup);
