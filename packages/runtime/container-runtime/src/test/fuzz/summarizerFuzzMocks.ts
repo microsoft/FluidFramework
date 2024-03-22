@@ -92,7 +92,8 @@ export class MockContainerRuntimeForSummarizer
 		runtimeOptions: IMockContainerRuntimeForSummarizerOptions = {},
 		overrides?: { minimumSequenceNumber?: number },
 	) {
-		super(dataStoreRuntime, factory, runtimeOptions, overrides);
+		// trackRemoteOps is needed for replaying all ops on creating new ContainerRuntime
+		super(dataStoreRuntime, factory, runtimeOptions, { ...overrides, trackRemoteOps: true });
 
 		this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			this.emit("op", message);

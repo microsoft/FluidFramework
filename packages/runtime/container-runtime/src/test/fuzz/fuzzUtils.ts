@@ -91,28 +91,31 @@ function makeReducer(): AsyncReducer<SummarizerOperation, SummarizerFuzzTestStat
 			state.containerRuntimeFactory.processAllMessages();
 		};
 
-	const newSummarizer = (state: SummarizerFuzzTestState) => {
-		state.containerRuntime.disposeFn();
+	const createNewSummarizer = async (state: SummarizerFuzzTestState) => {
+		const oldRuntime = state.containerRuntime;
+		oldRuntime.disposeFn();
 		state.containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
 			new MockFluidDataStoreRuntime(),
 		);
+		await state.containerRuntime.initializeWithStashedOps(oldRuntime);
 	};
 
 	const reducer = combineReducersAsync<SummarizerOperation, SummarizerFuzzTestState>({
 		reconnect: async (state: SummarizerFuzzTestState, _op: Reconnect) => {
 			state.containerRuntime.connected = false;
 			state.containerRuntime.connected = true;
-			newSummarizer(state);
+			await createNewSummarizer(state);
 		},
 		newSummarizer: async (state: SummarizerFuzzTestState, _op: NewSummarizer) => {
-			newSummarizer(state);
+			await createNewSummarizer(state);
 		},
 		summaryNack: async (state: SummarizerFuzzTestState, _op: SummaryNack) => {
 			state.containerRuntime.prepareSummaryNack();
 			await state.containerRuntime.summarize();
 		},
 		submitOp: async (state: SummarizerFuzzTestState, _op: SubmitOp) => {
-			// TODO AB#6954: Need to move things around package-wise since DDS Factories are in different packages
+			// Send arbitrary runtime op
+			state.containerRuntime.submit({}, {});
 		},
 	});
 
