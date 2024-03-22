@@ -9,11 +9,15 @@ export {
 	DriverApi,
 	DriverApiType,
 	FluidTestDriverConfig,
-} from "./factory";
-export { LocalDriverApi, LocalDriverApiType } from "./localDriverApi";
-export { LocalServerTestDriver } from "./localServerTestDriver";
-export { generateOdspHostStoragePolicy, OdspDriverApi, OdspDriverApiType } from "./odspDriverApi";
-export { assertOdspEndpoint, OdspTestDriver } from "./odspTestDriver";
-export { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi";
-export { assertRouterliciousEndpoint, RouterliciousTestDriver } from "./routerliciousTestDriver";
-export { TinyliciousTestDriver } from "./tinyliciousTestDriver";
+} from "./factory.js";
+export { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
+export { LocalServerTestDriver } from "./localServerTestDriver.js";
+export {
+	generateOdspHostStoragePolicy,
+	OdspDriverApi,
+	OdspDriverApiType,
+} from "./odspDriverApi.js";
+export { assertOdspEndpoint, OdspTestDriver } from "./odspTestDriver.js";
+export { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
+export { assertRouterliciousEndpoint, RouterliciousTestDriver } from "./routerliciousTestDriver.js";
+export { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";

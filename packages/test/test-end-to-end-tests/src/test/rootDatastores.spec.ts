@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
+	DefaultSummaryConfiguration,
 	IAckedSummary,
 	SummaryCollection,
-	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { IDataStore } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IDataStore } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

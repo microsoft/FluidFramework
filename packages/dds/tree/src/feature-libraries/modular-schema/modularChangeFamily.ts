@@ -1040,16 +1040,17 @@ function* relevantRemovedRootsFromFields(
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function updateRefreshers(
-	change: TaggedChange<ModularChangeset>,
+	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
-		if (change.change.builds !== undefined) {
+		if (change.builds !== undefined) {
+			const major = root.major === revision ? undefined : root.major;
 			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			const original = tryGetFromNestedMap(change.builds, major, root.minor);
 			if (original !== undefined) {
 				continue;
 			}
@@ -1060,8 +1061,7 @@ export function updateRefreshers(
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
-	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } =
-		change.change;
+	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } = change;
 	return makeModularChangeset(
 		fieldChanges,
 		maxId,

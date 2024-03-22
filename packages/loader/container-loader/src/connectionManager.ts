@@ -1069,7 +1069,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		if (this.connection !== undefined) {
 			this.connection.submitSignal(content, targetClientId);
 		} else {
