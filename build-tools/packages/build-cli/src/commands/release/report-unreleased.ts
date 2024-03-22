@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import fetch from "node-fetch";
 import * as fs from "node:fs/promises";
-import { Flags } from "@oclif/core";
+import { isInternalVersionRange } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import fetch from "node-fetch";
+
 import { BaseCommand } from "../../base";
 import { PackageVersionList } from "../../library";
-import { isInternalVersionRange } from "@fluid-tools/version-tools";
 
 // Define the interface for build details
 interface IBuildDetails {

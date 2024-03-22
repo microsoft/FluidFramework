@@ -10,7 +10,7 @@ import { table } from "table";
 import { BaseCommand } from "../base";
 import { releaseGroupFlag } from "../flags";
 // eslint-disable-next-line import/no-deprecated
-import { PackageVersionList, MonoRepoKind, isMonoRepoKind } from "../library";
+import { MonoRepoKind, PackageVersionList, isMonoRepoKind } from "../library";
 
 /**
  * The root `info` command.

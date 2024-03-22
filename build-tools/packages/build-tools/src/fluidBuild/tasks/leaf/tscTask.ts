@@ -6,13 +6,12 @@
 import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
-import * as tsTypes from "typescript";
-import isEqual from "lodash.isequal";
-
 import { readFileSync } from "fs-extra";
-import { existsSync, readFileAsync } from "../../../common/utils";
+import isEqual from "lodash.isequal";
+import * as tsTypes from "typescript";
 import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
-import { getTscUtils, TscUtil } from "../../../common/tscUtils";
+import { TscUtil, getTscUtils } from "../../../common/tscUtils";
+import { existsSync, readFileAsync } from "../../../common/utils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {

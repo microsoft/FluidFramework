@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { MonoRepo, Logger, Package } from "@fluidframework/build-tools";
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
@@ -12,8 +11,8 @@ import {
 	bumpVersionScheme,
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
+import { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
 import { Context } from "./context";
-
 import { setVersion } from "./package";
 
 /**

@@ -4,10 +4,11 @@
  */
 
 import path from "path";
+import findUp from "find-up";
+
+import { getResolvedFluidRoot } from "../../../common/fluidUtils";
 import { GitRepo } from "../../../common/gitRepo";
 import { LeafWithFileStatDoneFileTask } from "./leafTask";
-import { getResolvedFluidRoot } from "../../../common/fluidUtils";
-import findUp from "find-up";
 
 export class BiomeTask extends LeafWithFileStatDoneFileTask {
 	private repoRoot: string | undefined;

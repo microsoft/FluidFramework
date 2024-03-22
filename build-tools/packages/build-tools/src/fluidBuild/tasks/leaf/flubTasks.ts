@@ -4,10 +4,11 @@
  */
 
 import { existsSync } from "fs";
-import { LeafWithDoneFileTask } from "./leafTask";
 import path from "path";
-import { readFileAsync } from "../../../common/utils";
+
 import { GitRepo } from "../../../common/gitRepo";
+import { readFileAsync } from "../../../common/utils";
+import { LeafWithDoneFileTask } from "./leafTask";
 
 export class FlubListTask extends LeafWithDoneFileTask {
 	private getResourceGroup() {

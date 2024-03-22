@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
+import registerDebug from "debug";
 import detectIndent from "detect-indent";
-import * as fs from "fs";
 import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
-import * as path from "path";
 import sortPackageJson from "sort-package-json";
-
-import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest";
-
+import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
@@ -27,7 +26,6 @@ import {
 	rimrafWithErrorAsync,
 } from "./utils";
 
-import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
 const { log, errorLog: error } = defaultLogger;

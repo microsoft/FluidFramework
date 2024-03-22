@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
 import { strict as assert } from "node:assert";
+import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";

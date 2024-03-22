@@ -13,10 +13,10 @@ import sortPackageJson from "sort-package-json";
 
 import {
 	PackageJson,
-	updatePackageJsonFile,
-	loadFluidBuildConfig,
 	PackageNamePolicyConfig,
 	ScriptRequirement,
+	loadFluidBuildConfig,
+	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import { Handler, readFile, writeFile } from "./common";
 

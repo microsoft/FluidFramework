@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import chai, { assert, expect } from "chai";
-
+import path from "node:path";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";
 
 import {
 	AllPackagesSelectionCriteria,
-	filterPackages,
 	PackageFilterOptions,
 	PackageSelectionCriteria,
+	filterPackages,
 	selectAndFilterPackages,
 } from "../src/filter";
 import { Context } from "../src/library";
-import path from "path";
 
 chai.use(assertArrays);
 

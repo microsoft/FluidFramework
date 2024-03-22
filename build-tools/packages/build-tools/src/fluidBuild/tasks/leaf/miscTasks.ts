@@ -4,12 +4,12 @@
  */
 
 import * as path from "path";
+import { readdir, stat } from "fs/promises";
+import picomatch from "picomatch";
 
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
-import picomatch from "picomatch";
-import { readdir, stat } from "fs/promises";
 
 export class EchoTask extends LeafTask {
 	protected get isIncremental() {

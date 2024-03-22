@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
 import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { expect } from "chai";
+
 import { FeedsForPackages } from "../../src/commands/list";
 import { Context } from "../../src/library";
 

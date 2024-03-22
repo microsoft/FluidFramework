@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Package } from "@fluidframework/build-tools";
-import { ux, Command, Flags } from "@oclif/core";
-import async from "async";
 import { strict as assert } from "node:assert";
+import { Package } from "@fluidframework/build-tools";
+import { Command, Flags, ux } from "@oclif/core";
+import async from "async";
 
 import { BaseCommand } from "./base";
 import {

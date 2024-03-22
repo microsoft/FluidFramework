@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Logger, MonoRepo, Package, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { strict as assert } from "node:assert";
+import path from "node:path";
 import {
 	InterdependencyRange,
 	ReleaseVersion,
@@ -15,8 +16,8 @@ import {
 	isRangeOperator,
 	isWorkspaceRange,
 } from "@fluid-tools/version-tools";
+import { Logger, MonoRepo, Package, updatePackageJsonFile } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "node:assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJson, readJsonSync, writeFile } from "fs-extra";
@@ -24,12 +25,8 @@ import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-import path from "node:path";
 import * as semver from "semver";
 
-import { DependencyUpdateType } from "./bump";
-import { zip } from "./collections";
-import { indentString } from "./text";
 import {
 	AllPackagesSelectionCriteria,
 	PackageSelectionCriteria,
@@ -37,7 +34,10 @@ import {
 	selectAndFilterPackages,
 } from "../filter";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
+import { DependencyUpdateType } from "./bump";
+import { zip } from "./collections";
 import { Context, VersionDetails } from "./context";
+import { indentString } from "./text";
 
 /**
  * An object that maps package names to version strings or range strings.

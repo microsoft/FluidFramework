@@ -7,7 +7,7 @@ import { StringBuilder } from "@rushstack/node-core-library";
 import chalk from "chalk";
 
 // eslint-disable-next-line import/no-deprecated
-import { indentString, MonoRepoKind } from "./library";
+import { MonoRepoKind, indentString } from "./library";
 import { CommandLogger } from "./logging";
 import { ReleaseGroup, ReleasePackage } from "./releaseGroups";
 

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
 import globby from "globby";
 import matter from "gray-matter";
-import path from "node:path";
 
 import { ReleasePackage } from "../releaseGroups";
 import { Repository } from "./git";

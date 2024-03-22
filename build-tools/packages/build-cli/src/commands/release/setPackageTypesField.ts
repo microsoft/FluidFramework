@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Flags } from "@oclif/core";
-import { Package, updatePackageJsonFile, PackageJson } from "@fluidframework/build-tools";
-import { PackageCommand } from "../../BasePackageCommand";
-import { ExtractorConfig } from "@microsoft/api-extractor";
-import { CommandLogger } from "../../logging";
-import path from "node:path";
 import { strict as assert } from "node:assert";
+import path from "node:path";
+import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { ExtractorConfig } from "@microsoft/api-extractor";
+import { Flags } from "@oclif/core";
+
+import { PackageCommand } from "../../BasePackageCommand";
+import { CommandLogger } from "../../logging";
 
 /**
  * Represents a list of package categorized into two arrays

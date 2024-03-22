@@ -3,11 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import * as assert from "assert";
 import { AsyncPriorityQueue } from "async";
 import chalk from "chalk";
+import registerDebug from "debug";
 import * as semver from "semver";
-
 import { FileHashCache } from "../common/fileHashCache";
+import {
+	TaskDefinition,
+	TaskDefinitions,
+	TaskDefinitionsOnDisk,
+	getDefaultTaskDefinition,
+	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
+} from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
 import { Package } from "../common/npmPackage";
 import { Timer } from "../common/timer";
@@ -15,16 +24,6 @@ import { options } from "./options";
 import { Task, TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { WorkerPool } from "./tasks/workers/workerPool";
-import * as assert from "assert";
-import {
-	TaskDefinitions,
-	TaskDefinitionsOnDisk,
-	TaskDefinition,
-	getTaskDefinitions,
-	normalizeGlobalTaskDefinitions,
-	getDefaultTaskDefinition,
-} from "../common/fluidTaskDefinitions";
-import registerDebug from "debug";
 
 const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
