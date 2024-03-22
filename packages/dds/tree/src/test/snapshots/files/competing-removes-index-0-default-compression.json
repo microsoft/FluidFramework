@@ -19,6 +19,7 @@
                       "change": [
                         {
                           "data": {
+                            "maxId": 0,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
@@ -46,6 +47,7 @@
                       "change": [
                         {
                           "data": {
+                            "maxId": 0,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
@@ -79,6 +81,7 @@
                       "change": [
                         {
                           "data": {
+                            "maxId": 0,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
@@ -119,6 +122,7 @@
                             "change": [
                               {
                                 "data": {
+                                  "maxId": 0,
                                   "changes": [
                                     {
                                       "fieldKey": "rootFieldKey",
@@ -153,6 +157,7 @@
                             "change": [
                               {
                                 "data": {
+                                  "maxId": 0,
                                   "changes": [
                                     {
                                       "fieldKey": "rootFieldKey",
