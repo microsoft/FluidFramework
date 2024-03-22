@@ -160,6 +160,7 @@ async function updateImports(
 					log.warning(
 						`Found a default import (not yet implemented): ${defaultImport.getText().trim()}`,
 					);
+					continue;
 				}
 				const namedImports = importDeclaration.getNamedImports();
 				const isTypeOnly = importDeclaration.isTypeOnly();
