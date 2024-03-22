@@ -49,13 +49,12 @@ import type { IThrottler } from "../../throttler.js";
 export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRuntimeFactoryForReconnection {
 	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
-		overrides?: { minimumSequenceNumber?: number },
+		_?: { minimumSequenceNumber?: number },
 	): MockContainerRuntimeForSummarizer {
 		const containerRuntime = new MockContainerRuntimeForSummarizer(
 			dataStoreRuntime,
 			this,
 			this.runtimeOptions,
-			overrides,
 		);
 		this.runtimes.add(containerRuntime);
 		return containerRuntime;
@@ -90,10 +89,9 @@ export class MockContainerRuntimeForSummarizer
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForSummarizer,
 		runtimeOptions: IMockContainerRuntimeForSummarizerOptions = {},
-		overrides?: { minimumSequenceNumber?: number },
 	) {
 		// trackRemoteOps is needed for replaying all ops on creating new ContainerRuntime
-		super(dataStoreRuntime, factory, runtimeOptions, { ...overrides, trackRemoteOps: true });
+		super(dataStoreRuntime, factory, runtimeOptions, { trackRemoteOps: true });
 
 		this.deltaManager.on("op", (message: ISequencedDocumentMessage) => {
 			this.emit("op", message);

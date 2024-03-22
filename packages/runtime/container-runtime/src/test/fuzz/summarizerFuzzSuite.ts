@@ -224,11 +224,13 @@ async function runTestForSeed(
 		saveInfo,
 	);
 
-	finalState.containerRuntime.disposeFn();
-	finalState.containerRuntime = finalState.containerRuntimeFactory.createContainerRuntime(
+	const oldRuntime = finalState.containerRuntime;
+	oldRuntime.disposeFn();
+	const newRuntime = containerRuntimeFactory.createContainerRuntime(
 		new MockFluidDataStoreRuntime(),
 	);
-	await finalState.containerRuntime.summarize();
+	await newRuntime.initializeWithStashedOps(oldRuntime);
+	await newRuntime.summarize();
 
 	options.emitter.emit("testEnd", finalState);
 
