@@ -84,7 +84,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
 		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "afterDeepChange", () => {
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "afterShallowChange", () => {
 			this.emit("quantityChanged");
 		});
 	}
