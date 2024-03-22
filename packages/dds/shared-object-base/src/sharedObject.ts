@@ -794,7 +794,7 @@ export interface ISharedObjectKind<TSharedObject> {
 	 * @privateRemarks
 	 * TODO:
 	 * Many tests use this and can't use {@link ISharedObjectKind.create}.
-	 * The docs should make it clear why thats ok, and why {@link ISharedObjectKind.create} isn't in such a way that when reading non app code (like tests in this package)
+	 * The docs should make it clear why that's ok, and why {@link ISharedObjectKind.create} isn't in such a way that when reading non app code (like tests in this package)
 	 * someone can tell if the wrong one is being used without running it and seeing if it works.
 	 */
 	getFactory(): IChannelFactory<TSharedObject>;
