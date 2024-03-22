@@ -107,6 +107,7 @@ export {
 	DocumentSchemaValueType,
 	DocumentsSchemaController,
 	IDocumentSchemaChangeMessage,
+	IDocumentSchemaFeatures,
 } from "./documentSchema.js";
 export { getFailMessage, RetriableSummaryError, SummarizeReason } from "./summaryGenerator.js";
 export {

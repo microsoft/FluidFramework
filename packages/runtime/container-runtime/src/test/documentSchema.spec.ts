@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { DocumentsSchemaController, type IDocumentSchemaCurrent } from "../summary/index.js";
+import {
+	DocumentsSchemaController,
+	type IDocumentSchemaCurrent,
+	type IDocumentSchemaFeatures,
+} from "../summary/index.js";
 
 function boolToProp(b: boolean) {
 	return b ? true : undefined;
@@ -21,14 +25,18 @@ describe("Runtime", () => {
 		},
 	};
 
+	const features: IDocumentSchemaFeatures = {
+		explicitSchemaControl: true,
+		compressionLz4: true,
+		opGroupingEnabled: false,
+		idCompressorMode: "delayed",
+	};
+
 	function createController(config: unknown) {
 		return new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			false, // existing,
 			config as IDocumentSchemaCurrent, // old schema,
-			true, // lz4
-			"delayed", // idCompressionMode
-			false, // groupedBatching,
+			features,
 			() => {}, // onSchemaChange
 		);
 	}
@@ -109,12 +117,9 @@ describe("Runtime", () => {
 
 	function testSimpleCases(explicitSchemaControl: boolean, existing: boolean) {
 		const controller = new DocumentsSchemaController(
-			explicitSchemaControl,
 			existing, // existing,
 			undefined, // old schema,
-			true, // lz4
-			"delayed", // idCompressionMode
-			false, // groupedBatching,
+			{ ...features, explicitSchemaControl },
 			() => assert(false, "no schema changes!"), // onSchemaChange
 		);
 
@@ -207,12 +212,9 @@ describe("Runtime", () => {
 
 	function testExistingDocNoChangesInSchema(schema: IDocumentSchemaCurrent) {
 		const controller = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			schema, // old schema,
-			true, // lz4
-			"delayed", // idCompressionMode
-			false, // groupedBatching,
+			features,
 			() => {}, // onSchemaChange
 		);
 
@@ -232,12 +234,9 @@ describe("Runtime", () => {
 
 	it("Existing document, changes required; race conditions", () => {
 		const controller = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			validConfig, // old schema,
-			true, // lz4
-			"delayed", // idCompressionMode
-			true, // groupedBatching,
+			{ ...features, opGroupingEnabled: true },
 			() => {}, // onSchemaChange
 		);
 
@@ -265,12 +264,9 @@ describe("Runtime", () => {
 		assert(schema.refSeq === 200);
 
 		const controller2 = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			schema, // old schema,
-			false, // lz4
-			undefined, // idCompressionMode
-			false, // groupedBatching,
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {}, // onSchemaChange
 		);
 
@@ -321,12 +317,9 @@ describe("Runtime", () => {
 		 * There should be no ops sent.
 		 */
 		const controller = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			undefined, // old schema,
-			false, // lz4
-			undefined, // idCompressionMode
-			false, // groupedBatching,
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
@@ -341,12 +334,9 @@ describe("Runtime", () => {
 		 */
 		const newSchema = controller.summarizeDocumentSchema(100);
 		const controller2 = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			newSchema, // old schema,
-			false, // lz4
-			undefined, // idCompressionMode
-			false, // groupedBatching,
+			{ ...features, idCompressorMode: undefined, compressionLz4: false },
 			() => {
 				assert(false, "no changes!");
 			}, // onSchemaChange
@@ -367,12 +357,9 @@ describe("Runtime", () => {
 		 */
 		let schemaChanged = false;
 		const controller3 = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			newSchema, // old schema,
-			false, // lz4
-			"on", // idCompressionMode
-			false, // groupedBatching,
+			{ ...features, idCompressorMode: "on", compressionLz4: false },
 			() => {
 				schemaChanged = true;
 			}, // onSchemaChange
@@ -408,12 +395,14 @@ describe("Runtime", () => {
 		 */
 		schemaChanged = false;
 		const controller4 = new DocumentsSchemaController(
-			true, // explicitSchemaControl
 			true, // existing,
 			newSchema, // old schema,
-			false, // lz4
-			undefined, // idCompressionMode
-			true, // groupedBatching,
+			{
+				...features,
+				idCompressorMode: undefined,
+				compressionLz4: false,
+				opGroupingEnabled: true,
+			},
 			() => (schemaChanged = true), // onSchemaChange
 		);
 		controller4.processDocumentSchemaOp(

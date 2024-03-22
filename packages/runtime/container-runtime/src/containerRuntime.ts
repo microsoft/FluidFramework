@@ -938,15 +938,17 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
-		const groupedBatchingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
+		const opGroupingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
 
 		const documentSchemaController = new DocumentsSchemaController(
-			explicitSchemaControl,
 			existing,
 			metadata?.documentSchema,
-			compressionLz4,
-			idCompressorMode,
-			groupedBatchingEnabled,
+			{
+				explicitSchemaControl,
+				compressionLz4,
+				idCompressorMode,
+				opGroupingEnabled,
+			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
 			},

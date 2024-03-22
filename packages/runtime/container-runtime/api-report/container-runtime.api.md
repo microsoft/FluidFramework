@@ -254,9 +254,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get documentSchema(): {
         explicitSchemaControl?: true | undefined;
+        compressionLz4?: true | undefined;
         idCompressorMode?: IdCompressorMode;
         opGroupingEnabled?: true | undefined;
-        compressionLz4?: true | undefined;
     };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
@@ -410,7 +410,7 @@ export type DocumentSchemaValueType = string | true | number | undefined;
 
 // @alpha
 export class DocumentsSchemaController {
-    constructor(explicitSchemaControl: boolean, existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, compressionLz4: boolean, idCompressorMode: IdCompressorMode, groupedBatchingEnabled: boolean, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     // (undocumented)
     onDisconnect(): void;
     // (undocumented)
@@ -760,12 +760,21 @@ export type IDocumentSchemaCurrent = {
     version: 1;
     refSeq: number;
     runtime: {
-        explicitSchemaControl?: true;
-        idCompressorMode?: IdCompressorMode;
-        opGroupingEnabled?: true;
-        compressionLz4?: true;
+        [P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean ? true : IDocumentSchemaFeatures[P];
     };
 };
+
+// @alpha
+export interface IDocumentSchemaFeatures {
+    // (undocumented)
+    compressionLz4: boolean;
+    // (undocumented)
+    explicitSchemaControl: boolean;
+    // (undocumented)
+    idCompressorMode: IdCompressorMode;
+    // (undocumented)
+    opGroupingEnabled: boolean;
+}
 
 // @alpha
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {

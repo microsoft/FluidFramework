@@ -77,6 +77,24 @@ export interface IDocumentSchema {
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
 /**
+ * Settings that this session would like to have, based on options and feature gates.
+ *
+ * WARNING: This type is used to infer IDocumentSchemaCurrent type!
+ * Any changes here (including renaming of properties) are potentially changing document format and should be considered carefully!
+ *
+ * @alpha
+ */
+export interface IDocumentSchemaFeatures {
+	// Tells if client uses legacy behavior of changing schema.
+	// - Legacy behavior - changing schema without leveraging schema change ops.
+	// - New behavior - changes in schema require ops and take into affect with delay.
+	explicitSchemaControl: boolean;
+	compressionLz4: boolean;
+	idCompressorMode: IdCompressorMode;
+	opGroupingEnabled: boolean;
+}
+
+/**
  * Current version known properties that define document schema
  * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
  * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
@@ -95,17 +113,9 @@ export type IDocumentSchemaCurrent = {
 	refSeq: number;
 
 	runtime: {
-		// Tells if client uses legacy behavior of changing schema.
-		// - Legacy behavior - changing schema without leveraging schema change ops.
-		// - New behavior - changes in schema require ops and take into affect with delay.
-		explicitSchemaControl?: true;
-
-		// Should any of IGCRuntimeOptions be here?
-		// Should sessionExpiryTimeoutMs be here?
-
-		idCompressorMode?: IdCompressorMode;
-		opGroupingEnabled?: true;
-		compressionLz4?: true;
+		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
+			? true
+			: IDocumentSchemaFeatures[P];
 	};
 };
 
@@ -387,15 +397,12 @@ export class DocumentsSchemaController {
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param compressionAlgorithm - desired compression algorith to use
 	 * @param idCompressorModeArg - desired ID compressor mode to use
-	 * @param groupedBatchingEnabled - true if it's desired to use op grouping.
+	 * @param opGroupingEnabled - true if it's desired to use op grouping.
 	 */
 	constructor(
-		explicitSchemaControl: boolean,
 		existing: boolean,
 		documentMetadataSchema: IDocumentSchema | undefined,
-		compressionLz4: boolean,
-		idCompressorMode: IdCompressorMode,
-		groupedBatchingEnabled: boolean,
+		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
 		checkRuntimeCompatibility(documentMetadataSchema);
@@ -409,23 +416,24 @@ export class DocumentsSchemaController {
 				// If it's existing document and it has no schema, then it was written by legacy client.
 				// If it's a new document, then we define it's legacy-related behaviors.
 				runtime: {
-					explicitSchemaControl: boolToProp(!existing && explicitSchemaControl),
+					explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 				},
 			} satisfies IDocumentSchemaCurrent);
 
 		// Use legacy behavior only if both document and options tell us to use legacy.
 		// Otherwise it's no longer legacy time!
 		this.explicitSchemaControl =
-			this.documentSchema.runtime.explicitSchemaControl === true || explicitSchemaControl;
+			this.documentSchema.runtime.explicitSchemaControl === true ||
+			features.explicitSchemaControl;
 
 		this.desiredSchema = {
 			version: currentDocumentVersionSchema,
 			refSeq: this.documentSchema.refSeq,
 			runtime: {
-				explicitSchemaControl: boolToProp(explicitSchemaControl),
-				compressionLz4: boolToProp(compressionLz4),
-				idCompressorMode,
-				opGroupingEnabled: boolToProp(groupedBatchingEnabled),
+				explicitSchemaControl: boolToProp(features.explicitSchemaControl),
+				compressionLz4: boolToProp(features.compressionLz4),
+				idCompressorMode: features.idCompressorMode,
+				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 			},
 		};
 
