@@ -29,7 +29,7 @@ import {
 	defaultRevisionMetadataFromChanges,
 	isDeltaVisible,
 } from "../../utils.js";
-import { brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import { brand, fail, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -163,7 +163,7 @@ function rebase(
 	const rebased = optionalChangeRebaser.rebase(
 		change,
 		base,
-		TestChange.rebase as any,
+		(id, baseId) => id,
 		idAllocator,
 		moveEffects,
 		metadata,
@@ -200,7 +200,7 @@ function rebaseComposed(
 	const rebased = optionalChangeRebaser.rebase(
 		change,
 		makeAnonChange(composed),
-		TestChange.rebase as any,
+		(id, baseId) => id,
 		idAllocator,
 		moveEffects,
 		metadata,
@@ -227,7 +227,7 @@ function composeList(
 		composed = optionalChangeRebaser.compose(
 			makeAnonChange(composed),
 			change,
-			TestChange.compose as any,
+			(id1, id2) => id1 ?? id2 ?? fail("Should not compose two undefined nodes"),
 			idAllocator,
 			moveEffects,
 			metadataOrDefault,
@@ -302,14 +302,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: state.content,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.buildChildChange(
-						// XXX
-						{ localId: brand(0) },
-						// TestChange.mint(
-						// 	computeChildChangeInputContext(state),
-						// 	changeChildIntention,
-						// ),
-					),
+					OptionalChange.buildChildChange({ localId: brand(0) }),
 					tagFromIntention(changeChildIntention),
 				),
 				intention: changeChildIntention,

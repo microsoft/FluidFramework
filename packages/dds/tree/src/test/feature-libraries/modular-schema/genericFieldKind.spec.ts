@@ -264,24 +264,24 @@ describe("GenericField", () => {
 	});
 
 	it("intoDelta", () => {
-		const testChange1 = TestChange.mint([], 1);
-		const testChange2 = TestChange.mint([], 2);
+		const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
+		const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
 		const input: GenericChangeset = [
 			{
 				index: 0,
-				nodeChange: TestNodeId.create(nodeId1, testChange1),
+				nodeChange: nodeChange1,
 			},
 			{
 				index: 2,
-				nodeChange: TestNodeId.create(nodeId2, testChange2),
+				nodeChange: nodeChange2,
 			},
 		];
 
 		const expected: DeltaFieldChanges = {
 			local: [
-				{ count: 1, fields: TestChange.toDelta(makeAnonChange(testChange1)) },
+				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
 				{ count: 1 },
-				{ count: 1, fields: TestChange.toDelta(makeAnonChange(testChange2)) },
+				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
 			],
 		};
 

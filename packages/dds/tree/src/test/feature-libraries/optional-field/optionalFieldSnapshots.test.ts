@@ -16,6 +16,7 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { Change } from "./optionalFieldUtils.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,
@@ -60,17 +61,19 @@ export function testSnapshots() {
 			new RevisionTagCodec(snapshotCompressor),
 		);
 
+		const baseContext = {
+			originatorId: snapshotCompressor.localSessionId,
+		};
+
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
 				const codec = family.resolve(version);
 				for (const { name, change } of changesets) {
 					it(name, () => {
 						const encoded = codec.json.encode(change, {
-							baseContext: {
-								originatorId: snapshotCompressor.localSessionId,
-							},
-							encodeNode: () => fail(""),
-							decodeNode: () => fail(""),
+							baseContext,
+							encodeNode: (node) => TestNodeId.encode(node, baseContext),
+							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});

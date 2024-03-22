@@ -18,8 +18,10 @@ import { IJsonCodec } from "../../../codec/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
 import { FieldChangeEncodingContext, NodeId } from "../../../feature-libraries/index.js";
 import { Change } from "./optionalFieldUtils.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { TestChange } from "../../testChange.js";
 
-const nodeChange1: NodeId = { localId: brand(0) };
+const nodeChange1: TestNodeId = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 
 const encodedChild = "encoded child";
 
@@ -66,8 +68,8 @@ export function testCodecs() {
 		const sessionId = { originatorId: "session1" as SessionId };
 		const context: FieldChangeEncodingContext = {
 			baseContext: sessionId,
-			encodeNode: () => fail(""),
-			decodeNode: () => fail(""),
+			encodeNode: (nodeId) => TestNodeId.encode(nodeId, sessionId),
+			decodeNode: (nodeId) => TestNodeId.decode(nodeId, sessionId),
 		};
 
 		const encodingTestData: EncodingTestData<
