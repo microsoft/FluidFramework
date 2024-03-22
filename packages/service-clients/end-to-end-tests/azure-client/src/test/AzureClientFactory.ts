@@ -14,7 +14,7 @@ import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-uti
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 
-import { createAzureTokenProvider } from "./AzureTokenFactory";
+import { createAzureTokenProvider } from "./AzureTokenFactory.js";
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new

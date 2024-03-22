@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
+import { FlushMode } from "@fluidframework/runtime-definitions";
+import type { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -14,12 +20,6 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { SharedString } from "@fluidframework/sequence";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
-import { FlushMode } from "@fluidframework/runtime-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 
 describeCompat(
 	"Concurrent op processing via DDS event handlers",
