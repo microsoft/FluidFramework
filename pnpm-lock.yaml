@@ -9775,8 +9775,8 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^5.1.0
       '@fluidframework/test-driver-definitions': workspace:~
-      '@types/node': ^18.19.0
       applicationinsights: ^2.1.9
+      copyfiles: ^2.4.1
       eslint: ~8.55.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -9788,11 +9788,11 @@ importers:
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
-      '@fluid-tools/build-cli': 0.34.0_u673t2dmpu2di5cxot3t45f7wi
+      '@fluid-tools/build-cli': 0.34.0_bpztyfltmpuv6lhsgzfwtmxhte
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.34.0_@types+node@18.19.1
+      '@fluidframework/build-tools': 0.34.0
       '@fluidframework/eslint-config-fluid': 5.1.0_bpztyfltmpuv6lhsgzfwtmxhte
-      '@types/node': 18.19.1
+      copyfiles: 2.4.1
       eslint: 8.55.0
       prettier: 3.0.3
       rimraf: 4.4.1
