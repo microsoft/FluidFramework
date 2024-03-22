@@ -21,7 +21,6 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
-import { setFlexNode } from "./flexNode.js";
 import {
 	arrayNodePrototypeProperties,
 	createArrayNodeProxy,
@@ -31,6 +30,7 @@ import {
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
+import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
 import {
 	AllowedTypes,
