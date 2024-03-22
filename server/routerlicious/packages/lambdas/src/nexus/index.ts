@@ -1049,7 +1049,17 @@ export function configureWebSocketServices(
 		 * Message sent when a new signal is submitted to the router.
 		 * @see {@link DocumentDeltaConnection.emitMessages} for client-side emission of signals.
 		 */
-		socket.on("submitSignal", (clientId: string, contentBatches: string[][]) => {
+		socket.on(
+			"submitSignal",
+			/**
+			 * @param contentBatches - typed as `unknown` array as it comes from wire and has not been validated.
+			 * It is expected to be an array of strings (Json.stringified `ISignalEnvelope`s from
+			 * [Container.submitSignal](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294)
+			 * and sent via
+			 * [DocumentDeltaConnection.emitMessages](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4)),
+			 * but actual content is passed-thru and not decoded.
+			 */
+			(clientId: string, contentBatches: unknown[]) => {
 			// Verify the user has subscription to the room.
 			const room = roomMap.get(clientId);
 			if (!room) {
