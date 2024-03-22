@@ -7,15 +7,23 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	AllowInactiveRequestHeaderKey,
 	ContainerRuntime,
-	InactiveResponseHeaderKey,
 	ISummarizer,
+	InactiveResponseHeaderKey,
 } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { delay } from "@fluidframework/core-utils";
 import { DriverHeader } from "@fluidframework/driver-definitions";
+import type { ISharedDirectory } from "@fluidframework/map";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {
@@ -25,14 +33,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	itExpects,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { delay } from "@fluidframework/core-utils";
-import type { ISharedDirectory } from "@fluidframework/map";
 import {
 	manufactureHandle,
 	waitForContainerWriteModeConnectionWrite,

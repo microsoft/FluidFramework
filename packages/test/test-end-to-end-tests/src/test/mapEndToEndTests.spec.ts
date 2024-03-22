@@ -11,19 +11,19 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
