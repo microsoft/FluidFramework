@@ -21,17 +21,16 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
-import { setFlexNode } from "./flexNode.js";
 import {
 	arrayNodePrototypeProperties,
 	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
-	getClassSchema,
-	getSequenceField,
+	getSimpleSchema,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
+import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
 import {
 	AllowedTypes,
@@ -41,12 +40,9 @@ import {
 	ImplicitFieldSchema,
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
-	InsertableTypedNode,
-	NodeFromSchema,
 	NodeKind,
 	ObjectFromSchemaRecord,
 	TreeMapNode,
-	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
@@ -313,7 +309,7 @@ export class SchemaFactory<
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
-						getClassSchema(input.schema) === this.constructor,
+						getSimpleSchema(input.schema) === this.constructor,
 						0x83b /* building node with wrong schema */,
 					);
 				}
@@ -667,14 +663,21 @@ export class SchemaFactory<
 			allowedTypes,
 			implicitlyConstructable,
 		) {
-			[x: number]: TreeNodeFromImplicitAllowedTypes<T>;
-			public get length(): number {
-				return getSequenceField(this as unknown as TreeArrayNode).length;
-			}
 			public constructor(input: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>) {
 				super(input);
 
 				const proxyTarget = customizable ? this : undefined;
+
+				if (customizable) {
+					// Since proxy reports this as a "non-configurable" property, it must exist on the underlying object used as the proxy target, not as an inherited property.
+					// This should not get used as the proxy should intercept all use.
+					Object.defineProperty(this, "length", {
+						value: NaN,
+						writable: true,
+						enumerable: false,
+						configurable: false,
+					});
+				}
 
 				const flexSchema = getFlexSchema(this.constructor as TreeNodeSchema);
 				assert(flexSchema instanceof FlexFieldNodeSchema, "invalid flex schema");
@@ -691,7 +694,7 @@ export class SchemaFactory<
 		// Setup array functionality
 		Object.defineProperties(schema.prototype, arrayNodePrototypeProperties);
 
-		return schema as unknown as TreeNodeSchemaClass<
+		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Array,
 			TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>>,
@@ -738,24 +741,6 @@ export class SchemaFactory<
 	 * @deprecated Use special `recursive` versions of builders instead of relying on this.
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
-}
-
-// TODO: unify this with logic in getOrCreateNodeProxy
-export function createTree<T extends TreeNodeSchema>(
-	schema: T,
-	data: InsertableTypedNode<T> | FlexTreeNode,
-): NodeFromSchema<T> {
-	if (typeof schema === "function") {
-		return new (schema as TreeNodeSchemaClass<
-			any,
-			any,
-			any,
-			InsertableTypedNode<T> | FlexTreeNode
-		>)(data) as NodeFromSchema<T>;
-	}
-	return (
-		schema as TreeNodeSchemaNonClass<any, any, any, InsertableTypedNode<T> | FlexTreeNode>
-	).create(data) as NodeFromSchema<T>;
 }
 
 export function structuralName<const T extends string>(

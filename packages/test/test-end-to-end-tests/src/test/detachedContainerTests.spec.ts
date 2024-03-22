@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
 	IContainer,
@@ -15,32 +16,31 @@ import {
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { SharedDirectory, ISharedMap } from "@fluidframework/map";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import type { SharedString } from "@fluidframework/sequence";
-import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestObjectProvider,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-	waitForContainerConnection,
-	timeoutPromise,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const detachedContainerRefSeqNumber = 0;
@@ -476,6 +476,9 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
+				return;
+			}
+			if (message.type === ContainerMessageType.IdAllocation) {
 				return;
 			}
 			try {

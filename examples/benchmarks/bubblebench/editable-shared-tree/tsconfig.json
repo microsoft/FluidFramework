@@ -1,11 +1,9 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"module": "esnext",
 		"lib": ["ESNext", "DOM"],
-		"outDir": "dist",
-		"jsx": "react",
+		"outDir": "./lib",
 		"noImplicitAny": true,
 		"resolveJsonModule": true,
 		// jest-dev-server/dist/index.d.ts:2:31 - error TS7016: Could not find a declaration file for module 'wait-on'.
