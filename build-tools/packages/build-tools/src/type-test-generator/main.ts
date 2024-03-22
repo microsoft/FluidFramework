@@ -4,96 +4,72 @@
  */
 
 import { readJsonSync } from "fs-extra";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import path from "node:path";
-import { Project, SourceFile } from "ts-morph";
-import { BrokenCompatTypes } from "../common/fluidRepo";
-import { PackageJson } from "../common/npmPackage";
-import { buildTestCase, TestCaseTypeData } from "../typeValidator/testGeneration";
-import { getFullTypeName, getNodeTypeData, TypeData } from "../typeValidator/typeData";
 import { typeOnly } from "./compatibility";
+import {
+	ensureDevDependencyExists,
+	getPreviousPackageJsonPath,
+	getTypeRollupPathFromExtractorConfig,
+	getTypeDefinitionFilePath,
+	typeDataFromFile,
+	generateCompatibilityTestCases,
+	prepareFilepathForTests,
+	initializeProjectsAndLoadFiles,
+} from "./typeTestUtils";
+import { PackageJson } from "../common/npmPackage";
+import { ExtractorConfig } from "@microsoft/api-extractor";
 
 // Do not check that file exists before opening:
 // Doing so is a time of use vs time of check issue so opening the file could fail anyway.
 // Do not catch error from opening file since the default behavior is fine (exits process with error showing useful message)
+
 const packageObject: PackageJson = readJsonSync("package.json");
+const previousPackageName = `${packageObject.name}-previous`;
+const previousBasePath = path.join("node_modules", previousPackageName);
 
-const testPath = `./src/test/types`;
-// remove scope if it exists
-const unscopedName = path.basename(packageObject.name);
+ensureDevDependencyExists(packageObject, previousPackageName);
+getPreviousPackageJsonPath(previousBasePath);
 
-const fileBaseName = unscopedName
-	.split("-")
-	.map((p) => p[0].toUpperCase() + p.substring(1))
-	.join("");
-const filePath = `${testPath}/validate${fileBaseName}Previous.generated.ts`;
-
+const filePath = prepareFilepathForTests(packageObject);
 if (packageObject.typeValidation?.disabled) {
 	console.log("skipping type test generation because they are disabled in package.json");
 	// force means to ignore the error if the file does not exist.
 	rmSync(filePath, { force: true });
 	process.exit(0);
 }
+const extractorConfigOptions = ExtractorConfig.tryLoadForFolder({
+	startingFolder: previousBasePath,
+});
 
-const previousPackageName = `${packageObject.name}-previous`;
+let typeRollupPaths: string | undefined;
 
-{
-	// Information about the previous package from the package.json is not needed,
-	// but error if its missing since it's nice to separate errors for the dep missing here vs not installed.
-	const previousDep = packageObject?.devDependencies?.[previousPackageName];
-	if (typeof previousDep !== "string") {
-		throw new Error(`Did not find devDependency ${previousPackageName} in package.json`);
-	}
+if (!extractorConfigOptions || !extractorConfigOptions.configObject) {
+	console.log("API Extractor configuration not found. Falling back to default behavior.");
+} else {
+	typeRollupPaths = getTypeRollupPathFromExtractorConfig("alpha", extractorConfigOptions);
 }
 
-const broken: BrokenCompatTypes = packageObject.typeValidation?.broken ?? {};
+let typeDefinitionFilePath: string | undefined;
 
-const previousBasePath = `./node_modules/${previousPackageName}`;
-if (!existsSync(`${previousBasePath}/package.json`)) {
-	throw new Error(
-		`${previousBasePath} not found. You may need to install the package via pnpm install.`,
+// Check if a specified typeRollupFile exists
+if (typeRollupPaths) {
+	typeDefinitionFilePath = typeRollupPaths;
+} else {
+	typeDefinitionFilePath = getTypeDefinitionFilePath(previousBasePath);
+}
+
+if (typeDefinitionFilePath === undefined) {
+	throw Error(
+		"Could not determine the type definition file path from API Extractor config or package.json",
 	);
 }
 
-const currentFile = new Project({
-	skipFileDependencyResolution: true,
-	tsConfigFilePath: "tsconfig.json",
-}).getSourceFileOrThrow("index.ts");
-
-const previousTsConfigPath = `${previousBasePath}/tsconfig.json`;
-let previousFile: SourceFile;
-if (existsSync(previousTsConfigPath)) {
-	const project = new Project({
-		skipFileDependencyResolution: true,
-		tsConfigFilePath: previousTsConfigPath,
-	});
-	previousFile = project.getSourceFileOrThrow("index.ts");
-} else {
-	const project = new Project({
-		skipFileDependencyResolution: true,
-	});
-	project.addSourceFilesAtPaths(`${previousBasePath}/dist/**/*.d.ts`);
-	previousFile = project.getSourceFileOrThrow("index.d.ts");
-}
-
-function typeDataFromFile(file: SourceFile): Map<string, TypeData> {
-	const typeData = new Map<string, TypeData>();
-	const exportedDeclarations = file.getExportedDeclarations();
-	for (const declarations of exportedDeclarations.values()) {
-		for (const dec of declarations) {
-			getNodeTypeData(dec).forEach((td) => {
-				const fullName = getFullTypeName(td);
-				if (typeData.has(fullName)) {
-					// This system does not properly handle overloads: instead it only keeps the last signature.
-					console.warn(`skipping overload for ${fullName}`);
-				}
-				typeData.set(fullName, td);
-			});
-		}
-	}
-	return typeData;
-}
-
+const { currentFile, previousFile } = initializeProjectsAndLoadFiles(
+	typeDefinitionFilePath,
+	previousBasePath,
+	previousPackageName,
+);
 const currentTypeMap = typeDataFromFile(currentFile);
 const previousData = [...typeDataFromFile(previousFile).values()];
 
@@ -120,57 +96,14 @@ import type * as current from "../../index.js";
 	typeOnly,
 ];
 
-for (const oldTypeData of previousData) {
-	const oldType: TestCaseTypeData = {
-		prefix: "old",
-		...oldTypeData,
-		removed: false,
-	};
-	const currentTypeData = currentTypeMap.get(getFullTypeName(oldTypeData));
-	// if the current package is missing a type, we will use the old type data.
-	// this can represent a breaking change which can be disable in the package.json.
-	// this can also happen for type changes, like type to interface, which can remain
-	// compatible.
-	const currentType: TestCaseTypeData =
-		currentTypeData === undefined
-			? {
-					prefix: "current",
-					...oldTypeData,
-					kind: `Removed${oldTypeData.kind}`,
-					removed: true,
-			  }
-			: {
-					prefix: "current",
-					...currentTypeData,
-					removed: false,
-			  };
-
-	// look for settings not under version, then fall back to version for back compat
-	const brokenData = broken?.[getFullTypeName(currentType)];
-
-	testString.push(`/*`);
-	testString.push(`* Validate forward compat by using old type in place of current type`);
-	testString.push(
-		`* If breaking change required, add in package.json under typeValidation.broken:`,
-	);
-	testString.push(`* "${getFullTypeName(currentType)}": {"forwardCompat": false}`);
-	testString.push("*/");
-	testString.push(...buildTestCase(oldType, currentType, brokenData?.forwardCompat ?? true));
-
-	testString.push("");
-
-	testString.push(`/*`);
-	testString.push(`* Validate back compat by using current type in place of old type`);
-	testString.push(
-		`* If breaking change required, add in package.json under typeValidation.broken:`,
-	);
-	testString.push(`* "${getFullTypeName(currentType)}": {"backCompat": false}`);
-	testString.push("*/");
-	testString.push(...buildTestCase(currentType, oldType, brokenData?.backCompat ?? true));
-	testString.push("");
-}
+const testCases = generateCompatibilityTestCases(
+	previousData,
+	currentTypeMap,
+	packageObject,
+	testString,
+);
 
 mkdirSync("./src/test/types", { recursive: true });
 
-writeFileSync(filePath, testString.join("\n"));
+writeFileSync(filePath, testCases.join("\n"));
 console.log(`generated ${path.resolve(filePath)}`);
