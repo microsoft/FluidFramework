@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -11,14 +11,16 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "fluid-build --task format .",
@@ -35,7 +37,6 @@
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:watch": "npm run test:jest -- --watch",
-		"tsc": "tsc",
 		"webpack": "webpack --color --no-stats"
 	},
 	"dependencies": {
@@ -81,7 +82,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@types/jest": "29.5.3",
-		"@types/jest-environment-puppeteer": "workspace:",
+		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/uuid": "^9.0.2",
 		"clean-webpack-plugin": "^4.0.0",
 		"concurrently": "^8.2.1",
@@ -101,6 +102,7 @@
 		"sass-loader": "^7.1.0",
 		"source-map-loader": "^2.0.0",
 		"style-loader": "^1.0.0",
+		"tinylicious": "^4.0.0",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",
 		"webpack": "^5.82.0",
@@ -116,7 +118,7 @@
 				],
 				"script": false
 			},
-			"tsc": [
+			"build:esnext": [
 				"...",
 				"@fluid-experimental/property-inspector-table#build:copy-resources"
 			],
@@ -127,7 +129,7 @@
 		},
 		"buildDependencies": {
 			"merge": {
-				"tsc": {
+				"build:esnext": {
 					"@fluid-experimental/property-inspector-table": [
 						"build:webpack"
 					]

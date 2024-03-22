@@ -265,27 +265,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @alpha @deprecated
-export interface IFluidCodeDetails {
-    readonly config?: IFluidCodeDetailsConfig;
-    readonly package: string | Readonly<IFluidPackage>;
-}
-
-// @internal @deprecated (undocumented)
-export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
-
-// @internal @deprecated
-export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
-    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
-    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
-}
-
-// @alpha @deprecated
-export interface IFluidCodeDetailsConfig {
-    // (undocumented)
-    readonly [key: string]: string;
-}
-
 // @public (undocumented)
 export const IFluidHandle = "IFluidHandle";
 
@@ -330,23 +309,6 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     handle: IFluidHandle;
 }
 
-// @alpha @deprecated
-export interface IFluidPackage {
-    [key: string]: unknown;
-    fluid: {
-        [environment: string]: undefined | IFluidPackageEnvironment;
-    };
-    name: string;
-}
-
-// @alpha @deprecated
-export interface IFluidPackageEnvironment {
-    [target: string]: undefined | {
-        files: string[];
-        [key: string]: unknown;
-    };
-}
-
 // @internal (undocumented)
 export const IFluidRunnable: keyof IProvideFluidRunnable;
 
@@ -370,13 +332,7 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @internal @deprecated (undocumented)
-export interface IProvideFluidCodeDetailsComparer {
-    // (undocumented)
-    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @alpha @deprecated (undocumented)
+// @public (undocumented)
 export interface IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly [IFluidHandle]: IFluidHandleInternal;
@@ -429,15 +385,6 @@ export interface IResponse {
     // (undocumented)
     value: any;
 }
-
-// @internal
-export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
-
-// @internal @deprecated (undocumented)
-export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
-
-// @internal @deprecated
-export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
 // @internal (undocumented)
 export interface ISignalEnvelope {

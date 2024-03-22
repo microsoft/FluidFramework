@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -148,6 +148,42 @@
 				"forwardCompat": false
 			},
 			"RemovedInterfaceDeclaration_ITaggedTelemetryPropertyType": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidCodeDetails": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_IFluidCodeDetailsComparer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidCodeDetailsComparer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidCodeDetailsConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidPackage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidPackageEnvironment": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IProvideFluidCodeDetailsComparer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_isFluidCodeDetails": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_isFluidPackage": {
 				"backCompat": false,
 				"forwardCompat": false
 			},

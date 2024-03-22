@@ -22,15 +22,6 @@ export type {
 export type { IProvideFluidLoadable, IProvideFluidRunnable } from "./fluidLoadable.js";
 export { IFluidLoadable, IFluidRunnable } from "./fluidLoadable.js";
 
-export type {
-	IFluidPackageEnvironment,
-	IFluidPackage,
-	IFluidCodeDetailsConfig,
-	IFluidCodeDetails,
-	IProvideFluidCodeDetailsComparer,
-} from "./fluidPackage.js";
-export { isFluidPackage, isFluidCodeDetails, IFluidCodeDetailsComparer } from "./fluidPackage.js";
-
 // TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038

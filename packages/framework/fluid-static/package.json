@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-static",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -113,7 +113,9 @@
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~"
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
@@ -156,6 +158,14 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_ContainerSchema": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectCtor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SharedObjectClass": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}

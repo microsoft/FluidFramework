@@ -9,9 +9,11 @@
 @fluid-internal/test-service-load
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
+@fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluid-experimental/odsp-client
 @fluid-experimental/odsp-end-to-end-tests
+@fluidframework/azure-end-to-end-tests
 @fluidframework/azure-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
@@ -84,6 +86,5 @@ fluid-framework
 @fluid-experimental/property-binder
 @fluid-example/table-document
 @fluid-experimental/azure-scenario-runner
-@fluidframework/azure-end-to-end-tests
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service

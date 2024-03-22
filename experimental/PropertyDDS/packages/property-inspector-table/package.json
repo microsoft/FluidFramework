@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-inspector-table",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"description": "Property Inspector Table component",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,9 +10,17 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "dist/src/index.js",
-	"module": "lib/src/index.js",
-	"types": "dist/src/index.d.ts",
+	"type": "module",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/src/index.d.ts",
+				"default": "./lib/src/index.js"
+			}
+		}
+	},
+	"main": "lib/src/index.js",
+	"types": "lib/src/index.d.ts",
 	"files": [
 		"dist/src",
 		"dist/assets",
@@ -23,7 +31,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "webpack --config webpack.svgs.cjs && copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
@@ -39,7 +47,6 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci",
 		"test:jest": "jest",
-		"tsc": "tsc",
 		"webpack": "webpack --config webpack.svgs.cjs"
 	},
 	"dependencies": {

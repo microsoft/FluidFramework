@@ -5,9 +5,9 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { EditReferencePath } from "./EditReferencePath";
-import { InspectorDecorator } from "./InspectorDecorator";
-import { InspectorTableDecorator } from "./InspectorTableDecorator";
+import { EditReferencePath } from "./EditReferencePath.js";
+import { InspectorDecorator } from "./InspectorDecorator.js";
+import { InspectorTableDecorator } from "./InspectorTableDecorator.js";
 
 storiesOf("EditReferencePath", module)
 	.addDecorator(InspectorDecorator)

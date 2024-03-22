@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { join } from 'path';
 import * as fs from 'fs';
+import { join } from 'path';
 import { takeAsync } from '@fluid-private/stochastic-test-utils';
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTree } from '../../SharedTree.js';
 import { WriteFormat } from '../../persisted-types/index.js';
-import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests.js';
 import { makeOpGenerator } from '../fuzz/Generators.js';
-import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
-import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities.js';
+import { performFuzzActions } from '../fuzz/SharedTreeFuzzTests.js';
 import { expectAssert } from './TestCommon.js';
+import { setUpLocalServerTestSharedTree, setUpTestSharedTree, testDocumentsPathBase } from './TestUtilities.js';
 
 const directory = join(testDocumentsPathBase, 'summary-load-perf-tests');
 

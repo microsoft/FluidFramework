@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, ITreeCursorSynchronous, TreeValue } from "../../core/index.js";
+import {
+	AnchorNode,
+	FieldKey,
+	ITreeCursorSynchronous,
+	TreeValue,
+	anchorSlot,
+} from "../../core/index.js";
 import { Assume, FlattenKeys } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
@@ -24,7 +30,13 @@ import {
 	LeafNodeSchema,
 } from "../typed-schema/index.js";
 import { FlexTreeContext } from "./context.js";
-import { EditableTreeEvents } from "./treeEvents.js";
+import { FlexTreeNodeEvents } from "./treeEvents.js";
+
+/**
+ * An anchor slot which records the {@link FlexTreeNode} associated with that anchor, if there is one.
+ * @remarks This always points to a "real" {@link FlexTreeNode} (i.e. a `LazyTreeNode`), never to a "raw" node.
+ */
+export const flexTreeSlot = anchorSlot<FlexTreeNode>();
 
 /**
  * Indicates that an object is a flex tree.
@@ -78,7 +90,7 @@ export interface FlexTreeEntity<out TSchema = unknown> {
 	readonly schema: TSchema;
 
 	/**
-	 * A common context of a "forest" of EditableTrees.
+	 * A common context of a "forest" of FlexTrees.
 	 */
 	readonly context: FlexTreeContext;
 
@@ -121,12 +133,6 @@ export enum TreeStatus {
 }
 
 /**
- * {@inheritdoc TreeNode.[onNextChange]}
- * @internal
- */
-export const onNextChange = Symbol("onNextChange");
-
-/**
  * Generic tree node API.
  *
  * Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
@@ -155,9 +161,9 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	/**
 	 * {@inheritDoc ISubscribable#on}
 	 */
-	on<K extends keyof EditableTreeEvents>(
+	on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void;
 
 	/**
@@ -178,21 +184,9 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 	boxedIterator(): IterableIterator<FlexTreeField>;
 
 	/**
-	 * Subscribe to the next change that affects this node's children.
-	 * @returns a function which will deregister the registered event.
-	 * It has no effect if the event was already deregistered.
-	 * @remarks
-	 * The given function will be run the next time that this node's direct children change.
-	 * It will only be run once, and thereafter automatically deregistered.
-	 * It does not run in response to changes beneath this node's direct children.
-	 * This event fires after the tree has been mutated but before {@link EditableTreeEvents.afterChange}.
-	 * Only one subscriber may register to this event at the same time.
-	 * @privateRemarks
-	 * This event allows the proxy-based API that is built on top of the editable tree to maintain invariants
-	 * around "hydrating" proxies that were created with schema-provided factory functions.
-	 * It is not a public API and thus the symbol for this property is not exported.
+	 * The anchor node associated with this node
 	 */
-	[onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+	readonly anchorNode: AnchorNode;
 }
 
 /**
@@ -239,8 +233,8 @@ export interface FlexTreeField extends FlexTreeEntity<FlexFieldSchema> {
 
 	/**
 	 * Check if this field is the same as a different field.
-	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
-	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
+	 * This is defined to mean that both are in the same flex tree, and are the same field on the same node.
+	 * This is more than just a reference comparison because unlike FlexTree nodes, fields are not cached on anchors and can be duplicated.
 	 *
 	 * @privateRemarks
 	 * TODO:
@@ -566,6 +560,7 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
  * @internal
  */
 export const reservedObjectNodeFieldPropertyNames = [
+	"anchorNode",
 	"constructor",
 	"context",
 	"is",

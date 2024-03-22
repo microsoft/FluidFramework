@@ -6,15 +6,15 @@
 import { assert } from "@fluidframework/core-utils";
 import { TreeValue } from "../core/index.js";
 import {
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	LeafNodeSchema,
 	Multiplicity,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
+import { getOrCreateNodeProxy, getSimpleSchema } from "./proxies.js";
+import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
@@ -103,10 +103,10 @@ export const treeNodeApi: TreeNodeApi = {
 		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
 		return parentField.parent.key;
 	},
-	on: <K extends keyof EditableTreeEvents>(
+	on: <K extends keyof FlexTreeNodeEvents>(
 		node: TreeNode,
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	) => {
 		return getFlexNode(node).on(eventName, listener);
 	},
@@ -129,7 +129,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (isTreeValue(node)) {
 			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
 		}
-		return getClassSchema(getFlexNode(node).schema) as TreeNodeSchema<
+		return getSimpleSchema(getFlexNode(node).schema) as TreeNodeSchema<
 			string,
 			NodeKind,
 			unknown,

@@ -21,7 +21,7 @@ import {
 	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils";
-import { getForceTokenReauth } from "./fluidFetchArgs";
+import { getForceTokenReauth } from "./fluidFetchArgs.js";
 
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,

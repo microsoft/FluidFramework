@@ -16,15 +16,15 @@ import {
 import { EditRegular, Person12Regular, Search12Regular } from "@fluentui/react-icons";
 import React from "react";
 
-import { ThemeContext, ThemeOption } from "../ThemeHelper";
-import { type TransformedAudienceStateData } from "./AudienceView";
+import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+import { type TransformedAudienceStateData } from "./AudienceView.js";
 import {
 	clientIdTooltipText,
 	clientModeTooltipText,
 	clientScopesTooltipText,
 	userIdTooltipText,
-} from "./TooltipTexts";
-import { LabelCellLayout } from "./utility-components";
+} from "./TooltipTexts.js";
+import { LabelCellLayout } from "./utility-components/index.js";
 
 const audienceStateStyle = makeStyles({
 	currentUser: {
