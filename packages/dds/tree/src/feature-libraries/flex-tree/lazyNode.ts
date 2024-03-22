@@ -149,6 +149,8 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		anchor: Anchor,
 	) {
 		super(context, schema, cursor, anchorNode);
+		// By extending LazyEntity we have this.anchor, but given the generic types used, that is an AnchorNode and not an
+		// Anchor, so we need to keep this reference separately for a few things.
 		this.#anchorRef = anchor;
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
