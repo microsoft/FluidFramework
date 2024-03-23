@@ -19,6 +19,13 @@ import {
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
 import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "./leafNodeSchema.js";
+import {
 	arrayNodePrototypeProperties,
 	createArrayNodeProxy,
 	createMapProxy,
@@ -48,13 +55,6 @@ import {
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
-import {
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
-} from "./leafNodeSchema.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
