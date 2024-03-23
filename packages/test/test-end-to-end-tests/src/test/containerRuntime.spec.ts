@@ -39,7 +39,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		provider = getTestObjectProvider();
 	});
 
-	async function test(explicitSchemaControl: boolean, compression: boolean) {
+	async function testSchemaControl(explicitSchemaControl: boolean, compression: boolean) {
 		const options: ITestContainerConfig = {
 			runtimeOptions: {
 				explicitSchemaControl,
@@ -102,36 +102,49 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 
 		const container3 = await loadContainer(options);
 		const entry3 = await getentryPoint(container3);
-		assert(entry3.root.get("key2").length === 5000);
+		await provider.ensureSynchronized();
 
 		assert(crash === container.closed);
 		assert(!container2.closed);
 		assert(!container3.closed);
+
+		assert(entry3.root.get("key2").length === 5000);
+
+		entry3.root.set("key3", generateStringOfSize(15000));
+		await provider.ensureSynchronized();
+		assert(!container2.closed);
+		assert(!container3.closed);
+		assert(entry2.root.get("key3").length === 15000);
+
+		if (!crash) {
+			assert(!container.closed);
+			assert(entry.root.get("key3").length === 15000);
+		}
 	}
 
 	it("test explicitSchemaControl = false, no compression", async () => {
-		await test(
+		await testSchemaControl(
 			false, // explicitSchemaControl
 			false, // compression
 		);
 	});
 
 	it("test explicitSchemaControl = false, with compression", async () => {
-		await test(
+		await testSchemaControl(
 			false, // explicitSchemaControl
 			true, // compression
 		);
 	});
 
 	it("test explicitSchemaControl = true, no compression", async () => {
-		await test(
+		await testSchemaControl(
 			true, // explicitSchemaControl
 			false, // compression
 		);
 	});
 
 	it("test explicitSchemaControl = true, with compression", async () => {
-		await test(
+		await testSchemaControl(
 			true, // explicitSchemaControl
 			true, // compression
 		);
