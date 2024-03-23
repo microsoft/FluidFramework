@@ -73,8 +73,7 @@ export const logCommonSessionEndMetrics = (
 		closeType === LambdaCloseType.Stop ||
 		closeType === LambdaCloseType.Rebalance
 	) {
-		sessionMetric.setProperties({ [CommonProperties.sessionState]: SessionState.paused });
-		sessionMetric.success("Session paused");
+		Lumberjack.info("Session Paused", sessionMetric?.properties);
 	} else if (closeType === LambdaCloseType.ActivityTimeout) {
 		if (activeNackMessageTypes?.includes(NackMessagesType.SummaryMaxOps)) {
 			sessionMetric.error(
