@@ -113,11 +113,13 @@
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~"
+		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
@@ -156,6 +158,14 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_ContainerSchema": {
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_LoadableObjectCtor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SharedObjectClass": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}
