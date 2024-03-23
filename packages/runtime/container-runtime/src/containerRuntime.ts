@@ -127,6 +127,7 @@ import {
 } from "./gc/index.js";
 import {
 	ContainerMessageType,
+	type ContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -134,7 +135,6 @@ import {
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
-	type ContainerRuntimeDocumentSchemaMessage,
 } from "./messageTypes.js";
 import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
 import {
