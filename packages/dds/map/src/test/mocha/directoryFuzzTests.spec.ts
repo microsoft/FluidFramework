@@ -225,8 +225,7 @@ function makeOperationGenerator(
 		[
 			deleteSubDirectory,
 			options.deleteSubDirWeight,
-			(state: FuzzTestState): boolean =>
-				(state.client.channel.countSubDirectory?.() ?? 0) > 0,
+			(state: FuzzTestState): boolean => (state.client.channel.countSubDirectory?.() ?? 0) > 0,
 		],
 		[setKey, options.setKeyWeight],
 		[
@@ -370,8 +369,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
 			skip: [
-				13, 40, 43, 55, 66, 93, 94, 107, 110, 123, 136, 148, 160, 163, 168, 172, 177, 191,
-				196,
+				13, 40, 43, 55, 66, 93, 94, 107, 110, 123, 136, 148, 160, 163, 168, 172, 177, 191, 196,
 			],
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
