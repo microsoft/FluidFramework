@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-private/test-drivers";
-export const pkgVersion = "2.0.0-rc.2.0.1";
+export const pkgVersion = "2.0.0-rc.2.0.2";
