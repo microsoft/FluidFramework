@@ -1,5 +1,5 @@
 {
-	"version": "2.0.0-internal.8.0.8",
+	"version": "2.0.0-internal.8.0.9",
 	"npmClient": "pnpm",
 	"useWorkspaces": true
 }
