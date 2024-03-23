@@ -134,6 +134,7 @@ import {
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
+	type ContainerRuntimeDocumentSchemaMessage,
 } from "./messageTypes.js";
 import { IBatchMetadata, IIdAllocationMetadata } from "./metadata.js";
 import {
@@ -3848,7 +3849,19 @@ export class ContainerRuntime
 				// If it needs to send a message, it will call provided callback with payload of such message and rely
 				// on this callback to do actual sending.
 				this.documentsSchemaController.onMessageSent(
-					(content: IDocumentSchemaChangeMessage) => this.outbox.submit(message),
+					(contents: IDocumentSchemaChangeMessage) => {
+						const msg: ContainerRuntimeDocumentSchemaMessage = {
+							type: ContainerMessageType.DocumentSchemaChange,
+							contents,
+						};
+						this.outbox.submit({
+							contents: JSON.stringify(msg),
+							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+							metadata: undefined,
+							localOpMetadata: undefined,
+							type: ContainerMessageType.DocumentSchemaChange,
+						});
+					},
 				);
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
