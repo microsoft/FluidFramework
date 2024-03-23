@@ -1134,24 +1134,6 @@ export enum RuntimeHeaders {
     wait = "wait"
 }
 
-// @internal @deprecated (undocumented)
-export enum RuntimeMessage {
-    // (undocumented)
-    Alias = "alias",
-    // (undocumented)
-    Attach = "attach",
-    // (undocumented)
-    BlobAttach = "blobAttach",
-    // (undocumented)
-    ChunkedOp = "chunkedOp",
-    // (undocumented)
-    FluidDataStoreOp = "component",
-    // (undocumented)
-    Operation = "op",
-    // (undocumented)
-    Rejoin = "rejoin"
-}
-
 // @alpha
 export interface SubmitSummaryFailureData extends IRetriableFailureResult {
     // (undocumented)

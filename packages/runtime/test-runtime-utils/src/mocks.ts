@@ -151,7 +151,7 @@ const makeContainerRuntimeOptions = (
 
 interface IInternalMockRuntimeMessage {
 	content: any;
-	localOpMetadata: unknown;
+	localOpMetadata?: unknown;
 }
 
 /**
@@ -221,7 +221,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown): number {
+	public submit(messageContent: any, localOpMetadata?: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
@@ -340,7 +340,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	protected reSubmitMessages(
-		messagesToResubmit: { content: any; localOpMetadata: unknown }[],
+		messagesToResubmit: { content: any; localOpMetadata?: unknown }[],
 	): void {
 		// Sort the messages so that idAllocation messages are submitted first
 		// When resubmitting non-idAllocation messages, they may generate new IDs.
@@ -373,7 +373,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
-				localOpMetadata: undefined,
 			};
 		}
 		return undefined;

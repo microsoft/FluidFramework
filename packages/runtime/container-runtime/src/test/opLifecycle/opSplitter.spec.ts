@@ -20,6 +20,11 @@ import {
 	splitOp,
 } from "../../opLifecycle/index.js";
 
+function typeFromBatchedOp(op: IBatchMessage) {
+	assert(op.contents !== undefined);
+	return JSON.parse(op.contents).type as string;
+}
+
 describe("OpSplitter", () => {
 	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];
 
@@ -346,7 +351,7 @@ describe("OpSplitter", () => {
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch.messages[0] as BatchMessage).type,
+						typeFromBatchedOp(batch.messages[0]),
 						ContainerMessageType.ChunkedOp,
 					);
 					assert.equal(batch.referenceSequenceNumber, 0);
@@ -409,7 +414,7 @@ describe("OpSplitter", () => {
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch.messages[0] as BatchMessage).type,
+						typeFromBatchedOp(batch.messages[0]),
 						ContainerMessageType.ChunkedOp,
 					);
 					assert.equal(batch.referenceSequenceNumber, 0);
@@ -450,19 +455,21 @@ describe("OpSplitter", () => {
 			});
 		});
 	});
-
 	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
 		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));
-		assert.strictEqual(result.type, original.type);
+		assert.strictEqual(result.type, "op");
 		assert.strictEqual(result.metadata, original.metadata);
 		assert.strictEqual(result.compression, original.compression);
 	};
 
 	const generateChunkableOp = (contentSizeInBytes: number): BatchMessage => {
-		const contents = { value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex") };
+		const contents = {
+			// There should be a type here, but there is no validation for that,
+			// and tests would need to be adjusted (sizing and assumptions) if we add it here.
+			// type: ContainerMessageType.FluidDataStoreOp,
+			value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex"),
+		};
 		return {
-			localOpMetadata: undefined,
-			type: ContainerMessageType.FluidDataStoreOp,
 			referenceSequenceNumber: Infinity,
 			metadata: { meta: "data" },
 			compression: CompressionAlgorithms.lz4,

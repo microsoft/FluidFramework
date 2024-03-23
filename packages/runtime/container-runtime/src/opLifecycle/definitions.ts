@@ -12,8 +12,7 @@ import { ContainerMessageType } from "../messageTypes.js";
  * Batch message type used internally by the runtime
  */
 export type BatchMessage = IBatchMessage & {
-	localOpMetadata: unknown;
-	type: ContainerMessageType;
+	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
 };

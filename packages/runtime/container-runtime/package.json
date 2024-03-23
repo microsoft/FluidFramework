@@ -262,6 +262,10 @@
 			"RemovedFunctionDeclaration_isStableId": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedEnumDeclaration_RuntimeMessage": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
