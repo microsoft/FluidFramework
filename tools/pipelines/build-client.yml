@@ -61,6 +61,8 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - biome.json
+    - biome.jsonc
     - packages
     - azure
     - examples
