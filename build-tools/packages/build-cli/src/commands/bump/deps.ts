@@ -223,7 +223,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
-				  )
+					)
 				: await npmCheckUpdates(
 						context,
 						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
@@ -233,7 +233,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 						/* prerelease */ flags.prerelease,
 						/* writeChanges */ !flags.testMode,
 						this.logger,
-				  );
+					);
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {

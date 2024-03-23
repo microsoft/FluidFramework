@@ -117,7 +117,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-experimental/attributable-map-previous": "npm:@fluid-experimental/attributable-map@2.0.0-internal.8.0.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",

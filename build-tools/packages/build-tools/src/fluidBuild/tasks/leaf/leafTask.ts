@@ -225,7 +225,7 @@ export abstract class LeafTask extends Task {
 									message: "Worker error",
 									cmd: this.executionCommand,
 									code: workerResult.code,
-							  },
+								},
 					stdout: workerResult.stdout ?? "",
 					stderr: workerResult.stderr ?? "",
 					worker: true,

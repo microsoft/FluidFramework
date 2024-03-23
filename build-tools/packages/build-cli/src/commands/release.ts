@@ -102,8 +102,8 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const userPolicyCheckChoice = argv.includes("--policyCheck")
 			? true
 			: argv.includes("--no-policyCheck")
-			  ? false
-			  : undefined;
+				? false
+				: undefined;
 
 		const branchPolicyCheckDefault = getRunPolicyCheckDefault(
 			releaseGroup,

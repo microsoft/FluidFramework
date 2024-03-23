@@ -87,7 +87,7 @@
 		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",

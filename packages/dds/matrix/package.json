@@ -131,7 +131,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
