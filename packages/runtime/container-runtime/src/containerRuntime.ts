@@ -3839,9 +3839,6 @@ export class ContainerRuntime
 						this.outbox.submit({
 							contents: JSON.stringify(msg),
 							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-							metadata: undefined,
-							localOpMetadata: undefined,
-							type: ContainerMessageType.DocumentSchemaChange,
 						});
 					},
 				);
