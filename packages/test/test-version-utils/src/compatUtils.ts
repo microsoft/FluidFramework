@@ -100,12 +100,12 @@ function filterRuntimeOptionsForVersion(
 
 	if (version.startsWith("1.")) {
 		options = {
-			...options,
 			// None of these features are supported by 1.3
 			compressionOptions: undefined,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+			...options,
 		};
 	} else if (version.startsWith("2.0.0-rc.1.")) {
 		options = {
