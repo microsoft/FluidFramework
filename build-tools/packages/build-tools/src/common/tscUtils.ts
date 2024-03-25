@@ -211,6 +211,7 @@ function createTscUtil(tsLib: typeof ts) {
 					tsConfigFullPath = path.join(tsConfigFullPath, "tsconfig.json");
 				}
 			} else {
+				// Does a search from given directory and up to find tsconfig.json.
 				const foundConfigFile = tsLib.findConfigFile(
 					directory,
 					tsLib.sys.fileExists,
@@ -219,7 +220,9 @@ function createTscUtil(tsLib: typeof ts) {
 				if (foundConfigFile) {
 					tsConfigFullPath = foundConfigFile;
 				} else {
+					// Assume there will be a local tsconfig.json and it is just currently missing.
 					tsConfigFullPath = path.join(directory, "tsconfig.json");
+					console.warn(`Warning: no config file found; assuming ${tsConfigFullPath}`);
 				}
 			}
 			return tsConfigFullPath;

@@ -251,9 +251,8 @@ export {
 	TreeStatus,
 	Context,
 	TreeEvent,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	FlexTreeUnknownUnboxed,
-	onNextChange,
 	isFlexTreeNode,
 
 	// Internal
@@ -276,6 +275,7 @@ export {
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
 	assertFlexTreeEntityNotFreed,
+	flexTreeSlot,
 } from "./flex-tree/index.js";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema.js";

@@ -197,8 +197,8 @@ export class MonoRepo {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			  ? "npm run install-strict"
-			  : "npm i --no-package-lock --no-shrinkwrap";
+				? "npm run install-strict"
+				: "npm i --no-package-lock --no-shrinkwrap";
 	}
 
 	public get fluidBuildConfig(): IFluidBuildConfig | undefined {

@@ -4,39 +4,39 @@
  */
 
 import { strict as assert } from "assert";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ContainerMessageType,
 	ContainerRuntime,
 	IGCRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-internal-modules
+import { ISweepMessage, disableDatastoreSweepKey } from "@fluidframework/container-runtime/test/gc";
 import {
-	ITestObjectProvider,
-	createSummarizer,
-	summarizeNow,
-	waitForContainerConnection,
-	ITestContainerConfig,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
-import { stringToBuffer } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { gcTreeKey } from "@fluidframework/runtime-definitions";
-import {
-	blobsTreeName,
-	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
 	ISummarizer,
 	RetriableSummaryError,
+	blobsTreeName,
+	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/summary";
-// eslint-disable-next-line import/no-internal-modules
-import { disableDatastoreSweepKey, ISweepMessage } from "@fluidframework/container-runtime/test/gc";
+import { delay } from "@fluidframework/core-utils";
+import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import {
+	ITestContainerConfig,
+	ITestObjectProvider,
+	createSummarizer,
+	createTestConfigProvider,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
+import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
 import {
 	getGCDeletedStateFromSummary,

@@ -1,12 +1,9 @@
 {
-	"extends": [
-		"../../../common/build/build-common/tsconfig.base.json",
-		"../../../common/build/build-common/tsconfig.cjs.json",
-	],
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"include": ["src/**/*"],
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "./lib",
 	},
 }

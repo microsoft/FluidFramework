@@ -4,21 +4,21 @@
  */
 
 import { strict as assert } from "assert";
-import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { IHostLoader } from "@fluidframework/container-definitions";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { IHostLoader } from "@fluidframework/container-definitions";
+import type { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";

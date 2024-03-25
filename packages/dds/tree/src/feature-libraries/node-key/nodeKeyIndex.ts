@@ -43,7 +43,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	/**
 	 * Search the tree for all nodes with keys, and record them in this index for lookup.
 	 * This should be called each time the tree changes; each call to scan forgets all existing keys.
-	 * @param context - the editable tree context in which to search for node keys
+	 * @param context - the flex tree context in which to search for node keys
 	 */
 	// TODO: This can be optimized by responding to deltas/changes to the tree, rather than rescanning the whole tree every time
 	public scanKeys(context: FlexTreeContext): void {

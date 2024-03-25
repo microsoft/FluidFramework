@@ -555,6 +555,9 @@ function processOp(
 			case ContainerMessageType.GC: {
 				break;
 			}
+			case ContainerMessageType.DocumentSchemaChange: {
+				break;
+			}
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
