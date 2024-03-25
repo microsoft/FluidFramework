@@ -16,6 +16,7 @@ import {
 	ContainerClosedTelemetry,
 	ContainerAttachingTelemetry,
 	ContainerAttachedTelemetry,
+	type ContainerTelemetryEventName,
 } from "./containerTelemetry";
 import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents";
 
@@ -39,7 +40,7 @@ export class ContainerEventTelemetryProducer {
 				return telemetry;
 			case ContainerSystemEventNames.DISCONNECTED:
 				telemetry = <ContainerDisconnectedTelemetry>(
-					this.produceBasicContainerTelemetry(ContainerSystemEventNames.DISCONNECTED)
+					this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.DISCONNECTED)
 				);
 				break;
 			case ContainerSystemEventNames.CLOSED:
@@ -47,12 +48,12 @@ export class ContainerEventTelemetryProducer {
 				break;
 			case ContainerSystemEventNames.ATTACHED:
 				telemetry = <ContainerAttachedTelemetry>(
-					this.produceBasicContainerTelemetry(ContainerSystemEventNames.ATTACHED)
+					this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHED)
 				);
 				break;
 			case ContainerSystemEventNames.ATTACHING:
 				telemetry = <ContainerAttachingTelemetry>(
-					this.produceBasicContainerTelemetry(ContainerSystemEventNames.ATTACHING)
+					this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHING)
 				);
 				break;
 			default:
@@ -61,7 +62,7 @@ export class ContainerEventTelemetryProducer {
 		return telemetry;
 	}
 
-	private produceBasicContainerTelemetry = <T>(eventName: ContainerSystemEventName): T => {
+	private produceBasicContainerTelemetry = <T>(eventName: ContainerTelemetryEventName): T => {
 		return {
 			eventName,
 			containerId: this.getContainerId(),
