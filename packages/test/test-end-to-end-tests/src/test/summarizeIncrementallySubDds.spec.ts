@@ -4,25 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IExperimentalIncrementalSummaryContext,
-	ISummaryTreeWithStats,
-	ITelemetryContext,
-	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import {
-	ITestFluidObject,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -30,13 +14,28 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
 	MessageType,
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	TestFluidObjectFactory,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 import { pkgVersion } from "../packageVersion.js";
 
 // Test DDS factory for the blob dds
@@ -460,7 +459,9 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 describeCompat(
 	"Incremental summaries can be generated for DDS content",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 		let provider: ITestObjectProvider;
 		const defaultFactory = new TestFluidObjectFactory([
 			[

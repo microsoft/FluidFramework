@@ -155,7 +155,7 @@ export {
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
@@ -327,7 +327,7 @@ export {
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
-export { SharedTree, TreeFactory } from "./treeFactory.js";
+export { SharedTree } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

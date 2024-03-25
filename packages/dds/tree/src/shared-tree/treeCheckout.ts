@@ -51,7 +51,7 @@ import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilde
 export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
 	 *
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
