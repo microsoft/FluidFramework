@@ -4,13 +4,13 @@
  */
 
 /**
- * The values of RouterliciousEndpoint correspond to those defined in the interfaces file of the test-driver-definitions package, 
+ * The values of RouterliciousEndpoint correspond to those defined in the interfaces file of the test-driver-definitions package,
  * {@link @fluidframework/test-driver-definitions#RouterliciousEndpoint}
  */
 type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 /**
- * The values of TestDriverTypes correspond to those defined in the interfaces file of the test-driver-definitions package, 
+ * The values of TestDriverTypes correspond to those defined in the interfaces file of the test-driver-definitions package,
  * {@link @fluidframework/test-driver-definitions#TestDriverTypes}
  */
 type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
