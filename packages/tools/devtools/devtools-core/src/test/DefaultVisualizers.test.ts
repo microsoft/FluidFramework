@@ -428,6 +428,11 @@ describe("DefaultVisualizers unit tests", () => {
 				chaiLatte: builder.object("chai-latte-object", {
 					appleCider: [builder.boolean, builder.string, builder.handle],
 				}),
+				dalgona: builder.array(
+					builder.object("dalgona-object", {
+						avengers: builder.boolean,
+					}),
+				),
 			}),
 			baz: [builder.number, builder.string, builder.boolean],
 		}) {}
@@ -467,8 +472,13 @@ describe("DefaultVisualizers unit tests", () => {
 							chaiLatte: {
 								appleCider: true,
 							},
+							dalgona: [
+								{
+									avengers: true,
+								},
+							],
 						},
-						baz: 64,
+						baz: 128,
 					}),
 			),
 		);

@@ -419,23 +419,6 @@ function objectFieldHelper(
 	return result;
 }
 
-function arrayAlloedTypesHelper(fields: JsonableTree[]): string {
-	let result = "";
-
-	for (const field of fields) {
-		const nodeSchema = field.type;
-
-		result += `${nodeSchema} | `;
-	}
-
-	/**
-	 * Slice the trailing ` | ` from the `result`.
-	 */
-	result = result.slice(0, -3);
-
-	return result;
-}
-
 function objectNodeStoredSchemaHelper(
 	tree: JsonableTree,
 	schema: ObjectNodeStoredSchema,
@@ -450,7 +433,6 @@ function objectNodeStoredSchemaHelper(
 	const objectVisualized = {};
 
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		const arrayAllowedTypes = arrayAlloedTypesHelper(childField);
 		const childFieldVisualized = objectFieldHelper(childField, contentSnapshot);
 
 		// TODO: If index exists add field and schema.
@@ -460,7 +442,7 @@ function objectNodeStoredSchemaHelper(
 				? { ...childFieldVisualized }
 				: {
 						schema: {
-							allowedTypes: arrayAllowedTypes,
+							allowedTypes: childField[0].type,
 						},
 						fields: childFieldVisualized,
 				  };
