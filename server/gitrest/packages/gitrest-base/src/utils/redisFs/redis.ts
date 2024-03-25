@@ -135,7 +135,9 @@ export class Redis implements IRedis {
 		if (keys.length === 0) {
 			return false;
 		}
-		const result = await this.redisClientConnectionManager.getRedisClient().unlink(...keys);
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.unlink(...keys.map((key) => this.getKey(key)));
 		return result === keys.length;
 	}
 
@@ -152,7 +154,8 @@ export class Redis implements IRedis {
 				keyPrefix,
 			},
 		);
-		return result;
+		// Remove the prefix from the keys before returning them.
+		return result.map((key) => key.replace(`${this.prefix}:`, ""));
 	}
 
 	/**
@@ -229,7 +232,7 @@ export class HashMapRedis implements IRedis {
 		// Filter out root directory fields, since they are not necessary fields in the HashMap.
 		// Then, map each field/value pair to array of arguments for the HSET command (f1, v1, f2, v2...).
 		const fieldValueArgs = fieldValuePairs
-			.filter(({ key: field, value }) => this.isFieldRootDirectory(field))
+			.filter(({ key: field, value }) => !this.isFieldRootDirectory(field))
 			.flatMap(({ key: field, value }) => [this.getMapField(field), JSON.stringify(value)]);
 		if (fieldValueArgs.length === 0) {
 			// Don't do anything if there are no fields to set.
@@ -239,7 +242,7 @@ export class HashMapRedis implements IRedis {
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
 		await this.redisClientConnectionManager
 			.getRedisClient()
-			.hset(this.getMapKey(), fieldValueArgs);
+			.hset(this.getMapKey(), ...fieldValueArgs);
 	}
 
 	public async peek(field: string): Promise<number> {
@@ -300,7 +303,7 @@ export class HashMapRedis implements IRedis {
 				keyPrefix,
 			},
 		);
-		return result.filter((field) => `${this.getMapKey()}/${field}`.startsWith(keyPrefix));
+		return result.filter((field) => field.startsWith(keyPrefix));
 	}
 
 	/**
