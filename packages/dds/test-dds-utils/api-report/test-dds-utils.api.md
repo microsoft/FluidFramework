@@ -8,7 +8,6 @@ import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochast
 import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor';
 import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
@@ -65,8 +64,8 @@ export function createDDSFuzzSuite<TChannelFactory extends IChannelFactory, TOpe
 
 // @internal
 export namespace createDDSFuzzSuite {
-    const only: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<IFluidLoadable>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
-    const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<IFluidLoadable>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
+    const only: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
+    const skip: (...seeds: number[]) => <TChannelFactory extends IChannelFactory<unknown>, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>, providedOptions?: Partial<DDSFuzzSuiteOptions>) => void;
 }
 
 // @internal

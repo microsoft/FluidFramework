@@ -6,10 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import {
 	FlexFieldNodeSchema,
-	LeafNodeSchema as FlexLeafNodeSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNode,
@@ -18,9 +16,15 @@ import {
 	isLazy,
 	markEager,
 	typeNameSymbol,
-	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+import {
+	booleanSchema,
+	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
+} from "./leafNodeSchema.js";
 import {
 	arrayNodePrototypeProperties,
 	createArrayNodeProxy,
@@ -45,61 +49,12 @@ import {
 	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
 	WithType,
 	type,
 } from "./schemaTypes.js";
-import { getFlexSchema, setFlexSchemaFromClassSchema } from "./toFlexSchema.js";
+import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode } from "./types.js";
-
-/**
- * Instances of this class are schema for leaf nodes.
- * @remarks
- * Unlike other schema, leaf schema are class instances instead of classes themselves.
- * This is because the instance type (the tree node type) for leaves are not objects,
- * so those instances can't be instances of a schema based class.
- * @privateRemarks
- * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
- */
-class LeafNodeSchema<T extends FlexLeafNodeSchema>
-	implements TreeNodeSchemaNonClass<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>>
-{
-	public readonly identifier: UnbrandedName<T>;
-	public readonly kind = NodeKind.Leaf;
-	public readonly info: T["info"];
-	public readonly implicitlyConstructable = true as const;
-	public create(data: TreeValue<T["info"]> | FlexTreeNode): TreeValue<T["info"]> {
-		if (isFlexTreeNode(data)) {
-			const value = data.value;
-			assert(valueSchemaAllows(this.info, value), "invalid value");
-			return value;
-		}
-		return data;
-	}
-
-	public constructor(schema: T) {
-		setFlexSchemaFromClassSchema(this, schema);
-		this.identifier = schema.name as UnbrandedName<T>;
-		this.info = schema.info;
-	}
-}
-
-/**
- * Wrapper around LeafNodeSchema's constructor that provides the return type that is desired in the package public API.
- */
-function makeLeaf<T extends FlexLeafNodeSchema>(
-	schema: T,
-): TreeNodeSchema<UnbrandedName<T>, NodeKind.Leaf, TreeValue<T["info"]>, TreeValue<T["info"]>> {
-	return new LeafNodeSchema(schema);
-}
-
-// Leaf schema shared between all SchemaFactory instances.
-const stringSchema = makeLeaf(leaf.string);
-const numberSchema = makeLeaf(leaf.number);
-const booleanSchema = makeLeaf(leaf.boolean);
-const nullSchema = makeLeaf(leaf.null);
-const handleSchema = makeLeaf(leaf.handle);
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -123,12 +78,6 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			unreachableCase(value);
 	}
 }
-
-type UnbrandedName<T extends FlexLeafNodeSchema> = T["name"] extends TreeNodeSchemaIdentifier<
-	infer Name extends string
->
-	? Name
-	: T["name"];
 
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.

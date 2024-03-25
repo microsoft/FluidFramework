@@ -114,8 +114,8 @@ export class Package {
 		this.packageManager = existsSync(pnpmWorkspacePath)
 			? "pnpm"
 			: existsSync(yarnLockPath)
-			  ? "yarn"
-			  : "npm";
+				? "yarn"
+				: "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
@@ -228,8 +228,8 @@ export class Package {
 		return this.packageManager === "pnpm"
 			? "pnpm i"
 			: this.packageManager === "yarn"
-			  ? "npm run install-strict"
-			  : "npm i";
+				? "npm run install-strict"
+				: "npm i";
 	}
 
 	private get color() {
@@ -362,7 +362,7 @@ async function queueExec<TItem, TResult>(
 					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(3)}s`,
 				);
 				return result;
-		  }
+			}
 		: exec;
 	const q = queue(async (taskExec: TaskExec<TItem, TResult>) => {
 		try {

@@ -91,15 +91,15 @@ export async function npmCheckUpdates(
 		releaseGroup === undefined // run on the whole repo
 			? [...context.repo.releaseGroups.keys()]
 			: isReleaseGroup(releaseGroup) // run on just this release group
-			  ? [releaseGroup]
-			  : undefined;
+				? [releaseGroup]
+				: undefined;
 
 	const packagesToCheck =
 		releaseGroup === undefined // run on the whole repo
 			? [...context.independentPackages] // include all independent packages
 			: isReleaseGroup(releaseGroup)
-			  ? [] // run on a release group so no independent packages should be included
-			  : [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
+				? [] // run on a release group so no independent packages should be included
+				: [context.fullPackageMap.get(releaseGroup)]; // the releaseGroup argument must be a package
 
 	if (releaseGroupsToCheck !== undefined) {
 		for (const group of releaseGroupsToCheck) {
@@ -769,12 +769,12 @@ export async function npmCheckUpdatesHomegrown(
 	const selectionCriteria: PackageSelectionCriteria =
 		releaseGroup === undefined
 			? // if releaseGroup is undefined it means we should update all packages and release groups
-			  AllPackagesSelectionCriteria
+				AllPackagesSelectionCriteria
 			: {
 					independentPackages: false,
 					releaseGroups: [releaseGroup as ReleaseGroup],
 					releaseGroupRoots: [releaseGroup as ReleaseGroup],
-			  };
+				};
 
 	// Remove the filtered release group from the list if needed
 	if (releaseGroupFilter !== undefined) {
