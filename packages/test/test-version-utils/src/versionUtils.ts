@@ -32,7 +32,7 @@ const getModulePath = (version: string) => path.join(baseModulePath, version);
 const resolutionCache = new Map<string, string>();
 
 // Increment the revision if we want to force installation (e.g. package list changed)
-const revision = 1;
+const revision = 2;
 
 interface InstalledJson {
 	revision: number;
