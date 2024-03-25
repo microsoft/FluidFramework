@@ -4,9 +4,11 @@
  */
 
 import { runWithRetry } from "@fluidframework/server-services-core";
-import { IRedisParameters } from "@fluidframework/server-services-utils";
+import {
+	IRedisParameters,
+	IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import * as IoRedis from "ioredis";
 import { RedisFsApis, executeRedisFsApiWithMetric } from "./helpers";
 
 export interface RedisParams extends IRedisParameters {
@@ -55,7 +57,7 @@ export class Redis implements IRedis {
 	private readonly prefix: string = "fs";
 
 	constructor(
-		private readonly client: IoRedis.default | IoRedis.Cluster,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		private readonly parameters?: RedisParams,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -66,13 +68,15 @@ export class Redis implements IRedis {
 			this.prefix = parameters.prefix;
 		}
 
-		client.on("error", (error) => {
+		redisClientConnectionManager.getRedisClient().on("error", (error) => {
 			Lumberjack.error("Redis Cache Error", undefined, error);
 		});
 	}
 
 	public async get<T>(key: string): Promise<T | undefined> {
-		const stringValue = await this.client.get(this.getKey(key));
+		const stringValue = await this.redisClientConnectionManager
+			.getRedisClient()
+			.get(this.getKey(key));
 		if (!stringValue) {
 			// Cannot JSON parse an empty string or null value, so return undefined.
 			return undefined;
@@ -85,12 +89,9 @@ export class Redis implements IRedis {
 		value: T,
 		expireAfterSeconds: number = this.expireAfterSeconds,
 	): Promise<void> {
-		const result = await this.client.set(
-			this.getKey(key),
-			JSON.stringify(value),
-			"EX",
-			expireAfterSeconds,
-		);
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.set(this.getKey(key), JSON.stringify(value), "EX", expireAfterSeconds);
 
 		if (result !== "OK") {
 			throw new Error(result);
@@ -108,7 +109,9 @@ export class Redis implements IRedis {
 	}
 
 	public async peek(key: string): Promise<number> {
-		const strlen = await this.client.strlen(this.getKey(key));
+		const strlen = await this.redisClientConnectionManager
+			.getRedisClient()
+			.strlen(this.getKey(key));
 		// If the key does not exist, strlen will return 0.
 		// Otherwise, we are stringifying everything we store in Redis, so strlen will always be at least 2 from the stringified quotes.
 		return strlen === 0 ? -1 : strlen - 2;
@@ -120,7 +123,7 @@ export class Redis implements IRedis {
 		// If 'appendPrefixToKey' is false, we assume that the 'key' parameter with prefix is already passed in by the caller,
 		// and no additional prefix needs to be added.
 		const keyToDelete = appendPrefixToKey ? this.getKey(key) : key;
-		const result = await this.client.unlink(keyToDelete);
+		const result = await this.redisClientConnectionManager.getRedisClient().unlink(keyToDelete);
 		// The UNLINK API in Redis returns the number of keys that were removed.
 		// We always call Redis DEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.
@@ -132,13 +135,16 @@ export class Redis implements IRedis {
 		if (keys.length === 0) {
 			return false;
 		}
-		const result = await this.client.unlink(...keys);
+		const result = await this.redisClientConnectionManager.getRedisClient().unlink(...keys);
 		return result === keys.length;
 	}
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
 		const result = await executeRedisFsApiWithMetric(
-			async () => this.client.keys(`${this.getKey(keyPrefix)}*`),
+			async () =>
+				this.redisClientConnectionManager
+					.getRedisClient()
+					.keys(`${this.getKey(keyPrefix)}*`),
 			RedisFsApis.KeysByPrefix,
 			this.parameters?.enableRedisMetrics,
 			this.parameters?.redisApiMetricsSamplingPeriod,
@@ -167,7 +173,7 @@ export class HashMapRedis implements IRedis {
 		 * Key that points to the HashMap in Redis.
 		 */
 		private readonly hashMapKey: string,
-		private readonly client: IoRedis.default | IoRedis.Cluster,
+		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		private readonly parameters?: RedisParams,
 	) {
 		if (parameters?.expireAfterSeconds) {
@@ -178,7 +184,7 @@ export class HashMapRedis implements IRedis {
 			this.prefix = parameters.prefix;
 		}
 
-		client.on("error", (error) => {
+		redisClientConnectionManager.getRedisClient().on("error", (error) => {
 			Lumberjack.error("Redis Cache Error", undefined, error);
 		});
 	}
@@ -188,7 +194,9 @@ export class HashMapRedis implements IRedis {
 			// Field is part of the root hashmap key, so return empty string.
 			return "" as unknown as T;
 		}
-		const stringValue = await this.client.hget(this.getMapKey(), this.getMapField(field));
+		const stringValue = await this.redisClientConnectionManager
+			.getRedisClient()
+			.hget(this.getMapKey(), this.getMapField(field));
 		if (!stringValue) {
 			// Cannot JSON parse an empty string or null value, so return undefined.
 			return undefined;
@@ -208,7 +216,9 @@ export class HashMapRedis implements IRedis {
 		}
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		await this.client.hset(this.getMapKey(), this.getMapField(field), JSON.stringify(value));
+		await this.redisClientConnectionManager
+			.getRedisClient()
+			.hset(this.getMapKey(), this.getMapField(field), JSON.stringify(value));
 	}
 
 	public async setMany<T>(
@@ -227,7 +237,9 @@ export class HashMapRedis implements IRedis {
 		}
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		await this.client.hset(this.getMapKey(), fieldValueArgs);
+		await this.redisClientConnectionManager
+			.getRedisClient()
+			.hset(this.getMapKey(), fieldValueArgs);
 	}
 
 	public async peek(field: string): Promise<number> {
@@ -235,7 +247,9 @@ export class HashMapRedis implements IRedis {
 			// Field is part of the root hashmap key, so it exists but is empty.
 			return 0;
 		}
-		const strlen = await this.client.hstrlen(this.getMapKey(), this.getMapField(field));
+		const strlen = await this.redisClientConnectionManager
+			.getRedisClient()
+			.hstrlen(this.getMapKey(), this.getMapField(field));
 		// If the key does not exist, strlen will return 0.
 		// Otherwise, we are stringifying everything we store in Redis, so strlen will always be at least 2 from the stringified quotes.
 		return strlen === 0 ? -1 : strlen - 2;
@@ -246,7 +260,9 @@ export class HashMapRedis implements IRedis {
 			// The deleted field is a root directory, so we need to delete the whole HashMap.
 			return this.delAll(field);
 		}
-		const result = await this.client.hdel(this.getMapKey(), this.getMapField(field));
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.hdel(this.getMapKey(), this.getMapField(field));
 		// The HDEL API in Redis returns the number of keys that were removed.
 		// We always call Redis HDEL with one key only, so we expect a result equal to 1
 		// to indicate that the key was removed. 0 would indicate that the key does not exist.
@@ -256,7 +272,9 @@ export class HashMapRedis implements IRedis {
 	public async delAll(keyPrefix: string): Promise<boolean> {
 		if (this.isFieldRootDirectory(keyPrefix)) {
 			// The key prefix matches a root directory, so we need to delete the whole HashMap.
-			const unlinkResult = await this.client.unlink(this.getMapKey());
+			const unlinkResult = await this.redisClientConnectionManager
+				.getRedisClient()
+				.unlink(this.getMapKey());
 			// The UNLINK API in Redis returns the number of keys that were removed.
 			// We always call Redis DEL with one key only, so we expect a result equal to 1
 			// to indicate that the key was removed. 0 would indicate that the key does not exist.
@@ -266,13 +284,15 @@ export class HashMapRedis implements IRedis {
 		if (keys.length === 0) {
 			return false;
 		}
-		const hDelResult = await this.client.hdel(this.getMapKey(), ...keys);
+		const hDelResult = await this.redisClientConnectionManager
+			.getRedisClient()
+			.hdel(this.getMapKey(), ...keys);
 		return hDelResult === keys.length;
 	}
 
 	public async keysByPrefix(keyPrefix: string): Promise<string[]> {
 		const result = await executeRedisFsApiWithMetric(
-			async () => this.client.hkeys(this.getMapKey()),
+			async () => this.redisClientConnectionManager.getRedisClient().hkeys(this.getMapKey()),
 			RedisFsApis.HKeysByPrefix,
 			this.parameters?.enableRedisMetrics,
 			this.parameters?.redisApiMetricsSamplingPeriod,
@@ -307,13 +327,19 @@ export class HashMapRedis implements IRedis {
 			return;
 		}
 		const initializeHashMapIfNotExists = async (): Promise<void> => {
-			const exists = await this.client.exists(this.getMapKey());
+			const exists = await this.redisClientConnectionManager
+				.getRedisClient()
+				.exists(this.getMapKey());
 			if (!exists) {
 				await executeRedisFsApiWithMetric(
 					async () => {
 						// Set a blank field/value pair to initialize the hashmap.
-						await this.client.hset(this.getMapKey(), "", "");
-						await this.client.expire(this.getMapKey(), this.expireAfterSeconds);
+						await this.redisClientConnectionManager
+							.getRedisClient()
+							.hset(this.getMapKey(), "", "");
+						await this.redisClientConnectionManager
+							.getRedisClient()
+							.expire(this.getMapKey(), this.expireAfterSeconds);
 					},
 					RedisFsApis.InitHashmapFs,
 					this.parameters?.enableRedisMetrics,

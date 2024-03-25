@@ -8,9 +8,9 @@ import { strict as assert } from "assert";
 import {
 	type BuildNode,
 	Change,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	type SharedTreeShim,
 	SharedTreeShimFactory,
 	StablePlace,
@@ -18,14 +18,6 @@ import {
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
-import {
-	type ITree,
-	SharedTree,
-	type TreeView,
-	disposeSymbol,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -37,11 +29,19 @@ import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

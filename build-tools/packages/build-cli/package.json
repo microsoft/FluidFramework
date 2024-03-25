@@ -105,7 +105,7 @@
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.1",
-		"ts-morph": "^17.0.1",
+		"ts-morph": "^21.0.1",
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {
@@ -183,6 +183,9 @@
 			},
 			"generate": {
 				"description": "Generate commands are used to create/update code, docs, readmes, etc."
+			},
+			"modify": {
+				"description": "Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc."
 			},
 			"release": {
 				"description": "Release commands are used to manage the Fluid release process."
