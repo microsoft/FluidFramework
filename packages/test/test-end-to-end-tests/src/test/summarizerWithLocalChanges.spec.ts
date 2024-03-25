@@ -23,7 +23,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -51,6 +51,7 @@ async function waitForSummaryOp(container: IContainer): Promise<boolean> {
 
 describeCompat("Summarizer with local changes", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 	/**
