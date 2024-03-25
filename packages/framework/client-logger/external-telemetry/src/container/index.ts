@@ -10,6 +10,8 @@ export {
 	ContainerConnectedTelemetry,
 	ContainerClosedTelemetry,
 	ContainerDisconnectedTelemetry,
+	ContainerAttachingTelemetry,
+	ContainerAttachedTelemetry,
 } from "./containerTelemetry";
 
 export { ContainerTelemetryManager } from "./telemetryManager";

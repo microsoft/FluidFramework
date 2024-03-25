@@ -12,8 +12,10 @@ import {
 	ContainerConnectedTelemetry,
 	ContainerTelemetryEventNames,
 	IContainerTelemetry,
-	type ContainerDisconnectedTelemetry,
-	type ContainerClosedTelemetry,
+	ContainerDisconnectedTelemetry,
+	ContainerClosedTelemetry,
+	ContainerAttachingTelemetry,
+	ContainerAttachedTelemetry,
 } from "./containerTelemetry";
 import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents";
 
@@ -36,10 +38,22 @@ export class ContainerEventTelemetryProducer {
 				telemetry = this.produceConnectedTelemetry(payload);
 				return telemetry;
 			case ContainerSystemEventNames.DISCONNECTED:
-				telemetry = this.produceDisconnectedTelemetry();
+				telemetry = <ContainerDisconnectedTelemetry>(
+					this.produceBasicContainerTelemetry(ContainerSystemEventNames.DISCONNECTED)
+				);
 				break;
 			case ContainerSystemEventNames.CLOSED:
 				telemetry = this.produceClosedTelemetry(payload);
+				break;
+			case ContainerSystemEventNames.ATTACHED:
+				telemetry = <ContainerAttachedTelemetry>(
+					this.produceBasicContainerTelemetry(ContainerSystemEventNames.ATTACHED)
+				);
+				break;
+			case ContainerSystemEventNames.ATTACHING:
+				telemetry = <ContainerAttachingTelemetry>(
+					this.produceBasicContainerTelemetry(ContainerSystemEventNames.ATTACHING)
+				);
 				break;
 			default:
 				break;
@@ -47,20 +61,20 @@ export class ContainerEventTelemetryProducer {
 		return telemetry;
 	}
 
+	private produceBasicContainerTelemetry = <T>(eventName: ContainerSystemEventName): T => {
+		return {
+			eventName,
+			containerId: this.getContainerId(),
+			documentId: this.getDocumentId(),
+		} as T;
+	};
+
 	private produceConnectedTelemetry = (payload?: {
 		clientId: string;
 	}): ContainerConnectedTelemetry => {
 		return {
 			eventName: ContainerTelemetryEventNames.CONNECTED,
 			containerId: payload?.clientId ?? this.getContainerId(),
-			documentId: this.getDocumentId(),
-		};
-	};
-
-	private produceDisconnectedTelemetry = (): ContainerDisconnectedTelemetry => {
-		return {
-			eventName: ContainerTelemetryEventNames.DISCONNECTED,
-			containerId: this.getContainerId(),
 			documentId: this.getDocumentId(),
 		};
 	};

@@ -11,16 +11,14 @@ import type {
 	IContainerEvents,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
-	createTelemetryManagers,
-	type AppInsightsTelemetryConsumerConfig,
-	type TelemetryManagerConfig,
-} from "../factory";
+import { createTelemetryManagers, TelemetryManagerConfig } from "../factory";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ContainerSystemEventNames } from "../container/containerSystemEvents";
 import { ContainerTelemetryEventNames, type ContainerConnectedTelemetry } from "../container";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import type {
+	ContainerAttachedTelemetry,
+	ContainerAttachingTelemetry,
 	ContainerClosedTelemetry,
 	ContainerDisconnectedTelemetry,
 } from "../container/containerTelemetry";
@@ -50,7 +48,8 @@ class MockContainer
 	}
 
 	public async attach(): Promise<void> {
-		this.emit("attached");
+		this.emit(ContainerSystemEventNames.ATTACHING);
+		this.emit(ContainerSystemEventNames.ATTACHED);
 	}
 
 	public dispose(): void {
@@ -91,8 +90,8 @@ describe("External container telemetry", () => {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockContainer = createMockContainer();
 
-		const consumerConfig: AppInsightsTelemetryConsumerConfig = {
-			type: "AppInsights",
+		const consumerConfig: TelemetryManagerConfig.AppInsightsConsumerConfig = {
+			type: TelemetryManagerConfig.ConsumerConfigTypes.APP_INSIGHTS,
 			appInsightsClient,
 		};
 		telemetryManagerConfig = {
@@ -180,6 +179,44 @@ describe("External container telemetry", () => {
 
 		const expectedAppInsightsTelemetry = {
 			name: ContainerTelemetryEventNames.CLOSED,
+			properties: expectedAppInsightsTelemetryProperties,
+		};
+
+		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+	});
+
+	it("Emitting 'attaching' system event produces expected ContainerAttachingTelemetry", () => {
+		createTelemetryManagers(telemetryManagerConfig);
+
+		mockContainer.attach({ url: "mockUrl" });
+
+		const expectedAppInsightsTelemetryProperties: ContainerAttachingTelemetry = {
+			eventName: ContainerTelemetryEventNames.ATTACHING,
+			documentId: mockContainer.resolvedUrl?.id,
+			containerId: mockContainer.clientId,
+		};
+
+		const expectedAppInsightsTelemetry = {
+			name: ContainerTelemetryEventNames.ATTACHING,
+			properties: expectedAppInsightsTelemetryProperties,
+		};
+
+		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+	});
+
+	it("Emitting 'attached' system event produces expected ContainerAttachedTelemetry", () => {
+		createTelemetryManagers(telemetryManagerConfig);
+
+		mockContainer.attach({ url: "mockUrl" });
+
+		const expectedAppInsightsTelemetryProperties: ContainerAttachedTelemetry = {
+			eventName: ContainerTelemetryEventNames.ATTACHED,
+			documentId: mockContainer.resolvedUrl?.id,
+			containerId: mockContainer.clientId,
+		};
+
+		const expectedAppInsightsTelemetry = {
+			name: ContainerTelemetryEventNames.ATTACHED,
 			properties: expectedAppInsightsTelemetryProperties,
 		};
 

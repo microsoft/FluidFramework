@@ -1,10 +1,87 @@
 # Description
 
-The telemetry-manager package contains code for managing production and consumption of typed telemetry intended for customers building Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications.
+This package contains code enabling the production and consumption of typed telemetry for Fluid Framework applications. The typed telemetry from this package is used as the backbone for different Fluid Framework cloud offerings such as dashboards and alarms for Fluid applications. People can also use this package as a reference for customizing and creating their own telemetry solution if desired.
 
-The telemetry is produced from internal system events, such as [`IContainerEvents`](../../../common/container-definitions/src/loader.ts).
+### Telemetry Destinations
 
-# High level design overview
+At this time, Azure App Insights is the only available destination for fluid external telemetry. Eventually, more destinations will be added.
+
+### What is Application Insights?
+
+At a high level, App Insights is an Azure cloud service for aggregating, visualizing, analyzing, and alerting on metrics related to a given “service” or “application”.
+You create an App Insights Instance and then configure your applications to send data to your instance using either Azure provided SDK’s or REST APIs.
+This could be general machine related health being automatically reported to the instance when you install a logging program on your service’s machines or custom metrics that you manually configure your applications to send. Keep in mind this logger is intended for use with browser based web applications, not pure nodeJS.
+In our case, we are sending custom metrics. [Learn more about Azure App Insights with their docs](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview?tabs=net)
+
+### Areas currently supported for external telemetry
+
+1. Containers
+
+# Getting Started
+
+The core functionality of this package is exposed by the `createTelemetryManagers(config: TelemetryManagerConfig);` method. A Telemetry manager handles the production and consumption/emission of telemetry events and there should be one manager created per area of interest within the Fluid Framework such as Containers. In the future more areas of interest will be added.
+
+```ts
+import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+import { FluidContainer } from "@fluidframework/fluid-static";
+import { TelemetryManagerConfig, createTelemetryManagers } from "@fluidframework/external-telemetry"
+
+const myAppContainer: FluidContainer = {...your code to create a Fluid Continer}
+
+
+// Create App Insights Client
+const appInsightsClient = new ApplicationInsights({
+	config: {
+		connectionString:
+			"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
+	},
+});
+
+// Initializes the App Insights client. Without this, logs will not be sent to Azure.
+applicationInsightsClient.loadAppInsights();
+
+// Create the telemetry manager config object(s)
+const consumerConfig: TelemetryManagerConfig.AppInsightsConsumerConfig = {
+	type: TelemetryManagerConfig.ConsumerConfigTypes.APP_INSIGHTS,
+	appInsightsClient: appInsightsClient,
+};
+const telemetryManagerConfig: TelemetryManagerConfig = {
+    // Here we are specifying that we want to be tracking Fluid container related events.
+	containerTelemetry: {
+		container: myAppContainer,
+		consumerConfig: consumerConfig,
+	},
+};
+
+
+// Setup telemetry manager(s)
+createTelemetryManagers(telemetryManagerConfig);
+
+// Done!
+```
+
+# Telemetry Events
+
+This section details the currently available telemetry event and their typescript types.
+
+### Container Telemetry
+
+Telemetry events relating directly to Fluid Containers.
+
+1. `ContainerConnectedTelemetry` - Description coming soon
+1. `ContainerDisconnectedTelemetry` - Description coming soon
+1. `ContainerClosedTelemetry` - Description coming soon
+1. `ContainerAttachingTelemetry` - Description coming soon
+1. `ContainerAttachedTelemetry` - Description coming soon
+
+# Internal Design
+
+This section is relevant for people looking to create their own custom logic for production and consumption of telemetry for their Fluid Framework application. It details information about the internal package setup to help people get a better understanding of how to get started customizing themselves.
+
+The telemetry is produced from internal fluid system events, such as [`IContainerEvents`](../../../common/container-definitions/src/loader.ts).
+These events are subscribed to and when they if/when they fire, additional information is added and a strongly typed telemetry event is produced.
+
+## High level design overview
 
 At a high level, this package accomplishes producing and consuming telemetry with a few simple concepts
 
@@ -14,7 +91,7 @@ At a high level, this package accomplishes producing and consuming telemetry wit
 3. **Telemetry Managers** - Managers handle taking **Producers** and **Consumers** and linking them together create a pipeline for producing [`IExternalTelemetry`](./telemetry-manager/common/telemetry/index.ts), ideally with a focus on a specific set of events.
     - The [`ContainerTelemetryManager`](./telemetry-manager/container/telemetryManager.ts) is one such example focused on producing [`IContainerTelemetry`](./telemetry-manager/container/containerTelemetry.ts).
 
-# Package Structure
+## Package Structure
 
 `/common/` : Shared/common files such as interfaces used within the telemetry-manager pacakge
 

@@ -36,6 +36,12 @@ export class ContainerTelemetryManager {
 		container.on(ContainerSystemEventNames.CLOSED, (error?: ICriticalContainerError) =>
 			this.handleContainerSystemEvent(ContainerSystemEventNames.CLOSED, { error }),
 		);
+		container.on(ContainerSystemEventNames.ATTACHED, () =>
+			this.handleContainerSystemEvent(ContainerSystemEventNames.ATTACHED),
+		);
+		container.on(ContainerSystemEventNames.ATTACHING, () =>
+			this.handleContainerSystemEvent(ContainerSystemEventNames.ATTACHING),
+		);
 	}
 
 	/**

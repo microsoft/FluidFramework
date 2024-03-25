@@ -7,6 +7,8 @@ import type { ContainerTelemetryEventName } from "../../container";
 
 /**
  * The base interface extended by all external telemetry
+ *
+ * @beta
  */
 export interface IExternalTelemetry {
 	eventName: ExternalTelemetryEventName;
@@ -15,6 +17,8 @@ export interface IExternalTelemetry {
 /**
  * Aggregate type for all the different types of external telemetry event names.
  *
- * @remarks This only looks odd right now because {@link ContainerEventName} is the only option at the moment.
+ * @remarks This only looks odd right now because {@link ContainerTelemetryEventName} is the only aggregation at the moment.
+ *
+ * @beta
  */
 export type ExternalTelemetryEventName = ContainerTelemetryEventName;
