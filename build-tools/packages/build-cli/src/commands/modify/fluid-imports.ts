@@ -313,7 +313,7 @@ function isFluidImport(importDeclaration: ImportDeclaration): boolean {
 	);
 }
 
-interface MemberDataRaw {
+export interface MemberDataRaw {
 	level: ApiLevel;
 	kind: string;
 	name: string;

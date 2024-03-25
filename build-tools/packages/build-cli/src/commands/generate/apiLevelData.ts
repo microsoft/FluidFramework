@@ -3,24 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Package, FluidRepo } from "@fluidframework/build-tools";
-import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { Flags } from "@oclif/core";
-import { command as execCommand } from "execa";
-import { readFile, writeFile } from "node:fs/promises";
-import { inc } from "semver";
-import { CleanOptions } from "simple-git";
+import { readJsonSync, writeJson } from "fs-extra";
+import globby from "globby";
 
 import { BaseCommand } from "../../base";
-import { releaseGroupFlag } from "../../flags";
-import { Repository } from "../../library";
-import { isReleaseGroup } from "../../releaseGroups";
-
-async function replaceInFile(search: string, replace: string, path: string): Promise<void> {
-	const content = await readFile(path, "utf8");
-	const newContent = content.replace(new RegExp(search, "g"), replace);
-	await writeFile(path, newContent, "utf8");
-}
+import type { MemberDataRaw } from "../modify/fluid-imports";
 
 export default class GenerateApiLevelData extends BaseCommand<typeof GenerateApiLevelData> {
 	static readonly description =
@@ -28,13 +20,17 @@ export default class GenerateApiLevelData extends BaseCommand<typeof GenerateApi
 
 	static readonly flags = {
 		input: Flags.file({
-			description:
-				"The api-extractor model JSON file to use as input.",
+			description: "The api-extractor model JSON file to use as input.",
 			exists: true,
+			// required: true,
+		}),
+		glob: Flags.string({
+			description: "Use all files matching this glob as input.",
+			exactlyOne: ["input", "glob"],
 		}),
 		output: Flags.file({
-			description:
-				"Path to output file.",
+			description: "Path to output file.",
+			required: true,
 		}),
 		...BaseCommand.flags,
 	} as const;
@@ -76,9 +72,32 @@ export default class GenerateApiLevelData extends BaseCommand<typeof GenerateApi
 	// }
 
 	public async run(): Promise<void> {
-		const {input, output} = this.flags;
+		const { input, glob, output } = this.flags;
+		const rawData: Map<string, MemberDataRaw[]> = new Map();
 
-		
+		const inputFiles =
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			input === undefined
+				? await globby([glob!, "!**/node_modules/**"], { absolute: true })
+				: [input];
 
+		for (const inFile of inputFiles) {
+			const apiExtractorJson = readJsonSync(inFile);
+			const pkgName: string = apiExtractorJson.name;
+
+			if (!rawData.has(pkgName)) {
+				rawData.set(pkgName, []);
+			}
+			const members = rawData.get(pkgName);
+			for (const item of apiExtractorJson.members[0].members) {
+				members?.push({
+					name: item.name,
+					kind: item.kind.toLowerCase(),
+					level: item.releaseTag.toLowerCase(),
+				});
+			}
+		}
+		const toWrite = Object.fromEntries(rawData.entries());
+		await writeJson(output, toWrite, { spaces: "\t" });
 	}
 }

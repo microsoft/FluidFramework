@@ -3,12 +3,36 @@
 
 Generate commands are used to create/update code, docs, readmes, etc.
 
+* [`flub generate apiLevelData`](#flub-generate-apileveldata)
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate upcoming`](#flub-generate-upcoming)
+
+## `flub generate apiLevelData`
+
+Generate a datafile for use with the 'modify fluid-imports' command.
+
+```
+USAGE
+  $ flub generate apiLevelData --output <value> [-v | --quiet] [--input <value>] [--glob <value>]
+
+FLAGS
+  --glob=<value>    Use all files matching this glob as input.
+  --input=<value>   The api-extractor model JSON file to use as input.
+  --output=<value>  (required) Path to output file.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+  --quiet        Disable all logging.
+
+DESCRIPTION
+  Generate a datafile for use with the 'modify fluid-imports' command.
+```
+
+_See code: [src/commands/generate/apiLevelData.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/apiLevelData.ts)_
 
 ## `flub generate assertTags`
 
