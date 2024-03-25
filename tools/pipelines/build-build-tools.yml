@@ -47,6 +47,8 @@ trigger:
   paths:
     include:
     - .prettierignore
+    - biome.json
+    - biome.jsonc
     - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/templates/1ES/build-npm-package.yml

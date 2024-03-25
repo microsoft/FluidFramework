@@ -34,12 +34,12 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import React, { useState, useRef } from "react";
-import SplitPane from "react-split-pane";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { useLogger } from "../TelemetryUtils";
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+import { SplitPane } from "./SplitPane.cjs";
+import { Waiting } from "./Waiting.js";
 
 /**
  * Set the default displayed size to 100.

@@ -14,9 +14,9 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import React from "react";
-import { useMessageRelay } from "../MessageRelayContext";
-import { ContainerHistoryLog } from "./ContainerHistoryLog";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { ContainerHistoryLog } from "./ContainerHistoryLog.js";
+import { Waiting } from "./Waiting.js";
 
 /**
  * {@link ContainerHistoryView} input props.

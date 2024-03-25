@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "node:assert";
-import { stub, type SinonStub } from "sinon";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { Socket } from "socket.io-client";
 import type { IClient } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { type SinonStub, stub } from "sinon";
+import { Socket } from "socket.io-client";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";

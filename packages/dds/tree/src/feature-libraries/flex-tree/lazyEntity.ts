@@ -13,20 +13,6 @@ import { IDisposable, disposeSymbol } from "../../util/index.js";
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
 
-/**
- * Like {@link makePropertyNotEnumerable}, but less type safe so it works on private properties.
- */
-export function makePrivatePropertyNotEnumerable(
-	target: object,
-	key: string | symbol | number,
-): void {
-	assert(
-		Object.getOwnPropertyDescriptor(target, key)?.enumerable === true,
-		0x777 /* missing property or not enumerable */,
-	);
-	Object.defineProperty(target, key, { enumerable: false });
-}
-
 export const prepareForEditSymbol = Symbol("prepareForEdit");
 export const isFreedSymbol = Symbol("isFreed");
 export const tryMoveCursorToAnchorSymbol = Symbol("tryMoveCursorToAnchor");
@@ -95,12 +81,12 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 			);
 			assert(
 				this[anchorSymbol] !== undefined,
-				0x779 /* EditableTree should have an anchor if it does not have a cursor */,
+				0x779 /* FlexTree should have an anchor if it does not have a cursor */,
 			);
 			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
-				0x77a /* It is invalid to access an EditableTree node which no longer exists */,
+				0x77a /* It is invalid to access a FlexTree node which no longer exists */,
 			);
 			this.context.withCursors.add(this);
 		}

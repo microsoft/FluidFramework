@@ -223,7 +223,7 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
  * const lastBoldedAttributionKey = segment.attribution?.getAtOffset(0, "bold");
  * const lastItalicizedAttributionKey = segment.attribution?.getAtOffset(0, "italic");
  * ```
- * @alpha
+ * @internal
  */
 export function createPropertyTrackingAttributionPolicyFactory(
 	...propNames: string[]
@@ -241,7 +241,7 @@ export function createPropertyTrackingAttributionPolicyFactory(
  * Creates an attribution policy which tracks insertion as well as annotation of certain property names.
  * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
  * {@link createInsertOnlyAttributionPolicy}: see there for more details.
- * @alpha
+ * @internal
  */
 export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
 	...propNames: string[]

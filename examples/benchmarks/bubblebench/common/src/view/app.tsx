@@ -4,10 +4,10 @@
  */
 
 import React, { useEffect, useState } from "react";
-import useResizeObserver from "use-resize-observer";
 import { Stats } from "../stats.js";
 import { IAppState, IBubble } from "../types.js";
 import { StageView } from "./stage.js";
+import { useResizeObserver } from "./useResizeObserver.cjs";
 
 const formatFloat = (n: number): number => Math.round(n * 10) / 10;
 interface IAppProps {
