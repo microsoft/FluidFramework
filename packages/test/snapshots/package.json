@@ -39,7 +39,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:new": "mocha --experimental-worker \"lib/test/generate/new.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:update": "mocha --experimental-worker \"lib/test/generate/update.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,
