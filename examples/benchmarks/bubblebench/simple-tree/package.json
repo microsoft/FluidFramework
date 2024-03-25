@@ -42,7 +42,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-example/bubblebench-common": "workspace:~",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
