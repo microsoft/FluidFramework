@@ -5,7 +5,6 @@
 
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -37,6 +36,7 @@ interface IDataStores extends IFluidDataStoreChannel {
 }
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;

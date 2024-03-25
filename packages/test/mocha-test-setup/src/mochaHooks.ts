@@ -6,7 +6,7 @@
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import * as mochaModule from "mocha";
-import { pkgName } from "./packageVersion";
+import { pkgName } from "./packageVersion.js";
 
 // this will enabling capturing the full stack for errors
 // since this is test capturing the full stack is worth it
