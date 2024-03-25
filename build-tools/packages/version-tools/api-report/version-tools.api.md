@@ -7,9 +7,6 @@
 import * as semver from 'semver';
 
 // @public
-export const ALLOWED_PRERELEASE_IDENTIFIERS: readonly ["internal", "rc"];
-
-// @public
 export function bumpRange(range: string, bumpType: VersionBumpTypeExtended, prerelease?: boolean): string;
 
 // @public
@@ -95,9 +92,6 @@ export const RangeOperators: readonly ["^", "~", ""];
 
 // @public
 export type RangeOperatorWithVersion = `${Exclude<RangeOperator, "">}${string}`;
-
-// @public
-export const RC_PRERELEASE_IDENTIFER = "rc";
 
 // @public
 export type ReleaseVersion = string;
