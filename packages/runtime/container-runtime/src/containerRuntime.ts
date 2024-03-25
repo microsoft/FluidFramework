@@ -2160,10 +2160,12 @@ export class ContainerRuntime
 			extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 			this.messageAtLastSummary;
 
-		// Is document schema explicit control on?
 		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
 			this.deltaManager.lastSequenceNumber,
 		);
+
+		// Is document schema explicit control on?
+		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
@@ -2177,10 +2179,10 @@ export class ContainerRuntime
 			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
 			// See also messageFromMetadata()
-			message: documentSchema?.runtime.explicitSchemaControl
+			message: explitiSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
-			lastMessage: message,
+			lastMessage: explitiSchemaControl ? message : undefined,
 			documentSchema,
 		};
 
