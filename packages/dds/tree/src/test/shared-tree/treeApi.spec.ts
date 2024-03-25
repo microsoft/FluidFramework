@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 import { CheckoutFlexTreeView, Tree } from "../../shared-tree/index.js";
 import {
-	SchemaFactory,
-	TreeConfiguration,
-	type TreeChangeEvents,
 	type NodeFromSchema,
+	SchemaFactory,
+	type TreeChangeEvents,
+	TreeConfiguration,
 } from "../../simple-tree/index.js";
 import { createTestUndoRedoStacks, getView } from "../utils.js";
 

@@ -108,7 +108,6 @@ describe("treeApi", () => {
 	});
 
 	describe("on", () => {
-
 		describe("object node", () => {
 			const sb = new SchemaFactory("object-node-in-root");
 			class myObject extends sb.object("object", {
@@ -157,9 +156,9 @@ describe("treeApi", () => {
 			check(
 				"afterShallowChange",
 				(root) =>
-					root.rootObject = new myObject({
+					(root.rootObject = new myObject({
 						myNumber: 2,
-					}),
+					})),
 			);
 			check("afterDeepChange", (root) => root.rootObject.myNumber++);
 
@@ -181,7 +180,7 @@ describe("treeApi", () => {
 
 				root.rootObject = new myObject({
 					myNumber: 2,
-				})
+				});
 
 				assert.equal(
 					shallowChanges,
@@ -212,7 +211,7 @@ describe("treeApi", () => {
 					deepChanges++;
 				});
 
-				root.rootObject.myNumber++
+				root.rootObject.myNumber++;
 
 				assert.equal(
 					shallowChanges,
@@ -417,7 +416,7 @@ describe("treeApi", () => {
 					deepChanges++;
 				});
 
-				root.set("a", { myNumber: 2 })
+				root.set("a", { myNumber: 2 });
 
 				assert.equal(
 					shallowChanges,
