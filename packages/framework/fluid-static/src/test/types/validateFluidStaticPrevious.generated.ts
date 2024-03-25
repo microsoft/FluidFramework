@@ -54,7 +54,7 @@ use_old_InterfaceDeclaration_ContainerSchema(
 declare function get_old_TypeAliasDeclaration_DataObjectClass():
     TypeOnly<old.DataObjectClass<any>>;
 declare function use_current_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<current.DataObjectClass<any>>): void;
+    use: TypeOnly<current.DataObjectClass>): void;
 use_current_TypeAliasDeclaration_DataObjectClass(
     get_old_TypeAliasDeclaration_DataObjectClass());
 
@@ -64,7 +64,7 @@ use_current_TypeAliasDeclaration_DataObjectClass(
 * "TypeAliasDeclaration_DataObjectClass": {"backCompat": false}
 */
 declare function get_current_TypeAliasDeclaration_DataObjectClass():
-    TypeOnly<current.DataObjectClass<any>>;
+    TypeOnly<current.DataObjectClass>;
 declare function use_old_TypeAliasDeclaration_DataObjectClass(
     use: TypeOnly<old.DataObjectClass<any>>): void;
 use_old_TypeAliasDeclaration_DataObjectClass(
@@ -337,26 +337,14 @@ use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LoadableObjectCtor": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_LoadableObjectCtor": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_LoadableObjectCtor():
-    TypeOnly<old.LoadableObjectCtor<any>>;
-declare function use_current_TypeAliasDeclaration_LoadableObjectCtor(
-    use: TypeOnly<current.LoadableObjectCtor<any>>): void;
-use_current_TypeAliasDeclaration_LoadableObjectCtor(
-    get_old_TypeAliasDeclaration_LoadableObjectCtor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LoadableObjectCtor": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_LoadableObjectCtor": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_LoadableObjectCtor():
-    TypeOnly<current.LoadableObjectCtor<any>>;
-declare function use_old_TypeAliasDeclaration_LoadableObjectCtor(
-    use: TypeOnly<old.LoadableObjectCtor<any>>): void;
-use_old_TypeAliasDeclaration_LoadableObjectCtor(
-    get_current_TypeAliasDeclaration_LoadableObjectCtor());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -435,24 +423,12 @@ use_old_TypeAliasDeclaration_Myself(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SharedObjectClass():
-    TypeOnly<old.SharedObjectClass<any>>;
-declare function use_current_RemovedTypeAliasDeclaration_SharedObjectClass(
-    use: TypeOnly<current.SharedObjectClass<any>>): void;
-use_current_RemovedTypeAliasDeclaration_SharedObjectClass(
-    get_old_TypeAliasDeclaration_SharedObjectClass());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_SharedObjectClass": {"backCompat": false}
 */
-declare function get_current_RemovedTypeAliasDeclaration_SharedObjectClass():
-    TypeOnly<current.SharedObjectClass<any>>;
-declare function use_old_TypeAliasDeclaration_SharedObjectClass(
-    use: TypeOnly<old.SharedObjectClass<any>>): void;
-use_old_TypeAliasDeclaration_SharedObjectClass(
-    get_current_RemovedTypeAliasDeclaration_SharedObjectClass());
 
 /*
 * Validate forward compat by using old type in place of current type

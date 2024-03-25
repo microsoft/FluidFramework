@@ -100,12 +100,12 @@ function filterRuntimeOptionsForVersion(
 
 	if (version.startsWith("1.")) {
 		options = {
-			...options,
 			// None of these features are supported by 1.3
 			compressionOptions: undefined,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+			...options,
 		};
 	} else if (version.startsWith("2.0.0-rc.1.")) {
 		options = {
@@ -120,10 +120,7 @@ function filterRuntimeOptionsForVersion(
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
 			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
-			// This is very likely related to one of these bugfixes that missed that release:
-			// https://github.com/microsoft/FluidFramework/pull/20089
-			// https://github.com/microsoft/FluidFramework/pull/20080
-			enableRuntimeIdCompressor: undefined,
+			enableRuntimeIdCompressor,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
 		};
