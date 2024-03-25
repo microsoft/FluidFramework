@@ -2159,7 +2159,7 @@ export class ContainerRuntime
 		const message =
 			extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 			this.messageAtLastSummary;
-		
+
 		// Is document schema explicit control on?
 		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
 			this.deltaManager.lastSequenceNumber,
