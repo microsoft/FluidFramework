@@ -166,7 +166,7 @@ export class DetachedFieldIndex {
 		const rangeId = Delta.convertToRangeId(id);
 		const count = rangeId?.minor.length ?? 1;
 		const root = this.rootIdAllocator.allocate(count);
-		// const root = this.rootIdAllocator.allocate(nodeRangeId?.major, (nodeRangeId?.minor.start ?? 0) as ChangesetLocalId, nodeRangeId?.minor.length);
+		
 		if (rangeId !== undefined) {
 			assert(
 				tryGetFromNestedRangeMap(

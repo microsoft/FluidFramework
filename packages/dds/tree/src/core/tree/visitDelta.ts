@@ -415,6 +415,16 @@ function processBuilds(
 ) {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
+			// remove the inner loop, no need of offset
+			const rangeId = Delta.convertToRangeId(id, trees.length) as Delta.DetachedNodeRangeId;
+			let root = config.detachedFieldIndex.tryGetEntry(rangeId);
+			if (root === undefined) {
+				root = config.detachedFieldIndex.createEntry(rangeId);
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.create(trees, field);
+			}
+
+			/*
 			for (let i = 0; i < trees.length; i += 1) {
 				const offsettedId = offsetDetachId(id, i);
 				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
@@ -425,7 +435,7 @@ function processBuilds(
 					const field = config.detachedFieldIndex.toFieldKey(root);
 					visitor.create([trees[i]], field);
 				}
-			}
+			} */
 		}
 	}
 }
@@ -483,6 +493,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					visitNode(index, fields, visitor, config);
 				}
 				/*
+				// need to ensure all nodes within the same sourcefield before catogarizing them
 				for (let i = 0; i < mark.count; i += 1) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const offsetAttachId = offsetDetachId(mark.attach!, i);
