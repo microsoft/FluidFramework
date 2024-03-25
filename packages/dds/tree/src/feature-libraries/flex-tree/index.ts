@@ -23,7 +23,6 @@ export {
 	FlexTreeTypedNodeUnion,
 	CheckTypesOverlap,
 	TreeStatus,
-	onNextChange,
 	FlexTreeUnknownUnboxed,
 	FlexTreeUnboxField,
 	flexTreeMarker,
@@ -35,6 +34,7 @@ export {
 	reservedObjectNodeFieldPropertyNames,
 	reservedObjectNodeFieldPropertyNamePrefixes,
 	FlexTreeObjectNodeFieldsInner,
+	flexTreeSlot,
 } from "./flexTreeTypes.js";
 
 export {

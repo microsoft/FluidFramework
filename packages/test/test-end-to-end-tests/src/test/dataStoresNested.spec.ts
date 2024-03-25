@@ -3,30 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import {
-	ITestObjectProvider,
-	TestContainerRuntimeFactory,
-	TestFluidObjectFactory,
-	TestFluidObject,
-	TestObjectProvider,
-	summarizeNow,
-	createSummarizerCore,
-} from "@fluidframework/test-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 import {
+	ChannelCollection,
+	ChannelCollectionFactory,
 	IContainerRuntimeOptions,
 	ISummarizer,
 	SummaryCollection,
-	ChannelCollectionFactory,
-	ChannelCollection,
 } from "@fluidframework/container-runtime";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITestObjectProvider,
+	TestContainerRuntimeFactory,
+	TestFluidObject,
+	TestFluidObjectFactory,
+	TestObjectProvider,
+	createSummarizerCore,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
 /**
  * ADO:7302 This needs to be revisited after settling on a set of
@@ -37,6 +36,7 @@ interface IDataStores extends IFluidDataStoreChannel {
 }
 
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
 
 	let provider: ITestObjectProvider;

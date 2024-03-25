@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
+	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -17,8 +16,9 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 // eslint-disable-next-line import/no-deprecated
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,

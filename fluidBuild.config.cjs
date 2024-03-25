@@ -34,7 +34,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -425,7 +425,6 @@ module.exports = {
 				["oclif", "oclif"],
 				["renamer", "renamer"],
 				["ts2esm", "ts2esm"],
-				["tsc-multi", "tsc-multi"],
 				["tinylicious", "tinylicious"],
 				["attw", "@arethetypeswrong/cli"],
 			],

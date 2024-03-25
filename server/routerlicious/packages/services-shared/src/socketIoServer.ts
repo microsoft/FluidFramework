@@ -7,8 +7,12 @@ import { EventEmitter } from "events";
 import * as http from "http";
 import * as util from "util";
 import * as core from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Namespace, Server, Socket } from "socket.io";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
+import { Namespace, Server, Socket, RemoteSocket } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
@@ -71,6 +75,7 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly io: Server,
 		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
+		private readonly socketIoConfig?: any,
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
@@ -121,6 +126,72 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public async close(): Promise<void> {
+		const sleep = async (timeMs: number) =>
+			new Promise((resolve) => setTimeout(resolve, timeMs));
+
+		if (this.socketIoConfig?.gracefulShutdownEnabled) {
+			// Gradual disconnection of websocket connections
+			const drainTime = this.socketIoConfig?.gracefulShutdownDrainTimeMs ?? 30000;
+			const drainInterval = this.socketIoConfig?.gracefulShutdownDrainIntervalMs ?? 1000;
+			if (drainTime > 0 && drainInterval > 0) {
+				// we are assuming no new connections appear once we start. any leftover connections will be closed when close is called
+				const connections = await this.io.fetchSockets();
+				const connectionCount = connections.length;
+				const telemetryProperties = {
+					drainTime,
+					drainInterval,
+					connectionCount,
+				};
+				Lumberjack.info("Graceful disconnection started", telemetryProperties);
+				const metricForTimeTaken = Lumberjack.newLumberMetric(
+					LumberEventName.GracefulShutdown,
+					telemetryProperties,
+				);
+				// total number of drains to run
+				const totalDrains = Math.ceil(drainTime / drainInterval);
+				// number of connections to disconnect per drain
+				const connectionsToDisconnectPerDrain = Math.ceil(connectionCount / totalDrains);
+				let done = false;
+				const drainConnections = Array.from(connections.values());
+				let n = 0;
+				if (connectionsToDisconnectPerDrain > 0) {
+					// start draining                let done = false;
+					for (let i = 0; i < totalDrains; i++) {
+						for (let j = 0; j < connectionsToDisconnectPerDrain; j++) {
+							const connection: RemoteSocket<any, any> = drainConnections[n];
+							if (!connection) {
+								done = true;
+								break;
+							}
+							try {
+								connection.disconnect(true);
+							} catch (e) {
+								Lumberjack.error("Graceful disconnect exception", undefined, e);
+							}
+							n++;
+						}
+						if (done) {
+							break;
+						}
+						Lumberjack.info("Graceful disconnect batch processed", {
+							disconnectedSoFar: n + 1,
+							connectionCount,
+						});
+						await sleep(drainInterval);
+					}
+				}
+				if (n + 1 < connectionCount) {
+					metricForTimeTaken.error(
+						`Graceful shutdown finished incompletely. Missed ${
+							connectionCount - n - 1
+						} connections.`,
+					);
+				} else {
+					metricForTimeTaken.success("Graceful shutdown finished");
+				}
+			}
+		}
+
 		// eslint-disable-next-line @typescript-eslint/promise-function-async
 		const pubClosedP = util.promisify(((callback) =>
 			this.redisClientConnectionManagerForPub.getRedisClient().quit(callback)) as any)();
@@ -194,5 +265,6 @@ export function create(
 		io,
 		redisClientConnectionManagerForPub,
 		redisClientConnectionManagerForSub,
+		socketIoConfig,
 	);
 }
