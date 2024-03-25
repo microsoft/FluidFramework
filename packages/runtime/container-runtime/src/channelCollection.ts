@@ -777,7 +777,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// realize the local context, as local contexts shouldn't be delay
 		// loaded, as this client is playing the role of creating client,
 		// and creating clients always create realized data store contexts.
-		await dataStoreContext.realize().then(async (e) => e.entryPoint.get());
+		const channel = await dataStoreContext.realize();
+		await channel.entryPoint.get();
 
 		// add to the list of bound or remoted, as this context must be bound
 		// to had an attach message sent, and is the non-detached case is remoted.
