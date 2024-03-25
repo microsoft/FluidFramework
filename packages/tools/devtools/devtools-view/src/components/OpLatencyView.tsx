@@ -137,7 +137,7 @@ export function OpLatencyView(): React.ReactElement {
 		const toggleMessage = ToggleUnsampledTelemetry.createMessage({
 			unsampledTelemetry: String(newValue),
 		});
-
+		setUnsampledTelemetry(newValue);
 		messageRelay.postMessage(toggleMessage);
 	};
 
