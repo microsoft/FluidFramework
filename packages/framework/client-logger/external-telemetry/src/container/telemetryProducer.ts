@@ -63,7 +63,9 @@ export class ContainerEventTelemetryProducer {
 		return telemetry;
 	}
 
-	private produceBasicContainerTelemetry = <T>(eventName: ContainerTelemetryEventName): T => {
+	private produceBasicContainerTelemetry = <T extends IContainerTelemetry>(
+		eventName: ContainerTelemetryEventName,
+	): T => {
 		return {
 			eventName,
 			containerId: this.getContainerId(),
