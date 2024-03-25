@@ -1113,30 +1113,55 @@ describe("visitDelta", () => {
 		});
 	});
 
-	it("tolerates superfluous refreshers", () => {
-		const index = makeDetachedFieldIndex("", testRevisionTagCodec);
-		const node = { minor: 42 };
-		const node2 = { minor: 43 };
-		const rootFieldDelta: DeltaFieldChanges = {
-			local: [{ count: 1, attach: node2 }],
-		};
-		const delta: DeltaRoot = {
-			refreshers: [
-				{ id: node, trees: [content] },
-				{ id: node2, trees: [content] },
-			],
-			fields: new Map([[rootKey, rootFieldDelta]]),
-		};
-		const expected: VisitScript = [
-			["enterField", rootKey],
-			["exitField", rootKey],
-			["enterField", rootKey],
-			["create", [content], field0],
-			["attach", field0, 1, 0],
-			["exitField", rootKey],
-		];
-		testVisit(delta, expected, index);
-		assert.equal(index.entries().next().done, true);
+	describe("tolerates superfluous refreshers", () => {
+		it("when the delta can be applied without the refresher", () => {
+			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
+			const node = { minor: 42 };
+			const node2 = { minor: 43 };
+			const rootFieldDelta: DeltaFieldChanges = {
+				local: [{ count: 1, attach: node2 }],
+			};
+			const delta: DeltaRoot = {
+				refreshers: [
+					{ id: node, trees: [content] },
+					{ id: node2, trees: [content] },
+				],
+				fields: new Map([[rootKey, rootFieldDelta]]),
+			};
+			const expected: VisitScript = [
+				["enterField", rootKey],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["create", [content], field0],
+				["attach", field0, 1, 0],
+				["exitField", rootKey],
+			];
+			testVisit(delta, expected, index);
+			assert.equal(index.entries().next().done, true);
+		});
+
+		it("when the refreshed tree already exists in the forest", () => {
+			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
+			const node = { minor: 42 };
+			const rootFieldDelta: DeltaFieldChanges = {
+				local: [{ count: 1, attach: node }],
+			};
+			const delta: DeltaRoot = {
+				build: [{ id: node, trees: [content] }],
+				refreshers: [{ id: node, trees: [content] }],
+				fields: new Map([[rootKey, rootFieldDelta]]),
+			};
+			const expected: VisitScript = [
+				["create", [content], field0],
+				["enterField", rootKey],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["attach", field0, 1, 0],
+				["exitField", rootKey],
+			];
+			testVisit(delta, expected, index);
+			assert.equal(index.entries().next().done, true);
+		});
 	});
 
 	describe("rename chains", () => {

@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 
 import { NestedMap } from "../../index.js";
-import { nestedMapFromFlatList, tryGetFromNestedMap } from "../../util/index.js";
+import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ITreeCursorSynchronous } from "./cursor.js";
 import * as Delta from "./delta.js";
@@ -74,15 +74,13 @@ export function visitDelta(
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
-	const refresherData: [Major, Minor, ITreeCursorSynchronous][] = [];
+	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
 		for (let i = 0; i < trees.length; i += 1) {
 			const offsettedId = minor + i;
-			refresherData.push([major, offsettedId, trees[i]]);
+			setInNestedMap(refreshers, major, offsettedId, trees[i]);
 		}
 	});
-	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> =
-		nestedMapFromFlatList(refresherData);
 	const detachConfig: PassConfig = {
 		func: detachPass,
 		refreshers,
@@ -309,11 +307,6 @@ interface PassConfig {
 	 * created in the forest once needed.
 	 */
 	readonly refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous>;
-	/**
-	 * Nested changes on roots that need to be visited as part of the detach pass.
-	 * Each entry is removed when its associated changes are visited.
-	 */
-	// readonly detachPassRoots: Map<ForestRootId, Delta.FieldMap>;
 	/**
 	 * Nested changes on roots that need to be visited as part of the detach pass.
 	 * Each entry is removed when its associated changes are visited.
