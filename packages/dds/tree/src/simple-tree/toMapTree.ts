@@ -278,7 +278,10 @@ function objectToMapTree(
 	};
 }
 
-function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): NormalizedFieldSchema {
+function getObjectFieldSchema(
+	schema: TreeNodeSchema,
+	key: FieldKey,
+): FieldSchema<FieldKind, AllowedTypes> {
 	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 	if (fields[key] === undefined) {
@@ -349,24 +352,12 @@ export function getPossibleTypes(typeSet: AllowedTypes, data: ContextuallyTypedN
 	return possibleTypes;
 }
 
-/**
- * Normalized {@link ImplicitFieldSchema}.
- */
-export interface NormalizedFieldSchema {
-	kind: FieldKind;
-	allowedTypes: AllowedTypes;
-}
-
-export function normalizeFieldSchema(schema: ImplicitFieldSchema): NormalizedFieldSchema {
+export function normalizeFieldSchema(
+	schema: ImplicitFieldSchema,
+): FieldSchema<FieldKind, AllowedTypes> {
 	return schema instanceof FieldSchema
-		? {
-				kind: schema.kind,
-				allowedTypes: normalizeAllowedTypes(schema.allowedTypes),
-		  }
-		: {
-				kind: FieldKind.Required,
-				allowedTypes: normalizeAllowedTypes(schema),
-		  };
+		? new FieldSchema(schema.kind, normalizeAllowedTypes(schema.allowedTypes))
+		: new FieldSchema(FieldKind.Required, normalizeAllowedTypes(schema));
 }
 
 function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
