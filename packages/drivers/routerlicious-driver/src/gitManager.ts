@@ -8,9 +8,9 @@ import {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import { IWholeFlatSnapshot } from "./contracts";
-import { IR11sResponse } from "./restWrapper";
-import { IGitManager, IHistorian } from "./storageContracts";
+import { IWholeFlatSnapshot } from "./contracts.js";
+import { IR11sResponse } from "./restWrapper.js";
+import { IGitManager, IHistorian } from "./storageContracts.js";
 
 export class GitManager implements IGitManager {
 	constructor(private readonly historian: IHistorian) {}

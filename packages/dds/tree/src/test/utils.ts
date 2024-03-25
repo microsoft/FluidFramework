@@ -34,7 +34,6 @@ import {
 } from "@fluidframework/test-utils";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-// eslint-disable-next-line import/no-internal-modules -- test import
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
@@ -658,9 +657,16 @@ export function validateSnapshotConsistency(
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
+export function checkoutFromConfig(treeConfiguration: TreeConfiguration): TreeCheckout {
+	const forest = buildForest();
+	const flexConfig = toFlexConfig(treeConfiguration, forest);
+	return checkoutWithContent(flexConfig);
+}
+
 export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
+		forest?: IEditableForest;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -672,6 +678,7 @@ export function checkoutWithContent(
 export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
+		forest?: IEditableForest;
 		events?: ISubscribable<CheckoutEvents> &
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
@@ -679,7 +686,7 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): CheckoutFlexTreeView<TRoot> {
-	const forest = forestWithContent(content);
+	const forest = args?.forest ?? forestWithContent(content);
 	const view = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
@@ -694,7 +701,10 @@ export function flexTreeViewWithContent<TRoot extends FlexFieldSchema>(
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
-	const forest = buildForest();
+	return addContentToForest(buildForest(), content);
+}
+
+export function addContentToForest(forest: IEditableForest, content: TreeContent): IEditableForest {
 	const fieldCursor = normalizeNewFieldContent(
 		{ schema: content.schema },
 		content.schema.rootFieldSchema,
@@ -711,6 +721,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
+		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
@@ -718,7 +729,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = forestWithContent(content);
+	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
@@ -985,6 +996,8 @@ export function defaultRevInfosFromChanges(
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
+		// TODO: ADO#7366 assert to check if either all the changes have revision,
+		// or that all of the changes have undefined revision.
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
@@ -1183,8 +1196,10 @@ export function treeTestFactory(
 export function getView<TSchema extends ImplicitFieldSchema>(
 	config: TreeConfiguration<TSchema>,
 ): SchematizingSimpleTreeView<TSchema> {
-	const flexConfig = toFlexConfig(config);
-	const checkout = checkoutWithContent(flexConfig);
+	const forest = buildForest();
+	const flexConfig = toFlexConfig(config, forest);
+	addContentToForest(forest, flexConfig);
+	const checkout = checkoutWithContent(flexConfig, { forest });
 	return new SchematizingSimpleTreeView<TSchema>(
 		checkout,
 		config,

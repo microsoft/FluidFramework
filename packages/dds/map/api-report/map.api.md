@@ -16,6 +16,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @alpha @sealed
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
@@ -205,10 +206,7 @@ export const SharedDirectory: {
 export type SharedDirectory = ISharedDirectory;
 
 // @public @deprecated
-export const SharedMap: {
-    getFactory(): IChannelFactory<ISharedMap>;
-    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
-};
+export const SharedMap: ISharedObjectKind<ISharedMap>;
 
 // @public @deprecated
 export type SharedMap = ISharedMap;

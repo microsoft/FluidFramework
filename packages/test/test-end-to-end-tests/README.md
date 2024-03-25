@@ -115,6 +115,14 @@ of how to write an end-to-end test.
 
 That same [directory](src/test) contains more complex examples too.
 
+## Debugging
+
+In order to debug legacy code running as part of an end-to-end test, you'll need to modify the debug launch configuration to include `node_modules` in its set of loaded files.
+
+For example, if using "Debug Current Mocha Test" or one of its variants, remove the `node_modules` entry under `"skipFiles"`.
+
+Break points in the set of legacy modules (found in test-version-utils' install tree) will then properly be hit.
+
 ## "Real Service" Tests
 
 The tests under the `real-service-tests` dir target a live production service like r11s or ODSP's Fluid server.

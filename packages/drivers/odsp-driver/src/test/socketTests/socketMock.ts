@@ -105,7 +105,19 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 			case "connect_document": {
 				const connectMessage = args[0] as IConnect;
 				switch (this.mockSocketConnectResponse.connect_document.eventToEmit) {
-					case "connect_document_error":
+					case "connect_document_error": {
+						const errorToThrow =
+							this.mockSocketConnectResponse.connect_document.errorToThrow ??
+							createGenericNetworkError(
+								"TestError",
+								{ canRetry: false },
+								{ driverVersion, isSocketError: false },
+							);
+						this.emit(
+							this.mockSocketConnectResponse.connect_document.eventToEmit,
+							errorToThrow,
+						);
+					}
 					case "connect_error": {
 						const errorToThrow =
 							this.mockSocketConnectResponse.connect_document.errorToThrow ??

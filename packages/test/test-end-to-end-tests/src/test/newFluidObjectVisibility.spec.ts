@@ -4,22 +4,22 @@
  */
 
 import assert from "assert";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle, type FluidObject } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
+import { responseToException } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { responseToException } from "@fluidframework/runtime-utils";
 
 async function resolveHandleWithoutWait(
 	containerRuntime: ContainerRuntime,

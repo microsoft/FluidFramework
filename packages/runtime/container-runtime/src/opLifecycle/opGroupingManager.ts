@@ -28,6 +28,10 @@ function isGroupContents(opContents: any): opContents is IGroupedBatchMessageCon
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
+export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
+	return isGroupContents(op.contents);
+}
+
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 	readonly opCountThreshold: number;
@@ -46,9 +50,7 @@ export class OpGroupingManager {
 	}
 
 	public groupBatch(batch: IBatch): IBatch {
-		if (!this.shouldGroup(batch)) {
-			return batch;
-		}
+		assert(this.shouldGroup(batch), "cannot group the provided batch");
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -96,13 +98,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents)) {
-			return [op];
-		}
+		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		const contents: IGroupedBatchMessageContents = op.contents;
 
-		const messages = op.contents.contents;
 		let fakeCsn = 1;
-		return messages.map((subMessage) => ({
+		return contents.contents.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,
