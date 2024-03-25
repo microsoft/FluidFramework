@@ -860,6 +860,13 @@ export class ContainerRuntime
 				loadSequenceNumberVerification !== "bypass" &&
 				runtimeSequenceNumber !== protocolSequenceNumber
 			) {
+				// Message to OCEs:
+				// You can hit this error with runtimeSequenceNumber === -1 in 1.x amd < 2.0 RC3 builds.
+				// This would indicate that explicit schema control is enable in current (2.0 RC3+) builds and i
+				// results in addMetadataToSummary() creating a poison pill for older runtimes in the form of a -1 sequence number.
+				// Older runtimes do not understand new schema, and thus could corrupt document if they proceed, thus we are using
+				// this poison pill to prevent them from proceeding.
+
 				// "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: SummaryMetadataMismatch
