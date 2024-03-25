@@ -309,8 +309,7 @@ export function isInternalVersionRange(range: string, allowAnyPrereleaseId = fal
 	return (
 		singleRangeSet.find(
 			(comparator) =>
-				comparator.operator === "<" &&
-				comparator.semver.version.startsWith(prereleasePrefix),
+				comparator.operator === "<" && comparator.semver.version.startsWith(prereleasePrefix),
 		) !== undefined
 	);
 }
@@ -446,7 +445,9 @@ export function changePreReleaseIdentifier(
  *
  * @internal
  */
-export function detectInternalVersionConstraintType(range: string): "minor" | "patch" | "exact" {
+export function detectInternalVersionConstraintType(
+	range: string,
+): "minor" | "patch" | "exact" {
 	if (semver.validRange(range) === null) {
 		throw new Error(`Invalid range: ${range}`);
 	}
