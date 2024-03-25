@@ -22,7 +22,6 @@ export default class GenerateApiLevelData extends BaseCommand<typeof GenerateApi
 		input: Flags.file({
 			description: "The api-extractor model JSON file to use as input.",
 			exists: true,
-			// required: true,
 		}),
 		glob: Flags.string({
 			description: "Use all files matching this glob as input.",
@@ -35,50 +34,15 @@ export default class GenerateApiLevelData extends BaseCommand<typeof GenerateApi
 		...BaseCommand.flags,
 	} as const;
 
-	// static readonly examples = [
-	// 	{
-	// 		description: "Generate changelogs for the client release group.",
-	// 		command: "<%= config.bin %> <%= command.id %> --releaseGroup client",
-	// 	},
-	// ];
-
-	// private repo?: Repository;
-
-	// private async processPackage(pkg: Package): Promise<void> {
-	// 	const { directory, version: pkgVersion } = pkg;
-
-	// 	// This is the version that the changesets tooling calculates by default. It does a semver major bump on the current
-	// 	// version. We search for that version in the generated changelog and replace it with the one that we want.
-	// 	// For internal versions, bumping the semver major is the same as just taking the public version from the internal
-	// 	// version and using it directly.
-	// 	const changesetsCalculatedVersion = isInternalVersionScheme(pkgVersion)
-	// 		? fromInternalScheme(pkgVersion)[0].version
-	// 		: inc(pkgVersion, "major");
-	// 	const versionToUse = this.flags.version ?? pkgVersion;
-
-	// 	// Replace the changeset version with the correct version.
-	// 	await replaceInFile(
-	// 		`## ${changesetsCalculatedVersion}\n`,
-	// 		`## ${versionToUse}\n`,
-	// 		`${directory}/CHANGELOG.md`,
-	// 	);
-
-	// 	// For changelogs that had no changesets applied to them, add in a 'dependency updates only' section.
-	// 	await replaceInFile(
-	// 		`## ${versionToUse}\n\n## `,
-	// 		`## ${versionToUse}\n\nDependency updates only.\n\n## `,
-	// 		`${directory}/CHANGELOG.md`,
-	// 	);
-	// }
-
 	public async run(): Promise<void> {
 		const { input, glob, output } = this.flags;
 		const rawData: Map<string, MemberDataRaw[]> = new Map();
 
 		const inputFiles =
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			input === undefined
-				? await globby([glob!, "!**/node_modules/**"], { absolute: true })
+				? // glob is guaranteed to be defined if input is undefined, thanks to oclif's flag constraints
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					await globby([glob!, "!**/node_modules/**"], { absolute: true })
 				: [input];
 
 		for (const inFile of inputFiles) {
