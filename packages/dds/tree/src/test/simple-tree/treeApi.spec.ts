@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import type { TreeChangeEvents } from "../../../dist/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import {
@@ -11,7 +12,6 @@ import {
 	SchemaFactory,
 	treeNodeApi as Tree,
 	TreeConfiguration,
-	TreeNode,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import { hydrate } from "./utils.js";
@@ -108,56 +108,38 @@ describe("treeApi", () => {
 	});
 
 	describe("on", () => {
-		const sb = new SchemaFactory("object");
-		const object = sb.object("child", {
-			content: sb.number,
-		});
-		const list = sb.array(object);
-		const treeSchema = sb.object("parent", { object, list });
 
-		describe("events", () => {
-			function check(mutate: (root: NodeFromSchema<typeof treeSchema>) => void) {
-				it(".on(..) must subscribe to change event", () => {
+		describe("object node", () => {
+			const sb = new SchemaFactory("object-node-in-root");
+			class myObject extends sb.object("object", {
+				myNumber: sb.number,
+			}) {}
+			const treeSchema = sb.object("root", {
+				rootObject: myObject,
+			});
+
+			function check(
+				eventName: keyof TreeChangeEvents,
+				mutate: (root: NodeFromSchema<typeof treeSchema>) => void,
+			) {
+				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
 					const root = hydrate(treeSchema, {
-						object: { content: 1 },
-						list: [{ content: 2 }, { content: 3 }],
+						rootObject: {
+							myNumber: 1,
+						},
 					});
 					const log: any[][] = [];
 
-					Tree.on(root as TreeNode, "afterDeepChange", (...args: any[]) => {
+					const unsubscribe = Tree.on(root, eventName, (...args: any[]) => {
 						log.push(args);
 					});
 
 					mutate(root);
 
-					const numChanges = log.length;
-					assert(
-						numChanges > 0,
-						"Must receive change notifications after subscribing to event.",
-					);
-				});
-
-				it(".on(..) must return unsubscribe function", () => {
-					const root = hydrate(treeSchema, {
-						object: { content: 1 },
-						list: [{ content: 2 }, { content: 3 }],
-					});
-					const log: any[][] = [];
-
-					const unsubscribe = Tree.on(
-						root as TreeNode,
-						"afterDeepChange",
-						(...args: any[]) => {
-							log.push(args);
-						},
-					);
-
-					mutate(root);
-
-					const numChanges = log.length;
-					assert(
-						numChanges > 0,
-						"Must receive change notifications after subscribing to event.",
+					assert.equal(
+						log.length,
+						1,
+						`Must receive change notifications after subscribing to event '${eventName}'.`,
 					);
 
 					unsubscribe();
@@ -166,23 +148,333 @@ describe("treeApi", () => {
 
 					assert.equal(
 						log.length,
-						numChanges,
-						"Mutation after unsubscribe must not emit change events.",
+						1,
+						`Mutation after unsubscribe must not emit event '${eventName}'.`,
 					);
 				});
-
-				// TODO: tests for afterShallowChange ?
 			}
 
-			describe("object", () => {
-				check((root) => root.object.content++);
+			check(
+				"afterShallowChange",
+				(root) =>
+					root.rootObject = new myObject({
+						myNumber: 2,
+					}),
+			);
+			check("afterDeepChange", (root) => root.rootObject.myNumber++);
+
+			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
+				const root = hydrate(treeSchema, {
+					rootObject: {
+						myNumber: 1,
+					},
+				});
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "afterShallowChange", (...args: any[]) => {
+					shallowChanges++;
+				});
+				Tree.on(root, "afterDeepChange", (...args: any[]) => {
+					deepChanges++;
+				});
+
+				root.rootObject = new myObject({
+					myNumber: 2,
+				})
+
+				assert.equal(
+					shallowChanges,
+					1,
+					`Must trigger afterShallowChange when direct fields change.`,
+				);
+
+				assert.equal(
+					deepChanges,
+					1,
+					`Must trigger afterDeepChange when direct fields change.`,
+				);
 			});
 
-			describe("list", () => {
-				check((root) => root.list.insertAtEnd({ content: root.list.length }));
-			});
+			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
+				const root = hydrate(treeSchema, {
+					rootObject: {
+						myNumber: 1,
+					},
+				});
 
-			// TODO: map
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "afterShallowChange", (...args: any[]) => {
+					shallowChanges++;
+				});
+				Tree.on(root, "afterDeepChange", (...args: any[]) => {
+					deepChanges++;
+				});
+
+				root.rootObject.myNumber++
+
+				assert.equal(
+					shallowChanges,
+					0,
+					`Must NOT trigger afterShallowChange when descendant fields change.`,
+				);
+
+				assert.equal(
+					deepChanges,
+					1,
+					`Must trigger afterDeepChange when descendant fields change.`,
+				);
+			});
 		});
+
+		describe("list node", () => {
+			const sb = new SchemaFactory("list-node-in-root");
+			class myObject extends sb.object("object", {
+				myNumber: sb.number,
+			}) {}
+			const treeSchema = sb.array("root", myObject);
+
+			function check(
+				eventName: keyof TreeChangeEvents,
+				mutate: (root: NodeFromSchema<typeof treeSchema>) => void,
+			) {
+				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
+					const root = hydrate(treeSchema, [
+						{
+							myNumber: 1,
+						},
+					]);
+					const log: any[][] = [];
+
+					const unsubscribe = Tree.on(root, eventName, (...args: any[]) => {
+						log.push(args);
+					});
+
+					mutate(root);
+
+					assert.equal(
+						log.length,
+						1,
+						`Must receive change notifications after subscribing to event '${eventName}'.`,
+					);
+
+					unsubscribe();
+
+					mutate(root);
+
+					assert.equal(
+						log.length,
+						1,
+						`Mutation after unsubscribe must not emit event '${eventName}'.`,
+					);
+				});
+			}
+
+			check("afterShallowChange", (root) => root.insertAtEnd({ myNumber: 2 }));
+			check("afterDeepChange", (root) => root[0].myNumber++);
+
+			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
+				const root = hydrate(treeSchema, [
+					{
+						myNumber: 1,
+					},
+				]);
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "afterShallowChange", (...args: any[]) => {
+					shallowChanges++;
+				});
+				Tree.on(root, "afterDeepChange", (...args: any[]) => {
+					deepChanges++;
+				});
+
+				root.insertAtEnd({ myNumber: 2 });
+
+				assert.equal(
+					shallowChanges,
+					1,
+					`Must trigger afterShallowChange when direct fields change.`,
+				);
+
+				assert.equal(
+					deepChanges,
+					1,
+					`Must trigger afterDeepChange when direct fields change.`,
+				);
+			});
+
+			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
+				const root = hydrate(treeSchema, [
+					{
+						myNumber: 1,
+					},
+				]);
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "afterShallowChange", (...args: any[]) => {
+					shallowChanges++;
+				});
+				Tree.on(root, "afterDeepChange", (...args: any[]) => {
+					deepChanges++;
+				});
+
+				root[0].myNumber++;
+
+				assert.equal(
+					shallowChanges,
+					0,
+					`Must NOT trigger afterShallowChange when descendant fields change.`,
+				);
+
+				assert.equal(
+					deepChanges,
+					1,
+					`Must trigger afterDeepChange when descendant fields change.`,
+				);
+			});
+		});
+
+		describe("map node", () => {
+			const sb = new SchemaFactory("map-node-in-root");
+			class myObject extends sb.object("object", {
+				myNumber: sb.number,
+			}) {}
+			const treeSchema = sb.map("root", myObject);
+
+			function check(
+				eventName: keyof TreeChangeEvents,
+				mutate: (root: NodeFromSchema<typeof treeSchema>) => void,
+			) {
+				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
+					const root = hydrate(
+						treeSchema,
+						new Map([
+							[
+								"a",
+								{
+									myNumber: 1,
+								},
+							],
+						]),
+					);
+					const log: any[][] = [];
+
+					const unsubscribe = Tree.on(root, eventName, (...args: any[]) => {
+						log.push(args);
+					});
+
+					mutate(root);
+
+					assert.equal(
+						log.length,
+						1,
+						`Must receive change notifications after subscribing to event '${eventName}'.`,
+					);
+
+					unsubscribe();
+
+					mutate(root);
+
+					assert.equal(
+						log.length,
+						1,
+						`Mutation after unsubscribe must not emit event '${eventName}'.`,
+					);
+				});
+			}
+
+			check("afterShallowChange", (root) => root.set("a", { myNumber: 2 }));
+			check("afterDeepChange", (root) => {
+				const mapEntry = root.get("a");
+				if (mapEntry === undefined) {
+					throw new Error("Map entry for key 'a' not found");
+				}
+				mapEntry.myNumber++;
+			});
+
+			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
+				const root = hydrate(
+					treeSchema,
+					new Map([
+						[
+							"a",
+							{
+								myNumber: 1,
+							},
+						],
+					]),
+				);
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "afterShallowChange", (...args: any[]) => {
+					shallowChanges++;
+				});
+				Tree.on(root, "afterDeepChange", (...args: any[]) => {
+					deepChanges++;
+				});
+
+				root.set("a", { myNumber: 2 })
+
+				assert.equal(
+					shallowChanges,
+					1,
+					`Must trigger afterShallowChange when direct fields change.`,
+				);
+
+				assert.equal(
+					deepChanges,
+					1,
+					`Must trigger afterDeepChange when direct fields change.`,
+				);
+			});
+
+			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
+				const root = hydrate(
+					treeSchema,
+					new Map([
+						[
+							"a",
+							{
+								myNumber: 1,
+							},
+						],
+					]),
+				);
+
+				let shallowChanges = 0;
+				let deepChanges = 0;
+				Tree.on(root, "afterShallowChange", (...args: any[]) => {
+					shallowChanges++;
+				});
+				Tree.on(root, "afterDeepChange", (...args: any[]) => {
+					deepChanges++;
+				});
+
+				const mapEntry = root.get("a");
+				if (mapEntry === undefined) {
+					throw new Error("Map entry for key 'a' not found");
+				}
+				mapEntry.myNumber++;
+
+				assert.equal(
+					shallowChanges,
+					0,
+					`Must NOT trigger afterShallowChange when descendant fields change.`,
+				);
+
+				assert.equal(
+					deepChanges,
+					1,
+					`Must trigger afterDeepChange when descendant fields change.`,
+				);
+			});
+		});
+
+		// Change events don't apply to leaf nodes since they don't have fields that change, they are themselves replaced
+		// by other leaf nodes.
 	});
 });
