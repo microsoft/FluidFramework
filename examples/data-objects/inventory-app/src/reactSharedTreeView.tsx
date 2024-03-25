@@ -4,9 +4,10 @@
  */
 
 import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
+	type DataObjectClass,
 	ITree,
 	type ImplicitFieldSchema,
 	SchemaIncompatible,
@@ -14,7 +15,7 @@ import {
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "@fluidframework/tree";
+} from "fluid-framework";
 import * as React from "react";
 
 /**
@@ -29,11 +30,78 @@ import * as React from "react";
 export const factory: IChannelFactory = SharedTree.getFactory();
 
 /**
+ * Object with the required recursive type to be used to mark DataObjectClasses.
+ * Note that this probably doesn't work when exported to a package API as it will likely infer `any`.
+ * TODO: Simplify DataObjectClasses to avoid needing this.
+ */
+const dataObjectFactoryMarker = {
+	get IFluidDataStoreFactory(): typeof dataObjectFactoryMarker {
+		return this;
+	},
+};
+
+/**
+ * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeConfiguration}.
+ * @param key - See {@link ITreeDataObject.key}.
+ * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema
+ */
+export function treeDataObject<TSchema extends ImplicitFieldSchema>(
+	key: string,
+	treeConfiguration: TreeConfiguration<TSchema>,
+): DataObjectClass<ITreeDataObject<TSchema> & IFluidLoadable> {
+	return class InventoryList extends TreeDataObject<TSchema> {
+		public readonly key = key;
+		public readonly config = treeConfiguration;
+	};
+}
+
+export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * The key under the root DataObject in which the {@link @fluidframework/tree#SharedTree} is stored.
+	 */
+	readonly key: string;
+
+	/**
+	 * TreeConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 *
+	 * @remarks
+	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
+	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
+	 * its also impossible for this single view schema to handle multiple different stored schema.
+	 * Therefor, with this current API, two different applications (or different versions of the same application)
+	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
+	 * The only schema evolution thats currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
+	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
+	 * Future work on tree as well as these utilities should address this limitation.
+	 */
+	readonly config: TreeConfiguration<TSchema>;
+
+	/**
+	 * React component which handles schematizing trees.
+	 * This includes displaying errors when the document can not be schematized.
+	 *
+	 * @privateRemarks
+	 * This is exposed as a member rather than a free function since type inference for the schema doesn't work when used as a free function,
+	 * and thus making it a member avoids the user of this from having to explicitly provide the type parameter.
+	 * This is an arrow function not a method so it gets the correct this when not called as a member.
+	 */
+	readonly TreeViewComponent: ({
+		viewComponent,
+	}: {
+		viewComponent: React.FC<{ root: TreeFieldFromImplicitField<TSchema> }>;
+	}) => React.JSX.Element;
+}
+
+/**
  * Generic DataObject for shared trees.
  */
-export abstract class TreeDataObject<
-	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-> extends DataObject {
+export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
+	extends DataObject
+	implements ITreeDataObject<TSchema>
+{
+	public static readonly factory = dataObjectFactoryMarker;
+
 	#tree?: TreeView<TreeFieldFromImplicitField<TSchema>>;
 
 	public get tree(): TreeView<TreeFieldFromImplicitField<TSchema>> {
@@ -62,32 +130,10 @@ export abstract class TreeDataObject<
 		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
 	}
 
-	public abstract key: string;
+	public abstract readonly key: string;
 
-	/**
-	 * TreeConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
-	 *
-	 * @remarks
-	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
-	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
-	 * its also impossible for this single view schema to handle multiple different stored schema.
-	 * Therefor, with this current API, two different applications (or different versions of the same application)
-	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
-	 * The only schema evolution thats currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
-	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
-	 * Future work on tree as well as these utilities should address this limitation.
-	 */
-	public abstract config: TreeConfiguration<TSchema>;
+	public abstract readonly config: TreeConfiguration<TSchema>;
 
-	/**
-	 * React component which handles schematizing trees.
-	 * This includes displaying errors when the document can not be schematized.
-	 *
-	 * @privateRemarks
-	 * This is exposed as a member rather than a free function since type inference for the schema doesn't work when used as a free function,
-	 * and thus making it a member avoids the user of this from having to explicitly provide the type parameter.
-	 * This is an arrow function not a method so it gets the correct this when not called as a member.
-	 */
 	public readonly TreeViewComponent = ({
 		viewComponent,
 	}: {

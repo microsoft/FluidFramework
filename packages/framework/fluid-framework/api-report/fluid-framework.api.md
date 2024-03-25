@@ -89,7 +89,7 @@ export interface ContainerSchema {
 // @public
 export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     readonly factory: {
-        IFluidDataStoreFactory: DataObjectClass<T>["factory"];
+        readonly IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
 } & (new (...args: any[]) => T);
 

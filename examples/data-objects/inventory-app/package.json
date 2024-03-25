@@ -45,6 +45,7 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"fluid-framework": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
