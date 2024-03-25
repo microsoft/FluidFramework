@@ -34,15 +34,16 @@ testFileSystems.forEach((fileSystem) => {
 			enableAutoPipelining: false,
 			enableOfflineQueue: true,
 		};
-		const redisClientConnectionManager = new TestRedisClientConnectionManagerWithInvalidation(
-			redisOptions,
-		);
+		let redisClientConnectionManager: TestRedisClientConnectionManagerWithInvalidation;
 		beforeEach(() => {
+			redisClientConnectionManager = new TestRedisClientConnectionManagerWithInvalidation(
+				redisOptions,
+			);
 			redis = createRedisFs(fileSystem, redisClientConnectionManager);
 		});
 		afterEach(async () => {
-			redisClientConnectionManager.invalidateRedisClient();
 			await redis.delAll("");
+			redisClientConnectionManager.invalidateRedisClient();
 		});
 		it("single key CRD operations should succeed", async () => {
 			await assert.doesNotReject(async () => await redis.set("foo", "bar"));
@@ -58,7 +59,7 @@ testFileSystems.forEach((fileSystem) => {
 			];
 			await assert.doesNotReject(async () => await redis.setMany(keyValuePairs));
 			assert.strictEqual(await redis.get<string>("foo1"), "bar1");
-			assert.deepStrictEqual(await redis.keysByPrefix("foo"), ["fs:foo", "fs:foo1"]);
+			assert.deepStrictEqual(await redis.keysByPrefix("foo"), ["foo", "foo1"]);
 			assert.strictEqual(await redis.delAll("foo"), true);
 		});
 		it("single key CRD operations should succeed with client invalidation", async () => {
@@ -83,7 +84,7 @@ testFileSystems.forEach((fileSystem) => {
 			redisClientConnectionManager.invalidateRedisClient();
 			assert.strictEqual(await redis.get<string>("foo1"), "bar1");
 			redisClientConnectionManager.invalidateRedisClient();
-			assert.deepStrictEqual(await redis.keysByPrefix("foo"), ["fs:foo", "fs:foo1"]);
+			assert.deepStrictEqual(await redis.keysByPrefix("foo"), ["foo", "foo1"]);
 			redisClientConnectionManager.invalidateRedisClient();
 			assert.strictEqual(await redis.delAll("foo"), true);
 		});

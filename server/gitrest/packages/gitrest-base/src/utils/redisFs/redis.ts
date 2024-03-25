@@ -135,7 +135,9 @@ export class Redis implements IRedis {
 		if (keys.length === 0) {
 			return false;
 		}
-		const result = await this.redisClientConnectionManager.getRedisClient().unlink(...keys);
+		const result = await this.redisClientConnectionManager
+			.getRedisClient()
+			.unlink(...keys.map((key) => this.getKey(key)));
 		return result === keys.length;
 	}
 
@@ -152,7 +154,8 @@ export class Redis implements IRedis {
 				keyPrefix,
 			},
 		);
-		return result;
+		// Remove the prefix from the keys before returning them.
+		return result.map((key) => key.replace(`${this.prefix}:`, ""));
 	}
 
 	/**
@@ -216,10 +219,9 @@ export class HashMapRedis implements IRedis {
 		}
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		const num = await this.redisClientConnectionManager
+		await this.redisClientConnectionManager
 			.getRedisClient()
 			.hset(this.getMapKey(), this.getMapField(field), JSON.stringify(value));
-		console.log("[DHRUV DEBUG] in set num", num);
 	}
 
 	public async setMany<T>(
@@ -236,20 +238,11 @@ export class HashMapRedis implements IRedis {
 			// Don't do anything if there are no fields to set.
 			return;
 		}
-		console.log("[DHRUV DEBUG] fieldValueArgs", fieldValueArgs);
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		const num = await this.redisClientConnectionManager
+		await this.redisClientConnectionManager
 			.getRedisClient()
-			.hset(this.getMapKey(), fieldValueArgs, (err, reply) => {
-				console.log("[DHRUV DEBUG] hset callback");
-				console.log("[DHRUV DEBUG] err", err);
-				console.log("[DHRUV DEBUG] reply", reply);
-			});
-		console.log("[DHRUV DEBUG] num", num);
-		console.log(`Getting value ${fieldValuePairs[0].key}`);
-		const val = await this.get(fieldValuePairs[0].key);
-		console.log("[DHRUV DEBUG] val", val);
+			.hset(this.getMapKey(), ...fieldValueArgs);
 	}
 
 	public async peek(field: string): Promise<number> {
@@ -310,7 +303,7 @@ export class HashMapRedis implements IRedis {
 				keyPrefix,
 			},
 		);
-		return result.filter((field) => `${this.getMapKey()}/${field}`.startsWith(keyPrefix));
+		return result.filter((field) => field.startsWith(keyPrefix));
 	}
 
 	/**
