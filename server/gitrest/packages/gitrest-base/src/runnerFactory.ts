@@ -78,6 +78,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		const ephemeralFileSystemName: string =
 			config.get("git:ephemeralfilesystem:name") ?? "redisFs";
 
+		// Creating two customizations for redisClientConnectionManager for now.
+		// This may be changed to a single customization in the future.
 		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			defaultFileSystemName,
 			config,
