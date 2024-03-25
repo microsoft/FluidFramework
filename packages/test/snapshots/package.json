@@ -12,8 +12,8 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/generateSnapshotFiles.js",
-	"types": "dist/generateSnapshotFiles.js",
+	"type": "module",
+	"main": "lib/generateSnapshotFiles.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -31,11 +31,11 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --experimental-worker --ignore \"dist/test/generate/*\" dist/test",
+		"test:mocha": "mocha --experimental-worker --ignore \"lib/test/generate/*\" lib/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:new": "mocha --experimental-worker \"dist/test/generate/new.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:update": "mocha --experimental-worker \"dist/test/generate/update.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"tsc": "tsc"
+		"test:new": "mocha --experimental-worker \"lib/test/generate/new.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:update": "mocha --experimental-worker \"lib/test/generate/update.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"build:esnext": "tsc --project tsconfig.json"
 	},
 	"c8": {
 		"all": true,
