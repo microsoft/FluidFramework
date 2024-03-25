@@ -105,7 +105,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
         );
     }
 
-    private generateHeaders(requestHeaders?: AxiosRequestHeaders | undefined): Record<string, any> {
+    private generateHeaders(requestHeaders?: AxiosRequestHeaders | undefined): AxiosRequestHeaders {
         const correlationId = requestHeaders?.["x-correlation-id"] || uuid();
 
         return {
