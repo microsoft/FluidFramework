@@ -32,6 +32,7 @@ import { TestFluidObjectFactory } from "@fluidframework/test-utils";
 
 // ContainerRuntime and Data Runtime API
 import {
+	BaseContainerRuntimeFactory,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
@@ -120,7 +121,12 @@ export const LoaderApi = {
  */
 export const ContainerRuntimeApi = {
 	version: pkgVersion,
+	BaseContainerRuntimeFactory,
 	ContainerRuntime,
+	/**
+	 * @remarks - The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
+	 * to construct safely across versions.
+	 */
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
@@ -195,13 +201,22 @@ async function loadContainerRuntime(
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!containerRuntimeCache.has(version)) {
+		const [containerRuntimePkg, aqueductPkg] = await Promise.all([
+			loadPackage(modulePath, "@fluidframework/container-runtime"),
+			loadPackage(modulePath, "@fluidframework/aqueduct"),
+		]);
+
+		/* eslint-disable @typescript-eslint/no-shadow */
+		const { ContainerRuntime } = containerRuntimePkg;
+		const { BaseContainerRuntimeFactory, ContainerRuntimeFactoryWithDefaultDataStore } =
+			aqueductPkg;
+		/* eslint-enable @typescript-eslint/no-shadow */
+
 		const containerRuntime = {
 			version,
-			ContainerRuntime: (await loadPackage(modulePath, "@fluidframework/container-runtime"))
-				.ContainerRuntime,
-			ContainerRuntimeFactoryWithDefaultDataStore: (
-				await loadPackage(modulePath, "@fluidframework/aqueduct")
-			).ContainerRuntimeFactoryWithDefaultDataStore,
+			BaseContainerRuntimeFactory,
+			ContainerRuntime,
+			ContainerRuntimeFactoryWithDefaultDataStore,
 		};
 		containerRuntimeCache.set(version, containerRuntime);
 	}
