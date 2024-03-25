@@ -50,7 +50,7 @@
 		"use-resize-observer": "^7.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
