@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { RouterliciousEndpoint, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
+
+type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";
 
 /**
  * Different kind of compat version config
