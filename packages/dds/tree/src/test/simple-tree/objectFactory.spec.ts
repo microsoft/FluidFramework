@@ -215,7 +215,6 @@ describe("SharedTreeObject factories", () => {
 		Tree.on(root, "afterDeepChange", () => {
 			readData();
 		});
-		// TODO: Add more targeted tests for this kind of thing, and/or improved validation that detects this kind of issue better, and/or make the hydration more robust.
 		Tree.on(root, "afterShallowChange", () => {
 			readData();
 		});
