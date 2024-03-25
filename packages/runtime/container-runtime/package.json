@@ -262,6 +262,9 @@
 			"RemovedFunctionDeclaration_isStableId": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeMetadata": {
+				"backCompat": false
 			}
 		}
 	}

@@ -419,7 +419,7 @@ export class DocumentsSchemaController {
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
     // (undocumented)
-    summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined;
+    summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined;
 }
 
 // @alpha (undocumented)
@@ -709,7 +709,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
     readonly disableIsolatedChannels?: true;
     // (undocumented)
     readonly documentSchema?: IDocumentSchema;
-    readonly message: ISummaryMetadataMessage | undefined;
+    readonly lastMessage?: ISummaryMetadataMessage;
+    // @deprecated (undocumented)
+    readonly message?: ISummaryMetadataMessage;
     // (undocumented)
     readonly summaryFormatVersion: 1;
     readonly summaryNumber?: number;

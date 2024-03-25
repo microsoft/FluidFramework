@@ -716,6 +716,12 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	return fluidObject.ISummarizer;
 }
 
+function messageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
+	return metadata?.documentSchema?.runtime?.explicitSchemaControl
+		? metadata?.lastMessage
+		: metadata?.message;
+}
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -836,8 +842,10 @@ export class ContainerRuntime
 			},
 		);
 
+		const messageAtLastSummary = messageFromMetadata(metadata);
+
 		// Verify summary runtime sequence number matches protocol sequence number.
-		const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
+		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
 			const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
@@ -1429,7 +1437,7 @@ export class ContainerRuntime
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
-		this.messageAtLastSummary = metadata?.message;
+		this.messageAtLastSummary = messageFromMetadata(metadata);
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
@@ -2140,23 +2148,29 @@ export class ContainerRuntime
 
 	/** Adds the container's metadata to the given summary tree. */
 	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
+		// The last message processed at the time of summary. If there are no new messages, use the message from the
+		// last summary.
+		const message =
+			extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
+			this.messageAtLastSummary;
+		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
+			this.deltaManager.lastSequenceNumber,
+		);
+
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
 			// Increment the summary number for the next summary that will be generated.
 			summaryNumber: this.nextSummaryNumber++,
 			summaryFormatVersion: 1,
 			...this.garbageCollector.getMetadata(),
-			// The last message processed at the time of summary. If there are no new messages, use the message from the
-			// last summary.
-			message:
-				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
-				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-
-			documentSchema: this.documentsSchemaController.summarizeDocumentSchema(
-				this.deltaManager.lastSequenceNumber,
-			),
+			message: documentSchema?.runtime.explicitSchemaControl
+				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
+				: message,
+			lastMessage: message,
+			documentSchema,
 		};
+
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
 
