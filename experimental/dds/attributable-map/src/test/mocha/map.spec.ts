@@ -279,7 +279,7 @@ describe("Map", () => {
 
 				// 40K char string
 				let longString = "01234567890";
-				for (let i = 0; i < 12; i++) {
+				for (let i = 0; i < 14; i++) {
 					longString = longString + longString;
 				}
 				map.set("longValue", longString);
