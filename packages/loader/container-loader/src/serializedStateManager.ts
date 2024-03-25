@@ -109,7 +109,7 @@ export class SerializedStateManager {
 		supportGetSnapshotApi: boolean,
 	) {
 		if (this.pendingLocalState === undefined) {
-			const { snapshotTree, version } = await getSnapshotTree(
+			const { baseSnapshot, version } = await getSnapshotTree(
 				this.mc,
 				this.storageAdapter,
 				supportGetSnapshotApi,
@@ -118,12 +118,12 @@ export class SerializedStateManager {
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
 				const snapshotBlobs = await getBlobContentsFromTree(
-					snapshotTree,
+					baseSnapshot,
 					this.storageAdapter,
 				);
-				this.snapshot = { baseSnapshot: snapshotTree, snapshotBlobs };
+				this.snapshot = { baseSnapshot, snapshotBlobs };
 			}
-			return { baseSnapshot: snapshotTree, version };
+			return { baseSnapshot, version };
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
 			this.snapshot = { baseSnapshot, snapshotBlobs };
@@ -149,35 +149,39 @@ export class SerializedStateManager {
 		if (this.latestSnapshot === undefined) {
 			return;
 		}
-		const snapshotSN = this.latestSnapshot?.snapshotSequenceNumber;
+		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (this.processedOps.length === 0) {
 			// weird edge case in which we don't have to do nothing to processedOps
-			// since we don't have any
+			// since we don't have any.
 			return;
 		}
-		const firstSavedOpSN = this.processedOps[0].sequenceNumber;
-		const lastSavedOpSN = this.processedOps[this.processedOps.length - 1].sequenceNumber;
+		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
+		const lastProcessedOpSequenceNumber =
+			this.processedOps[this.processedOps.length - 1].sequenceNumber;
 
-		if (snapshotSN < firstSavedOpSN - 1) {
-			this.mc.logger.sendErrorEvent({
-				eventName: "Old_Snapshot_Fetch_While_Refresing",
-				snapshotSequenceNumber: snapshotSN,
-				firstProcessedOpSequenceNumber: firstSavedOpSN,
+		if (snapshotSequenceNumber < firstProcessedOpSequenceNumber) {
+			// Snapshot seq number is older than our first processed op, which could mean we're fetching
+			// the same snapshot that we already have or snapshot is too old, implicating an unexpected behavior.
+			this.mc.logger.sendTelemetryEvent({
+				category:
+					snapshotSequenceNumber < firstProcessedOpSequenceNumber - 1
+						? "error"
+						: "generic",
+				eventName: "OldSnapshotFetchWhileRefreshing",
+				snapshotSequenceNumber,
+				firstProcessedOpSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
-		} else if (snapshotSN === firstSavedOpSN - 1) {
-			// Snapshot is exactly one less than the first processed op sequence number.
-			// Meaning new snapshot is the same as before refreshing. Do nothing.
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "Previous_Snapshot_Fetch_While_Refreshing",
-				snapshotSequenceNumber: snapshotSN,
-				firstProcessedOpSequenceNumber: firstSavedOpSN,
-			});
-			return;
-		} else if (snapshotSN >= firstSavedOpSN && snapshotSN <= lastSavedOpSN) {
+		} else if (
+			snapshotSequenceNumber >= firstProcessedOpSequenceNumber &&
+			snapshotSequenceNumber <= lastProcessedOpSequenceNumber
+		) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
-			this.processedOps.splice(0, snapshotSN - firstSavedOpSN + 1);
+			this.processedOps.splice(
+				0,
+				snapshotSequenceNumber - firstProcessedOpSequenceNumber + 1,
+			);
 			this.snapshot = this.latestSnapshot;
 			this.latestSnapshot = undefined;
 		}
@@ -231,7 +235,15 @@ export class SerializedStateManager {
 	}
 }
 
-async function getLatestSnapshotInfo(
+/**
+ * Retrieves the most recent snapshot and returns its info.
+ *
+ * @param mc - The monitoring context.
+ * @param storageAdapter - The storage adapter providing methods to retrieve the snapshot.
+ * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+ * @returns a SnapshotInfo object containing the snapshot tree, snapshot blobs and its sequence number.
+ */
+export async function getLatestSnapshotInfo(
 	mc: MonitoringContext,
 	storageAdapter: Pick<
 		IDocumentStorageService,
@@ -239,21 +251,36 @@ async function getLatestSnapshotInfo(
 	>,
 	supportGetSnapshotApi: boolean,
 ): Promise<SnapshotInfo> {
-	const { snapshotTree } = await getSnapshotTree(
-		mc,
-		storageAdapter,
-		supportGetSnapshotApi,
-		undefined,
+	return PerformanceEvent.timedExecAsync(
+		mc.logger,
+		{ eventName: "GetLatestSnapshotInfo" },
+		async () => {
+			const { baseSnapshot } = await getSnapshotTree(
+				mc,
+				storageAdapter,
+				supportGetSnapshotApi,
+				undefined,
+			);
+			const snapshotBlobs = await getBlobContentsFromTree(baseSnapshot, storageAdapter);
+			const attributes: IDocumentAttributes = await getDocumentAttributes(
+				storageAdapter,
+				baseSnapshot,
+			);
+			const snapshotSequenceNumber = attributes.sequenceNumber;
+			return { baseSnapshot, snapshotBlobs, snapshotSequenceNumber };
+		},
 	);
-	const snapshotBlobs = await getBlobContentsFromTree(snapshotTree, storageAdapter);
-	const attributes: IDocumentAttributes = await getDocumentAttributes(
-		storageAdapter,
-		snapshotTree,
-	);
-	const snapshotSN = attributes.sequenceNumber;
-	return { baseSnapshot: snapshotTree, snapshotBlobs, snapshotSequenceNumber: snapshotSN };
 }
 
+/**
+ * Retrieves a snapshot from the storage adapter and transforms it into an ISnapshotTree object.
+ *
+ * @param mc - The monitoring context.
+ * @param storageAdapter - The storage adapter providing methods to retrieve the snapshot.
+ * @param supportGetSnapshotApi - a boolean indicating whether to use the fetchISnapshot or fetchISnapshotTree.
+ * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
+ * @returns - An ISnapshotTree and its version.
+ */
 async function getSnapshotTree(
 	mc: MonitoringContext,
 	storageAdapter: Pick<
@@ -262,17 +289,25 @@ async function getSnapshotTree(
 	>,
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
-): Promise<{ snapshotTree: ISnapshotTree; version?: IVersion }> {
+): Promise<{ baseSnapshot: ISnapshotTree; version?: IVersion }> {
 	const { snapshot, version } = supportGetSnapshotApi
 		? await fetchISnapshot(mc, storageAdapter, specifiedVersion)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
-	const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+	const baseSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 		? snapshot.snapshotTree
 		: snapshot;
-	assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
-	return { snapshotTree, version };
+	assert(baseSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
+	return { baseSnapshot, version };
 }
 
+/**
+ * Fetches an ISnapshot from a storage adapter based on the specified version.
+ *
+ * @param mc - The monitoring context.
+ * @param storageAdapter - The storage adapter providing a getSnapshot method to retrieve the ISnapshot and version.
+ * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
+ * @returns - The fetched snapshot tree and its version.
+ */
 export async function fetchISnapshot(
 	mc: MonitoringContext,
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
@@ -303,9 +338,12 @@ export async function fetchISnapshot(
 }
 
 /**
- * Get the most recent snapshot, or a specific version.
- * @param specifiedVersion - The specific version of the snapshot to retrieve
- * @returns The snapshot requested, or the latest snapshot if no version was specified, plus version ID
+ * Fetches an ISnapshotTree from a storage adapter based on the specified version.
+ *
+ * @param mc - The monitoring context.
+ * @param storageAdapter - The storage adapter providing methods to retrieve the ISnapshotTree and version.
+ * @param specifiedVersion - An optional version string specifying the version of the snapshot tree to fetch.
+ * @returns - The fetched snapshot tree and its version.
  */
 export async function fetchISnapshotTree(
 	mc: MonitoringContext,
