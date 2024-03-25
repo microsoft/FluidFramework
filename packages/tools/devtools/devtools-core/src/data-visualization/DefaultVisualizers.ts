@@ -23,7 +23,6 @@ import {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	SharedTree,
-	brand,
 } from "@fluidframework/tree/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces.js";
@@ -280,6 +279,13 @@ interface SharedTreeLeafNode extends SharedTreeNodeBase {
 	value: Primitive;
 }
 
+/**
+ * Returned when `tree.fields` does not exist inside the tree.
+ */
+interface EmptyTreeNode {
+	warning: string;
+}
+
 type VisualSharedTreeNode = SharedTreeNode | SharedTreeLeafNode;
 
 function mapVisualTreeHelper(tree: VisualSharedTreeNode): VisualChildNode {
@@ -288,7 +294,7 @@ function mapVisualTreeHelper(tree: VisualSharedTreeNode): VisualChildNode {
 		return {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			metadata: { allowedTypes: tree.schema.allowedTypes },
+			metadata: { allowedTypes: tree.schema.allowedTypes ?? "" },
 		};
 	} else {
 		// Handling SharedTreeNode
@@ -305,7 +311,9 @@ function mapVisualTreeHelper(tree: VisualSharedTreeNode): VisualChildNode {
 			children,
 			typeMetadata: "FluidHandle",
 			nodeKind: VisualNodeKind.TreeNode,
-			metadata: { allowedTypes: tree.schema.allowedTypes },
+			metadata: {
+				allowedTypes: tree.schema.allowedTypes ?? "",
+			},
 		};
 	}
 }
@@ -351,10 +359,13 @@ function allowedTypesHelper(schema: ObjectNodeStoredSchema): string {
 	return `{ ${result} }`;
 }
 
-function leafNodeStoredSchemaHelper(tree: JsonableTree): SharedTreeLeafNode {
+function leafNodeStoredSchemaHelper(
+	tree: JsonableTree,
+	schema: LeafNodeStoredSchema,
+): SharedTreeLeafNode {
 	return {
 		schema: {
-			allowedTypes: tree.type,
+			allowedTypes: JSON.stringify(schema.leafValue),
 		},
 		value: JSON.stringify(tree.value),
 	};
@@ -370,7 +381,8 @@ function objectFieldHelper(
 		const childField = node.fields;
 
 		if (childField === undefined) {
-			return leafNodeStoredSchemaHelper(node);
+			const nodeSchema = contentSnapshot.schema.nodeSchema.get(node.type);
+			return sharedTreeVisualizer(node, nodeSchema, contentSnapshot);
 		}
 
 		const emptyKey = "";
@@ -391,10 +403,14 @@ function objectFieldHelper(
 				const fieldName = arrayField[i].type;
 				const childSchema = contentSnapshot.schema.nodeSchema.get(fieldName);
 
-				const test = sharedTreeVisualizer(arrayField[i], childSchema, contentSnapshot);
+				const arrayVisualized = sharedTreeVisualizer(
+					arrayField[i],
+					childSchema,
+					contentSnapshot,
+				);
 
 				result[i] = {
-					...test,
+					...arrayVisualized,
 				};
 			}
 		}
@@ -403,34 +419,50 @@ function objectFieldHelper(
 	return result;
 }
 
+function arrayAlloedTypesHelper(fields: JsonableTree[]): string {
+	let result = "";
+
+	for (const field of fields) {
+		const nodeSchema = field.type;
+
+		result += `${nodeSchema} | `;
+	}
+
+	/**
+	 * Slice the trailing ` | ` from the `result`.
+	 */
+	result = result.slice(0, -3);
+
+	return result;
+}
+
 function objectNodeStoredSchemaHelper(
 	tree: JsonableTree,
 	schema: ObjectNodeStoredSchema,
 	contentSnapshot: SharedTreeContentSnapshot,
-): VisualSharedTreeNode | object | undefined {
+): VisualSharedTreeNode | object | undefined | EmptyTreeNode {
 	const treeFields = tree.fields;
 
 	if (treeFields === undefined) {
-		return {};
+		return { warning: "No fields exists in the tree." };
 	}
 
 	const objectVisualized = {};
 
-	for (const [fieldKey, childNodes] of Object.entries(treeFields)) {
-		/**
-		 * Pre-contsructs the visual representation of the tree.
-		 */
-		const fieldVisualized = objectFieldHelper(childNodes, contentSnapshot);
-		const allowedTypes = schema.objectNodeFields.get(brand(fieldKey))?.types;
+	for (const [fieldKey, childField] of Object.entries(treeFields)) {
+		const arrayAllowedTypes = arrayAlloedTypesHelper(childField);
+		const childFieldVisualized = objectFieldHelper(childField, contentSnapshot);
 
+		// TODO: If index exists add field and schema.
 		objectVisualized[fieldKey] =
-			fieldVisualized !== undefined && "value" in fieldVisualized
-				? fieldVisualized
+			childFieldVisualized !== undefined &&
+			("fields" in childFieldVisualized || "value" in childFieldVisualized)
+				? { ...childFieldVisualized }
 				: {
 						schema: {
-							allowedTypes: JSON.stringify(allowedTypes),
+							allowedTypes: arrayAllowedTypes,
 						},
-						fields: fieldVisualized,
+						fields: childFieldVisualized,
 				  };
 	}
 
@@ -447,7 +479,7 @@ function sharedTreeVisualizer(
 	contentSnapshot: SharedTreeContentSnapshot,
 ): VisualSharedTreeNode {
 	if (schema instanceof LeafNodeStoredSchema) {
-		return leafNodeStoredSchemaHelper(tree);
+		return leafNodeStoredSchemaHelper(tree, schema);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		const schemaName = tree.type;
 

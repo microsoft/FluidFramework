@@ -408,11 +408,11 @@ describe("DefaultVisualizers unit tests", () => {
 		}) {}
 
 		class AppleSchema extends builder.object("apple-object-schema", {
-			avocado: builder.number,
+			avocado: [builder.number, builder.string],
 			broccoli: builder.array(BroccoliSchema),
 		}) {}
 
-		class FooSchema extends builder.object("child-item", {
+		class FooSchema extends builder.object("foo-item", {
 			apple: builder.array(AppleSchema),
 			banana: builder.object("banana-object", {
 				miniBanana: [builder.boolean, builder.string, builder.number],
@@ -450,7 +450,10 @@ describe("DefaultVisualizers unit tests", () => {
 							},
 							{
 								apple: [
-									{ avocado: 64, broccoli: [{ alpaca: "Llama but not LLM." }] },
+									{
+										avocado: "Avacado Advocate.",
+										broccoli: [{ alpaca: "Llama but not LLM." }],
+									},
 								],
 								banana: {
 									miniBanana: false,
@@ -465,7 +468,7 @@ describe("DefaultVisualizers unit tests", () => {
 								appleCider: true,
 							},
 						},
-						baz: 128,
+						baz: 64,
 					}),
 			),
 		);
