@@ -84,7 +84,7 @@
     "@fluidframework/view-adapters": "^1.3.8",
     "@fluidframework/view-interfaces": "^1.3.8",
     "@fluidframework/web-code-loader": "^1.3.8",
-    "axios": "^0.26.0",
+    "axios": "^0.28.0",
     "express": "^4.16.3",
     "nconf": "^0.11.4",
     "sillyname": "^0.1.0",
