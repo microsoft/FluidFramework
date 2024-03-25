@@ -20,6 +20,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
+	ToggleUnsampledTelemetry,
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
@@ -101,6 +102,8 @@ export interface FluidDevtoolsProps {
  *
  * - {@link GetContainerList.Message}: When received, {@link ContainerList.Message} will be posted in response.
  *
+ * -{@link ToggleUnsampledTelemetry.Message}: When received, the unsampled telemetry flag will be toggled.
+ *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
@@ -145,6 +148,22 @@ export class FluidDevtools implements IFluidDevtools {
 			this.postContainerList();
 			return true;
 		},
+		[ToggleUnsampledTelemetry.MessageType]: async (message) => {
+			console.log("Unsampled telemetry message received", message);
+			if (message === undefined) {
+				console.error(
+					"Invalid value received in ToggleUnsampledTelemetry message:",
+					message,
+				);
+				return false;
+			}
+			const newValue = (message as ToggleUnsampledTelemetry.Message).data.unsampledTelemetry;
+			console.log("Unsampled telemetry new value:", newValue);
+			sessionStorage.setItem("Fluid.Telemetry.DisableSampling", String(newValue));
+			this.postSupportedFeatures();
+			window.location.reload();
+			return true;
+		},
 	};
 
 	/**
@@ -174,11 +193,17 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly postSupportedFeatures = (): void => {
 		const supportedFeatures = this.getSupportedFeatures();
+		let unsampledTelemetry = sessionStorage.getItem("Fluid.Telemetry.DisableSampling");
+		if (unsampledTelemetry === null) {
+			unsampledTelemetry = "false";
+		}
+		console.log(supportedFeatures);
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({
 				features: supportedFeatures,
 				devtoolsVersion,
+				unsampledTelemetry,
 			}),
 		);
 	};

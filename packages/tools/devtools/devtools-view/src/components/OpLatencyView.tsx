@@ -12,9 +12,12 @@ import {
 	makeStyles,
 } from "@fluentui/react-components";
 import {
+	DevtoolsFeatures,
+	GetDevtoolsFeatures,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	TelemetryEvent,
+	ToggleUnsampledTelemetry,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import React from "react";
@@ -91,9 +94,36 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState(
-		(): boolean => sessionStorage.getItem("Fluid.Telemetry.DisableSampling") === "true",
-	);
+	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(false);
+
+	React.useEffect(() => {
+		// Handler for incoming messages
+		const inboundMessageHandlers: InboundHandlers = {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as DevtoolsFeatures.Message;
+				if (message.data.unsampledTelemetry !== undefined) {
+					setUnsampledTelemetry(JSON.parse(message.data.unsampledTelemetry) as boolean);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers);
+		}
+
+		messageRelay.on("message", messageHandler);
+
+		// Cleanup the event listener
+		return () => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [messageRelay]);
+
+	React.useEffect(() => {
+		messageRelay.postMessage(GetDevtoolsFeatures.createMessage());
+	}, [messageRelay]);
 
 	// Render the text conditionally
 	const renderInstructions = unsampledTelemetry !== true;
@@ -104,8 +134,11 @@ export function OpLatencyView(): React.ReactElement {
 
 	const toggleUnsampledTelemetry = (): void => {
 		const newValue = !unsampledTelemetry;
-		setUnsampledTelemetry(newValue);
-		sessionStorage.setItem("Fluid.Telemetry.DisableSampling", String(newValue));
+		const toggleMessage = ToggleUnsampledTelemetry.createMessage({
+			unsampledTelemetry: String(newValue),
+		});
+
+		messageRelay.postMessage(toggleMessage);
 	};
 
 	React.useEffect(() => {

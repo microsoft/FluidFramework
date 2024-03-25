@@ -86,6 +86,8 @@ export namespace ContainerDevtoolsFeatures {
     }
     export interface MessageData extends HasContainerKey {
         features: ContainerDevtoolsFeatureFlags;
+        // (undocumented)
+        unsampledTelemetry?: string;
     }
 }
 
@@ -204,6 +206,8 @@ export namespace DevtoolsFeatures {
     export interface MessageData {
         devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
+        // (undocumented)
+        unsampledTelemetry?: string;
     }
 }
 
@@ -487,6 +491,18 @@ export namespace TelemetryHistory {
     }
     export interface MessageData {
         contents: ITimestampedTelemetryEvent[];
+    }
+}
+
+// @internal
+export namespace ToggleUnsampledTelemetry {
+    const MessageType = "TOGGLE_UNSAMPLED_TELEMETRY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        unsampledTelemetry: string;
     }
 }
 
