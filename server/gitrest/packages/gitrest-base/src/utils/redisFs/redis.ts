@@ -216,9 +216,10 @@ export class HashMapRedis implements IRedis {
 		}
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		await this.redisClientConnectionManager
+		const num = await this.redisClientConnectionManager
 			.getRedisClient()
 			.hset(this.getMapKey(), this.getMapField(field), JSON.stringify(value));
+		console.log("[DHRUV DEBUG] in set num", num);
 	}
 
 	public async setMany<T>(
@@ -229,17 +230,26 @@ export class HashMapRedis implements IRedis {
 		// Filter out root directory fields, since they are not necessary fields in the HashMap.
 		// Then, map each field/value pair to array of arguments for the HSET command (f1, v1, f2, v2...).
 		const fieldValueArgs = fieldValuePairs
-			.filter(({ key: field, value }) => this.isFieldRootDirectory(field))
+			.filter(({ key: field, value }) => !this.isFieldRootDirectory(field))
 			.flatMap(({ key: field, value }) => [this.getMapField(field), JSON.stringify(value)]);
 		if (fieldValueArgs.length === 0) {
 			// Don't do anything if there are no fields to set.
 			return;
 		}
+		console.log("[DHRUV DEBUG] fieldValueArgs", fieldValueArgs);
 		// Set values in the hash map and returns the count of set field/value pairs.
 		// However, if it's a duplicate field, it will return 0, so we can't rely on the return value to determine success.
-		await this.redisClientConnectionManager
+		const num = await this.redisClientConnectionManager
 			.getRedisClient()
-			.hset(this.getMapKey(), fieldValueArgs);
+			.hset(this.getMapKey(), fieldValueArgs, (err, reply) => {
+				console.log("[DHRUV DEBUG] hset callback");
+				console.log("[DHRUV DEBUG] err", err);
+				console.log("[DHRUV DEBUG] reply", reply);
+			});
+		console.log("[DHRUV DEBUG] num", num);
+		console.log(`Getting value ${fieldValuePairs[0].key}`);
+		const val = await this.get(fieldValuePairs[0].key);
+		console.log("[DHRUV DEBUG] val", val);
 	}
 
 	public async peek(field: string): Promise<number> {
