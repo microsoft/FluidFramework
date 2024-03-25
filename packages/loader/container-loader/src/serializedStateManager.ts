@@ -100,7 +100,7 @@ export class SerializedStateManager {
 	public addProcessedOp(message: ISequencedDocumentMessage) {
 		if (this.offlineLoadEnabled) {
 			this.processedOps.push(message);
-			this.refreshPendingAttributes();
+			this.updateSnapshotAndProcessedOpsMaybe();
 		}
 	}
 
@@ -133,7 +133,7 @@ export class SerializedStateManager {
 					this.storageAdapter,
 					supportGetSnapshotApi,
 				);
-				this.refreshPendingAttributes();
+				this.updateSnapshotAndProcessedOpsMaybe();
 			})();
 
 			return { baseSnapshot, version: undefined };
@@ -141,17 +141,15 @@ export class SerializedStateManager {
 	}
 
 	/**
-	 * Updates class snapshot and processedOps with the latest fetched snapshot
-	 *
-	 * @param baseSnapshot -
+	 * Updates class snapshot and processedOps if we have a new snapshot and it's among processedOps range.
 	 */
-	private refreshPendingAttributes() {
+	private updateSnapshotAndProcessedOpsMaybe() {
 		if (this.latestSnapshot === undefined) {
 			return;
 		}
 		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (this.processedOps.length === 0) {
-			// weird edge case in which we don't have to do nothing to processedOps
+			// case in which we don't have to do nothing to processedOps
 			// since we don't have any.
 			return;
 		}
@@ -172,10 +170,7 @@ export class SerializedStateManager {
 				firstProcessedOpSequenceNumber,
 			});
 			this.latestSnapshot = undefined;
-		} else if (
-			snapshotSequenceNumber >= firstProcessedOpSequenceNumber &&
-			snapshotSequenceNumber <= lastProcessedOpSequenceNumber
-		) {
+		} else if (snapshotSequenceNumber <= lastProcessedOpSequenceNumber) {
 			// Snapshot seq num is between the first and last processed op.
 			// Remove the ops that are already part of the snapshot
 			this.processedOps.splice(
