@@ -4,7 +4,7 @@ This package contains code enabling the production and consumption of typed tele
 
 ### Telemetry Destinations
 
-At this time, Azure App Insights is the only available destination for fluid external telemetry. Eventually, more destinations will be added.
+At this time, Azure App Insights is the only available destination for Fluid external telemetry. Eventually, more destinations will be added.
 
 ### What is Application Insights?
 
@@ -78,7 +78,7 @@ Telemetry events relating directly to Fluid Containers.
 
 This section is relevant for people looking to create their own custom logic for production and consumption of telemetry for their Fluid Framework application. It details information about the internal package setup to help people get a better understanding of how to get started customizing themselves.
 
-The telemetry is produced from internal fluid system events, such as [`IContainerEvents`](../../../common/container-definitions/src/loader.ts).
+The telemetry is produced from internal Fluid system events, such as [`IContainerEvents`](../../../common/container-definitions/src/loader.ts).
 These events are subscribed to and when they if/when they fire, additional information is added and a strongly typed telemetry event is produced.
 
 ## High level design overview
