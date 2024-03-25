@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IRange } from "../../util/index.js";
 import { RevisionTag } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ITreeCursorSynchronous } from "./cursor.js";
@@ -160,6 +161,35 @@ export interface Mark {
 export interface DetachedNodeId {
 	readonly major?: RevisionTag;
 	readonly minor: number;
+}
+
+/**
+ * A range of ids in a detached field.
+ * @internal
+ */
+export interface DetachedNodeRangeId {
+	readonly major?: RevisionTag;
+	readonly minor: IRange;
+}
+
+/**
+ * @internal
+ */
+export function convertToRangeId(
+	id?: DetachedNodeId | DetachedNodeRangeId,
+	count?: number,
+): DetachedNodeRangeId | undefined {
+	if (id === undefined) {
+		return undefined;
+	}
+	if (!instanceOfRangeId(id)) {
+		return { major: id.major, minor: { start: id.minor, length: count ?? 1 } };
+	}
+	return id;
+}
+
+function instanceOfRangeId(id: any): id is DetachedNodeRangeId {
+	return typeof id.minor === "object" && "start" in id.minor && "length" in id.minor;
 }
 
 /**

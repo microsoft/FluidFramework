@@ -170,7 +170,7 @@ export function setInRangeMap<T>(map: RangeMap<T>, start: number, length: number
  * TODO: We may find ways to mitigate the code duplication between set and delete, and we need to better
  * document the API.  AB#7413
  */
-export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
+export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): boolean {
 	const end = start + length - 1;
 
 	let iBefore = -1;
@@ -190,11 +190,11 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 
 	if (numOverlappingEntries === 0) {
 		// No entry will be removed
-		return;
+		return false;
 	}
 
 	const iFirst = iBefore + 1;
-	const iLast = iAfter - 1;
+	let iLast = iAfter - 1;
 
 	// Update or remove the overlapping entries
 	for (let i = iFirst; i <= iLast; ++i) {
@@ -205,6 +205,7 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 		// If the entry lies within the range to be deleted, remove it
 		if (entry.start >= start && entryLastKey <= end) {
 			map.splice(i, 1);
+			iLast--;
 		} else {
 			// If the entry partially or completely overlaps with the range to be deleted
 			if (entry.start < start) {
@@ -226,4 +227,44 @@ export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: n
 			}
 		}
 	}
+	return true;
+}
+
+/**
+ * Converts a range map to a flat list of triplets
+ */
+export function rangeMapToFlatList<T>(map: RangeMap<T>): [number, T][] {
+	const result: [number, T][] = [];
+	for (const entry of map) {
+		// const { start, length, value } = entry;
+		for (let i = entry.start; i < entry.start + entry.length; i++) {
+			result.push([i, entry.value]);
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Converts a flat list of triplets to a range map
+ */
+export function unflattenToRangeMap<T>(flattenedList: [number, T][]): RangeMap<T> {
+	const map: RangeMap<T> = [];
+
+	for (const [key, value] of flattenedList) {
+		let lastEntry = map.length === 0 ? undefined : map[map.length - 1];
+
+		if (
+			lastEntry === undefined ||
+			lastEntry.value !== value ||
+			lastEntry.start + lastEntry.length !== key
+		) {
+			lastEntry = { start: key, length: 1, value };
+			map.push(lastEntry);
+		} else {
+			lastEntry.length++;
+		}
+	}
+
+	return map;
 }

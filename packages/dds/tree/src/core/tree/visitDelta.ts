@@ -378,6 +378,18 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (isDetachMark(mark)) {
+				const rangeId = Delta.convertToRangeId(
+					mark.detach,
+					mark.count,
+				) as Delta.DetachedNodeRangeId;
+				rangeId.minor.length = mark.count;
+				const root = config.detachedFieldIndex.createEntry(rangeId);
+				if (mark.fields !== undefined) {
+					config.attachPassRoots.set(root, mark.fields);
+				}
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.detach({ start: index, end: index + mark.count }, field);
+				/*
 				for (let i = 0; i < mark.count; i += 1) {
 					const root = config.detachedFieldIndex.createEntry(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -388,7 +400,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					}
 					const field = config.detachedFieldIndex.toFieldKey(root);
 					visitor.detach({ start: index, end: index + 1 }, field);
-				}
+				} */
 			} else if (!isAttachMark(mark)) {
 				index += mark.count;
 			}
@@ -403,6 +415,16 @@ function processBuilds(
 ) {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
+			// remove the inner loop, no need of offset
+			const rangeId = Delta.convertToRangeId(id, trees.length) as Delta.DetachedNodeRangeId;
+			let root = config.detachedFieldIndex.tryGetEntry(rangeId);
+			if (root === undefined) {
+				root = config.detachedFieldIndex.createEntry(rangeId);
+				const field = config.detachedFieldIndex.toFieldKey(root);
+				visitor.create(trees, field);
+			}
+
+			/*
 			for (let i = 0; i < trees.length; i += 1) {
 				const offsettedId = offsetDetachId(id, i);
 				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
@@ -413,7 +435,7 @@ function processBuilds(
 					const field = config.detachedFieldIndex.toFieldKey(root);
 					visitor.create([trees[i]], field);
 				}
-			}
+			} */
 		}
 	}
 }
@@ -438,6 +460,40 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 		let index = 0;
 		for (const mark of delta.local) {
 			if (isAttachMark(mark) || isReplaceMark(mark)) {
+				const attachRangeId = Delta.convertToRangeId(
+					mark.attach,
+					mark.count,
+				) as Delta.DetachedNodeRangeId;
+				const sourceRoot = config.detachedFieldIndex.getEntry(attachRangeId);
+				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
+				if (isReplaceMark(mark)) {
+					const detachedRangeId = Delta.convertToRangeId(
+						mark.detach,
+						mark.count,
+					) as Delta.DetachedNodeRangeId;
+					const rootDestination = config.detachedFieldIndex.createEntry(detachedRangeId);
+					const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
+					visitor.replace(
+						sourceField,
+						{ start: index, end: index + mark.count },
+						destinationField,
+					);
+					// We may need to do a second pass on the detached nodes
+					if (mark.fields !== undefined) {
+						config.attachPassRoots.set(rootDestination, mark.fields);
+					}
+				} else {
+					// This a simple attach
+					visitor.attach(sourceField, mark.count, index);
+				}
+				config.detachedFieldIndex.deleteEntry(attachRangeId);
+				const fields = config.attachPassRoots.get(sourceRoot);
+				if (fields !== undefined) {
+					config.attachPassRoots.delete(sourceRoot);
+					visitNode(index, fields, visitor, config);
+				}
+				/*
+				// need to ensure all nodes within the same sourcefield before catogarizing them
 				for (let i = 0; i < mark.count; i += 1) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const offsetAttachId = offsetDetachId(mark.attach!, i);
@@ -470,7 +526,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						config.attachPassRoots.delete(sourceRoot);
 						visitNode(offsetIndex, fields, visitor, config);
 					}
-				}
+				} */
 			} else if (!isDetachMark(mark) && mark.fields !== undefined) {
 				visitNode(index, mark.fields, visitor, config);
 			}

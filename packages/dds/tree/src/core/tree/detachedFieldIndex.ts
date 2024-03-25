@@ -7,22 +7,25 @@ import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	Brand,
+	type IRange,
 	IdAllocator,
 	JsonCompatibleReadOnly,
-	NestedMap,
+	type NestedRangeMap,
 	brand,
-	deleteFromNestedMap,
+	deleteFromNestedRangeMap,
+	getFromRangeMap,
 	idAllocatorFromMaxId,
-	populateNestedMap,
-	setInNestedMap,
-	tryGetFromNestedMap,
+	populateNestedRangeMap,
+	setInNestedRangeMap,
+	setInRangeMap,
+	tryGetFromNestedRangeMap,
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";
-import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes.js";
+import { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 
 /**
  * ID used to create a detached field key for a removed subtree.
@@ -37,7 +40,8 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
  */
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
-	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+	// private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+	private detachedNodeToField: NestedRangeMap<Major, ForestRootId> = new Map();
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
 	private readonly options: ICodecOptions;
 
@@ -62,19 +66,21 @@ export class DetachedFieldIndex {
 			this.revisionTagCodec,
 			this.options,
 		);
-		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField, true);
+		populateNestedRangeMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;
 	}
 
-	public *entries(): Generator<{ root: ForestRootId } & { id: Delta.DetachedNodeId }> {
+	public *entries(): Generator<{ root: ForestRootId } & { rangeId: Delta.DetachedNodeRangeId }> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
 			if (major !== undefined) {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { major, minor }, root: entry };
+				for (const entry of innerMap) {
+					const minor: IRange = { start: entry.start, length: entry.length };
+					yield { rangeId: { major, minor }, root: entry.value };
 				}
 			} else {
-				for (const [minor, entry] of innerMap) {
-					yield { id: { minor }, root: entry };
+				for (const entry of innerMap) {
+					const minor: IRange = { start: entry.start, length: entry.length };
+					yield { rangeId: { minor }, root: entry.value };
 				}
 			}
 		}
@@ -95,12 +101,14 @@ export class DetachedFieldIndex {
 			if (innerUpdated === undefined) {
 				this.detachedNodeToField.set(updated, innerCurrent);
 			} else {
-				for (const [minor, entry] of innerCurrent) {
+				for (const entry of innerCurrent) {
+					// TODO: need to think of updating rangeEntry
 					assert(
-						innerUpdated.get(minor) === undefined,
+						getFromRangeMap(innerCurrent, entry.start, entry.length)?.value ===
+							undefined,
 						0x7a9 /* Collision during index update */,
 					);
-					innerUpdated.set(minor, entry);
+					setInRangeMap(innerUpdated, entry.start, entry.length, entry.value);
 				}
 			}
 		}
@@ -118,42 +126,64 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Returns undefined if no such id is known to the index.
 	 */
-	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
-		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
+	public tryGetEntry(
+		id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId,
+	): ForestRootId | undefined {
+		const rangeId = Delta.convertToRangeId(id) as Delta.DetachedNodeRangeId;
+		return tryGetFromNestedRangeMap(
+			this.detachedNodeToField,
+			rangeId.major,
+			rangeId.minor.start,
+			rangeId.minor.length,
+		)?.value;
 	}
 
 	/**
 	 * Returns the FieldKey associated with the given id.
 	 * Fails if no such id is known to the index.
 	 */
-	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
+	public getEntry(id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): ForestRootId {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
 	}
 
-	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
-		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
+	public deleteEntry(id: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): void {
+		const rangeId = Delta.convertToRangeId(id) as Delta.DetachedNodeRangeId;
+		const found = deleteFromNestedRangeMap(
+			this.detachedNodeToField,
+			rangeId.major,
+			rangeId.minor.start,
+			rangeId.minor.length,
+		);
 		assert(found, 0x7ab /* Unable to delete unknown entry */);
 	}
 
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
-	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): ForestRootId {
+	public createEntry(id?: Delta.DetachedNodeRangeId | Delta.DetachedNodeId): ForestRootId {
+		const rangeId = Delta.convertToRangeId(id);
+		const count = rangeId?.minor.length ?? 1;
 		const root = this.rootIdAllocator.allocate(count);
-		if (nodeId !== undefined) {
-			for (let i = 0; i < count; i++) {
-				assert(
-					tryGetFromNestedMap(
-						this.detachedNodeToField,
-						nodeId.major,
-						nodeId.minor + i,
-					) === undefined,
-					0x7ce /* Detached node ID already exists in index */,
-				);
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
-			}
+		
+		if (rangeId !== undefined) {
+			assert(
+				tryGetFromNestedRangeMap(
+					this.detachedNodeToField,
+					rangeId.major,
+					rangeId.minor.start,
+					count,
+				)?.value === undefined,
+				0x7ce /* Detached node ID already exists in index */,
+			);
+			setInNestedRangeMap(
+				this.detachedNodeToField,
+				rangeId.major,
+				rangeId.minor.start,
+				count,
+				root,
+			);
 		}
 		return root;
 	}
