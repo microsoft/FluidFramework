@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Mode, processContent } from "../replayMultipleFiles";
-import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
+import { Mode, processContent } from "../replayMultipleFiles.js";
+import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent.js";
 
 describe("Snapshots", function () {
 	this.timeout(300000);
