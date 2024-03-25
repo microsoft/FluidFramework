@@ -220,7 +220,7 @@ export function wrapContextForInnerChannel(
 		);
 	};
 
-	context.submitSignal = (type: string, contents: any, targetClientId?: string) => {
+	context.submitSignal = (type: string, contents: unknown, targetClientId?: string) => {
 		const envelope: IEnvelope = {
 			address: id,
 			contents,
