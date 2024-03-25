@@ -716,6 +716,12 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	return fluidObject.ISummarizer;
 }
 
+/**
+ * Extract last message from the snapshot metadata.
+ * Uses legacy property if not using explicit schema control, otherwise uses the new property.
+ * This allows new rnutime to make documents not openable for old runtimes, one explict document schema control is enabled.
+ * Please see addMetadataToSummary() as well
+ */
 function messageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
@@ -2153,6 +2159,8 @@ export class ContainerRuntime
 		const message =
 			extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 			this.messageAtLastSummary;
+		
+		// Is document schema explicit control on?
 		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
 			this.deltaManager.lastSequenceNumber,
 		);
@@ -2164,6 +2172,11 @@ export class ContainerRuntime
 			summaryFormatVersion: 1,
 			...this.garbageCollector.getMetadata(),
 			telemetryDocumentId: this.telemetryDocumentId,
+			// If explicit document schema control is not on, use legacy way to supply last message (using 'message' property).
+			// Otherwise use new 'lastMessage' property, but also put content into the 'message' property that cases old
+			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
+			// last message's sequence number.
+			// See also messageFromMetadata()
 			message: documentSchema?.runtime.explicitSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
