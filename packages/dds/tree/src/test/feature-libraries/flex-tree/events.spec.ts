@@ -7,8 +7,6 @@ import { strict as assert } from "assert";
 
 import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes.js";
 import { FieldKinds } from "../../../feature-libraries/index.js";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree/index.js";
 import { flexTreeWithContent } from "../../utils.js";
@@ -90,7 +88,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(childAfterChangeCount, 1);
 
 		// Replace the whole child; should fire events on the root node.
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = {
 			myInnerString: "initial string in new child",
 		};
@@ -182,7 +180,7 @@ describe("beforeChange/afterChange events", () => {
 		root.myNumberSequence.moveRangeToEnd(0, 2);
 		// Other miscellaneous updates
 		root.child.myInnerString = "new string in child";
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = {
 			myInnerString: "original string in new child",
 		};
@@ -579,7 +577,7 @@ describe("beforeChange/afterChange events", () => {
 			afterCounter++;
 		});
 
-		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
+		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in FlexTree
 		root.boxedChild.content = { myInnerString: "something" };
 
 		// Events shouldn't have fired on the original child node
@@ -630,67 +628,5 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterCounter, 1);
 		assert.strictEqual(childBeforeCounter, 1);
 		assert.strictEqual(childAfterCounter, 1);
-	});
-});
-
-describe("onNextChange event", () => {
-	const sb = new SchemaBuilder({ scope: "test" });
-	const object = sb.object("object", { content: sb.number });
-	const schema = sb.intoSchema(object);
-	const initialTree = { content: 3 };
-
-	it("fires exactly once after a change", () => {
-		const editNode = flexTreeWithContent({ schema, initialTree }).content;
-		let onNextChangeCount = 0;
-		editNode[onNextChange](() => (onNextChangeCount += 1));
-		assert(editNode.is(object));
-		editNode.content = 7;
-		assert.equal(onNextChangeCount, 1);
-		editNode.content = 12;
-		assert.equal(onNextChangeCount, 1);
-	});
-
-	it("can have at most one listener at a time", () => {
-		const editNode = flexTreeWithContent({ schema, initialTree }).content;
-		let onNextChangeEventCount = 0;
-		editNode[onNextChange](() => (onNextChangeEventCount += 1));
-		assert.throws(() => editNode[onNextChange](() => (onNextChangeEventCount += 1)));
-	});
-
-	it("can be subscribed to again after throwing and catching an error", () => {
-		const editNode = flexTreeWithContent({ schema, initialTree }).content;
-		assert(editNode.is(object));
-		editNode[onNextChange](() => {
-			throw new Error();
-		});
-		assert.throws(() => (editNode.content = 7));
-		editNode[onNextChange](() => {});
-	});
-
-	it("can be unsubscribed from", () => {
-		const editNode = flexTreeWithContent({ schema, initialTree }).content;
-		assert(editNode.is(object));
-		let onNextChangeEventFired = false;
-		const off = editNode[onNextChange](() => {
-			onNextChangeEventFired = true;
-		});
-		off();
-		editNode.content = 7;
-		assert.equal(onNextChangeEventFired, false);
-	});
-
-	it("unsubscription has no effect if the event has already fired", () => {
-		const editNode = flexTreeWithContent({ schema, initialTree }).content;
-		assert(editNode.is(object));
-		const off = editNode[onNextChange](() => {});
-		editNode.content = 7;
-		off();
-		let onNextChangeEventFired = false;
-		editNode[onNextChange](() => {
-			onNextChangeEventFired = true;
-		});
-		off();
-		editNode.content = 13;
-		assert.equal(onNextChangeEventFired, true);
 	});
 });

@@ -2337,10 +2337,6 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const getSpecifiedCodeDetails = () =>
-			(this.protocolHandler.quorum.get("code") ??
-				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
-
 		const existing = snapshotTree !== undefined;
 
 		const context = new ContainerContext(
@@ -2368,7 +2364,6 @@ export class Container
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,
-			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,

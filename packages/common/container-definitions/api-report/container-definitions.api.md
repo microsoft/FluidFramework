@@ -163,8 +163,6 @@ export interface IContainerContext {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
-    // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // @deprecated
     readonly id: string;
     // (undocumented)

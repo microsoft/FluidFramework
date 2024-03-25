@@ -44,6 +44,11 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	// - branching APIs
 
 	readonly nodeKeys: NodeKeys;
+
+	/**
+	 * The forest containing the tree data associated with this context
+	 */
+	readonly forest: IForestSubscription;
 }
 
 /**
@@ -143,7 +148,7 @@ export class Context implements FlexTreeContext, IDisposable {
  * @param nodeKeyManager - an object which handles node key generation and conversion.
  * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
  * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
- * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
+ * @returns {@link FlexTreeContext} which is used to manage the cursors and anchors within the FlexTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(

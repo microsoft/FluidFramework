@@ -7,15 +7,15 @@ import { strict as assert } from "assert";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 
-import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-	TestFluidObjectFactory,
-	waitForContainerConnection,
-	timeoutPromise,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import {
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObjectFactory,
+	timeoutPromise,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 

@@ -31,7 +31,7 @@ export {
 	ObjectFromSchemaRecord,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
-export { getFlexNode } from "./flexNode.js";
+export { getFlexNode } from "./proxyBinding.js";
 export { treeNodeApi, TreeNodeApi, TreeNodeEvents } from "./treeApi.js";
 export { toFlexConfig } from "./toFlexSchema.js";
 export {

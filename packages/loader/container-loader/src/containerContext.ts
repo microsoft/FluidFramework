@@ -10,7 +10,6 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
-	IFluidCodeDetails,
 	ILoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -103,7 +102,6 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
-		public readonly getSpecifiedCodeDetails: () => IFluidCodeDetails | undefined,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,
