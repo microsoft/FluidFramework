@@ -33,7 +33,7 @@ describeCompat(
 		};
 		const sharedStringId = "ss1Key";
 		const sharedMapId = "sm1Key";
-		async function createDetachedContainerAndGetEntryPoint(provider: ITestObjectProvider) {
+		async function createAttachingContainerAndGetEntryPoint(provider: ITestObjectProvider) {
 			const documentId = createDocumentId();
 			const request = provider.driver.createCreateNewRequest(documentId);
 			const loader = createTestLoader(
@@ -95,10 +95,10 @@ describeCompat(
 		};
 
 		for (const attachAfterRehydrate of [true, false]) {
-			it(`Can serialize detached container. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
+			it(`Can serialize and rehydrate attaching container with no additional changes. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
 				const provider = getTestObjectProvider();
 
-				const { container } = await createDetachedContainerAndGetEntryPoint(provider);
+				const { container } = await createAttachingContainerAndGetEntryPoint(provider);
 
 				const snapshotTree = container.serialize();
 
@@ -116,12 +116,12 @@ describeCompat(
 				const entryPoint = await rehydratedContainer.getEntryPoint();
 				assert.notStrictEqual(entryPoint, undefined, "Component should exist!");
 			});
-			it(`Can serialize detached container with data stores after failed attach. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
+			it(`Can serialize and rehydrate attaching container with newly created data stores. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
 				const provider = getTestObjectProvider();
 
 				// create a detached container and attempt to attach
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetEntryPoint(provider);
+					await createAttachingContainerAndGetEntryPoint(provider);
 
 				// create a new data store
 				const peerDataStore = await createPeerDataStore(
@@ -165,12 +165,12 @@ describeCompat(
 					"DataStore2 id should match",
 				);
 			});
-			it(`Can serialize detached container with DDS after failed attach. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
+			it(`Can serialize and rehydrate attaching container with newly created DDS. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
 				const provider = getTestObjectProvider();
 
 				// create a detached container and attempt to attach
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetEntryPoint(provider);
+					await createAttachingContainerAndGetEntryPoint(provider);
 
 				// create a new dds
 				const ddsId = "notbounddds";
@@ -211,13 +211,12 @@ describeCompat(
 				assert.strictEqual(dds2FromRC.id, ddsId, "DDS id should match");
 				assert.strictEqual(dds2FromRC.id, dds2.id, "Both DDS id should match");
 			});
-
-			it(`Can serialize detached container with data store and DDS after failed attach. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
+			it(`Can serialize and rehydrate attaching container with newly created data store and DDS. attachAfterRehydrate: ${attachAfterRehydrate}`, async () => {
 				const provider = getTestObjectProvider();
 
 				// create a detached container and attempt to attach
 				const { container, defaultDataStore } =
-					await createDetachedContainerAndGetEntryPoint(provider);
+					await createAttachingContainerAndGetEntryPoint(provider);
 
 				// create a new data store
 				const peerDataStore = await createPeerDataStore(

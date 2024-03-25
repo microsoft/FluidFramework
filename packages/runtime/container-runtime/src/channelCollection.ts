@@ -748,6 +748,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	private async applyStashedAttachOp(message: IAttachMessage) {
 		const { id, snapshot } = message;
 
+		// build the snapshot from the summary in the attach message
 		const flatAttachBlobs = new Map<string, ArrayBufferLike>();
 		const snapshotTree = buildSnapshotTree(snapshot.entries, flatAttachBlobs);
 		const storage = new StorageServiceWithAttachBlobs(
@@ -755,6 +756,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			flatAttachBlobs,
 		);
 
+		// create a local datastore context for the data store context,
+		// which this message represents. All newly created data store
+		// contexts start as a local context on the client that created
+		// them, and for stashed ops, the client that applies it plays
+		// the role of creating client.
 		const dataStoreContext = new LocalFluidDataStoreContext({
 			id,
 			pkg: undefined,
@@ -767,9 +773,19 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree,
 		});
+
+		// realize the local context, as local contexts shouldn't be delay
+		// loaded, as this client is playing the role of creating client,
+		// and creating clients always create realized data store contexts.
 		await dataStoreContext.realize().then(async (e) => e.entryPoint.get());
+
+		// add to the list of bound or remoted, as this context must be bound
+		// to had an attach message sent, and is the non-detached case is remoted.
 		this.contexts.addBoundOrRemoted(dataStoreContext);
 		if (this.parentContext.attachState !== AttachState.Detached) {
+			// if the client is not detached put in the pending attach list
+			// so that on ack of the stashed op, the context is found.
+			// detached client don't send ops, so should not expect and ack.
 			this.pendingAttach.set(message.id, message);
 		}
 	}
