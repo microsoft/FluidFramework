@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "1.3.7",
+  "version": "1.3.8",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,12 +35,12 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^1.3.7",
-    "@fluidframework/container-loader": "^1.3.7",
-    "@fluidframework/driver-definitions": "^1.3.7",
-    "@fluidframework/fluid-static": "^1.3.7",
-    "@fluidframework/map": "^1.3.7",
-    "@fluidframework/sequence": "^1.3.7"
+    "@fluidframework/container-definitions": "^1.3.8",
+    "@fluidframework/container-loader": "^1.3.8",
+    "@fluidframework/driver-definitions": "^1.3.8",
+    "@fluidframework/fluid-static": "^1.3.8",
+    "@fluidframework/map": "^1.3.8",
+    "@fluidframework/sequence": "^1.3.8"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
