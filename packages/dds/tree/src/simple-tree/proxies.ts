@@ -25,6 +25,7 @@ import {
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
+import { normalizeFieldSchema } from "./FieldSchemaUtilities.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
@@ -35,7 +36,7 @@ import {
 	TreeMapNode,
 	type TreeNodeSchema,
 } from "./schemaTypes.js";
-import { cursorFromFieldData, cursorFromNodeData, normalizeFieldSchema } from "./toMapTree.js";
+import { cursorFromFieldData, cursorFromNodeData } from "./toMapTree.js";
 import { IterableTreeArrayContent, TreeArrayNode } from "./treeArrayNode.js";
 import { TreeNode, Unhydrated } from "./types.js";
 

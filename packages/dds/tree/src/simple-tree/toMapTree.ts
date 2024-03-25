@@ -26,6 +26,7 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
+import { normalizeAllowedTypes, normalizeFieldSchema } from "./FieldSchemaUtilities.js";
 import { nullSchema } from "./leafNodeSchema.js";
 import { InsertableContent } from "./proxies.js";
 import {
@@ -350,18 +351,6 @@ export function getPossibleTypes(typeSet: AllowedTypes, data: ContextuallyTypedN
 		}
 	}
 	return possibleTypes;
-}
-
-export function normalizeFieldSchema(
-	schema: ImplicitFieldSchema,
-): FieldSchema<FieldKind, AllowedTypes> {
-	return schema instanceof FieldSchema
-		? new FieldSchema(schema.kind, normalizeAllowedTypes(schema.allowedTypes))
-		: new FieldSchema(FieldKind.Required, normalizeAllowedTypes(schema));
-}
-
-function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
-	return isReadonlyArray(types) ? types : [types];
 }
 
 /**

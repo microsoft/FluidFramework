@@ -44,6 +44,7 @@ import {
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
+import { normalizeFieldSchema } from "./FieldSchemaUtilities.js";
 
 /**
  * Returns a cursor (in nodes mode) for the root node.
@@ -59,8 +60,11 @@ function cursorFromUnhydratedRoot(
 	forest: IForestSubscription,
 ): ITreeCursorSynchronous {
 	const data = prepareContentForInsert(tree as InsertableContent, forest);
-	const allowedTypes = schema instanceof FieldSchema ? schema.allowedTypes : schema;
-	return cursorFromNodeData(data, allowedTypes) ?? fail("failed to decode tree");
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
+	return (
+		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
+		fail("failed to decode tree")
+	);
 }
 
 export function toFlexConfig(config: TreeConfiguration, forest: IForestSubscription): TreeContent {
