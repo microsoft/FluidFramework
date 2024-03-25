@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import { tokenFromResponse, isTokenFromCache } from "@fluidframework/odsp-driver-definitions";
+import assert from "node:assert";
+import { isTokenFromCache, tokenFromResponse } from "@fluidframework/odsp-driver-definitions";
 
 describe("tokenFromResponse", () => {
 	it("returns token verbatim when token value is passed as a string", async () => {

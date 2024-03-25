@@ -6,20 +6,17 @@
 import { strict as assert, fail } from "assert";
 import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core/index.js";
 import {
-	defaultSchemaPolicy,
-	cursorForJsonableTreeField,
-	intoStoredSchema,
+	FlexFieldSchema,
 	TreeCompressionStrategy,
+	cursorForJsonableTreeField,
+	defaultSchemaPolicy,
+	intoStoredSchema,
 	isFluidHandle,
 } from "../../../../feature-libraries/index.js";
 
-import {
-	buildCache,
-	fieldShaper,
-	oneFromSet,
-	treeShaper,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
+import { leaf } from "../../../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	FieldBatchEncodingContext,
 	makeFieldBatchCodec,
@@ -33,12 +30,20 @@ import {
 	anyFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+import {
+	buildCache,
+	fieldShaper,
+	oneFromSet,
+	treeShaper,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncoding.js";
 // eslint-disable-next-line import/no-internal-modules
-import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
+import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import { ajvValidator } from "../../../codec/index.js";
+import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import {
 	hasOptionalField,
 	minimal,
@@ -47,11 +52,7 @@ import {
 	storedLibrary,
 	testTrees,
 } from "../../../testTrees.js";
-import { leaf, SchemaBuilder } from "../../../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
-import { ajvValidator } from "../../../codec/index.js";
-import { takeSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -80,7 +81,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required(minimal),
+				FlexFieldSchema.create(FieldKinds.required, [minimal]),
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -107,7 +108,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.required([minimal, leaf.number]),
+				FlexFieldSchema.create(FieldKinds.required, [minimal, leaf.number]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -130,7 +131,7 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.sequence(minimal),
+				FlexFieldSchema.create(FieldKinds.sequence, [minimal]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:

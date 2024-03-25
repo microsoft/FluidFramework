@@ -5,11 +5,11 @@
 
 import {
 	ICodeDetailsLoader,
-	IFluidModule,
-	IProvideRuntimeFactory,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
+	IFluidModule,
 	IFluidModuleWithDetails,
+	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";

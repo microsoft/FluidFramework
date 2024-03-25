@@ -5,62 +5,62 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
-	Value,
 	Anchor,
-	FieldKey,
-	TreeNavigationResult,
-	ITreeSubscriptionCursor,
-	mapCursorFields,
-	CursorLocationType,
-	anchorSlot,
 	AnchorNode,
-	inCursorField,
-	rootFieldKey,
+	CursorLocationType,
 	EmptyKey,
+	FieldKey,
+	ITreeSubscriptionCursor,
+	TreeNavigationResult,
 	TreeNodeSchemaIdentifier,
-	forEachField,
 	TreeValue,
+	Value,
+	forEachField,
+	inCursorField,
+	mapCursorFields,
+	rootFieldKey,
 } from "../../core/index.js";
 import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { FieldKinds } from "../default-schema/index.js";
+import { LocalNodeKey } from "../node-key/index.js";
 import {
-	TreeFieldSchema,
+	Any,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
-	MapNodeSchema,
+	LeafNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	FieldNodeSchema,
-	LeafNodeSchema,
-	ObjectNodeSchema,
-	Any,
-	AllowedTypes,
 } from "../typed-schema/index.js";
-import { FieldKinds } from "../default-schema/index.js";
-import { LocalNodeKey } from "../node-key/index.js";
-import { EditableTreeEvents, TreeEvent } from "./treeEvents.js";
 import { Context } from "./context.js";
 import {
+	FlexTreeEntityKind,
+	FlexTreeField,
 	FlexTreeFieldNode,
 	FlexTreeLeafNode,
 	FlexTreeMapNode,
+	FlexTreeNode,
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeUnboxField,
-	FlexTreeField,
-	FlexTreeNode,
-	TreeStatus,
-	FlexTreeRequiredField,
-	FlexTreeOptionalField,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	onNextChange,
-	FlexTreeEntityKind,
+	PropertyNameFromFieldKey,
+	TreeStatus,
 	flexTreeMarker,
+	flexTreeSlot,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
 } from "./flexTreeTypes.js";
-import { LazyNodeKeyField, makeField } from "./lazyField.js";
 import {
 	LazyEntity,
 	cursorSymbol,
@@ -68,31 +68,33 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
+import { LazyNodeKeyField, makeField } from "./lazyField.js";
+import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
-
-const lazyTreeSlot = anchorSlot<LazyTreeNode>();
 
 export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.forest.anchors.locate(anchor) ??
 		fail("cursor should point to a node that is not the root of the AnchorSet");
-	const cached = anchorNode.slots.get(lazyTreeSlot);
+	const cached = anchorNode.slots.get(flexTreeSlot);
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
 		assert(cached.context === context, 0x782 /* contexts must match */);
-		return cached;
+		assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
+		return cached as LazyTreeNode;
 	}
 	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
 	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
-	anchorNode.slots.set(lazyTreeSlot, output);
+	anchorNode.slots.set(flexTreeSlot, output);
 	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
 function cleanupTree(anchor: AnchorNode): void {
-	const cached = anchor.slots.get(lazyTreeSlot) ?? fail("tree should only be cleaned up once");
+	const cached = anchor.slots.get(flexTreeSlot) ?? fail("tree should only be cleaned up once");
+	assert(cached instanceof LazyTreeNode, "Expected LazyTreeNode");
 	cached[disposeSymbol]();
 }
 
@@ -137,22 +139,16 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
-	readonly #anchorNode: AnchorNode;
-
-	#removeNextChangeCallback: (() => void) | undefined;
-
 	public constructor(
 		context: Context,
 		schema: TSchema,
 		cursor: ITreeSubscriptionCursor,
-		anchorNode: AnchorNode,
+		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
 		super(context, schema, cursor, anchor);
-		this.#anchorNode = anchorNode;
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
-
-		anchorNode.slots.set(lazyTreeSlot, this);
+		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
@@ -160,9 +156,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
-		// Setup JS Object API:
-		// makePrivatePropertyNotEnumerable(this, "removeDeleteCallback");
-		// makePrivatePropertyNotEnumerable(this, "anchorNode");
 		this.type = schema.name;
 	}
 
@@ -187,7 +180,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
-		this.#anchorNode.slots.delete(lazyTreeSlot);
+		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
 	}
@@ -214,22 +207,22 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
 		const cursor = this[cursorSymbol];
-		const index = this.#anchorNode.parentIndex;
+		const index = this.anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);
-		const key = this.#anchorNode.parentField;
+		const key = this.anchorNode.parentField;
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
-		let fieldSchema: TreeFieldSchema;
+		let fieldSchema: FlexFieldSchema;
 
 		// Check if the current node is in a detached sequence.
-		if (this.#anchorNode.parent === undefined) {
+		if (this.anchorNode.parent === undefined) {
 			// Parent field is a detached sequence, and thus needs special handling for its schema.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (key === rootFieldKey) {
 				fieldSchema = this.context.schema.rootFieldSchema;
 			} else {
-				// All fields (in the editable tree API) have a schema.
+				// All fields (in the flex tree API) have a schema.
 				// Since currently there is no known schema for detached field other than the special default root:
 				// give all other detached fields a schema of sequence of any.
 				// That schema is the only one that is safe since its the only field schema that allows any possible field content.
@@ -239,10 +232,10 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				// 1. Editing APIs start exposing user created detached sequences.
 				// 2. Remove (and its inverse) start working on subsequences or fields contents (like everything in a sequence or optional field) and not just single nodes.
 				// 3. Possibly other unknown cases.
-				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
+				// Additionally this approach makes it possible for a user to take a FlexTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = TreeFieldSchema.create(FieldKinds.sequence, [Any]);
+				fieldSchema = FlexFieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -264,16 +257,16 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		return treeStatusFromAnchorCache(this.context.forest.anchors, this.#anchorNode);
+		return treeStatusFromAnchorCache(this.context.forest.anchors, this.anchorNode);
 	}
 
-	public on<K extends keyof EditableTreeEvents>(
+	public on<K extends keyof FlexTreeNodeEvents>(
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromChildrenChange = this.#anchorNode.on(
+				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
 					(anchorNode: AnchorNode) =>
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
@@ -284,7 +277,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
-				const unsubscribeFromSubtreeChange = this.#anchorNode.on(
+				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
 					(anchorNode: AnchorNode) =>
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
@@ -295,10 +288,10 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				return unsubscribeFromSubtreeChange;
 			}
 			case "beforeChange": {
-				const unsubscribeFromChildrenBeforeChange = this.#anchorNode.on(
+				const unsubscribeFromChildrenBeforeChange = this.anchorNode.on(
 					"beforeChange",
 					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
+						const treeNode = anchorNode.slots.get(flexTreeSlot);
 						assert(
 							treeNode !== undefined,
 							0x7d3 /* tree node not found in anchor node slots */,
@@ -312,10 +305,10 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				return unsubscribeFromChildrenBeforeChange;
 			}
 			case "afterChange": {
-				const unsubscribeFromChildrenAfterChange = this.#anchorNode.on(
+				const unsubscribeFromChildrenAfterChange = this.anchorNode.on(
 					"afterChange",
 					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(lazyTreeSlot);
+						const treeNode = anchorNode.slots.get(flexTreeSlot);
 						assert(
 							treeNode !== undefined,
 							0x7d4 /* tree node not found in anchor node slots */,
@@ -332,30 +325,9 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 				unreachableCase(eventName);
 		}
 	}
-
-	public [onNextChange](fn: (node: FlexTreeNode) => void): () => void {
-		assert(
-			this.#removeNextChangeCallback === undefined,
-			0x806 /* Only one subscriber may listen to next tree node change at a time */,
-		);
-		this.#removeNextChangeCallback = this.#anchorNode.on("childrenChanged", () => {
-			this.#removeNextChangeCallback?.();
-			this.#removeNextChangeCallback = undefined;
-			fn(this);
-		});
-		const removeNextChangeCallback = this.#removeNextChangeCallback;
-		return () => {
-			// Only reset our saved callback if it's the one we closed over in the first place.
-			// It will be different if this is being called after a subsequent registration.
-			if (this.#removeNextChangeCallback === removeNextChangeCallback) {
-				this.#removeNextChangeCallback();
-				this.#removeNextChangeCallback = undefined;
-			}
-		};
-	}
 }
 
-export class LazyMap<TSchema extends MapNodeSchema>
+export class LazyMap<TSchema extends FlexMapNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeMapNode<TSchema>
 {
@@ -440,7 +412,7 @@ export class LazyMap<TSchema extends MapNodeSchema>
 		const fieldSchema = this.schema.info;
 
 		if (fieldSchema.kind === FieldKinds.optional) {
-			const optionalField = field as FlexTreeOptionalField<AllowedTypes>;
+			const optionalField = field as FlexTreeOptionalField<FlexAllowedTypes>;
 			optionalField.content = content;
 		} else {
 			assert(fieldSchema.kind === FieldKinds.sequence, 0x807 /* Unexpected map field kind */);
@@ -487,7 +459,7 @@ export class LazyLeaf<TSchema extends LeafNodeSchema>
 	}
 }
 
-export class LazyFieldNode<TSchema extends FieldNodeSchema>
+export class LazyFieldNode<TSchema extends FlexFieldNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeFieldNode<TSchema>
 {
@@ -504,7 +476,29 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	}
 }
 
-export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
+/**
+ * {@link reservedObjectNodeFieldPropertyNames} but as a set.
+ */
+export const reservedObjectNodeFieldPropertyNameSet: ReadonlySet<string> = new Set(
+	reservedObjectNodeFieldPropertyNames,
+);
+
+export function propertyNameFromFieldKey<T extends string>(key: T): PropertyNameFromFieldKey<T> {
+	if (reservedObjectNodeFieldPropertyNameSet.has(key)) {
+		return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
+	}
+	for (const prefix of reservedObjectNodeFieldPropertyNamePrefixes) {
+		if (key.startsWith(prefix)) {
+			const afterPrefix = key.slice(prefix.length);
+			if (afterPrefix === capitalize(afterPrefix)) {
+				return `field${capitalize(key)}` as PropertyNameFromFieldKey<T>;
+			}
+		}
+	}
+	return key as PropertyNameFromFieldKey<T>;
+}
+
+export abstract class LazyObjectNode<TSchema extends FlexObjectNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FlexTreeObjectNode
 {
@@ -523,7 +517,7 @@ export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
 		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
@@ -535,7 +529,7 @@ export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
 	}
 }
 
-export function buildLazyObjectNode<TSchema extends ObjectNodeSchema>(
+export function buildLazyObjectNode<TSchema extends FlexObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
@@ -550,26 +544,26 @@ export function buildLazyObjectNode<TSchema extends ObjectNodeSchema>(
 }
 
 const cachedStructClasses = new WeakMap<
-	ObjectNodeSchema,
+	FlexObjectNodeSchema,
 	new (
 		context: Context,
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyObjectNode<ObjectNodeSchema>
+	) => LazyObjectNode<FlexObjectNodeSchema>
 >();
 
 export function getBoxedField(
 	objectNode: LazyTreeNode,
 	key: FieldKey,
-	fieldSchema: TreeFieldSchema,
+	fieldSchema: FlexFieldSchema,
 ): FlexTreeField {
 	return inCursorField(objectNode[cursorSymbol], key, (cursor) => {
 		return makeField(objectNode.context, fieldSchema, cursor);
 	});
 }
 
-function buildStructClass<TSchema extends ObjectNodeSchema>(
+function buildStructClass<TSchema extends FlexObjectNodeSchema>(
 	schema: TSchema,
 ): new (
 	context: Context,
@@ -580,18 +574,19 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
-		let setter: ((newContent: FlexibleNodeContent<AllowedTypes>) => void) | undefined;
+		const escapedKey = propertyNameFromFieldKey(key);
+		let setter: ((newContent: FlexibleNodeContent<FlexAllowedTypes>) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<AllowedTypes> | undefined,
+					newContent: FlexibleNodeContent<FlexAllowedTypes> | undefined,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
-					) as FlexTreeOptionalField<AllowedTypes>;
+					) as FlexTreeOptionalField<FlexAllowedTypes>;
 					field.content = newContent;
 				};
 				break;
@@ -599,13 +594,13 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 			case FieldKinds.required: {
 				setter = function (
 					this: CustomStruct,
-					newContent: FlexibleNodeContent<AllowedTypes>,
+					newContent: FlexibleNodeContent<FlexAllowedTypes>,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
-					) as FlexTreeRequiredField<AllowedTypes>;
+					) as FlexTreeRequiredField<FlexAllowedTypes>;
 					field.content = newContent;
 				};
 				break;
@@ -616,7 +611,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 		}
 
 		// Create getter and setter (when appropriate) for property
-		propertyDescriptorMap[key] = {
+		propertyDescriptorMap[escapedKey] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
@@ -628,7 +623,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 
 		// Create set method for property (when appropriate)
 		if (setter !== undefined) {
-			propertyDescriptorMap[`set${capitalize(key)}`] = {
+			propertyDescriptorMap[`set${capitalize(escapedKey)}`] = {
 				enumerable: false,
 				get(this: CustomStruct) {
 					return setter;
@@ -636,7 +631,7 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 			};
 		}
 
-		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
+		propertyDescriptorMap[`boxed${capitalize(escapedKey)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
 				return getBoxedField(this, key, fieldSchema);

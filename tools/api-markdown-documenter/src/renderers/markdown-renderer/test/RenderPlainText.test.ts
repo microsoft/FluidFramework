@@ -4,9 +4,9 @@
  */
 import { expect } from "chai";
 
-import { PlainTextNode } from "../../../documentation-domain";
-import { type RenderContext } from "../RenderContext";
-import { testRender } from "./Utilities";
+import { PlainTextNode } from "../../../documentation-domain/index.js";
+import { type RenderContext } from "../RenderContext.js";
+import { testRender } from "./Utilities.js";
 
 describe("PlainText Markdown rendering tests", () => {
 	describe("Standard context", () => {

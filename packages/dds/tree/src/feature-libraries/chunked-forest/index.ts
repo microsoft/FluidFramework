@@ -20,4 +20,5 @@ export {
 	FieldBatchCodec,
 	makeFieldBatchCodec,
 	FieldBatchEncodingContext,
+	SchemaAndPolicy,
 } from "./codec/index.js";

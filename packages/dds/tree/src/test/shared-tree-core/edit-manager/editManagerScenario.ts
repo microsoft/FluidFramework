@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { SessionId } from "@fluidframework/id-compressor";
-import { ChangeRebaser, ChangeFamilyEditor, emptyDelta } from "../../../core/index.js";
-import { TestChangeFamily, TestChange, asDelta } from "../../testChange.js";
+import { ChangeFamilyEditor, ChangeRebaser, emptyDelta } from "../../../core/index.js";
 import { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";
 import { brand, clone } from "../../../util/index.js";
+import { TestChange, TestChangeFamily, asDelta } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 import {
 	addSequencedChange,

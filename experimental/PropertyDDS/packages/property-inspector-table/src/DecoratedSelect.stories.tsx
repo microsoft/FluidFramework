@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import {
 	DecoratedSelect,
-	DecoratedSelectGroupedOptionsType,
-	DecoratedSelectOptionsType,
-	IDecoratedSelectOptionType,
-} from "./DecoratedSelect";
-import * as TableIcons from "./icons";
-import { InspectorDecorator } from "./InspectorDecorator";
-import { TypeIcon } from "./TypeIcon";
+	type DecoratedSelectGroupedOptionsType,
+	type DecoratedSelectOptionsType,
+	type IDecoratedSelectOptionType,
+} from "./DecoratedSelect.js";
+import { InspectorDecorator } from "./InspectorDecorator.js";
+import { TypeIcon } from "./TypeIcon.js";
+import * as TableIcons from "./icons.js";
 
 storiesOf("DecoratedSelect", module)
 	.addDecorator(InspectorDecorator)

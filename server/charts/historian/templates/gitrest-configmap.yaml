@@ -20,21 +20,28 @@ data:
         },
         "lumberjack": {
             "options": {
+                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }},
                 "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
             }
         },
         "config": {
             "configDumpEnabled": {{ .Values.gitrest.config.configDumpEnabled }},
-            "secretNamesToRedactInConfigDump": {{ .Values.gitrest.config.secretNamesToRedactInConfigDump }}
+            "secretNamesToRedactInConfigDump": [
+                {{- $lastIndex := sub (len .Values.gitrest.config.secretNamesToRedactInConfigDump) 1}}
+                {{- range $i, $secret := .Values.gitrest.config.secretNamesToRedactInConfigDump }}
+                {{ toJson . }}{{- if ne $i $lastIndex -}}, {{ end }}
+                {{- end }}
+            ]
         },
         "requestSizeLimit": "1gb",
+        "enableResponseCloseLatencyMetric": {{ .Values.gitrest.enableResponseCloseLatencyMetric }},
         "storageDir": {
             "baseDir": "/home/node/documents",
             "useRepoOwner": true
         },
         "externalStorage": {
-          "enabled": false,
-          "endpoint": "http://externalStorage:3005"
+            "enabled": false,
+            "endpoint": "http://externalStorage:3005"
         },
         "git": {
             "lib": {
@@ -47,6 +54,7 @@ data:
                 "name": "{{ .Values.gitrest.git.ephemeralfilesystem.name }}"
             },
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
+            "persistLatestFullEphemeralSummary": {{ .Values.gitrest.git.persistLatestFullEphemeralSummary }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
             "enableRepositoryManagerMetrics": {{ .Values.gitrest.git.enableRepositoryManagerMetrics }},
             "apiMetricsSamplingPeriod": {{ .Values.gitrest.git.apiMetricsSamplingPeriod }},
@@ -58,6 +66,8 @@ data:
             "enableOptimizedInitialSummary": {{ .Values.gitrest.git.enableOptimizedInitialSummary }},
             "enableSlimGitInit": {{ .Values.gitrest.git.enableSlimGitInit }},
             "enableRedisFsMetrics": {{ .Values.gitrest.git.enableRedisFsMetrics }},
+            "enableHashmapRedisFs": {{ .Values.gitrest.git.enableHashmapRedisFs }},
+            "enableRedisFsOptimizedStat": {{ .Values.gitrest.git.enableRedisFsOptimizedStat }},
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
         },
         "redis": {

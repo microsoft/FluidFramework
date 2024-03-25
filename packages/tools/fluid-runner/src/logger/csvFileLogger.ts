@@ -4,8 +4,8 @@
  */
 
 import * as fs from "fs";
-import { parse } from "json2csv";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { parse } from "json2csv";
 import { BaseFileLogger } from "./baseFileLogger";
 
 /**

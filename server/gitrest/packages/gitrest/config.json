@@ -6,6 +6,12 @@
 		"level": "info",
 		"timestamp": true
 	},
+	"lumberjack": {
+		"options": {
+			"enableGlobalTelemetryContext": true,
+			"enableSanitization": false
+		}
+	},
 	"config": {
 		"configDumpEnabled": false,
 		"secretNamesToRedactInConfigDump": [
@@ -18,6 +24,7 @@
 		]
 	},
 	"requestSizeLimit": "1gb",
+	"enableResponseCloseLatencyMetric": true,
 	"storageDir": {
 		"baseDir": "/home/node/documents",
 		"useRepoOwner": true
@@ -37,6 +44,7 @@
 			"name": "redisFs"
 		},
 		"persistLatestFullSummary": false,
+		"persistLatestFullEphemeralSummary": false,
 		"repoPerDocEnabled": false,
 		"enableRepositoryManagerMetrics": false,
 		"apiMetricsSamplingPeriod": 100,
@@ -44,6 +52,8 @@
 		"enableOptimizedInitialSummary": false,
 		"enableSlimGitInit": false,
 		"enableRedisFsMetrics": true,
+		"enableHashmapRedisFs": false,
+		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
 		"enforceStrictPersistedFullSummaryReads": false
 	},
@@ -51,9 +61,11 @@
 		"host": "redis",
 		"port": 6379,
 		"connectTimeout": 10000,
+		"slotsRefreshTimeout": 50000,
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
-		"enableOfflineQueue": true
+		"enableOfflineQueue": true,
+		"enableClustering": false
 	},
 	"system": {
 		"httpServer": {

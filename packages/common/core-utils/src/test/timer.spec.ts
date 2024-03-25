@@ -5,8 +5,11 @@
 
 import { strict as assert } from "node:assert";
 import process from "node:process";
-import { SinonFakeTimers, SinonSandbox, SinonSpy, useFakeTimers, createSandbox } from "sinon";
-import { PromiseTimer, Timer, IPromiseTimerResult } from "@fluidframework/core-utils";
+import type { SinonFakeTimers, SinonSandbox, SinonSpy } from "sinon";
+import { createSandbox, useFakeTimers } from "sinon";
+
+import type { IPromiseTimerResult } from "@fluidframework/core-utils";
+import { PromiseTimer, Timer } from "@fluidframework/core-utils";
 
 const flushPromises = async (): Promise<void> =>
 	new Promise((resolve) => process.nextTick(resolve));
@@ -22,7 +25,7 @@ describe("Timers", () => {
 		sandbox = createSandbox();
 	});
 
-	beforeEach(() => {
+	beforeEach("createTimeoutSpy", () => {
 		timeoutSpy = sandbox.spy(global, "setTimeout");
 	});
 
@@ -41,7 +44,7 @@ describe("Timers", () => {
 		const defaultHandler = (): number => runCount++;
 		let timer: Timer;
 
-		beforeEach(() => {
+		beforeEach("createTimer", () => {
 			runCount = 0;
 			timer = new Timer(defaultTimeout, defaultHandler);
 		});
@@ -291,7 +294,7 @@ describe("Timers", () => {
 		const defaultHandler = (): number => runCount++;
 		let timer: PromiseTimer;
 
-		beforeEach(() => {
+		beforeEach("createTimer", () => {
 			runCount = 0;
 			resolveResult = undefined;
 			timer = new PromiseTimer(defaultTimeout, defaultHandler);

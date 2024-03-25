@@ -23,7 +23,7 @@ npm i @fluidframework/driver-utils
 
 ## API Documentation
 
-API documentation for **@fluidframework/driver-utils** is available at <https://fluidframework.com/docs/api/v1/driver-utils>.
+API documentation for **@fluidframework/driver-utils** is available at <https://fluidframework.com/docs/apis/driver-utils>.
 
 ## Contribution Guidelines
 

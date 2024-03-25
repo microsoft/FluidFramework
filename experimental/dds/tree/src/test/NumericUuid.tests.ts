@@ -6,22 +6,22 @@
 /* eslint-disable no-bitwise */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
 import { makeRandom } from '@fluid-private/stochastic-test-utils';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { compareStrings } from '../Common';
+import { expect } from 'chai';
+import { compareStrings } from '../Common.js';
+import { StableId } from '../Identifiers.js';
+import { assertIsStableId, isStableId } from '../UuidUtilities.js';
 import {
-	numericUuidEquals,
 	createSessionId,
+	ensureSessionUuid,
 	getPositiveDelta,
 	incrementUuid,
+	numericUuidEquals,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-	ensureSessionUuid,
-} from '../id-compressor/NumericUuid';
-import { StableId } from '../Identifiers';
-import { assertIsStableId, isStableId } from '../UuidUtilities';
-import { integerToStableId } from './utilities/IdCompressorTestUtilities';
+} from '../id-compressor/NumericUuid.js';
+import { integerToStableId } from './utilities/IdCompressorTestUtilities.js';
 
 describe('NumericUuid', () => {
 	it('can detect non-v4 variant 2 UUIDs', () => {

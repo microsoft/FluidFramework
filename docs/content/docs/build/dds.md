@@ -18,7 +18,7 @@ There are a number of shared objects built into the Fluid Framework. See [Distri
 
 DDSes automatically ensure that each client has access to the same state. They're called *distributed data structures*
 because they are similar to data structures used commonly when programming, like strings, maps/dictionaries, and
-sequences/lists. The APIs provided by DDSes are designed to be familiar to programmers who've used these types of data
+objects, and arrays. The APIs provided by DDSes are designed to be familiar to programmers who've used these types of data
 structures before. For example, the [SharedMap][] DDS is used to store key/value pairs, like a typical map or dictionary
 data structure, and provides `get` and `set` methods to store and retrieve data in the map.
 
@@ -27,8 +27,7 @@ However, a DDS is not *just* a local object. A DDS can also be changed by other 
 
 {{% callout tip %}}
 
-Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedMatrix*, *SharedString*,
-etc. This prefix indicates that the object is shared between multiple clients.
+Most distributed data structures are prefixed with "Shared" by convention. *SharedMap*, *SharedTree*, etc. This prefix indicates that the object is shared between multiple clients.
 
 {{% /callout %}}
 
@@ -69,7 +68,7 @@ The potential down-side to this approach is consistency; if another collaborator
 
 The DDSes will apply remote operations as they are made, and will always arrive at a consistent state.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][] and [SharedString][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedString][], and in Fluid Framework 2.0 and later [SharedTree][].
 
 ### Consensus-based data structures
 
@@ -115,6 +114,12 @@ see [Fluid handles]({{< relref "handles.md" >}}).
 
 [handles-example]: {{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}
 
+{{< callout note >}}
+
+If you are considering storing a DDS within another DDS in order to give your app's data a hierarchical structure, consider using a [SharedTree]({{< relref "/docs/data-structures/tree.md" >}}) DDS instead.
+
+{{</callout >}}
+
 ## Events
 
 When a distributed data structure is changed by the Fluid runtime, it raises events. Your app can listen to these events so
@@ -126,8 +131,6 @@ myMap.on("valueChanged", () => {
   recalculate();
 });
 ```
-
-Refer to later sections for more details about the events raised by each DDS.
 
 ## Picking the right data structure
 
@@ -179,23 +182,38 @@ This results in someone's changes being "lost" from a user's perspective. This m
 However, if your scenario requires users to edit individual properties of the shape, then the SharedMap LWW merge
 strategy probably won't give you the behavior you want.
 
-However, you could address this problem by storing individual shape properties in `SharedMap` keys. Instead of storing a
+However, you could address this problem in different ways depending on which version of Fluid Framework you are using.
+
+In version 1.0, store individual shape properties in `SharedMap` keys. Instead of storing a
 JSON object with all the data, your code can break it apart and store the length in one `SharedMap` key, the width in another,
 etc. With this data model, users can change individual properties of the shape without overwriting other users' changes.
 
 You likely have more than one shape in your data model, so you could create a `SharedMap` object to store all the shapes, then
 store the `SharedMaps` representing each shape within that parent `SharedMap` object.
 
+In version 2.0, there's a better, way. Store a shape as an object node of a `SharedTree`. Your code can store the length in one property of the object node, the width in another, etc. Again, users can change individual properties of the shape without overwriting other users' changes.
+
+When you have more than one shape in your data model, you could create a *array* node in the `SharedTree`, with child object nodes to store all the shapes.
+
 ### Key-value data
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
 *   [SharedMap][] -- a basic key-value distributed data structure.
+*   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+
+### Array-like data
+
+*   Array nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+
+### Object data
+
+*   Object nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Specialized data structures
 
-*   [SharedCounter][] -- a distributed counter.
-*   [SharedString][] -- a specialized data structure for handling collaborative text.
+*   [SharedCounter][] -- a distributed counter. (Deprecated in Fluid Framework 2.0.)
+*   [SharedString][] -- a specialized data structure for handling collaborative text. (Deprecated in Fluid Framework 2.0.)
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
 
@@ -215,18 +233,20 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 [Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/api/v1/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/api/v1/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/api/v1/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
-[IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

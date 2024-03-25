@@ -3,33 +3,40 @@
  * Licensed under the MIT License.
  */
 
-import { mintRevisionTag } from "../../utils.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { strict as assert } from "assert";
 import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
-import { brand } from "../../../util/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset, cases } from "./testEdits.js";
 import {
-	checkDeltaEquality,
-	rebaseTagged,
-	rebase as rebaseI,
-	shallowCompose,
-	rebaseOverComposition,
-	rebaseOverChanges,
-	describeForBothConfigs,
+	RebaseConfig,
 	assertChangesetsEqual,
-	withoutTombstones,
+	checkDeltaEquality,
+	describeForBothConfigs,
+	rebase as rebaseI,
+	rebaseOverChanges,
+	rebaseOverComposition,
+	rebaseTagged,
+	shallowCompose,
 	withOrderingMethod,
+	withoutTombstones,
 } from "./utils.js";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 
-function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
-	return rebaseI(change, tagChange(base, baseRev ?? tag1));
+function rebase(
+	change: TestChangeset,
+	base: TestChangeset,
+	baseRev?: RevisionTag,
+	config?: RebaseConfig,
+): TestChangeset {
+	return rebaseI(change, tagChange(base, baseRev ?? tag1), config);
 }
 
 export function testRebase() {
@@ -639,13 +646,54 @@ export function testRebase() {
 				checkDeltaEquality(moveC2.change, expected);
 			}));
 
-		it("modify ↷ move", () =>
+		it("modify ↷ move right", () =>
 			withConfig(() => {
 				const inner = TestChange.mint([0], 1);
 				const modify = [Mark.modify(inner)];
-				const move = Change.move(0, 1, 4);
+				const [moveOut, moveIn] = Mark.move(1, brand(0));
+				const move = [moveOut, Mark.skip(3), moveIn];
 				const expected = [Mark.tomb(tag1), Mark.skip(3), Mark.modify(inner)];
 				const rebased = rebase(modify, move);
+				assertChangesetsEqual(rebased, expected);
+			}));
+
+		it("modify ↷ move left", () =>
+			withConfig(() => {
+				const inner = TestChange.mint([0], 1);
+				const modify = [Mark.skip(3), Mark.modify(inner)];
+				const [moveOut, moveIn] = Mark.move(1, brand(0));
+				const move = [moveIn, Mark.skip(3), moveOut];
+				const expected = [Mark.modify(inner), Mark.skip(3), Mark.tomb(tag1)];
+				const rebased = rebase(modify, move);
+				assertChangesetsEqual(rebased, expected);
+			}));
+
+		it("modify ↷ move left + modify", () =>
+			withConfig(() => {
+				const inputChildChange = TestChange.mint([], 2);
+				const baseChildChange = TestChange.mint([], 1);
+				const modify = [Mark.skip(3), Mark.modify(inputChildChange)];
+				const [moveOut, moveIn] = Mark.move(1, brand(0), {
+					changes: baseChildChange,
+				});
+				const move = [moveIn, Mark.skip(3), moveOut];
+				const expected = [
+					Mark.modify(TestChange.mint([1], 2)),
+					Mark.skip(3),
+					Mark.tomb(tag1),
+				];
+				const childRebaser = (
+					change: TestChange | undefined,
+					over: TestChange | undefined,
+				): TestChange | undefined => {
+					// These checks ensure that we don't attempt to rebase output of `inputChildChange ↷ baseChildChange`.
+					// This may happen if the inputChildChange is rebased then sent as an effect that is then treated
+					// as nested change to be rebased when the effect is consumed.
+					assert.equal(change, inputChildChange);
+					assert.equal(over, baseChildChange);
+					return TestChange.rebase(change, over);
+				};
+				const rebased = rebase(modify, move, undefined, { childRebaser });
 				assertChangesetsEqual(rebased, expected);
 			}));
 

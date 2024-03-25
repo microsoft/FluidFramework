@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { SectionNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNode, renderNodes } from "../Render";
-import type { RenderContext } from "../RenderContext";
+import type { SectionNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import { renderNode, renderNodes } from "../Render.js";
+import type { RenderContext } from "../RenderContext.js";
 
 /**
  * Renders a {@link SectionNode} as HTML.

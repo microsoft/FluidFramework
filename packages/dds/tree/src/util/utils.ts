@@ -295,20 +295,6 @@ export function assertNonNegativeSafeInteger(index: number) {
 }
 
 /**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
- * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
- *
- * @internal
- */
-export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
-
-/**
  * Convert an object into a Map.
  *
  * This function must only be used with objects specifically intended to encode map like information.
@@ -364,7 +350,7 @@ export function transformObjectMap<MapKey extends string | number | symbol, MapV
  */
 export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 	const result = new Map<Value, Key>(mapIterable(input, ([key, value]) => [value, key]));
-	assert(result.size === input.size, "all values in a map must be unique to invert it");
+	assert(result.size === input.size, 0x88a /* all values in a map must be unique to invert it */);
 	return result;
 }
 

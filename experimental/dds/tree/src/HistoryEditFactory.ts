@@ -5,26 +5,26 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
-import { fail } from './Common';
-import { rangeFromStableRange } from './TreeViewUtilities';
+import { StablePlace } from './ChangeTypes.js';
+import { fail } from './Common.js';
+import { RangeValidationResultKind, validateStableRange } from './EditUtilities.js';
+import { DetachedSequenceId, NodeId, isDetachedSequenceId } from './Identifiers.js';
+import { RevisionView } from './RevisionView.js';
+import { getChangeNodeFromViewNode } from './SerializationUtilities.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { rangeFromStableRange } from './TreeViewUtilities.js';
 import {
+	BuildNodeInternal,
 	ChangeInternal,
 	ChangeTypeInternal,
 	DetachInternal,
-	SetValueInternal,
+	EditStatus,
 	InsertInternal,
-	BuildNodeInternal,
+	SetValueInternal,
 	Side,
 	StableRangeInternal,
-	EditStatus,
-} from './persisted-types';
-import { TransactionInternal } from './TransactionInternal';
-import { RangeValidationResultKind, validateStableRange } from './EditUtilities';
-import { StablePlace } from './ChangeTypes';
-import { RevisionView } from './RevisionView';
-import { TreeView } from './TreeView';
-import { getChangeNodeFromViewNode } from './SerializationUtilities';
+} from './persisted-types/index.js';
 
 /**
  * Events emitted from the history edit factory
@@ -53,7 +53,7 @@ export function revert(
 	changes: readonly ChangeInternal[],
 	before: RevisionView,
 	logger?: ITelemetryLoggerExt,
-	emit?: (event: string | symbol, ...args: any[]) => void
+	emit?: (event: string, ...args: any[]) => void
 ): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 

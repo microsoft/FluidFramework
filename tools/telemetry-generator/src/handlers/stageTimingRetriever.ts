@@ -54,7 +54,9 @@ module.exports = function handler(fileData, logger) {
 		if (job.stageName === "runAfterAll") {
 			continue;
 		}
+
 		logger.send({
+			namespace: "FFEngineering", // Transfer the telemetry associated with pipeline status to namespace "FFEngineering".
 			category: "performance",
 			eventName: "StageTiming",
 			benchmarkType: "PipelineInfo",

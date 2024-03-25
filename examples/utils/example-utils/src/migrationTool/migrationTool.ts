@@ -4,15 +4,15 @@
  */
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
 } from "@fluidframework/register-collection";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 
-import type { IMigrationTool } from "../migrationInterfaces";
+import type { IMigrationTool, MigrationState } from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const crcKey = "crc";
@@ -50,7 +50,7 @@ export class MigrationTool extends DataObject implements IMigrationTool {
 		return this._taskManager;
 	}
 
-	public get migrationState() {
+	public get migrationState(): MigrationState {
 		if (this.newContainerId !== undefined) {
 			return "migrated";
 		} else if (this.acceptedVersion !== undefined) {

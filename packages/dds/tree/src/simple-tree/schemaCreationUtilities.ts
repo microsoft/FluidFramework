@@ -4,9 +4,9 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { fail } from "../util/index.js";
 import { EmptyObject } from "../feature-libraries/index.js";
-import { SchemaFactory } from "./schemaFactory.js";
+import { fail } from "../util/index.js";
+import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import {
 	InsertableObjectFromSchemaRecord,
 	NodeFromSchema,
@@ -46,7 +46,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	// This is avoided by doing this type conversion.
 	// The conversion is done via assignment instead of `as` to get stronger type safety.
 	const toReturn: TreeNodeSchemaClass<
-		`${TScope}.${TName}`,
+		ScopedSchemaName<TScope, TName>,
 		NodeKind.Object,
 		NodeType,
 		object & InsertableObjectFromSchemaRecord<EmptyObject>,

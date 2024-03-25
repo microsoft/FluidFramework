@@ -4,6 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -16,14 +21,9 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
-	mockConfigProvider,
+	createTestConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -37,9 +37,10 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-	const settings = {
-		"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 10,
-	};
+
+	const configProvider = createTestConfigProvider();
+	configProvider.set("Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs", 10);
+	configProvider.set("Fluid.ContainerRuntime.SubmitSummary.shouldValidatePreSummaryState", true);
 
 	/** Creates a new container with the GC enabled / disabled as per gcAllowed param. */
 	const createContainer = async (gcAllowed: boolean): Promise<IContainer> => {
@@ -51,7 +52,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 					gcAllowed,
 				},
 			},
-			loaderProps: { configProvider: mockConfigProvider(settings) },
+			loaderProps: { configProvider },
 		};
 		return provider.makeTestContainer(testContainerConfig);
 	};
@@ -174,7 +175,7 @@ describeCompat("GC state reset in summaries", "NoCompat", (getTestObjectProvider
 		await waitForContainerConnection(container);
 	}
 
-	beforeEach(async function () {
+	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		// These tests validate the end-to-end behavior of summaries when GC is enabled / disabled. This behavior
 		// is not affected by the service. So, it doesn't need to run against real services.

@@ -4,22 +4,22 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
-	type IChannelFactory,
 	type IChannelAttributes,
+	type IChannelFactory,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
-import { CounterFactory } from "./counterFactory";
-import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces";
+import { CounterFactory } from "./counterFactory.js";
+import { type ISharedCounter, type ISharedCounterEvents } from "./interfaces.js";
 
 /**
  * Describes the operation (op) format for incrementing the {@link SharedCounter}.
@@ -54,7 +54,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 *
 	 * @returns newly create shared counter (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedCounter {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): ISharedCounter {
 		return runtime.createChannel(id, CounterFactory.Type) as SharedCounter;
 	}
 
@@ -71,7 +71,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 	 *
 	 * @returns a factory that creates and load SharedCounter
 	 */
-	public static getFactory(): IChannelFactory {
+	public static getFactory(): IChannelFactory<ISharedCounter> {
 		return new CounterFactory();
 	}
 
@@ -178,6 +178,6 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
-		this.incrementCore(counterOp.incrementAmount);
+		this.increment(counterOp.incrementAmount);
 	}
 }

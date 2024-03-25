@@ -59,6 +59,11 @@ describe("Routerlicious", () => {
 				testCheckpointService = new testUtils.TestNotImplementedCheckpointService();
 				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake());
 				Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
+				Sinon.replace(
+					testCheckpointService,
+					"getLocalCheckpointEnabled",
+					Sinon.fake.returns(false),
+				);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					testTenant,
 					testId,
@@ -80,11 +85,11 @@ describe("Routerlicious", () => {
 				});
 
 				it("Should be able to submit multiple checkpoints", async () => {
-					let i;
-					for (i = 0; i < 10; i++) {
+					const numCheckpoints = 10;
+					for (let i = 0; i < numCheckpoints + 1; i++) {
 						testCheckpointContext.checkpoint(createCheckpoint(i, i));
 					}
-					await testContext.waitForOffset(i - 1);
+					await testContext.waitForOffset(numCheckpoints);
 				});
 			});
 		});

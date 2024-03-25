@@ -6,12 +6,12 @@
 import { Mutable } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import { ITreeCursorSynchronous } from "./cursor.js";
-import { Root, DetachedNodeId, FieldChanges, Mark } from "./delta.js";
+import { DetachedNodeId, FieldChanges, Mark, Root } from "./delta.js";
 import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};
 
-export const emptyFieldChanges: FieldChanges<never> = {};
+export const emptyFieldChanges: FieldChanges = {};
 
 export function isAttachMark(mark: Mark): boolean {
 	return mark.attach !== undefined && mark.detach === undefined;

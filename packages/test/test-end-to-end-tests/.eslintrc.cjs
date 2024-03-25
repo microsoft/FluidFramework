@@ -4,7 +4,10 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		"prettier",
+	],
 	parserOptions: {
 		project: ["./src/test/tsconfig.json"],
 	},
@@ -13,11 +16,20 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
 
 		// This library is used in the browser, so we don't want dependencies on most node libraries.
-		"import/no-nodejs-modules": ["error", { allow: ["url"] }],
+		"import/no-nodejs-modules": ["error"],
 		"@typescript-eslint/no-restricted-imports": [
 			"error",
 			{
-				paths: ["@fluidframework/map"].map((importName) => ({
+				paths: [
+					"@fluidframework/cell",
+					"@fluidframework/counter",
+					"@fluidframework/map",
+					"@fluidframework/matrix",
+					"@fluidframework/ordered-collection",
+					"@fluidframework/register-collection",
+					"@fluidframework/sequence",
+					"@fluid-experimental/sequence-deprecated",
+				].map((importName) => ({
 					name: importName,
 					message:
 						"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
@@ -35,7 +47,7 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["assert", "url"] }],
+				"import/no-nodejs-modules": ["error", { allow: ["assert"] }],
 			},
 		},
 		{

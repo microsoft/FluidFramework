@@ -7,30 +7,30 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	CursorLocationType,
 	FieldKey,
-	TreeFieldStoredSchema,
+	FieldKindIdentifier,
 	ITreeCursorSynchronous,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
-	FieldKindIdentifier,
 } from "../../../core/index.js";
 import { fail, getOrCreate } from "../../../util/index.js";
-import { type FieldKind } from "../../modular-schema/index.js";
+import { type FlexFieldKind } from "../../modular-schema/index.js";
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
 	handleShapesAndIdentifiers,
 } from "./chunkEncodingGeneric.js";
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import {
-	version,
-	EncodedChunkShape,
-	EncodedValueShape,
-	EncodedAnyShape,
-	EncodedNestedArray,
-	EncodedFieldBatch,
-} from "./format.js";
 import { FieldBatch } from "./fieldBatch.js";
+import {
+	EncodedAnyShape,
+	EncodedChunkShape,
+	EncodedFieldBatch,
+	EncodedNestedArray,
+	EncodedValueShape,
+	version,
+} from "./format.js";
 
 /**
  * Encode data from `FieldBatch` in into an `EncodedChunk`.
@@ -421,7 +421,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 	public constructor(
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
-		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	) {}
 
 	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

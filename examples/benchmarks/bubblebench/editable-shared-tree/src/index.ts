@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+
 import { AppView } from "@fluid-example/bubblebench-common";
+import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import React from "react";
 
-import { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench";
-export { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench";
+import { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench.js";
+export { Bubblebench, BubblebenchInstantiationFactory } from "./bubblebench.js";
 
 const bubblebenchViewCallback = (model: Bubblebench) =>
 	React.createElement(AppView, { app: model.appState });

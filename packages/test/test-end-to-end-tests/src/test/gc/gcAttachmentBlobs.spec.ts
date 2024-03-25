@@ -7,20 +7,20 @@ import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
+import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+// eslint-disable-next-line import/no-internal-modules
+import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "../mockDetachedBlobStorage.js";
 import {
 	getGCStateFromSummary,
@@ -121,7 +121,7 @@ describeCompat("Garbage collection of blobs", "NoCompat", (getTestObjectProvider
 			return summarizerDefaultDataStore._context.containerRuntime as ContainerRuntime;
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider();
 			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();

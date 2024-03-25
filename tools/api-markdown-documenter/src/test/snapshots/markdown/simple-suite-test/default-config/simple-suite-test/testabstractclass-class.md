@@ -16,7 +16,7 @@ export declare abstract class TestAbstractClass
 
 | Constructor | Description |
 | --- | --- |
-| [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) | This is a constructor. |
+| [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) | This is a _{@customTag constructor}_. |
 
 ## Properties
 
@@ -37,7 +37,7 @@ export declare abstract class TestAbstractClass
 
 ### (constructor) {#_constructor_-constructor}
 
-This is a constructor.
+This is a _{@customTag constructor}_.
 
 #### Signature {#_constructor_-signature}
 

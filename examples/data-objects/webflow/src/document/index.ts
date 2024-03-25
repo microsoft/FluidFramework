@@ -3,27 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	LazyLoadedDataObject,
-	LazyLoadedDataObjectFactory,
-} from "@fluidframework/data-object-base";
-import {
+	IMergeTreeRemoveMsg,
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
-	IMergeTreeRemoveMsg,
 	refGetTileLabels,
 } from "@fluidframework/merge-tree";
 import {
-	IFluidDataStoreContext,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import {
-	SharedString,
-	SharedStringSegment,
-	SequenceMaintenanceEvent,
-	SequenceDeltaEvent,
 	ISegment,
 	LocalReferencePosition,
 	Marker,
@@ -31,13 +20,16 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	reservedTileLabelsKey,
+	SequenceDeltaEvent,
+	SequenceMaintenanceEvent,
+	SharedString,
+	SharedStringSegment,
 	TextSegment,
+	reservedTileLabelsKey,
 } from "@fluidframework/sequence";
-import { ISharedDirectory, SharedDirectory } from "@fluidframework/map";
-import { clamp, TagName, TokenList } from "../util/index.js";
-import { IHTMLAttributes } from "../util/attr.js";
 import { documentType } from "../package.js";
+import { IHTMLAttributes } from "../util/attr.js";
+import { TagName, TokenList, clamp } from "../util/index.js";
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";
 
@@ -142,20 +134,16 @@ const textId = "text";
 /**
  * @internal
  */
-export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDocumentEvents> {
-	private static readonly factory = new LazyLoadedDataObjectFactory<FlowDocument>(
+export class FlowDocument extends DataObject {
+	private static readonly factory = new DataObjectFactory<FlowDocument>(
 		documentType,
 		FlowDocument,
-		/* root: */ SharedDirectory.getFactory(),
 		[SharedString.getFactory()],
+		{},
 	);
 
-	public static getFactory(): IFluidDataStoreFactory {
+	public static getFactory() {
 		return FlowDocument.factory;
-	}
-
-	public static async create(parentContext: IFluidDataStoreContext, props?: any) {
-		return FlowDocument.factory.create(parentContext, props);
 	}
 
 	public get length() {
@@ -172,16 +160,21 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 
 	private sharedString: SharedString;
 
-	public create() {
+	protected async initializingFirstTime(props?: any): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
 		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
 		this.sharedString = SharedString.create(this.runtime);
 		this.root.set(textId, this.sharedString.handle);
-		this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
+		this.sharedString.on("sequenceDelta", (event, target) => {
+			this.emit("sequenceDelta", event, target);
+		});
+		this.sharedString.on("maintenance", (event, target) => {
+			this.emit("maintenance", event, target);
+		});
 	}
 
-	public async load() {
+	protected async initializingFromExisting(): Promise<void> {
 		// For 'findTile(..)', we must enable tracking of left/rightmost tiles:
 		Object.assign(this.runtime, { options: { ...(this.runtime.options || {}) } });
 
@@ -190,7 +183,12 @@ export class FlowDocument extends LazyLoadedDataObject<ISharedDirectory, IFlowDo
 			throw new Error("String not initialized properly");
 		}
 		this.sharedString = await handle.get();
-		this.forwardEvent(this.sharedString, "sequenceDelta", "maintenance");
+		this.sharedString.on("sequenceDelta", (event, target) => {
+			this.emit("sequenceDelta", event, target);
+		});
+		this.sharedString.on("maintenance", (event, target) => {
+			this.emit("maintenance", event, target);
+		});
 	}
 
 	public async getComponentFromMarker(marker: Marker) {

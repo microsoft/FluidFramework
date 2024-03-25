@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { SharedNumberSequenceFactory } from "./sequenceFactory";
-import { SharedSequence } from "./sharedSequence";
+import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { SharedNumberSequenceFactory } from "./sequenceFactory.js";
+import { SharedSequence } from "./sharedSequence.js";
 
 /**
  * The SharedNumberSequence holds a sequence of numbers. Each number will be stored

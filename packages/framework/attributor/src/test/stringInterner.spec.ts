@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { MutableStringInterner } from "../stringInterner";
+import { strict as assert } from "node:assert";
+import { MutableStringInterner } from "../stringInterner.js";
 
 describe("MutableStringInterner", () => {
 	const inputStrings = ["test", "test2", "test3", "test4"];

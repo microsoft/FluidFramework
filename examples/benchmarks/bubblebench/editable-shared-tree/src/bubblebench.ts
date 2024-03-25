@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	AllowedUpdateType,
-	fail,
-	ISharedTree,
-	FlexTreeView,
-	SharedTreeFactory,
-} from "@fluidframework/tree";
+
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { AppState } from "./appState";
-import { appSchemaData, rootAppStateSchema } from "./schema";
+import {
+	AllowedUpdateType,
+	FlexTreeView,
+	ISharedTree,
+	SharedTreeFactory,
+	fail,
+} from "@fluidframework/tree/internal";
+import { AppState } from "./appState.js";
+import { appSchemaData, rootAppStateSchema } from "./schema.js";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
@@ -75,11 +76,16 @@ export class Bubblebench extends DataObject {
 	 * @param tree - ISharedTree
 	 */
 	initializeTree(tree: ISharedTree) {
-		this.view = tree.schematizeInternal({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: [],
-			schema: appSchemaData,
-		});
+		this.view = tree.schematizeFlexTree(
+			{
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [],
+				schema: appSchemaData,
+			},
+			() => {
+				throw new Error("Schema changed");
+			},
+		);
 	}
 
 	/**

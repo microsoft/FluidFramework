@@ -2,24 +2,40 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { IEvent } from "@fluidframework/core-interfaces";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import {
+	AllowedUpdateType,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	rootFieldKey,
+} from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
+import {
+	DefaultEditBuilder,
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	cursorForJsonableTreeNode,
+	typeNameSymbol,
+} from "../../feature-libraries/index.js";
 import {
 	EditManager,
 	SharedTreeCore,
@@ -27,23 +43,9 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import {
-	AllowedUpdateType,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	rootFieldKey,
-} from "../../core/index.js";
-import {
-	DefaultEditBuilder,
-	FieldKinds,
-	TreeFieldSchema,
-	cursorForJsonableTreeNode,
-	typeNameSymbol,
-} from "../../feature-libraries/index.js";
-import { brand } from "../../util/index.js";
-import { SharedTreeTestFactory } from "../utils.js";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
+import { brand } from "../../util/index.js";
+import { SharedTreeTestFactory, schematizeFlexTree } from "../utils.js";
 import { TestSharedTreeCore } from "./utils.js";
 
 describe("SharedTreeCore", () => {
@@ -166,11 +168,6 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
-			revertible.discard();
-		});
-
 		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
 		assert.equal(getTrunkLength(tree), 1);
@@ -197,11 +194,6 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
-			revertible.discard();
-		});
-
 		changeTree(tree);
 		factory.processAllMessages();
 		assert.equal(getTrunkLength(tree), 1);
@@ -221,11 +213,6 @@ describe("SharedTreeCore", () => {
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
-		});
-
-		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
-		tree.getLocalBranch().on("revertible", (revertible) => {
-			revertible.discard();
 		});
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
@@ -296,11 +283,14 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
-		const node = b.objectRecursive("test node", {
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+		const b = new SchemaBuilderBase(FieldKinds.optional, {
+			scope: "0x4a6 repro",
+			libraries: [leaf.library],
 		});
-		const schema = b.intoSchema(b.optional(node));
+		const node = b.objectRecursive("test node", {
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+		});
+		const schema = b.intoSchema(node);
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -315,12 +305,12 @@ describe("SharedTreeCore", () => {
 		const config = {
 			schema,
 			initialTree: undefined,
-			allowedSchemaModifications: AllowedUpdateType.None,
+			allowedSchemaModifications: AllowedUpdateType.Initialize,
 		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematizeInternal(config);
+		const view1 = schematizeFlexTree(tree1, config);
 		containerRuntimeFactory.processAllMessages();
-		const view2 = tree2.schematizeInternal(config);
+		const view2 = schematizeFlexTree(tree2, config);
 		const editable1 = view1.flexTree;
 		const editable2 = view2.flexTree;
 

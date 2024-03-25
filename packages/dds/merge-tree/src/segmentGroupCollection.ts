@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections/index.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISegment, SegmentGroup } from "./mergeTreeNodes";
+import { ISegment, SegmentGroup } from "./mergeTreeNodes.js";
 
 /**
  * @alpha

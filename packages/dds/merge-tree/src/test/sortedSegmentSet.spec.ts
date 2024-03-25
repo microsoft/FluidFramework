@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet";
-import { ISegment } from "../mergeTreeNodes";
-import { LocalReferencePosition } from "../localReference";
-import { ReferenceType } from "../ops";
-import { TrackingGroup } from "../mergeTreeTracking";
-import { TestClient } from "./testClient";
+import { LocalReferencePosition } from "../localReference.js";
+import { ISegment } from "../mergeTreeNodes.js";
+import { TrackingGroup } from "../mergeTreeTracking.js";
+import { ReferenceType } from "../ops.js";
+import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet.js";
+import { TestClient } from "./testClient.js";
 const segmentCount = 15;
 
 function validateSorted<T extends SortedSegmentSetItem>(

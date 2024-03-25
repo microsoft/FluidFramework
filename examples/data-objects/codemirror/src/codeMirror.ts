@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString, ReferenceType, reservedTileLabelsKey } from "@fluidframework/sequence";
 import { create404Response } from "@fluidframework/runtime-utils";
+import { ReferenceType, SharedString, reservedTileLabelsKey } from "@fluidframework/sequence";
 
-import { PresenceManager } from "./presence";
+import { PresenceManager } from "./presence.js";
 
 /**
  * CodeMirrorComponent builds a Fluid collaborative code editor on top of the open source code editor CodeMirror.

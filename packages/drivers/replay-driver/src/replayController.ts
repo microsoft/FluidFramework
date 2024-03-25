@@ -33,10 +33,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
 	public async downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree> {
 		throw new Error("Invalid operation");
 	}
-
-	public get repositoryUrl(): string {
-		throw new Error("Invalid operation");
-	}
 }
 
 /**

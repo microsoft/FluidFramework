@@ -5,6 +5,12 @@
 
 import { strict as assert } from "assert";
 
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -15,12 +21,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs.js";
 
 /**
@@ -99,7 +99,7 @@ describeCompat(
 			}
 		}
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Currently, only ODSP returns back the "unreferenced" flag in the snapshot. Once we add this to other
 			// servers, we should enable these tests for them too.

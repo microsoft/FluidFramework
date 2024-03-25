@@ -11,16 +11,16 @@ import {
 	forEachField,
 } from "../../../core/index.js";
 import { brand, fail } from "../../../util/index.js";
-import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import { BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
-	NodeEncoder,
-	KeyedFieldEncoder,
-	FieldEncoder,
 	EncoderCache,
+	FieldEncoder,
+	KeyedFieldEncoder,
+	NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
+import { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	// TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.

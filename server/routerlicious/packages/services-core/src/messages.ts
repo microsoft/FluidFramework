@@ -99,6 +99,7 @@ export interface ISystemMessage extends IMessage {
  */
 export interface IObjectMessage extends IMessage, IRoutingKey {
 	// The client who submitted the message
+	// eslint-disable-next-line @rushstack/no-new-null
 	clientId: string | null;
 
 	// The time the server received the message, in milliseconds elapsed since

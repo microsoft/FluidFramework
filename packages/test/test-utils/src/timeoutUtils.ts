@@ -4,6 +4,7 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
+import type * as Mocha from "mocha";
 
 // @deprecated this value is no longer used
 /**

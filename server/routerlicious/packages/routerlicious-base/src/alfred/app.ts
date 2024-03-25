@@ -13,6 +13,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IClusterDrainingChecker,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -20,6 +21,7 @@ import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import express from "express";
+import shajs from "sha.js";
 import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
@@ -50,6 +52,8 @@ export function create(
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	clusterDrainingChecker?: IClusterDrainingChecker,
+	enableClientIPLogging?: boolean,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -95,6 +99,24 @@ export function create(
 						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 					};
+					if (enableClientIPLogging === true) {
+						const hashedClientIP = req.ip
+							? shajs("sha256").update(`${req.ip}`).digest("hex")
+							: "";
+						additionalProperties.hashedClientIPAddress = hashedClientIP;
+
+						const XAzureClientIP = "x-azure-clientip";
+						const hashedAzureClientIP = req.headers[XAzureClientIP]
+							? shajs("sha256").update(`${req.headers[XAzureClientIP]}`).digest("hex")
+							: "";
+						additionalProperties.hashedAzureClientIPAddress = hashedAzureClientIP;
+
+						const XAzureSocketIP = "x-azure-socketip";
+						const hashedAzureSocketIP = req.headers[XAzureSocketIP]
+							? shajs("sha256").update(`${req.headers[XAzureSocketIP]}`).digest("hex")
+							: "";
+						additionalProperties.hashedAzureSocketIPAddress = hashedAzureSocketIP;
+					}
 					if (req.body?.isEphemeralContainer !== undefined) {
 						additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
 					}
@@ -129,6 +151,7 @@ export function create(
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
+		clusterDrainingChecker,
 	);
 
 	app.use(routes.api);

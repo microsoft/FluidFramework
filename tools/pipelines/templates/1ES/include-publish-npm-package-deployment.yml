@@ -1,0 +1,58 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package-deployment
+
+parameters:
+- name: feedKind
+  type: string
+
+- name: feedUrl
+  type: string
+
+- name: environment
+  type: string
+
+- name: pool
+  type: object
+  default: Small-1ES
+
+- name: publishFlags
+  type: string
+  default:
+
+- name: customEndPoint
+  type: string
+  default:
+
+- name: tagName
+  type: string
+  default:
+
+jobs:
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }}
+  pool: ${{ parameters.pool }}
+  environment: ${{ parameters.environment }}
+  workspace:
+    clean: all
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
+  strategy:
+    runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: pack
+          - template: /tools/pipelines/templates/include-use-node-version.yml@self
+          - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
+            parameters:
+              artifactPath: scoped
+              feedUrl: ${{ parameters.feedUrl }}
+              customEndPoint: ${{ parameters.customEndPoint }}
+              feedKind: ${{ parameters.feedKind }}
+              publishFlags: ${{ parameters.publishFlags }}
+          - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+            parameters:
+              tagName: ${{ parameters.tagName }}

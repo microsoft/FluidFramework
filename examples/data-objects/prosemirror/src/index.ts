@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import {
+	IFluidMountableViewEntryPoint,
+	MountableView,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { MountableView } from "@fluidframework/view-adapters";
-import {
-	IFluidMountableViewEntryPoint,
-	getDataStoreEntryPoint,
-} from "@fluid-example/example-utils";
-import { FluidObject } from "@fluidframework/core-interfaces";
 
 import React from "react";
 
-import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
-export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
+export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
 
 const defaultComponentId = "default";
 

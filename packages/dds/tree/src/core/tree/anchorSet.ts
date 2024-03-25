@@ -4,31 +4,31 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { createEmitter, ISubscribable } from "../../events/index.js";
+import { ISubscribable, createEmitter } from "../../events/index.js";
 import {
-	brand,
 	Brand,
-	fail,
-	Opaque,
-	ReferenceCountedBase,
 	BrandedKey,
 	BrandedMapSubset,
+	Opaque,
+	ReferenceCountedBase,
+	brand,
 	brandedSlot,
+	fail,
 } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+import * as Delta from "./delta.js";
 import {
 	DetachedPlaceUpPath,
 	DetachedRangeUpPath,
 	PlaceIndex,
-	UpPath,
-	Range,
 	PlaceUpPath,
+	Range,
 	RangeUpPath,
+	UpPath,
 } from "./pathTree.js";
-import { Value, EmptyKey } from "./types.js";
-import { PathVisitor } from "./visitPath.js";
+import { EmptyKey, Value } from "./types.js";
 import { DeltaVisitor } from "./visitDelta.js";
-import * as Delta from "./delta.js";
+import { PathVisitor } from "./visitPath.js";
 import { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**
@@ -260,6 +260,17 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 		this.on("treeChanging", () => {
 			this.generationNumber += 1;
 		});
+	}
+
+	/**
+	 * Allows access to data stored on the AnchorSet in "slots".
+	 * Use {@link anchorSlot} to create slots.
+	 *
+	 * @privateRemarks
+	 * This forwards to the slots of the special above root anchor which locate can't access.
+	 */
+	public get slots(): BrandedMapSubset<AnchorSlot<any>> {
+		return this.root.slots;
 	}
 
 	public on<K extends keyof AnchorSetRootEvents>(

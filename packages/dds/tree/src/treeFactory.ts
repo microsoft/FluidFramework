@@ -9,40 +9,26 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
-	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
-import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
-import {
-	ITree,
-	ImplicitFieldSchema,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "./simple-tree/index.js";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { pkgVersion } from "./packageVersion.js";
+import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
+import { ITree } from "./simple-tree/index.js";
 
 /**
  * A channel factory that creates an {@link ITree}.
- * @internal
  */
-export class TreeFactory implements IChannelFactory {
-	public readonly type: string;
-	public readonly attributes: IChannelAttributes;
+export class TreeFactory implements IChannelFactory<ITree> {
+	public static readonly type = "https://graph.microsoft.com/types/tree";
+	public static readonly attributes: IChannelAttributes = {
+		type: this.type,
+		snapshotFormatVersion: "0.0.0",
+		packageVersion: pkgVersion,
+	};
 
-	public constructor(private readonly options: SharedTreeOptions) {
-		this.type = "https://graph.microsoft.com/types/tree";
+	public readonly type = TreeFactory.type;
+	public readonly attributes: IChannelAttributes = TreeFactory.attributes;
 
-		this.attributes = {
-			type: this.type,
-			snapshotFormatVersion: "0.0.0",
-			packageVersion: pkgVersion,
-		};
-	}
+	public constructor(private readonly options: SharedTreeOptions) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -63,74 +49,19 @@ export class TreeFactory implements IChannelFactory {
 }
 
 /**
- * SharedTree is a hierarchical data structure for collaboratively editing JSON-like trees
+ * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
  * of objects, arrays, and other data types.
- *
+ * @privateRemarks
+ * Due to the dependency structure and the placement of that interface SharedObjectClass,
+ * this interface implementation can not be recorded in the type here.
  * @public
  */
-export class SharedTree implements ITree {
-	// The IFluidContainer ContainerSchema currently requires a constructable class that
-	// implements the union of IChannel and the interface to be returned to the user.
-	//
-	// Temporarily, we provide one until the following work items is addressed:
-	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6458
-
-	public static getFactory(): IChannelFactory {
+export const SharedTree: ISharedObjectKind<ITree> = {
+	getFactory(): IChannelFactory<ITree> {
 		return new TreeFactory({});
-	}
+	},
 
-	public schematize<TRoot extends ImplicitFieldSchema>(
-		config: TreeConfiguration<TRoot>,
-	): TreeView<TreeFieldFromImplicitField<TRoot>> {
-		return this.useFactory();
-	}
-
-	private useFactory(): never {
-		throw new Error("Use factory to create instance.");
-	}
-
-	public get id(): string {
-		return this.useFactory();
-	}
-
-	public get attributes(): IChannelAttributes {
-		return this.useFactory();
-	}
-
-	public get handle(): IFluidHandle {
-		return this.useFactory();
-	}
-
-	public get IFluidLoadable(): IFluidLoadable {
-		return this.useFactory();
-	}
-
-	public getAttachSummary(
-		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
-	): ISummaryTreeWithStats {
-		return this.useFactory();
-	}
-
-	public async summarize(
-		fullTree?: boolean | undefined,
-		trackState?: boolean | undefined,
-		telemetryContext?: ITelemetryContext | undefined,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-	): Promise<ISummaryTreeWithStats> {
-		return this.useFactory();
-	}
-
-	public isAttached(): boolean {
-		return this.useFactory();
-	}
-
-	public connect(services: IChannelServices): void {
-		return this.useFactory();
-	}
-
-	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
-		return this.useFactory();
-	}
-}
+	create(runtime: IFluidDataStoreRuntime, id?: string): ITree {
+		return runtime.createChannel(id, TreeFactory.type) as ITree;
+	},
+};

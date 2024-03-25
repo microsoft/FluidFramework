@@ -5,7 +5,7 @@
 
 import { type AttachState } from "@fluidframework/container-definitions";
 import { type ConnectionState } from "@fluidframework/container-loader";
-import { type HasContainerKey } from "./CommonInterfaces";
+import { type HasContainerKey } from "./CommonInterfaces.js";
 
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer}'s core state.

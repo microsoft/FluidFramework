@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/devtools-core";
 
 import { type Globals } from "../Globals";
-import { type DevToolsInitMessage, extensionMessageSource } from "../messaging";
+import { type DevToolsInitMessage, extensionViewMessageSource } from "../messaging";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 type Port = chrome.runtime.Port;
@@ -109,7 +109,7 @@ describe("Background Script unit tests", () => {
 			data: {
 				tabId,
 			},
-			source: extensionMessageSource,
+			source: extensionViewMessageSource,
 		};
 		onMessageListener(devtoolsInitMessage, devtoolsPort);
 
@@ -177,7 +177,7 @@ describe("Background Script unit tests", () => {
 			data: {
 				tabId,
 			},
-			source: extensionMessageSource,
+			source: extensionViewMessageSource,
 		};
 		sendMessageFromDevtools(devtoolsInitMessage, devtoolsPort);
 
@@ -241,7 +241,7 @@ describe("Background Script unit tests", () => {
 		// Post message from the Tab
 		const devtoolsMessage = {
 			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
-			source: extensionMessageSource,
+			source: extensionViewMessageSource,
 		};
 		devtoolsPort.postMessage(devtoolsMessage);
 

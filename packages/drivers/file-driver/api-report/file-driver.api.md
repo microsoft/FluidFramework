@@ -22,6 +22,8 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions';
+import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions';
 import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
@@ -61,8 +63,8 @@ export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(B
         getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
-        repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
+        getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;
@@ -97,8 +99,8 @@ export const FluidFetchReaderFileSnapshotWriter: {
         getSnapshotTree(version?: api.IVersion): Promise<api.ISnapshotTree | null>;
         uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
         buildTree(snapshotTree: api.ISnapshotTree): Promise<api.ITree>;
-        repositoryUrl: string;
         readonly policies?: IDocumentStorageServicePolicies | undefined;
+        getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions | undefined): Promise<ISnapshot>;
         createBlob(file: ArrayBufferLike): Promise<api.ICreateBlobResponse>;
         downloadSummary(handle: api.ISummaryHandle): Promise<api.ISummaryTree>;
         readonly disposed?: boolean | undefined;

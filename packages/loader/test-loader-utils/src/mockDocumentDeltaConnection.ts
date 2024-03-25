@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import {
 	IAnyDriverError,
@@ -19,7 +20,6 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {

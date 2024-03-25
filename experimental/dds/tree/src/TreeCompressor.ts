@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from '@fluidframework/core-utils';
-import { isDetachedSequenceId } from './Identifiers';
-import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers';
-import type { StringInterner } from './StringInterner';
-import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree, Payload } from './persisted-types';
-import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
-import { fail, Mutable } from './Common';
+import { Mutable, fail } from './Common.js';
+import { isDetachedSequenceId } from './Identifiers.js';
+import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';
+import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities.js';
+import type { StringInterner } from './StringInterner.js';
+import type { CompressedPlaceholderTree, CompressedTraits, Payload, PlaceholderTree } from './persisted-types/index.js';
 
 /**
  * Compresses a given {@link PlaceholderTree} into a more compact serializable format.

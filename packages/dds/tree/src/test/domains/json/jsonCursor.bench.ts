@@ -4,49 +4,49 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import {
-	ITreeCursor,
-	jsonableTreeFromCursor,
-	EmptyKey,
-	JsonCompatible,
-	brand,
-} from "../../../index.js";
-import {
-	singleJsonCursor,
-	cursorToJsonObject,
-	jsonSchema,
-	jsonRoot,
-	SchemaBuilder,
-} from "../../../domains/index.js";
-import {
-	buildForest,
-	defaultSchemaPolicy,
-	mapTreeFromCursor,
-	cursorForMapTreeNode,
-	cursorForJsonableTreeNode,
-	buildChunkedForest,
-	intoStoredSchema,
-} from "../../../feature-libraries/index.js";
+import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import {
 	FieldKey,
-	initializeForest,
 	JsonableTree,
-	moveToDetachedField,
 	TreeStoredSchemaRepository,
+	initializeForest,
+	moveToDetachedField,
 } from "../../../core/index.js";
+import {
+	SchemaBuilder,
+	cursorToJsonObject,
+	jsonRoot,
+	jsonSchema,
+	singleJsonCursor,
+} from "../../../domains/index.js";
 import {
 	basicChunkTree,
 	defaultChunkPolicy,
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+import {
+	buildChunkedForest,
+	buildForest,
+	cursorForJsonableTreeNode,
+	cursorForMapTreeNode,
+	defaultSchemaPolicy,
+	intoStoredSchema,
+	mapTreeFromCursor,
+} from "../../../feature-libraries/index.js";
+import {
+	EmptyKey,
+	ITreeCursor,
+	JsonCompatible,
+	brand,
+	jsonableTreeFromCursor,
+} from "../../../index.js";
 import { testRevisionTagCodec } from "../../utils.js";
-import { Canada, generateCanada } from "./canada.js";
 import { averageTwoValues, sum, sumMap } from "./benchmarks.js";
-import { generateTwitterJsonByByteSize } from "./twitter.js";
+import { Canada, generateCanada } from "./canada.js";
 import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
+import { generateTwitterJsonByByteSize } from "./twitter.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {

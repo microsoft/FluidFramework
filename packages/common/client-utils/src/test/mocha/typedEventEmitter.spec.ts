@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
-import { TypedEventEmitter } from "../../typedEventEmitter";
+import { TypedEventEmitter } from "../../typedEventEmitter.js";
 
 describe("TypedEventEmitter", () => {
 	it("Validate Function proxies", () => {

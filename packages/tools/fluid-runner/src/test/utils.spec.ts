@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { strict as assert } from "assert";
 import { isJsonSnapshot, timeoutPromise, validateCommandLineArgs } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { fluidExport } from "./sampleCodeLoaders/sampleCodeLoader";

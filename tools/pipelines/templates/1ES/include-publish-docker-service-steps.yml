@@ -1,0 +1,83 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-docker-service-steps
+
+parameters:
+- name: environment
+  type: string
+
+- name: pool
+  type: object
+  default: Small-1ES
+
+- name: containerRegistry
+  type: string
+
+- name: containerTag
+  type: string
+
+- name: containerRegistryUrl
+  type: string
+
+- name: containerName
+  type: string
+
+- name: tagName
+  type: string
+  default:
+
+jobs:
+- deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+  displayName: Publish ${{ parameters.environment }}
+  environment: ${{ parameters.environment }}
+  pool: ${{ parameters.pool }}
+  workspace:
+    clean: all
+  variables:
+    version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
+    containerTagSuffix: $(version)
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - download: none
+
+        - task: Bash@3
+          displayName: Pull image
+          inputs:
+            targetType: 'inline'
+            script: |
+              'docker pull ${{ parameters.containerTag }}'
+
+        - task: Docker@1
+          displayName: Tag image as '$(containerTagSuffix)'
+          inputs:
+            command: 'tag'
+            arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)'
+
+        - task: Docker@1
+          displayName: Tag 1mage as 'latest'
+          inputs:
+            command: 'tag'
+            arguments: '${{ parameters.containerTag }} ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest'
+
+        - task: 1ES.PushContainerImage@1
+          displayName: Docker Push
+          inputs:
+            image: $(containerTag)
+            remoteImage: >
+              ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:latest,
+              ${{ parameters.containerRegistryUrl }}/${{ parameters.containerName }}:$(containerTagSuffix)
+
+        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+          parameters:
+            tagName: ${{ parameters.tagName }}
+  # templateContext is available because our templates were migrated to extend 1ES templates for pipelines, so
+  # the stage defined in this file ends up being passed to a 1ES template which provides this functionality.
+  templateContext:
+    authenticatedContainerRegistries:
+    # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
+    # specified as a runtime variable (variables from variable groups apparently are never available "statically"
+    # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
+    - serviceConnection: $(containerRegistryConnection)

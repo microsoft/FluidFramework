@@ -9,7 +9,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { RequestParser } from '@fluidframework/runtime-utils';
 
-// @internal @deprecated (undocumented)
+// @internal @deprecated
 export function buildRuntimeRequestHandler(...handlers: RuntimeRequestHandler[]): (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 // @alpha @deprecated

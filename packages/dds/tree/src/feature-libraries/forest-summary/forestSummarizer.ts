@@ -4,26 +4,28 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
+import { ICodecOptions, noopValidator } from "../../codec/index.js";
 import {
-	applyDelta,
+	DeltaDetachedNodeBuild,
 	DeltaFieldChanges,
 	FieldKey,
-	forEachField,
 	IEditableForest,
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
-	makeDetachedFieldIndex,
-	mapCursorField,
 	RevisionTagCodec,
 	TreeNavigationResult,
+	applyDelta,
+	forEachField,
+	makeDetachedFieldIndex,
+	mapCursorField,
 } from "../../core/index.js";
 import {
 	Summarizable,
@@ -31,14 +33,11 @@ import {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
-import { FieldBatchEncodingContext, FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachedNodeBuild } from "../../core/tree/delta.js";
-import { Format } from "./format.js";
+import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import { Format } from "./format.js";
 /**
  * The storage key for the blob in the summary containing tree data
  */
@@ -84,7 +83,7 @@ export class ForestSummarizer implements Summarizable {
 					{ fieldKey: key, parent: undefined },
 					innerCursor,
 				) === TreeNavigationResult.Ok,
-				"failed to navigate to field",
+				0x892 /* failed to navigate to field */,
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
@@ -137,7 +136,7 @@ export class ForestSummarizer implements Summarizable {
 			);
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
-			const build: DetachedNodeBuild[] = [];
+			const build: DeltaDetachedNodeBuild[] = [];
 			for (const [fieldKey, field] of fields) {
 				const chunked = chunkField(field, defaultChunkPolicy);
 				const nodeCursors = chunked.flatMap((chunk) =>

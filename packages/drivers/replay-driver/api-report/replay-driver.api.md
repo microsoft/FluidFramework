@@ -18,6 +18,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
 export class FileSnapshotReader extends ReadDocumentStorageServiceBase implements IDocumentStorageService {
@@ -56,16 +57,6 @@ export interface IFileSnapshot {
     tree: ITree;
 }
 
-// @internal (undocumented)
-export class OpStorage extends ReadDocumentStorageServiceBase {
-    // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    // (undocumented)
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
-    // (undocumented)
-    readBlob(blobId: string): Promise<ArrayBufferLike>;
-}
-
 // @internal
 export abstract class ReadDocumentStorageServiceBase implements IDocumentStorageService {
     // (undocumented)
@@ -78,8 +69,6 @@ export abstract class ReadDocumentStorageServiceBase implements IDocumentStorage
     abstract getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     abstract readBlob(blobId: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    get repositoryUrl(): string;
     // (undocumented)
     uploadSummaryWithContext(summary: api.ISummaryTree, context: ISummaryContext): Promise<string>;
 }
@@ -94,7 +83,7 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 }
 
 // @internal
-export class ReplayDocumentService implements api_2.IDocumentService {
+export class ReplayDocumentService extends TypedEventEmitter<api_2.IDocumentServiceEvents> implements api_2.IDocumentService {
     constructor(controller: api_2.IDocumentStorageService, deltaStorage: api_2.IDocumentDeltaConnection);
     connectToDeltaStorage(): Promise<api_2.IDocumentDeltaStorageService>;
     connectToDeltaStream(client: IClient): Promise<api_2.IDocumentDeltaConnection>;

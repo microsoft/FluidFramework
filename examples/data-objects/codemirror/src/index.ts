@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import {
+	IFluidMountableViewEntryPoint,
+	MountableView,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-import { MountableView } from "@fluidframework/view-adapters";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import {
-	IFluidMountableViewEntryPoint,
-	getDataStoreEntryPoint,
-} from "@fluid-example/example-utils";
 
 import React from "react";
 
-import { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-import { CodeMirrorReactView } from "./codeMirrorView";
+import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+import { CodeMirrorReactView } from "./codeMirrorView.js";
 
-export { CodeMirrorComponent, SmdeFactory } from "./codeMirror";
-export { CodeMirrorReactView } from "./codeMirrorView";
+export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
+export { CodeMirrorReactView } from "./codeMirrorView.js";
 
 const defaultComponentId = "default";
 

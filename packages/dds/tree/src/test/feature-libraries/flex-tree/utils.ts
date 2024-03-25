@@ -5,25 +5,25 @@
 
 import { strict as assert } from "node:assert";
 import {
-	DefaultEditBuilder,
-	FlexTreeSchema,
-	createMockNodeKeyManager,
-	nodeKeyFieldKey,
-	AllowedTypes,
-	FieldKind,
-} from "../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import {
 	FieldAnchor,
 	IEditableForest,
 	ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	rootFieldKey,
 } from "../../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import {
+	DefaultEditBuilder,
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexTreeSchema,
+	createMockNodeKeyManager,
+	nodeKeyFieldKey,
+} from "../../../feature-libraries/index.js";
 import { TreeContent } from "../../../shared-tree/index.js";
-import { forestWithContent } from "../../utils.js";
 import { brand } from "../../../util/index.js";
+import { forestWithContent } from "../../utils.js";
 
 export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it
@@ -65,7 +65,7 @@ export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootF
  *
  * @returns The initialized context and cursor.
  */
-export function readonlyTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+export function readonlyTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
 	treeContent: TreeContent,
 ): {
 	context: Context;

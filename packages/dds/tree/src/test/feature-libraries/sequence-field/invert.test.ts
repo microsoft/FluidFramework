@@ -10,19 +10,19 @@ import {
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { CellId } from "../../../feature-libraries/sequence-field/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
-import { brand } from "../../../util/index.js";
-import {
-	invert as invertChange,
-	describeForBothConfigs,
-	withOrderingMethod,
-	assertChangesetsEqual,
-} from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import {
+	assertChangesetsEqual,
+	describeForBothConfigs,
+	invert as invertChange,
+	withOrderingMethod,
+} from "./utils.js";
 
 function invert(change: TestChangeset, tag?: RevisionTag): TestChangeset {
 	return invertChange(tagChange(change, tag ?? tag1));

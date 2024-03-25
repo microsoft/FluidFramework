@@ -5,19 +5,20 @@
 
 import { strict as assert } from "assert";
 import {
+	BaseFuzzTestState,
 	Generator,
+	SaveInfo,
 	createWeightedGenerator,
 	interleave,
 	makeRandom,
 	performFuzzActions as performFuzzActionsBase,
 	repeat,
-	SaveInfo,
 	take,
-	BaseFuzzTestState,
 } from "@fluid-private/stochastic-test-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
-	createIdCompressor,
+	type IIdCompressor,
+	type IIdCompressorCore,
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -25,18 +26,19 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { assertIsSessionId, createSessionId } from "../utilities";
+	createIdCompressor,
+} from "..//index.js";
+import { IdCompressor } from "../idCompressor.js";
+import { assertIsSessionId, createSessionId } from "../utilities.js";
 import {
 	FinalCompressedId,
+	ReadonlyIdCompressor,
+	fail,
 	getOrCreate,
 	incrementStableId,
 	isFinalId,
 	isLocalId,
-	ReadonlyIdCompressor,
-	fail,
-} from "./testCommon";
+} from "./testCommon.js";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key
@@ -886,4 +888,34 @@ export function generateCompressedIds(
 		ids.push(compressor.generateCompressedId());
 	}
 	return ids;
+}
+
+/**
+ * Creates a compressor that only produces final IDs.
+ * It should only be used for testing purposes.
+ */
+export function createAlwaysFinalizedIdCompressor(
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
+/**
+ * Creates a compressor that only produces final IDs.
+ * It should only be used for testing purposes.
+ */
+export function createAlwaysFinalizedIdCompressor(
+	sessionId: SessionId,
+	logger?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore;
+export function createAlwaysFinalizedIdCompressor(
+	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
+	loggerOrUndefined?: ITelemetryBaseLogger,
+): IIdCompressor & IIdCompressorCore {
+	const compressor =
+		sessionIdOrLogger === undefined
+			? createIdCompressor()
+			: typeof sessionIdOrLogger === "string"
+			? createIdCompressor(sessionIdOrLogger, loggerOrUndefined)
+			: createIdCompressor(sessionIdOrLogger);
+	// Permanently put the compressor in a ghost session
+	(compressor as IdCompressor).startGhostSession(createSessionId());
+	return compressor;
 }

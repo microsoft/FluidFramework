@@ -9,21 +9,10 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IEventTransformer } from '@fluidframework/common-definitions';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
-import { ITelemetryGenericEvent } from '@fluidframework/common-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { ITelemetryPerformanceEvent } from '@fluidframework/common-definitions';
 import { TransformedEvent } from '@fluidframework/common-definitions';
 
 // @internal @deprecated
 export function assert(condition: boolean, message: string | number): asserts condition;
-
-// @internal @deprecated
-export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
-    send(event: ITelemetryBaseEvent): void;
-}
 
 // @internal @deprecated
 export class Buffer extends Uint8Array {
@@ -57,21 +46,6 @@ export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) 
 export type EventEmitterEventType = EventEmitter extends {
     on(event: infer E, listener: any): any;
 } ? E : never;
-
-// @internal @deprecated
-export class EventForwarder<TEvent = IEvent> extends TypedEventEmitter<TEvent> implements IDisposable {
-    constructor(source?: EventEmitter | IEventProvider<TEvent & IEvent>);
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    protected forwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-    // (undocumented)
-    protected static isEmitterEvent(event: string): boolean;
-    // (undocumented)
-    protected unforwardEvent(source: EventEmitter | IEventProvider<TEvent & IEvent>, ...events: string[]): void;
-}
 
 // @internal @deprecated
 export const fromBase64ToUtf8: (input: string) => string;
@@ -258,18 +232,6 @@ export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTime
 
 // @internal @deprecated
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike;
-
-// @internal @deprecated
-export class TelemetryNullLogger implements ITelemetryLogger {
-    // (undocumented)
-    send(event: ITelemetryBaseEvent): void;
-    // (undocumented)
-    sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    // (undocumented)
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    // (undocumented)
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
-}
 
 // @internal @deprecated
 export class Timer implements ITimer {

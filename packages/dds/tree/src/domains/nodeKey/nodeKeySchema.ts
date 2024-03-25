@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils";
 import { ValueSchema } from "../../core/index.js";
 import {
-	nodeKeyFieldKey,
 	FieldKinds,
-	nodeKeyTreeIdentifier,
+	FlexFieldSchema,
 	SchemaBuilderInternal,
-	TreeFieldSchema,
+	nodeKeyFieldKey,
+	nodeKeyTreeIdentifier,
 } from "../../feature-libraries/index.js";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
@@ -33,7 +33,7 @@ assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, 0x7ae /* mismatched ide
  * Requires including {@link nodeKeySchema}.
  */
 export const nodeKeyField = {
-	[nodeKeyFieldKey]: TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
+	[nodeKeyFieldKey]: FlexFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
 };
 
 /**

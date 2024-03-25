@@ -6,12 +6,12 @@
 import * as fs from "fs";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
-import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
+import { IExportFileResponse, createContainerAndExecute } from "./exportFile";
 /* eslint-disable import/no-internal-modules */
 import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 /* eslint-enable import/no-internal-modules */
-import { getSnapshotFileContent, getArgsValidationError } from "./utils";
+import { getArgsValidationError, getSnapshotFileContent } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 

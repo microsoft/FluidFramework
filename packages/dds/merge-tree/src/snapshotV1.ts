@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { UnassignedSequenceNumber } from "./constants";
-import { ISegment } from "./mergeTreeNodes";
-import { matchProperties, PropertySet } from "./properties";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { IAttributionCollection } from "./attributionCollection.js";
+import { UnassignedSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
+import { ISegment } from "./mergeTreeNodes.js";
+import { PropertySet, matchProperties } from "./properties.js";
 import {
 	IJSONSegmentWithMergeInfo,
 	JsonSegmentSpecs,
-	MergeTreeHeaderMetadata,
 	MergeTreeChunkV1,
-	toLatestVersion,
+	MergeTreeHeaderMetadata,
 	serializeAsMaxSupportedVersion,
-} from "./snapshotChunks";
-import { SnapshotLegacy } from "./snapshotlegacy";
-import { MergeTree } from "./mergeTree";
-import { walkAllChildSegments } from "./mergeTreeNodeWalk";
-import { IAttributionCollection } from "./attributionCollection";
+	toLatestVersion,
+} from "./snapshotChunks.js";
+import { SnapshotLegacy } from "./snapshotlegacy.js";
 
 export class SnapshotV1 {
 	// Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
@@ -181,12 +181,16 @@ export class SnapshotV1 {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
 
+		let originalSegments = 0;
+		let segmentsAfterCombine = 0;
+
 		// Helper to add the given `MergeTreeChunkV0SegmentSpec` to the snapshot.
 		const pushSegRaw = (
 			json: JsonSegmentSpecs,
 			length: number,
 			attribution: IAttributionCollection<AttributionKey> | undefined,
 		) => {
+			segmentsAfterCombine += 1;
 			this.segments.push(json);
 			this.segmentLengths.push(length);
 			if (attribution) {
@@ -223,8 +227,13 @@ export class SnapshotV1 {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				segment.movedSeq! <= minSeq
 			) {
+				if (segment.seq !== UnassignedSequenceNumber) {
+					originalSegments += 1;
+				}
 				return true;
 			}
+
+			originalSegments += 1;
 
 			// Next determine if the snapshot needs to preserve information required for merging the segment
 			// (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
@@ -322,7 +331,7 @@ export class SnapshotV1 {
 					0x066 /* "Corrupted preservation of segment metadata!" */,
 				);
 
-				// Record the segment with it's required metadata.
+				// Record the segment with its required metadata.
 				pushSegRaw(raw, segment.cachedLength, segment.attribution);
 			}
 			return true;
@@ -332,6 +341,17 @@ export class SnapshotV1 {
 
 		// If the last segment in the walk was coalescable, push it now.
 		pushSeg(prev);
+
+		// To reduce potential spam from this telemetry, we sample only a small
+		// percentage of summaries
+		if (Math.abs(originalSegments - segmentsAfterCombine) > 500 && Math.random() < 0.005) {
+			this.logger.sendTelemetryEvent({
+				eventName: "MergeTreeV1SummarizeSegmentCount",
+				originalSegments,
+				segmentsAfterCombine,
+				segmentsLen: this.segments.length,
+			});
+		}
 
 		return this.segments;
 	}

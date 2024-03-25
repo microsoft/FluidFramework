@@ -24,7 +24,7 @@ export class Attributor implements IAttributor {
     tryGetAttributionInfo(key: number): AttributionInfo | undefined;
 }
 
-// @internal (undocumented)
+// @internal
 export function createRuntimeAttributor(): IRuntimeAttributor;
 
 // @internal (undocumented)

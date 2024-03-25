@@ -7,8 +7,8 @@
  * This directory contains {@link IDevtoolsMessage} types listened for and posted by {@link FluidDevtools}.
  */
 
-export { ContainerList } from "./ContainerList";
-export { DevtoolsDisposed } from "./DevtoolsDisposed";
-export { DevtoolsFeatures } from "./DevtoolsFeatures";
-export { GetContainerList } from "./GetContainerList";
-export { GetDevtoolsFeatures } from "./GetDevtoolsFeatures";
+export { ContainerList } from "./ContainerList.js";
+export { DevtoolsDisposed } from "./DevtoolsDisposed.js";
+export { DevtoolsFeatures } from "./DevtoolsFeatures.js";
+export { GetContainerList } from "./GetContainerList.js";
+export { GetDevtoolsFeatures } from "./GetDevtoolsFeatures.js";

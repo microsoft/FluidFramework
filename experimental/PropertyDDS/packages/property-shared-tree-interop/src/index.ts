@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { convertPropertyToSharedTreeSchema } from "./schemaConverter";
+export { convertPropertyToSharedTreeSchema } from "./schemaConverter.js";

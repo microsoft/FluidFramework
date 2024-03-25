@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type MultiLineDocumentationNode } from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
+import { type MultiLineDocumentationNode } from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * A horizontal line dividing above and below contents in a document.
@@ -49,6 +49,11 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
 	public readonly singleLine = false;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public readonly isEmpty = false;
 
 	public constructor() {}
 }

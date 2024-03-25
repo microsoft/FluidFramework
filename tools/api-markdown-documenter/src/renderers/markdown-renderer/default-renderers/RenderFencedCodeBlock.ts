@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { FencedCodeBlockNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import { renderNodes } from "../Render";
-import type { RenderContext } from "../RenderContext";
-import { renderNodeWithHtmlSyntax } from "../Utilities";
+import type { FencedCodeBlockNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import { renderNodes } from "../Render.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderNodeWithHtmlSyntax } from "../Utilities.js";
 
 /**
  * Renders a {@link FencedCodeBlockNode} as Markdown.

@@ -3,23 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
+	IDocumentServiceEvents,
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockDocumentDeltaStorageService } from "./mockDeltaStorage";
-import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection";
+import { MockDocumentDeltaStorageService } from "./mockDeltaStorage.js";
+import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection.js";
 
 /**
  * Mock Document Service for testing.
  *
  * @internal
  */
-export class MockDocumentService implements IDocumentService {
+export class MockDocumentService
+	extends TypedEventEmitter<IDocumentServiceEvents>
+	implements IDocumentService
+{
 	public get deltaStorageMessages() {
 		return this._deltaStorageMessages;
 	}
@@ -31,7 +36,9 @@ export class MockDocumentService implements IDocumentService {
 	constructor(
 		private readonly deltaStorageFactory?: () => IDocumentDeltaStorageService,
 		private readonly deltaConnectionFactory?: (client?: IClient) => IDocumentDeltaConnection,
-	) {}
+	) {
+		super();
+	}
 
 	public dispose() {}
 

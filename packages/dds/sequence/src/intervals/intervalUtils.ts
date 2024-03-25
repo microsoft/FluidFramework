@@ -12,7 +12,7 @@ import {
 	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SequencePlace, Side } from "../intervalCollection";
+import { SequencePlace, Side } from "../intervalCollection.js";
 
 /**
  * Basic interval abstraction
@@ -81,7 +81,7 @@ export type IntervalDeltaOpType = (typeof IntervalDeltaOpType)[keyof typeof Inte
 
 /**
  * Values are used in revertibles.
- * @internal
+ * @alpha
  */
 export const IntervalOpType = {
 	...IntervalDeltaOpType,
@@ -89,7 +89,7 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 /**
- * @internal
+ * @alpha
  */
 export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 

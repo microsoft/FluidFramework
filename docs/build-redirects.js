@@ -4,43 +4,58 @@
  */
 
 /*
- * This script reads FF versions, generates redirects, and write redirect rules to azure webapp config json.
+ * This script builds FF.com's redirects
  */
 
-const chalk = require("chalk");
-const fs = require("fs-extra");
-const path = require("path");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import chalk from "chalk";
+import fs from "fs-extra";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const {
-	params: { currentVersion },
-} = require("./data/versions.json");
+	params: { currentVersion, ltsVersion },
+} = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
 
-const configFileName = "staticwebapp.config.json";
-const config = require(`./static/${configFileName}`);
+try {
+	const content = `/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-const routes = {
-	"/docs/apis": `/docs/api/${currentVersion}`,
-	// "/docs/api/current/*": `/docs/api/${currentVersion}/*`,
-	// "/docs/api/lts/*": `/docs/api/${ltsVersion}/*`,
+// Map of incoming URL paths to redirect URLs
+const routes = new Map([
+	["/docs/apis", "/docs/api/${currentVersion}"],
+	["/docs/api/current", "/docs/api/${currentVersion}"],
+	["/docs/api/lts", "/docs/api/${ltsVersion}"],
+]);
+
+/**
+ * Handles incoming HTTP requests and redirects them to the appropriate URL based on the current and LTS versions.
+ * It reads the versions from /docs/data/versions.json and matches the incoming URL to a set of predefined routes.
+ * If a matching route is found, it constructs and returns the redirect URL. Otherwise, it returns a 404 response.
+ */
+module.exports = async (context, { headers }) => {
+	const { pathname, search } = new URL(headers["x-ms-original-url"]);
+	const route = [...routes].find(([path, _]) => pathname.startsWith(path));
+
+	context.res = {
+		status: route ? 302 : 404,
+		headers: { location: route ? \`\${pathname.replace(...route)}\${search}\` : "/404" },
+	};
 };
+`;
+	const versionPath = path.resolve(dirname, "api", "fallback", "index.js");
+	await fs.writeFile(versionPath, content);
+} catch (error) {
+	console.error(
+		chalk.red("Could not download API doc model artifacts due to one or more errors:"),
+	);
+	console.error(error);
+	process.exit(1);
+}
 
-config.routes = Object.entries(routes).map(([route, redirect]) => ({
-	route,
-	redirect,
-	statusCode: 301,
-}));
-
-fs.writeFile(
-	path.join(__dirname, "static", configFileName),
-	JSON.stringify(config, null, 2),
-	"utf8",
-).then(
-	() => {
-		console.log(chalk.green("Redirects file generated!"));
-		process.exit(0);
-	},
-	() => {
-		console.error(chalk.red("Could not generate redirects file due to an error:"));
-		console.error(error);
-		process.exit(1);
-	},
-);
+console.log(chalk.green("API doc model artifacts downloaded!"));
+process.exit(0);

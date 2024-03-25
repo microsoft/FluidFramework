@@ -160,6 +160,7 @@ export function queryParamToString(value: any): string {
 }
 
 export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefined): RequestHandler {
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
 			const reqTenantId = request.params.tenantId;
@@ -189,6 +190,7 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 					);
 				}
 			}
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),

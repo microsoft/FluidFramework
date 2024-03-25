@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { IDetachedModel, IModelLoader } from "./interfaces";
+export { IDetachedModel, IModelLoader } from "./interfaces.js";
 export {
 	ModelContainerRuntimeFactory,
 	IModelContainerRuntimeEntryPoint,
-} from "./modelContainerRuntimeFactory";
-export { ModelLoader } from "./modelLoader";
-export { SessionStorageModelLoader } from "./sessionStorageModelLoader";
-export { StaticCodeLoader } from "./staticCodeLoader";
-export { TinyliciousModelLoader } from "./tinyliciousModelLoader";
+} from "./modelContainerRuntimeFactory.js";
+export { ModelLoader } from "./modelLoader.js";
+export { SessionStorageModelLoader } from "./sessionStorageModelLoader.js";
+export { StaticCodeLoader } from "./staticCodeLoader.js";
+export { TinyliciousModelLoader } from "./tinyliciousModelLoader.js";

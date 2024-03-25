@@ -5,20 +5,20 @@
 
 import { strict as assert } from "assert";
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
-import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
-import { MockIdCompressor, TestTreeProviderLite } from "../utils.js";
 import { AllowedUpdateType } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
+import { SharedTreeFactory, TreeContent } from "../../shared-tree/index.js";
 import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
+import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -86,7 +86,7 @@ describe("Summary benchmarks", () => {
 						objectStorage: new MockStorage(summaryTree),
 					};
 					const datastoreRuntime = new MockFluidDataStoreRuntime({
-						idCompressor: new MockIdCompressor(),
+						idCompressor: testIdCompressor,
 					});
 					await factory.load(datastoreRuntime, "test", services, factory.attributes);
 				},
@@ -125,7 +125,10 @@ describe("Summary benchmarks", () => {
 function getSummaryTree(content: TreeContent): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	tree.schematizeInternal({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
+	schematizeFlexTree(tree, {
+		...content,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
+	});
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;

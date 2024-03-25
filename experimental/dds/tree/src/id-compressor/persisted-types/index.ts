@@ -16,4 +16,4 @@ export {
 	SerializedSessionIdNormalizer,
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
-} from './0.0.1';
+} from './0.0.1.js';

@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ template "nexus.fullname" . }}
+  labels:
+    app: {{ template "routerlicious.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Values.nexus.name }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.org/websocket-services: {{ template "nexus.fullname" . }}
+    nginx.org/proxy-send-timeout: "7200s"
+    nginx.org/proxy-read-timeout: "7200s"
+    nginx.org/client-max-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  ingressClassName: {{ .Values.ingress.class }}
+  tls:
+  - hosts:
+    - {{ .Values.nexus.host }}
+    secretName: {{ .Values.nexus.cert }}
+  rules:
+  - host: {{ .Values.nexus.host }}
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ template "nexus.fullname" . }}
+            port:
+              number: 80

@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { HorizontalRuleNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import type { RenderContext } from "../RenderContext";
-import { renderNodeWithHtmlSyntax } from "../Utilities";
+import type { HorizontalRuleNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderNodeWithHtmlSyntax } from "../Utilities.js";
 
 /**
  * Renders a {@link HorizontalRuleNode} as Markdown.

@@ -2,42 +2,46 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+import { noopValidator } from "../codec/index.js";
 import {
-	AnchorLocator,
-	IForestSubscription,
-	AnchorSetRootEvents,
 	Anchor,
+	AnchorLocator,
 	AnchorNode,
 	AnchorSet,
-	IEditableForest,
-	TreeStoredSchemaRepository,
-	combineVisitors,
-	visitDelta,
-	DetachedFieldIndex,
-	makeDetachedFieldIndex,
-	Revertible,
+	AnchorSetRootEvents,
 	ChangeFamily,
-	tagChange,
-	TreeStoredSchema,
-	TreeStoredSchemaSubscription,
+	CommitMetadata,
+	DeltaVisitor,
+	DetachedFieldIndex,
+	IEditableForest,
+	IForestSubscription,
 	JsonableTree,
+	Revertible,
 	RevisionTagCodec,
+	TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	TreeStoredSchemaSubscription,
+	combineVisitors,
+	makeDetachedFieldIndex,
+	tagChange,
+	visitDelta,
 } from "../core/index.js";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events/index.js";
 import {
+	FieldBatchCodec,
+	TreeCompressionStrategy,
 	buildForest,
 	intoDelta,
-	FieldBatchCodec,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
-import { noopValidator } from "../codec/index.js";
-import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
 /**
@@ -47,7 +51,7 @@ import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilde
 export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
 	 *
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
@@ -55,14 +59,28 @@ export interface CheckoutEvents {
 	afterBatch(): void;
 
 	/**
-	 * A revertible change has been made to this view.
-	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire, if they so choose (failure to do so will leak memory).
+	 * Fired when a revertible change has been made to this view.
+	 *
+	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire (failure to do so will leak memory).
 	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
 	 *
-	 * @remarks
-	 * This event provides a {@link Revertible} object that can be used to revert the change.
+	 * @param revertible - The revertible that can be used to revert the change.
 	 */
-	revertible(revertible: Revertible): void;
+
+	/**
+	 * {@inheritdoc TreeViewEvents.commitApplied}
+	 */
+	commitApplied(data: CommitMetadata, getRevertible?: () => Revertible): void;
+
+	/**
+	 * Fired when a revertible is either reverted or discarded.
+	 *
+	 * This event can be used to maintain a list or set of active revertibles.
+	 * @param revertible - The revertible that was disposed.
+	 * This revertible was previously passed to the `newRevertible` event.
+	 * Calling `discard` on this revertible is not necessary but is safe to do.
+	 */
+	revertibleDisposed(revertible: Revertible): void;
 }
 
 /**
@@ -184,6 +202,7 @@ export function createTreeCheckout(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		removedRoots?: DetachedFieldIndex;
+		chunkCompressionStrategy?: TreeCompressionStrategy;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -195,6 +214,7 @@ export function createTreeCheckout(
 			revisionTagCodec,
 			args?.fieldBatchCodec ?? makeFieldBatchCodec(defaultCodecOptions),
 			{ jsonValidator: noopValidator },
+			args?.chunkCompressionStrategy,
 		);
 	const branch =
 		args?.branch ??
@@ -336,17 +356,19 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						const delta = intoDelta(
 							tagChange(change.innerChange, event.change.revision),
 						);
-						const anchorVisitor = this.forest.anchors.acquireVisitor();
-						const combinedVisitor = combineVisitors(
-							[this.forest.acquireVisitor(), anchorVisitor],
-							[anchorVisitor],
-						);
-						visitDelta(delta, combinedVisitor, this.removedRoots);
-						combinedVisitor.free();
+						this.withCombinedVisitor((visitor) => {
+							visitDelta(delta, visitor, this.removedRoots);
+						});
 					} else if (change.type === "schema") {
-						if (change.innerChange.schema !== undefined) {
-							storedSchema.apply(change.innerChange.schema.new);
-						}
+						// We purge all removed content because the schema change may render that repair data invalid.
+						// This happens on all peers that receive the schema change.
+						// Note that while the originator of the schema change could theoretically validate/update the
+						// repair data that it has, so that is it guaranteed to be valid with the new schema, we cannot
+						// guarantee that the originator has a superset of the repair data that other clients have.
+						// This means the originator cannot guarantee that the repair data on all peers is valid for
+						// the new schema.
+						this.purgeRemovedRoots();
+						storedSchema.apply(change.innerChange.schema.new);
 					} else {
 						fail("Unknown Shared Tree change type.");
 					}
@@ -360,14 +382,36 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 			}
 		});
-		branch.on("revertible", (revertible) => {
-			// if there are no listeners, discard the revertible to avoid memory leaks
-			if (!this.events.hasListeners("revertible")) {
-				revertible.discard();
-			} else {
-				this.events.emit("revertible", revertible);
+		branch.on("commitApplied", (data, getRevertible) => {
+			this.events.emit("commitApplied", data, getRevertible);
+		});
+		branch.on("revertibleDisposed", (revertible, revision) => {
+			// We do not expose the revision in this API
+			this.events.emit("revertibleDisposed", revertible);
+		});
+	}
+
+	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
+		const anchorVisitor = this.forest.anchors.acquireVisitor();
+		const combinedVisitor = combineVisitors(
+			[this.forest.acquireVisitor(), anchorVisitor],
+			[anchorVisitor],
+		);
+		fn(combinedVisitor);
+		combinedVisitor.free();
+	}
+
+	private purgeRemovedRoots() {
+		// Revertibles are susceptible to use repair data so we purge them.
+		this.branch.purgeRevertibles();
+		this.withCombinedVisitor((visitor) => {
+			for (const { root } of this.removedRoots.entries()) {
+				const field = this.removedRoots.toFieldKey(root);
+				// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
+				visitor.destroy(field, 1);
 			}
 		});
+		this.removedRoots.purge();
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {

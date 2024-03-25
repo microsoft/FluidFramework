@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 export { mochaGlobalSetup } from "./compatConfig.js";
 export {
 	getDataStoreFactory,
@@ -21,7 +22,6 @@ export {
 	DescribeCompatSuite,
 	describeCompat,
 	ITestObjectProviderOptions,
-	CompatVersionKind,
 } from "./describeCompat.js";
 export {
 	DescribeE2EDocSuite,

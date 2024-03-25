@@ -6,24 +6,24 @@
 import { strict as assert } from "assert";
 import {
 	IContainer,
+	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { LocalResolver, LocalDocumentServiceFactory } from "@fluidframework/local-driver";
+import { IUrlResolver } from "@fluidframework/driver-definitions";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { IUrlResolver } from "@fluidframework/driver-definitions";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
+	ITestFluidObject,
+	LoaderContainerTracker,
+	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-	LoaderContainerTracker,
-	ITestFluidObject,
-	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 
 /**
@@ -44,7 +44,7 @@ function createLocalLoader(
 
 describe("LocalTestServer", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const stringId = "stringKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",

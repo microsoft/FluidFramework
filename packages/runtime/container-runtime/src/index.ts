@@ -14,26 +14,32 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
-	RuntimeHeaders,
-	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
 	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
-} from "./containerRuntime";
+	RuntimeHeaderData,
+	disabledCompressionConfig,
+} from "./containerRuntime.js";
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
 	IContainerRuntimeMessageCompatDetails,
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
-} from "./messageTypes";
-export { IBlobManagerLoadInfo } from "./blobManager";
-export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { detectOutboundReferences } from "./dataStores";
+	UnknownContainerRuntimeMessage,
+} from "./messageTypes.js";
+export { IBlobManagerLoadInfo } from "./blobManager.js";
+export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+export {
+	detectOutboundReferences,
+	RuntimeHeaders,
+	ChannelCollectionFactory,
+	AllowTombstoneRequestHeaderKey,
+	AllowInactiveRequestHeaderKey,
+} from "./channelCollection.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -43,7 +49,7 @@ export {
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCStats,
-} from "./gc";
+} from "./gc/index.js";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -92,22 +98,26 @@ export {
 	SummaryStage,
 	IRetriableFailureResult,
 	ISummarizeEventProps,
-} from "./summary";
-export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
-
-// Re-exports for backwards compatibility.
-// Will be removed in the future.
+	IdCompressorMode,
+	IDocumentSchema,
+	DocumentSchemaValueType,
+	IDocumentSchemaCurrent,
+	currentDocumentVersionSchema,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
+	IDocumentSchemaFeatures,
+} from "./summary/index.js";
+export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export { ChannelCollection } from "./channelCollection.js";
 export {
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	assertIsStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	generateStableId,
-	/**
-	 * @deprecated Import from `@fluidframework/id-compressor` instead.
-	 */
-	isStableId,
-} from "@fluidframework/id-compressor";
+	IFluidDataStoreContextInternal,
+	ISnapshotDetails,
+	LocalFluidDataStoreContext,
+	LocalFluidDataStoreContextBase,
+	FluidDataStoreContext,
+	IFluidDataStoreContextProps,
+	ILocalFluidDataStoreContextProps,
+	ILocalDetachedFluidDataStoreContextProps,
+	IFluidDataStoreContextEvents,
+} from "./dataStoreContext.js";
+export { DataStoreContexts } from "./dataStoreContexts.js";

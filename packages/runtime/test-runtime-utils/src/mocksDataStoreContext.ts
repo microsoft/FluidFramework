@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
-import {
-	IAudience,
-	IDeltaManager,
-	AttachState,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions";
 
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -27,9 +24,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import { v4 as uuid } from "uuid";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 /**
  * @alpha
@@ -37,7 +32,8 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
-	public options: ILoaderOptions = undefined as any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
 	public clientDetails: IClientDetails = { capabilities: { interactive: this.interactive } };
 	public connected: boolean = true;
@@ -49,6 +45,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
 	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
+	public readonly gcThrowOnTombstoneUsage = false;
+	public readonly gcTombstoneEnforcementAllowed = false;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.
@@ -124,6 +122,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		id: string,
 		createParam: CreateChildSummarizerNodeParam,
 	): CreateChildSummarizerNodeFn {
+		throw new Error("Method not implemented.");
+	}
+
+	public deleteChildSummarizerNode(id: string): void {
 		throw new Error("Method not implemented.");
 	}
 

@@ -8,19 +8,25 @@ import {
 	UsageError,
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils";
-import { IContainerRuntimeMetadata } from "../summary";
+import { IContainerRuntimeMetadata } from "../summary/index.js";
 import {
-	nextGCVersion,
+	GCFeatureMatrix,
+	GCVersion,
+	IGCMetadata_Deprecated,
+	IGCRuntimeOptions,
+	IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	disableDatastoreSweepKey,
 	disableTombstoneKey,
-	GCFeatureMatrix,
+	gcDisableDataStoreSweepOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	gcGenerationOptionName,
 	gcTestModeKey,
-	GCVersion,
 	gcVersionUpgradeToV4Key,
-	IGarbageCollectorConfigs,
-	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
+	nextGCVersion,
 	oneDayMs,
 	runGCKey,
 	runSessionExpiryKey,
@@ -28,12 +34,8 @@ import {
 	stableGCVersion,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
-	gcDisableThrowOnTombstoneLoadOptionName,
-	defaultSweepGracePeriodMs,
-	gcGenerationOptionName,
-	IGCMetadata_Deprecated,
-} from "./gcDefinitions";
-import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
+} from "./gcDefinitions.js";
+import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers.js";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -137,18 +139,26 @@ export function generateGCConfigs(
 	 * Whether sweep should run or not. This refers to whether Tombstones should fail on load and whether
 	 * sweep-ready nodes should be deleted.
 	 *
-	 * Assuming overall GC is enabled and Tombstone timeout is present, the following conditions have to be met to run sweep:
+	 * Assuming overall GC is enabled and tombstoneTimeout is provided, the following conditions have to be met to run sweep:
 	 *
-	 * 1. Sweep should be enabled for this container.
-	 * 2. Sweep should be enabled for this session.
+	 * 1. Sweep should be allowed in this container.
+	 * 2. Sweep should be enabled for this session, optionally restricted to attachment blobs only.
 	 *
 	 * These conditions can be overridden via the RunSweep feature flag.
 	 */
-	const shouldRunSweep =
+	const sweepEnabled: boolean =
 		!shouldRunGC || tombstoneTimeoutMs === undefined
 			? false
 			: mc.config.getBoolean(runSweepKey) ??
 			  (sweepAllowed && createParams.gcOptions.enableGCSweep === true);
+	const disableDatastoreSweep =
+		mc.config.getBoolean(disableDatastoreSweepKey) === true ||
+		createParams.gcOptions[gcDisableDataStoreSweepOptionName] === true;
+	const shouldRunSweep: IGarbageCollectorConfigs["shouldRunSweep"] = sweepEnabled
+		? disableDatastoreSweep
+			? "ONLY_BLOBS"
+			: "YES"
+		: "NO";
 
 	// Override inactive timeout if test config or gc options to override it is set.
 	const inactiveTimeoutMs =

@@ -33,7 +33,7 @@ export function makeForestSummarizerCodec(
 		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
 			const fields = inner.decode(data.fields, context);
-			assert(data.keys.length === fields.length, "mismatched lengths");
+			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (let index = 0; index < fields.length; index++) {
 				out.set(data.keys[index], fields[index]);
 			}

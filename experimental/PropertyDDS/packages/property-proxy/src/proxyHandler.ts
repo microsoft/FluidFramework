@@ -2,18 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
 	BaseProperty,
 	ContainerProperty,
 	NodeProperty,
+	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy, proxySymbol } from "./propertyProxy";
 import { PropertyProxyErrors } from "./errors";
-import { Utilities, forceType } from "./utilities";
 import { ProxyType, ReferenceType } from "./interfaces";
+import { PropertyProxy, proxySymbol } from "./propertyProxy";
+import { Utilities, forceType } from "./utilities";
 
 /**
  * The additional proxy handlers for non-collection type properties.

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ISnapshotOptions } from "@fluidframework/odsp-driver-definitions";
 
 /**
@@ -15,6 +16,8 @@ export function getQueryString(
 	for (const key of Object.keys(queryParams)) {
 		if (queryParams[key] !== undefined) {
 			const startChar = queryString === "" ? "?" : "&";
+			// False-positive
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			queryString += `${startChar}${key}=${encodeURIComponent(queryParams[key])}`;
 		}
 	}

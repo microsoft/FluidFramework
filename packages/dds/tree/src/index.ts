@@ -83,12 +83,15 @@ export {
 	TreeAdapter,
 	MapTree,
 	Revertible,
-	RevertibleKind,
-	RevertResult,
-	DiscardResult,
+	CommitKind,
+	RevertibleStatus,
+	CommitMetadata,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 	ErasedTreeNodeSchemaDataFormat,
+	ObjectNodeStoredSchema,
+	MapNodeStoredSchema,
+	LeafNodeStoredSchema,
 } from "./core/index.js";
 
 export {
@@ -127,7 +130,7 @@ export {
 export { leaf } from "./domains/index.js";
 
 export {
-	FieldKind as FlexFieldKind,
+	FlexFieldKind,
 	Multiplicity,
 	isNeverField,
 	FullSchemaPolicy,
@@ -148,21 +151,21 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
-	cursorForJsonableTreeNode as singleTextCursor,
+	cursorForJsonableTreeNode,
 	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	ArrayLikeMut,
 	FieldKinds,
 	ContextuallyTypedFieldData,
 	cursorFromContextualData,
-	AllowedTypes as FlexAllowedTypes,
+	FlexAllowedTypes,
 	FlexTreeNodeSchema,
 	FlexTreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	TreeFieldSchema,
+	FlexFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
@@ -184,7 +187,7 @@ export {
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	AssignableFieldKinds,
-	FlexTreeContext as TreeContext,
+	FlexTreeContext,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,
@@ -192,14 +195,14 @@ export {
 	FlexTreeField,
 	FlexTreeNode,
 	TreeNodeSchemaBase,
-	FieldNodeSchema,
+	FlexFieldNodeSchema,
 	LeafNodeSchema,
-	MapNodeSchema,
-	ObjectNodeSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
-	ImplicitFieldSchema as FlexImplicitFieldSchema,
-	ImplicitAllowedTypes as FlexImplicitAllowedTypes,
+	FlexImplicitFieldSchema,
+	FlexImplicitAllowedTypes,
 	Unenforced,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -220,11 +223,17 @@ export {
 	ApplyMultiplicity,
 	NormalizeObjectNodeFields,
 	NormalizeFieldSchema,
-	Fields,
-	MapFieldSchema,
+	FlexObjectNodeFields,
+	FlexMapFieldSchema,
 	ArrayToUnion,
 	ExtractItemType,
 	LazyItem,
+	PropertyNameFromFieldKey,
+	ReservedObjectNodeFieldPropertyNames,
+	ReservedObjectNodeFieldPropertyNamePrefixes,
+	reservedObjectNodeFieldPropertyNames,
+	reservedObjectNodeFieldPropertyNamePrefixes,
+	FlexTreeObjectNodeFieldsInner,
 } from "./feature-libraries/index.js";
 
 export {
@@ -247,6 +256,8 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	Tree,
+	TreeApi,
 } from "./shared-tree/index.js";
 
 export {
@@ -261,8 +272,8 @@ export {
 	TreeView,
 	TreeViewEvents,
 	SchemaFactory,
-	Tree,
-	TreeApi,
+	type ScopedSchemaName,
+	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
 	TreeNodeEvents,
@@ -287,6 +298,23 @@ export {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	SchemaIncompatible,
+
+	// experimental @beta APIs:
+	SchemaFactoryRecursive,
+	ValidateRecursiveSchema,
+	ObjectFromSchemaRecordUnsafe,
+	TreeFieldFromImplicitFieldUnsafe,
+	TreeNodeFromImplicitAllowedTypesUnsafe,
+	FieldSchemaUnsafe,
+	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	TreeArrayNodeUnsafe,
+	TreeMapNodeUnsafe,
+	InsertableObjectFromSchemaRecordUnsafe,
+	InsertableTreeFieldFromImplicitFieldUnsafe,
+	InsertableTypedNodeUnsafe,
+	NodeBuilderDataUnsafe,
+	NodeFromSchemaUnsafe,
 
 	// experimental @internal APIs:
 	adaptEnum,
@@ -297,8 +325,9 @@ export {
 	// test recursive schema for checking that d.ts files handles schema correctly
 	test_RecursiveObject,
 	test_RecursiveObject_base,
+	test_RecursiveObjectPojoMode,
 } from "./simple-tree/index.js";
-export { SharedTree, TreeFactory } from "./treeFactory.js";
+export { SharedTree } from "./treeFactory.js";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec/index.js";
 export { noopValidator } from "./codec/index.js";

@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
-import { tokens } from "@fluentui/react-components";
 
-import { ThemeContext, ThemeOption } from "../../ThemeHelper";
-import { type HasLabel } from "./CommonInterfaces";
+import { tokens } from "@fluentui/react-components";
+import React from "react";
+
+import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
+import type { HasLabel } from "./CommonInterfaces.js";
 
 /**
  * Input props to {@link TreeHeader}

@@ -3,20 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { parse } from "url";
-import { v4 as uuid } from "uuid";
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
+import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
+	readAndParse,
 } from "@fluidframework/driver-utils";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { ISerializableBlobContents } from "./containerStorageAdapter";
-import { IPendingDetachedContainerState } from "./container";
+import {
+	IDocumentAttributes,
+	ISnapshotTree,
+	ISummaryTree,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type {
+	IPendingDetachedContainerState,
+	SnapshotWithBlobs,
+} from "./serializedStateManager.js";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -45,11 +53,10 @@ export interface IParsedUrl {
 	 */
 	query: string;
 	/**
-	 * Null means do not use snapshots, undefined means load latest snapshot
-	 * otherwise it's version ID passed to IDocumentStorageService.getVersions() to figure out what snapshot to use.
-	 * If needed, can add undefined which is treated by Container.load() as load latest snapshot.
+	 * Undefined means load latest snapshot, otherwise it's version ID passed to IDocumentStorageService.getVersions()
+	 * to figure out what snapshot to use.
 	 */
-	version: string | null | undefined;
+	version: string | undefined;
 }
 
 /**
@@ -62,7 +69,7 @@ export interface IParsedUrl {
  * @internal
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
-	const parsed = parse(url, true);
+	const parsed = new URL(url);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
 	}
@@ -70,7 +77,13 @@ export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefin
 	const regex = /^\/([^/]*\/[^/]*)(\/?.*)$/;
 	const match = regex.exec(parsed.pathname);
 	return match?.length === 3
-		? { id: match[1], path: match[2], query, version: parsed.query.version as string }
+		? {
+				id: match[1],
+				path: match[2],
+				query,
+				// URLSearchParams returns null if the param is not provided.
+				version: parsed.searchParams.get("version") ?? undefined,
+		  }
 		: undefined;
 }
 
@@ -107,15 +120,14 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToSnapshotAndBlobs(
-	summary: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] {
+function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBlobs {
 	let blobContents: ISerializableBlobContents = {};
 	const treeNode: ISnapshotTree = {
 		blobs: {},
 		trees: {},
 		id: uuid(),
 		unreferenced: summary.unreferenced,
+		groupId: summary.groupId,
 	};
 	const keys = Object.keys(summary.tree);
 	for (const key of keys) {
@@ -123,9 +135,9 @@ function convertSummaryToSnapshotAndBlobs(
 
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
-				let blobs: ISerializableBlobContents | undefined;
-				[treeNode.trees[key], blobs] = convertSummaryToSnapshotAndBlobs(summaryObject);
-				blobContents = { ...blobContents, ...blobs };
+				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);
+				treeNode.trees[key] = innerSnapshot.baseSnapshot;
+				blobContents = { ...blobContents, ...innerSnapshot.snapshotBlobs };
 				break;
 			}
 			case SummaryType.Attachment:
@@ -151,7 +163,8 @@ function convertSummaryToSnapshotAndBlobs(
 			}
 		}
 	}
-	return [treeNode, blobContents];
+	const pendingSnapshot = { baseSnapshot: treeNode, snapshotBlobs: blobContents };
+	return pendingSnapshot;
 }
 
 /**
@@ -162,7 +175,7 @@ function convertSummaryToSnapshotAndBlobs(
 function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] {
+): SnapshotWithBlobs {
 	const combinedSummary: ISummaryTree = {
 		type: SummaryType.Tree,
 		tree: { ...appSummaryTree.tree },
@@ -175,10 +188,10 @@ function convertProtocolAndAppSummaryToSnapshotAndBlobs(
 
 export const getSnapshotTreeAndBlobsFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-): [ISnapshotTree, ISerializableBlobContents] => {
+): SnapshotWithBlobs => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
-		"Protocol and App summary trees should be present",
+		0x8e6 /* Protocol and App summary trees should be present */,
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
 	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
@@ -258,7 +271,7 @@ export function getDetachedContainerStateFromSerializedContainer(
 	if (isPendingDetachedContainerState(parsedContainerState)) {
 		return parsedContainerState;
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const [baseSnapshot, snapshotBlobs] =
+		const { baseSnapshot, snapshotBlobs } =
 			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
@@ -270,4 +283,54 @@ export function getDetachedContainerStateFromSerializedContainer(
 	} else {
 		throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 	}
+}
+
+/**
+ * Ensures only a single instance of the provided async function is running.
+ * If there are multiple calls they will all get the same promise to wait on.
+ */
+export const runSingle = <A extends any[], R>(func: (...args: A) => Promise<R>) => {
+	let running:
+		| {
+				args: A;
+				result: Promise<R>;
+		  }
+		| undefined;
+	// don't mark this function async, so we return the same promise,
+	// rather than one that is wrapped due to async
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	return (...args: A) => {
+		if (running !== undefined) {
+			if (!compareArrays(running.args, args)) {
+				return Promise.reject(
+					new UsageError("Subsequent calls cannot use different arguments."),
+				);
+			}
+			return running.result;
+		}
+		running = { args, result: func(...args).finally(() => (running = undefined)) };
+		return running.result;
+	};
+};
+
+export async function getDocumentAttributes(
+	storage: Pick<IDocumentStorageService, "readBlob">,
+	tree: ISnapshotTree | undefined,
+): Promise<IDocumentAttributes> {
+	if (tree === undefined) {
+		return {
+			minimumSequenceNumber: 0,
+			sequenceNumber: 0,
+		};
+	}
+
+	// Backward compatibility: old docs would have ".attributes" instead of "attributes"
+	const attributesHash =
+		".protocol" in tree.trees
+			? tree.trees[".protocol"].blobs.attributes
+			: tree.blobs[".attributes"];
+
+	const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
+
+	return attributes;
 }

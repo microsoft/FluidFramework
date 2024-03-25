@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	readAndParse,
 	blobHeadersBlobName as blobNameForBlobHeaders,
+	readAndParse,
 } from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
@@ -15,11 +15,12 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { IGCMetadata } from "../gc";
+import { IGCMetadata } from "../gc/index.js";
+import { IDocumentSchema } from "./documentSchema.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -98,8 +99,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly summaryNumber?: number;
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
-	/** True if the runtime IdCompressor is enabled */
-	readonly idCompressorEnabled?: boolean;
+
+	readonly documentSchema?: IDocumentSchema;
 }
 
 /**

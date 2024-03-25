@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -18,7 +19,6 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 /**
@@ -155,7 +155,7 @@ describeCompat(
 		const createContainer = async (): Promise<IContainer> =>
 			provider.createContainer(runtimeFactory);
 
-		beforeEach(async function () {
+		beforeEach("setup", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// These tests validate the GC state in summary by calling summarize directly on the container runtime.
 			// They do not post these summaries or download them. So, it doesn't need to run against real services.

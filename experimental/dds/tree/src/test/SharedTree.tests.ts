@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { WriteFormat } from '../persisted-types';
-import { setUpTestSharedTree, setUpLocalServerTestSharedTree } from './utilities/TestUtilities';
-import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests';
-import { runSummarySizeTests } from './utilities/SummarySizeTests';
-import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests';
-import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests';
-import { runSummaryTests } from './Summary.tests';
+import { WriteFormat } from '../persisted-types/index.js';
+import { runSummaryTests } from './Summary.tests.js';
+import { runPendingLocalStateTests } from './utilities/PendingLocalStateTests.js';
+import { runSharedTreeOperationsTests } from './utilities/SharedTreeTests.js';
+import { runSharedTreeVersioningTests } from './utilities/SharedTreeVersioningTests.js';
+import { runSummarySizeTests } from './utilities/SummarySizeTests.js';
+import { setUpLocalServerTestSharedTree, setUpTestSharedTree } from './utilities/TestUtilities.js';
 
 describe('SharedTree', () => {
 	describe('Operations', () => {

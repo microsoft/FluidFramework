@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, JsonableTree, Value } from "../../../core/index.js";
+import { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
 import {
 	SharedTreeTestFactory,
 	createTestUndoRedoStacks,
@@ -21,9 +21,9 @@ import {
 	validateTreeConsistency,
 } from "../../utils.js";
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
+	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
@@ -217,8 +217,7 @@ describe("Fuzz - undo/redo", () => {
 			numberOfClients: 3,
 			emitter,
 			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 0,
+				numOpsBeforeAttach: 0,
 			},
 			saveFailures: {
 				directory: failureDirectory,
@@ -283,8 +282,7 @@ describe("Fuzz - undo/redo", () => {
 			// This test is targeted at long-running undo/redo scenarios, so having a single client start detached and later attach
 			// is not particularly interesting
 			detachedStartOptions: {
-				enabled: false,
-				attachProbability: 1,
+				numOpsBeforeAttach: 0,
 			},
 			saveFailures: {
 				directory: failureDirectory,

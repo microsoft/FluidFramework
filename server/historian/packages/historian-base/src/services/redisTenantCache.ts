@@ -15,7 +15,7 @@ export class RedisTenantCache {
 	private readonly prefix: string = "tenant";
 
 	constructor(
-		private readonly client: Redis.default,
+		private readonly client: Redis.default | Redis.Cluster,
 		parameters?: IRedisParameters,
 	) {
 		if (parameters?.expireAfterSeconds) {

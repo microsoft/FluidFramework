@@ -1,5 +1,60 @@
 # @fluidframework/tree
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   map, tree: DDS classes are no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    SharedMap and SharedTree now only export their factories and the interface types.
+    The actual concrete classes which leak implementation details are no longer exported.
+    Users of the `SharedMap` type should use `ISharedMap`.
+    Users of the `SharedTree` type should use `ISharedTree`.
+
+-   tree: Minor API fixes for "@fluidframework/tree" package. ([#19057](https://github.com/microsoft/FluidFramework/issues/19057)) [3e0f218832](https://github.com/microsoft/FluidFramework/commits/3e0f21883255317f8bb1f7c420543650502a5b66)
+
+    Rename `IterableTreeListContent` to `IterableTreeArrayContent`, inline `TreeMapNodeBase` into `TreeMapNode`, rename `TreeArrayNode.spread` to `TreeArrayNode.spread` and remove `create` which was not supposed to be public (use `TreeArrayNode.spread` instead).
+
+## 2.0.0-rc.1.0.0
+
+### Major Changes
+
+-   @fluid-experimental/tree2 package renamed ([#18851](https://github.com/microsoft/FluidFramework/issues/18851)) [6161193ffe](https://github.com/microsoft/FluidFramework/commits/6161193ffe661c3835c4f1ba2da78078dca10b4b)
+
+    The package is now `@fluidframework/tree`.
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
 ## 2.0.0-internal.8.0.0
 
 ### Major Changes

@@ -3,32 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	IdCreationRange,
-	IIdCompressor,
-	IIdCompressorCore,
-	OpSpaceCompressedId,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-} from "./types";
-import { FinalCompressedId, isFinalId, LocalCompressedId, NumericUuid } from "./identifiers";
-import {
-	createSessionId,
-	localIdFromGenCount,
-	genCountFromLocalId,
-	numericUuidFromStableId,
-	offsetNumericUuid,
-	stableIdFromNumericUuid,
-	subtractNumericUuids,
-} from "./utilities";
+import { FinalSpace } from "./finalSpace.js";
+import { FinalCompressedId, LocalCompressedId, NumericUuid, isFinalId } from "./identifiers.js";
 import {
 	Index,
 	readBoolean,
@@ -37,18 +17,38 @@ import {
 	writeBoolean,
 	writeNumber,
 	writeNumericUuid,
-} from "./persistanceUtilities";
+} from "./persistanceUtilities.js";
+import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
 import {
-	getAlignedLocal,
-	getAlignedFinal,
 	IdCluster,
-	lastFinalizedLocal,
 	Session,
 	Sessions,
+	getAlignedFinal,
+	getAlignedLocal,
 	lastFinalizedFinal,
-} from "./sessions";
-import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer";
-import { FinalSpace } from "./finalSpace";
+	lastFinalizedLocal,
+} from "./sessions.js";
+import {
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCreationRange,
+	OpSpaceCompressedId,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./types/index.js";
+import {
+	createSessionId,
+	genCountFromLocalId,
+	localIdFromGenCount,
+	numericUuidFromStableId,
+	offsetNumericUuid,
+	stableIdFromNumericUuid,
+	subtractNumericUuids,
+} from "./utilities.js";
 
 /**
  * The version of IdCompressor that is currently persisted.
@@ -166,11 +166,25 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
+	public generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId {
+		const id = this.generateCompressedId();
+		return isFinalId(id) ? id : this.decompress(id);
+	}
+
+	/**
+	 * Starts a ghost session. Only exposed for test purposes (this class is not exported from the package).
+	 * @param ghostSessionId - The session ID to start the ghost session with.
+	 */
+	public startGhostSession(ghostSessionId: SessionId): void {
+		assert(!this.ongoingGhostSession, 0x8fe /* Ghost session already in progress. */);
+		this.ongoingGhostSession = { ghostSessionId };
+	}
+
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
-		this.ongoingGhostSession = { ghostSessionId };
+		this.startGhostSession(ghostSessionId);
 		try {
 			ghostSessionCallback();
 		} finally {
@@ -187,7 +201,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public takeNextCreationRange(): IdCreationRange {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a6 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		const count = this.localGenCount - (this.nextRangeBaseGenCount - 1);
 		if (count === 0) {
@@ -224,7 +238,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public finalizeCreationRange(range: IdCreationRange): void {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a7 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		// Check if the range has IDs
 		if (range.ids === undefined) {
@@ -311,7 +325,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {
 		assert(
 			!this.ongoingGhostSession?.cluster,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a8 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		const newCluster = session.addNewCluster(
 			this.finalSpace.getAllocatedIdLimit(),
@@ -478,7 +492,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	public serialize(hasLocalState: boolean): SerializedIdCompressor {
 		assert(
 			!this.ongoingGhostSession,
-			"IdCompressor should not be operated normally when in a ghost session",
+			0x8a9 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
 		const { normalizer, finalSpace, sessions } = this;
 		const sessionIndexMap = new Map<Session, number>();
@@ -549,15 +563,27 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return bufferToString(serializedFloat.buffer, "base64") as SerializedIdCompressor;
 	}
 
-	public static deserialize(serialized: SerializedIdCompressorWithOngoingSession): IdCompressor;
+	public static deserialize(
+		serialized: SerializedIdCompressorWithOngoingSession,
+		logger?: ITelemetryLoggerExt,
+	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressorWithNoSession,
 		newSessionId: SessionId,
+		logger?: ITelemetryLoggerExt,
 	): IdCompressor;
 	public static deserialize(
 		serialized: SerializedIdCompressor,
-		sessionId?: SessionId,
+		loggerOrSessionId?: ITelemetryLoggerExt | SessionId,
 	): IdCompressor {
+		let sessionId: SessionId | undefined;
+		let logger: ITelemetryLoggerExt | undefined;
+		if (typeof loggerOrSessionId === "string") {
+			sessionId = loggerOrSessionId;
+		} else {
+			logger = loggerOrSessionId;
+		}
+
 		const buffer = stringToBuffer(serialized, "base64");
 		const index: Index = {
 			index: 0,
@@ -569,13 +595,17 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			case 1.0:
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
 			case 2.0:
-				return IdCompressor.deserialize2_0(index, sessionId);
+				return IdCompressor.deserialize2_0(index, sessionId, logger);
 			default:
 				throw new Error("Unknown IdCompressor serialized version.");
 		}
 	}
 
-	static deserialize2_0(index: Index, sessionId?: SessionId): IdCompressor {
+	static deserialize2_0(
+		index: Index,
+		sessionId?: SessionId,
+		logger?: ITelemetryLoggerExt,
+	): IdCompressor {
 		const hasLocalState = readBoolean(index);
 		const sessionCount = readNumber(index);
 		const clusterCount = readNumber(index);
@@ -601,7 +631,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			sessions.push([numeric, new Session(numeric)]);
 		}
 
-		const compressor = new IdCompressor(new Sessions(sessions));
+		const compressor = new IdCompressor(new Sessions(sessions), logger);
 
 		// Clusters
 		let baseFinalId = 0;
@@ -684,7 +714,7 @@ export function createIdCompressor(
 			logger = loggerOrUndefined;
 		} else {
 			localSessionId = createSessionId();
-			logger = loggerOrUndefined;
+			logger = sessionIdOrLogger;
 		}
 	}
 	const compressor = new IdCompressor(
@@ -700,6 +730,7 @@ export function createIdCompressor(
  */
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithOngoingSession,
+	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 /**
  * Deserializes the supplied state into an ID compressor.
@@ -708,12 +739,20 @@ export function deserializeIdCompressor(
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressorWithNoSession,
 	newSessionId: SessionId,
+	logger?: ITelemetryLoggerExt,
 ): IIdCompressor & IIdCompressorCore;
 export function deserializeIdCompressor(
 	serialized: SerializedIdCompressor | SerializedIdCompressorWithNoSession,
-	sessionId?: SessionId,
+	sessionIdOrLogger?: SessionId | ITelemetryLoggerExt,
+	logger?: ITelemetryLoggerExt | undefined,
 ): IIdCompressor & IIdCompressorCore {
-	return sessionId === undefined
-		? IdCompressor.deserialize(serialized as SerializedIdCompressorWithOngoingSession)
-		: IdCompressor.deserialize(serialized as SerializedIdCompressorWithNoSession, sessionId);
+	if (typeof sessionIdOrLogger === "string") {
+		return IdCompressor.deserialize(
+			serialized as SerializedIdCompressorWithNoSession,
+			sessionIdOrLogger,
+			logger,
+		);
+	}
+
+	return IdCompressor.deserialize(serialized as SerializedIdCompressorWithOngoingSession, logger);
 }

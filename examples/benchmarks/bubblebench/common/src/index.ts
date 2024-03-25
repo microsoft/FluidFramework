@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { AppView } from "./view";
-export { IAppState, IArrayish, IBubble, IClient, makeBubble, makeClient } from "./types";
-export { normal, randomColor, rnd } from "./rnd";
-export { Stats } from "./stats";
+export { AppView } from "./view/index.js";
+export { IAppState, IArrayish, IBubble, IClient, makeBubble, makeClient } from "./types.js";
+export { normal, randomColor, rnd } from "./rnd.js";
+export { Stats } from "./stats.js";

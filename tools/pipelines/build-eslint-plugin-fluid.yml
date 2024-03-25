@@ -1,0 +1,99 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# build-eslint-plugin-fluid pipeline
+
+name: $(Build.BuildId)
+
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
+
+trigger:
+  branches:
+    include:
+    - main
+    - next
+    - lts
+    - release/*
+  paths:
+    include:
+    - .prettierignore
+    - common/build/eslint-plugin-fluid
+    - tools/markdown-magic # Required since eslint-plugin-fluid takes a `file:` dependency on this package
+    - tools/pipelines/build-eslint-plugin-fluid.yml
+    - tools/pipelines/templates/1ES/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
+
+pr:
+  branches:
+    include:
+    - main
+    - next
+    - lts
+    - release/*
+  paths:
+    include:
+    - .prettierignore
+    - common/build/eslint-plugin-fluid
+    - tools/markdown-magic # Required since eslint-plugin-fluid takes a `file:` dependency on this package
+    - tools/pipelines/build-eslint-plugin-fluid.yml
+    - tools/pipelines/templates/1ES/build-npm-package.yml
+    - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
+
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: ''
+
+extends:
+  template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
+  parameters:
+    publish: ${{ variables.publish }}
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    buildDirectory: common/build/eslint-plugin-fluid
+    tagName: eslint-plugin-fluid
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
+    testCoverage: ${{ variables.testCoverage }}
+    taskBuild: build
+    taskBuildDocs: false
+    taskLint: false
+    taskTest:
+      - test

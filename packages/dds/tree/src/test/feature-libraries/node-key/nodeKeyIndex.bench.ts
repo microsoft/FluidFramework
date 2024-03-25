@@ -34,14 +34,14 @@ import { ApiMode } from "../../../feature-libraries/schema-aware.js";
 
 const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
 const nodeSchema = builder.object("node", {
-	// child: TreeFieldSchema.createUnsafe(
+	// child: FlexFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeSchema,	() => nodeWithKeySchema],
 	// ),
 });
 const nodeWithKeySchema = builder.object("nodeWithKey", {
 	...nodeKeyField,
-	// child: TreeFieldSchema.createUnsafe(
+	// child: FlexFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeWithKeySchema, () => nodeSchema],
 	// ),

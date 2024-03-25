@@ -9,8 +9,8 @@ import {
 	HorizontalRuleNode,
 	ParagraphNode,
 	SectionNode,
-} from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+} from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("HierarchicalSection Markdown rendering tests", () => {
 	describe("Standard context", () => {

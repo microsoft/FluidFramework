@@ -11,7 +11,10 @@ export interface TokenResponse {
 	/** Token value */
 	token: string;
 
-	/** Flag indicating whether token was obtained from local cache */
+	/**
+	 * Whether or not the token was obtained from local cache.
+	 * @remarks `undefined` indicates that it could not be determined whether or not the token was obtained this way.
+	 */
 	fromCache?: boolean;
 }
 

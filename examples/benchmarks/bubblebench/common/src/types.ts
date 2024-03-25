@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { normal, randomColor, rnd } from "./rnd";
+import { normal, randomColor, rnd } from "./rnd.js";
 
 /**
  * @internal

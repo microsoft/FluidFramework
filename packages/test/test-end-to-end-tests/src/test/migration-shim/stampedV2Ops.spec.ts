@@ -8,24 +8,16 @@ import { strict as assert } from "assert";
 import {
 	type BuildNode,
 	Change,
+	SharedTree as LegacySharedTree,
 	type MigrationShim,
 	MigrationShimFactory,
-	SharedTree as LegacySharedTree,
 	type SharedTreeShim,
 	SharedTreeShimFactory,
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 // eslint-disable-next-line import/no-internal-modules
-import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
-import {
-	type ITree,
-	SharedTree,
-	type TreeView,
-	disposeSymbol,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
+import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -37,10 +29,19 @@ import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
-	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
@@ -131,7 +132,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	// V1 of the registry -----------------------------------------
@@ -200,7 +201,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 	const originalValue = 3;
 	const newValue = 4;
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
@@ -213,7 +214,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		container.close();
 	});
 
-	it.skip("MigrationShim can drop v1 ops and migrate ops", async () => {
+	it("MigrationShim can drop v1 ops and migrate ops", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -222,6 +223,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 
@@ -249,6 +251,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree as ITree;
 		const view1 = getNewTreeView(newTree1);
+		await provider.ensureSynchronized();
 		const view2 = getNewTreeView(newTree2);
 		const node1 = view1.root;
 		const node2 = view2.root;
@@ -278,6 +281,8 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 
+		await waitForContainerConnection(container1);
+
 		await provider.opProcessingController.pauseProcessing();
 		shim1.submitMigrateOp();
 
@@ -303,6 +308,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
+		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		assert(
@@ -313,6 +319,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider) => {
 		const newTree1 = shim1.currentTree as ITree;
 		const newTree2 = shim2.currentTree;
 		const view1 = getNewTreeView(newTree1);
+		await provider.ensureSynchronized();
 		const view2 = getNewTreeView(newTree2);
 		const node1 = view1.root;
 		const node2 = view2.root;

@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { Ink } from "@fluid-experimental/ink";
+import {
+	SharedNumberSequence,
+	SharedObjectSequence,
+	SparseMatrix,
+} from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { Ink } from "@fluidframework/ink";
-import { SharedMap, SharedDirectory } from "@fluidframework/map";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -23,14 +29,8 @@ import {
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { SharedIntervalCollection, SharedString } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
-import {
-	SharedNumberSequence,
-	SharedObjectSequence,
-	SparseMatrix,
-} from "@fluid-experimental/sequence-deprecated";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { UnknownChannelFactory } from "./unknownChannel";
 import { ReplayToolContainerEntryPoint } from "./helpers";
+import { UnknownChannelFactory } from "./unknownChannel";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {

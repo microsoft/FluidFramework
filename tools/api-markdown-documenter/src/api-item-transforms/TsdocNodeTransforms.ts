@@ -16,9 +16,10 @@ import {
 	type DocParagraph,
 	type DocPlainText,
 	type DocSection,
+	type DocInlineTag,
 } from "@microsoft/tsdoc";
 
-import { type Link } from "../Link";
+import { type Link } from "../Link.js";
 import {
 	CodeSpanNode,
 	type DocumentationNode,
@@ -30,10 +31,11 @@ import {
 	PlainTextNode,
 	type SingleLineDocumentationNode,
 	SingleLineSpanNode,
-} from "../documentation-domain";
-import { type ConfigurationBase } from "../ConfigurationBase";
-import { getTsdocNodeTransformationOptions } from "./Utilities";
-import { type ApiItemTransformationConfiguration } from "./configuration";
+	SpanNode,
+} from "../documentation-domain/index.js";
+import { type ConfigurationBase } from "../ConfigurationBase.js";
+import { getTsdocNodeTransformationOptions } from "./Utilities.js";
+import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
@@ -113,6 +115,15 @@ export function _transformTsdocNode(
 		}
 		case DocNodeKind.HtmlEndTag: {
 			return transformTsdocHtmlTag(node as DocHtmlEndTag, options);
+		}
+		case DocNodeKind.InheritDocTag: {
+			options.logger?.error(
+				`Encountered inheritDoc tag. This is not expected. Such tags should have already undergone content replacement.`,
+			);
+			return undefined;
+		}
+		case DocNodeKind.InlineTag: {
+			return transformTsdocInlineTag(node as DocInlineTag);
 		}
 		case DocNodeKind.LinkTag: {
 			return transformTsdocLinkTag(node as DocLinkTag, options);
@@ -200,6 +211,9 @@ export function transformTsdocHtmlTag(
 	node: DocHtmlStartTag | DocHtmlEndTag,
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
+	// TODO: this really isn't right. Mapping this forward as plain text assumes that any output format can support embedded HTML.
+	// That is valid for HTML and Markdown, but not necessarily for other formats.
+	// Instead, we should map embedded HTML content forward in an encapsulated format, and let the renderer decide how to handle it.
 	return new PlainTextNode(node.emitAsHtml(), /* escaped: */ true);
 }
 
@@ -214,7 +228,7 @@ export function transformTsdocFencedCode(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
+ * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link SingleLineDocumentationNode}.
  */
 export function transformTsdocLinkTag(
 	input: DocLinkTag,
@@ -247,6 +261,35 @@ export function transformTsdocLinkTag(
 }
 
 /**
+ * Converts a {@link @microsoft/tsdoc#DocInlineTag} to a {@link SpanNode} (or `undefined` if the input is a `{@label}` tag).
+ *
+ * @remarks
+ * Custom inline tags are not something the system can do anything with inherently.
+ * In the future, we may be able to add extensibility points for transforming custom inline tags.
+ * But for now, we will simply emit them as italicized plain text in the output.
+ *
+ * Notes:
+ *
+ * * `{@link}` tags are handled separately via {@link transformTsdocLinkTag}.
+ *
+ * * `{@inheritDoc}` tags are resolved when loading the API model via simple content replacement.
+ * We do not expect to see them at this stage.
+ *
+ * * `{@label}` tags aren't really intended to appear in output; they're used as extra metadata
+ * for use in `{@link}` and `{@inheritDoc}` tags, so we will simply ignore them here. I.e. we
+ * will return `undefined`.
+ */
+export function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
+	if (node.tagName === "@label") {
+		return undefined;
+	}
+
+	// For all other inline tags, there isn't really anything we can do with them except emit them
+	// as is. However, to help differentiate them in the output, we will italicize them.
+	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, { italic: true });
+}
+
+/**
  * Helper function for creating {@link ParagraphNode}s from input nodes that simply wrap child contents.
  *
  * Also performs the following cleanup steps:
@@ -274,23 +317,27 @@ function createParagraph(
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
 		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+			const plainTextNode = transformedChildren[0] as PlainTextNode;
 			transformedChildren[0] = new PlainTextNode(
-				(transformedChildren[0] as PlainTextNode).value.trimStart(),
+				plainTextNode.value.trimStart(),
+				plainTextNode.escaped,
 			);
 		}
 		if (
 			transformedChildren[transformedChildren.length - 1].type ===
 			DocumentationNodeType.PlainText
 		) {
+			const plainTextNode = transformedChildren[
+				transformedChildren.length - 1
+			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
-				(
-					transformedChildren[transformedChildren.length - 1] as PlainTextNode
-				).value.trimEnd(),
+				plainTextNode.value.trimEnd(),
+				plainTextNode.escaped,
 			);
 		}
 	}
 
-	// To reduce unecessary hierarchy, if the only child of this paragraph is a single paragraph,
+	// To reduce unnecessary hierarchy, if the only child of this paragraph is a single paragraph,
 	// return it, rather than wrapping it.
 	if (
 		transformedChildren.length === 1 &&
@@ -313,12 +360,16 @@ function transformChildren(
 	children: readonly DocNode[],
 	options: TsdocNodeTransformOptions,
 ): DocumentationNode[] {
+	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
+	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
+	// and map the subsequence to an "html" node.
+
 	// Transform child items into Documentation domain
 	const transformedChildren = children.map((child) => _transformTsdocNode(child, options));
 
 	// Filter out `undefined` values resulting from transformation errors.
 	let filteredChildren = transformedChildren.filter(
-		(child) => child !== undefined,
+		(child) => child !== undefined && !child.isEmpty,
 	) as DocumentationNode[];
 
 	// Collapse groups of adjacent line breaks to reduce unnecessary clutter in the output.

@@ -2,8 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
+import * as semver from "semver";
 import {
 	CompatKind,
 	compatKind,
@@ -15,8 +17,13 @@ import {
 } from "../compatOptions.cjs";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
-import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
-import { getRequestedVersion } from "./versionUtils.js";
+import {
+	baseVersion,
+	baseVersionForMinCompat,
+	codeVersion,
+	testBaseVersion,
+} from "./baseVersion.js";
+import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -52,14 +59,23 @@ export interface CompatConfig {
 	 * (Same version will be used across all layers).
 	 */
 	loadWith?: CompatVersion;
+	/**
+	 * Cross Version Compat Only
+	 * Resolved version from loadWith used to calculate min compat version to test against.
+	 */
+	loadVersion?: string;
 }
 
 const defaultCompatVersions = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
 	// we are currently supporting 1.3.X long-term
-	ltsVersions: ["^1.3.4"],
+	ltsVersions: [resolveVersion("^1.3", false)],
 };
+
+// This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.
+// Currently we only want to support 2.0.0.internal.3.y.z. and above
+const defaultNumOfDriverVersionsAboveV2Int1 = 2;
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
@@ -158,7 +174,7 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 	];
 };
 
-const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+const genLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
@@ -171,6 +187,15 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 			compatVersion,
 			loader: compatVersion,
 		},
+	];
+};
+
+const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+	const compatVersionStr =
+		typeof compatVersion === "string"
+			? `${compatVersion} (N)`
+			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+	return [
 		{
 			name: `compat back ${compatVersionStr} - older loader + older driver`,
 			kind: CompatKind.LoaderDriver,
@@ -181,9 +206,7 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	];
 };
 
-const genFullBackCompatConfig = (): CompatConfig[] => {
-	const _configList: CompatConfig[] = [];
-
+const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
 	const [, semverInternal, prereleaseIndentifier] = fromInternalScheme(codeVersion, true, true);
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 
@@ -191,20 +214,54 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	// generating back compat configs. For back compat purposes, we consider RC major release 1 to be treated as internal
 	// major release 9. This will ensure we generate back compat configs for all RC and internal major releases.
 	const greatestInternalMajor = 8;
-	const greatestMajor =
+	const numOfVersionsToV2Int1 =
 		prereleaseIndentifier === "rc" || prereleaseIndentifier === "dev-rc"
 			? semverInternal.major + greatestInternalMajor
-			: semverInternal.major;
+			: semverInternal.major; // this happens to be the greatest major version
+	// This allows us to increase our "LTS" support for certain versions above 2.0.0.internal.1.y.z
+	return numOfVersionsToV2Int1 - numOfVersionsAboveV2Int1;
+};
+
+const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatConfig[] => {
+	// not working with new rc version
+	const _configList: CompatConfig[] = [];
+
+	const loaderVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
 
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
 	// This loop goes as far back as 2.0.0.internal.1.y.z.
 	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)
 	// This means as the number of majors increase the number of versions we support - this may be updated in the future.
-	for (let i = 2; i < greatestMajor; i++) {
-		_configList.push(...genBackCompatConfig(-i));
+	for (let i = 2; i < loaderVersionBackCompatCount; i++) {
+		_configList.push(...genLoaderBackCompatConfig(-i));
+	}
+
+	// Splitting the two allows us to still test driver-loader while skipping older loader-driver versions are no longer supported
+	const driverVersionBackCompatCount = getNumberOfVersionsToGoBack(driverVersionsAboveV2Int1);
+	for (let i = 2; i < driverVersionBackCompatCount; i++) {
+		_configList.push(...genDriverLoaderBackCompatConfig(-i));
 	}
 	return _configList;
 };
+
+/**
+ * Returns true if compat test version is below the one provided as minimum version.
+ * It helps to filter out lower verions configs that the ones intended to be tested on a
+ * particular suite.
+ */
+export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+	let lowerVersion: string | number = config.compatVersion;
+	// For CrossVersion there are 2 versions being tested. Get the lower one.
+	if (config.kind === CompatKind.CrossVersion) {
+		lowerVersion =
+			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
+				? (config.loadVersion as string)
+				: config.compatVersion;
+	}
+	const compatVersion = getRequestedVersion(baseVersionForMinCompat, lowerVersion);
+	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
+	return semver.compare(compatVersion, minReqVersion) < 0;
+}
 
 /**
  * Generates the cross version compat config permutations.
@@ -246,6 +303,7 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 						compatVersion: resolvedCreateVersion,
 						createWith: createVersion,
 						loadWith: loadVersion,
+						loadVersion: resolvedLoadVersion,
 					};
 				}),
 			)
@@ -284,6 +342,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
+		if (process.env.fluid__test__backCompat === "V2_INT_3") {
+			_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
+		}
 	} else {
 		compatVersions.forEach((value) => {
 			switch (value) {
@@ -295,6 +356,12 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 				}
 				case "FULL": {
 					_configList.push(...genFullBackCompatConfig());
+					break;
+				}
+				case "V2_INT_3": {
+					_configList.push(
+						...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1),
+					);
 					break;
 				}
 				case "CROSS_VERSION": {

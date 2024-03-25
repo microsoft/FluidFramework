@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 
-import { AppState } from "./state";
+import { AppState } from "./state.js";
 
 /**
  * @internal

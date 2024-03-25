@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { Flags } from "@oclif/core";
-import { LayerGraph, Timer } from "@fluidframework/build-tools";
+import { Timer } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
+import { LayerGraph } from "../../library";
 
 const packagesMdFileName = "PACKAGES.md";
 
@@ -46,15 +48,11 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 
 		timer.time("Package scan completed");
 
-		const layerGraph = LayerGraph.load(resolvedRoot, packages, flags.info);
+		const layerGraph = LayerGraph.load(resolvedRoot, packages.packages, flags.info);
 
 		// Write human-readable package list organized by layer
 		if (flags.md !== undefined) {
-			const packagesMdFilePath: string = path.join(
-				resolvedRoot,
-				flags.md,
-				packagesMdFileName,
-			);
+			const packagesMdFilePath: string = path.join(resolvedRoot, flags.md, packagesMdFileName);
 			await writeFile(
 				packagesMdFilePath,
 				layerGraph.generatePackageLayersMarkdown(resolvedRoot),

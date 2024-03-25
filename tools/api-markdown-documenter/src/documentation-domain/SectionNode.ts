@@ -6,9 +6,9 @@ import {
 	type DocumentationNode,
 	DocumentationParentNodeBase,
 	type MultiLineDocumentationNode,
-} from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { type HeadingNode } from "./HeadingNode";
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { type HeadingNode } from "./HeadingNode.js";
 
 /**
  * Represents a hierarchically nested section.

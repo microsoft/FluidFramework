@@ -5,7 +5,6 @@
 
 import { strict } from "assert";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -17,24 +16,26 @@ import {
 	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
-import {
-	assertFieldChangesEqual,
-	deepFreeze,
-	defaultRevInfosFromChanges,
-	defaultRevisionMetadataFromChanges,
-} from "../../utils.js";
-import {
-	brand,
-	fail,
-	fakeIdAllocator,
-	getOrAddEmptyToMap,
-	IdAllocator,
-	idAllocatorFromMaxId,
-	Mutable,
-} from "../../../util/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import {
+	CellOrderingMethod,
+	SequenceConfig,
+	sequenceConfig,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/config.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
+import {
+	CellId,
+	Changeset,
+	HasMarkFields,
+	MarkListFactory,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
@@ -49,22 +50,21 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
-	CellOrderingMethod,
-	SequenceConfig,
-	sequenceConfig,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/config.js";
+	IdAllocator,
+	Mutable,
+	brand,
+	fail,
+	fakeIdAllocator,
+	getOrAddEmptyToMap,
+	idAllocatorFromMaxId,
+} from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
 import {
-	CellId,
-	Changeset,
-	HasMarkFields,
-	MarkListFactory,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/sequence-field/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+	assertFieldChangesEqual,
+	deepFreeze,
+	defaultRevInfosFromChanges,
+	defaultRevisionMetadataFromChanges,
+} from "../../utils.js";
 import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
@@ -148,13 +148,20 @@ export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
 ): TestChangeset {
-	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
+	return composeI(
+		changes,
+		(change1, change2) => TestChange.compose(change1, change2, false),
+		revInfos,
+	);
 }
 
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
-	childComposer?: (childChanges: TaggedChange<TestChange>[]) => TestChange,
+	childComposer?: (
+		change1: TestChange | undefined,
+		change2: TestChange | undefined,
+	) => TestChange,
 ): TestChangeset {
 	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
 }
@@ -175,9 +182,12 @@ export function shallowCompose<T>(
 ): SF.Changeset<T> {
 	return composeI(
 		changes,
-		(children) => {
-			assert(children.length === 1, "Should only have one child to compose");
-			return children[0].change;
+		(child1, child2) => {
+			assert(
+				child1 === undefined || child2 === undefined,
+				"Should only have one child to compose",
+			);
+			return child1 ?? child2 ?? fail("One of the children should be defined");
 		},
 		revInfos,
 	);
@@ -185,7 +195,7 @@ export function shallowCompose<T>(
 
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
-	composer: (childChanges: TaggedChange<T>[]) => T,
+	composer: (change1: T | undefined, change2: T | undefined) => T,
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
 ): SF.Changeset<T> {
 	const updatedChanges = changes.map(({ change, revision, rollbackOf }) => ({
@@ -193,32 +203,51 @@ function composeI<T>(
 		revision,
 		rollbackOf,
 	}));
-	const moveEffects = SF.newCrossFieldTable();
-	const idAllocator = continuingAllocator(changes);
-	let composed = SF.compose(
-		updatedChanges,
-		composer,
-		idAllocator,
-		moveEffects,
+	const idAllocator = continuingAllocator(updatedChanges);
+	const metadata =
 		revInfos !== undefined
 			? Array.isArray(revInfos)
 				? revisionMetadataSourceFromInfo(revInfos)
 				: revInfos
-			: defaultRevisionMetadataFromChanges(updatedChanges),
-	);
+			: defaultRevisionMetadataFromChanges(updatedChanges);
+
+	let composed: SF.Changeset<T> = [];
+	for (const change of updatedChanges) {
+		composed = composePair(makeAnonChange(composed), change, composer, metadata, idAllocator);
+	}
+
+	return composed;
+}
+
+function composePair<T>(
+	change1: TaggedChange<SF.Changeset<T>>,
+	change2: TaggedChange<SF.Changeset<T>>,
+	composer: (change1: T | undefined, change2: T | undefined) => T,
+	metadata: RevisionMetadataSource,
+	idAllocator: IdAllocator,
+): SF.Changeset<T> {
+	const moveEffects = SF.newCrossFieldTable();
+	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
-		composed = SF.amendCompose(composed, composer, idAllocator, moveEffects);
-		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
+		composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 	}
 	return composed;
+}
+
+export interface RebaseConfig {
+	readonly metadata?: RebaseRevisionMetadata;
+	readonly childRebaser?: (
+		child: TestChange | undefined,
+		base: TestChange | undefined,
+	) => TestChange | undefined;
 }
 
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionMetadata?: RebaseRevisionMetadata,
+	config: RebaseConfig = {},
 ): TestChangeset {
 	const cleanChange = purgeUnusedCellOrderingInfo(change);
 	const cleanBase = { ...base, change: purgeUnusedCellOrderingInfo(base.change) };
@@ -226,18 +255,19 @@ export function rebase(
 	deepFreeze(cleanBase);
 
 	const metadata =
-		revisionMetadata ??
-		rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
-			[cleanBase.revision],
-		);
+		config.metadata ??
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
+			cleanBase.revision,
+		]);
+
+	const childRebaser = config.childRebaser ?? TestChange.rebase;
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
 	let rebasedChange = SF.rebase(
 		cleanChange,
 		cleanBase,
-		TestChange.rebase,
+		childRebaser,
 		idAllocator,
 		moveEffects,
 		metadata,
@@ -247,7 +277,7 @@ export function rebase(
 		rebasedChange = SF.rebase(
 			cleanChange,
 			cleanBase,
-			TestChange.rebase,
+			childRebaser,
 			idAllocator,
 			moveEffects,
 			metadata,
@@ -272,11 +302,9 @@ export function rebaseOverChanges(
 	const revisionInfo = revInfos ?? defaultRevInfosFromChanges(baseChanges);
 	for (const base of baseChanges) {
 		currChange = tagChange(
-			rebase(
-				currChange.change,
-				base,
-				rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
-			),
+			rebase(currChange.change, base, {
+				metadata: rebaseRevisionMetadataFromInfo(revisionInfo, [base.revision]),
+			}),
 			currChange.revision,
 		);
 	}
@@ -289,7 +317,7 @@ export function rebaseOverComposition(
 	base: TestChangeset,
 	metadata: RebaseRevisionMetadata,
 ): TestChangeset {
-	return rebase(change, makeAnonChange(base), metadata);
+	return rebase(change, makeAnonChange(base), { metadata });
 }
 
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
@@ -306,6 +334,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		cleanChange,
 		TestChange.invert,
+		true,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
@@ -319,6 +348,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.invert(
 			cleanChange,
 			TestChange.invert,
+			true,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
 			table,

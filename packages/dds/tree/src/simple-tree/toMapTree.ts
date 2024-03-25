@@ -12,22 +12,23 @@ import { EmptyKey, type FieldKey, type MapTree } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../domains/leafDomain.js";
 import {
+	type AllowedTypeSet,
+	Any,
+	type CursorWithNode,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	type FlexTreeNodeSchema,
+	FlexTreeSchema,
+	LeafNodeSchema,
+	Multiplicity,
 	allowsValue,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
-	type CursorWithNode,
-	isFluidHandle,
-	Multiplicity,
-	type FlexTreeNodeSchema,
-	FlexTreeSchema,
-	type AllowedTypeSet,
-	TreeFieldSchema,
-	Any,
-	FieldNodeSchema,
-	isTreeValue,
-	LeafNodeSchema,
-	MapNodeSchema,
 	getAllowedTypes,
+	isFluidHandle,
+	isTreeValue,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { brand, isReadonlyArray } from "../util/index.js";
@@ -67,14 +68,14 @@ export function cursorFromNodeData(
 type InsertableTreeField = InsertableContent | undefined | InsertableContent[];
 
 /**
- * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
+ * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s, and wraps the tree in a {@link CursorWithNode}.
  * @param data - The input tree to be converted.
  * @param globalSchema - Schema for the whole tree for interperting `Any`.
  */
 export function cursorFromFieldData(
 	data: InsertableTreeField,
 	globalSchema: FlexTreeSchema,
-	fieldSchema: TreeFieldSchema,
+	fieldSchema: FlexFieldSchema,
 ): CursorWithNode<MapTree> {
 	const mappedContent = fieldDataToMapTrees(data, globalSchema, fieldSchema);
 	return cursorForMapTreeField(mappedContent);
@@ -132,7 +133,7 @@ export function nodeDataToMapTree(
 }
 
 /**
- * Transforms an input {@link TreeField} tree to a list of {@link MapTree}s.
+ * Transforms an input {@link TreeField} tree to an array of {@link MapTree}s.
  * @param data - The input tree to be converted.
  * If the input is a sequence containing 1 or more `undefined` values, those values will be mapped as `null` if supported.
  * Othewise, an error will be thrown.
@@ -141,7 +142,7 @@ export function nodeDataToMapTree(
 export function fieldDataToMapTrees(
 	data: InsertableTreeField,
 	globalSchema: FlexTreeSchema,
-	fieldSchema: TreeFieldSchema,
+	fieldSchema: FlexFieldSchema,
 ): MapTree[] {
 	const multiplicity = fieldSchema.kind.multiplicity;
 	if (data === undefined) {
@@ -164,7 +165,7 @@ export function fieldDataToMapTrees(
 				if (typeSet === Any || typeSet.has(leaf.null)) {
 					childWithFallback = null;
 				} else {
-					throw new TypeError(`Received unsupported list entry value: ${child}.`);
+					throw new TypeError(`Received unsupported array entry value: ${child}.`);
 				}
 			}
 			return nodeDataToMapTree(childWithFallback, globalSchema, typeSet);
@@ -242,7 +243,7 @@ function arrayToMapTree(
 ): MapTree {
 	const schema = getType(data, globalSchema, typeSet);
 	assert(
-		schema instanceof FieldNodeSchema,
+		schema instanceof FlexFieldNodeSchema,
 		0x84b /* Array data reported comparable with the schema without a primary field. */,
 	);
 
@@ -250,7 +251,7 @@ function arrayToMapTree(
 	const fieldsEntries: [FieldKey, MapTree[]][] =
 		mappedChildren.length === 0 ? [] : [[EmptyKey, mappedChildren]];
 
-	// List children are represented as a single field entry denoted with `EmptyKey`
+	// Array node children are represented as a single field entry denoted with `EmptyKey`
 	const fields = new Map<FieldKey, MapTree[]>(fieldsEntries);
 
 	return {
@@ -385,7 +386,7 @@ function shallowCompatibilityTest(
 ): boolean {
 	assert(
 		data !== undefined,
-		"undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData.",
+		0x889 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	if (isTreeValue(data)) {
 		return schema instanceof LeafNodeSchema && allowsValue(schema.leafValue, data);
@@ -397,7 +398,7 @@ function shallowCompatibilityTest(
 		return data[typeNameSymbol] === schema.name;
 	}
 	if (isReadonlyArray(data)) {
-		if (schema instanceof FieldNodeSchema) {
+		if (schema instanceof FlexFieldNodeSchema) {
 			const field = schema.getFieldSchema();
 			return field.kind.multiplicity === Multiplicity.Sequence;
 		} else {
@@ -405,11 +406,32 @@ function shallowCompatibilityTest(
 		}
 	}
 	if (data instanceof Map) {
-		return schema instanceof MapNodeSchema;
+		return schema instanceof FlexMapNodeSchema;
 	}
 
-	// For now, consider all not explicitly typed objects shallow compatible.
-	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
+	if (schema instanceof FlexFieldNodeSchema) {
+		throw Error("Expected inserted value to be a list");
+	}
+	if (schema instanceof FlexMapNodeSchema) {
+		throw Error("Expected inserted value to be a map");
+	}
+
+	assert(schema instanceof FlexObjectNodeSchema, 0x906 /* Expected object schema */);
+
+	// TODO: Improve type inference by making this logic more thorough. Handle at least:
+	// * Types which are strict subsets of other types in the same polymorphic union
+	// * Types which have the same keys but different types for those keys in the polymorphic union
+	// * Types which have the same required fields but different optional fields and enough of those optional fields are populated to disambiguate
+
+	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
+
+	for (const [fieldKey, field] of schema.objectNodeFields.entries()) {
+		if (field.kind.multiplicity === Multiplicity.Single) {
+			if (data[fieldKey] === undefined) {
+				return false;
+			}
+		}
+	}
 
 	return true;
 }
@@ -452,7 +474,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys.
 	 *
-	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+	 * Allow explicit undefined for compatibility with FlexTree, and type-safety on read.
 	 */
 	// TODO: make sure explicit undefined is actually handled correctly.
 	[key: FieldKey]: ContextuallyTypedFieldData;

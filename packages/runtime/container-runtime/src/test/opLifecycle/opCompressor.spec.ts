@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "../..";
-import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle";
+import { ContainerMessageType } from "../../index.js";
+import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";
 
 describe("OpCompressor", () => {
 	let compressor: OpCompressor;
@@ -59,7 +59,7 @@ describe("OpCompressor", () => {
 					assert.strictEqual(compressedBatch.content[1].compression, undefined);
 					assert.strictEqual(compressedBatch.content[1].contents, undefined);
 				}
-			});
+			}).timeout(3000);
 		}));
 
 	describe("Unsupported batches", () =>

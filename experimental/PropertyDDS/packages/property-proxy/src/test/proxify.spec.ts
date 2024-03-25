@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable no-prototype-builtins */
 /* eslint-env jest */
 import { PropertyFactory } from "@fluid-experimental/property-properties";

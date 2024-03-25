@@ -2,10 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type Link, type UrlTarget } from "../Link";
-import { DocumentationParentNodeBase, type SingleLineDocumentationNode } from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { PlainTextNode } from "./PlainTextNode";
+import { type Link, type UrlTarget } from "../Link.js";
+import {
+	DocumentationParentNodeBase,
+	type SingleLineDocumentationNode,
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
  * A hyperlink to some other content.

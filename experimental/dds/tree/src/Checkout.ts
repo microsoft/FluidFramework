@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
-import { IDisposable, IErrorEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
-import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
-import { EditId } from './Identifiers';
-import { CachingLogViewer } from './LogViewer';
-import { TreeView } from './TreeView';
-import { RevisionView } from './RevisionView';
-import { EditCommittedHandler, SharedTree } from './SharedTree';
-import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal';
-import { ChangeInternal, Edit, EditStatus } from './persisted-types';
-import { SharedTreeEvent } from './EventTypes';
-import { newEditId } from './EditUtilities';
-import { Change } from './ChangeTypes';
+import { Change } from './ChangeTypes.js';
+import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
+import { newEditId } from './EditUtilities.js';
+import { SharedTreeEvent } from './EventTypes.js';
+import { EditId } from './Identifiers.js';
+import { CachingLogViewer } from './LogViewer.js';
+import { RevisionView } from './RevisionView.js';
+import { EditCommittedHandler, SharedTree } from './SharedTree.js';
+import { EditingResult, GenericTransaction, TransactionInternal, ValidEditingResult } from './TransactionInternal.js';
+import { TreeView } from './TreeView.js';
+import { ChangeInternal, Edit, EditStatus } from './persisted-types/index.js';
 
 /**
  * An event emitted by a `Checkout` to indicate a state change. See {@link ICheckoutEvents} for event argument information.
@@ -197,7 +197,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		}
 
 		const { failure } = result as { failure: TransactionInternal.Failure };
-		const additionalProps: ITelemetryProperties = {};
+		const additionalProps: ITelemetryBaseProperties = {};
 		switch (failure.kind) {
 			case TransactionInternal.FailureKind.BadPlace:
 				additionalProps.placeFailure = failure.placeFailure;

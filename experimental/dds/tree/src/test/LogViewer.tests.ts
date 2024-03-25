@@ -4,10 +4,15 @@
  */
 
 import { strict as assert } from 'assert';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
-import { EditLog } from '../EditLog';
+import { StableRange } from '../ChangeTypes.js';
+import { copyPropertyIfDefined, fail } from '../Common.js';
+import { EditLog } from '../EditLog.js';
+import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities.js';
+import { EditId } from '../Identifiers.js';
+import { initialTree } from '../InitialTree.js';
 import {
 	CachingLogViewer,
 	CachingLogViewerDiagnosticEvents,
@@ -15,10 +20,10 @@ import {
 	LogViewer,
 	SequencedEditResult,
 	SequencedEditResultCallback,
-} from '../LogViewer';
-import { EditId } from '../Identifiers';
-import { copyPropertyIfDefined, fail } from '../Common';
-import { initialTree } from '../InitialTree';
+} from '../LogViewer.js';
+import { NodeIdContext } from '../NodeIdUtilities.js';
+import { RevisionView } from '../RevisionView.js';
+import { TransactionInternal } from '../TransactionInternal.js';
 import {
 	ChangeInternal,
 	ChangeNode,
@@ -28,15 +33,10 @@ import {
 	EditStatus,
 	SetValueInternal,
 	StablePlaceInternal,
-} from '../persisted-types';
-import { areRevisionViewsSemanticallyEqual, newEdit } from '../EditUtilities';
-import { NodeIdContext } from '../NodeIdUtilities';
-import { RevisionView } from '../RevisionView';
-import { TransactionInternal } from '../TransactionInternal';
-import { StableRange } from '../ChangeTypes';
-import { expectDefined } from './utilities/TestCommon';
-import { buildLeaf, TestTree } from './utilities/TestNode';
-import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities';
+} from '../persisted-types/index.js';
+import { expectDefined } from './utilities/TestCommon.js';
+import { TestTree, buildLeaf } from './utilities/TestNode.js';
+import { refreshTestTree, testTraitLabel } from './utilities/TestUtilities.js';
 
 /**
  * Creates an {@link EditLog} and accompanying {@link RevisionView} with pre-existing edits.

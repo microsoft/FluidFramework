@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 
-import { DataCorruptionError, DataProcessingError } from "../error";
-import { LoggingError, isILoggingError, normalizeError } from "../errorLogging";
+import { DataCorruptionError, DataProcessingError } from "../error.js";
+import { LoggingError, isILoggingError, normalizeError } from "../errorLogging.js";
 
 describe("Errors", () => {
 	describe("DataProcessingError.create", () => {

@@ -78,11 +78,6 @@ Therefore, we would test the following combinations:
 -   Use for tests that targets the loader layer, and don't care about compat combinations of other layers.
 -   Test combination generated: [CompatKind.None, CompatKind.Loader]
 
-`NoCompat` - generate one test variant that doesn't varies version of any layers.
-
--   Use for tests that doesn't benefit or require any compat testing.
--   Test combination generated: [CompatKind.None]
-
 This compat `describe*` function will also load the APIs with appropriate version and provide the test with a
 `TestObjectProvider` object, where the test can use to access Fluid functionality. Even when compat testing
 is not necessary, `TestObjectProvider` provide functionalities that help writing Fluid tests, and it allows the test

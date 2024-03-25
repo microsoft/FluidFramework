@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { createResponseError, exceptionToResponse, responseToException } from "../dataStoreHelpers";
+import {
+	createResponseError,
+	exceptionToResponse,
+	responseToException,
+} from "../dataStoreHelpers.js";
 
 describe("createResponseError", () => {
 	it("Strip URL query param ", () => {

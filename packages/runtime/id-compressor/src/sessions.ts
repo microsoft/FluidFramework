@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from "@tylerbu/sorted-btree-es6";
 import { assert } from "@fluidframework/core-utils";
-import { SessionId, StableId } from "./types";
+import { BTree } from "@tylerbu/sorted-btree-es6";
+import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers.js";
+import { SessionId, StableId } from "./types/index.js";
 import {
 	compareBigints,
-	localIdFromGenCount,
 	genCountFromLocalId,
+	localIdFromGenCount,
 	numericUuidFromStableId,
+	offsetNumericUuid,
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
-	offsetNumericUuid,
-} from "./utilities";
-import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers";
+} from "./utilities.js";
 
 /**
  * A collection of all sessions known to the compressor (i.e. all finalized/acked allocated UUIDs and their corresponding local and final forms).

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
+import { globals } from "../jest.config.cjs";
 
 describe("presence-tracker", () => {
 	beforeAll(async () => {
@@ -38,9 +38,11 @@ describe("presence-tracker", () => {
 		const elementHandle = await page.waitForFunction(() =>
 			document.getElementById("focus-div"),
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		const innerHTML = await page.evaluate((element) => element.innerHTML.trim(), elementHandle);
-		console.log(innerHTML.startsWith("Current user"));
+		const innerHTML = await page.evaluate(
+			(element) => element?.innerHTML.trim(),
+			elementHandle,
+		);
+		console.log(innerHTML?.startsWith("Current user"));
 		expect(innerHTML).toMatch(/^Current user:/);
 	});
 
@@ -48,8 +50,10 @@ describe("presence-tracker", () => {
 		const elementHandle = await page.waitForFunction(() =>
 			document.getElementById("focus-div"),
 		);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		const innerHTML = await page.evaluate((element) => element.innerHTML.trim(), elementHandle);
-		expect(innerHTML.endsWith("has focus")).toBe(true);
+		const innerHTML = await page.evaluate(
+			(element) => element?.innerHTML.trim(),
+			elementHandle,
+		);
+		expect(innerHTML?.endsWith("has focus")).toBe(true);
 	});
 });

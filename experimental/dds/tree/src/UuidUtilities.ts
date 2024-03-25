@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { v4, NIL } from 'uuid';
-import { assertWithMessage } from './Common';
-import { StableId, UuidString } from './Identifiers';
+import { NIL, v4 } from 'uuid';
+import { assertWithMessage } from './Common.js';
+import { StableId, UuidString } from './Identifiers.js';
 
 const hexadecimalCharCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as [
 	zero: number,

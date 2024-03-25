@@ -163,4 +163,5 @@ export {
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
 export { IServiceMessageResourceManager } from "./serviceMessage";
+export { IClusterDrainingChecker } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes";
+import { IMergeBlock, IMergeNode, ISegment } from "./mergeTreeNodes.js";
 
 export const LeafAction = {
 	Exit: false,

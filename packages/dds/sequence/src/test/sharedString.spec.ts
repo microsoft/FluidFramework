@@ -4,30 +4,31 @@
  */
 
 import { strict as assert } from "assert";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-	appendToMergeTreeDeltaRevertibles,
 	Marker,
-	matchProperties,
 	MergeTreeDeltaRevertible,
 	ReferenceType,
+	appendToMergeTreeDeltaRevertibles,
+	matchProperties,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { getTextAndMarkers, SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString, getTextAndMarkers } from "../sharedString.js";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;
@@ -399,7 +400,7 @@ describe("SharedString", () => {
 			await sharedString2.load(services2);
 
 			// Now connect the first Ink
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
@@ -448,7 +449,7 @@ describe("SharedString", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedString.
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {

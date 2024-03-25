@@ -50,4 +50,12 @@ export interface ISession {
 	 * Activity time window is defined by `DefaultServiceConfiguration.documentLambda.partitionActivityTimeout`.
 	 */
 	isSessionActive: boolean;
+
+	/**
+	 * Whether the session stickiness should be ignored during session discovery.
+	 * Session stickiness is ignored if the landed cluster is in draining process.
+	 * Session should be landed on a new cluster immediately if the session stickiness is ignored.
+	 * @defaultValue `false` if undefined
+	 */
+	ignoreSessionStickiness?: boolean;
 }

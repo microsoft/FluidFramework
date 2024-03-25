@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { createInsertOnlyAttributionPolicy } from "../attributionPolicy";
-import { TestClient } from "./testClient";
+import { createInsertOnlyAttributionPolicy } from "../attributionPolicy.js";
+import { TestClient } from "./testClient.js";
 
 const localUserLongId = "localUser";
 describe("createInsertOnlyAttributionPolicy", () => {

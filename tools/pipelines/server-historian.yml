@@ -48,16 +48,16 @@ trigger:
     - fluidBuild.config.cjs
     - server/historian
     - tools/pipelines/server-historian.yml
-    - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/1ES/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
-    - tools/pipelines/templates/include-publish-npm-package.yml
-    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package.yml
+    - tools/pipelines/templates/1ES/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-publish-docker-service.yml
-    - tools/pipelines/templates/include-publish-docker-service-steps.yml
+    - tools/pipelines/templates/1ES/include-publish-docker-service.yml
+    - tools/pipelines/templates/1ES/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
 
@@ -74,18 +74,34 @@ pr:
     - fluidBuild.config.cjs
     - server/historian
     - tools/pipelines/server-historian.yml
-    - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/1ES/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
 
+variables:
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      releaseImage: true
+      publishOverride: ${{ parameters.publishOverride }}
+      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+      buildNumberInPatch: true
+  # Note: we tried to centralize the use of the 'container-registry-info' variable group (i.e. put it inside the shared
+  # build-docker-service.yml template) but ran into issues because if it exists in the stage-level variables of the template
+  # instead of in the root-level variables of a pipeline, then the value for the ACR service connection name (which comes
+  # from the variable group) that gets passed to a Docker@1 task seems to not be available before ADO performs checks for
+  # that task, including that the specified service connection exists and the pipeline is authorized to use it. So ADO ends
+  # uplooking for a service connection named "$(containerRegistryConnection)" instead of the actual value after replacement.
+  - group: container-registry-info
+
 extends:
-  template: templates/build-docker-service.yml
+  template: /tools/pipelines/templates/1ES/build-docker-service.yml@self
   parameters:
-    releaseImage: true
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    testBuild: ${{ variables.testBuild }}
+    shouldPushDockerImage: ${{ variables.pushImage }}
+    shouldReleaseDockerImage: ${{ variables.releaseImage }}
+    shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/historian

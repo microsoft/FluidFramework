@@ -13,11 +13,11 @@ import {
 	type ApiPropertySignature,
 } from "@microsoft/api-extractor-model";
 
-import { type SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
-import { type ApiItemTransformationConfiguration } from "../configuration";
-import { createChildDetailsSection, createMemberTables } from "../helpers";
-import { filterChildMembers } from "../ApiItemTransformUtilities";
+import { type SectionNode } from "../../documentation-domain/index.js";
+import { filterByKind } from "../../utilities/index.js";
+import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
+import { filterChildMembers } from "../ApiItemTransformUtilities.js";
 
 /**
  * Default documentation transform for `Interface` items.

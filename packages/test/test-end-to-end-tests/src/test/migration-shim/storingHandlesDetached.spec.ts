@@ -6,13 +6,6 @@
 import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
-import {
-	type ITree,
-	type TreeView,
-	SharedTree,
-	SchemaFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {
@@ -26,7 +19,14 @@ import {
 } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
-import { waitForContainerConnection, type ITestObjectProvider } from "@fluidframework/test-utils";
+import { type ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+} from "@fluidframework/tree";
 
 const newSharedTreeFactory = SharedTree.getFactory();
 const builder = new SchemaFactory("test");
@@ -96,7 +96,7 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 				state: "disabled",
 			},
 		},
-		enableRuntimeIdCompressor: true,
+		enableRuntimeIdCompressor: "on",
 	};
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
@@ -117,11 +117,11 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 
 	let provider: ITestObjectProvider;
 
-	beforeEach(async () => {
+	beforeEach("getTestObjectProvider", async () => {
 		provider = getTestObjectProvider();
 	});
 
-	it.skip("Detached handles", async () => {
+	it("Detached handles", async () => {
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 
 		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);
@@ -135,12 +135,14 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider) =
 
 		const request = provider.driver.createCreateNewRequest(provider.documentId);
 		await container1.attach(request);
+		provider.updateDocumentId(container1.resolvedUrl);
 		await waitForContainerConnection(container1);
 
 		await provider.ensureSynchronized();
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const tree2 = shim2.currentTree;
 		const node2 = getNewTreeView(tree2).root;

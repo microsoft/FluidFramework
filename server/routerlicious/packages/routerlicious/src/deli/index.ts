@@ -16,6 +16,10 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
+import {
+	RedisClientConnectionManager,
+	type IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 
 export async function deliCreate(
 	config: Provider,
@@ -62,6 +66,11 @@ export async function deliCreate(
 	if (checkpointHeuristics && checkpointHeuristics.enable) {
 		core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
 	}
+
+	const enableEphemeralContainerSummaryCleanup =
+		(config.get("deli:enableEphemeralContainerSummaryCleanup") as boolean | undefined) ?? true;
+	core.DefaultServiceConfiguration.deli.enableEphemeralContainerSummaryCleanup =
+		enableEphemeralContainerSummaryCleanup;
 
 	let globalDb: core.IDb;
 	if (globalDbEnabled) {
@@ -122,7 +131,15 @@ export async function deliCreate(
 			servername: redisConfig.host,
 		};
 	}
-	const publisher = new services.SocketIoRedisPublisher(redisOptions);
+	const redisClientConnectionManager: IRedisClientConnectionManager =
+		customizations?.redisClientConnectionManager ??
+		new RedisClientConnectionManager(
+			redisOptions,
+			undefined,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+		);
+	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
 		Lumberjack.error("Error with Redis Publisher:", undefined, err);
@@ -172,6 +189,7 @@ export async function deliCreate(
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
+		customizations?.clusterDrainingChecker,
 	);
 }
 

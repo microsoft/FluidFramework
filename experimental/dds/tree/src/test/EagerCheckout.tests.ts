@@ -4,10 +4,10 @@
  */
 
 import { expect } from 'chai';
-import { Change, StableRange } from '../ChangeTypes';
-import { EagerCheckout } from '../EagerCheckout';
-import { checkoutTests } from './Checkout.tests';
-import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities';
+import { Change, StableRange } from '../ChangeTypes.js';
+import { EagerCheckout } from '../EagerCheckout.js';
+import { checkoutTests } from './Checkout.tests.js';
+import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';
 
 checkoutTests(
 	'EagerCheckout',

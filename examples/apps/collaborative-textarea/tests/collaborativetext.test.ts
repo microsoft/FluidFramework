@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { globals } from "../jest.config";
 import { retryWithEventualValue } from "@fluidframework/test-utils";
+import { globals } from "../jest.config.cjs";
 
 describe("collaborativetext", () => {
 	const getValue = async (index: number, expectedValue: string) =>

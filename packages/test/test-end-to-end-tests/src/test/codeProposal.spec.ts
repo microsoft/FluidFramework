@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -11,17 +12,16 @@ import {
 	IFluidPackage,
 	isFluidPackage,
 } from "@fluidframework/container-definitions";
+import type { ISharedMap } from "@fluidframework/map";
 import {
-	createAndAttachContainer,
-	createDocumentId,
-	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
+	createAndAttachContainer,
+	createDocumentId,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import type { ISharedMap } from "@fluidframework/map";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;
@@ -104,7 +104,7 @@ describeCompat("CodeProposal.EndToEnd", "NoCompat", (getTestObjectProvider, apis
 
 	let provider: ITestObjectProvider;
 	let containers: IContainer[];
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		containers = [];
 

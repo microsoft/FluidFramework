@@ -14,19 +14,19 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
-import {
-	AllowedTypes,
-	Any,
-	FieldKind,
-	FieldKinds,
-	TreeFieldSchema,
-} from "../../../feature-libraries/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	unboxedField,
 	unboxedTree,
 	unboxedUnion,
 } from "../../../feature-libraries/flex-tree/unboxed.js";
+import {
+	Any,
+	FieldKinds,
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexFieldSchema,
+} from "../../../feature-libraries/index.js";
 import { type TreeContent } from "../../../shared-tree/index.js";
 import { contextWithContentReadonly } from "./utils.js";
 
@@ -47,7 +47,7 @@ function initializeCursor(context: Context, anchor: FieldAnchor): ITreeSubscript
  *
  * @returns The initialized context and cursor.
  */
-function initializeTreeWithContent<Kind extends FieldKind, Types extends AllowedTypes>(
+function initializeTreeWithContent<Kind extends FlexFieldKind, Types extends FlexAllowedTypes>(
 	treeContent: TreeContent,
 ): {
 	context: Context;
@@ -95,7 +95,7 @@ describe("unboxedField", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
 		const fieldSchema = SchemaBuilder.optional(objectSchema);
 		const schema = builder.intoSchema(fieldSchema);
@@ -191,7 +191,7 @@ describe("unboxedTree", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
+			child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
 		const rootSchema = builder.optional(objectSchema);
 		const schema = builder.intoSchema(rootSchema);

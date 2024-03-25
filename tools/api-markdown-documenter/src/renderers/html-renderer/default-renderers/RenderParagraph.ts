@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { ParagraphNode } from "../../../documentation-domain";
-import type { DocumentWriter } from "../../DocumentWriter";
-import type { RenderContext } from "../RenderContext";
-import { renderContentsUnderTag } from "../Utilities";
+import type { ParagraphNode } from "../../../documentation-domain/index.js";
+import type { DocumentWriter } from "../../DocumentWriter.js";
+import type { RenderContext } from "../RenderContext.js";
+import { renderContentsUnderTag } from "../Utilities.js";
 
 /**
  * Renders a {@link ParagraphNode} as HTML.

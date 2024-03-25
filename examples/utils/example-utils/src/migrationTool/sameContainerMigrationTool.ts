@@ -11,7 +11,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definit
 import { MessageType } from "@fluidframework/protocol-definitions";
 
 import { assert } from "@fluidframework/core-utils";
-import type { ISameContainerMigrationTool } from "../migrationInterfaces";
+import type { ISameContainerMigrationTool } from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";

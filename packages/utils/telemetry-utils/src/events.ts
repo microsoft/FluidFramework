@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// False positive: this is an import from the `events` package, not from Node.
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
+import type { EventEmitter } from "@fluid-internal/client-utils";
+import { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Note: The contents of this file really don't belong in this package, as they are only intended for internal use.

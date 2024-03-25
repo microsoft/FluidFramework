@@ -4,7 +4,7 @@
  */
 
 import fs from "node:fs";
-import * as Redis from "ioredis";
+import { Redis as IoRedis, RedisOptions as IoRedisOptions, type Cluster } from "ioredis";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
 import {
@@ -14,6 +14,7 @@ import {
 } from "./definitions";
 import { RedisParams } from "./redisFs";
 import { RedisFsManager, RedisFsConfig } from ".";
+
 export class NodeFsManagerFactory implements IFileSystemManagerFactory {
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
 		return fs;
@@ -29,13 +30,19 @@ export class MemFsManagerFactory implements IFileSystemManagerFactory {
 
 export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 	private readonly redisParams: RedisParams;
-	private readonly redisOptions: Redis.RedisOptions;
+	private readonly redisOptions: IoRedisOptions;
 	private readonly redisFsConfig: RedisFsConfig;
-	constructor(config: Provider) {
+	private readonly enableClustering: boolean;
+
+	constructor(
+		config: Provider,
+		private readonly createRedisClient?: (options: IoRedisOptions) => IoRedis | Cluster,
+	) {
 		this.redisFsConfig = {
 			enableRedisFsMetrics: (config.get("git:enableRedisFsMetrics") as boolean) ?? true,
 			redisApiMetricsSamplingPeriod:
 				(config.get("git:redisApiMetricsSamplingPeriod") as number) ?? 0,
+			enableOptimizedStat: (config.get("git:enableRedisFsOptimizedStat") as boolean) ?? false,
 		};
 		const redisConfig = config.get("redis");
 		this.redisOptions = {
@@ -46,6 +53,7 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			enableReadyCheck: true,
 			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
 			enableOfflineQueue: redisConfig.enableOfflineQueue,
+			retryStrategy: (attempts: number) => Math.min(attempts * 50, 2000),
 		};
 		if (redisConfig.enableAutoPipelining) {
 			/**
@@ -62,12 +70,25 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			};
 		}
 
+		const enableHashmapRedisFs = (config.get("git:enableHashmapRedisFs") as boolean) ?? false;
 		this.redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
+			enableHashmapRedisFs,
+			enableRedisMetrics: this.redisFsConfig.enableRedisFsMetrics,
+			redisApiMetricsSamplingPeriod: this.redisFsConfig.redisApiMetricsSamplingPeriod,
 		};
+
+		this.enableClustering = redisConfig.enableClustering;
 	}
 
-	public create(params?: IFileSystemManagerParams): IFileSystemManager {
-		return new RedisFsManager(this.redisParams, this.redisOptions, this.redisFsConfig);
+	public create(fsManagerParams?: IFileSystemManagerParams): IFileSystemManager {
+		return new RedisFsManager(
+			this.redisParams,
+			this.redisOptions,
+			this.redisFsConfig,
+			fsManagerParams,
+			this.createRedisClient,
+			this.enableClustering,
+		);
 	}
 }

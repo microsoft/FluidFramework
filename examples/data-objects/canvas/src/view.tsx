@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IColor, InkCanvas } from "@fluidframework/ink";
+import { IColor, InkCanvas } from "@fluid-experimental/ink";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { Canvas } from "./canvas";
+import { Canvas } from "./canvas.js";
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.less";
 

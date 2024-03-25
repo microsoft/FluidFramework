@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-
+import { EventEmitter } from "@fluid-example/example-utils";
 import {
 	BuildNode,
 	Change,
@@ -20,7 +19,7 @@ import {
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces.js";
 
 /**
  * LegacyTreeInventoryItem is the local object with a friendly interface for the view to use.

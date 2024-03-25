@@ -9,8 +9,8 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes";
-import { createChildLogger } from "./logger";
+import { createChildLogger } from "./logger.js";
+import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events

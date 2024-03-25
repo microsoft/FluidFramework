@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { TSchema } from "@sinclair/typebox";
-import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
+import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
 import { Versioned } from "./format.js";
 
 export function makeVersionedCodec<
@@ -26,7 +26,7 @@ export function makeVersionedCodec<
 				const encoded = inner.encode(data, context);
 				assert(
 					supportedVersions.has(encoded.version),
-					"version being encoded should be supported",
+					0x88b /* version being encoded should be supported */,
 				);
 				return encoded;
 			},
@@ -34,7 +34,7 @@ export function makeVersionedCodec<
 				const versioned = data as Versioned; // Validated by withSchemaValidation
 				assert(
 					supportedVersions.has(versioned.version),
-					"version being decoded is not supported",
+					0x88c /* version being decoded is not supported */,
 				);
 				const decoded = inner.decode(data, context);
 				return decoded;

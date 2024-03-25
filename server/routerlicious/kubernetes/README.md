@@ -20,19 +20,6 @@ chart. Or in the future simpling installing a chart we have published to a chart
 
 Prior to deploying the Routerlicious chart, a few base components need to be configured.
 
-#### Access to the docker images
-
-The Fluid Framework team's internal AKS cluster is configured so it can [authenticate to our ACR instance automatically](https://docs.microsoft.com/en-us/azure/aks/cluster-container-registry-integration?tabs=azure-cli),
-no manual configuration is needed in that cluster.
-
-For external clusters, you'll need to provide credentials to our private container registry as
-documented [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/). This boils
-down to the below command to create a secret in Kubernetes:
-
-```bash
-kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=/vM3i=D+K4+vj+pgha=cg=55OQLDWj3w --docker-email=kurtb@microsoft.com
-```
-
 #### Storage Classes
 
 We use specific [StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/) for some services running in the cluster. For MongoDB we use a storage class

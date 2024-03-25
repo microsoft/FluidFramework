@@ -40,12 +40,11 @@ export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.
 export { MarkListFactory } from "./markListFactory.js";
 export { NodeChangeRebaser, rebase } from "./rebase.js";
 export { invert, NodeChangeInverter } from "./invert.js";
-export { amendCompose, compose, NodeChangeComposer } from "./compose.js";
+export { compose, NodeChangeComposer } from "./compose.js";
 export {
 	getInputLength,
 	isDetach,
 	newCrossFieldTable,
-	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
 	extractMarkEffect,

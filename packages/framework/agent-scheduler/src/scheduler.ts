@@ -4,25 +4,30 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore";
-import { AttachState } from "@fluidframework/container-definitions";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
+import {
+	type ITelemetryLoggerExt,
+	UsageError,
+	createChildLogger,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
-import { tagCodeArtifacts, UsageError } from "@fluidframework/telemetry-utils";
-import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
@@ -89,6 +94,8 @@ export class AgentScheduler
 		return this;
 	}
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	private get clientId(): string {
 		if (this.runtime.attachState === AttachState.Detached) {
 			return UnattachedClientId;
@@ -121,6 +128,7 @@ export class AgentScheduler
 		private readonly consensusRegisterCollection: ConsensusRegisterCollection<string | null>,
 	) {
 		super();
+		this.logger = createChildLogger({ logger: runtime.logger });
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
 		super.setMaxListeners(0);
 		this._handle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
@@ -423,7 +431,7 @@ export class AgentScheduler
 	}
 
 	private sendErrorEvent(eventName: string, error: any, key?: string) {
-		this.runtime.logger.sendErrorEvent({ eventName, key }, error);
+		this.logger.sendErrorEvent({ eventName, key }, error);
 	}
 }
 

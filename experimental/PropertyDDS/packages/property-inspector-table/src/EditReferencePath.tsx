@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import Button from "@material-ui/core/Button";
-import { makeStyles, Theme } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
+import { type Theme, makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import React from "react";
-import { LoadingButton } from "./LoadingButton";
-import { SvgIcon } from "./SVGIcon";
-import { ErrorPopup } from "./ErrorPopup";
-import { iconHeight, iconWidth } from "./constants";
+import { ErrorPopup } from "./ErrorPopup.js";
+import { LoadingButton } from "./LoadingButton.js";
+import { SvgIcon } from "./SVGIcon.js";
+import { iconHeight, iconWidth } from "./constants.js";
 
 const useStyles = makeStyles(
 	(theme: Theme) => ({

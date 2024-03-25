@@ -45,6 +45,7 @@ These DDSes are used for storing key-value data. They are optimistic and use a l
 the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
 -   [SharedMap][] -- a basic key-value data structure.
+-   Map nodes in a [SharedTree][] -- a hierarchical data structure with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
 
 ### Key Value Scenarios
 
@@ -56,9 +57,8 @@ Key-value data structures are the most common choice for many scenarios.
 
 ### Common issues and best practices for key-value DDSes
 
--   Storing a counter in a map will have unexpected behavior. Use the [SharedCounter][] instead.
--   Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
-  collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
+-   Storing arrays, lists, or logs in a single key-value entry may lead to unexpected behavior because users can't
+  collaboratively modify parts of one entry. Try storing the data in an array node of a [SharedTree][].
 -   Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
   value rather than merging two updates. Try splitting the data across multiple keys.
 
@@ -74,6 +74,12 @@ Key-value data structures are the most common choice for many scenarios.
   from the sequence and then insert a new value at the position where the old value was. But because other clients can
   insert and remove, there's no reliable way of getting the new value into the the desired position.
 
+## Hierarchical data
+
+FluidFramework 2.0 preview provides a DDS can be used for hierarchical data structures. It is optimistic and uses a last-writer-wins merge policy.
+
+-   [SharedTree][] -- a tree of data with three kinds of complex nodes; maps (similar to [SharedMap][]), arrays, and JavaScript objects. There are also several kinds of leaf nodes, including boolean, string, number, null, and [Fluid handles]({{< relref "handles.md" >}}).
+
 ## Strings
 
 The SharedString DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
@@ -86,7 +92,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 ## Specialized data structures
 
--   [SharedCounter][] -- a counter.
+-   [SharedCounter][] -- a counter. (Deprecated in Fluid Framework 2.0.)
     -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
     While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/#why-a-specialized-dds" >}}).
     By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
@@ -129,18 +135,20 @@ Typical scenarios require the connected clients to "agree" on some course of act
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
 [Sequences]: {{< relref "/docs/data-structures/sequences.md" >}}
+[SharedTree]: {{< relref "/docs/data-structures/tree.md" >}}
 
 <!-- API links -->
 
-[fluid-framework]: {{< relref "/docs/api/v1/fluid-framework.md" >}}
-[@fluidframework/azure-client]: {{< relref "/docs/api/v1/azure-client.md" >}}
-[@fluidframework/tinylicious-client]: {{< relref "/docs/api/v1/tinylicious-client.md" >}}
+[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
+[@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
+[@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}
 
-[AzureClient]: {{< relref "/docs/api/v1/azure-client/AzureClient-class.md" >}}
-[TinyliciousClient]: {{< relref "/docs/api/v1/tinylicious-client/TinyliciousClient-class.md" >}}
+[AzureClient]: {{< apiref "azure-client" "AzureClient" "class" "v2" >}}
+[TinyliciousClient]: {{< apiref "tinylicious-client" "TinyliciousClient" "class" "v1" >}}
 
-[FluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
-[IFluidContainer]: {{< relref "/docs/api/v1/fluid-static/ifluidcontainer-interface.md" >}}
+[FluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
+[IFluidContainer]: {{< apiref "fluid-static" "IFluidContainer" "interface" "v2" >}}
 
 <!-- prettier-ignore-end -->
 

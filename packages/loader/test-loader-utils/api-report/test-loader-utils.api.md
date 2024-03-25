@@ -14,6 +14,7 @@ import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitio
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
+import { IDocumentServiceEvents } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { INack } from '@fluidframework/protocol-definitions';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -79,7 +80,7 @@ export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageSer
 }
 
 // @internal
-export class MockDocumentService implements IDocumentService {
+export class MockDocumentService extends TypedEventEmitter<IDocumentServiceEvents> implements IDocumentService {
     constructor(deltaStorageFactory?: (() => IDocumentDeltaStorageService) | undefined, deltaConnectionFactory?: ((client?: IClient) => IDocumentDeltaConnection) | undefined);
     // (undocumented)
     connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;

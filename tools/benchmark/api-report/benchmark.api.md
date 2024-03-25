@@ -133,7 +133,7 @@ export interface IMemoryTestObject extends MemoryTestObjectProps {
 // @public
 export const isInPerformanceTestingMode: boolean;
 
-// @public (undocumented)
+// @public
 export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
 // @public (undocumented)
@@ -174,7 +174,7 @@ export function prettyNumber(num: number, numDecimals?: number): string;
 // @public
 export function qualifiedTitle(args: BenchmarkDescription & Titled): string;
 
-// @public (undocumented)
+// @public
 export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
 
 // @public (undocumented)

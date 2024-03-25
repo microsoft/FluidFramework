@@ -5,13 +5,13 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
-import { pkgVersion } from "./packageVersion";
-import { SharedString, SharedStringSegment } from "./sharedString";
+import { pkgVersion } from "./packageVersion.js";
+import { SharedString, SharedStringSegment } from "./sharedString.js";
 
 /**
  * @alpha
@@ -63,6 +63,9 @@ export class SharedStringFactory implements IChannelFactory {
 		return sharedString;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+	 */
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
 		const sharedString = new SharedString(document, id, this.attributes);
 		sharedString.initializeLocal();

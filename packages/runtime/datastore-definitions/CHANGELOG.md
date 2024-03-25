@@ -1,5 +1,69 @@
 # @fluidframework/datastore-definitions
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   datastore-definitions: Add TChannel type parameter to IChannelFactory. ([#19961](https://github.com/microsoft/FluidFramework/issues/19961)) [e2317bdbd2](https://github.com/microsoft/FluidFramework/commits/e2317bdbd29c40c7888bba2ed657a40a8dd6f45b)
+
+    Add `TChannel` type parameter (which defaults to `IFluidLoadable`) to `IChannelFactory`. When left at its default this preserves the old behavior, however packages exporting `IChannelFactory` will now reference `IFluidLoadable` if not providing a different parameter and thus will implicitly depend on @fluidframework/core-interfaces.
+
+-   datastore-definitions: IFluidDataStoreRuntime.logger is now an ITelemetryBaseLogger ([#19585](https://github.com/microsoft/FluidFramework/issues/19585)) [56f23e1b89](https://github.com/microsoft/FluidFramework/commits/56f23e1b895c59f8ba5a50c707484bfdcdeedd67)
+
+    `IFluidDataStoreRuntime.logger` is now an `ITelemetryBaseLogger` instead of the deprecated `ITelemetryLogger`. The `sendTelemetryEvent()`, `sendErrorEvent()`, or `sendPerformanceEvent()` methods were not intended for users of `IFluidDataStoreRuntime`. You can keep using the logger's `send()` method to generate telemetry.
+
+-   container-definitions: ILoaderOptions no longer accepts arbitrary key/value pairs ([#19306](https://github.com/microsoft/FluidFramework/issues/19306)) [741926e225](https://github.com/microsoft/FluidFramework/commits/741926e2253a161504ecc6a6451d8f15d7ac4ed6)
+
+    ILoaderOptions has been narrowed to the specific set of supported loader options, and may no longer be used to pass arbitrary key/value pairs through to the runtime.
+
+## 2.0.0-rc.1.0.0
+
+### Minor Changes
+
+-   Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
+
+    -   @fluidframework/gitresources
+    -   @fluidframework/server-kafka-orderer
+    -   @fluidframework/server-lambdas
+    -   @fluidframework/server-lambdas-driver
+    -   @fluidframework/server-local-server
+    -   @fluidframework/server-memory-orderer
+    -   @fluidframework/protocol-base
+    -   @fluidframework/server-routerlicious
+    -   @fluidframework/server-routerlicious-base
+    -   @fluidframework/server-services
+    -   @fluidframework/server-services-client
+    -   @fluidframework/server-services-core
+    -   @fluidframework/server-services-ordering-kafkanode
+    -   @fluidframework/server-services-ordering-rdkafka
+    -   @fluidframework/server-services-ordering-zookeeper
+    -   @fluidframework/server-services-shared
+    -   @fluidframework/server-services-telemetry
+    -   @fluidframework/server-services-utils
+    -   @fluidframework/server-test-utils
+    -   tinylicious
+
+-   Updated @fluidframework/protocol-definitions ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
+
+    The @fluidframework/protocol-definitions dependency has been upgraded to v3.1.0. [See the full
+    changelog.](https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/CHANGELOG.md#310)
+
+-   datastore-definitions: Remove unused IFluidDataStoreRegistry from IFluidDataStoreRuntime ([#18803](https://github.com/microsoft/FluidFramework/issues/18803)) [396b8e9738](https://github.com/microsoft/FluidFramework/commits/396b8e9738156ff88b62424a0076f09fb5028a32)
+
+    `IFluidDataStoreRuntime` optionally extended `IFluidDataStoreRegistry`. This is never used, so is removed. As with all provider interfaces, consumers can continue to extend the interface if they have a use, and use `FluidObject` to inspect for it existing.
+
+-   garbage collection: Deprecate addedGCOutboundReference ([#18456](https://github.com/microsoft/FluidFramework/issues/18456)) [0619cf8a41](https://github.com/microsoft/FluidFramework/commits/0619cf8a4197bee6d5ac56cac05db92008939817)
+
+    The `addedGCOutboundReference` property on IDeltaConnection, IFluidDataStoreContext, and MockFluidDataStoreRuntime is
+    now deprecated.
+
+    The responsibility of adding outbound references (for Garbage Collection tracking) is moving up to the ContainerRuntime.
+    Previously, DDSes themselves were responsible to detect and report added outbound references (via a handle being stored),
+    so these interfaces (and corresponding mock) needed to plumb that information up to the ContainerRuntime layer where GC sits.
+    This is no longer necessary so they're being removed in an upcoming release.
+
 ## 2.0.0-internal.8.0.0
 
 ### Major Changes

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -12,12 +13,10 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
-	mockConfigProvider,
 	createSummarizerFromFactory,
-	waitForContainerConnection,
 	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
@@ -50,10 +49,10 @@ describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObje
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 		});
-		return provider.createContainer(runtimeFactory, { configProvider: mockConfigProvider() });
+		return provider.createContainer(runtimeFactory);
 	}
 
-	beforeEach(async () => {
+	beforeEach("setupContainer", async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await createContainer();
 		dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;

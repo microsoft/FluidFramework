@@ -5,6 +5,7 @@
 ```ts
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal
 export function assertIsStableId(stableId: string): StableId;
@@ -19,10 +20,10 @@ export function createIdCompressor(sessionId: SessionId, logger?: ITelemetryBase
 export function createSessionId(): SessionId;
 
 // @alpha
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithOngoingSession, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @alpha
-export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId): IIdCompressor & IIdCompressorCore;
+export function deserializeIdCompressor(serialized: SerializedIdCompressorWithNoSession, newSessionId: SessionId, logger?: ITelemetryLoggerExt): IIdCompressor & IIdCompressorCore;
 
 // @internal
 export function generateStableId(): StableId;
@@ -43,7 +44,7 @@ export interface IdCreationRange {
 export interface IIdCompressor {
     decompress(id: SessionSpaceCompressedId): StableId;
     generateCompressedId(): SessionSpaceCompressedId;
-    // (undocumented)
+    generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
     localSessionId: SessionId;
     normalizeToOpSpace(id: SessionSpaceCompressedId): OpSpaceCompressedId;
     normalizeToSessionSpace(id: OpSpaceCompressedId, originSessionId: SessionId): SessionSpaceCompressedId;
@@ -51,7 +52,7 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: StableId): SessionSpaceCompressedId | undefined;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface IIdCompressorCore {
     beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
     finalizeCreationRange(range: IdCreationRange): void;
