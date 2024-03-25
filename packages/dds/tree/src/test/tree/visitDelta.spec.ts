@@ -1143,6 +1143,28 @@ describe("visitDelta", () => {
 		it("when the refreshed tree already exists in the forest", () => {
 			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 			const node = { minor: 42 };
+			index.createEntry(node, 1);
+			const rootFieldDelta: DeltaFieldChanges = {
+				local: [{ count: 1, attach: node }],
+			};
+			const delta: DeltaRoot = {
+				refreshers: [{ id: node, trees: [content] }],
+				fields: new Map([[rootKey, rootFieldDelta]]),
+			};
+			const expected: VisitScript = [
+				["enterField", rootKey],
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["attach", field0, 1, 0],
+				["exitField", rootKey],
+			];
+			testVisit(delta, expected, index);
+			assert.equal(index.entries().next().done, true);
+		});
+
+		it("when the refreshed tree is included in the builds", () => {
+			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
+			const node = { minor: 42 };
 			const rootFieldDelta: DeltaFieldChanges = {
 				local: [{ count: 1, attach: node }],
 			};
