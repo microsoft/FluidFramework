@@ -87,18 +87,20 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 					dataProcessingError: 1,
 					runtimeSequenceNumber: -1,
 				});
-				// In all other cases failure happens only if compression is on, as that either results in sending compressed comtent
-				// (that other container does not understand), or prior to that - in document schema change op (that other container does not undersatnd either).
-				// chunking is only engaged if compression is on.
 			} else if (compression) {
+				// In all other cases failure happens only if compression is on. If compression is not on, then
+				// - there is no chunking, as 2.0 does chunking only if compression is on. That said, if chunking is enabled (with compression),
+				//   it changes point of failre (read on)
+				// - compression is the only change in document schema from 1.x state (no schema stored in a document). Thus, if it's not enabled,
+				//   no document schema changes happens, and no document schema change ops are sent.
 				crash = version?.startsWith("1.");
 				crash2 = version2?.startsWith("1.");
 				if (crash || crash2) {
 					// 0x122 is unknown type of the operation - happens with document schema change ops that old runtime does not understand
 					// 0x121 is no type - happens with compressed ops that old runtime does not understand. This check happens early, and thus
 					//       is missed if op is both compressed and chunked (as unchunking happens later)
-					// 0x161 compressed & chunked op is processed by 1.3 that does not understand compression,
-					//       and thus fails on empty address property (of compressed op).
+					// 0x162 compressed & chunked op is processed by 1.3 that does not understand compression,
+					//       and thus fails on empty address property (of compressed op), after unchunking happens.
 					const error =
 						crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
 					provider.logger?.registerExpectedEvent({
