@@ -13,7 +13,7 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-// This test doesn't care to test compat of the fluid handle implementation, it's just used for convenience
+// This test doesn't care to test compat of the Fluid handle implementation, it's just used for convenience
 // to simulate an unknown object.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { FluidObjectHandle } from "@fluidframework/datastore";
