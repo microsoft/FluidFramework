@@ -991,7 +991,7 @@ describe("visitDelta", () => {
 		]);
 	});
 
-	describe.only("builds refreshers", () => {
+	describe("refreshers", () => {
 		it("for restores at the root", () => {
 			const index = makeDetachedFieldIndex("", testRevisionTagCodec);
 			const node = { minor: 42 };
