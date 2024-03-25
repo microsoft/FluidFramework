@@ -198,6 +198,7 @@ export enum ContainerMessageType {
     BlobAttach = "blobAttach",
     // (undocumented)
     ChunkedOp = "chunkedOp",
+    DocumentSchemaChange = "schema",
     // (undocumented)
     FluidDataStoreOp = "component",
     GC = "GC",
@@ -208,7 +209,7 @@ export enum ContainerMessageType {
 
 // @alpha
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider, IProvideFluidHandleContext {
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, idCompressorMode: IdCompressorMode, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLoggerExt, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>, documentsSchemaController: DocumentsSchemaController, featureGatesForTelemetry: Record<string, boolean | number | undefined>, provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: {
@@ -229,7 +230,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         runSweep?: boolean;
         fullGC?: boolean;
     }, telemetryContext?: ITelemetryContext): Promise<IGCStats | undefined>;
-    protected compressorLoadInitiated: boolean;
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
@@ -251,6 +251,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     get disposed(): boolean;
     // (undocumented)
     readonly disposeFn: (error?: ICriticalContainerError) => void;
+    // (undocumented)
+    get documentSchema(): {
+        explicitSchemaControl?: true | undefined;
+        compressionLz4?: true | undefined;
+        idCompressorMode?: IdCompressorMode;
+        opGroupingEnabled?: true | undefined;
+    };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     ensureNoDataModelChanges<T>(callback: () => T): T;
@@ -285,10 +292,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     }>;
     get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined;
     // (undocumented)
+    get idCompressorMode(): IdCompressorMode;
+    // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     get isDirty(): boolean;
+    protected _loadIdCompressor: Promise<void> | undefined;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
@@ -305,6 +315,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     makeLocallyVisible(): void;
     // (undocumented)
     notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
+    // (undocumented)
+    onSchemaChange(schema: IDocumentSchemaCurrent): void;
     // (undocumented)
     readonly options: Record<string | number, any>;
     orderSequentially<T>(callback: () => T): T;
@@ -353,6 +365,9 @@ export interface ContainerRuntimeMessage {
     type: ContainerMessageType;
 }
 
+// @alpha
+export const currentDocumentVersionSchema = 1;
+
 // @internal (undocumented)
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
     // (undocumented)
@@ -386,6 +401,26 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
 // @internal
 export function detectOutboundReferences(address: string, contents: unknown, addedOutboundReference: (fromNodePath: string, toNodePath: string) => void): void;
+
+// @alpha (undocumented)
+export const disabledCompressionConfig: ICompressionRuntimeOptions;
+
+// @alpha
+export type DocumentSchemaValueType = string | true | number | undefined;
+
+// @alpha
+export class DocumentsSchemaController {
+    constructor(existing: boolean, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
+    // (undocumented)
+    onDisconnect(): void;
+    // (undocumented)
+    onMessageSent(send: (content: IDocumentSchemaChangeMessage) => void): void;
+    processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
+    // (undocumented)
+    sessionSchema: IDocumentSchemaCurrent;
+    // (undocumented)
+    summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined;
+}
 
 // @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -672,7 +707,8 @@ export interface IContainerRuntimeMessageCompatDetails {
 // @alpha (undocumented)
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly disableIsolatedChannels?: true;
-    readonly idCompressorMode?: IdCompressorMode;
+    // (undocumented)
+    readonly documentSchema?: IDocumentSchema;
     readonly message: ISummaryMetadataMessage | undefined;
     // (undocumented)
     readonly summaryFormatVersion: 1;
@@ -687,6 +723,7 @@ export interface IContainerRuntimeOptions {
     readonly enableGroupedBatching?: boolean;
     readonly enableOpReentryCheck?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
+    readonly explicitSchemaControl?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
@@ -703,7 +740,41 @@ export interface ICreateContainerMetadata {
 }
 
 // @alpha
-export type IdCompressorMode = "on" | "delayed" | "off";
+export type IdCompressorMode = "on" | "delayed" | undefined;
+
+// @alpha
+export interface IDocumentSchema {
+    // (undocumented)
+    refSeq: number;
+    // (undocumented)
+    runtime: Record<string, DocumentSchemaValueType>;
+    // (undocumented)
+    version: number;
+}
+
+// @alpha
+export type IDocumentSchemaChangeMessage = IDocumentSchema;
+
+// @alpha
+export type IDocumentSchemaCurrent = {
+    version: 1;
+    refSeq: number;
+    runtime: {
+        [P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean ? true : IDocumentSchemaFeatures[P];
+    };
+};
+
+// @alpha
+export interface IDocumentSchemaFeatures {
+    // (undocumented)
+    compressionLz4: boolean;
+    // (undocumented)
+    explicitSchemaControl: boolean;
+    // (undocumented)
+    idCompressorMode: IdCompressorMode;
+    // (undocumented)
+    opGroupingEnabled: boolean;
+}
 
 // @alpha
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
