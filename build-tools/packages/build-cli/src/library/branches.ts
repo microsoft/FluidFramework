@@ -169,7 +169,7 @@ export function generateReleaseBranchName(
 				? `${semver.major(branchVersion)}.${semver.minor(branchVersion)}`
 				: `${publicVersion.version}-${prereleaseId}.${semver.major(
 						internalVersion,
-				  )}.${semver.minor(internalVersion)}`;
+					)}.${semver.minor(internalVersion)}`;
 	} else if (scheme === "virtualPatch") {
 		releaseBranchVersion = toVirtualPatchScheme(
 			`${semver.major(branchVersion)}.${semver.minor(branchVersion)}.0`,
