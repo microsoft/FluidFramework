@@ -25,6 +25,7 @@ import { ContainerSystemEventName, ContainerSystemEventNames } from "./container
  * The class contains different helper methods for simplifying and standardizing logic for adding additional information necessary
  * to produce different {@link IContainerTelemetry}.
  *
+ * @internal
  */
 export class ContainerEventTelemetryProducer {
 	constructor(private container: IContainer) {}
@@ -101,8 +102,4 @@ export class ContainerEventTelemetryProducer {
 	private getDocumentId(): string | undefined {
 		return this.container.resolvedUrl?.id;
 	}
-}
-
-export interface ContainerTelemetryProducer {
-	(payload?: any): IContainerTelemetry;
 }

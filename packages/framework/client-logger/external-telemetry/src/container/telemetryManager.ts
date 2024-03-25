@@ -13,6 +13,8 @@ import { ContainerSystemEventName, ContainerSystemEventNames } from "./container
  * This class manages container telemetry intended for customers to consume.
  * It manages subcribing to the proper raw container system events, sending them to the {@link ContainerEventTelemetryProducer}
  * to be transformed into {@link IContainerTelemetry} and finally sending them to the provided {@link ITelemetryConsumer}
+ *
+ * @internal
  */
 export class ContainerTelemetryManager {
 	constructor(

@@ -4,12 +4,14 @@
  */
 
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import type { ITelemetryConsumer } from ".";
+import type { ITelemetryConsumer } from "./";
 import type { IExternalTelemetry } from "../telemetry";
 
 /**
  * A simple implementation of {@link ITelemetryConsumer} for sending {@link IExternalTelemetry}
  * to Azure App Insights in a controlled manner.
+ *
+ * @internal
  */
 export class AppInsightsTelemetryConsumer implements ITelemetryConsumer {
 	constructor(private readonly appInsightsClient: ApplicationInsights) {}
