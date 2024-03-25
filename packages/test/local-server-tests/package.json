@@ -90,7 +90,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^3.0.0",
+		"@fluidframework/server-local-server": "^4.0.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
