@@ -25,7 +25,7 @@ import {
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
-import { normalizeFieldSchema } from "./FieldSchemaUtilities.js";
+import { normalizeFieldSchema } from "./fieldSchemaUtils.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {

@@ -26,7 +26,7 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
-import { normalizeAllowedTypes, normalizeFieldSchema } from "./FieldSchemaUtilities.js";
+import { normalizeAllowedTypes, normalizeFieldSchema } from "./fieldSchemaUtils.js";
 import { nullSchema } from "./leafNodeSchema.js";
 import { InsertableContent } from "./proxies.js";
 import {

@@ -27,7 +27,7 @@ import {
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-import { normalizeFieldSchema } from "./FieldSchemaUtilities.js";
+import { normalizeFieldSchema } from "./fieldSchemaUtils.js";
 import {
 	InsertableContent,
 	getSimpleSchema,
