@@ -5,16 +5,15 @@
 
 import { resolve } from 'path';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
-import { AttachState, type IContainer, type IHostLoader } from '@fluidframework/container-definitions';
+import {
+	AttachState,
+	type IContainer,
+	type IFluidCodeDetails,
+	type IHostLoader,
+} from '@fluidframework/container-definitions';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
-import type {
-	ConfigTypes,
-	IConfigProviderBase,
-	IFluidCodeDetails,
-	IFluidHandle,
-	IRequestHeader,
-} from '@fluidframework/core-interfaces';
+import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -74,6 +73,7 @@ import {
 	reservedIdCount,
 } from '../../persisted-types/index.js';
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { _dirname } from './dirname.cjs';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {
@@ -501,7 +501,7 @@ export function areNodesEquivalent(...nodes: NodeData<unknown>[]): boolean {
 
 // This accounts for this file being executed after compilation. If many tests want to leverage resources, we should unify
 // resource path logic to a single place.
-export const testDocumentsPathBase = resolve(__dirname, '../../../src/test/documents/');
+export const testDocumentsPathBase = resolve(_dirname, '../../../src/test/documents/');
 
 export const versionComparator = (versionA: string, versionB: string): number => {
 	const versionASplit = versionA.split('.');

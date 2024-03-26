@@ -7,16 +7,9 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { type SharedObjectClass } from "@fluidframework/fluid-static";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTreeFactory,
-	TreeConfiguration,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -95,7 +88,7 @@ export class AppData extends DataObject {
 			SharedCounter.getFactory(),
 			SharedMatrix.getFactory(),
 			SharedCell.getFactory(),
-			new SharedTreeFactory(),
+			SharedTree.getFactory(),
 		],
 		{},
 	);
@@ -108,7 +101,7 @@ export class AppData extends DataObject {
 		// Create the shared objects and store their handles in the root SharedDirectory
 		const text = SharedString.create(this.runtime, this.sharedTextKey);
 		const counter = SharedCounter.create(this.runtime, this.sharedCounterKey);
-		const sharedTree = this.generateSharedTree(this.runtime);
+		const sharedTree = SharedTree.create(this.runtime);
 
 		const emojiMatrix = SharedMatrix.create(this.runtime, this.emojiMatrixKey);
 		const matrixDimension = 2; // Height and Width
@@ -178,35 +171,6 @@ export class AppData extends DataObject {
 
 			await Promise.all(loadInitialObjectsP);
 		}
-	}
-
-	/**
-	 * Function to create an instance which contains getFactory method returning SharedTreeFactory.
-	 * The example application calls container.create() to create a new DDS, and the method requires:
-	 * #1. static factory method
-	 * #2. class object with a constructor returning a type with a handle field
-	 *
-	 * The function below satisfies the requirements to populate the SharedTree within the application.
-	 */
-	private castSharedTreeType(): SharedObjectClass<ITree> {
-		/**
-		 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
-		 */
-		// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-		class SharedTree {
-			public static getFactory(): SharedTreeFactory {
-				return new SharedTreeFactory();
-			}
-		}
-
-		return SharedTree as unknown as SharedObjectClass<ITree>;
-	}
-
-	private generateSharedTree(runtime: IFluidDataStoreRuntime): ITree {
-		const sharedTreeObject = this.castSharedTreeType();
-
-		const factory = sharedTreeObject.getFactory();
-		return runtime.createChannel(undefined, factory.type) as ITree;
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {

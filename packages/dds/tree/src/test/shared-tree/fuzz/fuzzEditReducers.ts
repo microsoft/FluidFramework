@@ -110,7 +110,7 @@ function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
 			assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
 			assert(field !== undefined);
-			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
+			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
 		case "remove": {

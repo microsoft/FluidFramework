@@ -13,7 +13,6 @@ import {
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { ContainerMessageType } from "../messageTypes.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
 import {
 	BatchManager,
@@ -187,20 +186,12 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
-		assert(
-			message.type !== ContainerMessageType.IdAllocation,
-			0x8f8 /* Allocation message submitted to mainBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.Attach,
-			0x8f9 /* Non attach message submitted to attachFlowBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -232,10 +223,6 @@ export class Outbox {
 	}
 
 	public submitBlobAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.BlobAttach,
-			0x8fa /* Non blobAttach message submitted to blobAttachBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -254,10 +241,6 @@ export class Outbox {
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.IdAllocation,
-			0x8fb /* Non allocation message submitted to idAllocationBatch. */,
-		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -328,10 +311,9 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch();
-		if (
-			rawBatch.hasReentrantOps === true &&
-			this.params.groupingManager.shouldGroup(rawBatch)
-		) {
+		const shouldGroup =
+			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
+		if (rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -344,7 +326,9 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
+			const processedBatch = this.compressBatch(
+				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+			);
 			this.sendBatch(processedBatch);
 		}
 
@@ -390,7 +374,7 @@ export class Outbox {
 		return this.params.opReentrancy() && !this.rebasing;
 	}
 
-	private compressBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
+	private compressBatch(batch: IBatch): IBatch {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
@@ -399,12 +383,10 @@ export class Outbox {
 			this.params.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch);
+			return batch;
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(
-			disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch),
-		);
+		const compressedBatch = this.params.compressor.compressBatch(batch);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes

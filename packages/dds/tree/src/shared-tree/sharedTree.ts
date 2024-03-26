@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -12,6 +11,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	JsonableTree,
@@ -134,10 +134,9 @@ export class SharedTree
 		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
-		assert(
-			runtime.idCompressor !== undefined,
-			0x883 /* IdCompressor must be enabled to use SharedTree */,
-		);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const schema = new TreeStoredSchemaRepository();

@@ -24,14 +24,14 @@ import {
 } from "@fluidframework/devtools-core";
 import React from "react";
 
-import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper";
-import { useMessageRelay } from "../MessageRelayContext";
-import { useLogger } from "../TelemetryUtils";
-import { AudienceView } from "./AudienceView";
-import { ContainerHistoryView } from "./ContainerHistoryView";
-import { ContainerSummaryView } from "./ContainerSummaryView";
-import { DataObjectsView } from "./DataObjectsView";
-import { Waiting } from "./Waiting";
+import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+import { AudienceView } from "./AudienceView.js";
+import { ContainerHistoryView } from "./ContainerHistoryView.js";
+import { ContainerSummaryView } from "./ContainerSummaryView.js";
+import { DataObjectsView } from "./DataObjectsView.js";
+import { Waiting } from "./Waiting.js";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.

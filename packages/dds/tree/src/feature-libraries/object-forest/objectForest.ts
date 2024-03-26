@@ -131,6 +131,7 @@ export class ObjectForest implements IEditableForest {
 			},
 			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.add(content, destination);
+				this.forest.events.emit("afterRootFieldCreated", destination);
 			},
 			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);

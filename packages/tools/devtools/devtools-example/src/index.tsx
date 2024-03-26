@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 
 import { DevtoolsPanel, WindowMessageRelay } from "@fluid-internal/devtools-view";
 
-import { App } from "./App";
+import { App } from "./App.js";
 
 console.log("Rendering app...");
 

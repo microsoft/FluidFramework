@@ -5,25 +5,20 @@
 
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import {
-	createSummarizerFromFactory,
-	summarizeNow,
-	type ITestObjectProvider,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { SummaryType, type ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions";
+import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	createTestConfigProvider,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
@@ -42,22 +37,25 @@ const interceptResult = <T>(
 	return fn;
 };
 
-// A Test Data Object that exposes some basic functionality.
-class TestDataObject extends DataObject {
-	public get _root() {
-		return this.root;
+describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider, apis) => {
+	const { DataObjectFactory, DataObject } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	// A Test Data Object that exposes some basic functionality.
+	class TestDataObject extends DataObject {
+		public get _root() {
+			return this.root;
+		}
+
+		public get containerRuntime() {
+			return this.context.containerRuntime as ContainerRuntime;
+		}
+
+		public get loadingGroupId() {
+			return this.context.loadingGroupId;
+		}
 	}
 
-	public get containerRuntime() {
-		return this.context.containerRuntime as ContainerRuntime;
-	}
-
-	public get loadingGroupId() {
-		return this.context.loadingGroupId;
-	}
-}
-
-describeCompat("Create data store with group id", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {

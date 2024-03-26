@@ -210,8 +210,8 @@ export function generateBumpDepsCommitMessage(
 		bumpedDep === "prerelease"
 			? "released prerelease packages"
 			: isReleaseGroup(bumpedDep)
-			  ? `${bumpedDep} release group`
-			  : PackageName.getUnscopedName(bumpedDep);
+				? `${bumpedDep} release group`
+				: PackageName.getUnscopedName(bumpedDep);
 
 	const releaseGroupSegment = isReleaseGroup(releaseGroup)
 		? ` in the ${releaseGroup} release group`
