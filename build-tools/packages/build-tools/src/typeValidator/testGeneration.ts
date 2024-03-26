@@ -14,6 +14,7 @@ export function buildTestCase(
 	getAsType: TestCaseTypeData,
 	useType: TestCaseTypeData,
 	isCompatible: boolean,
+	typePreprocessor: string,
 ) {
 	if (!isCompatible && (getAsType.removed || useType.removed)) {
 		return "";
@@ -25,9 +26,9 @@ export function buildTestCase(
 	const testString: string[] = [];
 
 	testString.push(`declare function ${getSig}():`);
-	testString.push(`    ${toTypeString(getAsType.prefix, getAsType)};`);
+	testString.push(`    ${toTypeString(getAsType.prefix, getAsType, typePreprocessor)};`);
 	testString.push(`declare function ${useSig}(`);
-	testString.push(`    use: ${toTypeString(useType.prefix, useType)}): void;`);
+	testString.push(`    use: ${toTypeString(useType.prefix, useType, typePreprocessor)}): void;`);
 	testString.push(`${useSig}(`);
 	if (!isCompatible) {
 		testString.push(expectErrorString);
