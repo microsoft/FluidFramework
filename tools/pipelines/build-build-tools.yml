@@ -24,7 +24,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: latest
+  default: "^0.5.0"
 
 trigger:
   branches:
@@ -80,9 +80,15 @@ extends:
 
     preCG:
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 18.17.1
       inputs:
-        version: 14.x
+        version: 18.17.1
+    - task: Npm@1
+      displayName: Install npm 6
+      inputs:
+        command: 'custom'
+        customCommand: 'install --global npm@^6'
+        customRegistry: 'useNpmrc'
     - task: Npm@1
       displayName: npm ci
       inputs:

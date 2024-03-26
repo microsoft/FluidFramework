@@ -53,9 +53,15 @@ jobs:
           - download: current
             artifact: pack
           - task: UseNode@1
-            displayName: Use Node 14.x
+            displayName: Use Node 18.17.1
             inputs:
-              version: 14.x
+              version: 18.17.1
+          - task: Npm@1
+            displayName: Install npm 6
+            inputs:
+              command: 'custom'
+              customCommand: 'install --global npm@^6'
+              customRegistry: 'useNpmrc'
           - template: include-publish-npm-package-steps.yml
             parameters:
               namespace: ${{ parameters.namespace }}

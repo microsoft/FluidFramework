@@ -156,6 +156,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
 
@@ -194,9 +195,15 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 14.x
+          displayName: Use Node 18.17.1
           inputs:
-            version: 14.x
+            version: 18.17.1
+        - task: Npm@1
+          displayName: Install npm 6
+          inputs:
+            command: 'custom'
+            customCommand: 'install --global npm@^6'
+            customRegistry: 'useNpmrc'
         - task: Npm@1
           displayName: npm ci
           inputs:
@@ -210,6 +217,7 @@ stages:
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
 
         # Build
@@ -367,6 +375,7 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+              TARGET_BRANCH_NAME: $(System.PullRequest.TargetBranch)
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
