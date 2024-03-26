@@ -33,8 +33,21 @@ export class SocketIoRedisPublisher implements core.IPublisher {
 		options: Redis.RedisOptions,
 		enableClustering: boolean = false,
 		slotsRefreshTimeout: number = 50000,
+		retryDelays: { 
+			retryDelayOnFailover: number;
+			retryDelayOnClusterDown: number;
+			retryDelayOnTryAgain: number;
+			retryDelayOnMoved: number;
+			maxRedirections?: number;
+		} = {
+			retryDelayOnFailover: 100,
+			retryDelayOnClusterDown: 100,
+			retryDelayOnTryAgain: 100,
+			retryDelayOnMoved: 100,
+			maxRedirections: 16,
+		},
 	) {
-		this.redisClient = getRedisClient(options, slotsRefreshTimeout, enableClustering);
+		this.redisClient = getRedisClient(options, slotsRefreshTimeout, enableClustering, retryDelays);
 
 		this.io = new SocketIoEmitter(this.redisClient);
 

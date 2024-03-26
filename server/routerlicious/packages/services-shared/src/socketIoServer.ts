@@ -167,17 +167,27 @@ export function create(
 			servername: redisConfig.host,
 		};
 	}
+	
+	const retryDelays = {
+		retryDelayOnFailover: 100,
+		retryDelayOnClusterDown: 100,
+		retryDelayOnTryAgain: 100,
+		retryDelayOnMoved: redisConfig.retryDelayOnMoved ?? 100,
+		maxRedirections: redisConfig.maxRedirections ?? 16,
+};
 
 	const pub: Redis.default | Redis.Cluster = getRedisClient(
 		clone(options),
 		redisConfig.slotsRefreshTimeout,
 		redisConfig.enableClustering,
+		retryDelays,
 	);
 
 	const sub: Redis.default | Redis.Cluster = getRedisClient(
 		clone(options),
 		redisConfig.slotsRefreshTimeout,
 		redisConfig.enableClustering,
+		retryDelays,
 	);
 
 	pub.on("error", (err) => {

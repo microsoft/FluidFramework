@@ -214,10 +214,19 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
+		const retryDelays = {
+			retryDelayOnFailover: 100,
+			retryDelayOnClusterDown: 100,
+			retryDelayOnTryAgain: 100,
+			retryDelayOnMoved: redisConfig2.retryDelayOnMoved ?? 100,
+			maxRedirections: redisConfig2.maxRedirections ?? 16,
+		};
+
 		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
 			redisOptions2,
 			redisConfig2.slotsRefreshTimeout,
 			redisConfig2.enableClustering,
+			retryDelays,
 		);
 		const clientManager = new services.ClientManager(redisClient, redisParams2);
 
@@ -225,6 +234,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisOptions2,
 			redisConfig2.slotsRefreshTimeout,
 			redisConfig2.enableClustering,
+			retryDelays,
 		);
 
 		const redisJwtCache = new services.RedisCache(redisClientForJwtCache);
@@ -331,6 +341,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisOptionsForThrottling,
 			redisConfigForThrottling.slotsRefreshTimeout,
 			redisConfigForThrottling.enableClustering,
+			retryDelays,
 		);
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
@@ -471,6 +482,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				redisOptions,
 				redisConfig.slotsRefreshTimeout,
 				redisConfig.enableClustering,
+				retryDelays,
 			);
 
 			redisCache = new services.RedisCache(redisClientForLogging);
