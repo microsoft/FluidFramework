@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 

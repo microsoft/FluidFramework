@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 module.exports = {
 	...require("@fluidframework/build-common/prettier.config.cjs"),
 };
