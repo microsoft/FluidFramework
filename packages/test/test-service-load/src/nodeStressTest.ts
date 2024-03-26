@@ -13,8 +13,8 @@ import {
 } from "@fluidframework/test-driver-definitions";
 import commander from "commander";
 import ps from "ps-node";
-import { ILoadTestConfig } from "./testConfigFile";
-import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
+import { ILoadTestConfig } from "./testConfigFile.js";
+import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils.js";
 
 interface ITestUserConfig {
 	/* Credentials' key/value description:

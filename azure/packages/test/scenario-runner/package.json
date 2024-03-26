@@ -87,7 +87,7 @@
 		"js-yaml": "^4.1.0",
 		"mocha": "^10.2.0",
 		"sinon": "^17.0.1",
-		"start-server-and-test": "^1.11.7",
+		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^4.0.0",
 		"uuid": "^9.0.0"
 	},
