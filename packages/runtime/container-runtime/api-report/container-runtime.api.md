@@ -668,8 +668,6 @@ export interface IChunkedOp {
     // (undocumented)
     originalMetadata?: Record<string, unknown>;
     // (undocumented)
-    originalType: MessageType | ContainerMessageType;
-    // (undocumented)
     totalChunks: number;
 }
 
@@ -1203,24 +1201,6 @@ export interface RuntimeHeaderData {
 export enum RuntimeHeaders {
     viaHandle = "viaHandle",
     wait = "wait"
-}
-
-// @internal @deprecated (undocumented)
-export enum RuntimeMessage {
-    // (undocumented)
-    Alias = "alias",
-    // (undocumented)
-    Attach = "attach",
-    // (undocumented)
-    BlobAttach = "blobAttach",
-    // (undocumented)
-    ChunkedOp = "chunkedOp",
-    // (undocumented)
-    FluidDataStoreOp = "component",
-    // (undocumented)
-    Operation = "op",
-    // (undocumented)
-    Rejoin = "rejoin"
 }
 
 // @alpha
