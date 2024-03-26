@@ -17,7 +17,6 @@ import {
 	revisionMetadataSourceFromInfo,
 	tagChange,
 } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
 import {
 	assertFieldChangesEqual,
 	deepFreeze,
@@ -34,7 +33,7 @@ import {
 	Mutable,
 } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	areInputCellsEmpty,
 	cloneMark,
@@ -65,6 +64,7 @@ import {
 import { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
@@ -148,32 +148,32 @@ export function composeNoVerify(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[],
 ): TestChangeset {
+	return composeI(changes, (id1, id2) => TestNodeId.composeChild(id1, id2, false), revInfos);
+}
+
+export function composeShallow(changes: TaggedChange<SF.Changeset>[]): SF.Changeset {
 	return composeI(
 		changes,
-		(change1, change2) => TestChange.compose(change1, change2, false),
-		revInfos,
+		(id1, id2) => id1 ?? id2 ?? fail("Should not compose two undefined IDs"),
 	);
 }
 
 export function compose(
 	changes: TaggedChange<TestChangeset>[],
 	revInfos?: RevisionInfo[] | RevisionMetadataSource,
-	childComposer?: (
-		change1: TestChange | undefined,
-		change2: TestChange | undefined,
-	) => TestChange,
+	childComposer?: (change1: NodeId | undefined, change2: NodeId | undefined) => NodeId,
 ): TestChangeset {
-	return composeI(changes, childComposer ?? TestChange.compose, revInfos);
+	return composeI(changes, childComposer ?? TestNodeId.composeChild, revInfos) as TestChangeset;
 }
 
 export function prune(
 	change: TestChangeset,
-	childPruner?: (child: TestChange) => TestChange | undefined,
+	childPruner?: (child: NodeId) => TestNodeId | undefined,
 ): TestChangeset {
 	return SF.sequenceFieldChangeRebaser.prune(
 		change,
-		childPruner ?? ((child: TestChange) => (TestChange.isEmpty(child) ? undefined : child)),
-	);
+		childPruner ?? ((child: NodeId) => child),
+	) as TestChangeset;
 }
 
 export function shallowCompose<T>(
@@ -239,9 +239,9 @@ function composePair<T>(
 export interface RebaseConfig {
 	readonly metadata?: RebaseRevisionMetadata;
 	readonly childRebaser?: (
-		child: TestChange | undefined,
-		base: TestChange | undefined,
-	) => TestChange | undefined;
+		child: NodeId | undefined,
+		base: NodeId | undefined,
+	) => NodeId | undefined;
 }
 
 export function rebase(
@@ -261,7 +261,7 @@ export function rebase(
 			[cleanBase.revision],
 		);
 
-	const childRebaser = config.childRebaser ?? TestChange.rebase;
+	const childRebaser = config.childRebaser ?? TestNodeId.rebaseChild;
 
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(cleanChange, cleanBase.change));
@@ -284,7 +284,7 @@ export function rebase(
 			metadata,
 		);
 	}
-	return rebasedChange;
+	return rebasedChange as TestChangeset;
 }
 
 export function rebaseTagged(
@@ -327,7 +327,7 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.dstQueries.clear();
 }
 
-export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+export function invert<T>(change: TaggedChange<SF.Changeset<T>>): SF.Changeset<T> {
 	const cleanChange = { ...change, change: purgeUnusedCellOrderingInfo(change.change) };
 	deepFreeze(cleanChange);
 	const table = SF.newCrossFieldTable();
@@ -364,9 +364,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 
 export function toDelta(change: TestChangeset, revision?: RevisionTag): DeltaFieldChanges {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
-		TestChange.toDelta(tagChange(childChange, revision)),
-	);
+	return SF.sequenceFieldToDelta(tagChange(change, revision), TestNodeId.deltaFromChild);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

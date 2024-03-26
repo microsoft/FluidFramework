@@ -11,11 +11,16 @@ import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { RevisionTagCodec } from "../../../core/index.js";
 import { fail } from "../../../index.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
 		useSnapshotDirectory("sequence-field");
 		const compressor = createSnapshotCompressor();
+		const baseContext = {
+			originatorId: compressor.localSessionId,
+		};
+
 		const family = SequenceField.sequenceFieldChangeCodecFactory(
 			new RevisionTagCodec(compressor),
 		);
@@ -27,11 +32,9 @@ export function testSnapshots() {
 					it(`${index} - ${"type" in mark ? mark.type : "NoOp"}`, () => {
 						const changeset = [mark];
 						const encoded = codec.json.encode(changeset, {
-							baseContext: {
-								originatorId: compressor.localSessionId,
-							},
-							encodeNode: () => fail(""),
-							decodeNode: () => fail(""),
+							baseContext,
+							encodeNode: (node) => TestNodeId.encode(node, baseContext),
+							decodeNode: (node) => TestNodeId.decode(node, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});

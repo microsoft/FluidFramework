@@ -11,21 +11,22 @@ import {
 	makeAnonChange,
 	tagChange,
 } from "../../../core/index.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { TestChangeset, MarkMaker as Mark } from "./testEdits.js";
 
 const tag = mintRevisionTag();
 const atomId: ChangeAtomId = { localId: brand(0) };
 const deltaId: DeltaDetachedNodeId = { minor: atomId.localId };
-const childChange = TestChange.mint([0], 1);
+const childChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([0], 1));
 const relevantNestedTree = { minor: 4242 };
-const oneTreeDelegate = (child: TestChange) => {
+const oneTreeDelegate = (child: NodeId) => {
 	assert.deepEqual(child, childChange);
 	return [relevantNestedTree];
 };
-const noTreeDelegate = (child: TestChange) => {
+const noTreeDelegate = (child: NodeId) => {
 	assert.deepEqual(child, childChange);
 	return [];
 };

@@ -30,8 +30,12 @@ function create(id: NodeId, testChange: TestChange): TestNodeId {
 	return { ...id, testChange };
 }
 
-function composeChild(id1: NodeId | undefined, id2: NodeId | undefined): NodeId {
-	const testChange = TestChange.compose(tryGetTestChange(id1), tryGetTestChange(id2));
+function composeChild(
+	id1: NodeId | undefined,
+	id2: NodeId | undefined,
+	verify: boolean = true,
+): TestNodeId {
+	const testChange = TestChange.compose(tryGetTestChange(id1), tryGetTestChange(id2), verify);
 	const resultId = id1 ?? id2 ?? fail("Should not compose two undefined IDs");
 	const composed: TestNodeId = {
 		...resultId,
@@ -44,7 +48,7 @@ function composeChild(id1: NodeId | undefined, id2: NodeId | undefined): NodeId 
 function rebaseChild(
 	idToRebase: NodeId | undefined,
 	baseId: NodeId | undefined,
-): NodeId | undefined {
+): TestNodeId | undefined {
 	const testChange = TestChange.rebase(tryGetTestChange(idToRebase), tryGetTestChange(baseId));
 	const resultId = idToRebase ?? baseId ?? fail("Should not rebase two undefined IDs");
 	if (testChange === undefined) {

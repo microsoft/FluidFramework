@@ -17,8 +17,9 @@ import {
 	MarkEffect,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
+import { TestNodeId } from "../../testNodeId.js";
 
-export type PopulatedMark<TNodeChange = TestChange> = Populated<
+export type PopulatedMark<TNodeChange = TestNodeId> = Populated<
 	CellMark<Populated<MarkEffect>, TNodeChange>
 >;
 
@@ -44,7 +45,7 @@ export function generatePopulatedMarks(idCompressor: IIdCompressor): PopulatedMa
 		lineage: [lineageEvent],
 		adjacentCells: [adjacentCell],
 	};
-	const changes = TestChange.mint([], 1);
+	const changes = TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1));
 	const unattachIdOverride: Populated<DetachIdOverride> = {
 		type: DetachIdOverrideType.Unattach,
 		id: cellId,

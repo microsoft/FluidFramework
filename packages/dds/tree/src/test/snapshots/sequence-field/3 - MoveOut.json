@@ -55,13 +55,16 @@
       ]
     },
     "changes": {
-      "inputContext": [],
-      "intentions": [
-        1
-      ],
-      "outputContext": [
-        1
-      ]
+      "localId": 2,
+      "testChange": {
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
     }
   }
 ]

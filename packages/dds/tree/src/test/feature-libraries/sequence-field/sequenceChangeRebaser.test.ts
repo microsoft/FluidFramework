@@ -25,7 +25,7 @@ import { TestChange } from "../../testChange.js";
 import { deepFreeze, mintRevisionTag } from "../../utils.js";
 import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
@@ -45,8 +45,10 @@ import {
 	skipOnLineageMethod,
 	areRebasable,
 	DetachedNodeTracker,
+	composeShallow,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -65,8 +67,8 @@ function generateAdjacentCells(maxId: number): SF.IdRange[] {
 	return [{ id: brand(0), count: maxId + 1 }];
 }
 
-const hasAdjacentCells = (m: SF.Mark<TestChange>): boolean => m.cellId?.adjacentCells !== undefined;
-function withAdjacentTombstones(marks: readonly SF.Mark<TestChange>[]): SF.Mark<TestChange>[] {
+const hasAdjacentCells = (m: SF.Mark<unknown>): boolean => m.cellId?.adjacentCells !== undefined;
+function withAdjacentTombstones(marks: readonly SF.Mark<TestNodeId>[]): SF.Mark<TestNodeId>[] {
 	const output = [...marks];
 	let markIdx = marks.findIndex(hasAdjacentCells);
 	assert(
@@ -95,14 +97,17 @@ function withAdjacentTombstones(marks: readonly SF.Mark<TestChange>[]): SF.Mark<
 	return output;
 }
 
-const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
-	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
+const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestNodeId>][] = [
+	[
+		"NestedChange",
+		(i) => Change.modify(i, TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1))),
+	],
 	[
 		"NestedChangeUnderRemovedNode",
 		(i, max) => [
 			...(i > 0 ? [{ count: i }] : []),
 			...withAdjacentTombstones([
-				Mark.modify(TestChange.mint([], 1), {
+				Mark.modify(TestNodeId.create({ localId: brand(1) }, TestChange.mint([], 1)), {
 					revision: tag1,
 					localId: brand(i),
 					adjacentCells: generateAdjacentCells(max),
@@ -114,7 +119,9 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		"MInsert",
 		(i) => [
 			...(i > 0 ? [Mark.skip(i)] : []),
-			Mark.insert(1, brand(42), { changes: TestChange.mint([], 2) }),
+			Mark.insert(1, brand(42), {
+				changes: TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 2)),
+			}),
 		],
 	],
 	["Insert", (i) => Change.insert(i, 2, brand(42))],
@@ -636,7 +643,13 @@ const generateChildStates: ChildStateGenerator<TestState, TestChangeset> = funct
 			},
 			mostRecentEdit: {
 				changeset: tagChange(
-					Change.modify(i, TestChange.mint(node.nested, nestedChange)),
+					Change.modify(
+						i,
+						TestNodeId.create(
+							{ localId: brand(0) },
+							TestChange.mint(node.nested, nestedChange),
+						),
+					),
 					tagFromIntention(modifyIntention),
 				),
 				intention: modifyIntention,
@@ -986,11 +999,12 @@ export function testSandwichComposing() {
 		);
 		it("[move, move, modify, move] ↷ [del]", () =>
 			withConfig(() => {
+				const nodeId: NodeId = { localId: brand(3) };
 				const [mo1, mi1] = Mark.move(1, brand(1));
 				const move1 = tagChange([mi1, mo1], tag1);
 				const [mo2, mi2] = Mark.move(1, brand(2));
 				const move2 = tagChange([mi2, mo2], tag2);
-				const mod = tagChange([Mark.modify(TestChange.mint([], 1))], tag3);
+				const mod = tagChange([Mark.modify(nodeId)], tag3);
 				const [mo3, mi3] = Mark.move(1, brand(3));
 				const move3 = tagChange([mi3, mo3], tag4);
 				const del = tagChange([Mark.remove(1, brand(0))], tag0);
@@ -1011,8 +1025,8 @@ export function testSandwichComposing() {
 					move3,
 				];
 
-				const sandwich = compose(changes);
-				const pruned = prune(sandwich);
+				const sandwich = composeShallow(changes);
+				const pruned = prune(sandwich, (id) => undefined);
 				const noTombstones = withoutTombstones(pruned);
 				assertChangesetsEqual(noTombstones, []);
 			}));

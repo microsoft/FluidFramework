@@ -16,11 +16,16 @@ import {
 	DeltaMark,
 	DeltaFieldMap,
 } from "../../../core/index.js";
-import { FieldChange, FieldKinds, SequenceField as SF } from "../../../feature-libraries/index.js";
+import {
+	FieldChange,
+	FieldKinds,
+	NodeId,
+	SequenceField as SF,
+} from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, deepFreeze, mintRevisionTag } from "../../utils.js";
-import { NodeId } from "../../../feature-libraries/modular-schema/index.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import { toDelta } from "./utils.js";
 
@@ -40,8 +45,9 @@ function toDeltaShallow(change: TestChangeset): DeltaFieldChanges {
 	);
 }
 
-const childChange1 = TestChange.mint([0], 1);
-const childChange1Delta = TestChange.toDelta(tagChange(childChange1, tag));
+const nodeId1: NodeId = { localId: brand(1) };
+const childChange1 = TestNodeId.create(nodeId1, TestChange.mint([0], 1));
+const childChange1Delta = TestChange.toDelta(tagChange(childChange1.testChange, tag));
 const detachId = { major: tag, minor: 42 };
 
 export function testToDelta() {
@@ -68,7 +74,9 @@ export function testToDelta() {
 		});
 
 		it("empty child change", () => {
-			const actual = toDelta(Change.modify(0, TestChange.emptyChange));
+			const actual = toDelta(
+				Change.modify(0, TestNodeId.create(nodeId1, TestChange.emptyChange)),
+			);
 			assert.deepEqual(actual, emptyFieldChanges);
 		});
 

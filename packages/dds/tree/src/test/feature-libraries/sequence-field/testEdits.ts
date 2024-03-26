@@ -4,17 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { isNewAttach } from "../../../feature-libraries/sequence-field/utils.js";
 import { brand } from "../../../util/index.js";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../../core/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
+import { TestNodeId } from "../../testNodeId.js";
 
 const tag: RevisionTag = mintRevisionTag();
 
-export type TestChangeset = SF.Changeset<TestChange>;
+export type TestChangeset = SF.Changeset;
+
+const nodeId1: NodeId = { localId: brand(1) };
+const nodeId2: NodeId = { localId: brand(2) };
 
 export const cases: {
 	no_change: TestChangeset;
@@ -30,10 +34,15 @@ export const cases: {
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, brand(1)),
-	modify: SF.sequenceFieldEditor.buildChildChange(0, TestChange.mint([], 1)),
+	modify: SF.sequenceFieldEditor.buildChildChange(
+		0,
+		TestNodeId.create(nodeId1, TestChange.mint([], 1)),
+	),
 	modify_insert: [
 		createSkipMark(1),
-		createInsertMark(1, brand(1), { changes: TestChange.mint([], 2) }),
+		createInsertMark(1, brand(1), {
+			changes: TestNodeId.create(nodeId2, TestChange.mint([], 2)),
+		}),
 	],
 	remove: createRemoveChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),

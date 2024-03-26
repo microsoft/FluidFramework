@@ -19,25 +19,26 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
+import { TestNodeId } from "../../testNodeId.js";
 import { generatePopulatedMarks } from "./populatedMarks.js";
 import { ChangeMaker as Change, cases } from "./testEdits.js";
 
-type TestCase = [string, Changeset<TestChange>, FieldChangeEncodingContext];
+type TestCase = [string, Changeset, FieldChangeEncodingContext];
 
 const sessionId = { originatorId: "session1" as SessionId };
 const context: FieldChangeEncodingContext = {
 	baseContext: sessionId,
-	encodeNode: () => fail(""),
-	decodeNode: () => fail(""),
+	encodeNode: (node) => TestNodeId.encode(node, sessionId),
+	decodeNode: (node) => TestNodeId.decode(node, sessionId),
 };
 
-const encodingTestData: EncodingTestData<
-	Changeset<TestChange>,
-	unknown,
-	FieldChangeEncodingContext
-> = {
+const encodingTestData: EncodingTestData<Changeset, unknown, FieldChangeEncodingContext> = {
 	successes: [
-		["with child change", Change.modify(1, TestChange.mint([], 1)), context],
+		[
+			"with child change",
+			Change.modify(1, TestNodeId.create({ localId: brand(2) }, TestChange.mint([], 1))),
+			context,
+		],
 		["without child change", Change.remove(2, 2), context],
 		[
 			"with repair data",
