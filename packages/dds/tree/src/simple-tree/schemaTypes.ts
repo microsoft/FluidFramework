@@ -26,9 +26,6 @@ export type ObjectFromSchemaRecord<
  * All non-empty fields on an object node are exposed as enumerable own properties with string keys.
  * No other own `own` or `enumerable` properties are included on object nodes unless the user of the node manually adds custom session only state.
  * This allows a majority of general purpose JavaScript object processing operations (like `for...in`, `Reflect.ownKeys()` and `Object.entries()`) to enumerate all the children.
- *
- * Object nodes can be used many of the standard JavaScript object processing operations since they implement `Reflect.ownKeys()` which returns all of the currently non-empty field keys on the object.
- * Additionally all fields
  * @public
  */
 export type TreeObjectNode<
