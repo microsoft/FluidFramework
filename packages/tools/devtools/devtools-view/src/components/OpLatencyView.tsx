@@ -104,7 +104,7 @@ export function OpLatencyView(): React.ReactElement {
 					return false;
 				}
 				// If any of the required fields are missing, we can't use this data
-				if(eventContents.durationNetwork === undefined) {
+				if (eventContents.durationNetwork === undefined) {
 					return false;
 				}
 
