@@ -30,7 +30,7 @@ import {
 	SharedTreeFactory,
 	TreeContent,
 } from "../../../shared-tree/index.js";
-import { brand, fail, getOrCreate } from "../../../util/index.js";
+import { brand, fail, getOrCreate, makeArray } from "../../../util/index.js";
 import { schematizeFlexTree } from "../../utils.js";
 import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
 import {
@@ -264,7 +264,7 @@ export const makeEditGenerator = (
 					parent: maybeDownPathFromNode(field.parent),
 					key: field.key,
 					index: state.random.integer(0, field.length),
-					value: jsonableTree(state),
+					content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
 				};
 				return {
 					type: "sequence",

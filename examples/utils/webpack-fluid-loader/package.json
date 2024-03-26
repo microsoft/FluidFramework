@@ -107,7 +107,7 @@
 		"nconf": "^0.12.0",
 		"sillyname": "^0.1.0",
 		"uuid": "^9.0.0",
-		"webpack-dev-server": "~4.6.0"
+		"webpack-dev-server": "~4.15.1"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
