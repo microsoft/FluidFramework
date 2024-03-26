@@ -14,6 +14,8 @@ import { fail } from "../../util/index.js";
 import {
 	FieldChangeHandler,
 	FieldEditor,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 	FieldKindWithEditor,
 	FlexFieldKind,
 	ToDelta,
@@ -171,8 +173,28 @@ export const forbidden = new FieldKindWithEditor(
 	new Set(),
 );
 
+const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new Map([
+	[
+		0,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
+			[required.identifier, { kind: required, formatVersion: 0 }],
+			[optional.identifier, { kind: optional, formatVersion: 0 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
+		]),
+	],
+]);
+
 /**
- * Default field kinds by identifier
+ * The current configuration for field kinds.
+ * Each field kind has an associated format version that will be used for encoding purposes.
+ */
+export const fieldKindConfiguration: FieldKindConfiguration =
+	fieldKindConfigurations.get(0) ?? fail("Unknown field kind configuration");
+
+/**
+ * All supported field kinds.
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[required, optional, sequence, nodeKey, forbidden].map((s) => [s.identifier, s]),

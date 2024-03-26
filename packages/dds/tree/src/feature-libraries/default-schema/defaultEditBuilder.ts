@@ -36,7 +36,12 @@ import {
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
+import {
+	fieldKindConfiguration,
+	optional,
+	sequence,
+	required as valueFieldKind,
+} from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -55,7 +60,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
 		this.modularFamily = new ModularChangeFamily(
-			fieldKinds,
+			fieldKindConfiguration,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
@@ -80,7 +85,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
  * @param change - The change to convert into a delta.
  */
 export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRoot {
-	return intoModularDelta(taggedChange, fieldKinds);
+	return intoModularDelta(taggedChange, fieldKindConfiguration);
 }
 
 /**
@@ -100,7 +105,7 @@ export function intoDelta(taggedChange: TaggedChange<ModularChangeset>): DeltaRo
 export function relevantRemovedRoots(
 	taggedChange: TaggedChange<ModularChangeset>,
 ): Iterable<DeltaDetachedNodeId> {
-	return relevantModularRemovedRoots(taggedChange, fieldKinds);
+	return relevantModularRemovedRoots(taggedChange, fieldKindConfiguration);
 }
 
 /**

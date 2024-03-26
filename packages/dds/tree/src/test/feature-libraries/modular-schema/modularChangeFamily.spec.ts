@@ -28,6 +28,8 @@ import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 	FieldKindWithEditor,
 	ModularChangeset,
 	Multiplicity,
@@ -99,15 +101,19 @@ const singleNodeField = new FieldKindWithEditor(
 	new Set(),
 );
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[singleNodeField, valueField].map((field) => [field.identifier, field]),
-);
+export const fieldKindConfiguration: FieldKindConfiguration = new Map<
+	FieldKindIdentifier,
+	FieldKindConfigurationEntry
+>([
+	[singleNodeField.identifier, { kind: singleNodeField, formatVersion: 0 }],
+	[valueField.identifier, { kind: valueField, formatVersion: 0 }],
+]);
 
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
 const family = new ModularChangeFamily(
-	fieldKinds,
+	fieldKindConfiguration,
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
@@ -1041,7 +1047,9 @@ describe("ModularChangeFamily", () => {
 			() => false,
 			new Set(),
 		);
-		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
+		const mockFieldKinds = new Map([
+			[fieldKind, { kind: hasRemovedRootsRefsField, formatVersion: 0 }],
+		]);
 
 		function relevantRemovedRoots(
 			input: TaggedChange<ModularChangeset>,

@@ -30,7 +30,7 @@ import {
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
-import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
+import { FieldKindConfiguration, FieldKindConfigurationEntry } from "./fieldKindConfiguration.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
 	EncodedBuilds,
@@ -49,7 +49,7 @@ import {
 } from "./modularChangeTypes.js";
 
 export function makeV0Codec(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	fieldKinds: FieldKindConfiguration,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -76,10 +76,10 @@ export function makeV0Codec(
 		encodedSchema: EncodedNodeChangeset,
 	};
 
-	const getMapEntry = (field: FieldKindWithEditor) => {
-		const codec = field.changeHandler
+	const getMapEntry = ({ kind, formatVersion }: FieldKindConfigurationEntry) => {
+		const codec = kind.changeHandler
 			.codecsFactory(nodeChangesetCodec, revisionTagCodec)
-			.resolve(0);
+			.resolve(formatVersion);
 		return {
 			codec,
 			compiledSchema: codec.json.encodedSchema
@@ -95,16 +95,25 @@ export function makeV0Codec(
 		ChangeEncodingContext
 	>;
 
+	/**
+	 * The codec version for the generic field kind.
+	 */
+	const genericFieldKindFormatVersion = 0;
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		{
 			compiledSchema?: SchemaValidationFunction<TAnySchema>;
 			codec: FieldCodec;
 		}
-	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
+	> = new Map([
+		[
+			genericFieldKind.identifier,
+			getMapEntry({ kind: genericFieldKind, formatVersion: genericFieldKindFormatVersion }),
+		],
+	]);
 
-	fieldKinds.forEach((fieldKind, identifier) => {
-		fieldChangesetCodecs.set(identifier, getMapEntry(fieldKind));
+	fieldKinds.forEach((entry, identifier) => {
+		fieldChangesetCodecs.set(identifier, getMapEntry(entry));
 	});
 
 	const getFieldChangesetCodec = (

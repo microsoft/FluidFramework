@@ -13,15 +13,17 @@ import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecodi
 import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
+import {
+	fieldKindConfiguration,
+	sequence,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	FieldBatch,
 	FieldBatchEncodingContext,
 	ModularChangeset,
 	SequenceField,
 	defaultSchemaPolicy,
-	fieldKinds,
 	makeV0Codec,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -46,7 +48,7 @@ describe("sharedTreeChangeCodec", () => {
 			},
 		};
 		const modularChangeCodec = makeV0Codec(
-			fieldKinds,
+			fieldKindConfiguration,
 			testRevisionTagCodec,
 			dummyFieldBatchCodec,
 			codecOptions,
