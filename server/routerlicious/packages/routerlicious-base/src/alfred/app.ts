@@ -112,12 +112,12 @@ export function create(
 							ipv4Regex.test(clientIPAddress) &&
 							clientIPAddress.split(".").every((part) => Number(part) <= 255)
 						) {
-							additionalProperties.clientIPType = "IPV4";
+							additionalProperties.clientIPType = "IPv4";
 						} else if (
 							ipv6Regex.test(clientIPAddress) &&
 							clientIPAddress.split(":").every((part) => part.length <= 4)
 						) {
-							additionalProperties.clientIPType = "IPV6";
+							additionalProperties.clientIPType = "IPv6";
 						} else {
 							additionalProperties.clientIPType = "";
 						}
