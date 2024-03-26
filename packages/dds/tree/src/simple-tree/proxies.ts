@@ -112,9 +112,7 @@ export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | un
 }
 
 function getSimpleSchemaOrFail(schema: FlexTreeNodeSchema): TreeNodeSchema {
-	const simpleSchema = getSimpleSchema(schema);
-	assert(simpleSchema !== undefined, "missing simple schema");
-	return simpleSchema;
+	return getSimpleSchema(schema) ?? fail("missing simple schema");
 }
 
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
