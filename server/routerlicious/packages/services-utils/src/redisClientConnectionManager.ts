@@ -23,7 +23,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	private readonly redisOptions: Redis.RedisOptions;
 	private readonly enableClustering: boolean;
 	private readonly slotsRefreshTimeout: number;
-	private readonly retryDelays: { 
+	private readonly retryDelays: {
 		retryDelayOnFailover: number;
 		retryDelayOnClusterDown: number;
 		retryDelayOnTryAgain: number;
@@ -36,7 +36,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 		redisConfig?: any,
 		enableClustering: boolean = false,
 		slotsRefreshTimeout: number = 50000,
-		retryDelays: { 
+		retryDelays: {
 			retryDelayOnFailover: number;
 			retryDelayOnClusterDown: number;
 			retryDelayOnTryAgain: number;
@@ -52,6 +52,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 	) {
 		this.enableClustering = enableClustering;
 		this.slotsRefreshTimeout = slotsRefreshTimeout;
+		this.retryDelays = retryDelays;
 		if (!redisOptions && !redisConfig) {
 			Lumberjack.error("Either redisOptions or redisConfig must be provided");
 			throw new Error("Either redisOptions or redisConfig must be provided");
@@ -104,7 +105,7 @@ export class RedisClientConnectionManager implements IRedisClientConnectionManag
 					slotsRefreshTimeout: this.slotsRefreshTimeout,
 					dnsLookup: (adr, callback) => callback(null, adr),
 					showFriendlyErrorStack: true,
-					retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,	
+					retryDelayOnFailover: this.retryDelays.retryDelayOnFailover,
 					retryDelayOnClusterDown: this.retryDelays.retryDelayOnClusterDown,
 					retryDelayOnTryAgain: this.retryDelays.retryDelayOnTryAgain,
 					retryDelayOnMoved: this.retryDelays.retryDelayOnMoved,
