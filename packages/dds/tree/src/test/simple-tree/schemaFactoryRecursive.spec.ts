@@ -24,7 +24,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaFactoryRecursive.js";
 import {
-	FieldSchemaUnsafe,
 	InsertableTreeFieldFromImplicitFieldUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
@@ -111,7 +110,7 @@ describe("SchemaFactoryRecursive", () => {
 			type Field2 = XSchema extends FieldSchema<infer Kind, infer Types>
 				? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind>
 				: "zzz";
-			type XTypes = XSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? Types : "Q";
+			type XTypes = XSchema extends FieldSchema<infer Kind, infer Types> ? Types : "Q";
 			type Field3 = TreeNodeFromImplicitAllowedTypes<XTypes>;
 			type Field4 = FlexListToUnion<XTypes>;
 			type _check1 = requireTrue<areSafelyAssignable<Field3, ObjectRecursive>>;

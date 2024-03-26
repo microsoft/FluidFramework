@@ -213,10 +213,7 @@ export enum NodeKind {
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @public
  */
-export class FieldSchema<
-	out Kind extends FieldKind = FieldKind,
-	out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes,
-> {
+export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types = ImplicitAllowedTypes> {
 	/**
 	 * This class is used with instanceof, and therefore should have nominal typing.
 	 * This field enforces that.
@@ -285,25 +282,23 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
  * Type of of tree node for a field of the given schema.
  * @public
  */
-export type TreeNodeFromImplicitAllowedTypes<
-	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
-> = TSchema extends TreeNodeSchema
-	? NodeFromSchema<TSchema>
-	: TSchema extends AllowedTypes
-	? NodeFromSchema<FlexListToUnion<TSchema>>
-	: unknown;
+export type TreeNodeFromImplicitAllowedTypes<TSchema = TreeNodeSchema> =
+	TSchema extends TreeNodeSchema
+		? NodeFromSchema<TSchema>
+		: TSchema extends AllowedTypes
+		? NodeFromSchema<FlexListToUnion<TSchema>>
+		: unknown;
 
 /**
  * Type of content that can be inserted into the tree for a node of the given schema.
  * @public
  */
-export type InsertableTreeNodeFromImplicitAllowedTypes<
-	TSchema extends ImplicitAllowedTypes = TreeNodeSchema,
-> = TSchema extends TreeNodeSchema
-	? InsertableTypedNode<TSchema>
-	: TSchema extends AllowedTypes
-	? InsertableTypedNode<FlexListToUnion<TSchema>>
-	: never;
+export type InsertableTreeNodeFromImplicitAllowedTypes<TSchema = TreeNodeSchema> =
+	TSchema extends TreeNodeSchema
+		? InsertableTypedNode<TSchema>
+		: TSchema extends AllowedTypes
+		? InsertableTypedNode<FlexListToUnion<TSchema>>
+		: never;
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
