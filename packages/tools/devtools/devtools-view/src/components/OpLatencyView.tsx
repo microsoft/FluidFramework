@@ -104,6 +104,7 @@ export function OpLatencyView(): React.ReactElement {
 					return false;
 				}
 				// If any of the required fields are missing, we can't use this data
+				// TODO: AB#7583 Investigates the ops being skipped and their source.
 				if (eventContents.durationNetwork === undefined) {
 					return false;
 				}
