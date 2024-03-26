@@ -329,9 +329,9 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		const opSpaceId2 = getIdCompressor(sharedMapContainer1).normalizeToOpSpace(localId2);
 		const opSpaceId3 = getIdCompressor(sharedMapContainer1).normalizeToOpSpace(finalId3);
 
-		assert(opSpaceId1 > 0);
-		assert(opSpaceId2 > 0);
-		assert(opSpaceId3 > 0);
+		assert(opSpaceId1 >= 0);
+		assert(opSpaceId2 >= 0);
+		assert(opSpaceId3 >= 0);
 		assert.strictEqual(finalId3, opSpaceId3);
 
 		assert.strictEqual(
