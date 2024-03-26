@@ -30,7 +30,8 @@ export interface IBubble {
 export interface IClient {
 	clientId: string;
 	color: string;
-	bubbles: IBubble[];
+	// Make the bubbles read-only, as SharedTree ArrayNodes are not compatible with JavaScript arrays for writing purposes.
+	bubbles: readonly IBubble[];
 }
 
 /**

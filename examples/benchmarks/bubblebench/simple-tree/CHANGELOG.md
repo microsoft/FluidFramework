@@ -1,8 +1,4 @@
-# @fluid-example/bubblebench-common
-
-## 2.0.0-rc.2.0.0
-
-Dependency updates only.
+# @fluid-example/bubblebench-simple-tree
 
 ## 2.0.0-rc.1.0.0
 
