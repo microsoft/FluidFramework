@@ -104,7 +104,6 @@ describe("OpGroupingManager", () => {
 						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',
 					metadata: undefined,
 					referenceSequenceNumber: 0,
-					type: "groupedBatch",
 				},
 			]);
 		});

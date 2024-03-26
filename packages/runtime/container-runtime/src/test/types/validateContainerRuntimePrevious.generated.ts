@@ -549,6 +549,7 @@ declare function get_current_InterfaceDeclaration_IChunkedOp():
 declare function use_old_InterfaceDeclaration_IChunkedOp(
     use: TypeOnly<old.IChunkedOp>): void;
 use_old_InterfaceDeclaration_IChunkedOp(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IChunkedOp());
 
 /*
