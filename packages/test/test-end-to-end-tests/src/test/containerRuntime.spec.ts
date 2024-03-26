@@ -39,7 +39,11 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		provider = getTestObjectProvider();
 	});
 
-	async function testSchemaControl(explicitSchemaControl: boolean, compression: boolean) {
+	async function testSchemaControl(
+		explicitSchemaControl: boolean,
+		compression: boolean,
+		chunking: boolean,
+	) {
 		const options: ITestContainerConfig = {
 			runtimeOptions: {
 				explicitSchemaControl,
@@ -47,6 +51,7 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 					minimumBatchSizeInBytes: compression ? 1000 : Infinity,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
+				chunkSizeInBytes: chunking ? 200 : Infinity,
 			},
 		};
 		const container = await provider.makeTestContainer(options);
@@ -71,8 +76,12 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			crash2 = version2?.startsWith("1.") && compression;
 			if (crash || crash2) {
 				// 0x122 is unknown type of the operation - happens with document schema change ops that old runtime does not understand
-				// 0x121 is no type - happens with compressed ops that old runtime does not understand
-				const error = crash && explicitSchemaControl ? "0x122" : "0x121";
+				// 0x121 is no type - happens with compressed ops that old runtime does not understand. This check happens early, and thus
+				//       is missed if op is both compressed and chunked (as unchunking happens later)
+				// 0x161 compressed & chunked op is processed by 1.3 that does not understand compression,
+				//       and thus fails on empty address property (of compressed op).
+				const error =
+					crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
 				provider.logger?.registerExpectedEvent({
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
@@ -120,33 +129,18 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			assert(!container.closed);
 			assert(entry.root.get("key3").length === 15000);
 		}
+
+		provider.logger?.reportAndClearTrackedEvents();
 	}
 
-	it("test explicitSchemaControl = false, no compression", async () => {
-		await testSchemaControl(
-			false, // explicitSchemaControl
-			false, // compression
-		);
-	});
-
-	it("test explicitSchemaControl = false, with compression", async () => {
-		await testSchemaControl(
-			false, // explicitSchemaControl
-			true, // compression
-		);
-	});
-
-	it("test explicitSchemaControl = true, no compression", async () => {
-		await testSchemaControl(
-			true, // explicitSchemaControl
-			false, // compression
-		);
-	});
-
-	it("test explicitSchemaControl = true, with compression", async () => {
-		await testSchemaControl(
-			true, // explicitSchemaControl
-			true, // compression
-		);
-	});
+	const choices = [true, false];
+	for (const explicitSchemaControl of choices) {
+		for (const compression of choices) {
+			for (const chunking of choices) {
+				it(`test explicitSchemaControl = ${explicitSchemaControl}, compression = ${compression}, chunking = ${chunking}`, async () => {
+					await testSchemaControl(explicitSchemaControl, compression, chunking);
+				});
+			}
+		}
+	}
 });
