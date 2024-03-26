@@ -11,10 +11,10 @@ import {
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxyErrors } from "./errors";
-import { ProxyType, ReferenceType } from "./interfaces";
-import { PropertyProxy, proxySymbol } from "./propertyProxy";
-import { Utilities, forceType } from "./utilities";
+import { PropertyProxyErrors } from "./errors.js";
+import { ProxyType, ReferenceType } from "./interfaces.js";
+import { PropertyProxy, proxySymbol } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * The additional proxy handlers for non-collection type properties.
