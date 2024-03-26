@@ -219,22 +219,25 @@ export type ExpectedEvents = ITelemetryGenericEventExt[] | Partial<Record<TestDr
 export type ExpectsTest = (name: string, orderedExpectedEvents: ExpectedEvents, test: Mocha.AsyncFunc) => Mocha.Test;
 
 // @internal
-export function getContainerRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof ContainerRuntimeApi;
+export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi;
 
 // @internal (undocumented)
 export const getCurrentBenchmarkType: (currentType: DescribeE2EDocSuite) => BenchmarkType;
 
 // @internal
-export function getDataRuntimeApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DataRuntimeApi;
+export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi;
 
 // @internal (undocumented)
 export const getDataStoreFactory: (containerOptions?: ITestContainerConfig) => IFluidDataStoreFactory;
 
 // @internal
-export function getDriverApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof DriverApi;
+export function getDriverApi(requestedStr: string): typeof DriverApi;
 
 // @internal
-export function getLoaderApi(baseVersion: string, requested?: number | string, adjustMajorPublic?: boolean): typeof LoaderApi;
+export function getLoaderApi(requestedStr: string): typeof LoaderApi;
+
+// @internal
+export function getRequestedVersion(baseVersion: string, requested?: number | string, adjustPublicMajor?: boolean): string;
 
 // @internal (undocumented)
 export function getVersionedTestObjectProvider(baseVersion: string, loaderVersion?: number | string, driverConfig?: {

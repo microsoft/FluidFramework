@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import {
+	describeCompat,
+	getContainerRuntimeApi,
+	getRequestedVersion,
+} from "@fluid-private/test-version-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -65,7 +69,8 @@ describeCompat.skip("GC summary compatibility tests", "FullCompat", (getTestObje
 			mainContainer,
 			dataObjectFactory,
 			summaryVersion,
-			getContainerRuntimeApi(pkgVersion, version).ContainerRuntimeFactoryWithDefaultDataStore,
+			getContainerRuntimeApi(getRequestedVersion(pkgVersion, version))
+				.ContainerRuntimeFactoryWithDefaultDataStore,
 		);
 		return createSummarizerResult.summarizer;
 	}

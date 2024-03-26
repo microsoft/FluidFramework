@@ -497,8 +497,7 @@ describeCompat(
 				container,
 				defaultFactory,
 				summaryVersion,
-				getContainerRuntimeApi(pkgVersion, pkgVersion)
-					.ContainerRuntimeFactoryWithDefaultDataStore,
+				getContainerRuntimeApi(pkgVersion).ContainerRuntimeFactoryWithDefaultDataStore,
 			);
 			return createSummarizerResult.summarizer;
 		}
