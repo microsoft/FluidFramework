@@ -7,10 +7,10 @@ import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
-import { writeJson } from "fs-extra";
+import { writeFile } from "fs-extra";
 import inquirer from "inquirer";
 import path from "node:path";
-import sortJson from "sort-json";
+import { sortJsonc as sortJson } from "sort-jsonc";
 import { table } from "table";
 
 import {
@@ -680,6 +680,6 @@ async function writeReport(
 	log?.info(`${kind} report written to ${reportPath}`);
 	const reportOutput = toReportKind(report, kind);
 
-	await writeJson(reportPath, reportOutput, { spaces: 2 });
-	sortJson.overwrite(reportPath);
+	const sortedOutput = sortJson(JSON.stringify(reportOutput), { spaces: 2 });
+	await writeFile(reportPath, sortedOutput, { encoding: "utf8" });
 }

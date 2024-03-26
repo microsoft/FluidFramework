@@ -75,6 +75,7 @@ importers:
       '@oclif/plugin-plugins': ^3.9.4
       '@oclif/test': ~2.3.33
       '@octokit/core': ^4.2.4
+      '@prettier/sync': ^0.5.1
       '@rushstack/node-core-library': ^3.59.5
       '@types/async': ^3.2.20
       '@types/chai': ^4.3.5
@@ -90,7 +91,6 @@ importers:
       '@types/prompts': ^2.4.4
       '@types/semver': ^7.5.0
       '@types/semver-utils': ^1.1.1
-      '@types/sort-json': ^2.0.1
       async: ^3.2.4
       c8: ^7.14.0
       chai: ^4.3.7
@@ -131,7 +131,7 @@ importers:
       semver: ^7.5.4
       semver-utils: ^1.1.4
       simple-git: ^3.19.1
-      sort-json: ^2.0.1
+      sort-jsonc: ^1.0.1
       sort-package-json: 1.57.0
       strip-ansi: ^6.0.1
       table: ^6.8.1
@@ -153,6 +153,7 @@ importers:
       '@oclif/plugin-plugins': 3.9.4_6aghfyf5eabo7u6nxooxqsbtpq
       '@oclif/test': 2.3.33_6aghfyf5eabo7u6nxooxqsbtpq
       '@octokit/core': 4.2.4
+      '@prettier/sync': 0.5.1_prettier@3.2.5
       '@rushstack/node-core-library': 3.59.5_@types+node@18.18.6
       async: 3.2.4
       chalk: 2.4.2
@@ -179,7 +180,7 @@ importers:
       semver: 7.5.4
       semver-utils: 1.1.4
       simple-git: 3.19.1
-      sort-json: 2.0.1
+      sort-jsonc: 1.0.1
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.1
@@ -203,7 +204,6 @@ importers:
       '@types/prompts': 2.4.4
       '@types/semver': 7.5.0
       '@types/semver-utils': 1.1.1
-      '@types/sort-json': 2.0.1
       c8: 7.14.0
       chai: 4.3.7
       chai-arrays: 2.2.0
@@ -2223,6 +2223,15 @@ packages:
       '@pnpm/network.ca-file': 1.0.1
       config-chain: 1.1.13
 
+  /@prettier/sync/0.5.1_prettier@3.2.5:
+    resolution: {integrity: sha512-tpF+A1e4ynO2U4fTH21Sjgm9EYENmqg4zmJCMLrmLVfzIzuDc1cKGXyxrxbFgcH8qQRfowyDCZFAUukwhiZlsw==}
+    peerDependencies:
+      prettier: '*'
+    dependencies:
+      make-synchronized: 0.2.8
+      prettier: 3.2.5
+    dev: false
+
   /@rushstack/eslint-patch/1.4.0:
     resolution: {integrity: sha512-cEjvTPU32OM9lUFegJagO0mRnIn+rbqrG89vV8/xLnLFX0DoR0r1oy5IlTga71Q7uT3Qus7qm7wgeiMT/+Irlg==}
     dev: true
@@ -2686,10 +2695,6 @@ packages:
 
   /@types/sinonjs__fake-timers/8.1.2:
     resolution: {integrity: sha512-9GcLXF0/v3t80caGs5p2rRfkB+a8VBGLJZVih6CNFkx8IZ994wiKKLSRs9nuFwk1HevWs/1mnUmkApGrSGsShA==}
-
-  /@types/sort-json/2.0.1:
-    resolution: {integrity: sha512-HAeJLCXpLg9aMSCJVQcMR3yU0y2PwJUtWv7vogaz0mEhuK1bhvDX/DeDxl4spPUYpnK7PM7hmX2bU5lsghOJNQ==}
-    dev: true
 
   /@types/through/0.0.30:
     resolution: {integrity: sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==}
@@ -3378,6 +3383,10 @@ packages:
       get-intrinsic: 1.2.1
       is-string: 1.0.7
     dev: true
+
+  /array-timsort/1.0.3:
+    resolution: {integrity: sha512-/+3GRL7dDAGEfM6TseQk/U+mi18TU2Ms9I3UlLdUMhz2hbvGNTKdj9xniwXfUqgYhHxRx0+8UnKkvlNwVU+cWQ==}
+    dev: false
 
   /array-union/2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
@@ -4131,6 +4140,17 @@ packages:
     resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
     engines: {node: ^12.20.0 || >=14}
 
+  /comment-json/4.2.3:
+    resolution: {integrity: sha512-SsxdiOf064DWoZLH799Ata6u7iV658A11PlWtZATDlXPpKGJnbJZ5Z24ybixAi+LUUqJ/GKowAejtC5GFUG7Tw==}
+    engines: {node: '>= 6'}
+    dependencies:
+      array-timsort: 1.0.3
+      core-util-is: 1.0.3
+      esprima: 4.0.1
+      has-own-prop: 2.0.0
+      repeat-string: 1.6.1
+    dev: false
+
   /comment-parser/1.4.0:
     resolution: {integrity: sha512-QLyTNiZ2KDOibvFPlZ6ZngVsZ/0gYnE6uTXi5aoDg8ed3AkJAz4sEje3Y8a29hQ1s6A99MZXe47fLAXQ1rTqaw==}
     engines: {node: '>= 12.0.0'}
@@ -4770,6 +4790,7 @@ packages:
   /detect-indent/5.0.0:
     resolution: {integrity: sha512-rlpvsxUtM0PQvy9iZe640/IWwWYyBsTApREbA1pHOpmOUIl9MkP/U4z7vTtg4Oaojvqhxt7sdufnT0EzGaR31g==}
     engines: {node: '>=4'}
+    dev: true
 
   /detect-indent/6.1.0:
     resolution: {integrity: sha512-reYkTUJAZb9gUuZ2RvVCNhVHdg62RHnJ7WJl8ftMi4diZ6NWlciOzQN88pUhSELEwflJht4oQDv0F0BMlwaYtA==}
@@ -4783,6 +4804,7 @@ packages:
   /detect-newline/2.1.0:
     resolution: {integrity: sha512-CwffZFvlJffUg9zZA0uqrjQayUTC8ob94pnr5sFwaVv3IOmkfUHcWH+jXaQK3askE51Cqe8/9Ql/0uXNwqZ8Zg==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /detect-newline/3.1.0:
     resolution: {integrity: sha512-TLz+x/vEXm/Y7P7wn1EJFNLxYpUD4TgMosxY6fAVJUnJMbupHBOncxyWUG9OpTaH9EBD7uFI5LfEgmMOc54DsA==}
@@ -6459,6 +6481,11 @@ packages:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
 
+  /has-own-prop/2.0.0:
+    resolution: {integrity: sha512-Pq0h+hvsVm6dDEa8x82GnLSYHOzNDt7f0ddFa3FqcQlgzEiptPqL+XrOJNavjOzSYiYWIrgeVYYgGlLmnxwilQ==}
+    engines: {node: '>=8'}
+    dev: false
+
   /has-property-descriptors/1.0.0:
     resolution: {integrity: sha512-62DVLZGoiEBDHQyqG4w9xCuZ7eJEwNmJRWw2VY84Oedb7WFcA27fiEVe8oUQx9hAUJ4ekurquucTGwsyO1XGdQ==}
     dependencies:
@@ -7681,6 +7708,10 @@ packages:
     transitivePeerDependencies:
       - bluebird
       - supports-color
+
+  /make-synchronized/0.2.8:
+    resolution: {integrity: sha512-jtXnKYCxjmGaXiZhXbDbGPbh4YyTvIIbOgcQjtAboc4RSm9k3nyhTFvFQB0cfs7QFKuZXKe2D2RvOkv1c+vpxg==}
+    dev: false
 
   /map-obj/1.0.1:
     resolution: {integrity: sha512-7N/q3lyZ+LVCp7PzuxrJr4KMbBE2hW7BT7YNia330OFxIf4d3r5zVpicP2650l7CPN6RM9zOJRl3NGpqSiw3Eg==}
@@ -9497,6 +9528,11 @@ packages:
   /remove-trailing-separator/1.1.0:
     resolution: {integrity: sha512-/hS+Y0u3aOfIETiaiirUFwDBDzmXPvO+jAfKTitUngIPzdKc6Z0LoFjM/CK5PL4C+eKwHohlHAb6H0VFfmmUsw==}
 
+  /repeat-string/1.6.1:
+    resolution: {integrity: sha512-PV0dzCYDNfRi1jCDbJzpW7jNNDRuCOG/jI5ctQcGKt/clZD+YcPS3yIlWuTJMmESC8aevCFmWJy5wjAFgNqN6w==}
+    engines: {node: '>=0.10'}
+    dev: false
+
   /replace-ext/1.0.1:
     resolution: {integrity: sha512-yD5BHCe7quCgBph4rMQ+0KkIRKwWCrHDOX1p1Gp6HwjPM5kVoCdKGNhN7ydqqsX6lJEnQDKZ/tFMiEdQ1dvPEw==}
     engines: {node: '>= 0.10'}
@@ -9974,6 +10010,14 @@ packages:
       detect-indent: 5.0.0
       detect-newline: 2.1.0
       minimist: 1.2.8
+    dev: true
+
+  /sort-jsonc/1.0.1:
+    resolution: {integrity: sha512-Uy01Oc2/L/YA0NlPf6Ahh7pe2qNY8RlPB+Px12AGAb2mfc1KMVx7uf7A9MmLBL5TDYEyVnd+Pc4mPU9qOGokvA==}
+    engines: {node: '>= 6'}
+    dependencies:
+      comment-json: 4.2.3
+    dev: false
 
   /sort-keys/4.2.0:
     resolution: {integrity: sha512-aUYIEU/UviqPgc8mHR6IW1EGxkAXpeRETYcrzg8cLAvUPZcpAlleSXHV2mY7G12GphSH6Gzv+4MMVSSkbdteHg==}

@@ -1,9 +1,13 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"include": ["src/**/*.ts"],
+	"exclude": ["src/test/**/*", "dist", "node_modules"],
 	"compilerOptions": {
-		"outDir": "./dist",
 		"rootDir": "./src",
-		"composite": true,
+		"outDir": "./dist",
+		"module": "node16",
+		"moduleResolution": "node16",
+		"types": ["node"],
 		"noImplicitAny": false,
 		"noImplicitThis": true,
 		"noUnusedLocals": false,
@@ -11,11 +15,7 @@
 		"strictFunctionTypes": true,
 		"strictNullChecks": true,
 		"strictPropertyInitialization": true,
+		"composite": true,
 		"target": "es2022",
-		"module": "node16",
-		"moduleResolution": "node16",
-		"types": ["node"],
 	},
-	"include": ["src/**/*.ts"],
-	"exclude": ["src/test/**/*", "dist", "node_modules"],
 }
