@@ -40,7 +40,6 @@ export {
 	TreeObjectNodeUnsafe,
 	TreeFieldFromImplicitFieldUnsafe,
 	TreeNodeFromImplicitAllowedTypesUnsafe,
-	FieldSchemaUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,

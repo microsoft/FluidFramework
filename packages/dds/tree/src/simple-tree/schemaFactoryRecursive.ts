@@ -20,24 +20,12 @@ import {
 } from "./schemaTypes.js";
 import { TreeNode } from "./types.js";
 import {
-	FieldSchemaUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
 	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
-
-export function createFieldSchemaUnsafe<
-	Kind extends FieldKind,
-	Types extends Unenforced<ImplicitAllowedTypes>,
->(kind: Kind, allowedTypes: Types): FieldSchemaUnsafe<Kind, Types> {
-	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return new FieldSchema(kind, allowedTypes as ImplicitAllowedTypes) as FieldSchemaUnsafe<
-		Kind,
-		Types
-	>;
-}
 
 /**
  * Extends SchemaFactory with utilities for recursive schema.
@@ -125,7 +113,7 @@ export class SchemaFactoryRecursive<
 	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 */
 	public optionalRecursive<const T extends Unenforced<readonly (() => TreeNodeSchema)[]>>(t: T) {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t);
+		return new FieldSchema(FieldKind.Optional, t);
 	}
 
 	/**

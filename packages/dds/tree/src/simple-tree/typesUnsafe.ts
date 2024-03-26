@@ -8,7 +8,7 @@ import { RestrictiveReadonlyRecord } from "../util/index.js";
 import {
 	AllowedTypes,
 	ApplyKind,
-	FieldKind,
+	FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
@@ -55,7 +55,7 @@ export type TreeObjectNodeUnsafe<
  * @beta
  */
 export type TreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> =
-	TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+	TSchema extends FieldSchema<infer Kind, infer Types>
 		? ApplyKind<TreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
 		: TSchema extends ImplicitAllowedTypes
 		? TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>
@@ -163,18 +163,6 @@ export type InsertableObjectFromSchemaRecordUnsafe<
  */
 export type InsertableTreeFieldFromImplicitFieldUnsafe<
 	TSchema extends Unenforced<ImplicitFieldSchema>,
-> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types>
+> = TSchema extends FieldSchema<infer Kind, infer Types>
 	? ApplyKind<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind>
 	: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>;
-
-/**
- * {@link Unenforced} version of {@link FieldSchema}.
- * @beta
- */
-export interface FieldSchemaUnsafe<
-	out Kind extends FieldKind,
-	out Types extends Unenforced<ImplicitAllowedTypes>,
-> {
-	readonly kind: Kind;
-	readonly allowedTypes: Types;
-}
