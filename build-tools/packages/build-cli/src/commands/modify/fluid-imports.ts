@@ -48,18 +48,29 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 		onlyInternal: Flags.boolean({
 			description: "Use /internal for all non-public APIs instead of /alpha or /beta.",
 		}),
+		pkgs: Flags.string({
+			description:
+				"Limit the rewritten imports to this package, regardless of what mappings are in the data file. This flag can be used multiple times to include multiple packages.",
+			multiple: true,
+		}),
 		...BaseCommand.flags,
 	};
 
 	public async run(): Promise<void> {
-		const { tsconfig, data, onlyInternal, organize } = this.flags;
+		const { tsconfig, data, onlyInternal, organize, pkgs } = this.flags;
 
 		if (!existsSync(tsconfig)) {
 			this.error(`Can't find config file: ${tsconfig}`, { exit: 0 });
 		}
 		const dataFilePath = data ?? path.join(__dirname, "../../../data/rawApiLevels.jsonc");
 		const apiLevelData = await loadData(dataFilePath);
-		await updateImports(tsconfig, apiLevelData, onlyInternal, organize, this.logger);
+
+		const filteredData =
+			pkgs === undefined
+				? apiLevelData
+				: new Map([...apiLevelData].filter(([key]) => pkgs.includes(key)));
+
+		await updateImports(tsconfig, filteredData, onlyInternal, organize, this.logger);
 	}
 }
 
