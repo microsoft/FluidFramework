@@ -94,7 +94,9 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(false);
+	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(
+		sessionStorage.getItem("Fluid.Telemetry.DisableSampling") === "true",
+	);
 
 	React.useEffect(() => {
 		// Handler for incoming messages
