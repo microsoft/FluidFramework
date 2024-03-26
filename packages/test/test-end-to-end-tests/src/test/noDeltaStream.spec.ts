@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { IContainerLoadMode } from "@fluidframework/container-definitions";
+import { IContainerLoadMode } from "@fluidframework/container-definitions/internal";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
