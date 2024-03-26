@@ -12,6 +12,7 @@ import { IR11sSocketError, errorObjectFromSocketError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 /**
  * Wrapper over the shared one for driver specific translation.
@@ -49,6 +50,10 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(
 				";",
 			),
+		};
+
+		connectMessage.supportedFeatures = {
+			[feature_submit_signals_v2]: true,
 		};
 
 		const deltaConnection = new R11sDocumentDeltaConnection(
