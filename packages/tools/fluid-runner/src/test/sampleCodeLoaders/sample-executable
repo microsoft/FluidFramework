@@ -1,5 +1,0 @@
-#!/usr/bin/env node
-import { fluidRunner } from "../../../dist/fluidRunner.js";
-import { fluidExport } from "../../../dist/test/sampleCodeLoaders/sampleCodeLoader.js";
-
-fluidRunner(fluidExport);
