@@ -94,7 +94,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfigForThrottling,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
-						retryDelays,
 				  );
 
 		const redisParamsForThrottling = {
