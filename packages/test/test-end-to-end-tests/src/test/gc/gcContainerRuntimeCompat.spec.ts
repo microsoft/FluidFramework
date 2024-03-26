@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -13,10 +14,9 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	createSummarizerFromFactory,
-	waitForContainerConnection,
 	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../../packageVersion.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 

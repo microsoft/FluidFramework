@@ -249,7 +249,7 @@ describe("ArrayNode Proxy", () => {
 
 	describe("inserting nodes created by factory", () => {
 		const obj = schemaFactory.object("Obj", { id: schemaFactory.string });
-		const schema = schemaFactory.array(obj);
+		const schema = schemaFactory.array([obj, schemaFactory.number]);
 
 		it("insertAtStart()", () => {
 			const root = hydrate(schema, [{ id: "B" }]);
@@ -279,6 +279,25 @@ describe("ArrayNode Proxy", () => {
 			root.insertAt(1); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, root[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(root, [{ id: "A" }, newItem, { id: "C" }]);
+		});
+
+		it("multiple primitives", () => {
+			const root = hydrate(schema, []);
+			assert.deepEqual(root, []);
+			root.insertAt(0, 42, 43);
+			assert.deepEqual(root, [42, 43]);
+		});
+
+		it("multiple objects", () => {
+			const root = hydrate(schema, []);
+			assert.deepEqual(root, []);
+			const newItemA = new obj({ id: "A" });
+			const newItemB = new obj({ id: "B" });
+			root.insertAt(0, newItemA, newItemB);
+			// Check that the inserted and read proxies are the same object
+			assert.equal(newItemA, root[0]);
+			assert.equal(newItemB, root[1]);
+			assert.deepEqual(root, [newItemA, newItemB]);
 		});
 
 		it("at()", () => {

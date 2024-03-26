@@ -23,7 +23,7 @@
 		"build:webpack": "npm run webpack",
 		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
-		"clean": "rimraf --glob coverage dist nyc \"**/*.tsbuildinfo\" \"**/*.build.log\" lib",
+		"clean": "rimraf --glob coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "fluid-build --task format .",
@@ -34,7 +34,6 @@
 		"good-fences": "gf",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"mocha": "mocha \"dist/tsc/test/**/*.test.js\" --exit",
 		"rebuild": "npm run clean && npm run build",
 		"start:client:test": "webpack serve --config webpack.test.cjs",
 		"test": "concurrently npm:test:mocha npm:test:jest",
@@ -90,7 +89,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",

@@ -4,6 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { IContainer } from "@fluidframework/container-definitions";
+import {
+	IGarbageCollectionState,
+	concatGarbageCollectionStates,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/test/gc";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -11,13 +18,6 @@ import {
 	gcTombstoneBlobKey,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
-import {
-	concatGarbageCollectionStates,
-	IGarbageCollectionState,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/test/gc";
-import { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 
 /**

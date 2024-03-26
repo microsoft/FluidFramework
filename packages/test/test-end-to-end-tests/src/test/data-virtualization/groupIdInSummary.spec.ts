@@ -10,20 +10,20 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import {
-	createSummarizerFromFactory,
-	summarizeNow,
-	type ITestObjectProvider,
-	createTestConfigProvider,
-} from "@fluidframework/test-utils";
-import { SummaryType, type ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions";
+import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import {
+	type ITestObjectProvider,
+	createSummarizerFromFactory,
+	createTestConfigProvider,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
