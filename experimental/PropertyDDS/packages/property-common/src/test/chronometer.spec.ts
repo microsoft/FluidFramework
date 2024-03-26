@@ -7,8 +7,8 @@
  * @fileoverview In this file, we will test property-common.Chronometer
  */
 
-import sinon from "sinon";
 import { expect } from "chai";
+import sinon from "sinon";
 import { Chronometer } from "../chronometer.js";
 
 describe("property-common.Chronometer", function () {
