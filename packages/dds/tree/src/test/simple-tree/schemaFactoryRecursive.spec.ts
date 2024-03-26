@@ -138,12 +138,7 @@ describe("SchemaFactoryRecursive", () => {
 			>;
 
 			const tree = hydrate(ObjectRecursive, new ObjectRecursive({ x: undefined }));
-
-			const data = Reflect.ownKeys(tree);
-			// TODO: are empty optional fields supposed to show up as keys in simple-tree? They currently are included, but maybe thats a bug?
-			// Currently optional fields must be provided explicitly when constructing nodes, but this is planned to change (with default field defaults), which will make it seem less like the should be included.
-			// Additionally all the lower level abstractions omit empty fields when iterating (especially map nodes which would be infinite if they didn't): if this layer is supposed to differ it should be explicit about it.
-			assert.deepEqual(data, ["x"]);
+			assert.deepEqual(Reflect.ownKeys(tree), []);
 
 			tree.x = new ObjectRecursive({ x: undefined });
 
