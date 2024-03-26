@@ -326,7 +326,6 @@ export async function fetchISnapshot(
 			eventName: "getSnapshotTreeFailed",
 			id: specifiedVersion,
 		});
-		// Not sure if this should be here actually
 	} else if (snapshot !== undefined && version?.id === undefined) {
 		mc.logger.sendErrorEvent({
 			eventName: "getSnapshotFetchedTreeWithoutVersionId",
