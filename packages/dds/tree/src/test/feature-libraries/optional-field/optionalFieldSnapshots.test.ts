@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import path from "path";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
@@ -16,7 +17,6 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { TestChange } from "../../testChange.js";
 import { Change } from "./optionalFieldUtils.js";
-import path from "path";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,

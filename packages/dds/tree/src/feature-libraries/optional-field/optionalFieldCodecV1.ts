@@ -14,7 +14,7 @@ import {
 import { JsonCompatibleReadOnly, Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { EncodedChangeAtomId, NodeChangeset } from "../modular-schema/index.js";
-import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
+import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormatV1.js";
 import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
 
 function makeRegisterIdCodec(
