@@ -22,7 +22,7 @@ FLAGS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   Rewrite imports for Fluid Framework APIs to use the correct subpath import (/alpha, /beta. etc.)
