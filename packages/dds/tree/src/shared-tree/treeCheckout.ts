@@ -365,7 +365,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						// is also valid under the new schema.
 						// Note however, that such schema changes may in some cases be rolled back:
 						// Case 1: A transaction with a schema change may be aborted.
-						// The transaction may have made some data changes that would render the some trees invalid
+						// The transaction may have made some data changes that would render some trees invalid
 						// under the old schema, but these changes will also be rolled back, thereby putting the forest
 						// back in the state before the transaction, which is valid under the original (reinstated) schema.
 						// Case 2: A branch with a schema change may be rebased such that the schema change (because
