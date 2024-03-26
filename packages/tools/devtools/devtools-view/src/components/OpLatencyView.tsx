@@ -103,6 +103,10 @@ export function OpLatencyView(): React.ReactElement {
 				if (!eventContents.eventName.endsWith("OpRoundtripTime")) {
 					return false;
 				}
+				// If any of the required fields are missing, we can't use this data
+				if(eventContents.durationNetwork === undefined) {
+					return false;
+				}
 
 				setDurationOutboundBatchingData((currentData) => {
 					const newDataPoint = {
