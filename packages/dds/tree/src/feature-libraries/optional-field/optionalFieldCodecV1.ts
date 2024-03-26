@@ -68,10 +68,12 @@ export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 		encode: (change: OptionalChangeset<TChildChange>, context: ChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 
-			encoded.m = change.moves?.map(([src, dst]) => [
-				changeAtomIdCodec.encode(src, context),
-				changeAtomIdCodec.encode(dst, context),
-			]);
+			if (change.moves.length > 0) {
+				encoded.m = change.moves.map(([src, dst]) => [
+					changeAtomIdCodec.encode(src, context),
+					changeAtomIdCodec.encode(dst, context),
+				]);
+			}
 
 			if (change.valueReplace !== undefined) {
 				encoded.r = {

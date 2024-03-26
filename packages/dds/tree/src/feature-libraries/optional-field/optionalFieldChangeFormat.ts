@@ -21,7 +21,7 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 			// "applied simultaneously". As such, this list should not contain duplicated src or dst entries.
 			m: Type.Optional(Type.Array(EncodedMove)),
 			// Nested changes
-			c: EncodedChildChanges(tNodeChange),
+			c: Type.Optional(EncodedChildChanges(tNodeChange)),
 			// How to replace the current value of the field.
 			r: Type.Optional(EncodedReplace),
 		},
@@ -34,7 +34,7 @@ export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
 
 const EncodedChildChanges = <Schema extends TSchema>(tNodeChange: Schema) =>
 	// Changes to the children of the node that is in the specified register in the input context of this change.
-	Type.Optional(Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange])));
+	Type.Array(Type.Tuple([EncodedRegisterId, tNodeChange]));
 
 // A list of triplets (source, destination, isNodeTargeting) each representing a move of a node
 // from its current source register to a new destination register.
