@@ -30,6 +30,11 @@ import {
 } from "../../opLifecycle/index.js";
 import { IPendingBatchMessage, PendingStateManager } from "../../pendingStateManager.js";
 
+function typeFromBatchedOp(op: IBatchMessage) {
+	assert(op.contents !== undefined);
+	return JSON.parse(op.contents).type as string;
+}
+
 describe("Outbox", () => {
 	const maxBatchSizeInBytes = 1024;
 	interface State {
@@ -129,7 +134,6 @@ describe("Outbox", () => {
 
 	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => ({
 		contents: JSON.stringify({ type, contents }),
-		type,
 		metadata: undefined,
 		localOpMetadata: {},
 		referenceSequenceNumber: Number.POSITIVE_INFINITY,
@@ -472,7 +476,9 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.Attach, "7"),
 		];
 
-		const attachMessages = messages.filter((x) => x.type === ContainerMessageType.Attach);
+		const attachMessages = messages.filter(
+			(x) => typeFromBatchedOp(x) === ContainerMessageType.Attach,
+		);
 		assert.ok(attachMessages.length > 0 && attachMessages[0].contents !== undefined);
 		const outbox = getOutbox({
 			context: getMockContext() as IContainerContext,
@@ -483,7 +489,7 @@ describe("Outbox", () => {
 		});
 
 		for (const message of messages) {
-			if (message.type === ContainerMessageType.Attach) {
+			if (typeFromBatchedOp(message) === ContainerMessageType.Attach) {
 				outbox.submitAttach(message);
 			} else {
 				outbox.submit(message);
@@ -740,12 +746,12 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 1,
 			},
 		],
-	].forEach((ops) => {
+	].forEach((ops: BatchMessage[]) => {
 		it("Flushes all batches when an out of order message is detected in either flows", () => {
 			const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
-				if (op.type === ContainerMessageType.Attach) {
+				if (typeFromBatchedOp(op) === ContainerMessageType.Attach) {
 					outbox.submitAttach(op);
 				} else {
 					outbox.submit(op);
@@ -773,7 +779,7 @@ describe("Outbox", () => {
 			context: getMockContext() as IContainerContext,
 			disablePartialFlush: true,
 		});
-		const messages = [
+		const messages: BatchMessage[] = [
 			{
 				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 				referenceSequenceNumber: 0,
@@ -798,7 +804,7 @@ describe("Outbox", () => {
 
 		for (const message of messages) {
 			currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-			if (message.type === ContainerMessageType.Attach) {
+			if (typeFromBatchedOp(message) === ContainerMessageType.Attach) {
 				outbox.submitAttach(message);
 			} else {
 				outbox.submit(message);

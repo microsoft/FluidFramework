@@ -4,16 +4,13 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import { CompressionAlgorithms } from "../containerRuntime.js";
-import { ContainerMessageType } from "../messageTypes.js";
 
 /**
  * Batch message type used internally by the runtime
  */
 export type BatchMessage = IBatchMessage & {
-	localOpMetadata: unknown;
-	type: ContainerMessageType;
+	localOpMetadata?: unknown;
 	referenceSequenceNumber: number;
 	compression?: CompressionAlgorithms;
 };
@@ -59,7 +56,6 @@ export interface IChunkedOp {
 	chunkId: number;
 	totalChunks: number;
 	contents: string;
-	originalType: MessageType | ContainerMessageType;
 	originalMetadata?: Record<string, unknown>;
 	originalCompression?: string;
 }
