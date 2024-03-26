@@ -247,6 +247,9 @@ export interface CommitMetadata {
 export function compareLocalNodeKeys(a: LocalNodeKey, b: LocalNodeKey): -1 | 0 | 1;
 
 // @internal
+export function configuredSharedTree(options: SharedTreeOptions): ISharedObjectKind<ITree>;
+
+// @internal
 export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
 
 // @internal
