@@ -4595,6 +4595,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-properties:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.1
       '@fluid-experimental/property-changeset': workspace:~
       '@fluid-experimental/property-common': workspace:~
@@ -4608,6 +4609,7 @@ importers:
       async: ^3.2.2
       c8: ^8.0.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       fastest-json-copy: ^1.0.1
@@ -4635,6 +4637,7 @@ importers:
       traverse: 0.6.6
       underscore: 1.13.6
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
@@ -4644,6 +4647,7 @@ importers:
       '@types/sinon': 17.0.3
       c8: 8.0.1
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0

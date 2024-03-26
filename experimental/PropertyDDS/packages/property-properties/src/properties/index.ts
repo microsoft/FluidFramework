@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { ArrayProperty } from "./arrayProperty";
-import { BaseProperty } from "./baseProperty";
-import { BoolProperty } from "./boolProperty";
-import { ContainerProperty } from "./containerProperty";
-import { EnumArrayProperty } from "./enumArrayProperty";
-import { EnumProperty } from "./enumProperty";
-import { Float32Property, Float64Property } from "./floatProperties";
-import { IndexedCollectionBaseProperty } from "./indexedCollectionBaseProperty";
+import { ArrayProperty } from "./arrayProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { BoolProperty } from "./boolProperty.js";
+import { ContainerProperty } from "./containerProperty.js";
+import { EnumArrayProperty } from "./enumArrayProperty.js";
+import { EnumProperty } from "./enumProperty.js";
+import { Float32Property, Float64Property } from "./floatProperties.js";
+import { IndexedCollectionBaseProperty } from "./indexedCollectionBaseProperty.js";
 import {
 	Int8Property,
 	Int16Property,
 	Int32Property,
 	Int64Property,
 	Uint64Property,
-} from "./intProperties";
-import { MapProperty } from "./mapProperty";
-import { NamedNodeProperty } from "./namedNodeProperty";
-import { NamedProperty } from "./namedProperty";
-import { NodeProperty } from "./nodeProperty";
-import { _castFunctors } from "./primitiveTypeCasts";
-import { ReferenceArrayProperty } from "./referenceArrayProperty";
-import { ReferenceMapProperty } from "./referenceMapProperty";
-import { ReferenceProperty } from "./referenceProperty";
-import { SetProperty } from "./setProperty";
-import { StringProperty } from "./stringProperty";
-import { Uint8Property, Uint16Property, Uint32Property } from "./uintProperties";
+} from "./intProperties.js";
+import { MapProperty } from "./mapProperty.js";
+import { NamedNodeProperty } from "./namedNodeProperty.js";
+import { NamedProperty } from "./namedProperty.js";
+import { NodeProperty } from "./nodeProperty.js";
+import { _castFunctors } from "./primitiveTypeCasts.js";
+import { ReferenceArrayProperty } from "./referenceArrayProperty.js";
+import { ReferenceMapProperty } from "./referenceMapProperty.js";
+import { ReferenceProperty } from "./referenceProperty.js";
+import { SetProperty } from "./setProperty.js";
+import { StringProperty } from "./stringProperty.js";
+import { Uint8Property, Uint16Property, Uint32Property } from "./uintProperties.js";
 import {
 	BoolArrayProperty,
 	Float32ArrayProperty,
@@ -43,7 +43,7 @@ import {
 	Uint32ArrayProperty,
 	Uint64ArrayProperty,
 	ValueArrayProperty,
-} from "./valueArrayProperty";
+} from "./valueArrayProperty.js";
 import {
 	BoolMapProperty,
 	Float32MapProperty,
@@ -58,8 +58,8 @@ import {
 	Uint32MapProperty,
 	Uint64MapProperty,
 	ValueMapProperty,
-} from "./valueMapProperty";
-import { ValueProperty } from "./valueProperty";
+} from "./valueMapProperty.js";
+import { ValueProperty } from "./valueProperty.js";
 
 export {
 	ArrayProperty,
