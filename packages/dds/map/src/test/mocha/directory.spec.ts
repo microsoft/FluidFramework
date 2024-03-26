@@ -18,13 +18,14 @@ import {
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IDirectoryNewStorageFormat } from "../../directory.js";
-import { SharedDirectory, SharedMap } from "../../index.js";
 import {
 	IDirectory,
 	IDirectoryValueChanged,
 	type ISharedDirectory,
 	ISharedMap,
-} from "../../interfaces.js";
+	SharedDirectory,
+	SharedMap,
+} from "../../index.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 export function createConnectedDirectory(
