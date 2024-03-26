@@ -4,17 +4,15 @@
  */
 
 import { IFluidMountableView } from "@fluid-example/example-utils";
-import {
-	AttachState,
-	IFluidCodeResolver,
-	IResolvedFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainer,
 	IFluidCodeDetails,
+	IFluidCodeResolver,
 	IFluidModule,
 	IFluidModuleWithDetails,
 	IFluidPackage,
+	IResolvedFluidCodeDetails,
 	LoaderHeader,
 	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions/internal";
