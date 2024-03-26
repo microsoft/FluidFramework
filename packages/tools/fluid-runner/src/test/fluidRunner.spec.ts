@@ -193,7 +193,11 @@ describe("fluid-runner from command line", () => {
 });
 
 describe("custom fluidFileConverter provided", () => {
-	const command = path.join(_dirname, "../../src/test/sampleCodeLoaders", "sample-executable.mjs");
+	const command = path.join(
+		_dirname,
+		"../../src/test/sampleCodeLoaders",
+		"sample-executable.mjs",
+	);
 
 	describe("exportFile", () => {
 		const folderRoot = path.join(_dirname, "../../src/test");
