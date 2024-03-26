@@ -265,6 +265,13 @@
 			},
 			"InterfaceDeclaration_IContainerRuntimeMetadata": {
 				"backCompat": false
+			},
+			"RemovedEnumDeclaration_RuntimeMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IChunkedOp": {
+				"backCompat": false
 			}
 		}
 	}

@@ -549,6 +549,7 @@ declare function get_current_InterfaceDeclaration_IChunkedOp():
 declare function use_old_InterfaceDeclaration_IChunkedOp(
     use: TypeOnly<old.IChunkedOp>): void;
 use_old_InterfaceDeclaration_IChunkedOp(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IChunkedOp());
 
 /*
@@ -1734,26 +1735,14 @@ use_old_EnumDeclaration_RuntimeHeaders(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_RuntimeMessage": {"forwardCompat": false}
+* "RemovedEnumDeclaration_RuntimeMessage": {"forwardCompat": false}
 */
-declare function get_old_EnumDeclaration_RuntimeMessage():
-    TypeOnly<old.RuntimeMessage>;
-declare function use_current_EnumDeclaration_RuntimeMessage(
-    use: TypeOnly<current.RuntimeMessage>): void;
-use_current_EnumDeclaration_RuntimeMessage(
-    get_old_EnumDeclaration_RuntimeMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_RuntimeMessage": {"backCompat": false}
+* "RemovedEnumDeclaration_RuntimeMessage": {"backCompat": false}
 */
-declare function get_current_EnumDeclaration_RuntimeMessage():
-    TypeOnly<current.RuntimeMessage>;
-declare function use_old_EnumDeclaration_RuntimeMessage(
-    use: TypeOnly<old.RuntimeMessage>): void;
-use_old_EnumDeclaration_RuntimeMessage(
-    get_current_EnumDeclaration_RuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -591,25 +591,11 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated use ContainerRuntimeMessageType instead
- * @internal
- */
-export enum RuntimeMessage {
-	FluidDataStoreOp = "component",
-	Attach = "attach",
-	ChunkedOp = "chunkedOp",
-	BlobAttach = "blobAttach",
-	Rejoin = "rejoin",
-	Alias = "alias",
-	Operation = "op",
-}
-
-/**
  * @deprecated please use version in driver-utils
  * @internal
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
+	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
 }
 
 /**
@@ -3822,9 +3808,6 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					metadata: undefined,
-					localOpMetadata: undefined,
-					type: ContainerMessageType.IdAllocation,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -3865,7 +3848,6 @@ export class ContainerRuntime
 		const type = containerRuntimeMessage.type;
 		const message: BatchMessage = {
 			contents: serializedContent,
-			type,
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -3893,9 +3875,6 @@ export class ContainerRuntime
 						this.outbox.submit({
 							contents: JSON.stringify(msg),
 							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-							metadata: undefined,
-							localOpMetadata: undefined,
-							type: ContainerMessageType.DocumentSchemaChange,
 						});
 					},
 				);
