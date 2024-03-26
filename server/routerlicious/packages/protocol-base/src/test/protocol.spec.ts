@@ -221,6 +221,18 @@ describe("Protocol", () => {
 			});
 			assert.strictEqual(protocolOpHandler.attributes.sequenceNumber, 2);
 
+			const scrubbedProtocolState = protocolOpHandler.getProtocolState(true);
+			scrubbedProtocolState.members.forEach(([, member]) => {
+				assert(!member.client.user.id, "user id should be empty");
+				assert(
+					!(member.client.user as unknown as any).name,
+					"user name should not be present",
+				);
+				assert(
+					!(member.client.user as unknown as any).additionalDetails?.favoriteColor,
+					"user additional details should not be present",
+				);
+			});
 			const protocolState = protocolOpHandler.getProtocolState();
 			protocolState.members.forEach(([, member]) => {
 				assert(member.client.user.id, "user id should be present");

@@ -58,6 +58,14 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 		};
 
+		// const retryDelays = {
+		// 	retryDelayOnFailover: 100,
+		// 	retryDelayOnClusterDown: 100,
+		// 	retryDelayOnTryAgain: 100,
+		// 	retryDelayOnMoved: redisConfig.retryDelayOnMoved ?? 100,
+		// 	maxRedirections: redisConfig.maxRedirections ?? 16,
+		// };
+
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
 			? undefined
