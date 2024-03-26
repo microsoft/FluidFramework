@@ -7,10 +7,10 @@
 	// "pruneFiles" is disabled because it causesd "source-map-support/register" to give `Unknown file extension ".ts"` errors.
 	// "mochaExplorer.pruneFiles": true,
 	"mochaExplorer.require": [
-		"node_modules/@fluidframework/mocha-test-setup",
+		"node_modules/@fluid-internal/mocha-test-setup",
 		"source-map-support/register",
 	],
 	"mochaExplorer.configFile": ".mocharc.cjs",
 	"mochaExplorer.timeout": 999999,
-	"cSpell.words": ["deprioritized", "endregion", "insertable", "unhydrated"],
+	"cSpell.words": ["deprioritized", "endregion", "insertable", "reentrantly", "unhydrated"],
 }

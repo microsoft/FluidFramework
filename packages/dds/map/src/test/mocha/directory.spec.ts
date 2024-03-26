@@ -5,21 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { UsageError } from "@fluidframework/telemetry-utils";
-import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 
-import { MapFactory } from "../../map";
-import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory";
-import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+import { AttachState } from "@fluidframework/container-definitions";
+import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../../directory.js";
+import { IDirectory, IDirectoryValueChanged, ISharedMap } from "../../interfaces.js";
+import { MapFactory } from "../../map.js";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 function createConnectedDirectory(
 	id: string,
@@ -69,8 +70,7 @@ describe("Directory", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 			directory = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,
@@ -675,7 +675,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.local = false;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -818,7 +818,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.local = false;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),
@@ -884,7 +884,7 @@ describe("Directory", () => {
 				await directory2.load(services2);
 
 				// Now connect the first SharedDirectory
-				dataStoreRuntime.local = false;
+				dataStoreRuntime.setAttachState(AttachState.Attached);
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services1 = {
 					deltaConnection: dataStoreRuntime.createDeltaConnection(),

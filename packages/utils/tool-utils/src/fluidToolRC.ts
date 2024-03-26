@@ -7,8 +7,8 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import util from "util";
-import { lock } from "proper-lockfile";
 import { IOdspTokens } from "@fluidframework/odsp-doclib-utils/internal";
+import { lock } from "proper-lockfile";
 
 /**
  * @internal

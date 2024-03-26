@@ -285,6 +285,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				this.mutexes.set(repoName, withTimeout(new Mutex(), 100000));
 			}
 			try {
+				// eslint-disable-next-line @typescript-eslint/return-await
 				return this.mutexes.get(repoName).runExclusive(async () => {
 					return action();
 				});

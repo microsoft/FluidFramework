@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter, EventEmitterEventType } from "@fluid-internal/client-utils";
+
+import { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 
 /**
@@ -14,7 +15,7 @@ import { IEvent } from "@fluidframework/core-interfaces";
  * @privateRemarks
  * This probably doesn't belong in this package, as it is not telemetry-specific, and is really only intended for internal fluid-framework use.
  * We should consider moving it to the `core-utils` package.
- * @public
+ * @alpha
  */
 export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,

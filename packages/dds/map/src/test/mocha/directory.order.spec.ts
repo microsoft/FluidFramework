@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -12,14 +14,13 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	DirectoryFactory,
 	DirectoryLocalOpMetadata,
 	IDirectoryOperation,
 	SharedDirectory,
-} from "../../directory";
-import { ISharedDirectory } from "../../interfaces";
+} from "../../directory.js";
+import { ISharedDirectory } from "../../interfaces.js";
 
 function createConnectedDirectory(
 	id: string,
@@ -74,8 +75,7 @@ describe("Directory Iteration Order", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 		beforeEach("createDirectory", async () => {
-			dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			dataStoreRuntime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 			directory = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,
@@ -239,8 +239,9 @@ describe("Directory Iteration Order", () => {
 		let directory1: SharedDirectory;
 
 		it("can be compatible with the old format summary", async () => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+			});
 			directory1 = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,
@@ -289,8 +290,9 @@ describe("Directory Iteration Order", () => {
 		});
 
 		it("can be compatible with the new format summary", async () => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			dataStoreRuntime.local = true;
+			const dataStoreRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+			});
 			directory1 = new SharedDirectory(
 				"directory",
 				dataStoreRuntime,

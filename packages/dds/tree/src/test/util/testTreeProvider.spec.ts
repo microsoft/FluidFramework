@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { SharedTreeCore } from "../../shared-tree-core/index.js";
-import { spyOnMethod, SummarizeType, TestTreeProvider } from "../utils.js";
+import { SummarizeType, TestTreeProvider, spyOnMethod } from "../utils.js";
 
 describe("TestTreeProvider", () => {
 	it("can manually trigger summaries with summarizeOnDemand", async () => {

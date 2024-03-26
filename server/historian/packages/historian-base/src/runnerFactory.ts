@@ -7,8 +7,8 @@ import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
-import * as Redis from "ioredis";
 import winston from "winston";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
@@ -45,33 +45,14 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		customizations: IHistorianResourcesCustomizations,
 	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
-		const redisOptions: Redis.RedisOptions = {
-			host: redisConfig.host,
-			port: redisConfig.port,
-			password: redisConfig.pass,
-			connectTimeout: redisConfig.connectTimeout,
-			enableReadyCheck: true,
-			maxRetriesPerRequest: redisConfig.maxRetriesPerRequest,
-			enableOfflineQueue: redisConfig.enableOfflineQueue,
-			retryStrategy: utils.getRedisClusterRetryStrategy({
-				delayPerAttemptMs: 50,
-				maxDelayMs: 2000,
-			}),
-		};
-		if (redisConfig.enableAutoPipelining) {
-			/**
-			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-			 * More info: https://github.com/luin/ioredis#autopipelining
-			 */
-			redisOptions.enableAutoPipelining = true;
-			redisOptions.autoPipeliningIgnoredCommands = ["ping"];
-		}
-		if (redisConfig.tls) {
-			redisOptions.tls = {
-				servername: redisConfig.host,
-			};
-		}
+		const redisClientConnectionManager = customizations?.redisClientConnectionManager
+			? customizations.redisClientConnectionManager
+			: new RedisClientConnectionManager(
+					undefined,
+					redisConfig,
+					redisConfig.enableClustering,
+					redisConfig.slotsRefreshTimeout,
+			  );
 
 		const redisParams = {
 			expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
@@ -85,18 +66,14 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			maxRedirections: redisConfig.maxRedirections ?? 16,
 		};
 
-		const redisClient: Redis.default | Redis.Cluster = utils.getRedisClient(
-			redisOptions,
-			redisConfig.slotsRefreshTimeout,
-			redisConfig.enableClustering,
-			retryDelays,
-		);
-
 		const disableGitCache = config.get("restGitService:disableGitCache") as boolean | undefined;
 		const gitCache = disableGitCache
 			? undefined
-			: new historianServices.RedisCache(redisClient, redisParams);
-		const tenantCache = new historianServices.RedisTenantCache(redisClient, redisParams);
+			: new historianServices.RedisCache(redisClientConnectionManager, redisParams);
+		const tenantCache = new historianServices.RedisTenantCache(
+			redisClientConnectionManager,
+			redisParams,
+		);
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
@@ -109,39 +86,17 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
-		const redisOptionsForThrottling: Redis.RedisOptions = {
-			host: redisConfigForThrottling.host,
-			port: redisConfigForThrottling.port,
-			password: redisConfigForThrottling.pass,
-			connectTimeout: redisConfigForThrottling.connectTimeout,
-			enableReadyCheck: true,
-			maxRetriesPerRequest: redisConfigForThrottling.maxRetriesPerRequest,
-			enableOfflineQueue: redisConfigForThrottling.enableOfflineQueue,
-			retryStrategy: utils.getRedisClusterRetryStrategy({
-				delayPerAttemptMs: 50,
-				maxDelayMs: 2000,
-			}),
-		};
-		if (redisConfigForThrottling.enableAutoPipelining) {
-			/**
-			 * When enabled, all commands issued during an event loop iteration are automatically wrapped in a
-			 * pipeline and sent to the server at the same time. This can improve performance by 30-50%.
-			 * More info: https://github.com/luin/ioredis#autopipelining
-			 */
-			redisOptionsForThrottling.enableAutoPipelining = true;
-			redisOptionsForThrottling.autoPipeliningIgnoredCommands = ["ping"];
-		}
-		if (redisConfigForThrottling.tls) {
-			redisOptionsForThrottling.tls = {
-				servername: redisConfigForThrottling.host,
-			};
-		}
-		const redisClientForThrottling: Redis.default | Redis.Cluster = utils.getRedisClient(
-			redisOptionsForThrottling,
-			redisConfigForThrottling.slotsRefreshTimeout,
-			redisConfigForThrottling.enableClustering,
-			retryDelays,
-		);
+		const redisClientConnectionManagerForThrottling =
+			customizations?.redisClientConnectionManagerForThrottling
+				? customizations.redisClientConnectionManagerForThrottling
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfigForThrottling,
+						redisConfig.enableClustering,
+						redisConfig.slotsRefreshTimeout,
+						retryDelays,
+				  );
+
 		const redisParamsForThrottling = {
 			expireAfterSeconds: redisConfigForThrottling.keyExpireAfterSeconds as
 				| number
@@ -150,7 +105,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const redisThrottleAndUsageStorageManager =
 			new services.RedisThrottleAndUsageStorageManager(
-				redisClientForThrottling,
+				redisClientConnectionManagerForThrottling,
 				redisParamsForThrottling,
 			);
 

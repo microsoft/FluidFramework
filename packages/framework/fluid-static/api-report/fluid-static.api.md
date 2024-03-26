@@ -6,7 +6,6 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
@@ -14,14 +13,15 @@ import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
 // @public
 export interface ContainerSchema {
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
-    initialObjects: LoadableObjectClassRecord;
+    readonly dynamicObjectTypes?: readonly LoadableObjectClass[];
+    readonly initialObjects: LoadableObjectClassRecord;
 }
 
 // @internal
@@ -42,11 +42,11 @@ export function createServiceAudience<TMember extends IMember = IMember>(props: 
 }): IServiceAudience<TMember>;
 
 // @public
-export type DataObjectClass<T extends IFluidLoadable> = {
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     readonly factory: {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-} & LoadableObjectCtor<T>;
+} & (new (...args: any[]) => T);
 
 // @public
 export interface IConnection {
@@ -117,13 +117,10 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 }
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable> = DataObjectClass<T> | SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
 
 // @public
-export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;
-
-// @public
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
 
 // @internal
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
@@ -135,10 +132,5 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     currentConnection: string;
 };
-
-// @public
-export type SharedObjectClass<T extends IFluidLoadable> = {
-    readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
 
 ```

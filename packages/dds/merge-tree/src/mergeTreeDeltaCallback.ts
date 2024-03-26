@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISegment } from "./mergeTreeNodes.js";
 // eslint-disable-next-line import/no-deprecated
-import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops";
-import { PropertySet } from "./properties";
-import { ISegment } from "./mergeTreeNodes";
+import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops.js";
+import { PropertySet } from "./properties.js";
 
 /**
  * @alpha
@@ -99,11 +100,6 @@ export interface IMergeTreeDeltaOpArgs {
 	 * Delta op args are for an unacked local change
 	 */
 	readonly sequencedMessage?: ISequencedDocumentMessage;
-
-	/**
-	 * If the operation is being applied as a stashed op, which means it may have been previously submitted, and therefore should not be resubmitted
-	 */
-	readonly stashed?: boolean;
 }
 
 /**

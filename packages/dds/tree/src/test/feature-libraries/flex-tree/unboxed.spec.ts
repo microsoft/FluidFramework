@@ -14,19 +14,19 @@ import {
 	rootFieldKey,
 } from "../../../core/index.js";
 import { SchemaBuilder, leaf, leaf as leafDomain } from "../../../domains/index.js";
-import {
-	FlexAllowedTypes,
-	Any,
-	FlexFieldKind,
-	FieldKinds,
-	FlexFieldSchema,
-} from "../../../feature-libraries/index.js";
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	unboxedField,
 	unboxedTree,
 	unboxedUnion,
 } from "../../../feature-libraries/flex-tree/unboxed.js";
+import {
+	Any,
+	FieldKinds,
+	FlexAllowedTypes,
+	FlexFieldKind,
+	FlexFieldSchema,
+} from "../../../feature-libraries/index.js";
 import { type TreeContent } from "../../../shared-tree/index.js";
 import { contextWithContentReadonly } from "./utils.js";
 

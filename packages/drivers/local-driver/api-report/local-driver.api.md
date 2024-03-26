@@ -23,6 +23,8 @@ import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshot } from '@fluidframework/driver-definitions';
+import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { IStream } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
@@ -58,7 +60,7 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;
-    submitSignal(message: any): void;
+    submitSignal(message: string): void;
 }
 
 // @internal
@@ -94,6 +96,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     // (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    // (undocumented)
+    getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTreeEx | null>;
     // (undocumented)

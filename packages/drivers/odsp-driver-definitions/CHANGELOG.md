@@ -1,5 +1,29 @@
 # @fluidframework/odsp-driver-definitions
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+
+    Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+    deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+    `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+    2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+    on the replacements.
+
+-   odsp-driver: Removed deprecated implementation of SingleRT feature ([#18690](https://github.com/microsoft/FluidFramework/issues/18690)) [430205cff1](https://github.com/microsoft/FluidFramework/commits/430205cff1ba8a1a7b13b4d42d12babaae596708)
+
+    Removed the deprecated logic of creating sharing-links with container attach (called SingleRT) which was enabled via enableShareLinkWithCreate flag in HostStoragePolicy. This change removes SharingLinkTypes interface definition, removes other deprecated properties from the odsp-driver's resolvedUrl object and also removes the enableShareLinkWithCreate flag. The newer version of SingleRT feature continues to exist, which can be enabled via enableSingleRequestForShareLinkWithCreate feature flag in HostStoragePolicy.
+
+-   container-definitions: Added containerMetadata prop on IContainer interface ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    Added `containerMetadata` prop on IContainer interface.
+
+-   runtime-definitions: Moved ISignalEnvelope interface to core-interfaces ([#19142](https://github.com/microsoft/FluidFramework/issues/19142)) [d0d77f3516](https://github.com/microsoft/FluidFramework/commits/d0d77f3516d67f3c9faedb47b20dbd4e309c3bc2)
+
+    The `ISignalEnvelope` interface has been moved to the @fluidframework/core-interfaces package.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

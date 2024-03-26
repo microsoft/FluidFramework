@@ -10,12 +10,12 @@ import {
 } from "@microsoft/api-extractor-model";
 import { type DocDeclarationReference } from "@microsoft/tsdoc";
 
-import { DocumentNode, type SectionNode } from "../documentation-domain";
-import { type Link } from "../Link";
-import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities";
-import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
-import { type ApiItemTransformationConfiguration } from "./configuration";
-import { wrapInSection } from "./helpers";
+import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
+import { type Link } from "../Link.js";
+import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities.js";
+import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
+import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
+import { wrapInSection } from "./helpers/index.js";
 
 /**
  * Creates a {@link DocumentNode} representing the provided API item.

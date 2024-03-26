@@ -49,7 +49,7 @@ export function isSpoUrl(url: string): boolean {
 
 	// Format: foo.sharepoint.com/_api/v2.1./drives/bar/items/baz and foo.sharepoint-df.com/...
 	const spoRegex = /(.*\.sharepoint(-df)*\.com)\/_api\/v2.1\/drives\/([^/]*)\/items\/([^/]*)/;
-	return !!spoRegex.exec(urlLower);
+	return spoRegex.test(urlLower);
 }
 
 /**
@@ -88,7 +88,7 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 	// Joinsession like URL
 	// Pick a regex based on the hostname
 	// TODO This will only support ODC using api.onedrive.com, update to handle the future (share links etc)
-	let joinSessionMatch;
+	let joinSessionMatch: RegExpExecArray | null;
 	if (isOdcOrigin(url.origin)) {
 		// Capture groups:
 		// 0: match
@@ -97,7 +97,6 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		// 3: optional captured drive ID
 		// 4: Item ID
 		// 5: Drive ID portion of Item ID
-		// eslint-disable-next-line unicorn/no-unsafe-regex
 		joinSessionMatch = /(.*)\/v2\.1\/drive(s\/([\dA-Za-z]+))?\/items\/(([\dA-Za-z]+)!\d+)/.exec(
 			pathname,
 		);

@@ -13,6 +13,7 @@ import {
 import { ICreateTreeEntry } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
+	FileMode,
 	ISnapshotTreeEx,
 	ISummaryTree,
 	SummaryObject,
@@ -62,6 +63,17 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 				return treeEntry;
 			}),
 		);
+
+		if (summaryTree.groupId !== undefined) {
+			const groupId = summaryTree.groupId;
+			const groupIdBlobHandle = await this.writeSummaryBlob(groupId);
+			entries.push({
+				mode: FileMode.File,
+				path: encodeURIComponent(".groupId"),
+				sha: groupIdBlobHandle,
+				type: "blob",
+			});
+		}
 
 		const treeHandle = await this.manager.createGitTree({ tree: entries });
 		return treeHandle.sha;

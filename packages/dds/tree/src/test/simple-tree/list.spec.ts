@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaFactory } from "../../simple-tree/index.js";
-import { getRoot, pretty } from "./utils.js";
+import { hydrate, pretty } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("test");
 
@@ -44,14 +44,14 @@ describe("List", () => {
 
 	/** Helper that creates a new List<number> proxy */
 	function createNumberList(items: readonly number[]) {
-		const list = getRoot(schemaFactory.array(schemaFactory.number), () => items);
+		const list = hydrate(schemaFactory.array(schemaFactory.number), items);
 		assert.deepEqual(list, items);
 		return list;
 	}
 
 	/** Helper that creates a new List<string> proxy */
 	function createStringList(items: readonly string[]) {
-		const list = getRoot(schemaFactory.array(schemaFactory.string), () => items);
+		const list = hydrate(schemaFactory.array(schemaFactory.string), items);
 		assert.deepEqual(list, items);
 		return list;
 	}

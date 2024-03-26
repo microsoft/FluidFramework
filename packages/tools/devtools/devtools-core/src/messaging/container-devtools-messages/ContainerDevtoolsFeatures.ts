@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type HasContainerKey } from "../../CommonInterfaces";
-import { type ContainerDevtoolsFeatureFlags } from "../../Features";
-import { type IDevtoolsMessage } from "../Messages";
+import { type HasContainerKey } from "../../CommonInterfaces.js";
+import { type ContainerDevtoolsFeatureFlags } from "../../Features.js";
+import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
  * Encapsulates types and logic related to {@link ContainerDevtoolsFeatures.Message}.

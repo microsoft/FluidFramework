@@ -6,8 +6,8 @@
 import assert from "node:assert";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerPropertyBags,
 	ITelemetryLoggerPropertyBag,
+	ITelemetryLoggerPropertyBags,
 	TelemetryLogger,
 	convertToBasePropertyType,
 } from "../logger.js";

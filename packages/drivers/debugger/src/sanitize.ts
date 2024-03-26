@@ -18,10 +18,10 @@
  * Messages must match known structures when scrubbing for Fluid Preview.
  */
 
-import fs from "fs";
-import process from "process";
+import fs from "node:fs";
+import process from "node:process";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Sanitizer } from "./sanitizer";
+import { Sanitizer } from "./sanitizer.js";
 
 function printUsage() {
 	console.log("Usage:");

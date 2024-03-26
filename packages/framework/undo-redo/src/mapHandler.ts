@@ -4,7 +4,7 @@
  */
 
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared map undo redo handler that will add all local map changes to the provided

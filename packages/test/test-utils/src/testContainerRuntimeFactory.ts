@@ -6,8 +6,8 @@
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
+	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -16,8 +16,9 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 // eslint-disable-next-line import/no-deprecated
-import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler, buildRuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
@@ -83,12 +84,21 @@ export const createTestContainerRuntimeFactory = (
 		}
 
 		public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
-			const rootContext = runtime.createDetachedRootDataStore([this.type], "default");
+			// Back-compat - old code does not return IDataStore for rootContext.attachRuntime() call!
+			// Thus need to leverage old API createDetachedRootDataStore() that is gone in latest releases.
+			const rootContext =
+				"createDetachedRootDataStore" in runtime
+					? (runtime as any).createDetachedRootDataStore([this.type], "default")
+					: runtime.createDetachedDataStore([this.type], "default");
+
 			const rootRuntime = await this.dataStoreFactory.instantiateDataStore(
 				rootContext,
 				/* existing */ false,
 			);
-			await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+			const dataStore = await rootContext.attachRuntime(this.dataStoreFactory, rootRuntime);
+
+			const result = await dataStore?.trySetAlias("default");
+			assert(result === "Success" || result === undefined, "success");
 		}
 
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {

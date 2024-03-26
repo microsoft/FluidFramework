@@ -2,19 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, intervalLocatorFromEndpoint, Side } from "../intervalCollection";
-import { IntervalStickiness, SequenceInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+import { IIntervalCollection, Side, intervalLocatorFromEndpoint } from "../intervalCollection.js";
+import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 async function loadSharedString(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
@@ -37,7 +39,7 @@ async function loadSharedString(
 async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq: number }> {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.local = false;
+	dataStoreRuntime.setAttachState(AttachState.Attached);
 	dataStoreRuntime.options = {
 		intervalStickinessEnabled: true,
 	};

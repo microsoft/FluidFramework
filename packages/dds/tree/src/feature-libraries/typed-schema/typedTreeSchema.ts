@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, assert } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import {
 	Adapters,
 	EmptyKey,
 	FieldKey,
-	TreeNodeStoredSchema,
+	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	StoredSchemaCollection,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
 	TreeTypeSet,
 	ValueSchema,
-	TreeStoredSchema,
-	StoredSchemaCollection,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
-	ObjectNodeStoredSchema,
 } from "../../core/index.js";
 import {
+	Assume,
 	MakeNominal,
 	Named,
-	requireAssignableTo,
 	compareSets,
-	oneFromSet,
-	Assume,
 	mapIterable,
+	oneFromSet,
+	requireAssignableTo,
 } from "../../util/index.js";
 import { FieldKinds } from "../default-schema/index.js";
 import { FlexFieldKind, FullSchemaPolicy } from "../modular-schema/index.js";
@@ -48,12 +48,12 @@ export type NormalizeObjectNodeFields<T extends FlexObjectNodeFields> = {
 };
 
 /**
- * A placeholder to use in extends constraints when using the real type breaks compilation of some recursive types due to [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
+ * A placeholder to use in {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#generic-constraints | extends constraints} when using the real type breaks compilation of some recursive types due to {@link https://github.com/microsoft/TypeScript/issues/55758 | a design limitation of TypeScript}.
  *
  * These extends constraints only serve as documentation:
  * to avoid breaking compilation, this type has to not actually enforce anything, and thus is just `unknown`.
  * Therefore the type safety is the responsibility of the user of the API.
- * @internal
+ * @beta
  */
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 

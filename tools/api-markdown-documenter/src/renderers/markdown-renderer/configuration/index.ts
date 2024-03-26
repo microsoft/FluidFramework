@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { getRenderConfigurationWithDefaults, type RenderConfiguration } from "./Configuration";
-export { defaultRenderers, type Renderers } from "./RenderOptions";
+export { getRenderConfigurationWithDefaults, type RenderConfiguration } from "./Configuration.js";
+export { defaultRenderers, type Renderers } from "./RenderOptions.js";

@@ -16,8 +16,8 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { compress, decompress } from "lz4js";
-import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
+import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
+import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";
 
 /**
  * @internal

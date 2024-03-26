@@ -6,13 +6,13 @@
 import { TreeValue } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
 import { FluidSerializableReadOnly } from "../../valueUtilities.js";
-import { EncodedFieldBatchGeneric } from "./formatGeneric.js";
 import {
 	Counter,
 	CounterFilter,
 	DeduplicationTable,
 	jsonMinimizingFilter,
 } from "./chunkCodecUtilities.js";
+import { EncodedFieldBatchGeneric } from "./formatGeneric.js";
 
 /**
  * An identifier which can be compressed using {@link Counter}.

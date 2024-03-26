@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type IClient } from "@fluidframework/protocol-definitions";
+
 import { type AudienceClientMetadata } from "@fluidframework/devtools-core";
+import { type IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Represents a single audience user, aggregating their client connections.

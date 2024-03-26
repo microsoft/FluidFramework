@@ -5,8 +5,8 @@
 
 import {
 	IContainer,
-	IHostLoader,
 	IFluidCodeDetails,
+	IHostLoader,
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -16,21 +16,24 @@ import {
 } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
-	ITelemetryGenericEvent,
-	ITelemetryBaseLogger,
-	ITelemetryBaseEvent,
 	IRequestHeader,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
+import {
+	type ITelemetryGenericEventExt,
+	createChildLogger,
+	createMultiSinkLogger,
+} from "@fluidframework/telemetry-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
-import { createChildLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
-import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
+import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
@@ -105,10 +108,13 @@ export interface ITestObjectProvider {
 	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 * @param loaderProps - Optional loader properties
+	 * @param forceUseCreateVersion - For Cross-Version compat testing, create a loader based on the create version
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
+		forceUseCreateVersion?: boolean,
 	): IHostLoader;
 
 	/**
@@ -125,6 +131,19 @@ export interface ITestObjectProvider {
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
 	): Promise<IContainer>;
+
+	/**
+	 * Create a detached container much like createContainer, but without attaching it to the document service.
+	 */
+	createDetachedContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+	): Promise<IContainer>;
+
+	/**
+	 * Attaches a detached container to the document service.
+	 */
+	attachDetachedContainer(container: IContainer): Promise<void>;
 
 	/**
 	 * Loads a container using the default document id
@@ -204,6 +223,9 @@ export interface ITestContainerConfig {
 
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
+
+	/** For Cross-Version compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
+	forceUseCreateVersion?: true;
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
@@ -288,12 +310,12 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
 	constructor(private readonly baseLogger: ITelemetryBaseLogger) {}
 
 	private readonly expectedEvents: (
-		| { index: number; event: ITelemetryGenericEvent | undefined }
+		| { index: number; event: ITelemetryGenericEventExt | undefined }
 		| undefined
 	)[] = [];
 	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
-	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]) {
+	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]) {
 		if (this.expectedEvents.length !== 0) {
 			// we don't have to error here. just no reason not to. given the events must be
 			// ordered it could be tricky to figure out problems around multiple registrations.
@@ -503,6 +525,36 @@ export class TestObjectProvider implements ITestObjectProvider {
 		// update the document ID with the actual ID of the attached container.
 		this._documentIdStrategy.update(container.resolvedUrl);
 		return container;
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.createDetachedContainer}
+	 */
+	public async createDetachedContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps> | undefined,
+	): Promise<IContainer> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return loader.createDetachedContainer(defaultCodeDetails);
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.attachDetachedContainer}
+	 */
+	public async attachDetachedContainer(container: IContainer): Promise<void> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		await container.attach(this.driver.createCreateNewRequest(this.documentId));
+		this._documentCreated = true;
+		this._documentIdStrategy.update(container.resolvedUrl);
 	}
 
 	/**
@@ -786,10 +838,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
+		forceUseCreateVersion = false,
 	) {
+		const useCreateVersion = forceUseCreateVersion === true || this.useCreateApi;
 		if (this.useCreateApi) {
 			// After we create the first loader, we can set this.useCreateApi to false.
 			this.useCreateApi = false;
+		}
+		if (useCreateVersion) {
 			return this.createLoaderForCreating(packageEntries, loaderProps);
 		}
 		return this.createLoaderForLoading(packageEntries, loaderProps);
@@ -815,6 +871,36 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		// update the document ID with the actual ID of the attached container.
 		this._documentIdStrategy.update(container.resolvedUrl);
 		return container;
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.createDetachedContainer}
+	 */
+	public async createDetachedContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps> | undefined,
+	): Promise<IContainer> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return loader.createDetachedContainer(defaultCodeDetails);
+	}
+
+	/**
+	 * {@inheritdoc ITestObjectProvider.attachDetachedContainer}
+	 */
+	public async attachDetachedContainer(container: IContainer): Promise<void> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		await container.attach(this.driver.createCreateNewRequest(this.documentId));
+		this._documentCreated = true;
+		this._documentIdStrategy.update(container.resolvedUrl);
 	}
 
 	/**
@@ -849,6 +935,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
+			testContainerConfig?.forceUseCreateVersion,
 		);
 	}
 

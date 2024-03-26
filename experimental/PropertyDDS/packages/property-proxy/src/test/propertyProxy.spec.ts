@@ -6,24 +6,24 @@
 /* eslint-env jest */
 /* eslint-disable no-param-reassign */
 import {
-	PropertyFactory,
-	BaseProperty,
 	ArrayProperty,
+	BaseProperty,
 	MapProperty,
-	SetProperty,
 	NodeProperty,
+	PropertyFactory,
+	SetProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "..";
+import { PropertyProxy } from "../index.js";
 
 import {
-	vector2DTemplate,
-	vector3DTemplate,
-	enumUnoDosTresTemplate,
 	bookDataTemplate,
 	collectionConstants,
+	enumUnoDosTresTemplate,
 	genericTemplate,
-} from "./testSchemas";
+	vector2DTemplate,
+	vector3DTemplate,
+} from "./testSchemas.js";
 
 // --------------------- unit testing ----------------------------------
 

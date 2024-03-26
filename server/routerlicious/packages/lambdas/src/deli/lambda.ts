@@ -1489,7 +1489,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				return;
 			}
 
-			const errorMsg = `Could not send message to alfred`;
+			const errorMsg = `Could not send message to rawdeltas`;
 			this.context.log?.error(`${errorMsg}: ${JSON.stringify(error)}`, {
 				messageMetaData: {
 					documentId: this.documentId,

@@ -2,9 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { expect } from "chai";
-import { cloneDeep } from "lodash";
-import { ChangeSet } from "../changeset";
+import cloneDeep from "lodash/cloneDeep.js";
+import { ChangeSet } from "../changeset.js";
 
 describe("Indexed Collection Operations", function () {
 	it("modifications should rebase to a NOP for polymorphic collection, when the type of a primitive property changes in the base ChangeSet", () => {

@@ -4,6 +4,13 @@
  */
 
 import { TUnsafe, Type } from "@sinclair/typebox";
+import { makeCodecFamily } from "../../../codec/index.js";
+import {
+	ChangeEncodingContext,
+	DeltaFieldChanges,
+	makeDetachedNodeId,
+} from "../../../core/index.js";
+import { Multiplicity } from "../../../feature-libraries/index.js";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -12,13 +19,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import { Mutable, fail } from "../../../util/index.js";
-import { makeCodecFamily } from "../../../codec/index.js";
-import {
-	ChangeEncodingContext,
-	DeltaFieldChanges,
-	makeDetachedNodeId,
-} from "../../../core/index.js";
-import { Multiplicity } from "../../../feature-libraries/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**

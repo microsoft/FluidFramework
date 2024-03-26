@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { TextSegment } from "../textSegment";
-import { TestClient } from "./testClient";
+import { TextSegment } from "../textSegment.js";
+import { TestClient } from "./testClient.js";
 
 describe("client.getPosition", () => {
 	const localUserLongId = "localUser";

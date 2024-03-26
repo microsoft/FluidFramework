@@ -4,16 +4,16 @@
  */
 import { type ApiModel } from "@microsoft/api-extractor-model";
 
-import { type ConfigurationBase } from "../../ConfigurationBase";
-import { defaultConsoleLogger } from "../../Logging";
+import { type ConfigurationBase } from "../../ConfigurationBase.js";
+import { defaultConsoleLogger } from "../../Logging.js";
 import {
 	type DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
-} from "./DocumentationSuiteOptions";
+} from "./DocumentationSuiteOptions.js";
 import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationOptionsWithDefaults,
-} from "./TransformationOptions";
+} from "./TransformationOptions.js";
 
 /**
  * API Item transformation configuration.

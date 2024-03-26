@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
-import { createNodesFromPlainText } from "./Utilities";
+import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * Kind of Table Cell.

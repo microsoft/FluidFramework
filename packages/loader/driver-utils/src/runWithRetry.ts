@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
-import { pkgVersion } from "./packageVersion";
+import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
+import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * Interface describing an object passed to various network APIs.

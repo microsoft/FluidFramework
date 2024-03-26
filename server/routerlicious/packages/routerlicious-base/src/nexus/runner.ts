@@ -137,11 +137,11 @@ export class NexusRunner implements IRunner {
 
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("AlfredRunner.stop already called, returning early.");
+			Lumberjack.info("NexusRunner.stop already called, returning early.");
 			return;
 		}
 		this.stopped = true;
-		Lumberjack.info("AlfredRunner.stop starting.");
+		Lumberjack.info("NexusRunner.stop starting.");
 
 		const runnerServerCloseTimeoutMs =
 			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;

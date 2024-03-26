@@ -40,7 +40,7 @@ export function create(
 		}
 
 		const createParams = request.body as ICreateRepoParams;
-		if (!createParams || !createParams.name) {
+		if (!createParams?.name) {
 			return response.status(400).json("Invalid repo name");
 		}
 

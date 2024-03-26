@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PropertySet } from "@fluidframework/sequence";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { ITable, TableDocumentItem } from "../table.js";
+import { PropertySet } from "@fluidframework/sequence";
 import { TableDocument } from "../document.js";
+import { ITable, TableDocumentItem } from "../table.js";
 
 /**
  * Does the following:
@@ -20,14 +20,13 @@ import { TableDocument } from "../document.js";
  * - Use these new properties to call the underlying {@link TableDocument}.
  *
  * - The `propertyInterceptionCallback` and the call to the underlying `TableDocument` are wrapped around an
- * {@link IContainerRuntimeBase.orderSequentially} call to batch any operations that might happen in the callback.
+ * `IContainerRuntimeBase.orderSequentially` call to batch any operations that might happen in the callback.
  *
  * - Modify the `createSlice` method for `TableDocument` object to return a wrapped object by calling
  * `createTableWithInterception` on the created `TableSlice` object.
  *
  * @param table - The underlying {@link ITable} object
- * @param context - The {@link IFluidDataStoreContext} that will be used to call
- * {@link IContainerRuntimeBase.orderSequentially}.
+ * @param context - The `IFluidDataStoreContext` that will be used to call `IContainerRuntimeBase.orderSequentially`.
  * @param propertyInterceptionCallback - The interception callback to be called.
  *
  * @returns A new {@link ITable} object that intercepts the methods modifying the properties of cells, rows or columns.

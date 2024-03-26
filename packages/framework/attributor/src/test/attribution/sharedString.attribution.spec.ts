@@ -3,47 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import * as path from "node:path";
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
+	type Generator,
+	type IRandom,
+	type Reducer,
 	chain,
 	createWeightedGenerator,
 	done,
-	type Generator,
 	generatorFromArray,
 	interleave,
-	type IRandom,
 	makeRandom,
 	performFuzzActions,
-	type Reducer,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	MockContainerRuntimeFactoryForReconnection,
-	type MockContainerRuntimeForReconnection,
-} from "@fluidframework/test-runtime-utils";
+import { type IAudience } from "@fluidframework/container-definitions";
 import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 	type Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { type IAudience } from "@fluidframework/container-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
-import { type IAttributor, OpStreamAttributor } from "../../attributor";
+import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import {
+	MockContainerRuntimeFactoryForReconnection,
+	type MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
+	type Encoder,
 	chain as chainEncoders,
 	deltaEncoder,
-	type Encoder,
-} from "../../encoders";
-import { makeLZ4Encoder } from "../../lz4Encoder";
+} from "../../encoders.js";
+import { makeLZ4Encoder } from "../../lz4Encoder.js";
+import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {
 	const clients = new Map<string, IClient>();
@@ -324,7 +325,7 @@ function createSharedString(
 	);
 }
 
-const directory = path.join(__dirname, "../../../src/test/attribution/documents");
+const directory = path.join(_dirname, "../../../src/test/attribution/documents");
 
 interface TestPaths {
 	directory: string;

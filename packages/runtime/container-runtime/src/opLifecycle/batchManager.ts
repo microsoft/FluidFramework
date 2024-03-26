@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICompressionRuntimeOptions } from "../containerRuntime";
-import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions";
+import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;

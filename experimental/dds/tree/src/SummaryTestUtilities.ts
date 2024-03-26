@@ -5,8 +5,8 @@
 
 import { IsoBuffer } from '@fluid-internal/client-utils';
 import type { EditLog } from './EditLog.js';
-import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types/index.js';
 import type { SharedTree } from './SharedTree.js';
+import type { ChangeInternal, EditChunkContents, FluidEditHandle } from './persisted-types/index.js';
 
 /**
  * Format used for exporting an uploaded edit chunk and its associated handle path. Primarily used for testing SharedTree summaries.

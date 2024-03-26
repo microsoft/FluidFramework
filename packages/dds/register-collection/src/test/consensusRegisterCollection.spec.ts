@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { BlobTreeEntry } from "@fluidframework/driver-utils";
 import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -16,8 +16,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory";
-import { IConsensusRegisterCollection } from "../interfaces";
+import { ConsensusRegisterCollectionFactory } from "../consensusRegisterCollectionFactory.js";
+import { IConsensusRegisterCollection } from "../interfaces.js";
 
 function createConnectedCollection(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();

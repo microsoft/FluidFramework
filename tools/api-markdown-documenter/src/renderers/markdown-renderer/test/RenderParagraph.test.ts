@@ -4,8 +4,8 @@
  */
 import { expect } from "chai";
 
-import { ParagraphNode, PlainTextNode } from "../../../documentation-domain";
-import { testRender } from "./Utilities";
+import { ParagraphNode, PlainTextNode } from "../../../documentation-domain/index.js";
+import { testRender } from "./Utilities.js";
 
 describe("ParagraphNode Markdown rendering tests", () => {
 	describe("Standard context", () => {

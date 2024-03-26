@@ -6,6 +6,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable import/no-deprecated */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	Client,
 	ISegment,
@@ -23,7 +24,6 @@ import {
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
-import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import {
@@ -31,8 +31,9 @@ import {
 	Side,
 	computeStickinessFromSide,
 	endpointPosAndSide,
+	reservedIntervalIdKey,
 	sidesFromStickiness,
-} from "../intervalCollection";
+} from "../intervalCollection.js";
 import {
 	IIntervalHelpers,
 	ISerializableInterval,
@@ -41,9 +42,7 @@ import {
 	IntervalType,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
-} from "./intervalUtils";
-
-const reservedIntervalIdKey = "intervalId";
+} from "./intervalUtils.js";
 
 function compareSides(sideA: Side, sideB: Side): number {
 	if (sideA === sideB) {

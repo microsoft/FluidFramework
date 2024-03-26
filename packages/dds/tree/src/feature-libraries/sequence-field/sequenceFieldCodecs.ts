@@ -5,16 +5,16 @@
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
+import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
+import { Changeset as ChangesetSchema, Encoded } from "./format.js";
 import {
 	Attach,
 	AttachAndDetach,
 	CellId,
 	Changeset,
-	Remove,
 	Detach,
 	Insert,
 	Mark,
@@ -22,8 +22,8 @@ import {
 	MoveIn,
 	MoveOut,
 	NoopMarkType,
+	Remove,
 } from "./types.js";
-import { Changeset as ChangesetSchema, Encoded } from "./format.js";
 import { isNoopMark } from "./utils.js";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(

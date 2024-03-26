@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import type { EventEmitter } from "@fluid-example/example-utils";
 import { AttributableMap } from "@fluid-experimental/attributable-map";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export const greenKey = "green";

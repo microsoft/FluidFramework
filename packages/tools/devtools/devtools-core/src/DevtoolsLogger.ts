@@ -8,17 +8,17 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
+import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";
 import {
 	GetTelemetryHistory,
-	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
-	postMessagesToWindow,
-	TelemetryHistory,
 	TelemetryEvent,
-} from "./messaging";
-import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
+	TelemetryHistory,
+	handleIncomingWindowMessage,
+	postMessagesToWindow,
+} from "./messaging/index.js";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).

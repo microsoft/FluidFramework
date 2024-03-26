@@ -4,27 +4,28 @@
  */
 
 import { strict as assert } from "assert";
+import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree";
+import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-	MockStorage,
 	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { IIntervalCollection, Side } from "../intervalCollection";
-import { IntervalIndex } from "../intervalIndex";
-import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals";
-import { assertSequenceIntervals } from "./intervalTestUtils";
+import { IIntervalCollection, Side } from "../intervalCollection.js";
+import { IntervalIndex } from "../intervalIndex/index.js";
+import { ISerializableInterval, IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+import { assertSequenceIntervals } from "./intervalTestUtils.js";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
@@ -95,7 +96,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 
 			// Connect the first SharedString.
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			dataStoreRuntime1.options = {
 				intervalStickinessEnabled: true,
 			};
@@ -1559,7 +1560,7 @@ describe("SharedString interval collections", () => {
 			);
 
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.setAttachState(AttachState.Attached);
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
@@ -1993,6 +1994,108 @@ describe("SharedString interval collections", () => {
 			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+		});
+
+		it("slides backward reference to correct position when remove is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.removeText(1, 2);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it("slides backward reference to correct position when remove multiple segments is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+			// (AYYYXXXB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.After };
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.insertText(1, "XXX");
+			sharedString.insertText(1, "YYY");
+			sharedString.removeText(1, 8);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it("slides backward reference to correct position when start of string remove is unacked", () => {
+			sharedString.insertText(0, "ABC");
+
+			// (AB]C
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = { pos: 0, side: Side.After };
+			const end = { pos: 1, side: Side.Before };
+
+			const collection = sharedString.getIntervalCollection("test");
+			const interval = collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+
+			sharedString.removeText(0, 2);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(interval.start.getSegment()?.constructor.name, "StartOfTreeSegment");
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		});
+
+		it.skip("slides forward reference to correct position when remove of end of string is unacked", () => {
+			dataStoreRuntime1.options.mergeTreeReferencesCanSlideToEndpoint = false;
+			sharedString.insertText(0, "ABC");
+
+			// (ABC]
+
+			containerRuntimeFactory.processAllMessages();
+
+			const start = 0;
+			const end = 2;
+
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add({ end, start });
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
+
+			sharedString.removeText(1, 3);
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
 		});
 	});
 });

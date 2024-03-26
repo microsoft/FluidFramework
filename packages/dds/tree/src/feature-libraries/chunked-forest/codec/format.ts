@@ -5,7 +5,7 @@
 
 import { Static, Type } from "@sinclair/typebox";
 import { unionOptions } from "../../../codec/index.js";
-import { EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex, Count } from "./formatGeneric.js";
+import { Count, EncodedFieldBatchGeneric, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 
 // TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
 export const version = 1.0;

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { SharingLinkRole, SharingLinkScope } from "@fluidframework/odsp-driver-definitions";
-import { buildOdspShareLinkReqParams } from "../odspUtils";
+import { buildOdspShareLinkReqParams } from "../odspUtils.js";
 
 describe("buildOdspShareLinkReqParams", () => {
 	it("Should return appropriate query parameters when only scope is provided", async () => {

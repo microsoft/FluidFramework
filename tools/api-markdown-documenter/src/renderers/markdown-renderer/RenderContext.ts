@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { TextFormatting } from "../../documentation-domain";
-import type { Renderers } from "./configuration";
+import type { TextFormatting } from "../../documentation-domain/index.js";
+import type { Renderers } from "./configuration/index.js";
 
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.

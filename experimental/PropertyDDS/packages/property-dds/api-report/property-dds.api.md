@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -13,6 +11,7 @@ import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IsoBuffer } from '@fluid-internal/client-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { NodeProperty } from '@fluid-experimental/property-properties';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -110,8 +109,8 @@ export interface ISharedPropertyTreeEncDec {
     };
     // (undocumented)
     summaryEncoder: {
-        encode: (ISnapshotSummary: any) => Buffer;
-        decode: (Buffer: any) => ISnapshotSummary;
+        encode: (ISnapshotSummary: any) => IsoBuffer;
+        decode: (IsoBuffer: any) => ISnapshotSummary;
     };
 }
 

@@ -91,9 +91,9 @@
  * @packageDocumentation
  */
 
-export { SharedMapRevertible, SharedMapUndoRedoHandler } from "./mapHandler";
+export { SharedMapRevertible, SharedMapUndoRedoHandler } from "./mapHandler.js";
 export {
 	SharedSegmentSequenceRevertible,
 	SharedSegmentSequenceUndoRedoHandler,
-} from "./sequenceHandler";
-export { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
+} from "./sequenceHandler.js";
+export { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";

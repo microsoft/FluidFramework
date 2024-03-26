@@ -7,30 +7,30 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	CursorLocationType,
 	FieldKey,
-	TreeFieldStoredSchema,
+	FieldKindIdentifier,
 	ITreeCursorSynchronous,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
-	FieldKindIdentifier,
 } from "../../../core/index.js";
 import { fail, getOrCreate } from "../../../util/index.js";
 import { type FlexFieldKind } from "../../modular-schema/index.js";
+import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
 	handleShapesAndIdentifiers,
 } from "./chunkEncodingGeneric.js";
-import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
-import {
-	version,
-	EncodedChunkShape,
-	EncodedValueShape,
-	EncodedAnyShape,
-	EncodedNestedArray,
-	EncodedFieldBatch,
-} from "./format.js";
 import { FieldBatch } from "./fieldBatch.js";
+import {
+	EncodedAnyShape,
+	EncodedChunkShape,
+	EncodedFieldBatch,
+	EncodedNestedArray,
+	EncodedValueShape,
+	version,
+} from "./format.js";
 
 /**
  * Encode data from `FieldBatch` in into an `EncodedChunk`.

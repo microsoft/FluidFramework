@@ -1,13 +1,13 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
-		"module": "esnext",
-		"lib": ["ESNext", "DOM"],
 		"rootDir": "src",
-		"outDir": "dist",
-		"composite": true,
-		"jsx": "react",
+		// This serves as common base config, but should not be used for
+		// emitting; so, set an invalid outDir.
+		"outDir": "- invalid - use tsconfig.cjs|esm.json when emitting -",
+		// @fluentui packages raise tsc errors.
 		"skipLibCheck": true,
 	},
-	"include": ["src/**/*"],
 }

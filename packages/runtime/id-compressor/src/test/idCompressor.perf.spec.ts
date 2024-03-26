@@ -5,20 +5,19 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { assert } from "@fluidframework/core-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IdCreationRange,
-	SerializedIdCompressorWithNoSession,
 	OpSpaceCompressedId,
-	SessionSpaceCompressedId,
+	SerializedIdCompressorWithNoSession,
 	SessionId,
+	SessionSpaceCompressedId,
 	StableId,
-} from "../";
-import { IdCompressor } from "../idCompressor";
-import { createSessionId } from "../utilities";
-import { FinalCompressedId, LocalCompressedId, isFinalId, isLocalId, fail } from "./testCommon";
+} from "..//index.js";
+import { IdCompressor } from "../idCompressor.js";
+import { createSessionId } from "../utilities.js";
 import {
 	Client,
 	DestinationClient,
@@ -27,7 +26,8 @@ import {
 	makeOpGenerator,
 	performFuzzActions,
 	sessionIds,
-} from "./idCompressorTestUtilities";
+} from "./idCompressorTestUtilities.js";
+import { FinalCompressedId, LocalCompressedId, fail, isFinalId, isLocalId } from "./testCommon.js";
 
 const initialClusterCapacity = 512;
 

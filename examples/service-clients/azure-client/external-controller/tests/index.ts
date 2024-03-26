@@ -4,7 +4,7 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { SharedMap } from "fluid-framework";
+import { type ISharedMap, SharedMap } from "fluid-framework";
 
 import {
 	IContainer,
@@ -22,12 +22,12 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
-import { DiceRollerController } from "../src/controller";
-import { makeAppView } from "../src/view";
 import {
 	IFluidContainer,
 	createDOProviderContainerRuntimeFactory,
 } from "@fluidframework/fluid-static";
+import { DiceRollerController } from "../src/controller.js";
+import { makeAppView } from "../src/view.js";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -110,8 +110,8 @@ export const containerConfig = {
 
 async function initializeNewContainer(container: IFluidContainer): Promise<void> {
 	// We now get the first SharedMap from the container
-	const sharedMap1 = container.initialObjects.map1 as SharedMap;
-	const sharedMap2 = container.initialObjects.map2 as SharedMap;
+	const sharedMap1 = container.initialObjects.map1 as ISharedMap;
+	const sharedMap2 = container.initialObjects.map2 as ISharedMap;
 	await Promise.all([
 		DiceRollerController.initializeModel(sharedMap1),
 		DiceRollerController.initializeModel(sharedMap2),
@@ -142,8 +142,8 @@ export async function createContainerAndRenderInElement(
 		await attach?.();
 	}
 
-	const sharedMap1 = fluidContainer.initialObjects.map1 as SharedMap;
-	const sharedMap2 = fluidContainer.initialObjects.map2 as SharedMap;
+	const sharedMap1 = fluidContainer.initialObjects.map1 as ISharedMap;
+	const sharedMap2 = fluidContainer.initialObjects.map2 as ISharedMap;
 	const diceRollerController = new DiceRollerController(sharedMap1);
 	const diceRollerController2 = new DiceRollerController(sharedMap2);
 

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IAgentScheduler } from "./agent";
+import { IEvent } from "@fluidframework/core-interfaces";
+import { IAgentScheduler } from "./agent.js";
 
 /**
  * Events emitted by {@link TaskSubscription}.

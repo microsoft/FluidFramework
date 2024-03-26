@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from 'assert';
-import { expect } from 'chai';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { expect } from 'chai';
 import { MutableStringInterner } from '../StringInterner.js';
 
 describe('MutableStringInterner', () => {

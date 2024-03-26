@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+// Provide EventEmitter from example-utils to avoid examples all directly depending on
+// a @fluid-internal package while EventEmitter support is finalized.
+export { EventEmitter } from "@fluid-internal/client-utils";
+
 export {
 	ContainerViewRuntimeFactory,
 	ViewCallback,
@@ -45,4 +49,20 @@ export {
 	TinyliciousModelLoader,
 	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader/index.js";
-export { MountableView } from "./mountableView/index.js";
+export {
+	type IFluidMountableView,
+	type IProvideFluidMountableView,
+	MountableView,
+} from "./mountableView/index.js";
+export {
+	CollaborativeInput,
+	CollaborativeTextArea,
+	ICollaborativeInputProps,
+	ICollaborativeInputState,
+	ICollaborativeTextAreaProps,
+} from "./reactInputs/index.js";
+export {
+	ISharedStringHelperEvents,
+	ISharedStringHelperTextChangedEventArgs,
+	SharedStringHelper,
+} from "./SharedStringHelper.js";

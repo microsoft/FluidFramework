@@ -26,7 +26,6 @@ export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
 // eslint-disable-next-line no-restricted-syntax
 export * from "./indexNode";
 export { Lazy } from "./lazy";
-export { BaseTelemetryNullLogger, TelemetryNullLogger } from "./logger";
 export { IsomorphicPerformance } from "./performanceIsomorphic";
 export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";
 export { Deferred, LazyPromise } from "./promises";

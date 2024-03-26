@@ -6,27 +6,27 @@
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import {
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import {
 	IOdspSummaryPayload,
-	IWriteSummaryResponse,
 	IOdspSummaryTree,
 	IOdspSummaryTreeBaseEntry,
+	IWriteSummaryResponse,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { EpochTracker } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./odspUtils";
+} from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into
@@ -48,7 +48,10 @@ export class OdspSummaryUploadManager {
 		this.mc = loggerToMonitoringContext(logger);
 	}
 
-	public async writeSummaryTree(tree: api.ISummaryTree, context: ISummaryContext) {
+	public async writeSummaryTree(
+		tree: api.ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string> {
 		// If the last proposed handle is not the proposed handle of the acked summary(could happen when the last summary get nacked),
 		// then re-initialize the caches with the previous ones else just update the previous caches with the caches from acked summary.
 		// Don't bother logging if lastSummaryProposalHandle hasn't been set before; only log on a positive mismatch.
@@ -122,7 +125,7 @@ export class OdspSummaryUploadManager {
 					attempt: options.refresh ? 2 : 1,
 					hasClaims: !!options.claims,
 					hasTenantId: !!options.tenantId,
-					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					headers: Object.keys(headers).length > 0 ? true : undefined,
 					blobs,
 					size: postBody.length,
 					referenceSequenceNumber,
@@ -163,7 +166,10 @@ export class OdspSummaryUploadManager {
 		markUnreferencedNodes: boolean = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.MarkUnreferencedNodes",
 		) ?? true,
-	) {
+	): Promise<{
+		snapshotTree: IOdspSummaryTree;
+		blobs: number;
+	}> {
 		const snapshotTree: IOdspSummaryTree = {
 			type: "tree",
 			entries: [] as OdspSummaryTreeEntry[],
@@ -213,7 +219,7 @@ export class OdspSummaryUploadManager {
 				}
 				case api.SummaryType.Handle: {
 					if (!parentHandle) {
-						throw Error("Parent summary does not exist to reference by handle.");
+						throw new Error("Parent summary does not exist to reference by handle.");
 					}
 					let handlePath = summaryObject.handle;
 					if (handlePath.length > 0 && !handlePath.startsWith("/")) {
@@ -228,7 +234,10 @@ export class OdspSummaryUploadManager {
 					break;
 				}
 				default: {
-					unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
+					unreachableCase(
+						summaryObject,
+						`Unknown type: ${(summaryObject as api.SummaryObject).type}`,
+					);
 				}
 			}
 

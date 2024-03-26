@@ -4,9 +4,9 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
 import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
-import { Unhydrated, TreeNode } from "./types.js";
+import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
+import { TreeNode, Unhydrated } from "./types.js";
 
 /**
  * Helper used to produce types for object nodes.
@@ -49,7 +49,8 @@ export type InsertableObjectFromSchemaRecord<
  * @typeParam Name - The full (including scope) name/identifier for the schema.
  * @typeParam Kind - Which kind of node this schema is for.
  * @typeParam TNode - API for nodes that use this schema.
- * @typeParam TBuild - Data which can be used to construct an unhydrated node of this type.
+ * @typeParam TBuild - Data which can be used to construct an {@link Unhydrated} node of this type.
+ * @typeParam Info - Data used when defining this schema.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
  * @public
@@ -60,9 +61,10 @@ export type TreeNodeSchema<
 	TNode = unknown,
 	TBuild = never,
 	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable>;
+	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
 
 /**
  * Schema which is not a class.
@@ -78,7 +80,8 @@ export interface TreeNodeSchemaNonClass<
 	out TNode = unknown,
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	create(data: TInsertable): TNode;
 }
 
@@ -98,7 +101,8 @@ export interface TreeNodeSchemaClass<
 	out TNode = unknown,
 	in TInsertable = never,
 	out ImplicitlyConstructable extends boolean = boolean,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable> {
+	out Info = unknown,
+> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
 	/**
 	 * Constructs an {@link Unhydrated} node with this schema.
 	 * @remarks
@@ -117,10 +121,19 @@ export interface TreeNodeSchemaCore<
 	out Name extends string,
 	out Kind extends NodeKind,
 	out ImplicitlyConstructable extends boolean,
+	out Info = unknown,
 > {
 	readonly identifier: Name;
 	readonly kind: Kind;
-	readonly info: unknown;
+
+	/**
+	 * Data used to define this schema.
+	 *
+	 * @remarks
+	 * The format depends on the kind of node it is for.
+	 * For example, the "object" node kind could store the field schema here.
+	 */
+	readonly info: Info;
 
 	/**
 	 * When constructing insertable content,

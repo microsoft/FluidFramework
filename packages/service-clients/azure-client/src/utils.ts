@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import type {
 	AzureConnectionConfig,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
-} from "./interfaces";
+} from "./interfaces.js";
 
 /**
  * Type guard for validating a given AzureConnectionConfig is a remote connection type (AzureRemoteConnectionConfig)

@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ChildProcess } from "child_process";
-import { delay } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
+
 import {
 	IRunConfig,
 	IRunner,
@@ -13,8 +15,8 @@ import {
 	IScenarioConfig,
 	IScenarioRunConfig,
 	RunnerStatus,
-} from "./interface";
-import { convertConfigToScriptParams, createChildProcess } from "./utils";
+} from "./interface.js";
+import { convertConfigToScriptParams, createChildProcess } from "./utils.js";
 
 export abstract class ScenarioRunner<
 		ScenarioConfig extends IScenarioConfig,

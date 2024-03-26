@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -15,8 +14,9 @@ import {
 import { UsageError } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService";
-import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
+import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";
 
 /**
  * IDocumentService implementation that provides explicit snapshot to the document storage service.
@@ -57,7 +57,7 @@ export class LocalOdspDocumentService
 		throw toThrow;
 	}
 
-	public dispose(_error?: any): void {
+	public dispose(error?: unknown): void {
 		// Do nothing
 	}
 }

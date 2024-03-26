@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { TestObjectProvider } from '@fluidframework/test-utils';
-import type { IContainer } from '@fluidframework/container-definitions';
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
+import type { IContainer } from '@fluidframework/container-definitions';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import type { SharedTree } from '../../SharedTree.js';
-import type { WriteFormat } from '../../persisted-types/index.js';
+import type { TestObjectProvider } from '@fluidframework/test-utils';
 import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes.js';
-import type { TreeView } from '../../TreeView.js';
 import type { NodeId } from '../../Identifiers.js';
 import type { NodeIdGenerator } from '../../NodeIdUtilities.js';
+import type { SharedTree } from '../../SharedTree.js';
+import type { TreeView } from '../../TreeView.js';
+import type { WriteFormat } from '../../persisted-types/index.js';
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;

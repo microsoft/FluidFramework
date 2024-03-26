@@ -123,36 +123,3 @@ export const executeRedisMultiWithHmsetExpireAndLpush = async (
 export const getRedisClusterRetryStrategy =
 	(options: { delayPerAttemptMs: number; maxDelayMs: number }) => (attempts: number) =>
 		Math.min(attempts * options.delayPerAttemptMs, options.maxDelayMs);
-
-export function getRedisClient(
-	redisOptions: Redis.RedisOptions,
-	slotsRefreshTimeout: number,
-	enableClustering: boolean = false,
-	retryDelays: { 
-		retryDelayOnFailover: number;
-		retryDelayOnClusterDown: number;
-		retryDelayOnTryAgain: number;
-		retryDelayOnMoved: number;
-		maxRedirections?: number;
-	} = {
-		retryDelayOnFailover: 100,
-		retryDelayOnClusterDown: 100,
-		retryDelayOnTryAgain: 100,
-		retryDelayOnMoved: 100,
-		maxRedirections: 16,
-	},
-) {
-	return enableClustering
-		? new Redis.Cluster([{ port: redisOptions.port, host: redisOptions.host }], {
-				redisOptions,
-				slotsRefreshTimeout,
-				dnsLookup: (adr, callback) => callback(null, adr),
-				showFriendlyErrorStack: true,
-				retryDelayOnFailover: retryDelays.retryDelayOnFailover,	
-				retryDelayOnClusterDown: retryDelays.retryDelayOnClusterDown,
-				retryDelayOnTryAgain: retryDelays.retryDelayOnTryAgain,
-				retryDelayOnMoved: retryDelays.retryDelayOnMoved,
-				maxRedirections: retryDelays.maxRedirections,
-		  })
-		: new Redis.default(redisOptions);
-}

@@ -5,8 +5,8 @@
 import {
 	DocumentationLiteralNodeBase,
 	type SingleLineDocumentationNode,
-} from "./DocumentationNode";
-import { DocumentationNodeType } from "./DocumentationNodeType";
+} from "./DocumentationNode.js";
+import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Plain text.
@@ -38,6 +38,13 @@ export class PlainTextNode
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
 	public readonly singleLine = true;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		return this.value.length === 0;
+	}
 
 	/**
 	 * Whether or not the text content has already been escaped.

@@ -14,9 +14,9 @@ import {
 	IShowNextResultResult,
 	IToTableRowsOptions,
 	IToTableRowsProps,
-} from "./InspectorTableTypes";
+} from "./InspectorTableTypes.js";
 // @TODO remove this default behavior when making the table fully generic.
-import { fillExpanded as defaultFillExpanded } from "./propertyInspectorUtils";
+import { fillExpanded as defaultFillExpanded } from "./propertyInspectorUtils.js";
 
 /**
  * Generates:

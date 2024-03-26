@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import React from "react";
+import ReactDOM from "react-dom";
+import { BackgroundConnection } from "../BackgroundConnection";
 import { browser } from "../Globals";
+import { extensionPopupMessageSource } from "../messaging";
+import { PopupView } from "./PopupView";
 
 /**
  * This module is the extensions "pop-up" script.
@@ -14,12 +19,25 @@ import { browser } from "../Globals";
  * To inform them of this, we simply display a disclaimer pointing them to the Devtools panel.
  */
 
-// TODOs:
-// - Check page (via messages) to see if the Devtools have been initialized.
-//   If not, we may want to display an error message with a link to docs explaining how to
-//   use them.
+browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+	// Note: The tab selection (active tab) cannot change while the popup is being displayed.
+	if (tabs.length === 0) {
+		console.debug("No active tab.");
+		return;
+	}
+	// Very unlikely edge case but still worth keeping to prevent unexpected errors.
+	if (tabs.length > 1) {
+		console.error("More than one active tab found. This is not expected.");
+		return;
+	}
 
-browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
+	if (tabs[0].id === undefined) {
+		console.error("Tab does not define an ID.");
+		return;
+	}
+
+	const tabId = tabs[0].id;
+
 	const popupElement = document.createElement("div");
 	popupElement.id = "fluid-devtools-popup";
 	popupElement.style.height = "100%";
@@ -28,4 +46,21 @@ browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
 		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
 
 	document.body.append(popupElement);
+	initializePopupView(popupElement, tabId).then(() => {
+		console.debug(`Rendered popup for tab ${tabId}!`);
+	}, console.error);
 });
+
+/**
+ * Renders the Fluid Popup view into the provided target element.
+ *
+ * @param target - The element into which the popup view will be rendered.
+ */
+export async function initializePopupView(target: HTMLElement, tabId: number): Promise<void> {
+	const backgroundServiceConnection = await BackgroundConnection.Initialize({
+		messageSource: extensionPopupMessageSource,
+		tabId,
+	});
+
+	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target);
+}

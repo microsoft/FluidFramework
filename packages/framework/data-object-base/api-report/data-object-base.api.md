@@ -5,75 +5,12 @@
 ```ts
 
 import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectRegistry } from '@fluidframework/datastore';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
-
-// @internal @deprecated (undocumented)
-export abstract class LazyLoadedDataObject<TRoot extends ISharedObject = ISharedObject, TEvents extends IEvent = IEvent> extends TypedEventEmitter<TEvents> implements IFluidLoadable, IProvideFluidHandle, IDisposable {
-    constructor(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject);
-    // (undocumented)
-    protected readonly context: IFluidDataStoreContext;
-    // (undocumented)
-    abstract create(props?: any): any;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    // (undocumented)
-    get handle(): IFluidHandle<this>;
-    // (undocumented)
-    get IFluidHandle(): IFluidHandle<this>;
-    // (undocumented)
-    get IFluidLoadable(): this;
-    // (undocumented)
-    get IProvideFluidHandle(): this;
-    // (undocumented)
-    abstract load(context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, existing: boolean): Promise<void>;
-    // (undocumented)
-    request(r: IRequest): Promise<IResponse>;
-    // (undocumented)
-    protected readonly root: TRoot;
-    // (undocumented)
-    protected readonly runtime: IFluidDataStoreRuntime;
-}
-
-// @internal @deprecated (undocumented)
-export class LazyLoadedDataObjectFactory<T extends LazyLoadedDataObject> implements IFluidDataStoreFactory {
-    constructor(type: string, ctor: new (context: IFluidDataStoreContext, runtime: IFluidDataStoreRuntime, root: ISharedObject) => T, root: IChannelFactory, sharedObjects?: readonly IChannelFactory[], storeFactories?: readonly IFluidDataStoreFactory[]);
-    // (undocumented)
-    create(parentContext: IFluidDataStoreContext, props?: any): Promise<FluidObject>;
-    // (undocumented)
-    get IFluidDataStoreFactory(): this;
-    // (undocumented)
-    readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry | undefined;
-    // (undocumented)
-    instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
-    // (undocumented)
-    readonly ISharedObjectRegistry: ISharedObjectRegistry;
-    // (undocumented)
-    readonly root: IChannelFactory;
-    // (undocumented)
-    readonly type: string;
-}
 
 // @internal (undocumented)
 export class RuntimeFactory extends RuntimeFactoryHelper {

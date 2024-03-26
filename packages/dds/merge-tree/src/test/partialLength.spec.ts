@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { UnassignedSequenceNumber } from "../constants";
-import { MergeTree } from "../mergeTree";
-import { MergeTreeDeltaType } from "../ops";
-import { TextSegment } from "../textSegment";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { MergeTree } from "../mergeTree.js";
+import { MergeTreeDeltaType } from "../ops.js";
+import { TextSegment } from "../textSegment.js";
 import {
 	insertSegments,
 	insertText,
 	markRangeRemoved,
 	useStrictPartialLengthChecks,
 	validatePartialLengths,
-} from "./testUtils";
+} from "./testUtils.js";
 
 describe("partial lengths", () => {
 	let mergeTree: MergeTree;

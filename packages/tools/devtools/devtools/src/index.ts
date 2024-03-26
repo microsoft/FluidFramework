@@ -18,16 +18,16 @@
  * @packageDocumentation
  */
 
+import { type IContainer } from "@fluidframework/container-definitions";
+import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
-	type IFluidDevtools as IDevtoolsBase,
-	initializeDevtools as initializeDevtoolsBase,
-	type IDevtoolsLogger,
 	type HasContainerKey,
+	type IFluidDevtools as IDevtoolsBase,
+	type IDevtoolsLogger,
+	initializeDevtools as initializeDevtoolsBase,
 } from "@fluidframework/devtools-core";
-import { type IDisposable } from "@fluidframework/core-interfaces";
 import { type IFluidContainer } from "@fluidframework/fluid-static";
-import { type IContainer } from "@fluidframework/container-definitions";
 
 /**
  * Properties for configuring {@link IDevtools}.

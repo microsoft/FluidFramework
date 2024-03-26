@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { getAadTenant } from "../odspDocLibUtils";
+import { getAadTenant } from "../odspDocLibUtils.js";
 
 describe("getAadTenant", () => {
 	it("returns `onmicrosoft` tenant if ODSP personal site url is passed", () => {

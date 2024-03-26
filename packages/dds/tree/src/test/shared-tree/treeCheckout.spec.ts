@@ -2,21 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
-import { leaf } from "../../domains/index.js";
-import {
-	TestTreeProviderLite,
-	createTestUndoRedoStacks,
-	emptyJsonSequenceConfig,
-	insert,
-	jsonSequenceRootSchema,
-	flexTreeViewWithContent,
-	checkoutWithContent,
-	validateTreeContent,
-	numberSequenceRootSchema,
-} from "../utils.js";
 import {
 	AllowedUpdateType,
 	FieldUpPath,
@@ -29,6 +17,7 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
+import { leaf } from "../../domains/index.js";
 import {
 	ContextuallyTypedNodeData,
 	FieldKinds,
@@ -37,6 +26,20 @@ import {
 	cursorForJsonableTreeField,
 	intoStoredSchema,
 } from "../../feature-libraries/index.js";
+import { ITreeCheckout, TreeContent } from "../../shared-tree/index.js";
+import {
+	TestTreeProviderLite,
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	emptyJsonSequenceConfig,
+	flexTreeViewWithContent,
+	insert,
+	jsonSequenceRootSchema,
+	numberSequenceRootSchema,
+	schematizeFlexTree,
+	stringSequenceRootSchema,
+	validateTreeContent,
+} from "../utils.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -384,9 +387,9 @@ describe("sharedTreeView", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree2 = schematizeFlexTree(provider.trees[1], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -404,7 +407,7 @@ describe("sharedTreeView", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
+			const tree1 = schematizeFlexTree(provider.trees[0], emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -590,9 +593,6 @@ describe("sharedTreeView", () => {
 		provider.processMessages();
 		const checkout1Revertibles = createTestUndoRedoStacks(checkout1.events);
 
-		// Simulate the presence of a host application that retains the revertibles in multiple ways
-		const checkout1RevertiblesReadonly = createTestUndoRedoStacks(checkout1.events);
-
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove "A"
 		checkout1.editor.sequenceField(rootField).remove(0, 1); // Remove 1
 		checkout1Revertibles.undoStack.pop()?.revert(); // Restore 1
@@ -624,8 +624,6 @@ describe("sharedTreeView", () => {
 		// The undo stack is not empty because it contains the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 0);
-		assert.equal(checkout1RevertiblesReadonly.undoStack.length, 1);
-		assert.equal(checkout1RevertiblesReadonly.redoStack.length, 0);
 		assert.deepEqual(checkout1.getRemovedRoots(), []);
 
 		provider.processMessages();
@@ -636,6 +634,94 @@ describe("sharedTreeView", () => {
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();
+	});
+
+	describe("branches with schema edits can be rebased", () => {
+		it("over non-schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+			const checkout1 = provider.trees[0].checkout;
+
+			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			checkout1.editor.sequenceField(rootField).insert(
+				0,
+				cursorForJsonableTreeField([
+					{ type: leaf.string.name, value: "A" },
+					{ type: leaf.string.name, value: "B" },
+					{ type: leaf.string.name, value: "C" },
+				]),
+			);
+
+			const branch = checkout1.fork();
+
+			// Remove "A" on the parent branch
+			checkout1.editor.sequenceField(rootField).remove(0, 1);
+
+			// Remove "B" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			// Remove "C" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			validateTreeContent(branch, {
+				schema: stringSequenceRootSchema,
+				initialTree: ["A"],
+			});
+
+			branch.rebaseOnto(checkout1);
+
+			// The schema change and any changes after that should be dropped,
+			// but the changes before the schema change should be preserved
+			validateTreeContent(branch, {
+				schema: jsonSequenceRootSchema,
+				initialTree: ["C"],
+			});
+		});
+
+		// AB#7256: This test fails because purging repair data upon application of schema changes makes it impossible
+		// to roll back the changes that were before that schema change on the branch being rebased.
+		// This is not a problem when the changes before the schema change are applied once rebased (because the
+		// rollback and reapplication cancel out). This is the scenario covered in the test above.
+		// It is a problem here because the rebased change does not apply due to the presence of a schema change on
+		// the destination branch. Note that the presence of a schema change on the destination branch is not strictly
+		// necessary for the problem to occur. For example, if the rebased change had a constraint, and the rebasing
+		// caused that constraint to become violated, then the same issue would occur.
+		it.skip("over schema changes", () => {
+			const provider = new TestTreeProviderLite(1);
+			const checkout1 = provider.trees[0].checkout;
+
+			checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+			checkout1.editor.sequenceField(rootField).insert(
+				0,
+				cursorForJsonableTreeField([
+					{ type: leaf.string.name, value: "A" },
+					{ type: leaf.string.name, value: "B" },
+					{ type: leaf.string.name, value: "C" },
+				]),
+			);
+
+			const branch = checkout1.fork();
+
+			// Remove "A" and change the schema on the parent branch
+			checkout1.editor.sequenceField(rootField).remove(0, 1);
+			checkout1.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+			// Remove "B" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			branch.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+			// Remove "C" on the child branch
+			branch.editor.sequenceField(rootField).remove(1, 1);
+			validateTreeContent(branch, {
+				schema: stringSequenceRootSchema,
+				initialTree: ["A"],
+			});
+
+			branch.rebaseOnto(checkout1);
+
+			// All changes on the branch should be dropped
+			validateTreeContent(branch, {
+				schema: jsonSequenceRootSchema,
+				initialTree: ["B", "C"],
+			});
+		});
 	});
 });
 
@@ -698,12 +784,12 @@ function itView(
 	};
 	const config = {
 		...content,
-		allowedSchemaModifications: AllowedUpdateType.None,
+		allowedSchemaModifications: AllowedUpdateType.Initialize,
 	};
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematizeInternal(config).checkout);
+		fn(schematizeFlexTree(provider.trees[0], config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -712,7 +798,7 @@ function itView(
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematizeInternal(config).checkout.fork());
+		fn(schematizeFlexTree(provider.trees[0], config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {

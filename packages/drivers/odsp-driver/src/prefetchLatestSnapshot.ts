@@ -3,34 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	IOdspResolvedUrl,
+	IOdspUrlParts,
 	IPersistedCache,
 	ISnapshotOptions,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	IOdspUrlParts,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { createChildMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, createChildMonitoringContext } from "@fluidframework/telemetry-utils";
+import { IVersionedValueWithEpoch } from "./contracts.js";
+import {
+	ISnapshotRequestAndResponseOptions,
+	SnapshotFormatSupportType,
+	downloadSnapshot,
+	fetchSnapshotWithRedeem,
+} from "./fetchSnapshot.js";
+import { IPrefetchSnapshotContents } from "./odspCache.js";
+import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,
 	getOdspResolvedUrl,
 	toInstrumentedOdspTokenFetcher,
-} from "./odspUtils";
-import {
-	downloadSnapshot,
-	fetchSnapshotWithRedeem,
-	SnapshotFormatSupportType,
-} from "./fetchSnapshot";
-import { IVersionedValueWithEpoch } from "./contracts";
-import { IPrefetchSnapshotContents } from "./odspCache";
-import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory";
+} from "./odspUtils.js";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
@@ -94,7 +95,7 @@ export async function prefetchLatestSnapshot(
 		loadingGroupId: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
 		controller?: AbortController,
-	) => {
+	): Promise<ISnapshotRequestAndResponseOptions> => {
 		return downloadSnapshot(
 			finalOdspResolvedUrl,
 			storageToken,
@@ -107,13 +108,13 @@ export async function prefetchLatestSnapshot(
 	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl);
 	let cacheP: Promise<void> | undefined;
 	let snapshotEpoch: string | undefined;
-	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch) => {
+	const putInCache = async (valueWithEpoch: IVersionedValueWithEpoch): Promise<void> => {
 		snapshotEpoch = valueWithEpoch.fluidEpoch;
 		cacheP = persistedCache.put(snapshotKey, valueWithEpoch);
 		return cacheP;
 	};
 
-	const removeEntries = async () => persistedCache.removeEntries(snapshotKey.file);
+	const removeEntries = async (): Promise<void> => persistedCache.removeEntries(snapshotKey.file);
 	return PerformanceEvent.timedExecAsync(
 		odspLogger,
 		{ eventName: "PrefetchLatestSnapshot" },
@@ -165,11 +166,11 @@ export async function prefetchLatestSnapshot(
 						snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					}, 5000);
 				})
-				.catch((err) => {
+				.catch((error) => {
 					// Remove it from the non persistent cache if an error occured.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
-					snapshotContentsWithEpochP.reject(err);
-					throw err;
+					snapshotContentsWithEpochP.reject(error);
+					throw error;
 				});
 			return true;
 		},

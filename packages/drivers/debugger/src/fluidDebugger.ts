@@ -5,8 +5,8 @@
 
 import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframework/replay-driver";
-import { DebugReplayController } from "./fluidDebuggerController";
-import { DebuggerUI } from "./fluidDebuggerUi";
+import { DebugReplayController } from "./fluidDebuggerController.js";
+import { DebuggerUI } from "./fluidDebuggerUi.js";
 
 /**
  * @alpha

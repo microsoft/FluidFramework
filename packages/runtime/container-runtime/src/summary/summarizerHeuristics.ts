@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/core-utils";
-import { ISummaryConfigurationHeuristics } from "../containerRuntime";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 import {
+	ISummarizeAttempt,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
-	ISummarizeAttempt,
 	ISummaryHeuristicStrategy,
-} from "./summarizerTypes";
-import { SummarizeReason } from "./summaryGenerator";
+} from "./summarizerTypes.js";
+import { SummarizeReason } from "./summaryGenerator.js";
 
 /** Simple implementation of class for tracking summarize heuristic data. */
 export class SummarizeHeuristicData implements ISummarizeHeuristicData {

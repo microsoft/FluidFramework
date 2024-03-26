@@ -76,7 +76,7 @@ variables:
       eq(parameters.releaseImage, true)
     )}}
 
-# Forbids occurrences of `.only` through @fluidframework/mocha-test-setup common config
+# Forbids occurrences of `.only` through @fluid-internal/mocha-test-setup common config
 - name: fluid.test.forbid.only
   value: true
 
