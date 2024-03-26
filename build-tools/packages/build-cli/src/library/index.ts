@@ -42,3 +42,4 @@ export {
 	toReportKind,
 } from "./release";
 export { LayerGraph } from "./layerGraph";
+export { type Handler, policyHandlers } from "./repoPolicyCheck";

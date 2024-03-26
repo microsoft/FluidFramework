@@ -4,10 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import type {
 	IIntervalCollection,
 	IOverlappingIntervalsIndex,
@@ -18,15 +21,12 @@ import type {
 // eslint-disable-next-line import/no-internal-modules
 import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/test/intervalCollection";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,
