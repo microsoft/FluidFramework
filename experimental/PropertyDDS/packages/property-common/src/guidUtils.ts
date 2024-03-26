@@ -49,13 +49,20 @@ const guidRNG = {
 			this.isInitialized = true;
 
 			if (in_seed === undefined) {
-				const randomValues = uuid()
-					.split("-")
-					.map((x) => parseInt(x, 16));
-				this.u = randomValues[0];
-				this.v = randomValues[1];
-				this.w1 = randomValues[2];
-				this.w2 = randomValues[3];
+				// This is a roundabout way of initializing our PRNG using a robust source, with minimal
+				// changes to the original code or a new FF dependency.
+				//
+				// The standard 'uuid' package that we use elsewhere in FF has already done the work of
+				// normalizing crypto random across browser and older node.js environments.
+				//
+				// Normally, the following would be sufficent for this purpose:
+				//
+				//		[this.u, this.v, this.w1, this.w2] = guidToUint32x4(uuid())
+				//
+				// However, out of paranoia, we use two calls to 'uuid()' and skip the middle 32b integers,
+				// which in the UUID format contain a few predetermined (non-random).
+				[this.u, , , this.v] = guidToUint32x4(uuid());
+				[this.w1, , , this.w2] = guidToUint32x4(uuid());
 			} else {
 				this.v = 224461437;
 				this.w1 = 521288629;
