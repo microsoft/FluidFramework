@@ -740,7 +740,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return !this.disposed && this.socket.connected;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]): void {
+	protected override emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected override emitMessages(
+		type: "submitSignal",
+		messages: string[][] | ISentSignalMessage[],
+	): void;
+	protected override emitMessages(type: string, messages: unknown): void {
 		// Only submit the op/signals if we are connected.
 		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
@@ -761,15 +766,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		const signal: ISentSignalMessage = {
 			content,
 			targetClientId,
 		};
 
-		// back-compat: the typing for this method and emitMessages is incorrect, will be fixed in a future PR
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-		this.emitMessages("submitSignal", [signal] as any);
+		this.emitMessages("submitSignal", [signal]);
 	}
 
 	/**

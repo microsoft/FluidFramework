@@ -44,6 +44,11 @@ export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	// - branching APIs
 
 	readonly nodeKeys: NodeKeys;
+
+	/**
+	 * The forest containing the tree data associated with this context
+	 */
+	readonly forest: IForestSubscription;
 }
 
 /**

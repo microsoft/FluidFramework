@@ -6,6 +6,14 @@
 import { strict as assert } from "assert";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import {
+	DefaultSummaryConfiguration,
+	ISummaryAckMessage,
+	ISummaryConfiguration,
+} from "@fluidframework/container-runtime";
+import { Deferred } from "@fluidframework/core-utils";
+import { MessageType } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizer,
@@ -13,14 +21,6 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	DefaultSummaryConfiguration,
-	ISummaryAckMessage,
-	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
-import { MessageType } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { Deferred } from "@fluidframework/core-utils";
 
 describeCompat(
 	"Summarizer can refresh a snapshot from the server",

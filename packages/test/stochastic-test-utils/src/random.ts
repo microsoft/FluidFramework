@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import * as distribution from "./distributions";
-import { IRandom } from "./types";
-import { XSadd } from "./xsadd";
+import * as distribution from "./distributions/index.js";
+import { IRandom } from "./types.js";
+import { XSadd } from "./xsadd.js";
 
 // The base58 alphabet contains upper and lower case Latin letters and Arabic numerals,
 // excluding 0 (zero) / O (capital O) and l (lowercase L) / I (uppercase I) for improved

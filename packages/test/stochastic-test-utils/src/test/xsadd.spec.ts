@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { XSadd } from "..";
+import { XSadd } from "../index.js";
 
 describe("XSadd (PRNG)", () => {
 	it("produces expected values", () => {

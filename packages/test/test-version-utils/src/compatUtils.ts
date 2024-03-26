@@ -72,6 +72,7 @@ function filterRuntimeOptionsForVersion(
 			},
 		},
 	},
+	driverType: TestDriverTypes,
 ) {
 	let options = { ...optionsArg };
 
@@ -92,17 +93,22 @@ function filterRuntimeOptionsForVersion(
 		},
 		enableGroupedBatching = true,
 		enableRuntimeIdCompressor = "on",
-		// chunkSizeInBytes = 200,
+		// Some t9s tests timeout with small settings. This is likely due to too many ops going through.
+		// Reduce chunking cut-off for such tests.
+		chunkSizeInBytes = driverType === "local" ? 200 : 1000,
 	} = options;
 
 	if (version.startsWith("1.")) {
 		options = {
-			...options,
 			// None of these features are supported by 1.3
 			compressionOptions: undefined,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+			// Enable chunking.
+			// We need to ensure that 1.x documents (that use chunking) can still be opened by 2.x.
+			// This options does nothing for 2.x builds as chunking is only enabled if compression is enabled.
+			chunkSizeInBytes,
+			...options,
 		};
 	} else if (version.startsWith("2.0.0-rc.1.")) {
 		options = {
@@ -117,10 +123,7 @@ function filterRuntimeOptionsForVersion(
 			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
 			enableGroupedBatching,
 			// Can't track it down, but enabling Id Compressor for this config results in small number of t9s tests to timeout.
-			// This is very likely related to one of these bugfixes that missed that release:
-			// https://github.com/microsoft/FluidFramework/pull/20089
-			// https://github.com/microsoft/FluidFramework/pull/20080
-			enableRuntimeIdCompressor: undefined,
+			enableRuntimeIdCompressor,
 			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
 			...options,
 		};
@@ -129,8 +132,7 @@ function filterRuntimeOptionsForVersion(
 		options = {
 			compressionOptions,
 			enableGroupedBatching,
-			// need to investigate - some small number of t9s tests time out with this option on.
-			// chunkSizeInBytes,
+			chunkSizeInBytes,
 			enableRuntimeIdCompressor,
 			...options,
 		};
@@ -218,11 +220,9 @@ export async function getVersionedTestObjectProviderFromApis(
 		config?: FluidTestDriverConfig;
 	},
 ) {
-	const driver = await createFluidTestDriver(
-		driverConfig?.type ?? "local",
-		driverConfig?.config,
-		apis.driver,
-	);
+	const type = driverConfig?.type ?? "local";
+
+	const driver = await createFluidTestDriver(type, driverConfig?.config, apis.driver);
 
 	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(apis.dataRuntime);
 	const containerFactoryFn = (containerOptions?: ITestContainerConfig) => {
@@ -238,6 +238,7 @@ export async function getVersionedTestObjectProviderFromApis(
 			filterRuntimeOptionsForVersion(
 				apis.containerRuntime.version,
 				containerOptions?.runtimeOptions,
+				type,
 			),
 		);
 	};
@@ -337,7 +338,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
+			filterRuntimeOptionsForVersion(
+				minVersion,
+				containerOptions?.runtimeOptions,
+				driverConfig.type,
+			),
 			[innerRequestHandler],
 		);
 	};
@@ -357,7 +362,11 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(minVersion, containerOptions?.runtimeOptions),
+			filterRuntimeOptionsForVersion(
+				minVersion,
+				containerOptions?.runtimeOptions,
+				driverConfig.type,
+			),
 			[innerRequestHandler],
 		);
 	};
