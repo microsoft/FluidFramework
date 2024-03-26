@@ -9670,6 +9670,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^18.19.0
       c8: ^8.0.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -9713,6 +9714,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
@@ -10143,6 +10145,7 @@ importers:
       '@types/node': ^18.19.0
       c8: ^8.0.1
       commander: ^5.1.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -10190,6 +10193,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 18.19.1
       c8: 8.0.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
@@ -10513,7 +10517,6 @@ importers:
       '@fluidframework/test-utils': workspace:~
       '@microsoft/1ds-core-js': ^3.2.13
       '@microsoft/1ds-post-js': ^3.2.13
-      '@microsoft/api-extractor': ^7.42.3
       '@types/chai': ^4.0.0
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
@@ -10532,6 +10535,7 @@ importers:
       chai: ^4.2.0
       concurrently: ^8.2.1
       copy-webpack-plugin: ^11.0.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       dotenv-webpack: ^7.0.3
       eslint: ~8.55.0
@@ -10591,7 +10595,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/test-utils': link:../../../test/test-utils
-      '@microsoft/api-extractor': 7.42.3_@types+node@18.19.1
       '@types/chai': 4.3.11
       '@types/chrome': 0.0.232
       '@types/jest': 29.5.3
@@ -10609,6 +10612,7 @@ importers:
       chai: 4.3.10
       concurrently: 8.2.2
       copy-webpack-plugin: 11.0.0_webpack@5.89.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       dotenv-webpack: 7.1.1_webpack@5.89.0
       eslint: 8.55.0

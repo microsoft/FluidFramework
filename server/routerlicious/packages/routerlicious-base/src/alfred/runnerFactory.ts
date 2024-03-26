@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -116,6 +117,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Redis connection for client manager and single-use JWTs.
 		const redisConfig2 = config.get("redis2");
 
+		const retryDelays = {
+			retryDelayOnFailover: 100,
+			retryDelayOnClusterDown: 100,
+			retryDelayOnTryAgain: 100,
+			retryDelayOnMoved: redisConfig2.retryDelayOnMoved ?? 100,
+			maxRedirections: redisConfig2.maxRedirections ?? 16,
+		};
+
 		const redisClientConnectionManagerForJwtCache =
 			customizations?.redisClientConnectionManagerForJwtCache
 				? customizations.redisClientConnectionManagerForJwtCache
@@ -124,6 +133,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfig2,
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
+						retryDelays,
 				  );
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
 
@@ -191,6 +201,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				| number
 				| undefined,
 		};
+
 		const redisClientConnectionManagerForThrottling =
 			customizations?.redisClientConnectionManagerForThrottling
 				? customizations.redisClientConnectionManagerForThrottling
@@ -199,6 +210,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 						redisConfigForThrottling,
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
+						retryDelays,
 				  );
 
 		const redisThrottleAndUsageStorageManager =
