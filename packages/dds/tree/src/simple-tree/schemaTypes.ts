@@ -4,8 +4,9 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { Lazy } from "@fluidframework/core-utils";
 import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
-import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
+import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
 import { TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -216,14 +217,48 @@ export class FieldSchema<
 	protected _typeCheck?: MakeNominal;
 
 	/**
-	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
-	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
-	 * @param allowedTypes - What types of tree nodes are allowed in this field.
+	 * Lazily evaluated allowed types.
 	 */
+	private readonly lazyTypes: Lazy<AllowedTypes>;
+
+	/**
+	 * What types of tree nodes are allowed in this field.
+	 *
+	 * @remarks
+	 * This is the same set of types in {@link FlexFieldSchema.allowedTypes}, just as a set with
+	 * laziness removed.
+	 */
+	public get allowedTypeSet(): AllowedTypes {
+		return this.lazyTypes.value;
+	}
+
 	public constructor(
+		/**
+		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
+		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+		 */
 		public readonly kind: Kind,
+		/**
+		 * What types of tree nodes are allowed in this field.
+		 */
 		public readonly allowedTypes: Types,
-	) {}
+	) {
+		this.lazyTypes = new Lazy(() => FieldSchema.normalizeAllowedTypes(this.allowedTypes));
+	}
+
+	/**
+	 * Normalizes a {@link ImplicitAllowedTypes} to a {@link AllowedTypes}.
+	 */
+	public static normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
+		return isReadonlyArray(types) ? types : [types];
+	}
+
+	/**
+	 * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
+	 */
+	public static normalize(schema: ImplicitFieldSchema): FieldSchema {
+		return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
+	}
 }
 
 /**

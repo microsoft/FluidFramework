@@ -9,6 +9,7 @@ import {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
+	type FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
@@ -164,7 +165,8 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends Unenforced<ImplicitAllowedTypes>,
-> {
+> extends FieldSchema<Kind, any> {
 	readonly kind: Kind;
 	readonly allowedTypes: Types;
+	readonly allowedTypeSet: AllowedTypes;
 }

@@ -25,10 +25,10 @@ import {
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
-import { normalizeFieldSchema } from "./fieldSchemaUtils.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
+	FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTypedNode,
@@ -193,7 +193,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 					const content = prepareContentForInsert(value, flexNode.context.forest);
 					const cursor = cursorFromNodeData(
 						content,
-						normalizeFieldSchema(simpleNodeFields[key]).allowedTypes,
+						FieldSchema.normalize(simpleNodeFields[key]).allowedTypes,
 					);
 					typedField.content = cursor;
 					break;
@@ -299,10 +299,10 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
 			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
 
-			sequenceField.insertAt(
-				index,
-				cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema),
-			);
+			// TODO: cache this
+			const fieldSchema = FieldSchema.normalize(classSchema.info as ImplicitFieldSchema);
+
+			sequenceField.insertAt(index, cursorFromFieldData(content, fieldSchema));
 		},
 	},
 	insertAtStart: {
@@ -318,9 +318,10 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
 			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
 
-			sequenceField.insertAtStart(
-				cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema),
-			);
+			// TODO: cache this
+			const fieldSchema = FieldSchema.normalize(classSchema.info as ImplicitFieldSchema);
+
+			sequenceField.insertAtStart(cursorFromFieldData(content, fieldSchema));
 		},
 	},
 	insertAtEnd: {
@@ -336,9 +337,10 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
 			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
 
-			sequenceField.insertAtEnd(
-				cursorFromFieldData(content, classSchema.info as ImplicitFieldSchema),
-			);
+			// TODO: cache this
+			const fieldSchema = FieldSchema.normalize(classSchema.info as ImplicitFieldSchema);
+
+			sequenceField.insertAtEnd(cursorFromFieldData(content, fieldSchema));
 		},
 	},
 	removeAt: {

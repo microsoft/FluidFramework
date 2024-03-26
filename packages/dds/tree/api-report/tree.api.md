@@ -510,18 +510,23 @@ export interface FieldMapObject<TChild> {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
-    constructor(kind: Kind, allowedTypes: Types);
-    // (undocumented)
+    constructor(
+    kind: Kind,
+    allowedTypes: Types);
     readonly allowedTypes: Types;
-    // (undocumented)
+    get allowedTypeSet(): AllowedTypes;
     readonly kind: Kind;
+    static normalize(schema: ImplicitFieldSchema): FieldSchema;
+    static normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes;
     protected _typeCheck?: MakeNominal;
 }
 
 // @beta
-export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> {
+export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> extends FieldSchema<Kind, any> {
     // (undocumented)
     readonly allowedTypes: Types;
+    // (undocumented)
+    readonly allowedTypeSet: AllowedTypes;
     // (undocumented)
     readonly kind: Kind;
 }

@@ -26,7 +26,6 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 import { brand, fail, isReadonlyArray } from "../util/index.js";
-import { normalizeAllowedTypes, normalizeFieldSchema } from "./fieldSchemaUtils.js";
 import { nullSchema } from "./leafNodeSchema.js";
 import { InsertableContent } from "./proxies.js";
 import {
@@ -64,7 +63,7 @@ export function cursorFromNodeData(
 	if (data === undefined) {
 		return undefined;
 	}
-	const mappedContent = nodeDataToMapTree(data, normalizeAllowedTypes(allowedTypes));
+	const mappedContent = nodeDataToMapTree(data, FieldSchema.normalizeAllowedTypes(allowedTypes));
 	return cursorForMapTreeNode(mappedContent);
 }
 
@@ -75,12 +74,11 @@ export function cursorFromNodeData(
  */
 export function cursorFromFieldData(
 	data: InsertableContent,
-	schema: ImplicitFieldSchema,
+	schema: FieldSchema,
 ): CursorWithNode<MapTree> {
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	const mappedContent = Array.isArray(data)
-		? arrayToMapTreeFields(data, normalizedFieldSchema.allowedTypes)
-		: [nodeDataToMapTree(data, normalizedFieldSchema.allowedTypes)];
+		? arrayToMapTreeFields(data, schema.allowedTypeSet)
+		: [nodeDataToMapTree(data, schema.allowedTypeSet)];
 	return cursorForMapTreeField(mappedContent);
 }
 
@@ -209,7 +207,7 @@ function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): 
 		fail(`Provided array input is incompatible with schema "${schema.identifier}".`);
 	}
 
-	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const childSchema = FieldSchema.normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const mappedData = arrayToMapTreeFields(data, childSchema);
 
@@ -230,7 +228,7 @@ function mapToMapTree(data: Map<string, InsertableContent>, allowedTypes: Allowe
 		fail(`Provided map input is incompatible with schema "${schema.identifier}".`);
 	}
 
-	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const childSchema = FieldSchema.normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
@@ -268,7 +266,7 @@ function objectToMapTree(
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, key);
-			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypes);
+			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
 			fields.set(brand(key), [mappedChildTree]);
 		}
 	}
@@ -279,16 +277,13 @@ function objectToMapTree(
 	};
 }
 
-function getObjectFieldSchema(
-	schema: TreeNodeSchema,
-	key: FieldKey,
-): FieldSchema<FieldKind, AllowedTypes> {
+function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchema {
 	assert(schema.kind === NodeKind.Object, "Expected an object schema.");
 	const fields = schema.info as Record<string, ImplicitFieldSchema>;
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
 	} else {
-		return normalizeFieldSchema(fields[key]);
+		return FieldSchema.normalize(fields[key]);
 	}
 }
 
@@ -410,7 +405,7 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
-		const normalizedFieldSchema = normalizeFieldSchema(fieldSchema);
+		const normalizedFieldSchema = FieldSchema.normalize(fieldSchema);
 		if (data[fieldKey] === undefined && normalizedFieldSchema.kind === FieldKind.Required) {
 			return false;
 		}

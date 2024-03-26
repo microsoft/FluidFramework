@@ -27,7 +27,6 @@ import {
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-import { normalizeFieldSchema } from "./fieldSchemaUtils.js";
 import {
 	InsertableContent,
 	getSimpleSchema,
@@ -60,7 +59,9 @@ function cursorFromUnhydratedRoot(
 	forest: IForestSubscription,
 ): ITreeCursorSynchronous {
 	const data = prepareContentForInsert(tree as InsertableContent, forest);
-	const normalizedFieldSchema = normalizeFieldSchema(schema);
+
+	// TODO: cache this
+	const normalizedFieldSchema = FieldSchema.normalize(schema);
 	return (
 		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
 		fail("failed to decode tree")
