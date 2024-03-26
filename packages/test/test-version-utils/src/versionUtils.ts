@@ -5,16 +5,9 @@
 
 /* Utilities to manage finding, installing and loading legacy versions */
 
-import {
-	existsSync,
-	mkdirSync,
-	rmdirSync,
-	readdirSync,
-	readFileSync,
-	writeFileSync,
-} from "node:fs";
-import { ExecOptions, exec, execSync } from "node:child_process";
-import * as path from "node:path";
+import { existsSync, mkdirSync, rmdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
+import { ExecOptions, exec, execSync } from "child_process";
+import * as path from "path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
@@ -24,7 +17,7 @@ import { assert } from "@fluidframework/core-utils";
 import { pkgVersion } from "./packageVersion.js";
 import { InstalledPackage } from "./testApi.js";
 
-// Assuming this file is in `lib`, so go to `..\node_modules\.legacy` as the install location
+// Assuming this file is in dist\test, so go to ..\node_modules\.legacy as the install location
 const baseModulePath = fileURLToPath(new URL("../node_modules/.legacy", import.meta.url));
 const installedJsonPath = path.join(baseModulePath, "installed.json");
 const getModulePath = (version: string) => path.join(baseModulePath, version);
@@ -296,89 +289,51 @@ export function checkInstalled(requested: string) {
 }
 
 /**
- * Analyzes the package.json file for the given package and returns the main entry point.
- * It considers that the package.json file might already be using the 'exports' field.
- *
- * @param pkgPath - The path to the package.
- * @param moduleType - If the target package defines conditional exports, look for the one corresponding to this
- * module type.
- *
- * @remarks
- * This function is useful when the caller needs to import a package dynamically and has the path to it,
- * but needs to figure out which specific file within the package to point at in order to import it.
- *
- * It doesn't support the full range of possible 'exports' structures (e.g. conditional exports directly under 'exports'
- * instead of under exports['.'] are not supported), but it should be sufficient as long as we only use it to inspect
- * our own packages, which by convention always use exports['.'].
- *
- * If the package's exports['.'] field doesn't define conditional exports the function will look for the 'default'
- * field directly under exports['.'].
- *
  * @internal
  */
-export function getMainEntryPointForPackage(
-	pkgPath: string,
-	moduleType: "commonjs" | "esm",
-): string {
+export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
+	const pkgPath = path.join(modulePath, "node_modules", pkg);
+	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
+	// some of Node's module loading logic here.
+	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
 	const pkgJson: { main?: string; exports?: string | Record<string, any> } = JSON.parse(
 		readFileSync(path.join(pkgPath, "package.json"), { encoding: "utf8" }),
 	);
 	// See: https://nodejs.org/docs/latest-v18.x/api/packages.html#package-entry-points
-	let mainEntryPoint: string;
+	let primaryExport: string;
 	if (pkgJson.exports !== undefined) {
+		// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
+		// if this assert fails.
+		// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
+		// https://nodejs.org/api/packages.html#exports
+		for (const key of Object.keys(pkgJson.exports)) {
+			if (!key.startsWith(".")) {
+				throw new Error(
+					"Conditional exports not supported by test-version-utils. Legacy module loading logic needs to be updated.",
+				);
+			}
+		}
 		if (typeof pkgJson.exports === "string") {
-			mainEntryPoint = pkgJson.exports;
+			primaryExport = pkgJson.exports;
 		} else {
-			// See https://nodejs.org/docs/latest-v18.x/api/packages.html#conditional-exports for information on the spec
-			// if this assert fails.
-			// The v18 doc doesn't mention that export paths must start with ".", but the modern docs do:
-			// https://nodejs.org/api/packages.html#exports
-			for (const key of Object.keys(pkgJson.exports)) {
-				if (!key.startsWith(".")) {
-					throw new Error(
-						"Conditional exports directly under 'exports' are not supported. Legacy module loading logic needs to be updated.",
-					);
-				}
-			}
-			const exportsDot = pkgJson.exports["."];
-			if (exportsDot === undefined) {
-				throw new Error(
-					`Package at '${pkgPath}' defined subpath exports but no '.' entry.`,
-				);
-			}
-			const keyToCheck = moduleType === "commonjs" ? "require" : "import";
-			mainEntryPoint =
-				typeof exportsDot === "string"
-					? exportsDot
-					: exportsDot[keyToCheck].default ?? exportsDot.default;
-			if (mainEntryPoint === undefined) {
-				throw new Error(
-					`Package at '${pkgPath}' defined subpath exports but no '${keyToCheck}.default' nor 'default' entry was found under '.'.`,
-				);
+			const exp = pkgJson.exports["."];
+			primaryExport =
+				typeof exp === "string"
+					? exp
+					: exp.require !== undefined
+					? exp.require.default
+					: exp.default;
+			if (primaryExport === undefined) {
+				throw new Error(`Package ${pkg} defined subpath exports but no '.' entry.`);
 			}
 		}
 	} else {
 		if (pkgJson.main === undefined) {
-			throw new Error(
-				`No 'main' or 'exports' fields in package.json for package at '${pkgPath}'`,
-			);
+			throw new Error(`No main or exports in package.json for ${pkg}`);
 		}
-		mainEntryPoint = pkgJson.main;
+		primaryExport = pkgJson.main;
 	}
-	return mainEntryPoint;
-}
-
-/**
- * @internal
- */
-export const loadPackage = async (modulePath: string, pkg: string): Promise<any> => {
-	// Because we put legacy versions in a specific subfolder of node_modules (.legacy/<version>), we need to reimplement
-	// some of Node's module loading logic here.
-	// It would be ideal to remove the need for this duplication (e.g. by using node:module APIs instead) if possible.
-	const pkgPath = path.join(modulePath, "node_modules", pkg);
-	const primaryExport = getMainEntryPointForPackage(pkgPath, "commonjs");
-	const importPath = pathToFileURL(path.join(pkgPath, primaryExport)).href;
-	return import(importPath);
+	return import(pathToFileURL(path.join(pkgPath, primaryExport)).href);
 };
 
 /**

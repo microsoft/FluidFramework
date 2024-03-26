@@ -5,10 +5,8 @@
 
 import crypto from "crypto";
 import fs from "node:fs";
-import path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { getMainEntryPointForPackage } from "@fluid-private/test-version-utils";
 import type { IEvent, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { type ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -136,12 +134,8 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
-	const loggerPkgPath = process.env.FLUID_TEST_LOGGER_PKG_PATH;
-	if (loggerPkgPath) {
-		// NOTE: as of 2024-03-13, the aria-logger package we inject is commonjs-only.
-		// When it is updated to be esm, we'll need to update this call accordingly.
-		const entryPoint = getMainEntryPointForPackage(loggerPkgPath, "commonjs");
-		await import(path.join(loggerPkgPath, entryPoint));
+	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
+		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new ScenarioRunnerLogger(logger);
