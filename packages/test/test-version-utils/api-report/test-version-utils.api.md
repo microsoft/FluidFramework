@@ -5,20 +5,22 @@
 ```ts
 
 import * as agentScheduler from '@fluidframework/agent-scheduler';
+import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import * as cell from '@fluidframework/cell';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqueduct';
 import * as counter from '@fluidframework/counter';
 import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
+import * as datastore from '@fluidframework/datastore';
 import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedDirectory } from '@fluidframework/map';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { ITelemetryGenericEventExt } from '@fluidframework/telemetry-utils';
 import { ITestContainerConfig } from '@fluidframework/test-utils';
 import { ITestObjectProvider } from '@fluidframework/test-utils';
@@ -66,6 +68,7 @@ export interface CompatApis {
 // @internal (undocumented)
 export const ContainerRuntimeApi: {
     version: string;
+    BaseContainerRuntimeFactory: typeof BaseContainerRuntimeFactory;
     ContainerRuntime: typeof ContainerRuntime;
     ContainerRuntimeFactoryWithDefaultDataStore: typeof ContainerRuntimeFactoryWithDefaultDataStore;
 };
@@ -75,15 +78,13 @@ export const DataRuntimeApi: {
     version: string;
     DataObject: typeof DataObject;
     DataObjectFactory: typeof DataObjectFactory;
+    FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
         SharedDirectory: typeof map.SharedDirectory;
-        SharedMap: {
-            getFactory(): IChannelFactory<map.ISharedMap>;
-            create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedMap;
-        };
+        SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: typeof matrix.SharedMatrix;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;
         ConsensusRegisterCollection: typeof registerCollection.ConsensusRegisterCollection;
@@ -93,6 +94,7 @@ export const DataRuntimeApi: {
     packages: {
         cell: typeof cell;
         counter: typeof counter;
+        datastore: typeof datastore;
         map: typeof map;
         matrix: typeof matrix;
         orderedCollection: typeof orderedCollection;

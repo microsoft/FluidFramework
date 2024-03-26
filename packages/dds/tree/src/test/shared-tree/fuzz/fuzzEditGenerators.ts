@@ -39,7 +39,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTree } from "../../../shared-tree/sharedTree.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getOrCreate } from "../../../util/utils.js";
+import { getOrCreate, makeArray } from "../../../util/utils.js";
 import { schematizeFlexTree } from "../../utils.js";
 import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
@@ -324,7 +324,7 @@ export const makeEditGenerator = (
 					parent: maybeDownPathFromNode(field.parent),
 					key: field.key,
 					index: state.random.integer(0, field.length),
-					value: jsonableTree(state),
+					content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
 				};
 				return {
 					type: "sequence",

@@ -48,10 +48,10 @@ export interface FuzzInsert {
 	 */
 	key: FieldKey;
 	/**
-	 * Index to insert within the field.
+	 * Index to insert at within the field.
 	 */
 	index: number;
-	value: JsonableTree;
+	content: JsonableTree[];
 }
 
 export interface FuzzSet {

@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler";
 import { IContainer } from "@fluidframework/container-definitions";
 
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
