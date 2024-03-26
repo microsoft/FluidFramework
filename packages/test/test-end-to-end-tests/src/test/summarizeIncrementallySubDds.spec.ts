@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
@@ -460,7 +459,9 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 describeCompat(
 	"Incremental summaries can be generated for DDS content",
 	"NoCompat",
-	(getTestObjectProvider) => {
+	(getTestObjectProvider, apis) => {
+		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
 		let provider: ITestObjectProvider;
 		const defaultFactory = new TestFluidObjectFactory([
 			[
