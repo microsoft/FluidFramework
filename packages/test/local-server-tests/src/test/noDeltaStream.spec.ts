@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";

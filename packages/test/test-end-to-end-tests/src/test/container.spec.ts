@@ -17,7 +17,7 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
 	IContainerExperimental,

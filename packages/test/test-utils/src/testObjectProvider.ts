@@ -8,7 +8,7 @@ import {
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	ILoaderProps,
 	Loader,

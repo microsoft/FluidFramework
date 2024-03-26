@@ -7,15 +7,17 @@ import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
-	IBatchMessage,
-	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
+} from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
 	IGetPendingLocalStateProps,
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,

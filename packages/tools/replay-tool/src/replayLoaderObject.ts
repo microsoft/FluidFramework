@@ -10,7 +10,7 @@ import {
 	IFluidModule,
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 

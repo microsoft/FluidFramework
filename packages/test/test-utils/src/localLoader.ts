@@ -9,7 +9,7 @@ import {
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";

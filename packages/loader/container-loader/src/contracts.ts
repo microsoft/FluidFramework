@@ -7,10 +7,9 @@ import {
 	IConnectionDetails,
 	ICriticalContainerError,
 	IDeltaQueue,
-	IFluidCodeDetails,
 	ReadOnlyInfo,
-	isFluidPackage,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
 import {

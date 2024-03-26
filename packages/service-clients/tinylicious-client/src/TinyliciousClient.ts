@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	type IContainer,
 	type IFluidModuleWithDetails,
 	type IHostLoader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";

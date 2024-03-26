@@ -6,13 +6,11 @@
 import assert from "assert";
 import Deque from "double-ended-queue";
 
-import {
-	ContainerErrorTypes,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,

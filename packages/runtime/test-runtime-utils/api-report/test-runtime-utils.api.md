@@ -36,7 +36,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { ILoader } from '@fluidframework/container-definitions';
+import { ILoader } from '@fluidframework/container-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';

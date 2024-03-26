@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AttachState,
-	type IContainer,
-	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
 	type IDocumentServiceFactory,
@@ -25,6 +21,10 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 
+import {
+	type IContainer,
+	type IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";

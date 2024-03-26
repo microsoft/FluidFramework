@@ -6,15 +6,18 @@
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	AttachState,
-	ContainerWarning,
 	IAudience,
+	ICriticalContainerError,
+	IDeltaManager,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
+import {
+	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
-	ICriticalContainerError,
-	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -23,9 +26,8 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	ReadOnlyInfo,
 	isFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandleContext,
@@ -48,6 +48,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ChannelCollection, wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { channelToDataStore } from "../dataStore.js";

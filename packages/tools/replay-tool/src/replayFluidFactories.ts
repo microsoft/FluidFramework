@@ -10,7 +10,7 @@ import {
 	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";

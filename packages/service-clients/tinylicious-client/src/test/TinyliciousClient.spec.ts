@@ -4,13 +4,18 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { strict as assert } from "node:assert";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";

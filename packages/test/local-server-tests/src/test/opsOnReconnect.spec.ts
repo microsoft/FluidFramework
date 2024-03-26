@@ -5,7 +5,11 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails, IHostLoader } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
