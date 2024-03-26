@@ -5,6 +5,17 @@
 
 import { IFluidMountableView } from "@fluid-example/example-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IFluidCodeResolver,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	IFluidPackage,
+	IResolvedFluidCodeDetails,
+	LoaderHeader,
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
@@ -28,7 +39,6 @@ import {
 	extractPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
 } from "./webCodeLoader/index.js";
-import { IContainer, IFluidCodeDetails, IFluidCodeResolver, IFluidModule, IFluidModuleWithDetails, IFluidPackage, IResolvedFluidCodeDetails, LoaderHeader, isFluidBrowserPackage } from "@fluidframework/container-definitions/internal";
 
 export interface IDevServerUser extends IUser {
 	name: string;

@@ -16,9 +16,9 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 import React from "react";
 
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 import { CodeMirrorReactView } from "./codeMirrorView.js";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
 
 export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 export { CodeMirrorReactView } from "./codeMirrorView.js";

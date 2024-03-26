@@ -4,6 +4,16 @@
  */
 
 import {
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModule,
+	IHostLoader,
+	ILoader,
+	ILoaderOptions as ILoaderOptions1,
+	IProvideFluidCodeDetailsComparer,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
@@ -32,7 +42,6 @@ import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import { tryParseCompatibleResolvedUrl } from "./utils.js";
-import { IContainer, IFluidCodeDetails, IFluidModule, IHostLoader, ILoader, ILoaderOptions as ILoaderOptions1, IProvideFluidCodeDetailsComparer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,

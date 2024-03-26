@@ -4,6 +4,7 @@
  */
 
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
+import type { IContainer } from '@fluidframework/container-definitions/internal';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { TestObjectProvider } from '@fluidframework/test-utils';
 import type { Build, Detach, Insert, SetValue } from '../../ChangeTypes.js';
@@ -12,7 +13,6 @@ import type { NodeIdGenerator } from '../../NodeIdUtilities.js';
 import type { SharedTree } from '../../SharedTree.js';
 import type { TreeView } from '../../TreeView.js';
 import type { WriteFormat } from '../../persisted-types/index.js';
-import type { IContainer } from "@fluidframework/container-definitions/internal";
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	testObjectProvider?: TestObjectProvider;

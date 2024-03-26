@@ -4,6 +4,7 @@
  */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState, IContainerExperimental, Loader } from "@fluidframework/container-loader";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
@@ -35,7 +36,6 @@ import {
 	globalConfigurations,
 	safeExit,
 } from "./utils.js";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {

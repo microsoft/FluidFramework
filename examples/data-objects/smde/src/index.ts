@@ -16,9 +16,9 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 import React from "react";
 
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { SmdeDataObject, SmdeFactory } from "./smde.js";
 import { SmdeReactView } from "./smdeView.js";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
 
 const defaultComponentId = "default";
 

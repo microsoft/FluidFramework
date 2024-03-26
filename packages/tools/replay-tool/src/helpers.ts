@@ -5,6 +5,7 @@
 
 import { strict } from "assert";
 import fs from "fs";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
@@ -25,7 +26,6 @@ import {
 } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 export interface ReplayToolContainerEntryPoint {
 	readonly containerRuntime: ContainerRuntime;

@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import path from "path";
+import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils";
 import { IOdspTokens, getServer } from "@fluidframework/odsp-doclib-utils/internal";
 import {
@@ -20,7 +21,6 @@ import WebpackDevServer from "webpack-dev-server";
 import { createManifestResponse } from "./bohemiaIntercept.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
-import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 
 const tokenManager = new OdspTokenManager(odspTokensCache);
 let odspAuthStage = 0;

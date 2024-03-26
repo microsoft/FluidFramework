@@ -20,6 +20,7 @@ import { type IDirectory } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 
+import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ContainerSchema,
@@ -34,7 +35,6 @@ import {
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.

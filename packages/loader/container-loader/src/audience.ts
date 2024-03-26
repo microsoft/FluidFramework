@@ -4,9 +4,9 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 
 /**
  * Audience represents all clients connected to the op stream.

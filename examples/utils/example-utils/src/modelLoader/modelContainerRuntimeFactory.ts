@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import {
+	IContainer,
+	IContainerContext,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import { IContainer, IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 
 /**
  * @internal

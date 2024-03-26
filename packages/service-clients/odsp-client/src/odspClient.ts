@@ -4,6 +4,10 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import {
 	type FluidObject,
@@ -43,7 +47,6 @@ import {
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
-import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,

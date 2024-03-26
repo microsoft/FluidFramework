@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import {
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidCodeDetailsComparer,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	IProvideRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ICodeDetailsLoader, IFluidCodeDetails, IFluidCodeDetailsComparer, IFluidModule, IFluidModuleWithDetails, IProvideRuntimeFactory } from "@fluidframework/container-definitions/internal";
 
 /**
  * URL Resolver for the replay tool.

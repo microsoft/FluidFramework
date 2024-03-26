@@ -6,8 +6,8 @@
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid.js";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid.js";
 
 /**
  * The data model for our application.

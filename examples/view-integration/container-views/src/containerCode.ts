@@ -13,10 +13,10 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 
 import React from "react";
 
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IDiceRoller } from "./interface.js";
 import { DiceRollerInstantiationFactory } from "./model.js";
 import { DiceRollerView } from "./view.js";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * The data model for our application.

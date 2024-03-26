@@ -16,8 +16,8 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 
 import React from "react";
 
-import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
 
 export { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "./prosemirror.js";
 

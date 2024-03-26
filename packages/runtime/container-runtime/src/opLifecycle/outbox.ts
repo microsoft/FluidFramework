@@ -4,6 +4,7 @@
  */
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
@@ -24,7 +25,6 @@ import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 import { OpCompressor } from "./opCompressor.js";
 import { OpGroupingManager } from "./opGroupingManager.js";
 import { OpSplitter } from "./opSplitter.js";
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;

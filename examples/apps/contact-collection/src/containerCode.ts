@@ -6,8 +6,8 @@
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import { ContactCollectionInstantiationFactory, IContactCollection } from "./dataObject.js";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import { ContactCollectionInstantiationFactory, IContactCollection } from "./dataObject.js";
 
 const contactCollectionId = "contactCollection";
 

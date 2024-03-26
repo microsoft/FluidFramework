@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IContainer } from '@fluidframework/container-definitions/internal';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
 import { Change, StablePlace } from '../../ChangeTypes.js';
@@ -22,7 +23,6 @@ import {
 	stabilizeEdit,
 	withContainerOffline,
 } from './TestUtilities.js';
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Runs a test suite for SharedTree's ability to apply pending local state stashed by the host.

@@ -4,7 +4,20 @@
  */
 
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, ICriticalContainerError, IDeltaManager } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IAudience,
+	ICriticalContainerError,
+	IDeltaManager,
+} from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
+	IGetPendingLocalStateProps,
+	ILoader,
+	IRuntime,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -191,7 +204,6 @@ import {
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
-import { IBatchMessage, IContainerContext, IGetPendingLocalStateProps, ILoader, IRuntime, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 /**
  * Utility to implement compat behaviors given an unknown message type

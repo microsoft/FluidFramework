@@ -10,6 +10,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -25,7 +26,6 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoadTestConfig } from "./testConfigFile.js";
-import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 
 export interface IRunConfig {
 	runId: number;

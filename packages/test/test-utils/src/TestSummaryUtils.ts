@@ -5,6 +5,11 @@
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import {
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -27,7 +32,6 @@ import { waitForContainerConnection } from "./containerUtils.js";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const summarizerClientType = "summarizer";
 

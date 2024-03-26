@@ -7,6 +7,7 @@ import { type IAudience } from "@fluidframework/container-definitions";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type AudienceClientMetadata } from "./AudienceMetadata.js";
 import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
@@ -45,7 +46,6 @@ import {
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
-import { type IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.

@@ -17,6 +17,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+import { ILoader } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
 	IChannel,
@@ -46,7 +47,6 @@ import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
-import { ILoader } from "@fluidframework/container-definitions/internal";
 
 /**
  * Mock implementation of IDeltaConnection for testing
