@@ -52,6 +52,8 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		return this._summarizeProtocolTree === true;
 	}
 
+	public loadingGroupIds: Record<string, ISnapshot> = {};
+
 	/**
 	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
 	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
@@ -126,12 +128,25 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	}
 
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
-		if (this._storageService.getSnapshot !== undefined) {
-			return this._storageService.getSnapshot(snapshotFetchOptions);
+		if (this._storageService.getSnapshot === undefined) {
+			throw new UsageError(
+				"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
+			);
 		}
-		throw new UsageError(
-			"getSnapshot api should exist in internal storage in ContainerStorageAdapter",
-		);
+
+		const key = snapshotFetchOptions?.loadingGroupIds?.sort().join();
+		const hasLoadingGroupIds = key !== undefined && key !== "";
+		// So when do we drop the this.loadingGroupIds cache? The problem is that we need it if we go offline.
+		const snapshot = hasLoadingGroupIds
+			? this.loadingGroupIds[key]
+			: await this._storageService.getSnapshot(snapshotFetchOptions);
+		if (
+			snapshotFetchOptions?.loadingGroupIds !== undefined &&
+			snapshotFetchOptions.loadingGroupIds.length > 0
+		) {
+			this.loadingGroupIds[snapshotFetchOptions.loadingGroupIds.sort().join()] = snapshot;
+		}
+		return snapshot;
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {

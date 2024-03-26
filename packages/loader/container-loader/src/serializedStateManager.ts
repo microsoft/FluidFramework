@@ -23,7 +23,11 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+import {
+	ISerializableBlobContents,
+	getBlobContentsFromTree,
+	type ContainerStorageAdapter,
+} from "./containerStorageAdapter.js";
 
 export interface SnapshotWithBlobs {
 	/**
@@ -50,6 +54,7 @@ export interface IPendingContainerState extends SnapshotWithBlobs {
 	 * ops at the same sequence number at which they were made.
 	 */
 	savedOps: ISequencedDocumentMessage[];
+	loadingGroupSnapshots: Record<string, ISnapshot>;
 	url: string;
 	clientId?: string;
 }
@@ -73,10 +78,7 @@ export class SerializedStateManager {
 	constructor(
 		private readonly pendingLocalState: IPendingContainerState | undefined,
 		subLogger: ITelemetryLoggerExt,
-		private readonly storageAdapter: Pick<
-			IDocumentStorageService,
-			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
-		>,
+		private readonly storageAdapter: ContainerStorageAdapter,
 		private readonly _offlineLoadEnabled: boolean,
 	) {
 		this.mc = createChildMonitoringContext({
@@ -159,6 +161,7 @@ export class SerializedStateManager {
 					pendingRuntimeState,
 					baseSnapshot: this.snapshot.baseSnapshot,
 					snapshotBlobs: this.snapshot.snapshotBlobs,
+					loadingGroupSnapshots: this.storageAdapter.loadingGroupIds,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state
