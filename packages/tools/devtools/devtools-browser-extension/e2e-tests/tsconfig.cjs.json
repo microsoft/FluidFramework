@@ -4,9 +4,4 @@
 	"compilerOptions": {
 		"outDir": "../dist/e2e-tests",
 	},
-	"references": [
-		{
-			"path": "../tsconfig.cjs.json",
-		},
-	],
 }

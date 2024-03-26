@@ -42,7 +42,7 @@
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.test.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/tsc/test/**/*.test.*js\" --exit",
 		"test:mocha:esm": "echo \"Skipping ESM tests -- See AB#7470\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:unit": "npm run test:mocha",

@@ -1,7 +1,6 @@
 {
 	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"compilerOptions": {
-		"rootDir": "./",
 		"outDir": "../lib/e2e-tests",
 		"types": ["expect-puppeteer", "jest", "jest-environment-puppeteer", "puppeteer"],
 		"forceConsistentCasingInFileNames": true,
