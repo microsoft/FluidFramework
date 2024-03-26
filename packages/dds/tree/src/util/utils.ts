@@ -168,6 +168,20 @@ export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Ite
 }
 
 /**
+ * Filter an iterable by running a predicate on each element.
+ * @param iterable - the iterable to filter
+ * @param filter - the predicate to run on each element of the iterable
+ * @returns a new iterable of elements which have been filtered by the `filter` function
+ */
+export function* filterIterable<T>(iterable: Iterable<T>, filter: (t: T) => boolean): Iterable<T> {
+	for (const t of iterable) {
+		if (filter(t)) {
+			yield t;
+		}
+	}
+}
+
+/**
  * Returns an iterable of tuples containing pairs of elements from the given iterables
  * @param iterableA - an iterable to zip together with `iterableB`
  * @param iterableB - an iterable to zip together with `iterableA`
