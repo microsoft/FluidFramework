@@ -54,18 +54,6 @@ export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-// @alpha @deprecated
-export interface ISerializableValue {
-    type: string;
-    value: any;
-}
-
-// @alpha
-export interface ISerializedValue {
-    type: string;
-    value: string | undefined;
-}
-
 // @alpha
 export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>, Omit<IDirectory, "on" | "once" | "off"> {
     // (undocumented)

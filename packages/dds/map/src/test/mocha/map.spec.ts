@@ -14,19 +14,14 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import {
-	ISerializableValue,
-	ISharedMap,
-	IValueChanged,
-	MapFactory,
-	SharedMap,
-} from "../../index.js";
+import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
 	IMapKeyEditLocalOpMetadata,
 	IMapSetOperation,
+	ISerializableValue,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";

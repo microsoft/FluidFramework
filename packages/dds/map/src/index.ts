@@ -19,8 +19,6 @@ export {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
-	ISerializableValue,
-	ISerializedValue,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,

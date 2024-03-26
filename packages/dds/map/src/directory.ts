@@ -27,13 +27,15 @@ import {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
-	// eslint-disable-next-line import/no-deprecated
-	ISerializableValue,
-	ISerializedValue,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	IValueChanged,
 } from "./interfaces.js";
+import {
+	// eslint-disable-next-line import/no-deprecated
+	ISerializableValue,
+	ISerializedValue,
+} from "./internalInterfaces.js";
 import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.

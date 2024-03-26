@@ -276,50 +276,26 @@ use_old_InterfaceDeclaration_IDirectoryValueChanged(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializableValue": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISerializableValue": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISerializableValue():
-    TypeOnly<old.ISerializableValue>;
-declare function use_current_InterfaceDeclaration_ISerializableValue(
-    use: TypeOnly<current.ISerializableValue>): void;
-use_current_InterfaceDeclaration_ISerializableValue(
-    get_old_InterfaceDeclaration_ISerializableValue());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializableValue": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISerializableValue": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISerializableValue():
-    TypeOnly<current.ISerializableValue>;
-declare function use_old_InterfaceDeclaration_ISerializableValue(
-    use: TypeOnly<old.ISerializableValue>): void;
-use_old_InterfaceDeclaration_ISerializableValue(
-    get_current_InterfaceDeclaration_ISerializableValue());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializedValue": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedValue": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISerializedValue():
-    TypeOnly<old.ISerializedValue>;
-declare function use_current_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<current.ISerializedValue>): void;
-use_current_InterfaceDeclaration_ISerializedValue(
-    get_old_InterfaceDeclaration_ISerializedValue());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializedValue": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedValue": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISerializedValue():
-    TypeOnly<current.ISerializedValue>;
-declare function use_old_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<old.ISerializedValue>): void;
-use_old_InterfaceDeclaration_ISerializedValue(
-    get_current_InterfaceDeclaration_ISerializedValue());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -240,6 +240,14 @@
 			"RemovedClassDeclaration_LocalValueMaker": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializableValue": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializedValue": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
