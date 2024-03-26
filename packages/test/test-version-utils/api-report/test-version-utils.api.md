@@ -81,10 +81,7 @@ export const DataRuntimeApi: {
     dds: {
         SharedCell: typeof cell.SharedCell;
         SharedCounter: typeof counter.SharedCounter;
-        SharedDirectory: {
-            create(runtime: IFluidDataStoreRuntime, id?: string | undefined): map.ISharedDirectory;
-            getFactory(): IChannelFactory<map.ISharedDirectory>;
-        };
+        SharedDirectory: ISharedObjectKind<map.ISharedDirectory>;
         SharedMap: ISharedObjectKind<map.ISharedMap>;
         SharedMatrix: typeof matrix.SharedMatrix;
         ConsensusQueue: typeof orderedCollection.ConsensusQueue;

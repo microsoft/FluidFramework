@@ -76,7 +76,7 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 }
 
 /**
- * {@inheritDoc ISharedDirectory}
+ * Entrypoint for {@link ISharedDirectory} creation.
  * @sealed
  * @alpha
  */
@@ -110,7 +110,7 @@ export const SharedDirectory: ISharedObjectKind<ISharedDirectory> = {
 };
 
 /**
- * {@inheritDoc ISharedDirectory}
+ * Entrypoint for {@link ISharedDirectory} creation.
  * @alpha
  * @deprecated Use ISharedDirectory instead.
  * @privateRemarks
