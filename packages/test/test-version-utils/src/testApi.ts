@@ -29,6 +29,8 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import * as sequence from "@fluidframework/sequence";
 import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
+import * as datastore from "@fluidframework/datastore";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
 // ContainerRuntime and Data Runtime API
 import {
@@ -53,6 +55,7 @@ import {
 // List of package that needs to be install for legacy versions
 const packageList = [
 	"@fluidframework/aqueduct",
+	"@fluidframework/datastore",
 	"@fluidframework/test-utils",
 	"@fluidframework/container-loader",
 	"@fluidframework/container-runtime",
@@ -137,6 +140,7 @@ export const DataRuntimeApi = {
 	version: pkgVersion,
 	DataObject,
 	DataObjectFactory,
+	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
 	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
@@ -162,6 +166,7 @@ export const DataRuntimeApi = {
 	packages: {
 		cell,
 		counter,
+		datastore,
 		map,
 		matrix,
 		orderedCollection,
@@ -232,6 +237,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 		/* eslint-disable @typescript-eslint/no-shadow */
 		const [
 			{ DataObject, DataObjectFactory },
+			datastore,
 			{ TestFluidObjectFactory },
 			map,
 			sequence,
@@ -244,6 +250,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			agentScheduler,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
+			loadPackage(modulePath, "@fluidframework/datastore"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
 			loadPackage(modulePath, "@fluidframework/map"),
 			loadPackage(modulePath, "@fluidframework/sequence"),
@@ -260,6 +267,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			),
 			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
 		]);
+		const { FluidDataStoreRuntime } = datastore;
 		const { SharedCell } = cell;
 		const { SharedCounter } = counter;
 		const { SharedDirectory, SharedMap } = map;
@@ -274,6 +282,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			version,
 			DataObject,
 			DataObjectFactory,
+			FluidDataStoreRuntime,
 			TestFluidObjectFactory,
 			dds: {
 				SharedCell,
@@ -287,6 +296,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 				SparseMatrix,
 			},
 			packages: {
+				datastore,
 				map,
 				sequence,
 				cell,

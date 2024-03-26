@@ -12,6 +12,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from '@fluidframework/aqu
 import * as counter from '@fluidframework/counter';
 import { DataObject } from '@fluidframework/aqueduct';
 import { DataObjectFactory } from '@fluidframework/aqueduct';
+import * as datastore from '@fluidframework/datastore';
 import { DriverApi } from '@fluid-private/test-drivers';
 import { FluidTestDriverConfig } from '@fluid-private/test-drivers';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
@@ -77,6 +78,7 @@ export const DataRuntimeApi: {
     version: string;
     DataObject: typeof DataObject;
     DataObjectFactory: typeof DataObjectFactory;
+    FluidDataStoreRuntime: typeof datastore.FluidDataStoreRuntime;
     TestFluidObjectFactory: typeof TestFluidObjectFactory;
     dds: {
         SharedCell: typeof cell.SharedCell;
@@ -92,6 +94,7 @@ export const DataRuntimeApi: {
     packages: {
         cell: typeof cell;
         counter: typeof counter;
+        datastore: typeof datastore;
         map: typeof map;
         matrix: typeof matrix;
         orderedCollection: typeof orderedCollection;

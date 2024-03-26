@@ -9,7 +9,7 @@ import type { PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, mixinSummaryHandler } from "@fluidframework/datastore";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import type { ISharedMap } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -46,7 +46,8 @@ describeCompat(
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedMatrix } = apis.dds;
-		const { DataObject, DataObjectFactory } = apis.dataRuntime;
+		const { DataObject, DataObjectFactory, FluidDataStoreRuntime } = apis.dataRuntime;
+		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 		function createDataStoreRuntime(
