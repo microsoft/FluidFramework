@@ -64,9 +64,9 @@ export interface TreeNodeApi {
 
 	/**
 	 * Register an event listener on the given node.
-	 * @param node - the node who's events should be subscribed to.
-	 * @param eventName - which event to subscribe to.
-	 * @param listener - Callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
+	 * @param node - The node who's events should be subscribed to.
+	 * @param eventName - Which event to subscribe to.
+	 * @param listener - The callback to trigger for the event. The tree can be read during the callback, but it is invalid to modify the tree during this callback.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
@@ -187,13 +187,13 @@ export interface TreeChangeEvents {
 	 * if a node is moved, inserted or removed, events are fired for the parent of the node, not the node itself.
 	 *
 	 * These events occur whenever the apparent contents of the node instance change, regardless of what caused the change.
-	 * For example these events will fire when the local client reassigns a child, when part of a remote edit is applied
+	 * For example, these events will fire when the local client reassigns a child, when part of a remote edit is applied
 	 * to the node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 *
-	 * For remote edits these events are not guaranteed to occur in the same order or quantity that the edits were originally made:
+	 * For remote edits, these events are not guaranteed to occur in the same order or quantity that the edits were originally made:
 	 * While a batch of edits will get events for each change, and will as a whole update the tree to the appropriate end
-	 * state, no guarantees are made about the intermediate states other than the tree being in schema.
+	 * state, no guarantees are made about the intermediate states other than the tree being in-schema.
 	 *
 	 * @privateRemarks
 	 * Triggered by {@link AnchorEvents.childrenChanged}.
