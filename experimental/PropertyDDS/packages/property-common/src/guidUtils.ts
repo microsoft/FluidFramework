@@ -52,6 +52,9 @@ const guidRNG = {
 				// This is a roundabout way of initializing our PRNG using a robust source, with minimal
 				// changes to the original code or a new FF dependency.
 				//
+				// It is a stop-gap solution until this code is either retired, or FF moves to Node 19
+				// (see AB#7451 for details).
+				//
 				// The standard 'uuid' package that we use elsewhere in FF has already done the work of
 				// normalizing crypto random across browser and older node.js environments.
 				//
