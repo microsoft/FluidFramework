@@ -18,8 +18,6 @@ import { validateCommandLineArgs } from "./utils.js";
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	yargs
-		.strict()
-		.version(false)
 		.command(
 			"exportFile",
 			"Generate an output for a local ODSP snapshot",

@@ -133,7 +133,7 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"json2csv": "^5.0.7",
-		"yargs": "13.2.2"
+		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
