@@ -7,7 +7,10 @@ import {
 	Tree as FluentTree,
 	TreeItem as FluentTreeItem,
 	TreeItemLayout as FluentTreeItemLayout,
-} from "@fluentui/react-components/unstable";
+	treeItemLevelToken,
+	useSubtreeContext_unstable,
+	useTreeItemContext_unstable,
+} from "@fluentui/react-components";
 import React from "react";
 
 /**
@@ -29,14 +32,38 @@ export type TreeItemProps = React.PropsWithChildren<{
  */
 export function TreeItem(props: TreeItemProps): React.ReactElement {
 	const { children, header } = props;
+	const { level } = useSubtreeContext_unstable();
 
-	const isLeaf = React.Children.count(children) === 0;
+	const open = useTreeItemContext_unstable((ctx) => ctx.open || level === 1);
 
 	return (
-		<FluentTreeItem leaf={isLeaf} data-testid="tree-button">
+		<FluentTreeItem
+			value={level}
+			data-testid="tree-button"
+			itemType="branch"
+			style={{ [treeItemLevelToken]: level }}
+		>
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
+			{open && (
+				<FluentTree>
+					<TreeItem header={header} />
+				</FluentTree>
+			)}
 
 			<FluentTree>{children}</FluentTree>
 		</FluentTreeItem>
+	);
+}
+
+/**
+ * TODO
+ */
+export function InlineStylingTreeItemLevel(props: TreeItemProps): React.ReactElement {
+	const { header } = props;
+
+	return (
+		<FluentTree>
+			<TreeItem header={header} />
+		</FluentTree>
 	);
 }
