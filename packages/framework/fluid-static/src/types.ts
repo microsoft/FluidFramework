@@ -8,7 +8,7 @@ import {
 	type IEventProvider,
 	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type ISharedObjectKind } from "@fluidframework/shared-object-base";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
@@ -33,11 +33,11 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
  * There are some edge cases in TypeScript where the order of the members in a union matter.
  * Once such edge case is when multiple members of a generic union partially match, and the type parameter is being inferred.
  * In this case, its better to have the desired match and/or the simpler type first.
- * In this case placing SharedObjectClass fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
+ * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
-	| SharedObjectClass<T>
+	| ISharedObjectKind<T>
 	| DataObjectClass<T>;
 
 /**
@@ -47,31 +47,10 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * @typeParam T - The class of the `DataObject`.
  * @public
  */
-export type DataObjectClass<T extends IFluidLoadable> = {
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
 	readonly factory: { IFluidDataStoreFactory: DataObjectClass<T>["factory"] };
-} & LoadableObjectCtor<T>;
-
-/**
- * A factory that produces a factory that can create a DDSes (`SharedObject`s).
- *
- * @typeParam T - The class of the `SharedObject`.
- * @public
- */
-export interface SharedObjectClass<T extends IFluidLoadable> {
-	/**
-	 * Gets the factory this factory is a wrapper for.
-	 */
-	readonly getFactory: () => IChannelFactory<T>;
-}
-
-/**
- * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
- *
- * @typeParam T - The class of the loadable object.
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+} & (new (...args: any[]) => T);
 
 /**
  * Represents properties that can be attached to a container.

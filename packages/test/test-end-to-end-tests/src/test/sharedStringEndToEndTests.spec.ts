@@ -5,19 +5,19 @@
 
 import { strict as assert } from "assert";
 
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
 import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	createSummarizer,
-	summarizeNow,
 	getContainerEntryPointBackCompat,
+	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
 

@@ -32,10 +32,8 @@ export type {
 	IServiceAudienceEvents,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
-	LoadableObjectCtor,
 	MemberChangedListener,
 	Myself,
-	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export type { ISharedMap, ISharedMapEvents, IValueChanged } from "@fluidframework/map";
 export { SharedMap } from "@fluidframework/map";

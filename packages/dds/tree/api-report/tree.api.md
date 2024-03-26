@@ -13,6 +13,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
 import { StableId } from '@fluidframework/id-compressor';
 import type { Static } from '@sinclair/typebox';
@@ -409,14 +410,6 @@ export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRa
 export const disposeSymbol: unique symbol;
 
 // @internal
-export interface EditableTreeEvents {
-    afterChange(event: TreeEvent): void;
-    beforeChange(event: TreeEvent): void;
-    changing(upPath: UpPath): void;
-    subtreeChanging(upPath: UpPath): PathVisitor | void;
-}
-
-// @internal
 export const EmptyKey: FieldKey;
 
 // @internal
@@ -641,6 +634,7 @@ export class FlexObjectNodeSchema<const out Name extends string = string, const 
 
 // @internal
 export interface FlexTreeContext extends ISubscribable<ForestEvents> {
+    readonly forest: IForestSubscription;
     // (undocumented)
     readonly nodeKeys: NodeKeys;
     get root(): FlexTreeField;
@@ -720,17 +714,25 @@ export const flexTreeMarker: unique symbol;
 export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
     // (undocumented)
     readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
-    [onNextChange](fn: (node: FlexTreeNode) => void): () => void;
+    readonly anchorNode: AnchorNode;
     // (undocumented)
     boxedIterator(): IterableIterator<FlexTreeField>;
     is<TSchema extends FlexTreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
-    on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
+    on<K extends keyof FlexTreeNodeEvents>(eventName: K, listener: FlexTreeNodeEvents[K]): () => void;
     readonly parentField: {
         readonly parent: FlexTreeField;
         readonly index: number;
     };
     tryGetField(key: FieldKey): undefined | FlexTreeField;
     readonly value?: TreeValue;
+}
+
+// @internal
+export interface FlexTreeNodeEvents {
+    afterChange(event: TreeEvent): void;
+    beforeChange(event: TreeEvent): void;
+    changing(upPath: UpPath): void;
+    subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 // @internal
@@ -875,6 +877,7 @@ export const forbiddenFieldKindIdentifier = "Forbidden";
 // @internal
 export interface ForestEvents {
     afterChange(): void;
+    afterRootFieldCreated(key: FieldKey): void;
     beforeChange(): void;
 }
 
@@ -1467,7 +1470,7 @@ export const reservedObjectNodeFieldPropertyNamePrefixes: readonly ["set", "boxe
 export type ReservedObjectNodeFieldPropertyNames = (typeof reservedObjectNodeFieldPropertyNames)[number];
 
 // @internal
-export const reservedObjectNodeFieldPropertyNames: readonly ["constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
+export const reservedObjectNodeFieldPropertyNames: readonly ["anchorNode", "constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -1654,9 +1657,7 @@ export interface SequenceFieldEditBuilder {
 }
 
 // @public
-export const SharedTree: {
-    getFactory(): IChannelFactory<ITree>;
-};
+export const SharedTree: ISharedObjectKind<ITree>;
 
 // @internal
 export interface SharedTreeContentSnapshot {
@@ -1820,19 +1821,6 @@ export interface TreeDataContext {
 // @internal
 export interface TreeEvent {
     readonly target: FlexTreeNode;
-}
-
-// @internal
-export class TreeFactory implements IChannelFactory<ITree> {
-    constructor(options: SharedTreeOptions);
-    // (undocumented)
-    readonly attributes: IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ITree;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ITree>;
-    // (undocumented)
-    readonly type: string;
 }
 
 // @public

@@ -25,6 +25,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { type IDirectory } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ContainerSchema,
 	FluidRuntimeMinVersion,
@@ -32,12 +33,11 @@ import {
 	type LoadableObjectClass,
 	type LoadableObjectClassRecord,
 	type LoadableObjectRecord,
-	type SharedObjectClass,
 } from "./types.js";
 import {
 	type InternalDataObjectClass,
 	isDataObjectClass,
-	isSharedObjectClass,
+	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
 
@@ -134,9 +134,9 @@ class RootDataObject
 	 */
 	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
 		if (isDataObjectClass(objectClass)) {
-			return this.createDataObject<T>(objectClass);
-		} else if (isSharedObjectClass(objectClass)) {
-			return this.createSharedObject<T>(objectClass);
+			return this.createDataObject(objectClass);
+		} else if (isSharedObjectKind(objectClass)) {
+			return this.createSharedObject(objectClass);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
@@ -152,7 +152,7 @@ class RootDataObject
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
-		sharedObjectClass: SharedObjectClass<T>,
+		sharedObjectClass: ISharedObjectKind<T>,
 	): T {
 		const factory = sharedObjectClass.getFactory();
 		const obj = this.runtime.createChannel(undefined, factory.type);
@@ -255,6 +255,11 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 					// intermidiate states are exposed to remote clients half way through operations.
 					// It also results in op compressionto to not be very effective (as it compresses individual ops, not batches of ops)
 					flushMode: FlushMode.TurnBased,
+					// Enable explicit container runtime schema changes.
+					// This helps with future changes in schema, and will result in deterministic failure of old versions of runtime
+					// that do not understand the scheme.
+					// This option is not compatible with 1.3 versions of the runtime (same with all the other settings below)
+					explicitSchemaControl: true,
 					// Id Compressor is required for SharedTree scenarios. This is breaking change (even if SharedTree is not used) - this
 					// setting results in new type of ops that 1.3.x clients do not understand.
 					enableRuntimeIdCompressor: "on",
