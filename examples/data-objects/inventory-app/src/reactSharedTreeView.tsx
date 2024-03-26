@@ -27,7 +27,7 @@ import * as React from "react";
  */
 
 /**
- * Opt into extra validation to detect detect encoding bugs and data corruption.
+ * Opt into extra validation to detect encoding bugs and data corruption.
  */
 const SharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
