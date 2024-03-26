@@ -8,7 +8,7 @@ import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { resolveVersion } from "./versionUtils.js";
 // This import ensures nconf has been configured to load from correct sources before we compute the right baseVersion.
 // eslint-disable-next-line import/no-unassigned-import
-import "../compatOptions.cjs";
+import "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 
 function getCodeVersion() {
