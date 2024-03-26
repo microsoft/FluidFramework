@@ -30,6 +30,7 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	SummaryType,
+	type ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
 	IQuorumClients,
@@ -260,18 +261,8 @@ export class FluidDataStoreRuntime
 				// container from snapshot where we load detached container from a snapshot, isLocalDataStore would be
 				// true. In this case create a RehydratedLocalChannelContext.
 				if (dataStoreContext.isLocalDataStore) {
-					channelContext = new RehydratedLocalChannelContext(
+					channelContext = this.createRehydratedLocalChannelContext(
 						path,
-						this.sharedObjectRegistry,
-						this,
-						this.dataStoreContext,
-						this.dataStoreContext.storage,
-						this.logger,
-						(content, localOpMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata),
-						(address: string) => this.setChannelDirty(address),
-						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
-							this.addedGCOutboundReference(srcHandle, outboundHandle),
 						tree.trees[path],
 					);
 					// This is the case of rehydrating a detached container from snapshot. Now due to delay loading of
@@ -501,6 +492,27 @@ export class FluidDataStoreRuntime
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
 		);
 		this.contexts.set(channel.id, context);
+	}
+
+	private createRehydratedLocalChannelContext(
+		id: string,
+		tree: ISnapshotTree,
+		flatBlobs?: Map<string, ArrayBufferLike>,
+	) {
+		return new RehydratedLocalChannelContext(
+			id,
+			this.sharedObjectRegistry,
+			this,
+			this.dataStoreContext,
+			this.dataStoreContext.storage,
+			this.logger,
+			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
+			(address: string) => this.setChannelDirty(address),
+			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
+				this.addedGCOutboundReference(srcHandle, outboundHandle),
+			tree,
+			flatBlobs,
+		);
 	}
 
 	/**
@@ -1083,16 +1095,23 @@ export class FluidDataStoreRuntime
 		switch (type) {
 			case DataStoreMessageType.Attach: {
 				const attachMessage = content.content as IAttachMessage;
-				// local means this node will throw if summarized; this is fine because only interactive clients will have stashed ops
-				const summarizerNodeParams: CreateChildSummarizerNodeParam = {
-					type: CreateSummarizerNodeSource.Local,
-				};
-				const context = this.createRemoteChannelContext(
-					attachMessage,
-					summarizerNodeParams,
+
+				const flatBlobs = new Map<string, ArrayBufferLike>();
+				const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+
+				const channelContext = this.createRehydratedLocalChannelContext(
+					attachMessage.id,
+					snapshotTree,
+					flatBlobs,
 				);
-				this.pendingAttach.add(attachMessage.id);
-				this.contexts.set(attachMessage.id, context);
+				await channelContext.getChannel();
+				this.contexts.set(attachMessage.id, channelContext);
+				if (this.attachState === AttachState.Detached) {
+					this.localChannelContextQueue.set(attachMessage.id, channelContext);
+				} else {
+					channelContext.makeVisible();
+					this.pendingAttach.add(attachMessage.id);
+				}
 				return;
 			}
 			case DataStoreMessageType.ChannelOp: {
