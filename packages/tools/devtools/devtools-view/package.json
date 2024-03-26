@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.0.0-rc.2.0.0",
+	"version": "2.0.0-rc.3.0.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -92,7 +92,7 @@
 		"scheduler": "^0.20.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",

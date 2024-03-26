@@ -160,11 +160,96 @@ describe("SharedTreeObject", () => {
 	});
 });
 
-describe("SharedTreeList", () => {
+describe("ArrayNode Proxy", () => {
+	const schemaFactory = new SchemaFactory("test");
+
+	const StructurallyNamedNumberArray = schemaFactory.array(schemaFactory.number);
+
+	class NumberArray extends schemaFactory.array("NumberArray", schemaFactory.number) {}
+
+	class CustomizedArray extends schemaFactory.array("CustomArray", schemaFactory.number) {
+		public extra = "foo";
+	}
+
+	it("ownKeys", () => {
+		assert.deepEqual(Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [])), ["length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [])), ["length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [])), ["length", "extra"]);
+
+		assert.deepEqual(Reflect.ownKeys(hydrate(StructurallyNamedNumberArray, [5])), [
+			"0",
+			"length",
+		]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(NumberArray, [5])), ["0", "length"]);
+		assert.deepEqual(Reflect.ownKeys(hydrate(CustomizedArray, [5])), ["0", "length", "extra"]);
+	});
+
+	it("in", () => {
+		assert("length" in hydrate(StructurallyNamedNumberArray, []));
+		assert("length" in hydrate(NumberArray, []));
+		assert("length" in hydrate(CustomizedArray, []));
+		assert(!("extra" in hydrate(StructurallyNamedNumberArray, [])));
+		assert(!("extra" in hydrate(NumberArray, [])));
+		assert("extra" in hydrate(CustomizedArray, []));
+		assert(!("extra2" in hydrate(CustomizedArray, [])));
+		assert(!("0" in hydrate(StructurallyNamedNumberArray, [])));
+		assert(!("0" in hydrate(NumberArray, [])));
+		assert(!("0" in hydrate(CustomizedArray, [])));
+
+		assert("0" in hydrate(StructurallyNamedNumberArray, [5]));
+		assert("0" in hydrate(NumberArray, [5]));
+		assert("0" in hydrate(CustomizedArray, [5]));
+	});
+
+	it("length", () => {
+		assert.equal(hydrate(StructurallyNamedNumberArray, []).length, 0);
+		assert.equal(hydrate(StructurallyNamedNumberArray, [1, 2, 3]).length, 3);
+		assert.deepEqual(
+			Reflect.getOwnPropertyDescriptor(hydrate(StructurallyNamedNumberArray, [5]), "length"),
+			Reflect.getOwnPropertyDescriptor([5], "length"),
+		);
+
+		assert.equal(hydrate(NumberArray, []).length, 0);
+		assert.equal(hydrate(NumberArray, [1, 2, 3]).length, 3);
+		assert.deepEqual(
+			Reflect.getOwnPropertyDescriptor(hydrate(NumberArray, [5]), "length"),
+			Reflect.getOwnPropertyDescriptor([5], "length"),
+		);
+
+		// Since getOwnPropertyDescriptor reports length as writable, but its not actually writable, ensure writing it errors:
+		{
+			const array = hydrate(NumberArray, []);
+			assert.throws(() => {
+				// @ts-expect-error length is readonly
+				array.length = 1;
+			});
+		}
+		{
+			const array = hydrate(StructurallyNamedNumberArray, []);
+			assert.throws(() => {
+				// @ts-expect-error length is readonly
+				array.length = 1;
+			});
+		}
+	});
+
+	it("Json stringify", () => {
+		// JSON.stringify uses ownKeys and getOwnPropertyDescriptor
+
+		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [])), "[]");
+		assert.equal(JSON.stringify(hydrate(StructurallyNamedNumberArray, [1, 2, 3])), "[1,2,3]");
+		assert.equal(JSON.stringify(hydrate(NumberArray, [])), "{}");
+		assert.equal(JSON.stringify(hydrate(NumberArray, [1, 2, 3])), `{"0":1,"1":2,"2":3}`);
+
+		assert.equal(
+			JSON.stringify(hydrate(CustomizedArray, [1, 2, 3])),
+			`{"0":1,"1":2,"2":3,"extra":"foo"}`,
+		);
+	});
+
 	describe("inserting nodes created by factory", () => {
-		const _ = new SchemaFactory("test");
-		const obj = _.object("Obj", { id: _.string });
-		const schema = _.array(obj);
+		const obj = schemaFactory.object("Obj", { id: schemaFactory.string });
+		const schema = schemaFactory.array([obj, schemaFactory.number]);
 
 		it("insertAtStart()", () => {
 			const root = hydrate(schema, [{ id: "B" }]);
@@ -194,6 +279,25 @@ describe("SharedTreeList", () => {
 			root.insertAt(1); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, root[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(root, [{ id: "A" }, newItem, { id: "C" }]);
+		});
+
+		it("multiple primitives", () => {
+			const root = hydrate(schema, []);
+			assert.deepEqual(root, []);
+			root.insertAt(0, 42, 43);
+			assert.deepEqual(root, [42, 43]);
+		});
+
+		it("multiple objects", () => {
+			const root = hydrate(schema, []);
+			assert.deepEqual(root, []);
+			const newItemA = new obj({ id: "A" });
+			const newItemB = new obj({ id: "B" });
+			root.insertAt(0, newItemA, newItemB);
+			// Check that the inserted and read proxies are the same object
+			assert.equal(newItemA, root[0]);
+			assert.equal(newItemB, root[1]);
+			assert.deepEqual(root, [newItemA, newItemB]);
 		});
 
 		it("at()", () => {
@@ -642,6 +746,34 @@ describe("SharedTreeMap", () => {
 		for (const entry of root.map) {
 			result.push(entry);
 		}
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	it("forEach", () => {
+		const root = hydrate(schema, initialTree);
+		const result: [string, string][] = [];
+		root.map.forEach((v, k, m) => {
+			result.push([k, v]);
+			assert.equal(m, root.map);
+		});
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	it("forEach (bound)", () => {
+		const root = hydrate(schema, initialTree);
+		const result: [string, string][] = [];
+		root.map.forEach(function (this: typeof result, v, k, m) {
+			this.push([k, v]); // Accessing `result` via `this` to ensure that `thisArg` is respected
+			assert.equal(m, root.map);
+		}, result);
 
 		assert.deepEqual(result, [
 			["foo", "Hello"],

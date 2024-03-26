@@ -23,17 +23,51 @@ import {
 	UsageError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { IPendingContainerState } from "./container.js";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
+
+export interface SnapshotWithBlobs {
+	/**
+	 * Snapshot from which container initially loaded.
+	 */
+	baseSnapshot: ISnapshotTree;
+	/**
+	 * Serializable blobs from the base snapshot. Used to load offline since
+	 * storage is not available.
+	 */
+	snapshotBlobs: ISerializableBlobContents;
+}
+/**
+ * State saved by a container at close time, to be used to load a new instance
+ * of the container to the same state
+ * @internal
+ */
+export interface IPendingContainerState extends SnapshotWithBlobs {
+	attached: true;
+	pendingRuntimeState: unknown;
+	/**
+	 * All ops since base snapshot sequence number up to the latest op
+	 * seen when the container was closed. Used to apply stashed (saved pending)
+	 * ops at the same sequence number at which they were made.
+	 */
+	savedOps: ISequencedDocumentMessage[];
+	url: string;
+	clientId?: string;
+}
+
+/**
+ * State saved by a container in detached state, to be used to load a new instance
+ * of the container to the same state (rehydrate)
+ * @internal
+ */
+export interface IPendingDetachedContainerState extends SnapshotWithBlobs {
+	attached: false;
+	hasAttachmentBlobs: boolean;
+	pendingRuntimeState?: unknown;
+}
 
 export class SerializedStateManager {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
-	private snapshot:
-		| {
-				tree: ISnapshotTree;
-				blobs: ISerializableBlobContents;
-		  }
-		| undefined;
+	private snapshot: SnapshotWithBlobs | undefined;
 	private readonly mc: MonitoringContext;
 
 	constructor(
@@ -69,23 +103,23 @@ export class SerializedStateManager {
 			const { snapshot, version } = supportGetSnapshotApi
 				? await fetchISnapshot(this.mc, this.storageAdapter, specifiedVersion)
 				: await fetchISnapshotTree(this.mc, this.storageAdapter, specifiedVersion);
-			const snapshotTree: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
+			const baseSnapshot: ISnapshotTree | undefined = isInstanceOfISnapshot(snapshot)
 				? snapshot.snapshotTree
 				: snapshot;
-			assert(snapshotTree !== undefined, 0x8e4 /* Snapshot should exist */);
+			assert(baseSnapshot !== undefined, 0x8e4 /* Snapshot should exist */);
 			// non-interactive clients will not have any pending state we want to save
 			if (this.offlineLoadEnabled) {
-				const blobs = await getBlobContentsFromTree(snapshotTree, this.storageAdapter);
-				this.snapshot = { tree: snapshotTree, blobs };
+				const snapshotBlobs = await getBlobContentsFromTree(
+					baseSnapshot,
+					this.storageAdapter,
+				);
+				this.snapshot = { baseSnapshot, snapshotBlobs };
 			}
-			return { snapshotTree, version };
+			return { baseSnapshot, version };
 		} else {
 			const { baseSnapshot, snapshotBlobs } = this.pendingLocalState;
-			this.snapshot = {
-				tree: baseSnapshot,
-				blobs: snapshotBlobs,
-			};
-			return { snapshotTree: this.pendingLocalState.baseSnapshot, version: undefined };
+			this.snapshot = { baseSnapshot, snapshotBlobs };
+			return { baseSnapshot, version: undefined };
 		}
 	}
 
@@ -94,14 +128,7 @@ export class SerializedStateManager {
 	 * base snapshot when attaching.
 	 * @param snapshot - snapshot and blobs collected while attaching
 	 */
-	public setSnapshot(
-		snapshot:
-			| {
-					tree: ISnapshotTree;
-					blobs: ISerializableBlobContents;
-			  }
-			| undefined,
-	) {
+	public setSnapshot(snapshot: SnapshotWithBlobs | undefined) {
 		this.snapshot = snapshot;
 	}
 
@@ -130,8 +157,8 @@ export class SerializedStateManager {
 				const pendingState: IPendingContainerState = {
 					attached: true,
 					pendingRuntimeState,
-					baseSnapshot: this.snapshot.tree,
-					snapshotBlobs: this.snapshot.blobs,
+					baseSnapshot: this.snapshot.baseSnapshot,
+					snapshotBlobs: this.snapshot.snapshotBlobs,
 					savedOps: this.processedOps,
 					url: resolvedUrl.url,
 					// no need to save this if there is no pending runtime state

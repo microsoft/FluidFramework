@@ -710,6 +710,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
+		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
@@ -717,7 +718,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = forestWithContent(content);
+	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,
@@ -984,6 +985,8 @@ export function defaultRevInfosFromChanges(
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
 	for (const change of changes) {
+		// TODO: ADO#7366 assert to check if either all the changes have revision,
+		// or that all of the changes have undefined revision.
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
