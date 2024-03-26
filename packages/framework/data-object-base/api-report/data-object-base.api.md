@@ -6,7 +6,7 @@
 
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IContainerContext } from '@fluidframework/container-definitions';
+import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';

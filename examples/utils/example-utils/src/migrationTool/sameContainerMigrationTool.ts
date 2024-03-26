@@ -5,11 +5,11 @@
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import type { IContainer } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
 
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils";
 import type { ISameContainerMigrationTool } from "../migrationInterfaces/index.js";
 

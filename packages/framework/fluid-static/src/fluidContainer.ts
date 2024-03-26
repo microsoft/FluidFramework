@@ -7,9 +7,9 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type ConnectionState,
-	type IContainer,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	type IEvent,
 	type IEventProvider,

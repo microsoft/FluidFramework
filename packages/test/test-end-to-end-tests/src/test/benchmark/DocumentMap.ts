@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -27,6 +26,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,

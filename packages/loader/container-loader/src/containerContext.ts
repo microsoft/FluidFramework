@@ -6,13 +6,15 @@
 import {
 	AttachState,
 	IAudience,
-	IBatchMessage,
-	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
+} from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
 	ILoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import {

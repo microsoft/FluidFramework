@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -20,6 +19,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 const interceptResult = <T>(

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IResolvedFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 
 /**
  * Class used by hosts to allow specific containers and endpoint.

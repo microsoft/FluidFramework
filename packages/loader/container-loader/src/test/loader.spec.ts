@@ -5,7 +5,8 @@
 
 import assert from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IRuntime } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IRuntime } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import {
 	IDocumentService,

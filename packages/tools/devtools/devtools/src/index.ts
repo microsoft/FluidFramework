@@ -18,7 +18,7 @@
  * @packageDocumentation
  */
 
-import { type IContainer } from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,

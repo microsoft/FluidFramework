@@ -6,7 +6,8 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils";
 import {

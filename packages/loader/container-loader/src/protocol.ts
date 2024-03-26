@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceOwner } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IProtocolHandler as IBaseProtocolHandler,

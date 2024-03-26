@@ -12,7 +12,7 @@ import {
 	ILoaderOptions as ILoaderOptions1,
 	IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IConfigProviderBase,
