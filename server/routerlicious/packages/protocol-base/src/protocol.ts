@@ -159,15 +159,16 @@ export class ProtocolOpHandler implements IProtocolHandler {
 
 		if (scrubUserData) {
 			// In place, remove any identifying client information
-			snapshot.members.forEach((member) => {
-				member[1] = {
-					...member[1],
+			snapshot.members = snapshot.members.map(([id, sequencedClient]) => [
+				id,
+				{
+					...sequencedClient,
 					client: {
-						...member[1].client,
+						...sequencedClient.client,
 						user: { id: "" },
 					},
-				};
-			});
+				},
+			]);
 		}
 
 		return {
