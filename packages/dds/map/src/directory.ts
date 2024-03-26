@@ -7,8 +7,6 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
@@ -37,7 +35,6 @@ import {
 	IValueChanged,
 } from "./interfaces.js";
 import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
-import { pkgVersion } from "./packageVersion.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -266,67 +263,6 @@ export interface IDirectoryNewStorageFormat {
 	 * Storage content representing directory data that was not serialized.
 	 */
 	content: IDirectoryDataObject;
-}
-
-/**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedDirectory}.
- *
- * @sealed
- * @alpha
- */
-export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public static readonly Type = "https://graph.microsoft.com/types/directory";
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public static readonly Attributes: IChannelAttributes = {
-		type: DirectoryFactory.Type,
-		snapshotFormatVersion: "0.1",
-		packageVersion: pkgVersion,
-	};
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public get type(): string {
-		return DirectoryFactory.Type;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public get attributes(): IChannelAttributes {
-		return DirectoryFactory.Attributes;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<ISharedDirectory> {
-		const directory = new SharedDirectory(id, runtime, attributes);
-		await directory.load(services);
-
-		return directory;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory {
-		const directory = new SharedDirectory(id, runtime, DirectoryFactory.Attributes);
-		directory.initializeLocal();
-
-		return directory;
-	}
 }
 
 /**

@@ -15,13 +15,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import {
-	DirectoryFactory,
 	DirectoryLocalOpMetadata,
 	IDirectoryOperation,
 	SharedDirectory as SharedDirectoryInternal,
 } from "../../directory.js";
-import { SharedDirectory } from "../../index.js";
-import { ISharedDirectory } from "../../interfaces.js";
+import { DirectoryFactory, ISharedDirectory, SharedDirectory } from "../../index.js";
 
 function createConnectedDirectory(
 	id: string,

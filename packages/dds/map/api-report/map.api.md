@@ -4,14 +4,14 @@
 
 ```ts
 
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
+import type { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -197,10 +197,7 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 }
 
 // @alpha @sealed
-export const SharedDirectory: {
-    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedDirectory;
-    getFactory(): IChannelFactory<ISharedDirectory>;
-};
+export const SharedDirectory: ISharedObjectKind<ISharedDirectory>;
 
 // @alpha @deprecated
 export type SharedDirectory = ISharedDirectory;

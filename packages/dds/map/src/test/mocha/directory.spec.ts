@@ -18,17 +18,16 @@ import {
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IDirectoryNewStorageFormat } from "../../directory.js";
-import { SharedDirectory } from "../../index.js";
+import { SharedDirectory, SharedMap } from "../../index.js";
 import {
 	IDirectory,
 	IDirectoryValueChanged,
 	type ISharedDirectory,
 	ISharedMap,
 } from "../../interfaces.js";
-import { MapFactory } from "../../map.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
-function createConnectedDirectory(
+export function createConnectedDirectory(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 ): ISharedDirectory {
@@ -44,7 +43,7 @@ function createConnectedDirectory(
 }
 
 function createLocalMap(id: string): ISharedMap {
-	const factory = new MapFactory();
+	const factory = SharedMap.getFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
