@@ -1327,7 +1327,7 @@ describe("ModularChangeFamily", () => {
 				assert.deepEqual(withBuilds, expected);
 			});
 
-			it("throws if the detached node is not available", () => {
+			it("throws if the detached node is not available and allowMissingRefreshers is false", () => {
 				const input: ModularChangeset = {
 					fieldChanges: new Map([]),
 				};
@@ -1335,6 +1335,23 @@ describe("ModularChangeFamily", () => {
 				assert.throws(() =>
 					updateRefreshers(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
 				);
+			});
+
+			it("omits the refresher if the detached node is not available and allowMissingRefreshers is true", () => {
+				const input: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+
+				const updated = updateRefreshers(
+					makeAnonChange(input),
+					getDetachedNode,
+					[{ minor: 2 }],
+					true,
+				);
+				const expected: ModularChangeset = {
+					fieldChanges: new Map([]),
+				};
+				assert.deepEqual(updated, expected);
 			});
 		});
 
