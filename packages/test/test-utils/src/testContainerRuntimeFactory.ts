@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
@@ -24,6 +23,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 
 interface backCompat_IFluidRouter {
 	IFluidRouter?: backCompat_IFluidRouter;

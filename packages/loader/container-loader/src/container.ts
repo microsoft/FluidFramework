@@ -4,28 +4,7 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	ContainerWarning,
-	IAudience,
-	IBatchMessage,
-	ICodeDetailsLoader,
-	IContainer,
-	IContainerEvents,
-	IContainerLoadMode,
-	ICriticalContainerError,
-	IDeltaManager,
-	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IFluidModuleWithDetails,
-	IGetPendingLocalStateProps,
-	IHostLoader,
-	IProvideFluidCodeDetailsComparer,
-	IProvideRuntimeFactory,
-	IRuntime,
-	ReadOnlyInfo,
-	isFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+import { AttachState, IAudience, ICriticalContainerError, IDeltaManager, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IEvent,
@@ -132,6 +111,7 @@ import {
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,
 } from "./utils.js";
+import { ContainerWarning, IBatchMessage, ICodeDetailsLoader, IContainer, IContainerEvents, IContainerLoadMode, IFluidCodeDetails, IFluidCodeDetailsComparer, IFluidModuleWithDetails, IGetPendingLocalStateProps, IHostLoader, IProvideFluidCodeDetailsComparer, IProvideRuntimeFactory, IRuntime, isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 
 const detachedContainerRefSeqNumber = 0;
 

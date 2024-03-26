@@ -4,14 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IConnectionDetails,
-	IDeltaManager,
-	IDeltaManagerEvents,
-	IDeltaQueue,
-	IDeltaSender,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+import type { IConnectionDetails, IDeltaManager, IDeltaManagerEvents, IDeltaQueue, IDeltaSender, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {

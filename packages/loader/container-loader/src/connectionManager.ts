@@ -4,11 +4,7 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import {
-	ICriticalContainerError,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError, IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {

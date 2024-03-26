@@ -4,12 +4,6 @@
  */
 
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-	ILoader,
-} from "@fluidframework/container-definitions";
-import {
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
@@ -36,6 +30,7 @@ import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
+import { IContainer, IFluidCodeDetails, IHostLoader, ILoader } from "@fluidframework/container-definitions/internal";
 
 const defaultCodeDetails: IFluidCodeDetails = {
 	package: "defaultTestPackage",

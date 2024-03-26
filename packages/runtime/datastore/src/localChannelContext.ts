@@ -6,8 +6,6 @@
 import lodashPkg from "lodash";
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const { cloneDeep } = lodashPkg;
-
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -30,6 +28,7 @@ import {
 	summarizeChannelAsync,
 } from "./channelContext.js";
 import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 
 /**
  * Channel context for a locally created channel

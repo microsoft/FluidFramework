@@ -5,11 +5,11 @@
 
 import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IProvideRuntimeAttributor, IRuntimeAttributor } from "@fluid-experimental/attributor";
-import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { HitCounter } from "./dataObject.js";
 import { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution.js";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 
 export interface IHitCounterAppModel {
 	readonly hitCounter: HitCounter;

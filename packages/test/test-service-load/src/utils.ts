@@ -11,7 +11,6 @@ import {
 	createFluidTestDriver,
 	generateOdspHostStoragePolicy,
 } from "@fluid-private/test-drivers";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
@@ -39,6 +38,7 @@ import {
 } from "./optionsMatrix.js";
 import { pkgName, pkgVersion } from "./packageVersion.js";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile.js";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 
 const packageName = `${pkgName}@${pkgVersion}`;
 

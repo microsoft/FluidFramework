@@ -4,12 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	type ConnectionState,
-	type IContainer,
-	type ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { AttachState, type ConnectionState, type ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	type IEvent,
 	type IEventProvider,
@@ -21,6 +16,7 @@ import type {
 	IRootDataObject,
 	LoadableObjectClass,
 } from "./types.js";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.

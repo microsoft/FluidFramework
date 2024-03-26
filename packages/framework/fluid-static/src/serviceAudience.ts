@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IAudience, type IContainer } from "@fluidframework/container-definitions";
+import { type IAudience } from "@fluidframework/container-definitions";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import {
 	type IMember,
@@ -12,6 +12,7 @@ import {
 	type IServiceAudienceEvents,
 	type Myself,
 } from "./types.js";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Creates a service audience for the provided container.

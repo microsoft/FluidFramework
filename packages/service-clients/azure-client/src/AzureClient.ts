@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AttachState,
-	type IContainer,
-	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
 	type IDocumentServiceFactory,
@@ -38,6 +34,7 @@ import {
 	type AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
+import { type IContainer, type IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.

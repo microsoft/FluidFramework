@@ -3,14 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IFluidCodeDetails,
-	IFluidCodeResolver,
-	IResolvedFluidCodeDetails,
-	isFluidBrowserPackage,
-} from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
 import { extractPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils.js";
+import { IFluidCodeDetails, IFluidCodeResolver, IResolvedFluidCodeDetails, isFluidBrowserPackage } from "@fluidframework/container-definitions/internal";
 
 class FluidPackage {
 	private resolveP: Promise<IResolvedFluidCodeDetails> | undefined;

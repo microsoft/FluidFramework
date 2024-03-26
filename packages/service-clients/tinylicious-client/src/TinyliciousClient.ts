@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AttachState,
-	type IContainer,
-	type IFluidModuleWithDetails,
-	type IHostLoader,
-} from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
@@ -34,6 +29,7 @@ import {
 } from "@fluidframework/tinylicious-driver";
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
 import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
+import { type IContainer, type IFluidModuleWithDetails, type IHostLoader } from "@fluidframework/container-definitions/internal";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

@@ -4,12 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	ICriticalContainerError,
-	IDeltaManager,
-	IDeltaManagerEvents,
-	IDeltaQueue,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError, IDeltaManager, IDeltaManagerEvents, IDeltaQueue } from "@fluidframework/container-definitions";
 import {
 	IEventProvider,
 	type ITelemetryBaseEvent,

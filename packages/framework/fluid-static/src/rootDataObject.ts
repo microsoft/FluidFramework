@@ -8,7 +8,6 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions";
 import { type ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -35,6 +34,7 @@ import {
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.

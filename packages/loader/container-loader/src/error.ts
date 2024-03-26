@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ITelemetryBaseProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
 import {
 	IFluidErrorBase,
@@ -11,6 +10,7 @@ import {
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 
 /**
  * Warning emitted when requests to storage are being throttled.

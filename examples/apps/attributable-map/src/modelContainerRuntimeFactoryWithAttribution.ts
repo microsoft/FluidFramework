@@ -5,15 +5,10 @@
 
 import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
 import { createRuntimeAttributor, mixinAttributor } from "@fluid-experimental/attributor";
-import {
-	IContainer,
-	IContainerContext,
-	IRuntime,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
+import { IContainer, IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 

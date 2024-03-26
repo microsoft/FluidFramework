@@ -5,12 +5,7 @@
 
 import { resolve } from 'path';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
-import {
-	AttachState,
-	type IContainer,
-	type IFluidCodeDetails,
-	type IHostLoader,
-} from '@fluidframework/container-definitions';
+import { AttachState } from '@fluidframework/container-definitions';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
@@ -73,6 +68,7 @@ import {
 	reservedIdCount,
 } from '../../persisted-types/index.js';
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
+import { type IContainer, type IFluidCodeDetails, type IHostLoader } from "@fluidframework/container-definitions/internal";
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

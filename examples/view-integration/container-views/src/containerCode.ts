@@ -9,7 +9,6 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import React from "react";
@@ -17,6 +16,7 @@ import React from "react";
 import { IDiceRoller } from "./interface.js";
 import { DiceRollerInstantiationFactory } from "./model.js";
 import { DiceRollerView } from "./view.js";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * The data model for our application.

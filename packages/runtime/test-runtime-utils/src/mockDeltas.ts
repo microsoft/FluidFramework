@@ -4,12 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IDeltaManager,
-	IDeltaManagerEvents,
-	IDeltaQueue,
-	ReadOnlyInfo,
-} from "@fluidframework/container-definitions";
+import { IDeltaManager, IDeltaManagerEvents, IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IClientConfiguration,
