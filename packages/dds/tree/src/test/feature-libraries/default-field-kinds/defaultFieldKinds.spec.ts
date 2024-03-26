@@ -185,7 +185,7 @@ describe("defaultFieldKinds", () => {
 			const expected = Change.atOnce(
 				Change.clear("self", { localId: brand(41), revision: taggedChange.revision }),
 				Change.move({ localId: brand(1), revision: taggedChange.revision }, "self"),
-				Change.child(nodeChange2),
+				Change.child(nodeChange1),
 			);
 			assertEqual(inverted, expected);
 		});
@@ -210,7 +210,7 @@ describe("defaultFieldKinds", () => {
 			const childRebaser = (change: NodeId | undefined, base: NodeId | undefined) => {
 				assert.deepEqual(change, nodeChange2);
 				assert.deepEqual(base, nodeChange1);
-				return change;
+				return arbitraryChildChange;
 			};
 
 			const baseChange = fieldHandler.editor.buildChildChange(0, nodeChange1);
