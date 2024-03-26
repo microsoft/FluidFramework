@@ -719,10 +719,10 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 /**
  * Extract last message from the snapshot metadata.
  * Uses legacy property if not using explicit schema control, otherwise uses the new property.
- * This allows new rnutime to make documents not openable for old runtimes, one explict document schema control is enabled.
+ * This allows new runtime to make documents not openable for old runtimes, one explicit document schema control is enabled.
  * Please see addMetadataToSummary() as well
  */
-function messageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
+function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
 		: metadata?.message;
@@ -848,7 +848,7 @@ export class ContainerRuntime
 			},
 		);
 
-		const messageAtLastSummary = messageFromMetadata(metadata);
+		const messageAtLastSummary = lastMessageFromMetadata(metadata);
 
 		// Verify summary runtime sequence number matches protocol sequence number.
 		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
@@ -861,8 +861,8 @@ export class ContainerRuntime
 				runtimeSequenceNumber !== protocolSequenceNumber
 			) {
 				// Message to OCEs:
-				// You can hit this error with runtimeSequenceNumber === -1 in 1.x amd < 2.0 RC3 builds.
-				// This would indicate that explicit schema control is enable in current (2.0 RC3+) builds and i
+				// You can hit this error with runtimeSequenceNumber === -1 in < 2.0 RC3 builds.
+				// This would indicate that explicit schema control is enabled in current (2.0 RC3+) builds and it
 				// results in addMetadataToSummary() creating a poison pill for older runtimes in the form of a -1 sequence number.
 				// Older runtimes do not understand new schema, and thus could corrupt document if they proceed, thus we are using
 				// this poison pill to prevent them from proceeding.
@@ -1450,7 +1450,7 @@ export class ContainerRuntime
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
-		this.messageAtLastSummary = messageFromMetadata(metadata);
+		this.messageAtLastSummary = lastMessageFromMetadata(metadata);
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
@@ -2185,7 +2185,7 @@ export class ContainerRuntime
 			// Otherwise use new 'lastMessage' property, but also put content into the 'message' property that cases old
 			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
 			// last message's sequence number.
-			// See also messageFromMetadata()
+			// See also lastMessageFromMetadata()
 			message: explitiSchemaControl
 				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
 				: message,
