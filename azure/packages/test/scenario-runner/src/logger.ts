@@ -134,8 +134,8 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 }
 
 export const loggerP = new LazyPromise<ScenarioRunnerLogger>(async () => {
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-		await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+		await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 		const logger = getTestLogger?.();
 		assert(logger !== undefined, "Expected getTestLogger to return something");
 		return new ScenarioRunnerLogger(logger);
