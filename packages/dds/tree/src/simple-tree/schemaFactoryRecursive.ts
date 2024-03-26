@@ -23,9 +23,9 @@ import {
 	FieldSchemaUnsafe,
 	InsertableObjectFromSchemaRecordUnsafe,
 	InsertableTreeNodeFromImplicitAllowedTypesUnsafe,
-	ObjectFromSchemaRecordUnsafe,
 	TreeArrayNodeUnsafe,
 	TreeMapNodeUnsafe,
+	TreeObjectNodeUnsafe,
 } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
@@ -105,13 +105,14 @@ export class SchemaFactoryRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 	>(name: Name, t: T) {
+		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
 			t as T & RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 		) as unknown as TreeNodeSchemaClass<
-			ScopedSchemaName<TScope, Name>,
+			TScopedName,
 			NodeKind.Object,
-			TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeObjectNodeUnsafe<T, TScopedName>,
 			object & InsertableObjectFromSchemaRecordUnsafe<T>,
 			false,
 			T

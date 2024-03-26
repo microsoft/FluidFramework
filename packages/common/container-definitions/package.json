@@ -136,6 +136,9 @@
 			},
 			"InterfaceDeclaration_IContainerContext": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IBatchMessage": {
+				"backCompat": false
 			}
 		}
 	}
