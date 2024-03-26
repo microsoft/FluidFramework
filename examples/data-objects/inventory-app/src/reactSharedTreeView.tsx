@@ -7,6 +7,11 @@ import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
+	configuredSharedTree,
+	typeboxValidator,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/internal";
+import {
 	type DataObjectClass,
 	ITree,
 	type ImplicitFieldSchema,
@@ -15,11 +20,6 @@ import {
 	TreeFieldFromImplicitField,
 	TreeView,
 } from "fluid-framework";
-import {
-	configuredSharedTree,
-	typeboxValidator,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**
