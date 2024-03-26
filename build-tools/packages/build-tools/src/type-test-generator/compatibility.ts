@@ -41,12 +41,12 @@ type TypeOnly<T> = T extends number
 type TypeOnly<T> = T extends number
 	? number
 	: T extends string
-	  ? string
-	  : T extends boolean | bigint | symbol
-		  ? T
-		  : {
+		? string
+		: T extends boolean | bigint | symbol
+			? T
+			: {
 					[P in keyof T]: TypeOnly<T[P]>;
-			  };
+				};
 
 // Checks //
 // Confirm typeOnly and general compatibility in TypeScript works as expected.

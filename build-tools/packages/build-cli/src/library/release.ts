@@ -88,13 +88,13 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-		  }
+			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-		  };
+			};
 };
 
 interface PackageCaretRange {

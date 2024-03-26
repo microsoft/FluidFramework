@@ -12,8 +12,8 @@ import {
 	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxy } from "./propertyProxy";
-import { Utilities, forceType } from "./utilities";
+import { PropertyProxy } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * Creates an iterator that can iterate over an {@link external:ArrayProperty ArrayProperty}.
