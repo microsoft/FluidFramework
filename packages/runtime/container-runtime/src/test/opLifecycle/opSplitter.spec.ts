@@ -457,9 +457,9 @@ describe("OpSplitter", () => {
 	});
 	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
 		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));
-		// "component" is used to force 1.3 to crash on compressed & chunked ops, as it does not understand it.
-		// 2.x does not care about type, as it will get right type after decompressing, the op
-		// see code & comment i splitOp()
+		// type = "component" is used to force 1.3 to crash on compressed & chunked ops, as it does not understand it.
+		// 2.x does not care about type, as it will get right type after decompressing the op.
+		// see code & comment in splitOp()
 		assert.strictEqual(result.type, "component");
 		assert.strictEqual(result.metadata, original.metadata);
 		assert.strictEqual(result.compression, original.compression);

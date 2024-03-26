@@ -284,7 +284,7 @@ export const splitOp = (
 			// back-compat with 1.x builds
 			// 2.x builds only do chunking for compressed ops.
 			// originalType is no longer used in such cases, as each op preserves its type within compressed payload.
-			// But, if 1.x builds see this op, and there is no type on the message, then it wil ignore this message silently.
+			// But, if 1.x builds see this op, and there is no type on the message, then it will ignore this message silently.
 			// This is really bad, as we will crash on later ops and it's very hard to debug these cases.
 			// If we put some known type here, then we will crash on it (as 1.x does not understand compression, and thus will not
 			// find info on the op like address of the channel to deliver the op)
