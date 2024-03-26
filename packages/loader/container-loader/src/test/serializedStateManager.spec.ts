@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
+import { Deferred } from "@fluidframework/core-utils";
 import {
 	FetchSource,
 	IDocumentStorageService,
@@ -28,25 +29,48 @@ type ISerializedStateManagerDocumentStorageService = Pick<
 	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 >;
 
+const failProxy = <T extends object>() => {
+	const proxy = new Proxy<T>({} as any as T, {
+		get: (_, p) => {
+			if (p === "then") {
+				return undefined;
+			}
+			throw Error(`${p.toString()} not implemented`);
+		},
+	});
+	return proxy;
+};
+
+const snapshot = {
+	id: "fromStorage",
+	blobs: {},
+	trees: {
+		".protocol": {
+			blobs: { attributes: "attributesId" },
+			trees: {},
+		},
+		".app": {
+			blobs: {},
+			trees: {},
+		},
+	},
+};
+
+const pendingLocalState: IPendingContainerState = {
+	attached: true,
+	baseSnapshot: snapshot,
+	snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
+	pendingRuntimeState: {},
+	savedOps: [],
+	url: "fluid",
+};
+
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
-	private readonly blobs = new Map<string, ArrayBufferLike>();
+	public readonly blobs = new Map<string, ArrayBufferLike>();
 	private readonly snapshot: ISnapshotTree;
 
 	constructor() {
-		this.snapshot = {
-			id: "SnapshotId",
-			blobs: {},
-			trees: {
-				".protocol": {
-					blobs: { attributes: "attributesId" },
-					trees: {},
-				},
-				".app": {
-					blobs: {},
-					trees: {},
-				},
-			},
-		};
+		this.snapshot = snapshot;
 		this.blobs.set(
 			"attributesId",
 			stringToBuffer(`{"minimumSequenceNumber" : 0, "sequenceNumber": 0}`, "utf8"),
@@ -54,13 +78,13 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	}
 
 	public async getSnapshot(
-		snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
+		_snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
 	): Promise<ISnapshot> {
 		throw new Error("Method not implemented.");
 	}
 	public async getSnapshotTree(
-		version?: IVersion | undefined,
-		scenarioName?: string | undefined,
+		_version?: IVersion | undefined,
+		_scenarioName?: string | undefined,
 		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return this.snapshot;
@@ -68,10 +92,10 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 
 	public async getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
-		versionId: string | null,
-		count: number,
-		scenarioName?: string | undefined,
-		fetchSource?: FetchSource | undefined,
+		_versionId: string | null,
+		_count: number,
+		_scenarioName?: string | undefined,
+		_fetchSource?: FetchSource | undefined,
 	): Promise<IVersion[]> {
 		assert.ok(this.snapshot.id);
 		return [{ id: this.snapshot.id, treeId: this.snapshot.id }];
@@ -94,7 +118,7 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 type ISerializedStateManagerRuntime = Pick<IRuntime, "getPendingLocalState">;
 
 class MockRuntime implements ISerializedStateManagerRuntime {
-	public getPendingLocalState(props?: IGetPendingLocalStateProps | undefined): unknown {
+	public getPendingLocalState(_props?: IGetPendingLocalStateProps | undefined): unknown {
 		return { pending: {} };
 	}
 }
@@ -168,11 +192,10 @@ describe("serializedStateManager", () => {
 	});
 
 	it("can get pending local state after attach", async () => {
-		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
 			logger,
-			storageAdapter,
+			failProxy(), // no calls to storage expected
 			true,
 		);
 		// equivalent to attach
@@ -180,10 +203,6 @@ describe("serializedStateManager", () => {
 			baseSnapshot: { trees: {}, blobs: {} },
 			snapshotBlobs: {},
 		});
-		// delete
-		for (let num = 0; num < 10; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
-		}
 		await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -193,17 +212,13 @@ describe("serializedStateManager", () => {
 	});
 
 	it("can get pending local state from previous pending state", async () => {
-		const pendingLocalState: IPendingContainerState = {
-			attached: true,
-			baseSnapshot: { id: "fromPending", blobs: {}, trees: {} },
-			snapshotBlobs: {},
-			pendingRuntimeState: {},
-			savedOps: [],
-			url: "fluid",
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
+			pending,
 			logger,
 			storageAdapter,
 			true,
@@ -236,8 +251,8 @@ describe("serializedStateManager", () => {
 			false,
 		);
 		assert(baseSnapshot);
-		assert.strictEqual(version?.id, "SnapshotId");
-		assert.strictEqual(version.treeId, "SnapshotId");
+		assert.strictEqual(version?.id, "fromStorage");
+		assert.strictEqual(version.treeId, "fromStorage");
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -245,41 +260,28 @@ describe("serializedStateManager", () => {
 			resolvedUrl,
 		);
 		const parsed = JSON.parse(state);
-		assert.strictEqual(parsed.baseSnapshot.id, "SnapshotId");
+		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
 		const attributes = getAttributesFromPendingState(parsed);
 		assert.strictEqual(attributes.sequenceNumber, 0);
 		assert.strictEqual(attributes.minimumSequenceNumber, 0);
 	});
 
 	it("fetched snapshot is the same as pending snapshot", async () => {
-		const pendingSnapshot: ISnapshotTree = {
-			id: "fromPending",
-			blobs: {},
-			trees: {
-				".protocol": {
-					blobs: { attributes: "attributesId" },
-					trees: {},
-				},
-				".app": {
-					blobs: {},
-					trees: {},
-				},
-			},
-		};
-		const pendingLocalState: IPendingContainerState = {
-			attached: true,
-			baseSnapshot: pendingSnapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
-			pendingRuntimeState: {},
-			savedOps: [],
-			url: "fluid",
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
+		const deferred = new Deferred<void>();
+		const cb = () => {
+			deferred.resolve();
+		};
 		const serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
+			pending,
 			logger,
 			storageAdapter,
 			true,
+			cb,
 		);
 		for (let num = 0; num < 10; ++num) {
 			serializedStateManager.addProcessedOp(generateSavedOp());
@@ -288,8 +290,6 @@ describe("serializedStateManager", () => {
 			undefined,
 			false,
 		);
-		const flushPromises = async () => new Promise(setImmediate);
-		await flushPromises();
 		assert.strictEqual(baseSnapshot.id, "fromPending");
 		assert.strictEqual(version, undefined);
 		const state = await serializedStateManager.getPendingLocalStateCore(
@@ -306,32 +306,51 @@ describe("serializedStateManager", () => {
 		assert.strictEqual(attributes.minimumSequenceNumber, 0);
 	});
 
-	it("refresh snapshot when snapshot sequence number is among processed ops", async () => {
-		const pendingSnapshot: ISnapshotTree = {
-			id: "fromPending",
-			blobs: {},
-			trees: {
-				".protocol": {
-					blobs: { attributes: "attributesId" },
-					trees: {},
-				},
-				".app": {
-					blobs: {},
-					trees: {},
-				},
-			},
+	it("snapshot is older than first processed op", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
-		const pendingLocalState: IPendingContainerState = {
-			attached: true,
-			baseSnapshot: pendingSnapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
-			pendingRuntimeState: {},
-			savedOps: [],
-			url: "fluid",
+		const storageAdapter = new MockStorageAdapter();
+		const deferred = new Deferred<void>();
+		const cb = () => {
+			deferred.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger,
+			storageAdapter,
+			true,
+			cb,
+		);
+
+		const processedOpsSize = 20;
+		seq = 13; // greater than snapshotSequenceNumber + 1
+		for (let num = 0; num < processedOpsSize; ++num) {
+			serializedStateManager.addProcessedOp(generateSavedOp());
+		}
+		const snapshotSequenceNumber = 11;
+		storageAdapter.uploadSummary(snapshotSequenceNumber);
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await deferred.promise;
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			new MockRuntime(),
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state) as IPendingContainerState;
+		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+	});
+
+	it("get same pending snapshot when we capture before refreshing", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
+			pending,
 			logger,
 			storageAdapter,
 			true,
@@ -345,14 +364,8 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-			undefined,
-			false,
-		);
-		const flushPromises = async () => new Promise(setImmediate);
-		await flushPromises();
-		assert.strictEqual(baseSnapshot.id, "fromPending");
-		assert.strictEqual(version, undefined);
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		// no waiting for refresh
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -360,7 +373,45 @@ describe("serializedStateManager", () => {
 			resolvedUrl,
 		);
 		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "SnapshotId");
+		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
+	});
+
+	it("refresh snapshot when snapshot sequence number is among processed ops", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const deferred = new Deferred<void>();
+		const cb = () => {
+			deferred.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger,
+			storageAdapter,
+			true,
+			cb,
+		);
+
+		const processedOpsSize = 20;
+		for (let num = 0; num < processedOpsSize; ++num) {
+			serializedStateManager.addProcessedOp(generateSavedOp());
+		}
+
+		const snapshotSequenceNumber = 11;
+		storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await deferred.promise;
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			new MockRuntime(),
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state) as IPendingContainerState;
+		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
 		const attributes = getAttributesFromPendingState(parsed);
 		assert.strictEqual(
 			attributes.sequenceNumber,
@@ -379,35 +430,61 @@ describe("serializedStateManager", () => {
 		);
 	});
 
-	it("refresh snapshot when snapshot sequence number is above processed ops", async () => {
-		const pendingSnapshot: ISnapshotTree = {
-			id: "fromPending",
-			blobs: {},
-			trees: {
-				".protocol": {
-					blobs: { attributes: "attributesId" },
-					trees: {},
-				},
-				".app": {
-					blobs: {},
-					trees: {},
-				},
-			},
-		};
-		const pendingLocalState: IPendingContainerState = {
-			attached: true,
-			baseSnapshot: pendingSnapshot,
-			snapshotBlobs: { attributesId: '{"minimumSequenceNumber" : 0, "sequenceNumber": 0}' },
-			pendingRuntimeState: {},
-			savedOps: [],
-			url: "fluid",
+	it("refresh snapshot when there are no processed ops", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
 		};
 		const storageAdapter = new MockStorageAdapter();
+		const deferred = new Deferred<void>();
+		const cb = () => {
+			deferred.resolve();
+		};
 		const serializedStateManager = new SerializedStateManager(
-			pendingLocalState,
+			pending,
 			logger,
 			storageAdapter,
 			true,
+			cb,
+		);
+		const snapshotSequenceNumber = 11;
+		storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await deferred.promise;
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			new MockRuntime(),
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state) as IPendingContainerState;
+		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
+		const attributes = getAttributesFromPendingState(parsed);
+		assert.strictEqual(
+			attributes.sequenceNumber,
+			snapshotSequenceNumber,
+			"wrong snapshot sequence number",
+		);
+		assert.strictEqual(parsed.savedOps.length, 0, "should be no savedOps");
+	});
+
+	it("refresh snapshot when snapshot sequence number is above processed ops", async () => {
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const deferred = new Deferred<void>();
+		const cb = () => {
+			deferred.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger,
+			storageAdapter,
+			true,
+			cb,
 		);
 		const processedOpsSize1 = 20;
 		for (let num = 0; num < processedOpsSize1; ++num) {
@@ -417,18 +494,12 @@ describe("serializedStateManager", () => {
 		const snapshotSequenceNumber = 22;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
-		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
-			undefined,
-			false,
-		);
-		const flushPromises = async () => new Promise(setImmediate);
-		await flushPromises();
-		assert.strictEqual(baseSnapshot.id, "fromPending");
-		assert.strictEqual(version, undefined);
+		await serializedStateManager.fetchSnapshot(undefined, false);
 		const processedOpsSize2 = 10;
 		for (let num = 0; num < processedOpsSize2; ++num) {
 			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
+		await deferred.promise;
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -436,7 +507,7 @@ describe("serializedStateManager", () => {
 			resolvedUrl,
 		);
 		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "SnapshotId");
+		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
 		const attributes = getAttributesFromPendingState(parsed);
 		assert.strictEqual(
 			attributes.sequenceNumber,

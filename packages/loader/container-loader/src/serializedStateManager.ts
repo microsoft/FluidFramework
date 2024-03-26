@@ -86,6 +86,7 @@ export class SerializedStateManager {
 			"readBlob" | "getSnapshotTree" | "getSnapshot" | "getVersions"
 		>,
 		private readonly _offlineLoadEnabled: boolean,
+		private readonly snapshotRefreshed?: () => void,
 	) {
 		this.mc = createChildMonitoringContext({
 			logger: subLogger,
@@ -147,10 +148,13 @@ export class SerializedStateManager {
 		if (this.latestSnapshot === undefined) {
 			return;
 		}
+		this.snapshotRefreshed?.();
 		const snapshotSequenceNumber = this.latestSnapshot?.snapshotSequenceNumber;
 		if (this.processedOps.length === 0) {
 			// case in which we don't have to do nothing to processedOps
 			// since we don't have any.
+			this.snapshot = this.latestSnapshot;
+			this.latestSnapshot = undefined;
 			return;
 		}
 		const firstProcessedOpSequenceNumber = this.processedOps[0].sequenceNumber;
