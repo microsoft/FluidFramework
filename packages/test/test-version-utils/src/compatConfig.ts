@@ -14,7 +14,7 @@ import {
 	r11sEndpointName,
 	tenantIndex,
 	reinstall,
-} from "../compatOptions.cjs";
+} from "./compatOptions.js";
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
 import {

@@ -211,7 +211,6 @@ module.exports = {
 			"fluid-build-tasks-tsc": [
 				// TODO: AB#7460 fix tsconfig reference path match on Windows
 				"^packages/tools/devtools/devtools-view/package.json",
-				"^packages/test/snapshots/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
@@ -221,6 +220,11 @@ module.exports = {
 				// These files all require a node shebang at the top of the file.
 				"azure/packages/azure-local-service/src/index.ts",
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
+				"server/routerlicious/packages/tinylicious/src/index.ts",
+
+				// Type test files can be excluded since they're generated and known to have the correct header.
+				// This can be removed once the whole repo uses build-tools v0.35.0+.
+				/.*\/validate.*\.generated\.ts/,
 			],
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
