@@ -38,14 +38,12 @@ describe("RemoteMessageProcessor", () => {
 
 	function getOutboundMessage(value: string, batchMetadata?: boolean): BatchMessage {
 		return {
-			type: ContainerMessageType.FluidDataStoreOp,
 			metadata:
 				batchMetadata === undefined
 					? undefined
 					: {
 							batch: batchMetadata,
 					  },
-			localOpMetadata: undefined,
 			referenceSequenceNumber: Infinity,
 			contents: JSON.stringify({
 				contents: {
