@@ -51,6 +51,7 @@ export interface CompatConfig {
 	 * Cross Version Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to create the container with.
 	 * (Same version will be used across all layers).
+	 * This is same as compatVersion, but it's easier to use createVersion in the code as compatVersion type is number | string.
 	 */
 	createVersion?: string;
 	/**
