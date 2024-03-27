@@ -179,6 +179,6 @@ export class SharedTreeChangeFamily
 	}
 }
 
-function hasSchemaChange(change: SharedTreeChange): boolean {
+export function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }
