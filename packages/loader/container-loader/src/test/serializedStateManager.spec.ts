@@ -21,7 +21,7 @@ import {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
@@ -150,7 +150,7 @@ const getAttributesFromPendingState = (
 
 describe("serializedStateManager", () => {
 	let seq: number;
-	let logger: ITelemetryLoggerExt;
+	const logger = new MockLogger();
 
 	function generateSavedOp(): ISequencedDocumentMessage {
 		return {
@@ -163,14 +163,13 @@ describe("serializedStateManager", () => {
 
 	beforeEach(async () => {
 		seq = 1;
-		logger = createChildLogger({ namespace: "fluid:testSerializedStateManager" });
 	});
 
 	it("can't get pending local state when offline load disabled", async () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			false,
 		);
@@ -194,7 +193,7 @@ describe("serializedStateManager", () => {
 	it("can get pending local state after attach", async () => {
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
-			logger,
+			logger.toTelemetryLogger(),
 			failProxy(), // no calls to storage expected
 			true,
 		);
@@ -219,7 +218,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 		);
@@ -242,7 +241,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			undefined,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 		);
@@ -278,7 +277,7 @@ describe("serializedStateManager", () => {
 		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 			cb,
@@ -292,6 +291,15 @@ describe("serializedStateManager", () => {
 		);
 		assert.strictEqual(baseSnapshot.id, "fromPending");
 		assert.strictEqual(version, undefined);
+		await deferred.promise;
+		logger.assertMatchAny([
+			{
+				category: "generic",
+				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
+				snapshotSequenceNumber: 0,
+				firstProcessedOpSequenceNumber: 1,
+			},
+		]);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -318,14 +326,15 @@ describe("serializedStateManager", () => {
 		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 			cb,
 		);
 
 		const processedOpsSize = 20;
-		seq = 13; // greater than snapshotSequenceNumber + 1
+		const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
+		seq = firstProcessedOpSequenceNumber;
 		for (let num = 0; num < processedOpsSize; ++num) {
 			serializedStateManager.addProcessedOp(generateSavedOp());
 		}
@@ -333,6 +342,14 @@ describe("serializedStateManager", () => {
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 		await serializedStateManager.fetchSnapshot(undefined, false);
 		await deferred.promise;
+		logger.assertMatchAny([
+			{
+				category: "error",
+				eventName: "serializedStateManager:OldSnapshotFetchWhileRefreshing",
+				snapshotSequenceNumber,
+				firstProcessedOpSequenceNumber,
+			},
+		]);
 		const state = await serializedStateManager.getPendingLocalStateCore(
 			{ notifyImminentClosure: false },
 			"clientId",
@@ -351,7 +368,7 @@ describe("serializedStateManager", () => {
 		const storageAdapter = new MockStorageAdapter();
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 		);
@@ -388,7 +405,7 @@ describe("serializedStateManager", () => {
 		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 			cb,
@@ -442,7 +459,7 @@ describe("serializedStateManager", () => {
 		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 			cb,
@@ -481,7 +498,7 @@ describe("serializedStateManager", () => {
 		};
 		const serializedStateManager = new SerializedStateManager(
 			pending,
-			logger,
+			logger.toTelemetryLogger(),
 			storageAdapter,
 			true,
 			cb,
