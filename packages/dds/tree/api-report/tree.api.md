@@ -517,21 +517,16 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     kind: Kind,
     allowedTypes: Types);
     readonly allowedTypes: Types;
-    get allowedTypeSet(): AllowedTypes;
     readonly kind: Kind;
-    static normalize(schema: ImplicitFieldSchema): FieldSchema;
-    static normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes;
+    readonly normalizedAllowedTypes: AllowedTypes;
     protected _typeCheck?: MakeNominal;
 }
 
 // @beta
 export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends Unenforced<ImplicitAllowedTypes>> extends FieldSchema<Kind, any> {
-    // (undocumented)
     readonly allowedTypes: Types;
-    // (undocumented)
-    readonly allowedTypeSet: AllowedTypes;
-    // (undocumented)
     readonly kind: Kind;
+    readonly normalizedAllowedTypes: AllowedTypes;
 }
 
 // @internal

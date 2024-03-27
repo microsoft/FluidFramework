@@ -35,6 +35,8 @@ import {
 	type ImplicitFieldSchema,
 	NodeKind,
 	type TreeNodeSchema,
+	normalizeAllowedTypes,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 
 /**
@@ -62,7 +64,7 @@ export function cursorFromNodeData(
 	if (data === undefined) {
 		return undefined;
 	}
-	const mappedContent = nodeDataToMapTree(data, FieldSchema.normalizeAllowedTypes(allowedTypes));
+	const mappedContent = nodeDataToMapTree(data, normalizeAllowedTypes(allowedTypes));
 	return cursorForMapTreeNode(mappedContent);
 }
 
@@ -76,8 +78,8 @@ export function cursorFromFieldData(
 	schema: FieldSchema,
 ): CursorWithNode<MapTree> {
 	const mappedContent = Array.isArray(data)
-		? arrayToMapTreeFields(data, schema.allowedTypeSet)
-		: [nodeDataToMapTree(data, schema.allowedTypeSet)];
+		? arrayToMapTreeFields(data, schema.normalizedAllowedTypes)
+		: [nodeDataToMapTree(data, schema.normalizedAllowedTypes)];
 	return cursorForMapTreeField(mappedContent);
 }
 
@@ -199,7 +201,7 @@ function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): 
 		);
 	}
 
-	const childSchema = FieldSchema.normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const mappedData = arrayToMapTreeFields(data, childSchema);
 
@@ -222,7 +224,7 @@ function mapToMapTree(data: Map<string, InsertableContent>, allowedTypes: Allowe
 		);
 	}
 
-	const childSchema = FieldSchema.normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const childSchema = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of data) {
@@ -262,7 +264,10 @@ function objectToMapTree(
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, key);
-			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
+			const mappedChildTree = nodeDataToMapTree(
+				fieldValue,
+				fieldSchema.normalizedAllowedTypes,
+			);
 			fields.set(brand(key), [mappedChildTree]);
 		}
 	}
@@ -279,7 +284,7 @@ function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchem
 	if (fields[key] === undefined) {
 		fail(`Field "${key}" not found in schema "${schema.identifier}".`);
 	} else {
-		return FieldSchema.normalize(fields[key]);
+		return normalizeFieldSchema(fields[key]);
 	}
 }
 
@@ -401,7 +406,7 @@ function shallowCompatibilityTest(
 
 	// If the schema has a required key which is not present in the input object, reject it.
 	for (const [fieldKey, fieldSchema] of Object.entries(fields)) {
-		const normalizedFieldSchema = FieldSchema.normalize(fieldSchema);
+		const normalizedFieldSchema = normalizeFieldSchema(fieldSchema);
 		if (data[fieldKey] === undefined && normalizedFieldSchema.kind === FieldKind.Required) {
 			return false;
 		}

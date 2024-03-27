@@ -176,7 +176,16 @@ export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends Unenforced<ImplicitAllowedTypes>,
 > extends FieldSchema<Kind, any> {
+	/**
+	 * {@inheritDoc FieldSchema.kind}
+	 */
 	readonly kind: Kind;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypes}
+	 */
 	readonly allowedTypes: Types;
-	readonly allowedTypeSet: AllowedTypes;
+	/**
+	 * {@inheritDoc FieldSchema.normalizedAllowedTypes}
+	 */
+	readonly normalizedAllowedTypes: AllowedTypes;
 }

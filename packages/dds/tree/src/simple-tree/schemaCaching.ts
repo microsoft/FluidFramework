@@ -10,7 +10,12 @@ import {
 	TreeNodeSchemaBase,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
-import { FieldSchema, type ImplicitFieldSchema, TreeNodeSchema } from "./schemaTypes.js";
+import {
+	type FieldSchema,
+	type ImplicitFieldSchema,
+	TreeNodeSchema,
+	normalizeFieldSchema,
+} from "./schemaTypes.js";
 
 /**
  * A symbol for storing FlexTreeSchema on TreeNodeSchema.
@@ -77,7 +82,7 @@ export function getSimpleFieldSchema(
 		return flexSchema[simpleFieldSchemaSymbol] as FieldSchema;
 	}
 
-	const fieldSchema = FieldSchema.normalize(implicitSimpleSchema);
+	const fieldSchema = normalizeFieldSchema(implicitSimpleSchema);
 	(flexSchema as any)[simpleFieldSchemaSymbol] = fieldSchema;
 	return fieldSchema;
 }

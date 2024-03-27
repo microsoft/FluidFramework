@@ -37,6 +37,7 @@ import {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
@@ -54,7 +55,7 @@ function cursorFromUnhydratedRoot(
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
-	const normalizedFieldSchema = FieldSchema.normalize(schema);
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
 		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
 		fail("failed to decode tree")
