@@ -26,6 +26,7 @@ import {
 	FieldKindWithEditor,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
+	NodeId,
 } from "../../feature-libraries/index.js";
 
 import {
@@ -54,13 +55,11 @@ import { sequence } from "../../feature-libraries/default-schema/defaultFieldKin
 // eslint-disable-next-line import/no-internal-modules
 import { DetachIdOverrideType } from "../../feature-libraries/sequence-field/index.js";
 // eslint-disable-next-line import/no-internal-modules
+import { NodeChangeset } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
+// eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
-import {
-	NodeChangeset,
-	NodeId,
-} from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[sequence].map((f) => [f.identifier, f]),

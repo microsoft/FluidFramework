@@ -368,10 +368,3 @@ function invertNodeChangeOrSkip<TNodeChange>(
 	}
 	return { count };
 }
-
-function invertNodeChange<TNodeChange>(
-	change: TNodeChange | undefined,
-	inverter: NodeChangeInverter<TNodeChange>,
-): TNodeChange | undefined {
-	return change === undefined ? undefined : inverter(change);
-}

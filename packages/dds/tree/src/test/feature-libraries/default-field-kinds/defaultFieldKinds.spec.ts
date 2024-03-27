@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { FieldChangeHandler, CrossFieldManager } from "../../../feature-libraries/index.js";
+import { FieldChangeHandler, CrossFieldManager, NodeId } from "../../../feature-libraries/index.js";
 import {
 	ValueFieldEditor,
 	valueChangeHandler,
@@ -20,10 +20,7 @@ import { OptionalChangeset } from "../../../feature-libraries/optional-field/ind
 // eslint-disable-next-line import/no-internal-modules
 import { Change, assertEqual, assertTaggedEqual } from "../optional-field/optionalFieldUtils.js";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	NodeId,
-	rebaseRevisionMetadataFromInfo,
-} from "../../../feature-libraries/modular-schema/index.js";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

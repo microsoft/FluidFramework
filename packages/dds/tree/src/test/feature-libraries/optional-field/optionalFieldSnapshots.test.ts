@@ -10,13 +10,13 @@ import {
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
-import { brand, fail } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
-import { Change } from "./optionalFieldUtils.js";
 import { TestNodeId } from "../../testNodeId.js";
+import { Change } from "./optionalFieldUtils.js";
 
 function generateTestChangesets(
 	idCompressor: IIdCompressor,

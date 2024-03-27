@@ -10,6 +10,7 @@ import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../..
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import { FieldChangeEncodingContext, NodeId } from "../index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { EncodedNodeChangeset } from "../modular-schema/modularChangeFormat.js";
 import {
 	Attach,

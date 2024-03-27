@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 
-import { JsonCompatibleReadOnly, brand, fail } from "../../../util/index.js";
+import { JsonCompatibleReadOnly, brand } from "../../../util/index.js";
 import { EncodingTestData, makeEncodingTestSuite, testRevisionTagCodec } from "../../utils.js";
 import {
 	OptionalChangeset,
@@ -17,9 +17,9 @@ import {
 import { IJsonCodec } from "../../../codec/index.js";
 import { ChangeEncodingContext } from "../../../core/index.js";
 import { FieldChangeEncodingContext, NodeId } from "../../../feature-libraries/index.js";
-import { Change } from "./optionalFieldUtils.js";
 import { TestNodeId } from "../../testNodeId.js";
 import { TestChange } from "../../testChange.js";
+import { Change } from "./optionalFieldUtils.js";
 
 const nodeChange1: TestNodeId = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));
 

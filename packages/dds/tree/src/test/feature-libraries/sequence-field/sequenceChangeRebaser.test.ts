@@ -28,6 +28,7 @@ import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../ut
 import { NodeId, RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { TestNodeId } from "../../testNodeId.js";
 import {
 	compose,
 	invert,
@@ -48,7 +49,6 @@ import {
 	composeShallow,
 } from "./utils.js";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
-import { TestNodeId } from "../../testNodeId.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();

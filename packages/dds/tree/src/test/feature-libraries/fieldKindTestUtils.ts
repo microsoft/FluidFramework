@@ -7,6 +7,7 @@ import { FieldKinds, cursorForJsonableTreeNode } from "../../feature-libraries/i
 import { FieldKey, JsonableTree, ITreeCursorSynchronous } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import { leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { NodeChangeset } from "../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 // TODO: Users of this are mainly working with in memory representations.

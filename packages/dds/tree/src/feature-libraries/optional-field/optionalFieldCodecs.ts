@@ -10,6 +10,7 @@ import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../co
 import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { FieldChangeEncodingContext, NodeId } from "../modular-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { EncodedNodeChangeset } from "../modular-schema/modularChangeFormat.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";

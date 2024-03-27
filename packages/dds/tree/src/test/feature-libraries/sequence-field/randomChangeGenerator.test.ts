@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 import { FieldKey } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
+import { NodeId } from "../../../feature-libraries/index.js";
 import { generateRandomChange } from "./randomChangeGenerator.js";
 import { MarkMaker as Mark } from "./testEdits.js";
-import { NodeId } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 
 const testSeed = 432167897;
 const maxIndex = 3;

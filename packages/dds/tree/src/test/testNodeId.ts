@@ -13,6 +13,7 @@ import {
 	makeAnonChange,
 } from "../core/index.js";
 import { JsonCompatibleReadOnly, brand } from "../index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormat.js";
 import { TestChange } from "./testChange.js";
 

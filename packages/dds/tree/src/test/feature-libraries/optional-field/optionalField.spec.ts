@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	CrossFieldManager,
+	NodeId,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
 import {
@@ -36,13 +37,12 @@ import {
 import { fooKey } from "../fieldKindTestUtils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { NodeId } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
+import { TestNodeId } from "../../testNodeId.js";
+import { TestChange } from "../../testChange.js";
 import { Change, assertEqual } from "./optionalFieldUtils.js";
 import { testSnapshots } from "./optionalFieldSnapshots.test.js";
 import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
-import { TestNodeId } from "../../testNodeId.js";
-import { TestChange } from "../../testChange.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.

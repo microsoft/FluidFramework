@@ -10,7 +10,7 @@ import { TestChange } from "../../testChange.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { snapshotSessionId } from "../../snapshots/testTrees.js";
-import { brand, fail } from "../../../index.js";
+import { brand } from "../../../index.js";
 import { TestNodeId } from "../../testNodeId.js";
 
 const nodeChange = TestNodeId.create({ localId: brand(0) }, TestChange.mint([], 1));

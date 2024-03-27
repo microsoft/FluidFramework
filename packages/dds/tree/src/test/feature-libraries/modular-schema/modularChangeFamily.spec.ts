@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 import {
 	FieldChangeHandler,
@@ -20,6 +20,7 @@ import {
 	chunkFieldSingle,
 	makeFieldBatchCodec,
 	GenericChangeset,
+	NodeId,
 } from "../../../feature-libraries/index.js";
 import {
 	makeAnonChange,
@@ -37,6 +38,7 @@ import {
 	DeltaDetachedNodeId,
 	ChangeEncodingContext,
 	ChangeAtomIdMap,
+	taggedAtomId,
 } from "../../../core/index.js";
 import {
 	brand,
@@ -71,10 +73,9 @@ import { ajvValidator } from "../../codec/index.js";
 import {
 	FieldChangeMap,
 	NodeChangeset,
-	NodeId,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
-import { taggedAtomId } from "../optional-field/optionalFieldUtils.js";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[valueField].map((field) => [field.identifier, field]),

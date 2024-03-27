@@ -5,9 +5,8 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { NodeId } from "../../../feature-libraries/modular-schema/index.js";
 
 enum Operation {
 	EditChild = 0,
