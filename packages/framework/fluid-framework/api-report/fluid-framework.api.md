@@ -141,8 +141,8 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     kind: Kind,
     allowedTypes: Types);
     readonly allowedTypes: Types;
+    get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
-    readonly normalizedAllowedTypes: AllowedTypes;
     protected _typeCheck?: MakeNominal;
 }
 
