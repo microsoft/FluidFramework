@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
@@ -35,7 +36,6 @@ export function makeMessageCodec<TChangeset>(
 	JsonCompatibleReadOnly,
 	MessageEncodingContext
 > {
-	// TODO: consider adding version and using makeVersionedValidatedCodec
 	return withSchemaValidation<
 		DecodedMessage<TChangeset>,
 		TAnySchema,
@@ -56,11 +56,14 @@ export function makeMessageCodec<TChangeset>(
 						originatorId,
 						schema: context.schema,
 					}),
+					version: 1,
 				};
 				return message as unknown as JsonCompatibleReadOnly;
 			},
 			decode: (encoded: JsonCompatibleReadOnly) => {
-				const { revision, originatorId, changeset } = encoded as unknown as Message;
+				const { revision, originatorId, changeset, version } =
+					encoded as unknown as Message;
+				assert(version === undefined || version === 1, "Unsupported message version");
 				return {
 					commit: {
 						revision: revisionTagCodec.decode(revision, { originatorId }),
