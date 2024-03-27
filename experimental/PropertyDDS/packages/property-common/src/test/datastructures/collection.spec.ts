@@ -7,7 +7,6 @@
  * @fileoverview In this file, we will test the functions exported by datastructres/collection.js
  */
 import lodash from "lodash";
-// eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
 const { every, includes, keys } = lodash;
 import { expect } from "chai";
 import { Collection } from "../../index.js";
