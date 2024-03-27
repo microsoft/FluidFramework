@@ -146,20 +146,20 @@ describe("sharedTreeView", () => {
 		describe("commitApplied", () => {
 			it("is fired for data and schema changes", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout1 = provider.trees[0].checkout;
+				const checkout = provider.trees[0].checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout1.events.on("commitApplied", () =>
+				const unsubscribe = checkout.events.on("commitApplied", () =>
 					log.push("commitApplied"),
 				);
 
 				assert.equal(log.length, 0);
 
-				checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
 
 				assert.equal(log.length, 1);
 
-				checkout1.editor
+				checkout.editor
 					.sequenceField(rootField)
 					.insert(
 						0,
@@ -168,7 +168,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 2);
 
-				checkout1.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -176,23 +176,23 @@ describe("sharedTreeView", () => {
 
 			it("does not allow schema changes to be reverted", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout1 = provider.trees[0].checkout;
+				const checkout = provider.trees[0].checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout1.events.on("commitApplied", (data, getRevertible) =>
+				const unsubscribe = checkout.events.on("commitApplied", (data, getRevertible) =>
 					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
 				);
 
 				assert.deepEqual(log, []);
 
-				checkout1.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
-				checkout1.editor
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.editor
 					.sequenceField(rootField)
 					.insert(
 						0,
 						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
 					);
-				checkout1.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
