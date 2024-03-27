@@ -45,10 +45,10 @@ import {
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	ObjectFromSchemaRecord,
 	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeObjectNode,
 	WithType,
 	type,
 } from "./schemaTypes.js";
@@ -281,15 +281,16 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for an object node.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 */
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T) {
-		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
+	>(name: Name, fields: T) {
+		class schema extends this.nodeSchema(name, NodeKind.Object, fields, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 
@@ -329,7 +330,7 @@ export class SchemaFactory<
 		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
 			T
