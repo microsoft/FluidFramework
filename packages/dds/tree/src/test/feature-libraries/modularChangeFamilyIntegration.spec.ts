@@ -11,7 +11,6 @@ import {
 	DeltaMark,
 	DeltaRoot,
 	FieldKey,
-	FieldKindIdentifier,
 	RevisionTag,
 	UpPath,
 	makeAnonChange,
@@ -22,7 +21,7 @@ import {
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	DefaultEditBuilder,
-	FieldKindWithEditor,
+	FieldKindConfiguration,
 	FieldKinds,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
@@ -52,9 +51,9 @@ import { MarkMaker } from "./sequence-field/testEdits.js";
 // eslint-disable-next-line import/no-internal-modules
 import { purgeUnusedCellOrderingInfo } from "./sequence-field/utils.js";
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
-	[sequence].map((f) => [f.identifier, f]),
-);
+const fieldKinds: FieldKindConfiguration = new Map([
+	[sequence.identifier, { kind: sequence, formatVersion: 0 }],
+]);
 
 const family = new ModularChangeFamily(fieldKinds, testRevisionTagCodec, failCodec, {
 	jsonValidator: typeboxValidator,
