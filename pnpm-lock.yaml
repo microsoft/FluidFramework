@@ -16630,12 +16630,8 @@ packages:
       '@fluidframework/protocol-definitions': 3.2.0
       events: 3.3.0
 
-  /@fluidframework/protocol-definitions/3.1.0:
-    resolution: {integrity: sha512-BgGF82z4sk5M4torMR38NGjHjFG9t6Y653UcGOlXiIaGQMDZpRfrxiIuq53Gb12OTfUgbNtvBJL1W46JfLvzQw==}
-    dev: true
-
-  /@fluidframework/protocol-definitions/3.2.0-237840:
-    resolution: {integrity: sha512-NlAZT7WjESOzQYiFRIXiWi58ISlubc69zrC2bObHuDE/hMdIEA0mVnJS8x8A/WHaikNEjZ1cyryJsRscSjg5WA==}
+  /@fluidframework/protocol-definitions/3.2.0:
+    resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
 
   /@fluidframework/register-collection/2.0.0-internal.8.0.0:
     resolution: {integrity: sha512-siTjPbAuVKQPVX/fGEBlXZU8vVlsNLph5CtM3GsUt73MP2dvXBlPeh3VEIYAS6ux4Qu4BNxE3pij1afElM5OHw==}

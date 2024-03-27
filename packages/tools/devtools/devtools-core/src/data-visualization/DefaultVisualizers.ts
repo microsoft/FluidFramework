@@ -9,10 +9,12 @@
  */
 
 import { SharedCell } from "@fluidframework/cell";
+import { assert } from "@fluidframework/core-utils";
 import { SharedCounter } from "@fluidframework/counter";
 import { type IDirectory, type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import type {
 	FieldMapObject,
 	ISharedTree,
@@ -26,8 +28,6 @@ import {
 	ObjectNodeStoredSchema,
 	SharedTree,
 } from "@fluidframework/tree/internal";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
 import { EditType } from "../CommonInterfaces.js";
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
 import {
@@ -35,10 +35,10 @@ import {
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	type FluidUnknownObjectNode,
+	type Primitive,
 	type VisualChildNode,
 	VisualNodeKind,
 	type VisualTreeNode,
-	type Primitive,
 	type VisualValueNode,
 } from "./VisualTree.js";
 

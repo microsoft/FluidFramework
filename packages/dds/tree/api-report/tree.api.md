@@ -1352,6 +1352,20 @@ export type ObjectFromSchemaRecord<T extends RestrictiveReadonlyRecord<string, I
     -readonly [Property in keyof T]: TreeFieldFromImplicitField<T[Property]>;
 };
 
+// @beta
+export type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = {
+    -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
+};
+
+// @internal (undocumented)
+export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
+    constructor(objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>);
+    // (undocumented)
+    encode(): ErasedTreeNodeSchemaDataFormat;
+    // (undocumented)
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+}
+
 // @internal
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined;
 
