@@ -8,6 +8,8 @@ import { DocumentWriter } from "../DocumentWriter.js";
 import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
 import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
 
+// TODO: Leverage `documentationNodeToHtml` instead of maintaining custom renderers.
+
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
  *

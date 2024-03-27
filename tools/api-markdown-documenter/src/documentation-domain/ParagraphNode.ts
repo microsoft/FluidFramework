@@ -69,24 +69,4 @@ export class ParagraphNode
 	public static createFromPlainText(text: string): ParagraphNode {
 		return new ParagraphNode(createNodesFromPlainText(text));
 	}
-
-	/**
-	 * Combines the contents of 1 or more {@link ParagraphNode}s into a single node.
-	 */
-	public static combine(...nodes: ParagraphNode[]): ParagraphNode {
-		if (nodes.length === 0) {
-			return ParagraphNode.Empty;
-		}
-
-		if (nodes.length === 1) {
-			return nodes[0];
-		}
-
-		const children: DocumentationNode[] = [];
-		for (const node of nodes) {
-			children.push(...node.children);
-		}
-
-		return new ParagraphNode(children);
-	}
 }
