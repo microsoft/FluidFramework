@@ -29,9 +29,9 @@ import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	InsertableContent,
-	getSimpleSchema,
 	prepareContentForInsert,
-	simpleSchemaSymbol,
+	simpleNodeSchemaSymbol,
+	tryGetSimpleNodeSchema,
 } from "./proxies.js";
 import {
 	FieldKind,
@@ -98,7 +98,7 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const nodeSchema = new Map(
 		mapIterable(schemaMap, ([key, value]) => {
 			const schema = value.toFlex();
-			const classSchema = getSimpleSchema(schema);
+			const classSchema = tryGetSimpleNodeSchema(schema);
 			if (classSchema === undefined) {
 				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
@@ -281,7 +281,7 @@ export function setFlexSchemaFromClassSchema(
 	flex: TreeNodeSchemaBase,
 ): void {
 	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
-	assert(!(simpleSchemaSymbol in flex), "flex schema already marked");
+	assert(!(simpleNodeSchemaSymbol in flex), "flex schema already marked");
 	(simple as any)[flexSchemaSymbol] = flex;
-	(flex as any)[simpleSchemaSymbol] = simple;
+	(flex as any)[simpleNodeSchemaSymbol] = simple;
 }

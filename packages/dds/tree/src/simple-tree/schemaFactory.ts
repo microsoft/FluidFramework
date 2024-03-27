@@ -30,9 +30,9 @@ import {
 	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
-	getSimpleSchema,
 	isTreeNode,
 	mapStaticDispatchMap,
+	tryGetSimpleNodeSchema,
 } from "./proxies.js";
 import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
@@ -258,7 +258,7 @@ export class SchemaFactory<
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
-						getSimpleSchema(input.schema) === this.constructor,
+						tryGetSimpleNodeSchema(input.schema) === this.constructor,
 						0x83b /* building node with wrong schema */,
 					);
 				}

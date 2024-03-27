@@ -102,17 +102,49 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 /**
  * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
  */
-export const simpleSchemaSymbol: unique symbol = Symbol(`simpleSchema`);
+export const simpleNodeSchemaSymbol: unique symbol = Symbol(`simpleNodeSchema`);
 
-export function getSimpleSchema(schema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
-	if (simpleSchemaSymbol in schema) {
-		return schema[simpleSchemaSymbol] as TreeNodeSchema;
+/**
+ * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
+ * Returns `undefined` if no cached value is found.
+ */
+export function tryGetSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
+	if (simpleNodeSchemaSymbol in flexSchema) {
+		return flexSchema[simpleNodeSchemaSymbol] as TreeNodeSchema;
 	}
 	return undefined;
 }
 
-function getSimpleSchemaOrFail(schema: FlexTreeNodeSchema): TreeNodeSchema {
-	return getSimpleSchema(schema) ?? fail("missing simple schema");
+/**
+ * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
+ * Fails if no cached value is found.
+ */
+function getSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema {
+	return tryGetSimpleNodeSchema(flexSchema) ?? fail("missing simple schema");
+}
+
+/**
+ * A symbol for storing {@link FieldSchema}s on a {@link FlexFieldSchema}.
+ */
+export const simpleFieldSchemaSymbol: unique symbol = Symbol(`simpleFieldSchema`);
+
+/**
+ * Gets the {@link FieldSchema} which corresponds with the provided {@link FlexFieldSchema | flexSchema}.
+ * Caches the result on the provided `flexSchema` for future access.
+ * @param flexSchema - The flex schema on which the result will be cached.
+ * @param implicitSimpleSchema - The allowed types from which the `FieldSchema` will be derived.
+ */
+function getSimpleFieldSchema(
+	flexSchema: FlexFieldSchema,
+	implicitSimpleSchema: ImplicitFieldSchema,
+): FieldSchema {
+	if (simpleFieldSchemaSymbol in flexSchema) {
+		return flexSchema[simpleFieldSchemaSymbol] as FieldSchema;
+	}
+
+	const fieldSchema = FieldSchema.normalize(implicitSimpleSchema);
+	(flexSchema as any)[simpleFieldSchemaSymbol] = fieldSchema;
+	return fieldSchema;
 }
 
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {
@@ -122,7 +154,7 @@ export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeVal
 	}
 
 	const schema = flexNode.schema;
-	const classSchema = getSimpleSchema(schema);
+	const classSchema = tryGetSimpleNodeSchema(schema);
 	assert(classSchema !== undefined, "node without schema");
 	if (typeof classSchema === "function") {
 		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
@@ -166,22 +198,24 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 			const flexNode = getFlexNode(proxy);
 			const flexNodeSchema = flexNode.schema;
 			assert(flexNodeSchema instanceof FlexObjectNodeSchema, 0x888 /* invalid schema */);
-			const fieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
+			const flexFieldSchema = flexNodeSchema.objectNodeFields.get(key as FieldKey);
 
-			if (fieldSchema === undefined) {
+			if (flexFieldSchema === undefined) {
 				return allowAdditionalProperties ? Reflect.set(target, key, value) : false;
 			}
 
 			// TODO: Is it safe to assume 'content' is a LazyObjectNode?
 			assert(flexNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 			assert(typeof key === "string", 0x7e1 /* invalid key */);
-			const field = getBoxedField(flexNode, brand(key), fieldSchema);
+			const field = getBoxedField(flexNode, brand(key), flexFieldSchema);
 
-			const simpleNodeSchema = getSimpleSchemaOrFail(flexNodeSchema);
+			const simpleNodeSchema = getSimpleNodeSchema(flexNodeSchema);
 			const simpleNodeFields = simpleNodeSchema.info as Record<string, ImplicitFieldSchema>;
 			if (simpleNodeFields[key] === undefined) {
 				fail(`Field key '${key}' not found in schema.`);
 			}
+
+			const simpleFieldSchema = getSimpleFieldSchema(flexFieldSchema, simpleNodeFields[key]);
 
 			switch (field.schema.kind) {
 				case FieldKinds.required:
@@ -191,10 +225,7 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 						| FlexTreeOptionalField<FlexAllowedTypes>;
 
 					const content = prepareContentForInsert(value, flexNode.context.forest);
-					const cursor = cursorFromNodeData(
-						content,
-						FieldSchema.normalize(simpleNodeFields[key]).allowedTypes,
-					);
+					const cursor = cursorFromNodeData(content, simpleFieldSchema.allowedTypes);
 					typedField.content = cursor;
 					break;
 				}
@@ -296,13 +327,15 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
-			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
-			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
 
-			// TODO: cache this
-			const fieldSchema = FieldSchema.normalize(classSchema.info as ImplicitFieldSchema);
+			const simpleFieldSchema = getSimpleFieldSchema(
+				sequenceField.schema,
+				simpleNodeSchema.info as ImplicitFieldSchema,
+			);
 
-			sequenceField.insertAt(index, cursorFromFieldData(content, fieldSchema));
+			sequenceField.insertAt(index, cursorFromFieldData(content, simpleFieldSchema));
 		},
 	},
 	insertAtStart: {
@@ -315,13 +348,15 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
-			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
-			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
 
-			// TODO: cache this
-			const fieldSchema = FieldSchema.normalize(classSchema.info as ImplicitFieldSchema);
+			const simpleFieldSchema = getSimpleFieldSchema(
+				sequenceField.schema,
+				simpleNodeSchema.info as ImplicitFieldSchema,
+			);
 
-			sequenceField.insertAtStart(cursorFromFieldData(content, fieldSchema));
+			sequenceField.insertAtStart(cursorFromFieldData(content, simpleFieldSchema));
 		},
 	},
 	insertAtEnd: {
@@ -334,13 +369,15 @@ export const arrayNodePrototypeProperties: PropertyDescriptorMap = {
 
 			const content = contextualizeInsertedArrayContent(value, sequenceField);
 
-			const classSchema = getSimpleSchemaOrFail(sequenceNode.schema);
-			assert(classSchema.kind === NodeKind.Array, "Expected array schema");
+			const simpleNodeSchema = getSimpleNodeSchema(sequenceNode.schema);
+			assert(simpleNodeSchema.kind === NodeKind.Array, "Expected array schema");
 
-			// TODO: cache this
-			const fieldSchema = FieldSchema.normalize(classSchema.info as ImplicitFieldSchema);
+			const simpleFieldSchema = getSimpleFieldSchema(
+				sequenceField.schema,
+				simpleNodeSchema.info as ImplicitFieldSchema,
+			);
 
-			sequenceField.insertAtEnd(cursorFromFieldData(content, fieldSchema));
+			sequenceField.insertAtEnd(cursorFromFieldData(content, simpleFieldSchema));
 		},
 	},
 	removeAt: {
@@ -708,7 +745,7 @@ export const mapStaticDispatchMap: PropertyDescriptorMap = {
 				node.context.forest,
 			);
 
-			const classSchema = getSimpleSchemaOrFail(node.schema);
+			const classSchema = getSimpleNodeSchema(node.schema);
 			const cursor = cursorFromNodeData(content, classSchema.info as ImplicitAllowedTypes);
 
 			node.set(key, cursor);
@@ -955,7 +992,7 @@ export function extractFactoryContent(
 
 	if (rawFlexNode !== undefined) {
 		const kindFromSchema =
-			getSimpleSchema(rawFlexNode.schema)?.kind ??
+			tryGetSimpleNodeSchema(rawFlexNode.schema)?.kind ??
 			fail("NodeBase should always have class schema");
 
 		assert(kindFromSchema === type, 0x845 /* kind of data should match kind of schema */);
