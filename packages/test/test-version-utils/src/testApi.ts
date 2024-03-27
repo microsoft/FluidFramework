@@ -29,9 +29,12 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import * as sequence from "@fluidframework/sequence";
 import { SharedString } from "@fluidframework/sequence";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
+import * as datastore from "@fluidframework/datastore";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 
 // ContainerRuntime and Data Runtime API
 import {
+	BaseContainerRuntimeFactory,
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
@@ -52,6 +55,7 @@ import {
 // List of package that needs to be install for legacy versions
 const packageList = [
 	"@fluidframework/aqueduct",
+	"@fluidframework/datastore",
 	"@fluidframework/test-utils",
 	"@fluidframework/container-loader",
 	"@fluidframework/container-runtime",
@@ -120,7 +124,12 @@ export const LoaderApi = {
  */
 export const ContainerRuntimeApi = {
 	version: pkgVersion,
+	BaseContainerRuntimeFactory,
 	ContainerRuntime,
+	/**
+	 * @remarks - The API for constructing this factory has recently changed. Use `createContainerRuntimeFactoryWithDefaultDataStore`
+	 * to construct safely across versions.
+	 */
 	ContainerRuntimeFactoryWithDefaultDataStore,
 };
 
@@ -131,6 +140,7 @@ export const DataRuntimeApi = {
 	version: pkgVersion,
 	DataObject,
 	DataObjectFactory,
+	FluidDataStoreRuntime,
 	TestFluidObjectFactory,
 	// TODO: SharedTree is not included included here. Perhaps it should be added?
 	dds: {
@@ -156,6 +166,7 @@ export const DataRuntimeApi = {
 	packages: {
 		cell,
 		counter,
+		datastore,
 		map,
 		matrix,
 		orderedCollection,
@@ -195,13 +206,22 @@ async function loadContainerRuntime(
 
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!containerRuntimeCache.has(version)) {
+		const [containerRuntimePkg, aqueductPkg] = await Promise.all([
+			loadPackage(modulePath, "@fluidframework/container-runtime"),
+			loadPackage(modulePath, "@fluidframework/aqueduct"),
+		]);
+
+		/* eslint-disable @typescript-eslint/no-shadow */
+		const { ContainerRuntime } = containerRuntimePkg;
+		const { BaseContainerRuntimeFactory, ContainerRuntimeFactoryWithDefaultDataStore } =
+			aqueductPkg;
+		/* eslint-enable @typescript-eslint/no-shadow */
+
 		const containerRuntime = {
 			version,
-			ContainerRuntime: (await loadPackage(modulePath, "@fluidframework/container-runtime"))
-				.ContainerRuntime,
-			ContainerRuntimeFactoryWithDefaultDataStore: (
-				await loadPackage(modulePath, "@fluidframework/aqueduct")
-			).ContainerRuntimeFactoryWithDefaultDataStore,
+			BaseContainerRuntimeFactory,
+			ContainerRuntime,
+			ContainerRuntimeFactoryWithDefaultDataStore,
 		};
 		containerRuntimeCache.set(version, containerRuntime);
 	}
@@ -217,6 +237,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 		/* eslint-disable @typescript-eslint/no-shadow */
 		const [
 			{ DataObject, DataObjectFactory },
+			datastore,
 			{ TestFluidObjectFactory },
 			map,
 			sequence,
@@ -229,6 +250,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			agentScheduler,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
+			loadPackage(modulePath, "@fluidframework/datastore"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
 			loadPackage(modulePath, "@fluidframework/map"),
 			loadPackage(modulePath, "@fluidframework/sequence"),
@@ -245,6 +267,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			),
 			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
 		]);
+		const { FluidDataStoreRuntime } = datastore;
 		const { SharedCell } = cell;
 		const { SharedCounter } = counter;
 		const { SharedDirectory, SharedMap } = map;
@@ -259,6 +282,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			version,
 			DataObject,
 			DataObjectFactory,
+			FluidDataStoreRuntime,
 			TestFluidObjectFactory,
 			dds: {
 				SharedCell,
@@ -272,6 +296,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 				SparseMatrix,
 			},
 			packages: {
+				datastore,
 				map,
 				sequence,
 				cell,
@@ -357,13 +382,7 @@ function throwNotFound(layer: string, version: string): never {
  *
  * @internal
  */
-export function getLoaderApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof LoaderApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
-
+export function getLoaderApi(requestedStr: string): typeof LoaderApi {
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return LoaderApi;
@@ -385,12 +404,7 @@ export function getLoaderApi(
  *
  * @internal
  */
-export function getContainerRuntimeApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
+export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -409,12 +423,7 @@ export function getContainerRuntimeApi(
  *
  * @internal
  */
-export function getDataRuntimeApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof DataRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
+export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -433,13 +442,7 @@ export function getDataRuntimeApi(
  *
  * @internal
  */
-export function getDriverApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof DriverApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
-
+export function getDriverApi(requestedStr: string): typeof DriverApi {
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DriverApi;

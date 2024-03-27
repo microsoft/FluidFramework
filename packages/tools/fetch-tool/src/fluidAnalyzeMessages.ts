@@ -583,8 +583,8 @@ function processOp(
 					opCount = chunk.totalChunks; // 1 op for each chunk.
 					const patchedMessage = Object.create(runtimeMessage);
 					patchedMessage.contents = chunks.join("");
-					patchedMessage.type = chunk.originalType;
-					type = chunk.originalType;
+					type = (chunk as any).originalType;
+					patchedMessage.type = type;
 					totalMsgSize = value.totalSize;
 					chunkMap.delete(patchedMessage.clientId);
 				} else {

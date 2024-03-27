@@ -271,7 +271,7 @@ describe("Map", () => {
 			it("new serialization format for big maps", async () => {
 				map.set("key", "value");
 
-				// 40K char string
+				// 160K char string
 				let longString = "01234567890";
 				for (let i = 0; i < 12; i++) {
 					longString = longString + longString;

@@ -591,25 +591,11 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated use ContainerRuntimeMessageType instead
- * @internal
- */
-export enum RuntimeMessage {
-	FluidDataStoreOp = "component",
-	Attach = "attach",
-	ChunkedOp = "chunkedOp",
-	BlobAttach = "blobAttach",
-	Rejoin = "rejoin",
-	Alias = "alias",
-	Operation = "op",
-}
-
-/**
  * @deprecated please use version in driver-utils
  * @internal
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
+	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
 }
 
 /**
@@ -714,6 +700,18 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		throw new UsageError("Fluid object does not implement ISummarizer");
 	}
 	return fluidObject.ISummarizer;
+}
+
+/**
+ * Extract last message from the snapshot metadata.
+ * Uses legacy property if not using explicit schema control, otherwise uses the new property.
+ * This allows new runtime to make documents not openable for old runtimes, one explicit document schema control is enabled.
+ * Please see addMetadataToSummary() as well
+ */
+function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
+	return metadata?.documentSchema?.runtime?.explicitSchemaControl
+		? metadata?.lastMessage
+		: metadata?.message;
 }
 
 /**
@@ -836,8 +834,10 @@ export class ContainerRuntime
 			},
 		);
 
+		const messageAtLastSummary = lastMessageFromMetadata(metadata);
+
 		// Verify summary runtime sequence number matches protocol sequence number.
-		const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
+		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
 			const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
@@ -846,6 +846,13 @@ export class ContainerRuntime
 				loadSequenceNumberVerification !== "bypass" &&
 				runtimeSequenceNumber !== protocolSequenceNumber
 			) {
+				// Message to OCEs:
+				// You can hit this error with runtimeSequenceNumber === -1 in < 2.0 RC3 builds.
+				// This would indicate that explicit schema control is enabled in current (2.0 RC3+) builds and it
+				// results in addMetadataToSummary() creating a poison pill for older runtimes in the form of a -1 sequence number.
+				// Older runtimes do not understand new schema, and thus could corrupt document if they proceed, thus we are using
+				// this poison pill to prevent them from proceeding.
+
 				// "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: SummaryMetadataMismatch
@@ -1429,7 +1436,7 @@ export class ContainerRuntime
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
-		this.messageAtLastSummary = metadata?.message;
+		this.messageAtLastSummary = lastMessageFromMetadata(metadata);
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
@@ -2140,23 +2147,38 @@ export class ContainerRuntime
 
 	/** Adds the container's metadata to the given summary tree. */
 	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
+		// The last message processed at the time of summary. If there are no new messages, use the message from the
+		// last summary.
+		const message =
+			extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
+			this.messageAtLastSummary;
+
+		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
+			this.deltaManager.lastSequenceNumber,
+		);
+
+		// Is document schema explicit control on?
+		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
 			// Increment the summary number for the next summary that will be generated.
 			summaryNumber: this.nextSummaryNumber++,
 			summaryFormatVersion: 1,
 			...this.garbageCollector.getMetadata(),
-			// The last message processed at the time of summary. If there are no new messages, use the message from the
-			// last summary.
-			message:
-				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
-				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-
-			documentSchema: this.documentsSchemaController.summarizeDocumentSchema(
-				this.deltaManager.lastSequenceNumber,
-			),
+			// If explicit document schema control is not on, use legacy way to supply last message (using 'message' property).
+			// Otherwise use new 'lastMessage' property, but also put content into the 'message' property that cases old
+			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
+			// last message's sequence number.
+			// See also lastMessageFromMetadata()
+			message: explitiSchemaControl
+				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
+				: message,
+			lastMessage: explitiSchemaControl ? message : undefined,
+			documentSchema,
 		};
+
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
 
@@ -3786,9 +3808,6 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					metadata: undefined,
-					localOpMetadata: undefined,
-					type: ContainerMessageType.IdAllocation,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -3829,7 +3848,6 @@ export class ContainerRuntime
 		const type = containerRuntimeMessage.type;
 		const message: BatchMessage = {
 			contents: serializedContent,
-			type,
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -3857,9 +3875,6 @@ export class ContainerRuntime
 						this.outbox.submit({
 							contents: JSON.stringify(msg),
 							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-							metadata: undefined,
-							localOpMetadata: undefined,
-							type: ContainerMessageType.DocumentSchemaChange,
 						});
 					},
 				);

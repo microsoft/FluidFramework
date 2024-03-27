@@ -7,7 +7,6 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "../messageTypes.js";
 import { IBatch } from "./definitions.js";
 
 /**
@@ -86,11 +85,9 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
-					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
 				},
 			],
 		};

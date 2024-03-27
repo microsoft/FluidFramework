@@ -21,18 +21,27 @@ import {
 	JsonableTree,
 	UpPath,
 } from "../../../core/index.js";
-import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries/index.js";
+import {
+	DownPath,
+	FlexTreeNode,
+	toDownPath,
+	treeSchemaFromStoredSchema,
+} from "../../../feature-libraries/index.js";
 import {
 	FlexTreeView,
 	ISharedTree,
 	ITreeViewFork,
-	SharedTree,
 	SharedTreeFactory,
 	TreeContent,
-} from "../../../shared-tree/index.js";
-import { brand, fail, getOrCreate } from "../../../util/index.js";
+	brand,
+	fail,
+} from "../../../index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedTree } from "../../../shared-tree/sharedTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getOrCreate, makeArray } from "../../../util/utils.js";
 import { schematizeFlexTree } from "../../utils.js";
-import { FuzzNode, FuzzNodeSchema, fuzzNode, fuzzSchema } from "./fuzzUtils.js";
+import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -41,6 +50,7 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 	RedoOp,
+	SchemaChange,
 	Synchronize,
 	TransactionAbortOp,
 	TransactionBoundary,
@@ -103,26 +113,38 @@ export function viewFromState(
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
 ): FuzzView {
 	state.view ??= new Map();
-
-	return (
+	const view =
 		state.transactionViews?.get(client.channel) ??
 		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
+			const treeSchema = treeSchemaFromStoredSchema(tree.storedSchema);
 			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
 				tree,
 				{
 					initialTree,
-					schema: fuzzSchema,
+					schema: isEmptyStoredSchema(tree) ? initialFuzzSchema : treeSchema,
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 				},
-			);
+				() => {
+					if (state.view?.get(tree) !== undefined) {
+						state.view.delete(tree);
+					}
+				},
+			) as unknown as FuzzView;
+
 			const fuzzView = flexView as FuzzView;
 			assert.equal(fuzzView.currentSchema, undefined);
-			fuzzView.currentSchema = fuzzNode;
+			const nodeSchema = treeSchema.nodeSchema.get(brand("treefuzz.node")) as FuzzNodeSchema;
+			fuzzView.currentSchema =
+				nodeSchema ?? initialFuzzSchema.nodeSchema.get(brand("treefuzz.node"));
 			return fuzzView;
-		})
-	);
+		});
+	return view;
 }
 
+function isEmptyStoredSchema(tree: SharedTree): boolean {
+	const rootFieldSchemaData = (tree.storedSchema as unknown as any).rootFieldSchemaData;
+	return rootFieldSchemaData.types.size === 0;
+}
 /**
  * When performing an operation, a random field must be selected. Rather than enumerate all fields of the tree, this is
  * performed recursively starting at the root field.
@@ -185,6 +207,7 @@ export interface EditGeneratorOpWeights {
 	// needs to be updated since this is a nested object.
 	fieldSelection: FieldSelectionWeights;
 	synchronizeTrees: number;
+	schema: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
@@ -197,11 +220,24 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	move: 0,
 	fieldSelection: defaultFieldSelectionWeights,
 	synchronizeTrees: 0,
+	schema: 0,
 };
 
 export interface EditGeneratorOptions {
 	weights: Partial<EditGeneratorOpWeights>;
 	maxRemoveCount: number;
+}
+
+export function getAllowableNodeTypes(state: FuzzTestState) {
+	const fuzzView = viewFromState(state);
+	const nodeSchema = fuzzView.currentSchema;
+	const nodeTypes = [];
+	for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
+		if (typeof leafNodeSchema !== "string") {
+			nodeTypes.push(leafNodeSchema.name);
+		}
+	}
+	return nodeTypes;
 }
 
 export const makeEditGenerator = (
@@ -213,14 +249,25 @@ export const makeEditGenerator = (
 	};
 
 	const jsonableTree = (state: FuzzTestState): JsonableTree => {
-		// Heuristics around what type of tree we insert could be made customizable to tend toward trees of certain characteristics.
-		return state.random.bool(0.3)
-			? {
+		const allowableNodeTypes = getAllowableNodeTypes(state);
+		const nodeTypeToGenerate = state.random.pick(allowableNodeTypes);
+
+		switch (nodeTypeToGenerate) {
+			case "com.fluidframework.leaf.number":
+				return {
 					type: brand("com.fluidframework.leaf.number"),
 					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-			  }
-			: {
-					type: brand("tree2fuzz.node"),
+				};
+			case "com.fluidframework.leaf.string":
+				return {
+					type: brand("com.fluidframework.leaf.string"),
+					value: state.random
+						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
+						.toString(),
+				};
+			case "treefuzz.node":
+				return {
+					type: brand("treefuzz.node"),
 					fields: {
 						requiredChild: [
 							{
@@ -232,7 +279,14 @@ export const makeEditGenerator = (
 							},
 						],
 					},
-			  };
+				};
+
+			default:
+				return {
+					type: brand(nodeTypeToGenerate),
+					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+				};
+		}
 	};
 
 	const insert = (state: FuzzTestState): FieldEditTypes => {
@@ -264,7 +318,7 @@ export const makeEditGenerator = (
 					parent: maybeDownPathFromNode(field.parent),
 					key: field.key,
 					index: state.random.integer(0, field.length),
-					value: jsonableTree(state),
+					content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
 				};
 				return {
 					type: "sequence",
@@ -337,7 +391,7 @@ export const makeEditGenerator = (
 	};
 
 	const move = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.client.channel;
+		const tree = state.client.channel; // TODO: remove if unused
 		const fieldInfo = selectTreeField(
 			viewFromState(state),
 			state.random,
@@ -460,6 +514,21 @@ export const makeTransactionEditGenerator = (
 	};
 };
 
+export const makeSchemaEdit = (): Generator<SchemaChange, FuzzTestState> => {
+	const makeSchemaOp = (state: FuzzTestState) => {
+		return { type: "schema", contents: { type: state.random.uuid4() } };
+	};
+
+	return (state) => {
+		const contents = makeSchemaOp(state);
+
+		return {
+			type: "schema",
+			contents,
+		};
+	};
+};
+
 export const makeUndoRedoEditGenerator = (
 	opWeights: Partial<EditGeneratorOpWeights>,
 ): Generator<UndoRedo, FuzzTestState> => {
@@ -510,6 +579,7 @@ export function makeOpGenerator(
 					}),
 					weights.synchronizeTrees,
 				],
+				[() => makeSchemaEdit(), weights.schema],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
