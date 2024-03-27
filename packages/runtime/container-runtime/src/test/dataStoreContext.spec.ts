@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IFluidHandleContext,

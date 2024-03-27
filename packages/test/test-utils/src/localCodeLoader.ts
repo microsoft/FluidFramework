@@ -12,7 +12,7 @@ import {
 	IFluidModuleWithDetails,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	IProvideFluidDataStoreFactory,

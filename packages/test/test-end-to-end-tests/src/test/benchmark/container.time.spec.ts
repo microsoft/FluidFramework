@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";

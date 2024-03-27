@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -17,6 +17,7 @@ import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+import { ILoader } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
 	IChannel,

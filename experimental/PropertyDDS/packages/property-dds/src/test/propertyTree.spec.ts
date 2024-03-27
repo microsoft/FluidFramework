@@ -19,7 +19,7 @@ import {
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

@@ -5,12 +5,12 @@
 
 import { resolve } from 'path';
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
+import { AttachState } from '@fluidframework/container-definitions';
 import {
-	AttachState,
 	type IContainer,
 	type IFluidCodeDetails,
 	type IHostLoader,
-} from '@fluidframework/container-definitions';
+} from '@fluidframework/container-definitions/internal';
 import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';

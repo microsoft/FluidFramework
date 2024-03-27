@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";

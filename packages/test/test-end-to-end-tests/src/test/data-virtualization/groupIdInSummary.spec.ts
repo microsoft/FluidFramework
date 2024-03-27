@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,

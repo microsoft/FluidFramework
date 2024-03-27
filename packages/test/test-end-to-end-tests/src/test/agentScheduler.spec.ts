@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IAgentScheduler, TaskSubscription } from "@fluidframework/agent-scheduler";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import {

@@ -11,7 +11,11 @@ import {
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	CompressionAlgorithms,

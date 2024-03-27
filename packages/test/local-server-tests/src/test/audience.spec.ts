@@ -9,7 +9,7 @@ import {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { SharedMap } from "@fluidframework/map";

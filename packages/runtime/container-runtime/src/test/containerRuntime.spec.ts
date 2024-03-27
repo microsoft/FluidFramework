@@ -5,12 +5,11 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	ContainerErrorTypes,
 	IContainerContext,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	ConfigTypes,

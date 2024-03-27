@@ -5,9 +5,10 @@
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { parseStringDataVersionOne, readVersion } from "../dataTransform.js";
 import type {
 	IInventoryList,

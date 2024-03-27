@@ -39,6 +39,4 @@ export { IDevtoolsLogger }
 // @alpha
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
 
-// (No @packageDocumentation comment for this package)
-
 ```

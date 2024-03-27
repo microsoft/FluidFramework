@@ -4,7 +4,7 @@
  */
 
 import { OptionsMatrix } from "@fluid-private/test-pairwise-generator";
-import { ILoaderOptions } from "@fluidframework/container-definitions";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions";
+import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import Sinon from "sinon";
 import { RuntimeFactoryHelper } from "../runtimeFactoryHelper.js";

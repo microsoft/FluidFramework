@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions/internal";
 import type { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import {
 	ChannelFactoryRegistry,

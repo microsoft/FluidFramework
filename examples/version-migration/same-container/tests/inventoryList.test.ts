@@ -4,7 +4,7 @@
  */
 
 import { IMigrator } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { globals } from "../jest.config.cjs";
 
 // Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.

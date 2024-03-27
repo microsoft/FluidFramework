@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";

@@ -4,8 +4,8 @@
  */
 
 import { IFluidMountableView } from "@fluid-example/example-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	IContainer,
 	IFluidCodeDetails,
 	IFluidCodeResolver,
@@ -15,7 +15,7 @@ import {
 	IResolvedFluidCodeDetails,
 	LoaderHeader,
 	isFluidBrowserPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";

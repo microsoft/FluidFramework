@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IContainerContext } from "@fluidframework/container-definitions";
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	FluidDataStoreRegistry,

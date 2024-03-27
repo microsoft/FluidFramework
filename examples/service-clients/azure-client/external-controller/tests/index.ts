@@ -4,13 +4,7 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-import { type ISharedMap, SharedMap } from "fluid-framework";
 
-import {
-	IContainer,
-	IFluidModuleWithDetails,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
 	LocalDocumentServiceFactory,
@@ -21,7 +15,13 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { type ISharedMap, SharedMap } from "fluid-framework";
 
+import {
+	IContainer,
+	IFluidModuleWithDetails,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IFluidContainer,
 	createDOProviderContainerRuntimeFactory,
