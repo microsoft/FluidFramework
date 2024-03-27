@@ -14,20 +14,19 @@ import {
 	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 
-// import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
+import { leaf } from "../../domains/index.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
 
-const _ = new SchemaFactory(undefined);
-const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.boolean.identifier);
-const handleSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.handle.identifier);
-const numberSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.number.identifier);
-const nullSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.null.identifier);
-const stringSchemaIdentifier: TreeNodeSchemaIdentifier = brand(_.string.identifier);
+const booleanSchemaIdentifier: TreeNodeSchemaIdentifier = leaf.boolean.name;
+const handleSchemaIdentifier: TreeNodeSchemaIdentifier = leaf.handle.name;
+const numberSchemaIdentifier: TreeNodeSchemaIdentifier = leaf.number.name;
+const nullSchemaIdentifier: TreeNodeSchemaIdentifier = leaf.null.name;
+const stringSchemaIdentifier: TreeNodeSchemaIdentifier = leaf.string.name;
 
 describe("toMapTree", () => {
 	it("string", () => {
@@ -566,9 +565,9 @@ describe("toMapTree", () => {
 			assert.equal(result.value, +0);
 		});
 
-		it("List containing `undefined` (maps values to null if allowed by the schema)", () => {
+		it("Array containing `undefined` (maps values to null when allowed by the schema)", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("test-list", [
+			const schema = schemaFactory.array("test-array", [
 				schemaFactory.number,
 				schemaFactory.null,
 			]);
@@ -611,9 +610,9 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("List containing `undefined` (throws if fallback type is not allowed by the schema)", () => {
+		it("Array containing `undefined` (throws if fallback type when not allowed by the schema)", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("test-list", [schemaFactory.number]);
+			const schema = schemaFactory.array("test-array", [schemaFactory.number]);
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
