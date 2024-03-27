@@ -15,8 +15,8 @@ export interface SchemaChange {
 	readonly schema: { new: TreeStoredSchema; old: TreeStoredSchema };
 
 	/**
-	 * Whether this change rolls back a previous schema change.
-	 * While non-rollback changes are expected to be backwards compatible, rollback changes are not.
+	 * Whether this change reverses a previous schema change.
+	 * While non-inverse changes are expected to be backwards compatible, inverse changes are not.
 	 */
-	readonly isRollback: boolean;
+	readonly isInverse: boolean;
 }

@@ -116,7 +116,7 @@ export class SharedTreeChangeFamily
 								new: innerChange.innerChange.schema.old,
 								old: innerChange.innerChange.schema.new,
 							},
-							isRollback: true,
+							isInverse: true,
 						},
 					};
 				}

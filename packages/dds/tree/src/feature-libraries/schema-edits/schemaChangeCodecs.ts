@@ -15,7 +15,7 @@ export function makeSchemaChangeCodec({
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
 	return {
 		encode: (schemaChange) => {
-			assert(!schemaChange.isRollback, "Rollback schema changes should never be transmitted");
+			assert(!schemaChange.isInverse, "Inverse schema changes should never be transmitted");
 			return {
 				new: schemaCodec.encode(schemaChange.schema.new),
 				old: schemaCodec.encode(schemaChange.schema.old),
@@ -27,7 +27,7 @@ export function makeSchemaChangeCodec({
 					new: schemaCodec.decode(encoded.new),
 					old: schemaCodec.decode(encoded.old),
 				},
-				isRollback: false,
+				isInverse: false,
 			};
 		},
 		encodedSchema: EncodedSchemaChange,

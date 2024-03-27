@@ -72,7 +72,7 @@ const stSchemaChange: SharedTreeChange = {
 	changes: [
 		{
 			type: "schema",
-			innerChange: { schema: { new: emptySchema, old: emptySchema }, isRollback: false },
+			innerChange: { schema: { new: emptySchema, old: emptySchema }, isInverse: false },
 		},
 	],
 };
