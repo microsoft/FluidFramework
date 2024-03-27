@@ -54,13 +54,4 @@ export type { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./pr
 export type { ConfigTypes, IConfigProviderBase } from "./config.js";
 export type { ISignalEnvelope } from "./messages.js";
 
-export type {
-	Brand,
-	ErasedType,
-	BrandedType,
-	Erased,
-	ValueFromBranded,
-	NameFromBranded,
-} from "./brand.js";
-export { brand, brandErased } from "./brand.js";
-export type { Covariant, isAny } from "./typeCheck.js";
+export type { ErasedType } from "./erasedType.js";

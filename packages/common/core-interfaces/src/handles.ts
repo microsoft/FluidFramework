@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Brand, type Erased, brandErased, fromErased } from "./brand.js";
+import { type ErasedType } from "./erasedType.js";
 import type { IRequest, IResponse } from "./fluidRouter.js";
 
 /**
@@ -119,27 +119,32 @@ export interface IFluidHandle<out T = unknown> {
 	get(): Promise<T>;
 
 	/**
-	 * Symbol used to mark an object as a {@link (IFluidHandle:interface)}.
+	 * Symbol used to mark an object as a {@link (IFluidHandle:interface)}
+	 * and to recover the underlying handle implementation.
 	 * @privateRemarks
-	 * Used to recover {@link IFluidHandleInternal}, see {@link toInternal}.
+	 * Used to recover {@link IFluidHandleInternal}, see {@link toFluidHandleInternal}.
 	 */
 	readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
 }
 
-type HandleBrand<T> = Brand<IFluidHandleInternal<T>, IFluidHandleErased<T>>;
-
 /**
+ * A type erased Fluid Handle.
+ * These can only be produced by the Fluid Framework and provide the implementation details needed to power {@link (IFluidHandle:interface)}.
+ * @privateRemarks
+ * Created from {@link IFluidHandleInternal} using {@link toFluidHandleErased}.
  * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IFluidHandleErased<T> extends Erased<readonly ["IFluidHandle", T]> {}
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {}
 
 /**
- * Upcast a IFluidHandle to IFluidHandleInternal.
+ * Downcast an IFluidHandle to an IFluidHandleInternal.
  * @alpha
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
-	return fromErased<HandleBrand<T>>(handle[fluidHandleSymbol]);
+	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
+	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
+	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
 }
 
 /**
@@ -147,5 +152,5 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
  * @alpha
  */
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T> {
-	return brandErased<HandleBrand<T>>(handle);
+	return handle as unknown as IFluidHandleErased<T>;
 }

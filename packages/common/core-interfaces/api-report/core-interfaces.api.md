@@ -4,34 +4,8 @@
 
 ```ts
 
-// @alpha
-export type Brand<ValueType, Name extends string | ErasedType> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Name>;
-
-// @internal
-export function brand<T>(value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never): T;
-
-// @alpha @sealed
-export abstract class BrandedType<out ValueType, Name> {
-    static [Symbol.hasInstance](value: never): value is never;
-    protected abstract brand(dummy: never): Name;
-    // (undocumented)
-    protected _typeCheck?: Covariant<ValueType>;
-}
-
-// @internal
-export function brandErased<T extends BrandedType<unknown, unknown>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): ErasedType<NameFromBranded<T>>;
-
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
-
-// @alpha
-export interface Covariant<out T> {
-    // (undocumented)
-    _removeContravariance?: T;
-}
-
-// @public
-export type Erased<Name> = ErasedType<Name>;
 
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
@@ -288,8 +262,8 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     readonly routeContext?: IFluidHandleContext;
 }
 
-// @public (undocumented)
-export interface IFluidHandleErased<T> extends Erased<readonly ["IFluidHandle", T]> {
+// @public
+export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandle", T]> {
 }
 
 // @alpha
@@ -386,9 +360,6 @@ export interface IResponse {
     value: any;
 }
 
-// @internal
-export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
-
 // @internal (undocumented)
 export interface ISignalEnvelope {
     address?: string;
@@ -442,9 +413,6 @@ export const LogLevel: {
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
-// @internal
-export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<unknown, infer Name> ? Name : never;
-
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
@@ -469,9 +437,6 @@ export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleI
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
-
-// @internal
-export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<infer ValueType, unknown> ? ValueType : never;
 
 // (No @packageDocumentation comment for this package)
 
