@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { fail, strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
+import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import {
-	ChangeFamily,
-	ChangeRebaser,
-	TaggedChange,
 	AnchorSet,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyCodec,
 	ChangeFamilyEditor,
-	FieldKey,
-	emptyDelta,
+	ChangeRebaser,
 	DeltaFieldMap,
 	DeltaRoot,
-	ChangeFamilyCodec,
-	ChangeEncodingContext,
+	FieldKey,
+	TaggedChange,
+	emptyDelta,
 } from "../core/index.js";
-import { IJsonCodec, makeCodecFamily } from "../codec/index.js";
 import { JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util/index.js";
 import { deepFreeze } from "./utils.js";
 
@@ -103,7 +103,7 @@ function composeList(changes: TestChange[], verify: boolean = true): TestChange 
 			intentions = composeIntentions(intentions, change.intentions);
 		}
 	}
-	if (inputContext !== undefined) {
+	if (intentions.length !== 0 && inputContext !== undefined) {
 		return {
 			inputContext,
 			intentions,

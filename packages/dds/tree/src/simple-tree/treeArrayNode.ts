@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TreeArrayNodeBase, TreeNode } from "./types.js";
 import {
 	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
 } from "./schemaTypes.js";
+import { TreeArrayNodeBase } from "./types.js";
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.
@@ -18,12 +18,11 @@ import {
  * @public
  */
 export interface TreeArrayNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends TreeNode,
-		TreeArrayNodeBase<
-			TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-			InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-			TreeArrayNode
-		> {}
+	extends TreeArrayNodeBase<
+		TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+		InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+		TreeArrayNode
+	> {}
 
 /**
  * A {@link TreeNode} which implements 'readonly T[]' and the array mutation APIs.

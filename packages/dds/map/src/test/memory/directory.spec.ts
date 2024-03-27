@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IMemoryTestObject, benchmarkMemory } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DirectoryFactory, SharedDirectory } from "../../directory.js";
 
 function createLocalDirectory(id: string): SharedDirectory {

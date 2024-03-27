@@ -11,8 +11,8 @@
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 
-import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { SharedCell } from "@fluidframework/cell";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { type Edit, type EditSharedObject } from "./DataEditing.js";
 
 /**

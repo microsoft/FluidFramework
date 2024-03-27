@@ -25,7 +25,7 @@ export class AzureClient {
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;

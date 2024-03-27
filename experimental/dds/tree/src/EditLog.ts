@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { BTree } from '@tylerbu/sorted-btree-es6';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { assert, compareArrays } from '@fluidframework/core-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
+import { assert, compareArrays } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { BTree } from '@tylerbu/sorted-btree-es6';
+import type { ChangeCompressor } from './ChangeCompression.js';
 import { fail } from './Common.js';
 import type { EditId } from './Identifiers.js';
 import type { StringInterner } from './StringInterner.js';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types/index.js';
-import type { ChangeCompressor } from './ChangeCompression.js';
 
 /**
  * An ordered set of Edits associated with a SharedTree.

@@ -101,8 +101,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // (undocumented)
-    protected clientSequenceNumber: number;
     // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
@@ -129,14 +127,13 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
-    protected get referenceSequenceNumber(): number;
     // (undocumented)
     protected reSubmitMessages(messagesToResubmit: {
         content: any;
-        localOpMetadata: unknown;
+        localOpMetadata?: unknown;
     }[]): void;
     // (undocumented)
-    submit(messageContent: any, localOpMetadata: unknown): number;
+    submit(messageContent: any, localOpMetadata?: unknown): number;
 }
 
 // @alpha
@@ -224,11 +221,13 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor();
+    constructor(getClientId?: (() => string) | undefined);
     // (undocumented)
     readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
+    // (undocumented)
+    clientSequenceNumber: number;
     // (undocumented)
     readonly clientType: string;
     // (undocumented)
@@ -262,7 +261,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    prepareInboundResponse(type: MessageType, contents: any): void;
+    process(message: ISequencedDocumentMessage): void;
     // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
@@ -415,6 +414,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     });
     // (undocumented)
     get absolutePath(): string;
+    // (undocumented)
+    addChannel(channel: IChannel): void;
     // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)

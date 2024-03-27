@@ -17,27 +17,21 @@
 	"bin": {
 		"fluid-readme": "./bin/run.js"
 	},
-	"files": [
-		"/bin",
-		"/lib",
-		"/oclif.manifest.json"
-	],
+	"files": ["/bin", "/lib", "/oclif.manifest.json"],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run build:readme",
 		"build:manifest": "oclif manifest",
 		"build:readme": "node ./bin/dev generate readme",
 		"check:biome": "biome check .",
-		"check:format": "npm run check:biome && npm run check:prettier",
-		"check:prettier": "prettier --check . --cache",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run format:biome && npm run format:prettier",
+		"format": "npm run format:biome",
 		"format:biome": "biome check --apply .",
-		"format:prettier": "prettier --write . --cache",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"postpack": "npm run clean:manifest",
@@ -52,7 +46,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^4.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@oclif/test": "~2.3.33",
 		"@types/chai": "^4.3.5",
 		"@types/chai-arrays": "^2.0.0",
@@ -65,7 +59,6 @@
 		"eslint-config-oclif": "^5.0.0",
 		"eslint-config-oclif-typescript": "^3.0.8",
 		"eslint-config-prettier": "~9.0.0",
-		"prettier": "~3.2.4",
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.1",
 		"tslib": "^2.6.0",
@@ -78,21 +71,15 @@
 		"bin": "fluid-readme",
 		"flexibleTaxonomy": true,
 		"commands": "./lib/commands",
-		"additionalHelpFlags": [
-			"-h"
-		],
-		"additionalVersionFlags": [
-			"-V"
-		],
+		"additionalHelpFlags": ["-h"],
+		"additionalVersionFlags": ["-V"],
 		"plugins": [],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/readme-command/<%- commandPath %>",
 		"topicSeparator": " "
 	},
 	"pnpm": {
 		"updateConfig": {
-			"ignoreDependencies": [
-				"typescript"
-			]
+			"ignoreDependencies": ["typescript"]
 		}
 	}
 }

@@ -2,17 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+
+import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
 import {
 	IClientConfig,
 	TokenRequestCredentials,
 	getFetchTokenUrl,
 	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { IOdspTokenProvider } from "@fluid-experimental/odsp-client";
-import { IOdspCredentials } from "./OdspClientFactory";
+import { TokenResponse } from "@fluidframework/odsp-driver-definitions";
+import { IOdspCredentials } from "./OdspClientFactory.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.

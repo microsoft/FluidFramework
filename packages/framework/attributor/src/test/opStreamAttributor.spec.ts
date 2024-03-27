@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";

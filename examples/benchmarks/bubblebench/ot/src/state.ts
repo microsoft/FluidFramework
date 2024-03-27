@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import {
 	IAppState,
-	IClient,
 	IArrayish,
+	IClient,
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
+import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
 import { observe } from "./proxy/index.js";
 
 interface IApp {

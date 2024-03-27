@@ -2,35 +2,36 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils';
 import {
-	IChannelFactory,
 	type IChannelAttributes,
+	IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
+import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor';
+import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
-	type ITelemetryContext,
 	type ISummaryTreeWithStats,
+	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
-import { type ITree } from '@fluidframework/tree';
-import { assert } from '@fluidframework/core-utils';
-import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import type { SessionId, IIdCompressorCore } from '@fluidframework/id-compressor';
+import { type ITree } from '@fluidframework/tree';
 import {
-	type SharedTreeFactory as LegacySharedTreeFactory,
 	type SharedTree as LegacySharedTree,
+	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
-import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
+import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
-import { type IShim, type IOpContents } from './types.js';
+import { type IOpContents, type IShim } from './types.js';
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.

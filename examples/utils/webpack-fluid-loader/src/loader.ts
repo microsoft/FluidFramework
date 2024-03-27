@@ -3,41 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import sillyname from "sillyname";
-import { v4 as uuid } from "uuid";
 import { IFluidMountableView } from "@fluid-example/example-utils";
-import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
-	IFluidCodeResolver,
-	IResolvedFluidCodeDetails,
-	isFluidBrowserPackage,
 	IContainer,
-	IFluidPackage,
 	IFluidCodeDetails,
-	IFluidModuleWithDetails,
+	IFluidCodeResolver,
 	IFluidModule,
+	IFluidModuleWithDetails,
+	IFluidPackage,
+	IResolvedFluidCodeDetails,
 	LoaderHeader,
+	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { InsecureUrlResolver } from "@fluidframework/driver-utils";
-import { Port } from "webpack-dev-server";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { getUrlResolver } from "./getUrlResolver.js";
+import sillyname from "sillyname";
+import { v4 as uuid } from "uuid";
+import { Port } from "webpack-dev-server";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory.js";
+import { getUrlResolver } from "./getUrlResolver.js";
 import { OdspPersistentCache } from "./odspPersistantCache.js";
 import { OdspUrlResolver } from "./odspUrlResolver.js";
 import {
+	WebCodeLoader,
 	extractPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
-	WebCodeLoader,
 } from "./webCodeLoader/index.js";
 
 export interface IDevServerUser extends IUser {

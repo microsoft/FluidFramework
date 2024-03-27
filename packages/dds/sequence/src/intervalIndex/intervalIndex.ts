@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISerializableInterval } from "../intervals";
+import { ISerializableInterval } from "../intervals/index.js";
 
 /**
  * Collection of intervals.

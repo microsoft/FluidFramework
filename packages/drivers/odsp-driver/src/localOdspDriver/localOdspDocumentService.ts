@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -15,6 +14,7 @@ import {
 import { UsageError } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
 import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";
 

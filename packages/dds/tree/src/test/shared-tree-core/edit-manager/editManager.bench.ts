@@ -4,22 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
-import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
-import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
-import { Commit } from "../../../shared-tree-core/index.js";
-import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { noopValidator } from "../../../codec/index.js";
+import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
+import { DefaultChangeFamily } from "../../../feature-libraries/index.js";
+import { Commit } from "../../../shared-tree-core/index.js";
 import { brand } from "../../../util/index.js";
 import { Editor, makeEditMinter } from "../../editMinter.js";
+import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
 import { failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
 import {
+	editManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseConcurrentPeerEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
-	editManagerFactory,
 } from "./editManagerTestUtils.js";
 
 describe("EditManager - Bench", () => {

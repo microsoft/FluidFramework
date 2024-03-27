@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ux, Flags, Command } from "@oclif/core";
 import { strict as assert } from "node:assert";
 import chalk from "chalk";
@@ -12,7 +13,20 @@ import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 
-import { Context, VersionDetails } from "@fluidframework/build-tools";
+import {
+	VersionDetails,
+	Context,
+	PackageVersionMap,
+	ReleaseReport,
+	ReportKind,
+	filterVersionsOlderThan,
+	getDisplayDate,
+	getDisplayDateRelative,
+	getFluidDependencies,
+	getRanges,
+	sortVersions,
+	toReportKind,
+} from "../../library";
 
 import {
 	ReleaseVersion,
@@ -25,18 +39,6 @@ import {
 
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
-import {
-	PackageVersionMap,
-	ReleaseReport,
-	ReportKind,
-	filterVersionsOlderThan,
-	getDisplayDate,
-	getDisplayDateRelative,
-	getFluidDependencies,
-	getRanges,
-	sortVersions,
-	toReportKind,
-} from "../../library";
 import { CommandLogger } from "../../logging";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 
@@ -104,8 +106,8 @@ export abstract class ReleaseReportBaseCommand<
 		return date === undefined
 			? false
 			: this.numberBusinessDaysToConsiderRecent === undefined
-			  ? true
-			  : differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
+				? true
+				: differenceInBusinessDays(Date.now(), date) < this.numberBusinessDaysToConsiderRecent;
 	}
 
 	/**
@@ -119,7 +121,6 @@ export abstract class ReleaseReportBaseCommand<
 	 */
 	protected async collectReleaseData(
 		context: Context,
-		// eslint-disable-next-line default-param-last
 		mode: ReleaseSelectionMode = this.defaultMode,
 		releaseGroupOrPackage?: ReleaseGroup | ReleasePackage,
 		includeDependencies = true,
@@ -401,10 +402,10 @@ export default class ReleaseReportCommand extends ReleaseReportBaseCommand<
 			flags.highest === true
 				? "version"
 				: flags.mostRecent === true
-				  ? "date"
-				  : flags.interactive
-					  ? "interactive"
-					  : this.defaultMode;
+					? "date"
+					: flags.interactive
+						? "interactive"
+						: this.defaultMode;
 		assert(mode !== undefined, `mode is undefined`);
 
 		this.releaseGroupName = flags.releaseGroup;
@@ -671,7 +672,7 @@ async function writeReport(
 	const version =
 		releaseGroup === undefined
 			? // Use container-runtime as a proxy for the client release group.
-			  report["@fluidframework/container-runtime"].version
+				report["@fluidframework/container-runtime"].version
 			: context.getVersion(releaseGroup);
 
 	const reportName = generateReportFileName(kind, version, releaseGroup);

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,

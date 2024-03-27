@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";
 import { compareFiniteNumbers } from "../utilities.js";
 

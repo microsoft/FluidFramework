@@ -4,7 +4,6 @@
  */
 
 import { TAnySchema, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly } from "../util/index.js";
 import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -13,8 +12,9 @@ import {
 	RevisionTag,
 } from "../core/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
-import { DecodedMessage } from "./messageTypes.js";
+import { JsonCompatibleReadOnly } from "../util/index.js";
 import { Message } from "./messageFormat.js";
+import { DecodedMessage } from "./messageTypes.js";
 
 export interface MessageEncodingContext {
 	schema?: SchemaAndPolicy;

@@ -8,15 +8,15 @@
 
 import { strict as assert } from "assert";
 import { leaf } from "../../domains/index.js";
-import { brand } from "../../util/index.js";
-import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
-import { extractRawNodeContent, RawObjectNode } from "../../simple-tree/rawNode.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
 	FlexObjectNodeSchema,
 	SchemaBuilderBase,
 } from "../../feature-libraries/index.js";
+import { RawObjectNode, extractRawNodeContent } from "../../simple-tree/rawNode.js";
+import { brand } from "../../util/index.js";
+import { contextWithContentReadonly } from "../feature-libraries/flex-tree/utils.js";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {

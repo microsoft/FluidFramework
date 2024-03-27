@@ -153,10 +153,14 @@ export {
 
 export {
 	areEqualChangeAtomIds,
+	makeChangeAtomId,
+	asChangeAtomId,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	CommitKind,
+	CommitMetadata,
 	RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -192,9 +196,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export {
-	Revertible,
-	RevertibleKind,
-	RevertibleStatus,
-	RevertibleResult,
-} from "./revertible/index.js";
+export { Revertible, RevertibleStatus } from "./revertible/index.js";

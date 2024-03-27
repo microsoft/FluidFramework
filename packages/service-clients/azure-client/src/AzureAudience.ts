@@ -33,7 +33,8 @@ function assertIsAzureUser(user: IUser): asserts user is AzureUser<unknown> {
 	if (maybeAzureUser.id === undefined) {
 		throw new TypeError(`${baseMessage} Missing required "id" property.`);
 	}
-	if (maybeAzureUser.name === undefined) {
-		throw new TypeError(`${baseMessage} Missing required "name" property.`);
-	}
+	// AB#7448 to reenable this check.  Disabling to mitigate a bug that the name may be missing.
+	// if (maybeAzureUser.name === undefined) {
+	// 	throw new TypeError(`${baseMessage} Missing required "name" property.`);
+	// }
 }

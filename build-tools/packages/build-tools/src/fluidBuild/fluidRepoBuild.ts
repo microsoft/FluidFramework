@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as path from "path";
 import chalk from "chalk";
 import { FluidRepo, IFluidBuildConfig } from "../common/fluidRepo";

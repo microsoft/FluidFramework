@@ -6,22 +6,22 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type IDevtoolsMessage,
-	type ISourcedDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
-	isDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
+	isDevtoolsMessage,
 } from "@fluidframework/devtools-core";
 
-import { browser } from "./Globals";
+import { browser } from "./Globals.js";
 import {
-	devToolsInitAcknowledgementType,
 	type DevToolsInitMessage,
-	devToolsInitMessageType,
-	extensionViewMessageSource,
-	extensionPopupMessageSource,
 	type TypedPortConnection,
-} from "./messaging";
+	devToolsInitAcknowledgementType,
+	devToolsInitMessageType,
+	extensionPopupMessageSource,
+	extensionViewMessageSource,
+} from "./messaging/index.js";
 
 /**
  * {@link BackgroundConnection} input parameters.

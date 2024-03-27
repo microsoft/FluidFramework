@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ContainerMessageType } from "../messageTypes.js";
 import { IBatch } from "./definitions.js";
 
 /**
@@ -28,6 +27,10 @@ function isGroupContents(opContents: any): opContents is IGroupedBatchMessageCon
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
+export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
+	return isGroupContents(op.contents);
+}
+
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 	readonly opCountThreshold: number;
@@ -46,9 +49,7 @@ export class OpGroupingManager {
 	}
 
 	public groupBatch(batch: IBatch): IBatch {
-		if (!this.shouldGroup(batch)) {
-			return batch;
-		}
+		assert(this.shouldGroup(batch), "cannot group the provided batch");
 
 		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
@@ -84,11 +85,9 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
-					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
 				},
 			],
 		};
@@ -96,13 +95,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents)) {
-			return [op];
-		}
+		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		const contents: IGroupedBatchMessageContents = op.contents;
 
-		const messages = op.contents.contents;
 		let fakeCsn = 1;
-		return messages.map((subMessage) => ({
+		return contents.contents.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,

@@ -4,13 +4,13 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils";
 import { IQuorumClients } from "@fluidframework/protocol-definitions";
 import {
 	IOldestClientObservable,
-	IOldestClientObserverEvents,
 	IOldestClientObserver,
+	IOldestClientObserverEvents,
 } from "./interfaces.js";
 
 /**

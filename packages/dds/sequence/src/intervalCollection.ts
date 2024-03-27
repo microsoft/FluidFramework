@@ -7,53 +7,36 @@
 /* eslint-disable import/no-deprecated */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	addProperties,
 	Client,
-	createMap,
-	getSlideToSegoff,
+	DetachedReferencePosition,
 	ISegment,
+	LocalReferencePosition,
 	MergeTreeDeltaType,
 	PropertySet,
-	LocalReferencePosition,
 	ReferenceType,
+	SlidingPreference,
+	UnassignedSequenceNumber,
+	UniversalSequenceNumber,
+	addProperties,
+	createMap,
+	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
-	UnassignedSequenceNumber,
-	DetachedReferencePosition,
-	UniversalSequenceNumber,
-	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 import {
+	IIntervalCollectionFactory,
+	IIntervalCollectionOperation,
+	IIntervalCollectionType,
 	IMapMessageLocalMetadata,
-	IValueFactory,
 	IValueOpEmitter,
-	IValueOperation,
-	IValueType,
 	SequenceOptions,
-} from "./defaultMapInterfaces";
-import {
-	CompressedSerializedInterval,
-	IIntervalHelpers,
-	Interval,
-	IntervalOpType,
-	IntervalStickiness,
-	IntervalType,
-	ISerializableInterval,
-	ISerializedInterval,
-	SequenceInterval,
-	SerializedIntervalDelta,
-	createPositionReferenceFromSegoff,
-	endReferenceSlidingPreference,
-	startReferenceSlidingPreference,
-	sequenceIntervalHelpers,
-	createInterval,
-} from "./intervals";
+} from "./intervalCollectionMapInterfaces.js";
 import {
 	EndpointIndex,
 	IEndpointIndex,
@@ -62,7 +45,24 @@ import {
 	IntervalIndex,
 	OverlappingIntervalsIndex,
 	createIdIntervalIndex,
-} from "./intervalIndex";
+} from "./intervalIndex/index.js";
+import {
+	CompressedSerializedInterval,
+	IIntervalHelpers,
+	ISerializableInterval,
+	ISerializedInterval,
+	Interval,
+	IntervalOpType,
+	IntervalStickiness,
+	IntervalType,
+	SequenceInterval,
+	SerializedIntervalDelta,
+	createInterval,
+	createPositionReferenceFromSegoff,
+	endReferenceSlidingPreference,
+	sequenceIntervalHelpers,
+	startReferenceSlidingPreference,
+} from "./intervals/index.js";
 
 /**
  * Defines a position and side relative to a character in a sequence.
@@ -477,9 +477,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 }
 
-class SequenceIntervalCollectionFactory
-	implements IValueFactory<IntervalCollection<SequenceInterval>>
-{
+class SequenceIntervalCollectionFactory implements IIntervalCollectionFactory<SequenceInterval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -502,7 +500,7 @@ class SequenceIntervalCollectionFactory
 }
 
 export class SequenceIntervalCollectionValueType
-	implements IValueType<IntervalCollection<SequenceInterval>>
+	implements IIntervalCollectionType<SequenceInterval>
 {
 	public static Name = "sharedStringIntervalCollection";
 
@@ -510,21 +508,21 @@ export class SequenceIntervalCollectionValueType
 		return SequenceIntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<SequenceInterval>> {
+	public get factory(): IIntervalCollectionFactory<SequenceInterval> {
 		return SequenceIntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<SequenceInterval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<SequenceInterval>> {
 		return SequenceIntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<SequenceInterval>> =
+	private static readonly _factory: IIntervalCollectionFactory<SequenceInterval> =
 		new SequenceIntervalCollectionFactory();
 
 	private static readonly _ops = makeOpsMap<SequenceInterval>();
 }
 
-class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Interval>> {
+class IntervalCollectionFactory implements IIntervalCollectionFactory<Interval> {
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
@@ -543,35 +541,31 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 	}
 }
 
-export class IntervalCollectionValueType implements IValueType<IntervalCollection<Interval>> {
+export class IntervalCollectionValueType implements IIntervalCollectionType<Interval> {
 	public static Name = "sharedIntervalCollection";
 
 	public get name(): string {
 		return IntervalCollectionValueType.Name;
 	}
 
-	public get factory(): IValueFactory<IntervalCollection<Interval>> {
+	public get factory(): IIntervalCollectionFactory<Interval> {
 		return IntervalCollectionValueType._factory;
 	}
 
-	public get ops(): Map<IntervalOpType, IValueOperation<IntervalCollection<Interval>>> {
+	public get ops(): Map<IntervalOpType, IIntervalCollectionOperation<Interval>> {
 		return IntervalCollectionValueType._ops;
 	}
 
-	private static readonly _factory: IValueFactory<IntervalCollection<Interval>> =
+	private static readonly _factory: IIntervalCollectionFactory<Interval> =
 		new IntervalCollectionFactory();
 	private static readonly _ops = makeOpsMap<Interval>();
 }
 
 export function makeOpsMap<T extends ISerializableInterval>(): Map<
 	IntervalOpType,
-	IValueOperation<IntervalCollection<T>>
+	IIntervalCollectionOperation<T>
 > {
-	const rebase: IValueOperation<IntervalCollection<T>>["rebase"] = (
-		collection,
-		op,
-		localOpMetadata,
-	) => {
+	const rebase: IIntervalCollectionOperation<T>["rebase"] = (collection, op, localOpMetadata) => {
 		const { localSeq } = localOpMetadata;
 		const rebasedValue = collection.rebaseLocalInterval(op.opName, op.value, localSeq);
 		if (rebasedValue === undefined) {
@@ -581,7 +575,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 		return { rebasedOp, rebasedLocalOpMetadata: localOpMetadata };
 	};
 
-	return new Map<IntervalOpType, IValueOperation<IntervalCollection<T>>>([
+	return new Map<IntervalOpType, IIntervalCollectionOperation<T>>([
 		[
 			IntervalOpType.ADD,
 			{
@@ -1427,6 +1421,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
+				if (interval instanceof SequenceInterval) {
+					this.client?.removeLocalReferencePosition(interval.start);
+					this.client?.removeLocalReferencePosition(interval.end);
+				}
 			}
 			return newInterval;
 		}

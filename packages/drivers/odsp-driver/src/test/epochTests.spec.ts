@@ -5,18 +5,22 @@
 
 import { strict as assert } from "node:assert";
 import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
+import { type NonRetryableError, ThrottlingError } from "@fluidframework/driver-utils";
 import {
-	OdspErrorTypes,
-	IOdspResolvedUrl,
 	ICacheEntry,
 	IEntry,
+	IOdspResolvedUrl,
+	OdspErrorTypes,
+	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
-import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker.js";
+import { type IFluidErrorBase, createChildLogger } from "@fluidframework/telemetry-utils";
+import { stub } from "sinon";
+import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
-import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch.js";
+import * as odspUtilsModule from "../odspUtils.js";
+import { createResponse, mockFetchOk, mockFetchSingle } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -57,15 +61,12 @@ describe("Tests for Epoch Tracker", () => {
 
 	it("defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs policy", () => {
 		// This is the maximum allowed value per the policy - 5 days
-		const maximumCacheDurationMs: Exclude<
+		const expected: Exclude<
 			IDocumentStorageServicePolicies["maximumCacheDurationMs"],
 			undefined
 		> = 432000000;
 
-		assert(
-			defaultCacheExpiryTimeoutMs <= maximumCacheDurationMs,
-			"Actual cache expiry used must meet the policy",
-		);
+		assert(maximumCacheDurationMs <= expected, "Actual cache expiry used must meet the policy");
 	});
 
 	it("Cache, old versions", async () => {
@@ -392,5 +393,76 @@ describe("Tests for Epoch Tracker", () => {
 			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
+	});
+
+	it("Checks throttling errors are non-retriable when disableRetriesOnStorageThrottlingError=true", async () => {
+		const retryAfterSeconds = 1;
+		let fetchStub;
+		const epochTrackerWithHostPolicy = new EpochTracker(
+			localCache,
+			{
+				docId: hashedDocumentId,
+				resolvedUrl,
+			},
+			createChildLogger(),
+			undefined,
+			{ disableRetriesOnStorageThrottlingError: true } /* hostPolicy */,
+		);
+		try {
+			// fetchHelper is used by epochTracker's fetch method, which we stub here to emulate throttling error
+			fetchStub = stub(odspUtilsModule, "fetchHelper");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+			fetchStub.callsFake(async () => {
+				throw new ThrottlingError("Server is throttled", retryAfterSeconds, {
+					testProp: "testProp",
+					driverVersion: "1",
+				});
+			});
+			await epochTrackerWithHostPolicy.fetch("fetchUrl", {}, "test");
+		} catch (error) {
+			// retoring the fetchHelper function to avoid causing errors in other tests
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+			fetchStub.restore();
+			assert(
+				(error as NonRetryableError<string>).canRetry === false,
+				"Error should be marked as non-retriable",
+			);
+			assert(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(error as any).retryAfterSeconds === retryAfterSeconds,
+				"retryAfterSeconds should exist",
+			);
+		}
+	});
+
+	it("Checks throttling errors retriable when disableRetriesOnStorageThrottlingError=false", async () => {
+		let fetchStub;
+		const epochTrackerWithHostPolicy = new EpochTracker(
+			localCache,
+			{
+				docId: hashedDocumentId,
+				resolvedUrl,
+			},
+			createChildLogger(),
+			undefined,
+			{ disableRetriesOnStorageThrottlingError: false } /* hostPolicy */,
+		);
+		try {
+			// fetchHelper is used by epochTracker's fetch method, which we stub here to emulate throttling error
+			fetchStub = stub(odspUtilsModule, "fetchHelper");
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+			fetchStub.callsFake(async () => {
+				throw new ThrottlingError("Server is throttled", 1000, {
+					testProp: "testProp",
+					driverVersion: "1",
+				});
+			});
+			await epochTrackerWithHostPolicy.fetch("fetchUrl", {}, "test");
+		} catch (error) {
+			// retoring the fetchHelper function to avoid causing errors in other tests
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+			fetchStub.restore();
+			assert((error as ThrottlingError).canRetry === true, "Error should be retriable");
+		}
 	});
 });

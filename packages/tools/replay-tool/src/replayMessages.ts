@@ -6,16 +6,9 @@
 import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
-import { assert, Lazy } from "@fluidframework/core-utils";
-import {
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -23,19 +16,26 @@ import {
 	FileStorageDocumentName,
 	FluidFetchReaderFileSnapshotWriter,
 	ISnapshotWriterStorage,
-	Replayer,
 	ReplayFileDeltaConnection,
+	Replayer,
 } from "@fluidframework/file-driver";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
-	ITree,
-	TreeEntry,
-	MessageType,
-	ITreeEntry,
 	ISummaryTree,
+	ITree,
+	ITreeEntry,
+	MessageType,
+	TreeEntry,
 } from "@fluidframework/protocol-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import stringify from "json-stable-stringify";
 import {
 	compareWithReferenceSnapshot,

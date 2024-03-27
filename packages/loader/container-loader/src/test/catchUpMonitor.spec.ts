@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { CatchUpMonitor } from "../catchUpMonitor.js";
 
 class MockDeltaManagerForCatchingUp

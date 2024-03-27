@@ -4,13 +4,13 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IContainer } from "@fluidframework/container-definitions";
 import { Signaler } from "@fluid-experimental/data-objects";
+import { IContainer } from "@fluidframework/container-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { createServiceAudience } from "@fluidframework/fluid-static";
+import { createMockServiceMember } from "./Audience.js";
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
-import { createMockServiceMember } from "./Audience.js";
 
 export interface ITrackerAppModel {
 	readonly focusTracker: FocusTracker;

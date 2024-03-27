@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { performance } from "@fluid-internal/client-utils";
 
 import {
 	ITelemetryLoggerExt,

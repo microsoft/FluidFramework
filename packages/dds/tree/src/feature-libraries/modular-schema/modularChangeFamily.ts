@@ -6,62 +6,62 @@
 import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
-	ChangeFamily,
-	EditBuilder,
-	ChangeRebaser,
-	FieldKindIdentifier,
-	FieldKey,
-	UpPath,
-	TaggedChange,
-	RevisionTag,
-	tagChange,
-	makeAnonChange,
-	ChangeFamilyEditor,
-	FieldUpPath,
-	ChangesetLocalId,
-	isEmptyFieldChanges,
-	RevisionMetadataSource,
-	RevisionInfo,
-	revisionMetadataSourceFromInfo,
 	ChangeAtomIdMap,
-	makeDetachedNodeId,
-	emptyDelta,
-	DeltaFieldMap,
-	DeltaFieldChanges,
+	ChangeEncodingContext,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	ChangeRebaser,
+	ChangesetLocalId,
+	CursorLocationType,
 	DeltaDetachedNodeBuild,
 	DeltaDetachedNodeDestruction,
-	DeltaRoot,
 	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-	RevisionTagCodec,
-	mapCursorField,
+	DeltaFieldChanges,
+	DeltaFieldMap,
+	DeltaRoot,
+	EditBuilder,
+	FieldKey,
+	FieldKindIdentifier,
+	FieldUpPath,
 	ITreeCursorSynchronous,
-	CursorLocationType,
+	RevisionInfo,
+	RevisionMetadataSource,
+	RevisionTag,
+	RevisionTagCodec,
+	TaggedChange,
+	UpPath,
+	emptyDelta,
+	isEmptyFieldChanges,
+	makeAnonChange,
+	makeDetachedNodeId,
+	mapCursorField,
+	revisionMetadataSourceFromInfo,
+	tagChange,
 } from "../../core/index.js";
 import {
+	IdAllocationState,
+	IdAllocator,
+	Mutable,
 	brand,
 	deleteFromNestedMap,
 	fail,
 	forEachInNestedMap,
 	getOrAddInMap,
-	IdAllocationState,
-	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	Mutable,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util/index.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import {
+	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
-	defaultChunkPolicy,
-	FieldBatchCodec,
 	chunkTree,
+	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	CrossFieldManager,
@@ -79,6 +79,7 @@ import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
+import { makeV0Codec } from "./modularChangeCodecs.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -86,7 +87,6 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 } from "./modularChangeTypes.js";
-import { makeV0Codec } from "./modularChangeCodecs.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -247,7 +247,10 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields = new Set();
 			for (const fieldChange of fieldsToUpdate) {
 				const context = crossFieldTable.fieldToContext.get(fieldChange);
-				assert(context !== undefined, "Should have context for every invalidated field");
+				assert(
+					context !== undefined,
+					0x8cc /* Should have context for every invalidated field */,
+				);
 				const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
 				const rebaser = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).rebaser;
@@ -440,6 +443,7 @@ export class ModularChangeFamily
 
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, revisionFromTaggedChange(change)),
+			isRollback,
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -463,6 +467,7 @@ export class ModularChangeFamily
 				).rebaser.invert(
 					tagChange(originalFieldChange, revision),
 					(nodeChangeset) => nodeChangeset,
+					isRollback,
 					genId,
 					newCrossFieldManager(crossFieldTable, fieldChange),
 					revisionMetadata,
@@ -500,6 +505,7 @@ export class ModularChangeFamily
 
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
+		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
@@ -518,10 +524,12 @@ export class ModularChangeFamily
 				(childChanges) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
+						isRollback,
 						genId,
 						crossFieldTable,
 						revisionMetadata,
 					),
+				isRollback,
 				genId,
 				manager,
 				revisionMetadata,
@@ -544,6 +552,7 @@ export class ModularChangeFamily
 
 	private invertNodeChange(
 		change: TaggedChange<NodeChangeset>,
+		isRollback: boolean,
 		genId: IdAllocator,
 		crossFieldTable: InvertTable,
 		revisionMetadata: RevisionMetadataSource,
@@ -553,6 +562,7 @@ export class ModularChangeFamily
 		if (change.change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
+				isRollback,
 				genId,
 				crossFieldTable,
 				revisionMetadata,
@@ -1030,28 +1040,28 @@ function* relevantRemovedRootsFromFields(
  * Can be retrieved by calling {@link relevantRemovedRoots}.
  */
 export function updateRefreshers(
-	change: TaggedChange<ModularChangeset>,
+	{ change, revision }: TaggedChange<ModularChangeset>,
 	getDetachedNode: (id: DeltaDetachedNodeId) => TreeChunk | undefined,
 	removedRoots: Iterable<DeltaDetachedNodeId>,
 ): ModularChangeset {
 	const refreshers: ChangeAtomIdMap<TreeChunk> = new Map();
 
 	for (const root of removedRoots) {
-		if (change.change.builds !== undefined) {
+		if (change.builds !== undefined) {
+			const major = root.major === revision ? undefined : root.major;
 			// if the root exists in the original builds map, it does not need to be added as a refresher
-			const original = tryGetFromNestedMap(change.change.builds, root.major, root.minor);
+			const original = tryGetFromNestedMap(change.builds, major, root.minor);
 			if (original !== undefined) {
 				continue;
 			}
 		}
 
 		const node = getDetachedNode(root);
-		assert(node !== undefined, "detached node should exist");
+		assert(node !== undefined, 0x8cd /* detached node should exist */);
 		setInNestedMap(refreshers, root.major, root.minor, node);
 	}
 
-	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } =
-		change.change;
+	const { fieldChanges, maxId, revisions, constraintViolationCount, builds, destroys } = change;
 	return makeModularChangeset(
 		fieldChanges,
 		maxId,
@@ -1486,9 +1496,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
-		maxId: ChangesetLocalId = brand(-1),
 	): void {
-		const modularChange = this.buildChange(field, fieldKind, change, maxId);
+		const modularChange = this.buildChange(field, fieldKind, change);
 		this.applyChange(modularChange);
 	}
 
@@ -1503,21 +1512,17 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
-		maxId: ChangesetLocalId = brand(-1),
 	): ModularChangeset {
 		const changeMap = this.buildChangeMap(field, fieldKind, change);
-		return makeModularChangeset(changeMap, maxId);
+		return makeModularChangeset(changeMap, this.idAllocator.getMaxId());
 	}
 
-	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
-		const modularChange = this.buildChanges(changes, maxId);
+	public submitChanges(changes: EditDescription[]) {
+		const modularChange = this.buildChanges(changes);
 		this.applyChange(modularChange);
 	}
 
-	public buildChanges(
-		changes: EditDescription[],
-		maxId: ChangesetLocalId = brand(-1),
-	): ModularChangeset {
+	public buildChanges(changes: EditDescription[]): ModularChangeset {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				change.type === "global"
@@ -1534,6 +1539,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
+
+		const maxId: ChangesetLocalId = brand(this.idAllocator.getMaxId());
 		if (maxId >= 0) {
 			composedChange.maxId = maxId;
 		}

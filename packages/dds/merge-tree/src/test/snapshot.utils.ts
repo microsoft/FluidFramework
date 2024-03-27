@@ -6,17 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { IMergeTreeOp, ReferenceType } from "../ops.js";
-import { SnapshotV1 } from "../snapshotV1.js";
 import { IMergeTreeOptions } from "../mergeTree.js";
-import { PropertySet } from "../properties.js";
 import { ISegment } from "../mergeTreeNodes.js";
+import { IMergeTreeOp, ReferenceType } from "../ops.js";
+import { PropertySet } from "../properties.js";
+import { SnapshotV1 } from "../snapshotV1.js";
+import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { TestSerializer } from "./testSerializer.js";
-import { TestClient } from "./testClient.js";
 
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {

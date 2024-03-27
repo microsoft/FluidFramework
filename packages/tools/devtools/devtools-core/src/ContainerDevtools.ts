@@ -7,19 +7,21 @@ import { type IAudience, type IContainer } from "@fluidframework/container-defin
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
+import { type AudienceClientMetadata } from "./AudienceMetadata.js";
 import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
 import { type ContainerStateMetadata } from "./ContainerMetadata.js";
+import { type ContainerDevtoolsFeatureFlags } from "./Features.js";
+import { type IContainerDevtools } from "./IContainerDevtools.js";
+import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
-	defaultVisualizers,
-	defaultEditors,
 	type FluidObjectNode,
 	type RootHandleNode,
 	type SharedObjectEdit,
+	defaultEditors,
+	defaultVisualizers,
 } from "./data-visualization/index.js";
-import { type IContainerDevtools } from "./IContainerDevtools.js";
-import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	AudienceSummary,
 	CloseContainer,
@@ -35,16 +37,14 @@ import {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	type MessageLoggingOptions,
-	postMessagesToWindow,
 	RootDataVisualizations,
+	handleIncomingWindowMessage,
+	postMessagesToWindow,
 } from "./messaging/index.js";
-import { type AudienceClientMetadata } from "./AudienceMetadata.js";
-import { type ContainerDevtoolsFeatureFlags } from "./Features.js";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.

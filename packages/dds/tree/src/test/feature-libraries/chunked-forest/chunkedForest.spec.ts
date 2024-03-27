@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-// Allow importing from this specific file which is being tested:
-// eslint-disable-next-line import/no-internal-modules
-import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
-	IChunker,
-	makeTreeChunker,
 	Chunker,
-	polymorphic,
+	IChunker,
 	ShapeInfo,
 	defaultChunkPolicy,
+	makeTreeChunker,
+	polymorphic,
 	tryShapeFromSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// Allow importing from this specific file which is being tested:
+// eslint-disable-next-line import/no-internal-modules
+import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 
 import { TreeStoredSchemaSubscription } from "../../../core/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";

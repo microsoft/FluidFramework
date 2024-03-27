@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { loadSnapshot, TestString } from "./snapshot.utils.js";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 describe("MergeTree snapshots", () => {
 	let summary;

@@ -6,33 +6,33 @@
 import { strict as assert } from "assert";
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { Revertible } from "../../../core/index.js";
 import {
 	DownPath,
 	FlexTreeField,
 	FlexTreeNode,
-	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
 import { fail } from "../../../util/index.js";
 import { validateTreeConsistency } from "../../utils.js";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
-import { Revertible } from "../../../core/index.js";
-import {
-	FieldEdit,
-	FuzzRemove,
-	FuzzFieldChange,
-	FuzzSet,
-	FuzzTransactionType,
-	FuzzUndoRedoType,
-	Operation,
-} from "./operationTypes.js";
-import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import {
 	FuzzTestState,
 	FuzzTransactionView,
 	FuzzView,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
+import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import {
+	FieldEdit,
+	FuzzFieldChange,
+	FuzzRemove,
+	FuzzSet,
+	FuzzTransactionType,
+	FuzzUndoRedoType,
+	Operation,
+} from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
@@ -110,7 +110,7 @@ function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
 			assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
 			assert(field !== undefined);
-			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
+			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
 		case "remove": {

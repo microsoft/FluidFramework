@@ -4,27 +4,28 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions";
 import {
-	ITelemetryContext,
-	ISummaryTreeWithStats,
 	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
+import { ICodecOptions, noopValidator } from "../../codec/index.js";
 import {
-	applyDelta,
 	DeltaDetachedNodeBuild,
 	DeltaFieldChanges,
 	FieldKey,
-	forEachField,
 	IEditableForest,
 	ITreeCursorSynchronous,
 	ITreeSubscriptionCursor,
-	makeDetachedFieldIndex,
-	mapCursorField,
 	RevisionTagCodec,
 	TreeNavigationResult,
+	applyDelta,
+	forEachField,
+	makeDetachedFieldIndex,
+	mapCursorField,
 } from "../../core/index.js";
 import {
 	Summarizable,
@@ -32,12 +33,11 @@ import {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
-import { ICodecOptions, noopValidator } from "../../codec/index.js";
-import { FieldBatchEncodingContext, FieldBatchCodec } from "../chunked-forest/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
-import { Format } from "./format.js";
+import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
+import { Format } from "./format.js";
 /**
  * The storage key for the blob in the summary containing tree data
  */

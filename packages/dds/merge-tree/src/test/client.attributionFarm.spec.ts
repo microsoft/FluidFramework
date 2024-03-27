@@ -4,19 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy.js";
 import {
-	IMergeTreeOperationRunnerConfig,
-	removeRange,
-	runMergeTreeOperationRunner,
-	generateClientNames,
 	IConfigRange,
+	IMergeTreeOperationRunnerConfig,
 	TestOperation,
-	resolveRanges,
+	generateClientNames,
 	insert,
+	removeRange,
+	resolveRanges,
+	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";

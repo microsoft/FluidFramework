@@ -4,47 +4,50 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
-import type { SharedCell } from "@fluidframework/cell";
-import type { SharedCounter } from "@fluidframework/counter";
-import {
-	ReferenceType,
-	reservedMarkerIdKey,
-	reservedMarkerSimpleTypeKey,
-	reservedTileLabelsKey,
-} from "@fluidframework/merge-tree";
-import type { SharedString, IIntervalCollection, SequenceInterval } from "@fluidframework/sequence";
-import { SharedObject } from "@fluidframework/shared-object-base";
-import {
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	ITestContainerConfig,
-	ITestObjectProvider,
-	DataObjectFactoryType,
-	createAndAttachContainer,
-	createDocumentId,
-	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	describeCompat,
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
+import type { SharedCell } from "@fluidframework/cell";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { Deferred } from "@fluidframework/core-utils";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	DefaultSummaryConfiguration,
+	type RecentlyAddedContainerRuntimeMessageDetails,
+} from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IRequest,
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
+import type { SharedCounter } from "@fluidframework/counter";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map";
 import {
-	ContainerRuntime,
-	DefaultSummaryConfiguration,
-	type RecentlyAddedContainerRuntimeMessageDetails,
-} from "@fluidframework/container-runtime";
+	ReferenceType,
+	reservedMarkerIdKey,
+	reservedMarkerSimpleTypeKey,
+	reservedTileLabelsKey,
+} from "@fluidframework/merge-tree";
+import type { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
+import { SharedObject } from "@fluidframework/shared-object-base";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	createAndAttachContainer,
+	createDocumentId,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
+import { wrapObjectAndOverride } from "../mocking.js";
 const mapId = "map";
 const stringId = "sharedStringKey";
 const cellId = "cellKey";
@@ -87,6 +90,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 		runtimeOptions: {
+			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disable
+			compressionOptions: {
+				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
 			summaryOptions: {
 				summaryConfigOverrides: {
 					...DefaultSummaryConfiguration,
@@ -98,7 +106,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({
@@ -177,30 +185,26 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		pendingLocalState?: string,
 	): Promise<{ container: IContainerExperimental; connect: () => void }> {
 		const p = new Deferred();
-		const documentServiceFactory = testObjectProvider.driver.createDocumentServiceFactory();
+		const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
+			provider.documentServiceFactory,
+			{
+				createDocumentService: {
+					connectToDeltaStream: (ds) => async (client) => {
+						await p.promise;
+						return ds.connectToDeltaStream(client);
+					},
+					connectToDeltaStorage: (ds) => async () => {
+						await p.promise;
+						return ds.connectToDeltaStorage();
+					},
+					connectToStorage: (ds) => async () => {
+						await p.promise;
+						return ds.connectToStorage();
+					},
+				},
+			},
+		);
 
-		// patch document service methods to simulate offline by not resolving until we choose to
-		const boundFn = documentServiceFactory.createDocumentService.bind(documentServiceFactory);
-		documentServiceFactory.createDocumentService = async (...args) => {
-			const docServ = await boundFn(...args);
-			const boundCTDStream = docServ.connectToDeltaStream.bind(docServ);
-			docServ.connectToDeltaStream = async (...args2) => {
-				await p.promise;
-				return boundCTDStream(...args2);
-			};
-			const boundCTDStorage = docServ.connectToDeltaStorage.bind(docServ);
-			docServ.connectToDeltaStorage = async (...args2) => {
-				await p.promise;
-				return boundCTDStorage(...args2);
-			};
-			const boundCTStorage = docServ.connectToStorage.bind(docServ);
-			docServ.connectToStorage = async (...args2) => {
-				await p.promise;
-				return boundCTStorage(...args2);
-			};
-
-			return docServ;
-		};
 		// eslint-disable-next-line @typescript-eslint/no-shadow
 		const loader = testObjectProvider.createLoader(
 			[
@@ -1767,7 +1771,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 					},
 				},
 			},
-			enableRuntimeIdCompressor: true,
+			enableRuntimeIdCompressor: "on",
 		},
 		loaderProps: {
 			configProvider: configProvider({

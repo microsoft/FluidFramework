@@ -4,10 +4,10 @@
  */
 
 import {
+	IFluidCodeDetails,
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
 	isFluidBrowserPackage,
-	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
 import { extractPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils.js";

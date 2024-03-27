@@ -4,20 +4,20 @@
  */
 
 import assert from "assert";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import {
-	TestFluidObject,
 	ITestObjectProvider,
+	TestFluidObject,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -101,7 +101,7 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		const sharedMapHandle = sharedMap.handle;
 
 		// The expected absolute path.
-		const absolutePath = `/default/${sharedMap.id}`;
+		const absolutePath = `/${firstContainerObject1._runtime.id}/${sharedMap.id}`;
 
 		// Verify that the local client's handle has the correct absolute path.
 		assert.equal(sharedMapHandle.absolutePath, absolutePath, "The handle's path is incorrect");

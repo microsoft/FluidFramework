@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import { strict as assert } from "node:assert";
 import chalk from "chalk";

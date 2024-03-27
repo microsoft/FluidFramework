@@ -57,7 +57,7 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
 
 // @alpha
 export class EpochTracker implements IPersistedFileCache {
-    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined);
+    constructor(cache: IPersistedCache, fileEntry: IFileEntry, logger: ITelemetryLoggerExt, clientIsSummarizer?: boolean | undefined, hostPolicy?: HostStoragePolicy | undefined);
     // (undocumented)
     protected readonly cache: IPersistedCache;
     // (undocumented)
@@ -73,6 +73,8 @@ export class EpochTracker implements IPersistedFileCache {
     get fluidEpoch(): string | undefined;
     // (undocumented)
     get(entry: IEntry): Promise<any>;
+    // (undocumented)
+    protected readonly hostPolicy?: HostStoragePolicy | undefined;
     // (undocumented)
     protected readonly logger: ITelemetryLoggerExt;
     // (undocumented)

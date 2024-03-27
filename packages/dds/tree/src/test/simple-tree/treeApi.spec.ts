@@ -4,35 +4,36 @@
  */
 
 import { strict as assert } from "node:assert";
-
-// eslint-disable-next-line import/no-internal-modules
-import { nodeApi } from "../../simple-tree/treeApi.js";
-import { TreeFactory } from "../../treeFactory.js";
-import { SchemaFactory, Tree, TreeConfiguration } from "../../simple-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
-import { getView } from "./utils.js";
+import {
+	NodeFromSchema,
+	SchemaFactory,
+	treeNodeApi as Tree,
+	TreeConfiguration,
+	TreeNode,
+} from "../../simple-tree/index.js";
+import { getView } from "../utils.js";
+import { hydrate } from "./utils.js";
 
 const schema = new SchemaFactory("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-const factory = new TreeFactory({});
-
 describe("treeApi", () => {
 	it("is", () => {
 		const config = new TreeConfiguration([Point, schema.number], () => ({}));
 		const root = getView(config).root;
-		assert(nodeApi.is(root, Point));
+		assert(Tree.is(root, Point));
 		assert(root instanceof Point);
-		assert(!nodeApi.is(root, schema.number));
-		assert(nodeApi.is(5, schema.number));
-		assert(!nodeApi.is(root, schema.number));
-		assert(!nodeApi.is(5, Point));
+		assert(!Tree.is(root, schema.number));
+		assert(Tree.is(5, schema.number));
+		assert(!Tree.is(root, schema.number));
+		assert(!Tree.is(5, Point));
 
 		const NotInDocument = schema.object("never", {});
 		// Using a schema that is not in the document throws:
-		assert.throws(() => nodeApi.is(root, NotInDocument));
+		assert.throws(() => Tree.is(root, NotInDocument));
 	});
 
 	it("`is` can narrow polymorphic leaf field content", () => {
@@ -64,18 +65,18 @@ describe("treeApi", () => {
 	it("schema", () => {
 		const config = new TreeConfiguration([Point, schema.number], () => ({}));
 		const root = getView(config).root;
-		assert.equal(nodeApi.schema(root), Point);
-		assert.equal(nodeApi.schema(5), schema.number);
+		assert.equal(Tree.schema(root), Point);
+		assert.equal(Tree.schema(5), schema.number);
 	});
 	it("key", () => {
 		class Child extends schema.object("Child", { x: Point }) {}
 		const Root = schema.array(Child);
 		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
 		const root = getView(config).root;
-		assert.equal(nodeApi.key(root), rootFieldKey);
-		assert.equal(nodeApi.key(root[0]), 0);
-		assert.equal(nodeApi.key(root[1]), 1);
-		assert.equal(nodeApi.key(root[1].x), "x");
+		assert.equal(Tree.key(root), rootFieldKey);
+		assert.equal(Tree.key(root[0]), 0);
+		assert.equal(Tree.key(root[1]), 1);
+		assert.equal(Tree.key(root[1].x), "x");
 	});
 
 	it("parent", () => {
@@ -83,10 +84,10 @@ describe("treeApi", () => {
 		const Root = schema.array(Child);
 		const config = new TreeConfiguration(Root, () => [{ x: {} }, { x: {} }]);
 		const root = getView(config).root;
-		assert.equal(nodeApi.parent(root), undefined);
-		assert.equal(nodeApi.parent(root[0]), root);
-		assert.equal(nodeApi.parent(root[1]), root);
-		assert.equal(nodeApi.parent(root[1].x), root[1]);
+		assert.equal(Tree.parent(root), undefined);
+		assert.equal(Tree.parent(root[0]), root);
+		assert.equal(Tree.parent(root[1]), root);
+		assert.equal(Tree.parent(root[1].x), root[1]);
 	});
 
 	it("treeStatus", () => {
@@ -95,14 +96,91 @@ describe("treeApi", () => {
 		const root = getView(config).root;
 		const child = root.x;
 		const newChild = new Point({});
-		assert.equal(nodeApi.status(root), TreeStatus.InDocument);
-		assert.equal(nodeApi.status(child), TreeStatus.InDocument);
+		assert.equal(Tree.status(root), TreeStatus.InDocument);
+		assert.equal(Tree.status(child), TreeStatus.InDocument);
 		// TODO: This API layer should have an Unhydrated status:
 		// assert.equal(nodeApi.status(newChild), TreeStatus.Unhydrated);
 		root.x = newChild;
-		assert.equal(nodeApi.status(root), TreeStatus.InDocument);
-		assert.equal(nodeApi.status(child), TreeStatus.Removed);
-		assert.equal(nodeApi.status(newChild), TreeStatus.InDocument);
+		assert.equal(Tree.status(root), TreeStatus.InDocument);
+		assert.equal(Tree.status(child), TreeStatus.Removed);
+		assert.equal(Tree.status(newChild), TreeStatus.InDocument);
 		// TODO: test Deleted status.
+	});
+
+	describe("on", () => {
+		const sb = new SchemaFactory("object");
+		const object = sb.object("child", {
+			content: sb.number,
+		});
+		const list = sb.array(object);
+		const treeSchema = sb.object("parent", { object, list });
+
+		describe("events", () => {
+			function check(mutate: (root: NodeFromSchema<typeof treeSchema>) => void) {
+				it(".on(..) must subscribe to change event", () => {
+					const root = hydrate(treeSchema, {
+						object: { content: 1 },
+						list: [{ content: 2 }, { content: 3 }],
+					});
+					const log: any[][] = [];
+
+					Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
+						log.push(args);
+					});
+
+					mutate(root);
+
+					const numChanges = log.length;
+					assert(
+						numChanges > 0,
+						"Must receive change notifications after subscribing to event.",
+					);
+				});
+
+				it(".on(..) must return unsubscribe function", () => {
+					const root = hydrate(treeSchema, {
+						object: { content: 1 },
+						list: [{ content: 2 }, { content: 3 }],
+					});
+					const log: any[][] = [];
+
+					const unsubscribe = Tree.on(
+						root as TreeNode,
+						"afterChange",
+						(...args: any[]) => {
+							log.push(args);
+						},
+					);
+
+					mutate(root);
+
+					const numChanges = log.length;
+					assert(
+						numChanges > 0,
+						"Must receive change notifications after subscribing to event.",
+					);
+
+					unsubscribe();
+
+					mutate(root);
+
+					assert.equal(
+						log.length,
+						numChanges,
+						"Mutation after unsubscribe must not emit change events.",
+					);
+				});
+			}
+
+			describe("object", () => {
+				check((root) => root.object.content++);
+			});
+
+			describe("list", () => {
+				check((root) => root.list.insertAtEnd({ content: root.list.length }));
+			});
+
+			// TODO: map
+		});
 	});
 });

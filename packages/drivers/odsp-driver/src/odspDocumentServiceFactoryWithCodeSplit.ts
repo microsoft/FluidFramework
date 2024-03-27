@@ -5,10 +5,10 @@
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
+	HostStoragePolicy,
+	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	IPersistedCache,
-	HostStoragePolicy,
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 

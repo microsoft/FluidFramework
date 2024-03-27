@@ -4,29 +4,29 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	TelemetryDataTag,
-	mixinMonitoringContext,
 	MonitoringContext,
+	TelemetryDataTag,
 	createChildLogger,
+	mixinMonitoringContext,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { BlobManager } from "../../blobManager.js";
 import {
 	GCNodeType,
 	GCTelemetryTracker,
-	defaultSessionExpiryDurationMs,
-	oneDayMs,
+	IGarbageCollectorConfigs,
 	UnreferencedStateTracker,
 	cloneGCData,
-	IGarbageCollectorConfigs,
+	defaultSessionExpiryDurationMs,
+	oneDayMs,
 	stableGCVersion,
 } from "../../gc/index.js";
 import { pkgVersion } from "../../packageVersion.js";
-import { BlobManager } from "../../blobManager.js";
 
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
 import { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
@@ -115,7 +115,10 @@ class DataStore implements IDataStore {
 		this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
 		if (this.parentContext.attachState === AttachState.Detached) {
-			const localResult = this.channelCollection.processAliasMessageCore(message);
+			const localResult = this.channelCollection.processAliasMessageCore(
+				this.internalId,
+				alias,
+			);
 			// Explicitly lock-out future attempts of aliasing,
 			// regardless of result
 			this.aliasState = AliasState.Aliased;

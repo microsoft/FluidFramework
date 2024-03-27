@@ -6,17 +6,17 @@
 /* eslint-disable jsdoc/check-indentation */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { SequenceInterval } from "../intervals";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { LocalReferencePosition, compareReferencePositions } from "@fluidframework/merge-tree";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
-} from "../intervalIndex";
-import { RandomIntervalOptions } from "./intervalIndexTestUtils";
+} from "../intervalIndex/index.js";
+import { SequenceInterval } from "../intervals/index.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+import { RandomIntervalOptions } from "./intervalIndexTestUtils.js";
 
 function assertSequenceIntervalsEqual(
 	string: SharedString,

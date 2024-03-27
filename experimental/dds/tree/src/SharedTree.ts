@@ -3,44 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
 import { bufferToString } from '@fluid-internal/client-utils';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
-	IChannelAttributes,
-	IChannelServices,
-} from '@fluidframework/datastore-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { assert } from '@fluidframework/core-utils';
 import {
-	createSingleBlobSummary,
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+} from '@fluidframework/datastore-definitions';
+import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
+import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
+	createSingleBlobSummary,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import {
+	IEventSampler,
 	ITelemetryLoggerExt,
-	createChildLogger,
 	ITelemetryLoggerPropertyBags,
 	PerformanceEvent,
+	createChildLogger,
 	createSampledLogger,
-	IEventSampler,
 } from '@fluidframework/telemetry-utils';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common.js';
+import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
+import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';
 import {
+	areRevisionViewsSemanticallyEqual,
+	convertTreeNodes,
+	deepCloneStablePlace,
+	deepCloneStableRange,
+	internalizeBuildNode,
+	newEditId,
+	walkTree,
+} from './EditUtilities.js';
+import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
+import { revert } from './HistoryEditFactory.js';
+import { convertEditIds } from './IdConversion.js';
+import {
+	AttributionId,
+	DetachedSequenceId,
 	EditId,
 	NodeId,
-	StableNodeId,
-	DetachedSequenceId,
 	OpSpaceNodeId,
-	isDetachedSequenceId,
-	AttributionId,
 	SessionId,
+	StableNodeId,
+	isDetachedSequenceId,
 } from './Identifiers.js';
 import { initialTree } from './InitialTree.js';
 import {
@@ -51,8 +64,16 @@ import {
 	SequencedEditResult,
 	SequencedEditResultCallback,
 } from './LogViewer.js';
-import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { NodeIdContext, NodeIdNormalizer, getNodeIdContext } from './NodeIdUtilities.js';
 import { ReconciliationPath } from './ReconciliationPath.js';
+import { RevisionView } from './RevisionView.js';
+import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
+import { MutableStringInterner } from './StringInterner.js';
+import { SummaryContents, serialize } from './Summary.js';
+import { deserialize, getSummaryStatistics } from './SummaryBackCompatibility.js';
+import { TransactionInternal } from './TransactionInternal.js';
+import { nilUuid } from './UuidUtilities.js';
+import { IdCompressor, createSessionId } from './id-compressor/index.js';
 import {
 	BuildNodeInternal,
 	ChangeInternal,
@@ -63,7 +84,7 @@ import {
 	Edit,
 	EditLogSummary,
 	EditStatus,
-	reservedIdCount,
+	InternalizedChange,
 	SharedTreeEditOp,
 	SharedTreeEditOp_0_0_2,
 	SharedTreeOp,
@@ -73,32 +94,11 @@ import {
 	SharedTreeSummaryBase,
 	SharedTreeSummary_0_0_2,
 	TreeNode,
-	ghostSessionId,
-	WriteFormat,
 	TreeNodeSequence,
-	InternalizedChange,
+	WriteFormat,
+	ghostSessionId,
+	reservedIdCount,
 } from './persisted-types/index.js';
-import { serialize, SummaryContents } from './Summary.js';
-import {
-	areRevisionViewsSemanticallyEqual,
-	convertTreeNodes,
-	deepCloneStablePlace,
-	deepCloneStableRange,
-	internalizeBuildNode,
-	newEditId,
-	walkTree,
-} from './EditUtilities.js';
-import { getNodeIdContext, NodeIdContext, NodeIdNormalizer } from './NodeIdUtilities.js';
-import { SharedTreeDiagnosticEvent, SharedTreeEvent } from './EventTypes.js';
-import { RevisionView } from './RevisionView.js';
-import { SharedTreeEncoder_0_0_2, SharedTreeEncoder_0_1_1 } from './SharedTreeEncoder.js';
-import { revert } from './HistoryEditFactory.js';
-import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
-import { TransactionInternal } from './TransactionInternal.js';
-import { IdCompressor, createSessionId } from './id-compressor/index.js';
-import { convertEditIds } from './IdConversion.js';
-import { MutableStringInterner } from './StringInterner.js';
-import { nilUuid } from './UuidUtilities.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`

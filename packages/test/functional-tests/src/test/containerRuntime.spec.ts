@@ -7,24 +7,24 @@ import { strict as assert } from "assert";
 import events_pkg from "events_pkg";
 const { EventEmitter } = events_pkg;
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
+// eslint-disable-next-line import/no-internal-modules
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/test/contracts";
+// eslint-disable-next-line import/no-internal-modules
+import { DeltaManager } from "@fluidframework/container-loader/test/deltaManager";
+// eslint-disable-next-line import/no-internal-modules
+import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
+// ADO:1981
+// eslint-disable-next-line import/no-internal-modules
+import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
 import {
 	IClient,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-// eslint-disable-next-line import/no-internal-modules
-import { DeltaManager } from "@fluidframework/container-loader/test/deltaManager";
-// eslint-disable-next-line import/no-internal-modules
-import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/test/contracts";
-// eslint-disable-next-line import/no-internal-modules
-import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
-// ADO:1981
-// eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
-// eslint-disable-next-line import/no-internal-modules
-import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 describe("Container Runtime", () => {
 	/**

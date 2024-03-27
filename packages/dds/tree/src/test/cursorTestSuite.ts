@@ -5,30 +5,30 @@
 
 import { strict as assert } from "assert";
 import {
-	jsonableTreeFromCursor,
-	cursorForJsonableTreeNode,
-	prefixPath,
-	prefixFieldPath,
-	Any,
-	FieldKinds,
-	SchemaBuilderBase,
-	FlexFieldSchema,
-} from "../feature-libraries/index.js";
-import {
-	FieldKey,
-	EmptyKey,
-	JsonableTree,
-	ITreeCursor,
 	CursorLocationType,
-	rootFieldKey,
-	setGenericTreeField,
+	EmptyKey,
+	FieldKey,
+	FieldUpPath,
+	ITreeCursor,
+	JsonableTree,
+	PathRootPrefix,
 	UpPath,
 	compareFieldUpPaths,
-	FieldUpPath,
-	PathRootPrefix,
+	rootFieldKey,
+	setGenericTreeField,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
 import { leaf } from "../domains/index.js";
+import {
+	Any,
+	FieldKinds,
+	FlexFieldSchema,
+	SchemaBuilderBase,
+	cursorForJsonableTreeNode,
+	jsonableTreeFromCursor,
+	prefixFieldPath,
+	prefixPath,
+} from "../feature-libraries/index.js";
+import { brand } from "../util/index.js";
 import { expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
 
 const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {

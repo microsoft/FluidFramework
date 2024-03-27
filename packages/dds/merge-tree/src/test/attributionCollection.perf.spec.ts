@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import {
-	areEqualAttributionKeys,
-	AttributionCollection as NewAttributionCollection,
 	IAttributionCollection,
 	IAttributionCollectionSpec,
+	AttributionCollection as NewAttributionCollection,
 	SerializedAttributionCollection,
+	areEqualAttributionKeys,
 } from "../attributionCollection.js";
-import { TextSegmentGranularity } from "../textSegment.js";
-import { compareNumbers, ISegment } from "../mergeTreeNodes.js";
 import { RedBlackTree } from "../collections/index.js";
+import { ISegment, compareNumbers } from "../mergeTreeNodes.js";
+import { TextSegmentGranularity } from "../textSegment.js";
 
 interface IAttributionCollectionCtor {
 	new (length: number, key?: AttributionKey): IAttributionCollection<AttributionKey>;

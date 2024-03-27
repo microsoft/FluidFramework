@@ -12,29 +12,29 @@
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";
-import sinon from "sinon";
-import { v4 as uuid } from "uuid";
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger.js";
+import sinon from "sinon";
+import { v4 as uuid } from "uuid";
 import {
-	LoggingError,
-	isTaggedTelemetryPropertyValue,
-	normalizeError,
 	IFluidErrorAnnotations,
-	wrapError,
-	wrapErrorAndLog,
+	LoggingError,
 	extractLogSafeErrorProperties,
 	isExternalError,
+	isTaggedTelemetryPropertyValue,
+	normalizeError,
+	wrapError,
+	wrapErrorAndLog,
 } from "../errorLogging.js";
 import {
-	hasErrorInstanceId,
 	IFluidErrorBase,
+	hasErrorInstanceId,
 	isFluidError,
 	isValidLegacyError,
 } from "../fluidErrorBase.js";
+import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 import type { ITelemetryPropertiesExt } from "../telemetryTypes.js";
 

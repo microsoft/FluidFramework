@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
-	createChildMonitoringContext,
 	GenericError,
 	MonitoringContext,
 	UsageError,
+	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { IPendingBatchMessage, PendingStateManager } from "../pendingStateManager.js";
-import { ContainerMessageType } from "../messageTypes.js";
 import {
 	BatchManager,
 	BatchSequenceNumbers,
@@ -120,7 +119,12 @@ export class Outbox {
 	}
 
 	public get messageCount(): number {
-		return this.attachFlowBatch.length + this.mainBatch.length + this.blobAttachBatch.length;
+		return (
+			this.attachFlowBatch.length +
+			this.mainBatch.length +
+			this.blobAttachBatch.length +
+			this.idAllocationBatch.length
+		);
 	}
 
 	public get isEmpty(): boolean {
@@ -182,20 +186,12 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
-		assert(
-			message.type !== ContainerMessageType.IdAllocation,
-			"Allocation message submitted to mainBatch.",
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
 	public submitAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.Attach,
-			"Non attach message submitted to attachFlowBatch.",
-		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -227,10 +223,6 @@ export class Outbox {
 	}
 
 	public submitBlobAttach(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.BlobAttach,
-			"Non blobAttach message submitted to blobAttachBatch.",
-		);
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -249,10 +241,6 @@ export class Outbox {
 	}
 
 	public submitIdAllocation(message: BatchMessage) {
-		assert(
-			message.type === ContainerMessageType.IdAllocation,
-			"Non allocation message submitted to idAllocationBatch.",
-		);
 		this.maybeFlushPartialBatch();
 
 		if (
@@ -323,10 +311,9 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch();
-		if (
-			rawBatch.hasReentrantOps === true &&
-			this.params.groupingManager.shouldGroup(rawBatch)
-		) {
+		const shouldGroup =
+			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
+		if (rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
 			// it needs to be rebased so that we can ensure consistent reference sequence numbers
@@ -335,8 +322,15 @@ export class Outbox {
 			return;
 		}
 
-		const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
-		this.sendBatch(processedBatch);
+		// Did we disconnect?
+		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
+		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
+		if (this.params.shouldSend()) {
+			const processedBatch = this.compressBatch(
+				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+			);
+			this.sendBatch(processedBatch);
+		}
 
 		this.persistBatch(rawBatch.content);
 	}
@@ -380,7 +374,7 @@ export class Outbox {
 		return this.params.opReentrancy() && !this.rebasing;
 	}
 
-	private compressBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
+	private compressBatch(batch: IBatch): IBatch {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
@@ -389,12 +383,10 @@ export class Outbox {
 			this.params.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch);
+			return batch;
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(
-			disableGroupedBatching ? batch : this.params.groupingManager.groupBatch(batch),
-		);
+		const compressedBatch = this.params.compressor.compressBatch(batch);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
@@ -424,10 +416,7 @@ export class Outbox {
 	 */
 	private sendBatch(batch: IBatch) {
 		const length = batch.content.length;
-
-		// Did we disconnect in the middle of turn-based batch?
-		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
-		if (length === 0 || !this.params.shouldSend()) {
+		if (length === 0) {
 			return;
 		}
 

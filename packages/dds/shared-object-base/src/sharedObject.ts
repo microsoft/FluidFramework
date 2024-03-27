@@ -3,45 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-	DataProcessingError,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
 import { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
+	type IChannelFactory,
 	IChannelServices,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
+	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { FluidSerializer, IFluidSerializer } from "./serializer.js";
+import {
+	DataProcessingError,
+	EventEmitterWithErrorHandling,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	createChildLogger,
+	loggerToMonitoringContext,
+	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 import { SharedObjectHandle } from "./handle.js";
+import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";
 import { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**
  * Base class from which all shared objects derive.
- * @public
+ * @alpha
  */
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents>
 	extends EventEmitterWithErrorHandling<TEvent>
@@ -612,7 +613,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 /**
  * SharedObject with simplified, synchronous summarization and GC.
  * DDS implementations with async and incremental summarization should extend SharedObjectCore directly instead.
- * @public
+ * @alpha
  */
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
@@ -773,4 +774,53 @@ export abstract class SharedObject<
 			0) as number;
 		telemetryContext?.set(this.telemetryContextPrefix, propertyName, prevTotal + incrementBy);
 	}
+}
+
+/**
+ * Defines a kind of shared object.
+ * Used in containers to register a shared object implementation, and to create new instances of a given type of shared object.
+ * @public
+ */
+export interface ISharedObjectKind<TSharedObject> {
+	/**
+	 * Get a factory which can be used by the Fluid Framework to programmatically instantiate shared objects within containers.
+	 * @remarks
+	 * The produced factory is intended for use with the FluidDataStoreRegistry and is used by the Fluid Framework to instantiate already existing Channels.
+	 * To create new shared objects use:
+	 *
+	 * - {@link @fluidframework/fluid-static#IFluidContainer.create} if using `@fluidframework/fluid-static`, for example via `@fluidframework/azure-client`.
+	 *
+	 * - {@link ISharedObjectKind.create} if using a custom container definitions (and thus not using {@link @fluidframework/fluid-static#IFluidContainer}).
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * Many tests use this and can't use {@link ISharedObjectKind.create}.
+	 * The docs should make it clear why that's ok, and why {@link ISharedObjectKind.create} isn't in such a way that when reading non app code (like tests in this package)
+	 * someone can tell if the wrong one is being used without running it and seeing if it works.
+	 */
+	getFactory(): IChannelFactory<TSharedObject>;
+
+	/**
+	 * Create a shared object.
+	 * @param runtime - The data store runtime that the new shared object belongs to.
+	 * @param id - Optional name of the shared object.
+	 * @returns Newly created shared object.
+	 *
+	 * @example
+	 * To create a `SharedTree`, call the static create method:
+	 *
+	 * ```typescript
+	 * const myTree = SharedTree.create(this.runtime, id);
+	 * ```
+	 * @remarks
+	 * If using `@fluidframework/fluid-static` (for example via `@fluidframework/azure-client`), use {@link @fluidframework/fluid-static#IFluidContainer.create} instead of calling this directly.
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * This returns null when used with MockFluidDataStoreRuntime, so its unclear how tests should create DDS instances unless using `RootDataObject.create` (which most tests shouldn't to minimize dependencies).
+	 * In practice tests either avoid mock runtimes, use getFactory(), or call the DDS constructor directly. It is unclear (from docs) how getFactory().create differs but it does not rely on runtime.createChannel so it works with mock runtimes.
+	 * TODO:
+	 * See note on ISharedObjectKind.getFactory.
+	 */
+	create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
 }
