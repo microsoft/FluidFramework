@@ -120,11 +120,8 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedDirectory", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedDirectory = new SharedDirectory(
-			"test-directory",
-			runtime,
-			SharedDirectory.getFactory().attributes,
-		);
+		const sharedDirectory = SharedDirectory.getFactory().create(runtime, "test-directory");
+
 		sharedDirectory.set("foo", 37);
 		sharedDirectory.set("bar", false);
 		sharedDirectory.set("baz", {
