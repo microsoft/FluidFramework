@@ -4,10 +4,6 @@
  */
 
 import { FlaggedError } from "./flaggedError.js";
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import { HTTPError } from "./httpError.js";
 
 /**
