@@ -67,29 +67,51 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		if (provider.type === "TestObjectProviderWithVersionedLoad") {
 			assert(apis.containerRuntime !== undefined);
 			assert(apis.containerRuntimeForLoading !== undefined);
-			const version = apis.containerRuntime?.version;
-			const version2 = apis.containerRuntimeForLoading?.version;
 			// 1st container is defined by apis.containerRuntime, 2nd and 3rd are defined by apis.containerRuntimeForLoading.
 			// If first container is running 1.3, then it does not understand neither compression or document schema ops,
 			// and thus it will see either of those.
-			crash = version?.startsWith("1.") && compression; // Note: If there is no compression, then there is no schema change as well
-			crash2 = version2?.startsWith("1.") && compression;
-			if (crash || crash2) {
-				// 0x122 is unknown type of the operation - happens with document schema change ops that old runtime does not understand
-				// 0x121 is no type - happens with compressed ops that old runtime does not understand. This check happens early, and thus
-				//       is missed if op is both compressed and chunked (as unchunking happens later)
-				// 0x161 compressed & chunked op is processed by 1.3 that does not understand compression,
-				//       and thus fails on empty address property (of compressed op).
-				const error =
-					crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
+			const version = apis.containerRuntime?.version;
+			const version2 = apis.containerRuntimeForLoading?.version;
+
+			// Second container running 1.x should fail becausse of mismatch in metadata.message information.
+			// This validates that container does not go past loading stage.
+			if (explicitSchemaControl && version2?.startsWith("1.")) {
+				crash2 = true;
+				const error = "Summary metadata mismatch";
 				provider.logger?.registerExpectedEvent({
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "error",
 					error,
 					message: error,
-					errorType: "dataProcessingError",
+					errorType: "dataCorruptionError",
 					dataProcessingError: 1,
+					runtimeSequenceNumber: -1,
 				});
+			} else if (compression) {
+				// In all other cases failure happens only if compression is on. If compression is not on, then
+				// - there is no chunking, as 2.0 does chunking only if compression is on. That said, if chunking is enabled (with compression),
+				//   it changes point of failre (read on)
+				// - compression is the only change in document schema from 1.x state (no schema stored in a document). Thus, if it's not enabled,
+				//   no document schema changes happens, and no document schema change ops are sent.
+				crash = version?.startsWith("1.");
+				crash2 = version2?.startsWith("1.");
+				if (crash || crash2) {
+					// 0x122 is unknown type of the operation - happens with document schema change ops that old runtime does not understand
+					// 0x121 is no type - happens with compressed ops that old runtime does not understand. This check happens early, and thus
+					//       is missed if op is both compressed and chunked (as unchunking happens later)
+					// 0x162 compressed & chunked op is processed by 1.3 that does not understand compression,
+					//       and thus fails on empty address property (of compressed op), after unchunking happens.
+					const error =
+						crash && explicitSchemaControl ? "0x122" : chunking ? "0x162" : "0x121";
+					provider.logger?.registerExpectedEvent({
+						eventName: "fluid:telemetry:Container:ContainerClose",
+						category: "error",
+						error,
+						message: error,
+						errorType: "dataProcessingError",
+						dataProcessingError: 1,
+					});
+				}
 			}
 		}
 

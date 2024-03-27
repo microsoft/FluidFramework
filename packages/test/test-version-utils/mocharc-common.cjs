@@ -4,7 +4,7 @@
  */
 
 "use strict";
-const options = require("./compatOptions.cjs");
+const options = require("./dist/compatOptions.js");
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 function getFluidTestVariant() {
