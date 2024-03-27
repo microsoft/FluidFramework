@@ -317,6 +317,8 @@ export {
 	InsertableTypedNodeUnsafe,
 	NodeBuilderDataUnsafe,
 	NodeFromSchemaUnsafe,
+	type FieldProps,
+	type StoredKey,
 
 	// experimental @internal APIs:
 	adaptEnum,

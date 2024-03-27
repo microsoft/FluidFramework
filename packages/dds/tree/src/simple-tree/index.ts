@@ -30,6 +30,8 @@ export {
 	NodeBuilderData,
 	ObjectFromSchemaRecord,
 	TreeObjectNode,
+	type FieldProps,
+	type StoredKey,
 } from "./schemaTypes.js";
 export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 export { getFlexNode } from "./proxyBinding.js";
