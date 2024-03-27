@@ -16,8 +16,8 @@ import type { IConfigProvider } from "@fluidframework/telemetry-utils";
 import {
 	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV4Key,
 	IGCMetadata,
+	gcVersionUpgradeToV4Key,
 	nextGCVersion,
 	stableGCVersion,
 } from "./gcDefinitions.js";

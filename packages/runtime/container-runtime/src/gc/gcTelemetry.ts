@@ -23,8 +23,8 @@ import {
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
 } from "./gcDefinitions.js";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 import { getGCVersionInEffect } from "./gcHelpers.js";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
