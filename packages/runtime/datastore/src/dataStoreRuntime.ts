@@ -80,6 +80,7 @@ import {
 	RehydratedLocalChannelContext,
 } from "./localChannelContext.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * @alpha
@@ -236,7 +237,7 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.logger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid() },
+				all: { dataStoreId: uuid(), datastoreVersion: pkgVersion },
 			},
 		});
 
