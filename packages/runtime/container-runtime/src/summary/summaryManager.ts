@@ -238,6 +238,10 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 
 		this.delayBeforeCreatingSummarizer()
 			.then(async (startWithInitialDelay: boolean) => {
+				if (this.disposed) {
+					return "early exit (disposed)";
+				}
+
 				// Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
 				// but only if creation was delayed. If it was not, then we want to ensure we always create
 				// a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
