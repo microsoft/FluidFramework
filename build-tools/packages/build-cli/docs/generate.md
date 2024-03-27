@@ -24,24 +24,24 @@ FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
 
 PACKAGE SELECTION FLAGS
-  -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
-                                  release group root packages. To include those, use the --releaseGroupRoot argument.
-                                  Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
-  --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
-                                  --releaseGroup, or --releaseGroupRoot.
-  --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
-                                  --releaseGroup, or --releaseGroupRoot.
-  --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                  --releaseGroup, or --releaseGroupRoot.
-  --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
-                                  child packages within the release group. To include those, use the --releaseGroup
-                                  argument. Cannot be used with --all, --dir, or --packages.
-                                  <options: client|server|azure|build-tools|gitrest|historian|all>
+  -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
+                                      include release group root packages. To include those, use the --releaseGroupRoot
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
+      --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
+                                      --releaseGroup, or --releaseGroupRoot.
+      --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
+                                      child packages within the release group. To include those, use the --releaseGroup
+                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 TESTING FLAGS
   --disableConfig  Disable filtering based on the fluid-build config in the repo. Useful for testing.
@@ -73,23 +73,23 @@ USAGE
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
-  --base=<value>                         The base version. This will be read from lerna.json/package.json if not
+      --base=<value>                     The base version. This will be read from lerna.json/package.json if not
                                          provided.
-  --build=<value>                        (required) The CI build number.
-  --packageTypes=<option>                [default: none] If provided, the version generated will include extra strings
+      --build=<value>                    (required) The CI build number.
+      --packageTypes=<option>            [default: none] If provided, the version generated will include extra strings
                                          based on the TypeScript types that are expected to be used. This flag should
                                          only be used in the Fluid Framework CI pipeline.
                                          <options: none|alpha|beta|public|untrimmed>
-  --patch=<value>                        Indicates the build should use "simple patch versioning" where the value of the
+      --patch=<value>                    Indicates the build should use "simple patch versioning" where the value of the
                                          --build flag is used as the patch version.
-  --release=<option>                     Indicates the build is a release build.
+      --release=<option>                 Indicates the build is a release build.
                                          <options: release|prerelease|none>
-  --tag=<value>                          The tag name to use.
-  --testBuild=<value>                    Indicates the build is a test build.
+      --tag=<value>                      The tag name to use.
+      --testBuild=<value>                Indicates the build is a test build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   This command is used to compute the version number of Fluid packages. The release version number is based on what's in
@@ -116,7 +116,7 @@ FLAGS
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
@@ -136,12 +136,12 @@ USAGE
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  --version=<value>            The version for which to generate the changelog. If this is not provided, the version of
+      --version=<value>        The version for which to generate the changelog. If this is not provided, the version of
                                the package according to package.json will be used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 DESCRIPTION
   Generate a changelog for packages based on changesets.
@@ -169,13 +169,13 @@ FLAGS
                                a valid remote pointing to the microsoft/FluidFramework repo.
   -g, --releaseGroup=<option>  Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  --all                        Include ALL packages, including examples and other unpublished packages.
-  --empty                      Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
+      --all                    Include ALL packages, including examples and other unpublished packages.
+      --empty                  Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
                                randomly named changeset file will be created every time --empty is used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -225,11 +225,11 @@ FLAGS
                                <options: client|server|azure|build-tools|gitrest|historian>
   -t, --releaseType=<option>   (required) The type of release for which the upcoming file is being generated.
                                <options: major|minor>
-  --out=<value>                [default: UPCOMING.md] Output the results to this file.
+      --out=<value>            [default: UPCOMING.md] Output the results to this file.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
-  --quiet        Disable all logging.
+      --quiet    Disable all logging.
 
 GLOBAL FLAGS
   --json  Format output as json.

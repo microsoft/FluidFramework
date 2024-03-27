@@ -11,22 +11,23 @@ list all the commands
 
 ```
 USAGE
-  $ flub commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--filter <value>] [--no-header |
-    [--csv | --no-truncate]] [--output csv|json|yaml |  | ] [--sort <value>]
+  $ flub commands [--json] [--deprecated] [-h] [--hidden] [--tree] [--columns <value> | -x] [--filter <value>]
+    [--no-header | [--csv | --no-truncate]] [--output csv|json|yaml |  | ] [--sort <value>]
 
 FLAGS
-  -h, --help         Show CLI help.
-  -x, --extended     show extra columns
-  --columns=<value>  only show provided columns (comma-separated)
-  --csv              output is csv format [alias: --output=csv]
-  --filter=<value>   filter property by partial string matching, ex: name=foo
-  --hidden           show hidden commands
-  --no-header        hide table header from output
-  --no-truncate      do not truncate output to fit screen
-  --output=<option>  output in a more machine friendly format
-                     <options: csv|json|yaml>
-  --sort=<value>     property to sort by (prepend '-' for descending)
-  --tree             show tree of commands
+  -h, --help             Show CLI help.
+  -x, --extended         show extra columns
+      --columns=<value>  only show provided columns (comma-separated)
+      --csv              output is csv format [alias: --output=csv]
+      --deprecated       show deprecated commands
+      --filter=<value>   filter property by partial string matching, ex: name=foo
+      --hidden           show hidden commands
+      --no-header        hide table header from output
+      --no-truncate      do not truncate output to fit screen
+      --output=<option>  output in a more machine friendly format
+                         <options: csv|json|yaml>
+      --sort=<value>     property to sort by (prepend '-' for descending)
+      --tree             show tree of commands
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -35,4 +36,4 @@ DESCRIPTION
   list all the commands
 ```
 
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v3.0.4/src/commands/commands.ts)_
+_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v3.2.2/src/commands/commands.ts)_
