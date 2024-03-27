@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { FlexFieldNodeSchema } from "../../../dist/index.js";
-import { FlexObjectNodeSchema } from "../../feature-libraries/index.js";
+import { FlexFieldNodeSchema, FlexObjectNodeSchema } from "../../feature-libraries/index.js";
 import {
 	ImplicitFieldSchema,
 	NodeKind,
