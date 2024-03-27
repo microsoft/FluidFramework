@@ -16,7 +16,6 @@ import {
 	FlexObjectNodeSchema,
 	FlexTreeField,
 	FlexTreeNode,
-	FlexTreeNodeSchema,
 	FlexTreeOptionalField,
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
@@ -27,9 +26,12 @@ import {
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
-import { simpleNodeSchemaSymbol } from "./schemaCaching.js";
 import {
-	FieldSchema,
+	getSimpleFieldSchema,
+	getSimpleNodeSchema,
+	tryGetSimpleNodeSchema,
+} from "./schemaCaching.js";
+import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTypedNode,
@@ -98,49 +100,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 		default:
 			fail("invalid field kind");
 	}
-}
-
-/**
- * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
- * Returns `undefined` if no cached value is found.
- */
-export function tryGetSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema | undefined {
-	if (simpleNodeSchemaSymbol in flexSchema) {
-		return flexSchema[simpleNodeSchemaSymbol] as TreeNodeSchema;
-	}
-	return undefined;
-}
-
-/**
- * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
- * Fails if no cached value is found.
- */
-function getSimpleNodeSchema(flexSchema: FlexTreeNodeSchema): TreeNodeSchema {
-	return tryGetSimpleNodeSchema(flexSchema) ?? fail("missing simple schema");
-}
-
-/**
- * A symbol for storing {@link FieldSchema}s on a {@link FlexFieldSchema}.
- */
-export const simpleFieldSchemaSymbol: unique symbol = Symbol(`simpleFieldSchema`);
-
-/**
- * Gets the {@link FieldSchema} which corresponds with the provided {@link FlexFieldSchema | flexSchema}.
- * Caches the result on the provided `flexSchema` for future access.
- * @param flexSchema - The flex schema on which the result will be cached.
- * @param implicitSimpleSchema - The allowed types from which the `FieldSchema` will be derived.
- */
-function getSimpleFieldSchema(
-	flexSchema: FlexFieldSchema,
-	implicitSimpleSchema: ImplicitFieldSchema,
-): FieldSchema {
-	if (simpleFieldSchemaSymbol in flexSchema) {
-		return flexSchema[simpleFieldSchemaSymbol] as FieldSchema;
-	}
-
-	const fieldSchema = FieldSchema.normalize(implicitSimpleSchema);
-	(flexSchema as any)[simpleFieldSchemaSymbol] = fieldSchema;
-	return fieldSchema;
 }
 
 export function getOrCreateNodeProxy(flexNode: FlexTreeNode): TreeNode | TreeValue {

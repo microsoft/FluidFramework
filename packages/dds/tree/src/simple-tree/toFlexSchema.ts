@@ -23,8 +23,12 @@ import {
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-import { InsertableContent, extractFactoryContent, tryGetSimpleNodeSchema } from "./proxies.js";
-import { cachedFlexSchemaFromClassSchema, setFlexSchemaFromClassSchema } from "./schemaCaching.js";
+import { InsertableContent, extractFactoryContent } from "./proxies.js";
+import {
+	cachedFlexSchemaFromClassSchema,
+	setFlexSchemaFromClassSchema,
+	tryGetSimpleNodeSchema,
+} from "./schemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,

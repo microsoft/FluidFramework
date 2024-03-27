@@ -32,10 +32,10 @@ import {
 	createObjectProxy,
 	isTreeNode,
 	mapStaticDispatchMap,
-	tryGetSimpleNodeSchema,
 } from "./proxies.js";
 import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	AllowedTypes,
 	FieldKind,
