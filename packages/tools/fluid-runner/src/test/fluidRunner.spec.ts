@@ -10,7 +10,7 @@ import path from "path";
 import { _dirname } from "./dirname.cjs";
 
 describe("fluid-runner from command line", () => {
-	const command = path.join(_dirname, "../../bin/fluid-runner");
+	const command = path.join(_dirname, "../../bin/fluid-runner.js");
 
 	describe("exportFile", () => {
 		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
