@@ -14,16 +14,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./public": {
-			"import": {
 				"types": "./lib/local-driver-public.d.ts",
 				"default": "./lib/index.js"
 			},
@@ -57,7 +47,7 @@
 	"browser": {
 		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
 	},
-	"types": "dist/index.d.ts",
+	"types": "dist/local-driver-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
