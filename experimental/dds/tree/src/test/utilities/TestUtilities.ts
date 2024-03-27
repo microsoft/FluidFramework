@@ -10,8 +10,8 @@ import {
 	type IContainer,
 	type IFluidCodeDetails,
 	type IHostLoader,
-} from '@fluidframework/container-definitions';
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
+} from "@fluidframework/container-definitions/internal";
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';

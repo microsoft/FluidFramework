@@ -8,7 +8,7 @@ import {
 	type IAudience,
 	type IContainerContext,
 	type IDeltaManager,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";

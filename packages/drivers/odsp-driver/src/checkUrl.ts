@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DriverPreCheckInfo } from "@fluidframework/driver-definitions";
+import { DriverPreCheckInfo } from "@fluidframework/driver-definitions/internal";
 import { getLocatorFromOdspUrl } from "./odspFluidFileLink.js";
 
 /**

@@ -8,14 +8,14 @@ import {
 	type IContainer,
 	type IFluidModuleWithDetails,
 	type IHostLoader,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type ContainerSchema,
 	type IFluidContainer,
@@ -23,7 +23,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IEventProvider,
@@ -12,7 +12,7 @@ import type {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	type IClientDetails,
 	type IDocumentMessage,

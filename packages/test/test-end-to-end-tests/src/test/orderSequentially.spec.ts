@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions";
-import type { ISharedMap, IValueChanged, SharedDirectory } from "@fluidframework/map";
+import type { ISharedMap, IValueChanged, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedString } from "@fluidframework/sequence";
 import {
 	ChannelFactoryRegistry,

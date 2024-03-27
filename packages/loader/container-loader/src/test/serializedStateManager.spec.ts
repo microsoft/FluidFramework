@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
+import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	FetchSource,
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,

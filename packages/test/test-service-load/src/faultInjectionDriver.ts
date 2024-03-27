@@ -17,7 +17,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshotFetchOptions,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	IDocumentMessage,

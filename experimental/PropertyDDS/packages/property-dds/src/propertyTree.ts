@@ -11,7 +11,7 @@ const { isEmpty, findIndex, find, isEqual, range } = lodash;
 import { copy as cloneDeep } from "fastest-json-copy";
 import { Packr } from "msgpackr";
 
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,

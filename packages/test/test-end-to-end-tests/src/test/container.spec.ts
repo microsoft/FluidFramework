@@ -17,14 +17,14 @@ import {
 	IContainer,
 	IFluidCodeDetails,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
 	IContainerExperimental,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,
-} from "@fluidframework/container-loader";
+} from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
@@ -39,7 +39,7 @@ import {
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,

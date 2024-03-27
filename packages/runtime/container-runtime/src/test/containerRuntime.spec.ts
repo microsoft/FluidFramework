@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainerContext,
 	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	ConfigTypes,
@@ -23,7 +23,7 @@ import {
 	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ISequencedDocumentMessage,
 	type ISnapshotTree,

@@ -27,8 +27,8 @@ import {
 } from "@fluentui/react-icons";
 import React from "react";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import {
 	CloseContainer,
 	ConnectContainer,

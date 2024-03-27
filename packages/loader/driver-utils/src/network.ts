@@ -11,7 +11,7 @@ import {
 	ILocationRedirectionError,
 	IResolvedUrl,
 	IThrottlingWarning,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 /**

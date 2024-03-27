@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {

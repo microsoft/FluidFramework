@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from '@fluidframework/container-definitions';
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import {
@@ -18,7 +18,7 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
-import { type ITree } from '@fluidframework/tree';
+import { type ITree } from "@fluidframework/tree/internal";
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { StampDeltaConnection } from './shimDeltaConnection.js';

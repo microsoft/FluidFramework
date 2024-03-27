@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client";
+import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-import { SharedTree } from "@fluidframework/tree";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 const userId = Math.random().toString(36).slice(2);
 

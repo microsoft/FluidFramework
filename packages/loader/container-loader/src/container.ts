@@ -25,7 +25,7 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,
@@ -43,7 +43,7 @@ import {
 	ISnapshot,
 	IThrottlingWarning,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
 	OnlineStatus,

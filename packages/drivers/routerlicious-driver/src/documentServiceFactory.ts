@@ -13,7 +13,7 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	RateLimiter,
 	getDocAttributesFromProtocolSummary,

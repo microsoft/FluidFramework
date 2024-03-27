@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import { OdspClient } from "@fluid-experimental/odsp-client";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import { ContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 
 const clientCreds: IOdspLoginCredentials = {

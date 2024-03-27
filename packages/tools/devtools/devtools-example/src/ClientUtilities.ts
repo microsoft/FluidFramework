@@ -4,8 +4,8 @@
  */
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import { type IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { type IDevtoolsLogger } from "@fluidframework/devtools-core";
 import { type IAppModel, RuntimeFactory } from "./Container.js";
 import { type AppData } from "./FluidObject.js";

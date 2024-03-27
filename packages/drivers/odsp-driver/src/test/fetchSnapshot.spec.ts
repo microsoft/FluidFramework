@@ -7,7 +7,7 @@
 
 import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {

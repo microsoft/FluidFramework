@@ -5,8 +5,8 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentService, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframework/replay-driver";
 import { DebugReplayController } from "./fluidDebuggerController.js";
 import { DebuggerUI } from "./fluidDebuggerUi.js";

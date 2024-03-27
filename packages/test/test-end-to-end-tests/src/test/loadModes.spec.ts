@@ -6,12 +6,12 @@
 import { strict as assert } from "assert";
 import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
 import type { IDataObjectProps } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISharedMap } from "@fluidframework/map";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import {
 	DataObjectFactoryType,

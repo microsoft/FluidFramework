@@ -7,12 +7,12 @@ import {
 	AttachState,
 	type IContainer,
 	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	type ContainerSchema,
@@ -21,7 +21,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 

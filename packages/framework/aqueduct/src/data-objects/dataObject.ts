@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
+import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
 import { PureDataObject } from "./pureDataObject.js";
 import { type DataObjectTypes } from "./types.js";
 

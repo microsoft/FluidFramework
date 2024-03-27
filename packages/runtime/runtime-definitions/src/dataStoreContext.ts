@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
@@ -15,7 +15,7 @@ import type {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IClientDetails,

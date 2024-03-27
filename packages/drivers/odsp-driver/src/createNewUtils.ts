@@ -5,7 +5,7 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,

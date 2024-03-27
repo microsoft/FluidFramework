@@ -5,7 +5,7 @@
 
 /* eslint-disable prefer-template */
 
-import { IFluidContainer, Tree, TreeView } from "fluid-framework";
+import { IFluidContainer, Tree, TreeView } from "fluid-framework/internal";
 import React, { ReactNode, useEffect, useState } from "react";
 import { App, Letter } from "./schema.js";
 

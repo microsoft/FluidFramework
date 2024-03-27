@@ -9,7 +9,7 @@ import {
 	IAnyDriverError,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,

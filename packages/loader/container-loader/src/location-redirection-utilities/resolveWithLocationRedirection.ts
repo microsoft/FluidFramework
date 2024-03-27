@@ -8,7 +8,7 @@ import {
 	DriverErrorTypes,
 	ILocationRedirectionError,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 /**

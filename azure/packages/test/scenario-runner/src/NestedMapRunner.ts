@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient } from "@fluidframework/azure-client";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { AzureClient } from "@fluidframework/azure-client/internal";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";

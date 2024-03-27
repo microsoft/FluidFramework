@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
+import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
 import {
 	IClientDetails,

@@ -4,7 +4,7 @@
  */
 
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
-import { AttachState } from '@fluidframework/container-definitions';
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import {
@@ -22,7 +22,7 @@ import {
 	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { type ITree } from '@fluidframework/tree';
+import { type ITree } from "@fluidframework/tree/internal";
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,

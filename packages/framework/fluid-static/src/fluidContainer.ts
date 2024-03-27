@@ -9,7 +9,7 @@ import {
 	type ConnectionState,
 	type IContainer,
 	type ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	type IEvent,
 	type IEventProvider,

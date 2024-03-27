@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import * as api from "@fluidframework/driver-definitions";
+import * as api from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 

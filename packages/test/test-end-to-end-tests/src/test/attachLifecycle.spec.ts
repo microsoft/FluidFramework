@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import {
 	ITestFluidObject,

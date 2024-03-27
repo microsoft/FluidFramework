@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory, TreeConfiguration } from "fluid-framework";
+import { SchemaFactory, TreeConfiguration } from "fluid-framework/internal";
 
 const sb = new SchemaFactory("fc1db2e8-0a00-11ee-be56-0242ac120002");
 

@@ -11,7 +11,7 @@ import {
 	Tree,
 	TreeConfiguration,
 	disposeSymbol,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";

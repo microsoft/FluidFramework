@@ -4,7 +4,7 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
+import { AttachState } from '@fluidframework/container-definitions/internal';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';

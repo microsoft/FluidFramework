@@ -4,10 +4,10 @@
 
 ```ts
 
-import { DriverError } from '@fluidframework/driver-definitions';
-import { FiveDaysMs } from '@fluidframework/driver-definitions';
-import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { DriverError } from '@fluidframework/driver-definitions/internal';
+import { FiveDaysMs } from '@fluidframework/driver-definitions/internal';
+import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
+import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 
 // @alpha (undocumented)
 export type CacheContentType = "snapshot" | "ops";
@@ -225,7 +225,9 @@ export const OdspErrorTypes: {
     readonly writeError: "writeError";
     readonly fetchFailure: "fetchFailure";
     readonly fetchTokenError: "fetchTokenError";
-    readonly incorrectServerResponse: "incorrectServerResponse";
+    readonly incorrectServerResponse: "incorrectServerResponse"; /**
+    * @alpha
+    */
     readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
     readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
     readonly locationRedirection: "locationRedirection";

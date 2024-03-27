@@ -5,7 +5,7 @@
 
 import Deque from "double-ended-queue";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

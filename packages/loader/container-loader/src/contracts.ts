@@ -10,9 +10,9 @@ import {
 	IFluidCodeDetails,
 	ReadOnlyInfo,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,

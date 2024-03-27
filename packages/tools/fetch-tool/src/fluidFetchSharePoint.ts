@@ -4,7 +4,7 @@
  */
 
 import child_process from "child_process";
-import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientConfig,
 	IOdspAuthRequestInfo,

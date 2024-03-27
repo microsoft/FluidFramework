@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidContainer, ITree } from "fluid-framework";
+import { IFluidContainer, ITree } from "fluid-framework/internal";
 import React from "react";
 import ReactDOM from "react-dom";
 import { containerSchema, createFluidData, loadFluidData } from "./fluid.js";

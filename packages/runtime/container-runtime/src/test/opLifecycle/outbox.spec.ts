@@ -9,7 +9,7 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 	IDeltaManager,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

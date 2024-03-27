@@ -9,7 +9,7 @@ import { createDevtoolsLogger } from '@fluidframework/devtools-core';
 import { HasContainerKey } from '@fluidframework/devtools-core';
 import { IDevtoolsLogger } from '@fluidframework/devtools-core';
 import { IDisposable } from '@fluidframework/core-interfaces';
-import { IFluidContainer } from '@fluidframework/fluid-static';
+import { IFluidContainer } from '@fluidframework/fluid-static/internal';
 
 // @alpha
 export interface ContainerDevtoolsProps extends HasContainerKey {

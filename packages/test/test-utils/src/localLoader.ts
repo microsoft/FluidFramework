@@ -9,10 +9,10 @@ import {
 	IFluidCodeDetails,
 	IHostLoader,
 	ILoaderOptions,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 
 /**

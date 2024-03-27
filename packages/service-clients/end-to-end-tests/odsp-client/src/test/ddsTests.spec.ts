@@ -7,11 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { OdspClient } from "@fluid-experimental/odsp-client";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { ContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import { mapWait } from "./utils.js";

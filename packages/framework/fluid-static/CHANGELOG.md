@@ -261,7 +261,7 @@ Both DDS and DataObject are implementation details of how to access collaborativ
 
 ```javascript
 import { KeyValueDataObject } from "@fluid-experimental/data-objects";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 
 // ...
 

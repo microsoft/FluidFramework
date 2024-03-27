@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
 import { IErrorBase } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils";
 import {

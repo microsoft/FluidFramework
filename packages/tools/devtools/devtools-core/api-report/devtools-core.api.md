@@ -4,10 +4,10 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
-import { ConnectionState } from '@fluidframework/container-loader';
+import { AttachState } from '@fluidframework/container-definitions/internal';
+import { ConnectionState } from '@fluidframework/container-loader/internal';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IContainer } from '@fluidframework/container-definitions';
+import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';

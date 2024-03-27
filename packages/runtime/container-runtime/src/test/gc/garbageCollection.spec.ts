@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";

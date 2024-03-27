@@ -7,7 +7,7 @@ import type {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 
 /*
  * For this demo, the two "packages" are imported from the local directory.  In a more realistic scenario, these are

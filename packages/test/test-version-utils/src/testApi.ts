@@ -7,7 +7,7 @@
 import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
-import { Loader } from "@fluidframework/container-loader";
+import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API
 import { ContainerRuntime } from "@fluidframework/container-runtime";
@@ -18,8 +18,8 @@ import * as cell from "@fluidframework/cell";
 import { SharedCell } from "@fluidframework/cell";
 import * as counter from "@fluidframework/counter";
 import { SharedCounter } from "@fluidframework/counter";
-import * as map from "@fluidframework/map";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import * as map from "@fluidframework/map/internal";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import * as matrix from "@fluidframework/matrix";
 import { SharedMatrix } from "@fluidframework/matrix";
 import * as orderedCollection from "@fluidframework/ordered-collection";
@@ -57,11 +57,11 @@ const packageList = [
 	"@fluidframework/aqueduct",
 	"@fluidframework/datastore",
 	"@fluidframework/test-utils",
-	"@fluidframework/container-loader",
+	"@fluidframework/container-loader/internal",
 	"@fluidframework/container-runtime",
 	"@fluidframework/cell",
 	"@fluidframework/counter",
-	"@fluidframework/map",
+	"@fluidframework/map/internal",
 	"@fluidframework/matrix",
 	"@fluidframework/ordered-collection",
 	"@fluidframework/register-collection",
@@ -189,7 +189,7 @@ async function loadLoader(baseVersion: string, requested?: number | string): Pro
 	if (!loaderCache.has(version)) {
 		const loader = {
 			version,
-			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader")).Loader,
+			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader/internal")).Loader,
 		};
 		loaderCache.set(version, loader);
 	}
@@ -252,7 +252,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
 			loadPackage(modulePath, "@fluidframework/datastore"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
-			loadPackage(modulePath, "@fluidframework/map"),
+			loadPackage(modulePath, "@fluidframework/map/internal"),
 			loadPackage(modulePath, "@fluidframework/sequence"),
 			loadPackage(modulePath, "@fluidframework/cell"),
 			loadPackage(modulePath, "@fluidframework/counter"),

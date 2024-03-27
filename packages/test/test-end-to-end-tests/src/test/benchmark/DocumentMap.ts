@@ -6,14 +6,14 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,

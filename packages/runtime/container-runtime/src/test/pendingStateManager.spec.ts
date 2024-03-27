@@ -9,7 +9,7 @@ import Deque from "double-ended-queue";
 import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 

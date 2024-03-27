@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client/internal";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CommanderStatic } from "commander";

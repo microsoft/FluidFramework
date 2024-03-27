@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type AttachState } from "@fluidframework/container-definitions";
-import { type ConnectionState } from "@fluidframework/container-loader";
+import { type AttachState } from "@fluidframework/container-definitions/internal";
+import { type ConnectionState } from "@fluidframework/container-loader/internal";
 import { type HasContainerKey } from "./CommonInterfaces.js";
 
 /**

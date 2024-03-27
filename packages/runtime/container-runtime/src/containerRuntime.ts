@@ -15,7 +15,7 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -36,7 +36,7 @@ import {
 	FetchSource,
 	IDocumentStorageService,
 	type ISnapshot,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
 import type {
 	IIdCompressor,

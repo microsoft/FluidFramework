@@ -13,7 +13,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -25,7 +25,7 @@ import {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
-import { DriverError, IStream } from "@fluidframework/driver-definitions";
+import { DriverError, IStream } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import {
 	IClient,

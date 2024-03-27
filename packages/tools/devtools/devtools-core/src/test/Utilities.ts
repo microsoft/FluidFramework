@@ -9,8 +9,8 @@ import type {
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
-} from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
 

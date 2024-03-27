@@ -4,7 +4,7 @@
  */
 
 import { bufferToString } from '@fluid-internal/client-utils';
-import { AttachState } from '@fluidframework/container-definitions';
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import {

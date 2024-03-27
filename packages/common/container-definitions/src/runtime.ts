@@ -9,7 +9,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 
-import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientDetails,
 	IDocumentMessage,

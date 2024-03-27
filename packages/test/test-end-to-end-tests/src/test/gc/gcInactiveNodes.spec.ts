@@ -13,7 +13,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowInactiveRequestHeaderKey,
 	ContainerRuntime,
@@ -22,8 +22,8 @@ import {
 } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import type { ISharedDirectory } from "@fluidframework/map";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import {

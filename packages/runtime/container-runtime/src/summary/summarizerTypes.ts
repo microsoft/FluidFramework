@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,

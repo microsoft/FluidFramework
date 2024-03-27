@@ -10,7 +10,7 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
-import { type ITree } from '@fluidframework/tree';
+import { type ITree } from "@fluidframework/tree/internal";
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,

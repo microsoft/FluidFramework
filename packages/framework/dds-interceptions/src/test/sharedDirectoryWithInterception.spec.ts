@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IDirectory, type ISharedDirectory, SharedDirectory } from "@fluidframework/map";
+import { IDirectory, type ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { createDirectoryWithInterception } from "../map/index.js";

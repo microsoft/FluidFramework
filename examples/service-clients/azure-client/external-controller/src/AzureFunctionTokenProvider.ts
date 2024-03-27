@@ -5,7 +5,7 @@
 
 import axios from "axios";
 
-import { AzureMember } from "@fluidframework/azure-client";
+import { AzureMember } from "@fluidframework/azure-client/internal";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 
 /**

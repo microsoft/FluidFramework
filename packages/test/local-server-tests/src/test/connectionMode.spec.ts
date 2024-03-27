@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { ConnectionState, Loader } from "@fluidframework/container-loader/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

@@ -12,9 +12,9 @@ import {
 	AzureRemoteConnectionConfig,
 	ITokenProvider,
 	IUser,
-} from "@fluidframework/azure-client";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+} from "@fluidframework/azure-client/internal";
+import { ContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import commander from "commander";
 import { v4 as uuid } from "uuid";

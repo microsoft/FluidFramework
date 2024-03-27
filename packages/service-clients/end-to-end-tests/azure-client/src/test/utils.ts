@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import { IMember } from "@fluidframework/fluid-static";
-import { ISharedMap, IValueChanged } from "@fluidframework/map";
+import { AzureMember, IAzureAudience } from "@fluidframework/azure-client/internal";
+import { IMember } from "@fluidframework/fluid-static/internal";
+import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 
 export const waitForMember = async (
 	audience: IAzureAudience,

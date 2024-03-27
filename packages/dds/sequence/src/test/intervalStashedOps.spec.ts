@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { strict as assert } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IntervalType } from "@fluidframework/sequence-previous";
 import {
 	MockContainerRuntimeFactory,

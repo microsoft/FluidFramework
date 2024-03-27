@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
-import { SchemaFactory, SharedTree } from "@fluidframework/tree";
+import { SchemaFactory, SharedTree } from "@fluidframework/tree/internal";
 
 import { v4 as uuid } from "uuid";
 
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AzureClient } from "../AzureClient.js";
 import { type AzureLocalConnectionConfig } from "../interfaces.js";

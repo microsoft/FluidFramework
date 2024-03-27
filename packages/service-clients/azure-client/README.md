@@ -22,7 +22,7 @@ library consumers should always prefer `^`.
 The azure-client package has a `AzureClient` class that allows you to interact with Fluid.
 
 ```typescript
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client/internal";
 ```
 
 ## Instantiating AzureClient
@@ -44,7 +44,7 @@ npx @fluidframework/azure-local-service@latest
 Now, with our local service running in the background, we need to connect the application to it. For this, we first need to create our `ITokenProvider` instance to authenticate the current user to the service. For this, we can use the `InsecureTokenProvider` where we can pass anything into the key (since we are running locally) and an object identifying the current user. Our endpoint URL will point to the domain and port that our local Azure Fluid Relay service instance is running at. Lastly, to differentiate local mode from remote mode, we set the `type` to `"local"` or `"remote"` respectively.
 
 ```typescript
-import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
+import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
 const clientProps = {
@@ -62,7 +62,7 @@ const azureClient = new AzureClient(clientProps);
 When running against a live Azure Fluid Relay instance, we can use the same interface as we do locally but instead using the tenant ID, orderer, and storage URLs that were provided as part of the Azure Fluid Relay onboarding process. To ensure that the secret doesn't get exposed, it is passed to a secure, backend Azure function from which the token is fetched. We pass the Azure Function URL appended by `/api/GetAzureToken` along with the current user object to `AzureFunctionTokenProvider`. Later on, in `AzureFunctionTokenProvider` we make an axios `GET` request call to the Azure function by passing in the tenantID, documentId and userID/userName as optional parameters. Azure function is responsible for mapping between the tenant ID to a tenant key secret to generate and sign the token such that the service will accept it.
 
 ```typescript
-import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client";
+import { AzureClient, AzureConnectionConfig } from "@fluidframework/azure-client/internal";
 
 const clientProps = {
 	connection: {
@@ -118,7 +118,7 @@ const id = await container.attach();
 Using the `AzureClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
 
 ```typescript
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client/internal";
 
 const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);

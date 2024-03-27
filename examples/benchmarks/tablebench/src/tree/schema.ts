@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory } from "@fluidframework/tree";
+import { SchemaFactory } from "@fluidframework/tree/internal";
 
 const _ = new SchemaFactory("com.fluidframework.benchmarks.table");
 

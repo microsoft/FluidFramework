@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,

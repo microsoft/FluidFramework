@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
@@ -22,7 +22,7 @@ import {
 	SharedTree,
 	TreeConfiguration,
 	type TreeView,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const treeKey = "treeKey";
 

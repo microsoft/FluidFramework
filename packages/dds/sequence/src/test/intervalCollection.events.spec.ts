@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {

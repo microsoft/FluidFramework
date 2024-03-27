@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";

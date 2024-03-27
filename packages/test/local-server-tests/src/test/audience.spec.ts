@@ -9,10 +9,10 @@ import {
 	ICodeDetailsLoader,
 	IContainer,
 	IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	TestFluidObjectFactory,

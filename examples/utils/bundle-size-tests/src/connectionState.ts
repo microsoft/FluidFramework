@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 
 // This test was added because we expect ConnectionState to commonly be imported without the rest of the runtime.
 export function apisToBundle() {

@@ -13,7 +13,7 @@ import {
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 import {
 	configuredSharedTree,
 	typeboxValidator,

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions";
+import { AttachState, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

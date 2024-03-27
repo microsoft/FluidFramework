@@ -4,7 +4,7 @@
  */
 
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
-import { IAnyDriverError, IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
+import { IAnyDriverError, IDocumentDeltaConnection } from "@fluidframework/driver-definitions/internal";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";

@@ -21,7 +21,7 @@ import {
 	performFuzzActions,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { type IAudience } from "@fluidframework/container-definitions";
+import { type IAudience } from "@fluidframework/container-definitions/internal";
 import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,

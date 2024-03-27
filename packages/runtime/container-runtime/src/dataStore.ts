@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {

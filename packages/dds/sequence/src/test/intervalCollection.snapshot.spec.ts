@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {

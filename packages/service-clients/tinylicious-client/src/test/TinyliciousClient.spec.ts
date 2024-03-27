@@ -10,11 +10,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { strict as assert } from "node:assert";
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static/internal";
+import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";

@@ -12,7 +12,7 @@ import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

@@ -10,7 +10,7 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 
 /**
  * Some common utilities used by the components.

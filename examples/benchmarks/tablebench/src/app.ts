@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeConfiguration } from "@fluidframework/tree";
+import { TreeConfiguration } from "@fluidframework/tree/internal";
 import { initFluid } from "./azure.js";
 import { generateTable } from "./data.js";
 import { Table } from "./tree/index.js";

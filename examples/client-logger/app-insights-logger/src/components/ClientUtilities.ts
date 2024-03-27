@@ -4,8 +4,8 @@
  */
 
 import { createLogger } from "@fluidframework/app-insights-logger";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static/internal";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,

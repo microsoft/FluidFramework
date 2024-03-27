@@ -4,12 +4,12 @@
 
 ```ts
 
-import { ContainerSchema } from '@fluidframework/fluid-static';
+import { ContainerSchema } from '@fluidframework/fluid-static/internal';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
+import { IFluidContainer } from '@fluidframework/fluid-static/internal';
+import { IMember } from '@fluidframework/fluid-static/internal';
+import { IServiceAudience } from '@fluidframework/fluid-static/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';

@@ -8,7 +8,7 @@ import { expect } from "chai";
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { EditType } from "../CommonInterfaces.js";

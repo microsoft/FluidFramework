@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenProvider } from "@fluidframework/azure-client";
+import { ITokenProvider } from "@fluidframework/azure-client/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 export function createAzureTokenProvider(userId: string, userName: string): ITokenProvider {

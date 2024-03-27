@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
 import {

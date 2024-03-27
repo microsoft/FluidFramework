@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
-// import { ConnectionState } from "@fluidframework/container-loader";
+import { type ContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
+// import { ConnectionState } from "@fluidframework/container-loader/internal";
 // import { timeoutPromise } from "@fluidframework/test-utils";
 import type { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { OdspConnectionConfig } from "../interfaces.js";

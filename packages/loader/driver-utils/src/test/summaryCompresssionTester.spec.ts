@@ -21,7 +21,7 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	ISummaryContext,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,
 	ICreateBlobResponse,

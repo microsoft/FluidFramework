@@ -4,11 +4,11 @@
 
 ```ts
 
-import { ContainerSchema } from '@fluidframework/fluid-static';
+import { ContainerSchema } from '@fluidframework/fluid-static/internal';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
-import { IFluidContainer } from '@fluidframework/fluid-static';
-import type { IMember } from '@fluidframework/fluid-static';
-import type { IServiceAudience } from '@fluidframework/fluid-static';
+import { IFluidContainer } from '@fluidframework/fluid-static/internal';
+import type { IMember } from '@fluidframework/fluid-static/internal';
+import type { IServiceAudience } from '@fluidframework/fluid-static/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
 

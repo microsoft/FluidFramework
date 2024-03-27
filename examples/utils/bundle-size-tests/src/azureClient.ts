@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client/internal";
 
 export function apisToBundle() {
 	new AzureClient({} as any);

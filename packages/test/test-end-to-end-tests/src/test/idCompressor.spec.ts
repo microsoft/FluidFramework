@@ -11,8 +11,8 @@ import {
 	AttachState,
 	IContainer,
 	type IFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -21,9 +21,9 @@ import {
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
-import type { ISharedMap } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map/internal";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedDirectory } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	DataObjectFactoryType,

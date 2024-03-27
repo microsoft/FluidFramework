@@ -11,8 +11,8 @@ import {
 	IFluidCodeDetailsComparer,
 	IFluidPackage,
 	isFluidPackage,
-} from "@fluidframework/container-definitions";
-import type { ISharedMap } from "@fluidframework/map";
+} from "@fluidframework/container-definitions/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

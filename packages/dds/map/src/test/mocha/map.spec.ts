@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {

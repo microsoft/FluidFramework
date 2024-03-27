@@ -5,8 +5,8 @@
 ```ts
 
 import { ISegment } from '@fluidframework/merge-tree';
-import { ISharedMap } from '@fluidframework/map';
-import { IValueChanged } from '@fluidframework/map';
+import { ISharedMap } from '@fluidframework/map/internal';
+import { IValueChanged } from '@fluidframework/map/internal';
 import { SequenceDeltaEvent } from '@fluidframework/sequence';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
 

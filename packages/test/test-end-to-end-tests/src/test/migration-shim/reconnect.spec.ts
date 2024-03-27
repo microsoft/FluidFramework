@@ -18,8 +18,8 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IContainerExperimental } from "@fluidframework/container-loader";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions";
@@ -35,7 +35,7 @@ import {
 	SharedTree,
 	TreeConfiguration,
 	disposeSymbol,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

@@ -4,10 +4,10 @@
 
 ```ts
 
-import type { AttachState } from '@fluidframework/container-definitions';
+import type { AttachState } from '@fluidframework/container-definitions/internal';
 import type { FluidObject } from '@fluidframework/core-interfaces';
-import type { IAudience } from '@fluidframework/container-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IAudience } from '@fluidframework/container-definitions/internal';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import type { IDisposable } from '@fluidframework/core-interfaces';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IEvent } from '@fluidframework/core-interfaces';

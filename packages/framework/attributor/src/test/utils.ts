@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IAudience } from "@fluidframework/container-definitions";
+import { type IAudience } from "@fluidframework/container-definitions/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
 /**

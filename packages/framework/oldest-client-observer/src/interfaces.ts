@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { IQuorumClients } from "@fluidframework/protocol-definitions";
 

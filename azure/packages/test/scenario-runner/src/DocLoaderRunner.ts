@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionState } from "@fluidframework/container-loader";
-import { IFluidContainer } from "@fluidframework/fluid-static";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
+import { IFluidContainer } from "@fluidframework/fluid-static/internal";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 

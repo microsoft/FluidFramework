@@ -9,7 +9,7 @@ import {
 	type IChannelServices,
 	type IDeltaHandler,
 } from '@fluidframework/datastore-definitions';
-import { type ITree } from '@fluidframework/tree';
+import { type ITree } from "@fluidframework/tree/internal";
 import { type SharedTree as LegacySharedTree } from '../SharedTree.js';
 import { type IMigrationOp } from './migrationShim.js';
 

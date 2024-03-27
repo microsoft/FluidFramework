@@ -11,7 +11,7 @@ import {
 	type getLoaderApi,
 } from "@fluid-private/test-version-utils";
 import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeOptions,
 	type ISummaryRuntimeOptions,

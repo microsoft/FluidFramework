@@ -4,15 +4,15 @@
 
 ```ts
 
-import type { AttachState } from '@fluidframework/container-definitions';
+import type { AttachState } from '@fluidframework/container-definitions/internal';
 import type { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import { IContainerRuntimeBaseEvents } from '@fluidframework/runtime-definitions';
-import type { IDeltaManager } from '@fluidframework/container-definitions';
+import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import type { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces';

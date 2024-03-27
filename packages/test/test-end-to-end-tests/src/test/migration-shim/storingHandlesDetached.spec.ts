@@ -21,7 +21,7 @@ import {
 	SharedTree,
 	TreeConfiguration,
 	type TreeView,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;

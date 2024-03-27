@@ -16,7 +16,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IDirectoryNewStorageFormat } from "../../directory.js";
 import {
 	IDirectory,

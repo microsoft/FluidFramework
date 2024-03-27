@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "node:assert";
-import { AzureClient } from "@fluidframework/azure-client";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { AzureClient } from "@fluidframework/azure-client/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { ContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 

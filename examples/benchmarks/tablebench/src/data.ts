@@ -4,7 +4,7 @@
  */
 
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { InsertableTypedNode } from "@fluidframework/tree";
+import { InsertableTypedNode } from "@fluidframework/tree/internal";
 import { Row } from "./tree/index.js";
 
 export function generateRow(random: IRandom): InsertableTypedNode<typeof Row> {

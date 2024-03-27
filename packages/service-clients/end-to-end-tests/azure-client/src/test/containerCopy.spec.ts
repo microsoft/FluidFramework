@@ -5,13 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
-import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map";
+import { AzureClient } from "@fluidframework/azure-client/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import { ContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { createAzureClient } from "./AzureClientFactory.js";
 import { mapWait } from "./utils.js";
 

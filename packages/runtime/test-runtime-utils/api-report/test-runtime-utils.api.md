@@ -4,13 +4,13 @@
 
 ```ts
 
-import { AttachState } from '@fluidframework/container-definitions';
+import { AttachState } from '@fluidframework/container-definitions/internal';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
-import { IAudience } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/container-definitions/internal';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
@@ -21,11 +21,11 @@ import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-
 import { IdCreationRange } from '@fluidframework/id-compressor';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
-import { IDeltaManagerEvents } from '@fluidframework/container-definitions';
-import { IDeltaQueue } from '@fluidframework/container-definitions';
+import { IDeltaManager } from '@fluidframework/container-definitions/internal';
+import { IDeltaManagerEvents } from '@fluidframework/container-definitions/internal';
+import { IDeltaQueue } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentStorageService } from '@fluidframework/driver-definitions';
+import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
@@ -36,7 +36,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/id-compressor';
 import { IIdCompressorCore } from '@fluidframework/id-compressor';
-import { ILoader } from '@fluidframework/container-definitions';
+import { ILoader } from '@fluidframework/container-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -54,7 +54,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
-import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ReadOnlyInfo } from '@fluidframework/container-definitions/internal';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions';

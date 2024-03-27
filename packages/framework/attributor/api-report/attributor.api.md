@@ -7,8 +7,8 @@
 import { AttributionInfo } from '@fluidframework/runtime-definitions';
 import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { IAudience } from '@fluidframework/container-definitions';
-import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IAudience } from '@fluidframework/container-definitions/internal';
+import { IDeltaManager } from '@fluidframework/container-definitions/internal';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 
