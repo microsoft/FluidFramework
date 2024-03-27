@@ -1,0 +1,43 @@
+{
+  "c": [
+    [
+      [
+        42,
+        0
+      ],
+      {
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
+    ],
+    [
+      42,
+      {
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
+    ],
+    [
+      null,
+      {
+        "inputContext": [],
+        "intentions": [
+          1
+        ],
+        "outputContext": [
+          1
+        ]
+      }
+    ]
+  ]
+}
