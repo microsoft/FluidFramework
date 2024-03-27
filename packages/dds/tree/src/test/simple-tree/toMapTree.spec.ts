@@ -547,10 +547,7 @@ describe("toMapTree", () => {
 
 		it("Array containing `undefined` (maps values to null when allowed by the schema)", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("test-array", [
-				schemaFactory.number,
-				schemaFactory.null,
-			]);
+			const schema = schemaFactory.array([schemaFactory.number, schemaFactory.null]);
 
 			const input: (number | undefined)[] = [42, undefined, 37, undefined];
 
@@ -592,11 +589,13 @@ describe("toMapTree", () => {
 
 		it("Array containing `undefined` (throws if fallback type when not allowed by the schema)", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("test-array", [schemaFactory.number]);
-
-			const input: (number | undefined)[] = [42, undefined, 37, undefined];
-
-			assert.throws(() => nodeDataToMapTree(input as InsertableContent, [schema]));
+			assert.throws(
+				() =>
+					nodeDataToMapTree([42, undefined, 37, undefined] as InsertableContent, [
+						schemaFactory.array(schemaFactory.number),
+					]),
+				/Received unsupported array entry value/,
+			);
 		});
 	});
 });
