@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
-import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
+import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
 import { TreeNode, Unhydrated } from "./types.js";
 
 /**
@@ -224,14 +224,36 @@ export class FieldSchema<
 	protected _typeCheck?: MakeNominal;
 
 	/**
-	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
-	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
-	 * @param allowedTypes - What types of tree nodes are allowed in this field.
+	 * What types of tree nodes are allowed in this field.
 	 */
+	public readonly normalizedAllowedTypes: AllowedTypes;
+
 	public constructor(
+		/**
+		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
+		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+		 */
 		public readonly kind: Kind,
+		/**
+		 * What types of tree nodes are allowed in this field.
+		 */
 		public readonly allowedTypes: Types,
-	) {}
+	) {
+		this.normalizedAllowedTypes = normalizeAllowedTypes(this.allowedTypes);
+	}
+}
+
+/**
+ * Normalizes a {@link ImplicitFieldSchema} to a {@link FieldSchema}.
+ */
+export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
+	return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
+}
+/**
+ * Normalizes a {@link ImplicitAllowedTypes} to a {@link AllowedTypes}.
+ */
+export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
+	return isReadonlyArray(types) ? types : [types];
 }
 
 /**
