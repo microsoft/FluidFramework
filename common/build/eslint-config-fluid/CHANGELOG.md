@@ -5,7 +5,16 @@
 The import/order rule is enabled with the following settings:
 
 ```json
-["error", {"newlines-between": "always", "alphabetize": {"order": "asc", "caseInsensitive": true }}]
+[
+	"error",
+	{
+		"newlines-between": "always",
+		"alphabetize": {
+			"order": "asc",
+			"caseInsensitive": true
+		}
+	}
+]
 ```
 
 ## [5.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.2.0)
