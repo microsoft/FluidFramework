@@ -4,8 +4,8 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {

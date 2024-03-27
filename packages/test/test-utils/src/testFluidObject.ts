@@ -6,11 +6,14 @@
 import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore/internal";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import {
 	IFluidDataStoreChannel,

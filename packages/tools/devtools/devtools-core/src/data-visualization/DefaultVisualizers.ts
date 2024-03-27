@@ -10,7 +10,12 @@
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
-import { type IDirectory, type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map/internal";
+import {
+	type IDirectory,
+	type ISharedMap,
+	SharedDirectory,
+	SharedMap,
+} from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ISharedObject } from "@fluidframework/shared-object-base/internal";

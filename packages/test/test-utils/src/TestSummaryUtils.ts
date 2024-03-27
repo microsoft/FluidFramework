@@ -4,7 +4,11 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IOnDemandSummarizeOptions,
 	ISummarizer,
