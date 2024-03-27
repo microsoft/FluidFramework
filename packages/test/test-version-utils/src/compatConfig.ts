@@ -259,6 +259,7 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
 
+// Helper function for genCrossVersionCompatConfig().
 function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
 	return {
 		name: `compat cross version - create with ${createVersion} + load with ${loadVersion}`,
@@ -285,17 +286,13 @@ function genCompatConfig(createVersion: string, loadVersion: string): CompatConf
 export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 	const currentVersion = getRequestedVersion(pkgVersion, 0);
 
-	//
 	// Build a list of all the versions we want to test, except current version.
-	//
 	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.map((delta) => getRequestedVersion(pkgVersion, delta));
 	allDefaultDeltaVersions.push(...defaultCompatVersions.ltsVersions);
 
-	//
 	// Build all combos of (current verison, prior version) & (prior version, current version)
-	//
 	const configs: CompatConfig[] = [];
 
 	for (const c of allDefaultDeltaVersions) {
