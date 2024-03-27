@@ -30,6 +30,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type {
@@ -43,6 +44,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { v4 as uuid } from "uuid";
+import type { FluidObject , IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type Client,
 	type ClientLoadData,
@@ -110,8 +113,9 @@ export interface StashClient {
 /**
  * @internal
  */
-export interface Handle {
+export interface HandleCreated {
 	type: "handle";
+	handles: DDSFuzzHandle<IChannelFactory>[];
 }
 
 /**
@@ -189,6 +193,34 @@ function getSaveInfo(
 	}
 	const filepath = path.join(directory, `${seed}.json`);
 	return { saveOnFailure: true, filepath };
+}
+
+export class DDSFuzzHandle<T = IFluidLoadable & FluidObject> implements IFluidHandle {
+	readonly absolutePath: string;
+
+	public get IFluidHandle(): DDSFuzzHandle<T> {
+		return this;
+	}
+
+	public get isAttached(): boolean {
+		throw new Error("Method not implemented.");
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public async get(): Promise<any> { // i know this isn't right
+		return this;
+	}
+
+	constructor() {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		this.absolutePath = uuid() as string;
+	}
+	attachGraph(): void {
+		throw new Error("Method not implemented.");
+	}
+	bind(handle: IFluidHandle): void {
+		throw new Error("Method not implemented.");		
+	}
 }
 
 /**
@@ -519,7 +551,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
-handles: false,
+	handles: false,
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
@@ -1144,32 +1176,27 @@ export function mixinHandle<
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Handle, TState> {
+): DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState> {
 	if (options.handles === false) {
-		return model as DDSFuzzModel<TChannelFactory, TOperation | Handle, TState>;
+		return model as DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState>;
 	}
 
-	const generatorFactory: () => AsyncGenerator<TOperation | Handle, TState> = () => {
+	const generatorFactory: () => AsyncGenerator<TOperation | HandleCreated, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		return async (state): Promise<TOperation | Handle | typeof done> => {
+		return async (state): Promise<TOperation | HandleCreated | typeof done> => {
 			const baseOp = baseGenerator(state);
 			if (state.random.bool(0.5)) {
+				const handle1 = new DDSFuzzHandle();
 				return {
 					type: "handle",
+					handles: [handle1],
 				};
 			}
 			return baseOp;
 		};
 	};
 
-	const reducer: AsyncReducer<TOperation | Handle, TState> = async (state, operation) => {
-		if (isOperationType<Handle>("handle", operation)) {
-			const clientFromHandle = await state.client.channel.handle.get();
-			return {
-				...state,
-				client: clientFromHandle,
-			};
-		}
+	const reducer: AsyncReducer<TOperation | HandleCreated, TState> = async (state, operation) => {
 		return model.reducer(state, operation);
 	};
 
@@ -1178,7 +1205,7 @@ export function mixinHandle<
 		generatorFactory,
 		reducer,
 		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
-			TOperation | Handle
+			TOperation | HandleCreated
 		>[],
 	};
 }
@@ -1617,7 +1644,7 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	| AddClient
 	| Attach
 	| Attaching
-| Handle
+	| HandleCreated
 	| Rehydrate
 	| ChangeConnectionState
 	| TriggerRebase
@@ -1629,9 +1656,9 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-mixinHandle(
-						mixinReconnect(mixinRebase(ddsModel, options), options),
-options,
+						mixinHandle(
+							mixinReconnect(mixinRebase(ddsModel, options), options),
+							options,
 						),
 						options,
 					),
