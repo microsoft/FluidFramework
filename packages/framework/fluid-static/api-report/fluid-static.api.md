@@ -7,6 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { ICompressionRuntimeOptions } from '@fluidframework/container-runtime';
 import { IContainer } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -18,7 +19,7 @@ import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 // @public (undocumented)
 export interface AzureContainerSchema extends ContainerSchema {
     // (undocumented)
-    minRuntimeVersion?: FluidRuntimeMinVersion;
+    documentCompatibility?: FluidDocFormatCompatibility;
 }
 
 // @public
@@ -33,7 +34,7 @@ export interface ContainerSchema {
 // @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
-    minRuntimeVersion?: FluidRuntimeMinVersion;
+    documentCompatibility?: FluidDocFormatCompatibility;
 }): IRuntimeFactory;
 
 // @internal
@@ -56,10 +57,45 @@ export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
 } & (new (...args: any[]) => T);
 
 // @public
-export enum FluidRuntimeMinVersion {
-    V1 = 0,
-    V2 = 1
+export type FluidDocFormatCompatibility =
+/**
+* Use V1 setting in the following scenario:
+* A version of your application used 1.x version of Fluid Framework and shipped that application version to production.
+* There is no way to ship new application code (including Fluid Framework bits) instantly to all clients of a given application.
+* This means every update must result in at least two "current" versions at a time for a while.
+* These application versions need to use same (compatible) schema, for as long as old version of the application is in circulation.
+* V1 settings does precisely that - it instructs FluidFramework to disable all the features that modify document schema,
+* allowing full compatibility with old versions of FluidFramework library.
+*
+* Please note that even if you have no documents at rest (i.e. all Fluid containers are deleted as soon as all clients leave document),
+* you have to use V1 setting for a while. A user could open a document and close a lid of latop, and come back after a while (day/week/month/year)
+* Even if application will attempt to immidiatly close container in such cases, it's a race with FluidFramework attempting to reconnect
+* to container and receive / send ops, which may result in not the best user experience.
+*
+* That said, once it's safe (the new version of application with FluidFramework 2.0 has been deployed and reached 99.99% saturarion),
+* we highly recomend you to switch to V2 and rip all the benefits of latest changes.
+*
+* You should assume that FluidFramework 3.0 will remove this option. I.e. applications will be able to consume FluidFramework 3.0 only
+* after they deployed application version with FluidFramework 2.0 and this version saturated in production.
+*
+* V1 option does not allow usage of added in 2.0 Tree data structure.
+*/
+    {
+    compatibilityLevel: "1.x";
 }
+/**
+* Use V2 settign in one of the following scenarios:
+* 1. You are building a new application, i.e. you never used 1.x version of FluidFramework.
+* 2. An application version used V1 setting, deployed it to production and reached certain high level of saturation (99.99%) that makes it save
+* to enable V2 and gain the benefits of FluidFramework 2.0 work
+*
+* Please note that using Tree data structure requires this option.
+* Please see all the benefits of this setting descrived above.
+*/
+| {
+    compatibilityLevel: "2.x";
+    compressionOptions?: ICompressionRuntimeOptions;
+};
 
 // @public
 export interface IConnection {

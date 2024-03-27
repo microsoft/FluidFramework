@@ -18,7 +18,6 @@ import {
 } from "@fluidframework/driver-definitions";
 import {
 	type ContainerSchema,
-	FluidRuntimeMinVersion,
 	type IFluidContainer,
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
@@ -146,7 +145,7 @@ export class TinyliciousClient {
 	private createLoader(schema: ContainerSchema): IHostLoader {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			minRuntimeVersion: FluidRuntimeMinVersion.V2,
+			documentCompatibility: { compatibilityLevel: "2.x" },
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

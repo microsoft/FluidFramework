@@ -21,7 +21,7 @@ export type {
 	ContainerAttachProps,
 	ContainerSchema,
 	AzureContainerSchema,
-	FluidRuntimeMinVersion,
+	FluidDocFormatCompatibility,
 	DataObjectClass,
 	IConnection,
 	IFluidContainer,

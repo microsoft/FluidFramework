@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { type ICompressionRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	type IEvent,
 	type IEventProvider,
@@ -121,7 +122,7 @@ export interface ContainerSchema {
  *
  * @public
  */
-export enum FluidRuntimeMinVersion {
+export type FluidDocFormatCompatibility =
 	/**
 	 * Use V1 setting in the following scenario:
 	 * A version of your application used 1.x version of Fluid Framework and shipped that application version to production.
@@ -144,8 +145,9 @@ export enum FluidRuntimeMinVersion {
 	 *
 	 * V1 option does not allow usage of added in 2.0 Tree data structure.
 	 */
-	V1,
-
+	| {
+			compatibilityLevel: "1.x";
+	  }
 	/**
 	 * Use V2 settign in one of the following scenarios:
 	 * 1. You are building a new application, i.e. you never used 1.x version of FluidFramework.
@@ -155,15 +157,20 @@ export enum FluidRuntimeMinVersion {
 	 * Please note that using Tree data structure requires this option.
 	 * Please see all the benefits of this setting descrived above.
 	 */
-	V2,
-}
+	| {
+			compatibilityLevel: "2.x";
+
+			// default: lz4 compression is on, fofr large payloads.
+			// Please see defaultCompressionConfig for actual settings.
+			compressionOptions?: ICompressionRuntimeOptions;
+	  };
 
 /**
  * @public
  */
 export interface AzureContainerSchema extends ContainerSchema {
 	// Default is V2!
-	minRuntimeVersion?: FluidRuntimeMinVersion;
+	documentCompatibility?: FluidDocFormatCompatibility;
 }
 
 /**

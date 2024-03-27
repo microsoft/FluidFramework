@@ -28,7 +28,7 @@ import { RequestParser } from "@fluidframework/runtime-utils";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ContainerSchema,
-	FluidRuntimeMinVersion,
+	type FluidDocFormatCompatibility,
 	type IRootDataObject,
 	type LoadableObjectClass,
 	type LoadableObjectClassRecord,
@@ -170,9 +170,9 @@ const rootDataStoreId = "rootDOId";
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	schema: ContainerSchema;
-	minRuntimeVersion?: FluidRuntimeMinVersion;
+	documentCompatibility?: FluidDocFormatCompatibility;
 }): IRuntimeFactory {
-	return new DOProviderContainerRuntimeFactory(props.schema, props.minRuntimeVersion);
+	return new DOProviderContainerRuntimeFactory(props.schema, props.documentCompatibility);
 }
 
 /**
@@ -197,7 +197,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 	public constructor(
 		schema: ContainerSchema,
-		minRuntimeVersion: FluidRuntimeMinVersion = FluidRuntimeMinVersion.V2,
+		documentCompatibility?: FluidDocFormatCompatibility,
 	) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
@@ -236,8 +236,9 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 
 		let runtimeOptions: IContainerRuntimeOptions;
 
-		switch (minRuntimeVersion) {
-			case FluidRuntimeMinVersion.V1: {
+		const compatibilityLevel = documentCompatibility?.compatibilityLevel;
+		switch (compatibilityLevel) {
+			case "1.x": {
 				runtimeOptions = {
 					// Legacy - work around for inability to send over 1Mb batches.
 					// Very risky, as exposes app (remote clients) to intermidiate states.
@@ -252,7 +253,9 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 				};
 				break;
 			}
-			case FluidRuntimeMinVersion.V2: {
+
+			case undefined:
+			case "2.x": {
 				runtimeOptions = {
 					// FlushMode.Immediate has been depreceated. It leads to subtle bugs in applications, as
 					// intermidiate states are exposed to remote clients half way through operations.
@@ -267,12 +270,12 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 					// This also ensures that client does not trip (with relatively small to medium payloads) over service throttling limits easily.
 					enableGroupedBatching: true,
 					// chunkSizeInBytes - is on by default.
-					// compressionOptions - default is on
+					compressionOptions: documentCompatibility?.compressionOptions,
 				};
 				break;
 			}
 			default: {
-				unreachableCase(minRuntimeVersion, "unknown version");
+				unreachableCase(compatibilityLevel, "unknown version");
 			}
 		}
 		super({
