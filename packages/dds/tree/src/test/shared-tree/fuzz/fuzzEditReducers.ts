@@ -31,11 +31,11 @@ import {
 	FieldEdit,
 	FuzzFieldChange,
 	FuzzRemove,
-	SchemaChange,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
+	SchemaChange,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
