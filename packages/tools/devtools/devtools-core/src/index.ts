@@ -103,6 +103,6 @@ export {
 	RootDataVisualizations,
 	TelemetryEvent,
 	TelemetryHistory,
-	ToggleUnsampledTelemetry,
+	SetUnsampledTelemetry,
 } from "./messaging/index.js";
 export type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";

@@ -6,11 +6,11 @@
 import { type IDevtoolsMessage } from "../Messages.js";
 
 /**
- * Encapsulates types and logic related to {@link ToggleUnsampledTelemetry.Message}.
+ * Encapsulates types and logic related to {@link SetUnsampledTelemetry.Message}.
  *
  * @internal
  */
-export namespace ToggleUnsampledTelemetry {
+export namespace SetUnsampledTelemetry {
 	/**
 	 * {@link DevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
@@ -19,7 +19,7 @@ export namespace ToggleUnsampledTelemetry {
 	export const MessageType = "TOGGLE_UNSAMPLED_TELEMETRY";
 
 	/**
-	 * Message data format used by {@link ToggleUnsampledTelemetry.Message}.
+	 * Message data format used by {@link SetUnsampledTelemetry.Message}.
 	 *
 	 * @internal
 	 */
@@ -27,12 +27,11 @@ export namespace ToggleUnsampledTelemetry {
 		/**
 		 * String representation of whether unsampled telemetry should be enabled or disabled. True for enabled, false for disabled.
 		 */
-		unsampledTelemetry: string;
+		unsampledTelemetry: boolean;
 	}
 
 	/**
-	 * Outbound message indicating that the {@link IFluidDevtools} has been disposed.
-	 *
+	 * Message indicating that unsampled telemetry should be enabled/disabled in the Fluid application.
 	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
@@ -43,7 +42,7 @@ export namespace ToggleUnsampledTelemetry {
 	}
 
 	/**
-	 * Creates a {@link ToggleUnsampledTelemetry.Message} from the provided {@link ToggleUnsampledTelemetry.MessageData}.
+	 * Creates a {@link SetUnsampledTelemetry.Message} from the provided {@link SetUnsampledTelemetry.MessageData}.
 	 *
 	 * @internal
 	 */

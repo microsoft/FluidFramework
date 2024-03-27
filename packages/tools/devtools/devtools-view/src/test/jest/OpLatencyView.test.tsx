@@ -5,6 +5,7 @@
 
 import React from "react";
 
+import { DevtoolsFeatures } from "@fluidframework/devtools-core";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
@@ -21,10 +22,23 @@ import { MockMessageRelay } from "../utils/index.js";
 }));
 
 describe("OpLatencyView component tests", () => {
-	it("Renders as expected when unsampled telemetry is enabled in localStorage", async (): Promise<void> => {
-		window.sessionStorage.setItem("Fluid.Telemetry.DisableSampling", "true");
+	it("Renders as expected when unsampled telemetry is enabled in sessionStorage", async (): Promise<void> => {
+		const mockMessageRelay = new MockMessageRelay(() => {
+			return {
+				type: DevtoolsFeatures.MessageType,
+				source: "OpLatencyTest",
+				data: {
+					features: {
+						telemetry: true,
+						opLatencyTelemetry: true,
+					},
+					devtoolsVersion: "1.0.0",
+					unsampledTelemetry: true,
+				},
+			};
+		});
 		render(
-			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
+			<MessageRelayContext.Provider value={mockMessageRelay}>
 				<OpLatencyView />
 			</MessageRelayContext.Provider>,
 		);
@@ -53,10 +67,24 @@ describe("OpLatencyView component tests", () => {
 		expect(aboutHeader).toBeDefined();
 	});
 
-	it("Renders as expected when unsampled telemetry is disabled in localStorage", async (): Promise<void> => {
-		window.sessionStorage.setItem("Fluid.Telemetry.DisableSampling", "false");
+	it("Renders as expected when unsampled telemetry is disabled in sessionStorage", async (): Promise<void> => {
+		const mockMessageRelay = new MockMessageRelay(() => {
+			return {
+				type: DevtoolsFeatures.MessageType,
+				source: "OpLatencyTest",
+				data: {
+					features: {
+						telemetry: true,
+						opLatencyTelemetry: true,
+					},
+					devtoolsVersion: "1.0.0",
+					unsampledTelemetry: false,
+				},
+			};
+		});
+
 		render(
-			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
+			<MessageRelayContext.Provider value={mockMessageRelay}>
 				<OpLatencyView />
 			</MessageRelayContext.Provider>,
 		);

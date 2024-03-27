@@ -35,7 +35,7 @@ export namespace DevtoolsFeatures {
 		 */
 		devtoolsVersion?: string;
 
-		unsampledTelemetry?: string;
+		unsampledTelemetry?: boolean;
 	}
 
 	/**

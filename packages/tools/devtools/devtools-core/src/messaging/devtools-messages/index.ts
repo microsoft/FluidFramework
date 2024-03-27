@@ -12,4 +12,4 @@ export { DevtoolsDisposed } from "./DevtoolsDisposed.js";
 export { DevtoolsFeatures } from "./DevtoolsFeatures.js";
 export { GetContainerList } from "./GetContainerList.js";
 export { GetDevtoolsFeatures } from "./GetDevtoolsFeatures.js";
-export { ToggleUnsampledTelemetry } from "./ToggleUnsampledTelemetry.js";
+export { SetUnsampledTelemetry } from "./SetUnsampledTelemetry.js";

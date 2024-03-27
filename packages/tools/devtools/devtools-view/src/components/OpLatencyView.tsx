@@ -16,8 +16,8 @@ import {
 	GetDevtoolsFeatures,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
+	SetUnsampledTelemetry,
 	TelemetryEvent,
-	ToggleUnsampledTelemetry,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import React from "react";
@@ -94,17 +94,16 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(
-		sessionStorage.getItem("Fluid.Telemetry.DisableSampling") === "true",
-	);
+	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(false);
 
 	React.useEffect(() => {
 		// Handler for incoming messages
 		const inboundMessageHandlers: InboundHandlers = {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
-				if (message.data.unsampledTelemetry !== undefined) {
-					setUnsampledTelemetry(JSON.parse(message.data.unsampledTelemetry) as boolean);
+				const messageFlag = message.data.unsampledTelemetry;
+				if (messageFlag !== undefined) {
+					setUnsampledTelemetry(messageFlag);
 					return true;
 				}
 				return false;
@@ -116,15 +115,12 @@ export function OpLatencyView(): React.ReactElement {
 		}
 
 		messageRelay.on("message", messageHandler);
+		messageRelay.postMessage(GetDevtoolsFeatures.createMessage());
 
 		// Cleanup the event listener
 		return () => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay]);
-
-	React.useEffect(() => {
-		messageRelay.postMessage(GetDevtoolsFeatures.createMessage());
 	}, [messageRelay]);
 
 	// Render the text conditionally
@@ -136,16 +132,11 @@ export function OpLatencyView(): React.ReactElement {
 
 	const toggleUnsampledTelemetry = (): void => {
 		const newValue = !unsampledTelemetry;
-		const toggleMessage = ToggleUnsampledTelemetry.createMessage({
-			unsampledTelemetry: String(newValue),
+		const toggleMessage = SetUnsampledTelemetry.createMessage({
+			unsampledTelemetry: newValue,
 		});
-		setUnsampledTelemetry(newValue);
 		messageRelay.postMessage(toggleMessage);
 	};
-
-	React.useEffect(() => {
-		console.debug("Unsampled Telemetry:", unsampledTelemetry);
-	}, [unsampledTelemetry]);
 
 	React.useEffect(() => {
 		/**

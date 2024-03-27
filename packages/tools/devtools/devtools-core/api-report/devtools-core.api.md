@@ -207,7 +207,7 @@ export namespace DevtoolsFeatures {
         devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
         // (undocumented)
-        unsampledTelemetry?: string;
+        unsampledTelemetry?: boolean;
     }
 }
 
@@ -462,6 +462,18 @@ export namespace RootDataVisualizations {
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @internal
+export namespace SetUnsampledTelemetry {
+    const MessageType = "TOGGLE_UNSAMPLED_TELEMETRY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        unsampledTelemetry: boolean;
+    }
+}
+
+// @internal
 export interface SharedObjectEdit extends Edit, HasFluidObjectId {
 }
 
@@ -491,18 +503,6 @@ export namespace TelemetryHistory {
     }
     export interface MessageData {
         contents: ITimestampedTelemetryEvent[];
-    }
-}
-
-// @internal
-export namespace ToggleUnsampledTelemetry {
-    const MessageType = "TOGGLE_UNSAMPLED_TELEMETRY";
-    export function createMessage(data: MessageData): Message;
-    export interface Message extends IDevtoolsMessage<MessageData> {
-        type: typeof MessageType;
-    }
-    export interface MessageData {
-        unsampledTelemetry: string;
     }
 }
 
