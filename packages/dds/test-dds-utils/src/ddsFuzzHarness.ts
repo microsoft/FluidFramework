@@ -32,11 +32,11 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IIdCompressor,
 	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,

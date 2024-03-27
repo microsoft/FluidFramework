@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Note: The contents of this file really don't belong in this package, as they are only intended for internal use.

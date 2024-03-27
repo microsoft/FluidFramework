@@ -112,7 +112,7 @@ export interface IIdCompressorCore {
 	 * @param ghostSessionId - The session id that minted ids generated within `ghostSessionCallback` should be attributed to.
 	 * @param ghostSessionCallback - Callback which mints ids attributed to the ghost session.
 	 */
-	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void);
+	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.

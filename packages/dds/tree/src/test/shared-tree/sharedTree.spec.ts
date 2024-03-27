@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IContainerExperimental } from "@fluidframework/container-loader";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,

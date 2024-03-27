@@ -14,7 +14,8 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -34,7 +35,6 @@ import {
 } from "@fluidframework/test-utils";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
