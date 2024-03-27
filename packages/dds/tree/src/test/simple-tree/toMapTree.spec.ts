@@ -17,10 +17,7 @@ import {
 // import { FieldKinds, SchemaBuilderBase } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
-import {
-	SchemaFactory,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaFactory.js";
+import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
