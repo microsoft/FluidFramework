@@ -139,6 +139,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly readOnlyInfo: ReadOnlyInfo;
     resolvedUrl: IResolvedUrl | undefined;
     serialize(): string;
+    // (undocumented)
+    serialize(closeProps: {
+        dispose?: boolean;
+        stopBlobAttachingSignal?: AbortSignal;
+    }): Promise<string>;
 }
 
 // @alpha

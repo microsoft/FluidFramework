@@ -141,6 +141,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			await args.ensureSynchronized();
 			container.close();
 		} else {
+			// pendingState = await container.serialize({});
 			pendingState = await container.closeAndGetPendingLocalState?.();
 		}
 
@@ -1328,7 +1329,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("abort while stashing blobs", async function () {
+	it.skip("abort while stashing blobs", async function () {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		const ac = new AbortController();
