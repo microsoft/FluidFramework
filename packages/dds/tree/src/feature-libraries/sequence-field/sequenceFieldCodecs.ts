@@ -4,12 +4,13 @@
  */
 
 import { unreachableCase } from "@fluidframework/core-utils";
-import { TAnySchema, Type } from "@sinclair/typebox";
+import { TAnySchema } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly, Mutable, fail } from "../../util/index.js";
 import { DiscriminatedUnionDispatcher, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import { FieldChangeEncodingContext, NodeId } from "../index.js";
+import { EncodedNodeChangeset } from "../modular-schema/modularChangeFormat.js";
 import {
 	Attach,
 	AttachAndDetach,
@@ -300,7 +301,6 @@ function makeV0Codec<TNodeChange>(
 					encodedMark.cellId = cellIdCodec.encode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					// XXX
 					encodedMark.changes = context.encodeNode(mark.changes as NodeId);
 				}
 				jsonMarks.push(encodedMark);
@@ -327,14 +327,12 @@ function makeV0Codec<TNodeChange>(
 					decodedMark.cellId = cellIdCodec.decode(mark.cellId, context.baseContext);
 				}
 				if (mark.changes !== undefined) {
-					// XXX
 					decodedMark.changes = context.decodeNode(mark.changes) as TNodeChange;
 				}
 				marks.push(decodedMark);
 			}
 			return marks;
 		},
-		// XXX
-		encodedSchema: ChangesetSchema(Type.Any()),
+		encodedSchema: ChangesetSchema(EncodedNodeChangeset),
 	};
 }

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily } from "../../codec/index.js";
 import type { FieldChangeEncodingContext } from "../modular-schema/index.js";
 import { EncodedGenericChange, EncodedGenericChangeset } from "./genericFieldKindFormat.js";
 import type { GenericChange, GenericChangeset } from "./genericFieldKindTypes.js";
+import { EncodedNodeChangeset } from "./modularChangeFormat.js";
 
 export function makeGenericChangeCodec(): ICodecFamily<
 	GenericChangeset,
@@ -44,7 +44,6 @@ function makeV0Codec(): IJsonCodec<
 				}),
 			);
 		},
-		// XXX
-		encodedSchema: Type.Any(),
+		encodedSchema: EncodedGenericChangeset(EncodedNodeChangeset),
 	};
 }

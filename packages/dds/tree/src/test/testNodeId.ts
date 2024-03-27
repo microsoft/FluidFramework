@@ -5,8 +5,15 @@
 
 import { fail } from "assert";
 import { NodeId } from "../feature-libraries/index.js";
-import { ChangeEncodingContext, DeltaFieldMap, makeAnonChange } from "../core/index.js";
-import { JsonCompatibleReadOnly } from "../index.js";
+import {
+	ChangeEncodingContext,
+	DeltaFieldMap,
+	FieldKey,
+	FieldKindIdentifier,
+	makeAnonChange,
+} from "../core/index.js";
+import { JsonCompatibleReadOnly, brand } from "../index.js";
+import { EncodedNodeChangeset } from "../feature-libraries/modular-schema/modularChangeFormat.js";
 import { TestChange } from "./testChange.js";
 
 /**
@@ -68,15 +75,25 @@ function deltaFromChild(id: NodeId): DeltaFieldMap {
 	return TestChange.toDelta(makeAnonChange(testChange));
 }
 
-function encode(id: NodeId, context: ChangeEncodingContext): JsonCompatibleReadOnly {
-	return {
+const fieldKey: FieldKey = brand("");
+const fieldKind: FieldKindIdentifier = brand("");
+
+function encode(id: NodeId, context: ChangeEncodingContext): EncodedNodeChangeset {
+	const encodedId = {
 		...id,
 		testChange: TestChange.codec.encode((id as TestNodeId).testChange, context),
+	};
+
+	return {
+		fieldChanges: [{ fieldKey, fieldKind, change: encodedId }],
 	};
 }
 
 function decode(encoded: JsonCompatibleReadOnly, context: ChangeEncodingContext): NodeId {
-	return encoded as unknown as TestNodeId;
+	const fieldChanges =
+		(encoded as EncodedNodeChangeset).fieldChanges ?? fail("Invalid encoded TestNodeId");
+
+	return fieldChanges[0].change as TestNodeId;
 }
 
 function tryGetTestChange(id: NodeId | undefined): TestChange | undefined {

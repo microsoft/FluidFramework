@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema, Type } from "@sinclair/typebox";
+import { TAnySchema } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type { FieldChangeEncodingContext, NodeId } from "../modular-schema/index.js";
+import { EncodedNodeChangeset } from "../modular-schema/modularChangeFormat.js";
 import type { Move, OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes.js";
 import { EncodedOptionalChangeset, EncodedRegisterId } from "./optionalFieldChangeFormat.js";
 
@@ -114,7 +115,6 @@ function makeOptionalFieldCodec<TChildChange = NodeId>(
 				for (const [id, childChange] of change.childChanges) {
 					encoded.c.push([
 						registerIdCodec.encode(id, context.baseContext),
-						// XXX
 						context.encodeNode(childChange as NodeId),
 					]);
 				}
@@ -155,7 +155,6 @@ function makeOptionalFieldCodec<TChildChange = NodeId>(
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
 						registerIdCodec.decode(id, context.baseContext),
-						// XXX
 						context.decodeNode(encodedChange) as TChildChange,
 					]) ?? [],
 			};
@@ -212,7 +211,6 @@ function makeOptionalFieldCodec<TChildChange = NodeId>(
 			}
 			return decoded;
 		},
-		// XXX
-		encodedSchema: EncodedOptionalChangeset(Type.Any()),
+		encodedSchema: EncodedOptionalChangeset(EncodedNodeChangeset),
 	};
 }
