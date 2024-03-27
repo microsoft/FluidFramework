@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	AttachState,
+	IAudience,
+	IDeltaManager,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,

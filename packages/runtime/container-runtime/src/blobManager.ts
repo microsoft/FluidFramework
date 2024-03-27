@@ -4,7 +4,10 @@
  */
 
 import { TypedEventEmitter, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions/internal";
+import {
+	AttachState,
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
