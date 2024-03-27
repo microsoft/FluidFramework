@@ -196,7 +196,7 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.13.3",
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
@@ -262,6 +262,16 @@
 			"RemovedFunctionDeclaration_isStableId": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainerRuntimeMetadata": {
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_RuntimeMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IChunkedOp": {
+				"backCompat": false
 			}
 		}
 	}

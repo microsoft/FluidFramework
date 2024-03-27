@@ -19,7 +19,7 @@ import {
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
+import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,
@@ -104,8 +104,9 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
-		enableRuntimeIdCompressor: ["on", "off", "delayed"],
+		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
+		explicitSchemaControl: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

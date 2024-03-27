@@ -11,7 +11,6 @@ export {
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
 	isRuntimeMessage,
-	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
 	TombstoneResponseHeaderKey,
@@ -21,6 +20,7 @@ export {
 	ICompressionRuntimeOptions,
 	CompressionAlgorithms,
 	RuntimeHeaderData,
+	disabledCompressionConfig,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
@@ -98,6 +98,13 @@ export {
 	IRetriableFailureResult,
 	ISummarizeEventProps,
 	IdCompressorMode,
+	IDocumentSchema,
+	DocumentSchemaValueType,
+	IDocumentSchemaCurrent,
+	currentDocumentVersionSchema,
+	DocumentsSchemaController,
+	IDocumentSchemaChangeMessage,
+	IDocumentSchemaFeatures,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export { ChannelCollection } from "./channelCollection.js";

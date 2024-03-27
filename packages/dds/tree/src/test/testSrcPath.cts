@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import path from "node:path";
 
 // FUTURE: Without CommonJS requirement __dirname can be acquired from import.meta.url
 // In Node 20+ use:
