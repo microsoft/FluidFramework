@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import {
 	AttachState,
 	IContainer,
@@ -20,7 +20,11 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor/internal";
+import {
+	IIdCompressor,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/id-compressor/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedDirectory } from "@fluidframework/map/internal";

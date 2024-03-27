@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
-import { compareArrays } from "@fluidframework/core-utils/internal";
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { compareArrays } from '@fluidframework/core-utils/internal';
 import { Payload } from './persisted-types/index.js';
 
 /**

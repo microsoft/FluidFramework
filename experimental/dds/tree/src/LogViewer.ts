@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { IEvent } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { assert } from '@fluidframework/core-utils/internal';
 import Denque from 'denque';
 import { fail, noop } from './Common.js';
 import { EditLog, SequencedOrderedEditId } from './EditLog.js';

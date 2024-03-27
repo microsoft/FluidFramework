@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import { assert } from '@fluidframework/core-utils/internal';
+import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import {
 	Mutable,

@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct/internal";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	ContainerRuntime,
@@ -38,7 +42,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 interface ProvideSearchContent {

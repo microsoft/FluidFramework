@@ -10,8 +10,12 @@ import {
 	itExpects,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { SharedCell } from "@fluidframework/cell/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
@@ -35,7 +39,11 @@ import {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 } from "@fluidframework/merge-tree/internal";
-import type { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
+import type {
+	IIntervalCollection,
+	SequenceInterval,
+	SharedString,
+} from "@fluidframework/sequence/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,

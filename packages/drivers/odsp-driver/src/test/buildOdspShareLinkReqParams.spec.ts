@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
-import { SharingLinkRole, SharingLinkScope } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	SharingLinkRole,
+	SharingLinkScope,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { buildOdspShareLinkReqParams } from "../odspUtils.js";
 
 describe("buildOdspShareLinkReqParams", () => {

@@ -25,7 +25,7 @@ You may notice the command line argument `codeLoader` is optional. If you choose
 and provide a [`IFluidFileConverter`](./src/codeLoaderBundle.ts) implementation to the [`fluidRunner(...)`](./src/fluidRunner.ts) method.
 
 ```typescript
-import { fluidRunner } from "@fluidframework/fluid-runner";
+import { fluidRunner } from "@fluidframework/fluid-runner/internal";
 
 fluidRunner({
 	/* IFluidFileConverter implementation here */

@@ -16,7 +16,11 @@ import {
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
-import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	TelemetryDataTag,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { cloneGCData } from "../gc/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";

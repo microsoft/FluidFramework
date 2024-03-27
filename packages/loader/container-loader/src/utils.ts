@@ -5,7 +5,10 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,

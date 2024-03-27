@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from 'assert';
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
-import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { LoaderHeader } from '@fluidframework/container-definitions/internal';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
+import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 import { BuildNode, Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { Mutable } from '../../Common.js';

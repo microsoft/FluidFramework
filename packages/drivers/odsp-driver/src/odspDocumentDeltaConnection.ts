@@ -6,7 +6,7 @@
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { DocumentDeltaConnection } from "@fluidframework/driver-base";
+import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import { OdspError } from "@fluidframework/odsp-driver-definitions/internal";

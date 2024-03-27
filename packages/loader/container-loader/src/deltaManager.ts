@@ -22,7 +22,11 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 } from "@fluidframework/driver-definitions/internal";
-import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import {
+	MessageType2,
+	NonRetryableError,
+	isRuntimeMessage,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IDocumentMessage,

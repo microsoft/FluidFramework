@@ -20,7 +20,7 @@ import {
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
 import { getForceTokenReauth } from "./fluidFetchArgs.js";
 
 export async function resolveWrapper<T>(

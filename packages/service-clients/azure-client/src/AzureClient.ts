@@ -25,7 +25,10 @@ import {
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 
-import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
+import {
+	type FluidObject,
+	type IConfigProviderBase,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { createAzureAudienceMember } from "./AzureAudience.js";

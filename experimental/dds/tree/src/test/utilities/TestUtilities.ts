@@ -10,19 +10,24 @@ import {
 	type IContainer,
 	type IFluidCodeDetails,
 	type IHostLoader,
-} from "@fluidframework/container-definitions/internal";
-import { IContainerExperimental, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
-import { DefaultSummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from "@fluidframework/core-interfaces/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+} from '@fluidframework/container-definitions/internal';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime/internal';
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+	IRequestHeader,
+} from '@fluidframework/core-interfaces/internal';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import { assert } from '@fluidframework/core-utils/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from '@fluidframework/telemetry-utils/internal';
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
+} from '@fluidframework/test-runtime-utils/internal';
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -31,7 +36,7 @@ import {
 	TestFluidObjectFactory,
 	TestObjectProvider,
 	createAndAttachContainer,
-} from "@fluidframework/test-utils/internal";
+} from '@fluidframework/test-utils/internal';
 import { expect } from 'chai';
 import { v5 as uuidv5 } from 'uuid';
 import { BuildNode, Change, StablePlace } from '../../ChangeTypes.js';

@@ -7,7 +7,7 @@
 
 import { strict as assert } from 'assert';
 import { makeRandom } from '@fluid-private/stochastic-test-utils';
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { validateAssertionError } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 import { compareStrings } from '../Common.js';
 import { StableId } from '../Identifiers.js';

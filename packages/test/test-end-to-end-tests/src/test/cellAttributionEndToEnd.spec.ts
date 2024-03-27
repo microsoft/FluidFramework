@@ -10,7 +10,7 @@ import {
 	enableOnNewFileKey,
 } from "@fluid-experimental/attributor";
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
-import type { SharedCell } from "@fluidframework/cell";
+import type { SharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { AttributionInfo } from "@fluidframework/runtime-definitions/internal";

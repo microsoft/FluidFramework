@@ -13,7 +13,7 @@ import {
 	done,
 	makeRandom,
 } from '@fluid-private/stochastic-test-utils';
-import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { fail } from '../../Common.js';
 import { Definition, DetachedSequenceId, NodeId, TraitLabel } from '../../Identifiers.js';

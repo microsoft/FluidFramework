@@ -16,7 +16,12 @@ import {
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Deferred,
+	LazyPromise,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IChannelFactory,

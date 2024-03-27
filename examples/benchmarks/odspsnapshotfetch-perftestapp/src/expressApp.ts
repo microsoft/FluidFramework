@@ -10,7 +10,7 @@ import {
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
 import express, { type Response } from "express";
 import webpack from "webpack";
 import webpackDevMiddleware from "webpack-dev-middleware";

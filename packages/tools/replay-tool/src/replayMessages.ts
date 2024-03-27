@@ -7,7 +7,10 @@ import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { AttachState, IContainer } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
@@ -18,7 +21,7 @@ import {
 	ISnapshotWriterStorage,
 	ReplayFileDeltaConnection,
 	Replayer,
-} from "@fluidframework/file-driver";
+} from "@fluidframework/file-driver/internal";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
@@ -28,7 +31,7 @@ import {
 	MessageType,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
+import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

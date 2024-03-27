@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
-import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces/internal';
+import { assert } from '@fluidframework/core-utils/internal';
+import {
+	EventEmitterWithErrorHandling,
+	ITelemetryLoggerExt,
+	createChildLogger,
+} from '@fluidframework/telemetry-utils/internal';
 import { Change } from './ChangeTypes.js';
 import { RestOrArray, assertWithMessage, fail, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';

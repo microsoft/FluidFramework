@@ -8,8 +8,8 @@ import {
 	type IChannelAttributes,
 	type IChannelServices,
 	type IDeltaHandler,
-} from "@fluidframework/datastore-definitions/internal";
-import { type ITree } from "@fluidframework/tree/internal";
+} from '@fluidframework/datastore-definitions/internal';
+import { type ITree } from '@fluidframework/tree/internal';
 import { type SharedTree as LegacySharedTree } from '../SharedTree.js';
 import { type IMigrationOp } from './migrationShim.js';
 

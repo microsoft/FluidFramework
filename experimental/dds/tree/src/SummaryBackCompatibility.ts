@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces/internal';
+import type { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { fail } from './Common.js';
 import { getNumberOfHandlesFromEditLogSummary } from './EditLog.js';
 import {

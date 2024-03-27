@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
-import { MockContainerRuntimeFactory } from "@fluidframework/test-runtime-utils/internal";
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
+import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils/internal';
 import { expect } from 'chai';
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';
 import { SharedTreeMergeHealthTelemetryHeartbeat } from '../MergeHealth.js';

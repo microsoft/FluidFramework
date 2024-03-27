@@ -10,7 +10,7 @@ import util from "util";
 import child_process from "child_process";
 import interactiveLogin from "ms-rest-azure";
 import KeyVaultClient from "azure-keyvault";
-import { loadRC, saveRC } from "@fluidframework/tool-utils";
+import { loadRC, saveRC } from "@fluidframework/tool-utils/internal";
 
 const appendFile = util.promisify(fs.appendFile);
 

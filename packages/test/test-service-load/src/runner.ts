@@ -5,7 +5,11 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { ConnectionState, IContainerExperimental, Loader } from "@fluidframework/container-loader/internal";
+import {
+	ConnectionState,
+	IContainerExperimental,
+	Loader,
+} from "@fluidframework/container-loader/internal";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";

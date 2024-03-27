@@ -10,8 +10,8 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,

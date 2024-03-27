@@ -25,6 +25,10 @@ import {
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
+import type {
+	OdspResourceTokenFetchOptions,
+	TokenResponse,
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
@@ -32,10 +36,6 @@ import {
 	createOdspUrl,
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
-import type {
-	OdspResourceTokenFetchOptions,
-	TokenResponse,
-} from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";

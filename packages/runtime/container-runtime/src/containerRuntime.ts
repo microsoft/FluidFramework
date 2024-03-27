@@ -30,7 +30,13 @@ import {
 	ISignalEnvelope,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Deferred,
+	LazyPromise,
+	PromiseCache,
+	delay,
+} from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
 	FetchSource,

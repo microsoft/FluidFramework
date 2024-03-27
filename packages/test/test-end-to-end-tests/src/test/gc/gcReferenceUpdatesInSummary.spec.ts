@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
@@ -19,7 +22,7 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { UndoRedoStackManager } from "@fluidframework/undo-redo/internal";
 
 /**
  * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced

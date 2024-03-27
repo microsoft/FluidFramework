@@ -5,8 +5,12 @@
 
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type { ISharedCell, SharedCell } from "@fluidframework/cell/internal";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+} from '@fluidframework/datastore-definitions/internal';
 
 import { SharedTreeShim } from './sharedTreeShim.js';
 import { attributesMatch } from './utils.js';

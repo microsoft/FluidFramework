@@ -12,7 +12,10 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeBase, channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createSummarizer,

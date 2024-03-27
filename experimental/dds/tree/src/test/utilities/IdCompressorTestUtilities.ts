@@ -16,7 +16,7 @@ import {
 	repeat,
 	take,
 } from '@fluid-private/stochastic-test-utils';
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { assert, expect } from 'chai';
 import { ClosedMap, assertNotUndefined, fail, getOrCreate } from '../../Common.js';
 import {

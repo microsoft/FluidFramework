@@ -7,7 +7,7 @@ import React from "react";
 
 import { Spinner } from "@fluentui/react-components";
 
-import { type SharedCell } from "@fluidframework/cell";
+import { type SharedCell } from "@fluidframework/cell/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { type SharedMatrix } from "@fluidframework/matrix/internal";
 import { EmojiButton } from "./EmojiButton.js";

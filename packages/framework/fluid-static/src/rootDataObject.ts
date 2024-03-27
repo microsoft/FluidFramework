@@ -9,8 +9,8 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	type FluidObject,
 	type IFluidLoadable,

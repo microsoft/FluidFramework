@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { type IShim } from './types.js';
 
 /**

@@ -7,8 +7,17 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 
-import { IMergeTreeDeltaOp, createGroupOp, createRemoveRangeOp } from "@fluidframework/merge-tree/internal";
-import { Marker, ReferenceType, SharedString, TextSegment } from "@fluidframework/sequence/internal";
+import {
+	IMergeTreeDeltaOp,
+	createGroupOp,
+	createRemoveRangeOp,
+} from "@fluidframework/merge-tree/internal";
+import {
+	Marker,
+	ReferenceType,
+	SharedString,
+	TextSegment,
+} from "@fluidframework/sequence/internal";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";

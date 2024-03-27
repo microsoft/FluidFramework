@@ -5,9 +5,16 @@
 
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
-import { IContainer, IFluidCodeDetails, IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState, Loader } from "@fluidframework/container-loader/internal";
-import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerMessageType,
+	IContainerRuntimeOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import { type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map/internal";

@@ -13,7 +13,7 @@ import {
 	OdspTokenManager,
 	getMicrosoftConfiguration,
 	odspTokensCache,
-} from "@fluidframework/tool-utils";
+} from "@fluidframework/tool-utils/internal";
 import Axios from "axios";
 import express from "express";
 import nconf from "nconf";

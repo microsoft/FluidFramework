@@ -22,7 +22,7 @@ library consumers should always prefer `^`.
 The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
 
 ```javascript
-import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 ```
 
 ## Instantiating TinyliciousClient
@@ -32,7 +32,10 @@ Fluid requires a backing service to enable collaborative communication. The Tiny
 In the example below we are connecting to a locally running instance of our Tinylicious service running on port 7070 by filling out the optional `port` parameter in `TinyliciousConnectionConfig`.
 
 ```javascript
-import { TinyliciousClient, TinyliciousConnectionConfig } from "@fluidframework/tinylicious-client";
+import {
+	TinyliciousClient,
+	TinyliciousConnectionConfig,
+} from "@fluidframework/tinylicious-client/internal";
 
 const clientProps = { connection: { port: 7070 } };
 const tinyliciousClient = new TinyliciousClient(clientProps);
@@ -72,7 +75,7 @@ const id = await container.attach();
 Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
 
 ```javascript
-import { TinyliciousClient } from "@fluidframework/tinylicious-client";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client/internal";
 
 const tinyliciousClient = new TinyliciousClient(props);
 const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);

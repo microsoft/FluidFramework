@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/core-interfaces/internal";
+import {
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,

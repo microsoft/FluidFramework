@@ -17,7 +17,7 @@ import { IDocumentService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
-import { IFileSnapshot } from '@fluidframework/replay-driver';
+import { IFileSnapshot } from '@fluidframework/replay-driver/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
@@ -29,7 +29,7 @@ import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
+import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal

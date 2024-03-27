@@ -10,7 +10,10 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, ISubmitSummaryOptions } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	ISubmitSummaryOptions,
+} from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {

@@ -4,25 +4,25 @@
  */
 
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
-import { AttachState } from "@fluidframework/container-definitions/internal";
-import { type IEvent, type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { AttachState } from '@fluidframework/container-definitions/internal';
+import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces/internal';
+import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
 	IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressorCore, SessionId } from "@fluidframework/id-compressor/internal";
+} from '@fluidframework/datastore-definitions/internal';
+import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor/internal';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions/internal";
-import { DataProcessingError, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils/internal";
-import { type ITree } from "@fluidframework/tree/internal";
+} from '@fluidframework/runtime-definitions/internal';
+import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
+import { type ITree } from '@fluidframework/tree/internal';
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,

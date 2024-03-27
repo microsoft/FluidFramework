@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from '@fluidframework/core-utils/internal';
 import { ReplaceRecursive, assertNotUndefined } from '../Common.js';
 import type {
 	Definition,

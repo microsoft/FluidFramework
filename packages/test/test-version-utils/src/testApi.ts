@@ -14,8 +14,8 @@ import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 
 // Data Runtime API
 import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
-import * as cell from "@fluidframework/cell";
-import { SharedCell } from "@fluidframework/cell";
+import * as cell from "@fluidframework/cell/internal";
+import { SharedCell } from "@fluidframework/cell/internal";
 import * as counter from "@fluidframework/counter/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import * as map from "@fluidframework/map/internal";
@@ -59,7 +59,7 @@ const packageList = [
 	"@fluidframework/test-utils/internal",
 	"@fluidframework/container-loader/internal",
 	"@fluidframework/container-runtime/internal",
-	"@fluidframework/cell",
+	"@fluidframework/cell/internal",
 	"@fluidframework/counter/internal",
 	"@fluidframework/map/internal",
 	"@fluidframework/matrix/internal",
@@ -189,7 +189,8 @@ async function loadLoader(baseVersion: string, requested?: number | string): Pro
 	if (!loaderCache.has(version)) {
 		const loader = {
 			version,
-			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader/internal")).Loader,
+			Loader: (await loadPackage(modulePath, "@fluidframework/container-loader/internal"))
+				.Loader,
 		};
 		loaderCache.set(version, loader);
 	}
@@ -254,7 +255,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			loadPackage(modulePath, "@fluidframework/test-utils/internal"),
 			loadPackage(modulePath, "@fluidframework/map/internal"),
 			loadPackage(modulePath, "@fluidframework/sequence/internal"),
-			loadPackage(modulePath, "@fluidframework/cell"),
+			loadPackage(modulePath, "@fluidframework/cell/internal"),
 			loadPackage(modulePath, "@fluidframework/counter/internal"),
 			loadPackage(modulePath, "@fluidframework/matrix/internal"),
 			loadPackage(modulePath, "@fluidframework/ordered-collection/internal"),

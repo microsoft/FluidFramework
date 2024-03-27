@@ -12,7 +12,12 @@ import {
 	IFluidDataStoreRuntime,
 	Jsonable,
 } from "@fluidframework/datastore-definitions/internal";
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import {
+	BaseSegment,
+	IJSONSegment,
+	ISegment,
+	PropertySet,
+} from "@fluidframework/merge-tree/internal";
 import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { pkgVersion } from "./packageVersion.js";

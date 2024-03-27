@@ -4,13 +4,16 @@
  */
 
 import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
-import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentServiceFactory,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
-} from "@fluidframework/tinylicious-driver";
+} from "@fluidframework/tinylicious-driver/internal";
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
 
