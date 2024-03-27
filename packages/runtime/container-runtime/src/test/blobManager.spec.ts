@@ -19,6 +19,7 @@ import {
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
+	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -136,13 +137,13 @@ export class MockRuntime
 	public async createBlob(
 		blob: ArrayBufferLike,
 		signal?: AbortSignal,
-	): Promise<IFluidHandle<ArrayBufferLike>> {
+	): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		const P = this.blobManager.createBlob(blob, signal);
 		this.handlePs.push(P);
 		return P;
 	}
 
-	public async getBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
+	public async getBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
 		return this.blobManager.getBlob(blobId);
@@ -194,7 +195,7 @@ export class MockRuntime
 	public async processHandles() {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
-		const handles: IFluidHandle<ArrayBufferLike>[] = await Promise.all(handlePs);
+		const handles: IFluidHandleInternal<ArrayBufferLike>[] = await Promise.all(handlePs);
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
@@ -265,7 +266,7 @@ export class MockRuntime
 		return op;
 	}
 
-	public deleteBlob(blobHandle: IFluidHandle<ArrayBufferLike>) {
+	public deleteBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
 		this.deletedBlobs.push(blobHandle.absolutePath);
 	}
 

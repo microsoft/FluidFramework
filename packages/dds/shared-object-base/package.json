@@ -179,6 +179,16 @@
 			"RemovedVariableDeclaration_isSerializedHandle": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedObject": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedObjectCore": {
+				"forwardCompat": false
 			}
 		}
 	}

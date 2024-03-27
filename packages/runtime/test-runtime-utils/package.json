@@ -195,6 +195,9 @@
 			},
 			"ClassDeclaration_MockDeltaManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_MockHandle": {
+				"forwardCompat": false
 			}
 		}
 	}

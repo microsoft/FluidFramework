@@ -194,6 +194,21 @@
 			"InterfaceDeclaration_ITestContainerConfig": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"VariableDeclaration_TestContainerRuntimeFactory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IProvideTestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ITestFluidObject": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

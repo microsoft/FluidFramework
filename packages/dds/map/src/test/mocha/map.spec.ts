@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -530,7 +530,7 @@ describe("Map", () => {
 					containerRuntimeFactory.processAllMessages();
 
 					// Verify the local SharedMap
-					const localSubMap = map1.get<IFluidHandle>("test");
+					const localSubMap = map1.get<IFluidHandleInternal>("test");
 					assert(localSubMap);
 					assert.equal(
 						localSubMap.absolutePath,
@@ -539,7 +539,7 @@ describe("Map", () => {
 					);
 
 					// Verify the remote SharedMap
-					const remoteSubMap = map2.get<IFluidHandle>("test");
+					const remoteSubMap = map2.get<IFluidHandleInternal>("test");
 					assert(remoteSubMap);
 					assert.equal(
 						remoteSubMap.absolutePath,
@@ -936,7 +936,7 @@ describe("Map", () => {
 			public async deleteOutboundRoutes(): Promise<void> {
 				// Delete the last handle that was added.
 				const subMapId = `subMap-${this.subMapCount}`;
-				const deletedHandle = this.map1.get<IFluidHandle>(subMapId);
+				const deletedHandle = this.map1.get<IFluidHandleInternal>(subMapId);
 				assert(deletedHandle, "Route must be added before deleting");
 
 				this.map1.delete(subMapId);

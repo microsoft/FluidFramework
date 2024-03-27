@@ -3,15 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import type { IFluidHandleErased, IFluidHandleInternal } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandleContext,
+	fluidHandleSymbol,
+	toFluidHandleErased,
+} from "@fluidframework/core-interfaces";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 
 /**
  * Handle for a shared {@link @fluidframework/core-interfaces#FluidObject}.
  * @alpha
  */
-export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
-	private readonly pendingHandlesToMakeVisible: Set<IFluidHandle> = new Set();
+export class FluidObjectHandle<T extends FluidObject = FluidObject>
+	implements IFluidHandleInternal<T>
+{
+	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.absolutePath}
@@ -21,7 +29,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IProvideFluidHandle.IFluidHandle}
 	 */
-	public get IFluidHandle(): IFluidHandle {
+	public get IFluidHandle(): IFluidHandleInternal {
 		return this;
 	}
 
@@ -72,6 +80,10 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
+	public get [fluidHandleSymbol](): IFluidHandleErased<T> {
+		return toFluidHandleErased(this);
+	}
+
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.get}
 	 */
@@ -99,7 +111,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> implements I
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.bind}
 	 */
-	public bind(handle: IFluidHandle) {
+	public bind(handle: IFluidHandleInternal) {
 		// If this handle is visible, attach the graph of the incoming handle as well.
 		if (this.visible) {
 			handle.attachGraph();

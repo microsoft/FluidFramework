@@ -31,6 +31,7 @@ declare function get_old_InterfaceDeclaration_ContainerSchema():
 declare function use_current_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<current.ContainerSchema>): void;
 use_current_InterfaceDeclaration_ContainerSchema(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ContainerSchema());
 
 /*
@@ -176,6 +177,7 @@ declare function get_old_InterfaceDeclaration_IProvideRootDataObject():
 declare function use_current_InterfaceDeclaration_IProvideRootDataObject(
     use: TypeOnly<current.IProvideRootDataObject>): void;
 use_current_InterfaceDeclaration_IProvideRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideRootDataObject());
 
 /*
@@ -188,6 +190,7 @@ declare function get_current_InterfaceDeclaration_IProvideRootDataObject():
 declare function use_old_InterfaceDeclaration_IProvideRootDataObject(
     use: TypeOnly<old.IProvideRootDataObject>): void;
 use_old_InterfaceDeclaration_IProvideRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IProvideRootDataObject());
 
 /*
@@ -200,6 +203,7 @@ declare function get_old_InterfaceDeclaration_IRootDataObject():
 declare function use_current_InterfaceDeclaration_IRootDataObject(
     use: TypeOnly<current.IRootDataObject>): void;
 use_current_InterfaceDeclaration_IRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRootDataObject());
 
 /*
@@ -212,6 +216,7 @@ declare function get_current_InterfaceDeclaration_IRootDataObject():
 declare function use_old_InterfaceDeclaration_IRootDataObject(
     use: TypeOnly<old.IRootDataObject>): void;
 use_old_InterfaceDeclaration_IRootDataObject(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRootDataObject());
 
 /*
@@ -272,6 +277,7 @@ declare function get_old_TypeAliasDeclaration_InitialObjects():
 declare function use_current_TypeAliasDeclaration_InitialObjects(
     use: TypeOnly<current.InitialObjects<any>>): void;
 use_current_TypeAliasDeclaration_InitialObjects(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_InitialObjects());
 
 /*
@@ -284,6 +290,7 @@ declare function get_current_TypeAliasDeclaration_InitialObjects():
 declare function use_old_TypeAliasDeclaration_InitialObjects(
     use: TypeOnly<old.InitialObjects<any>>): void;
 use_old_TypeAliasDeclaration_InitialObjects(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_InitialObjects());
 
 /*
@@ -296,6 +303,7 @@ declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
 declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
     use: TypeOnly<current.LoadableObjectClass>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClass(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_LoadableObjectClass());
 
 /*
@@ -320,6 +328,7 @@ declare function get_old_TypeAliasDeclaration_LoadableObjectClassRecord():
 declare function use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
     use: TypeOnly<current.LoadableObjectClassRecord>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_LoadableObjectClassRecord());
 
 /*
@@ -356,6 +365,7 @@ declare function get_old_TypeAliasDeclaration_LoadableObjectRecord():
 declare function use_current_TypeAliasDeclaration_LoadableObjectRecord(
     use: TypeOnly<current.LoadableObjectRecord>): void;
 use_current_TypeAliasDeclaration_LoadableObjectRecord(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_LoadableObjectRecord());
 
 /*
@@ -368,6 +378,7 @@ declare function get_current_TypeAliasDeclaration_LoadableObjectRecord():
 declare function use_old_TypeAliasDeclaration_LoadableObjectRecord(
     use: TypeOnly<old.LoadableObjectRecord>): void;
 use_old_TypeAliasDeclaration_LoadableObjectRecord(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_LoadableObjectRecord());
 
 /*

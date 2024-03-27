@@ -152,6 +152,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedCell": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedCell": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

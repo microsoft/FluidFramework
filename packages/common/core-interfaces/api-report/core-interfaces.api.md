@@ -4,8 +4,40 @@
 
 ```ts
 
+// @alpha
+export type Brand<ValueType, Name extends string | ErasedType> = ValueType & BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Name>;
+
+// @internal
+export function brand<T>(value: T extends BrandedType<infer ValueType, unknown> ? ValueType : never): T;
+
+// @alpha @sealed
+export abstract class BrandedType<out ValueType, Name> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+    // (undocumented)
+    protected _typeCheck?: Covariant<ValueType>;
+}
+
+// @internal
+export function brandErased<T extends BrandedType<unknown, unknown>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): ErasedType<NameFromBranded<T>>;
+
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
+
+// @alpha
+export interface Covariant<out T> {
+    // (undocumented)
+    _removeContravariance?: T;
+}
+
+// @public
+export type Erased<Name> = ErasedType<Name>;
+
+// @public @sealed
+export abstract class ErasedType<out Name = unknown> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected abstract brand(dummy: never): Name;
+}
 
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
@@ -21,6 +53,9 @@ export const FluidErrorTypes: {
 
 // @alpha (undocumented)
 export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTypes];
+
+// @public
+export const fluidHandleSymbol: unique symbol;
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -231,16 +266,11 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
 // @public (undocumented)
-export const IFluidHandle: keyof IProvideFluidHandle;
+export const IFluidHandle = "IFluidHandle";
 
 // @public
-export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
-    // @deprecated (undocumented)
-    readonly absolutePath: string;
-    // @deprecated (undocumented)
-    attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(handle: IFluidHandle): void;
+export interface IFluidHandle<out T = unknown> {
+    readonly [fluidHandleSymbol]: IFluidHandleErased<T>;
     get(): Promise<T>;
     readonly isAttached: boolean;
 }
@@ -256,6 +286,18 @@ export interface IFluidHandleContext extends IProvideFluidHandleContext {
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     readonly routeContext?: IFluidHandleContext;
+}
+
+// @public (undocumented)
+export interface IFluidHandleErased<T> extends Erased<readonly ["IFluidHandle", T]> {
+}
+
+// @alpha
+export interface IFluidHandleInternal<out T = unknown> extends IFluidHandle<T>, IProvideFluidHandle {
+    readonly absolutePath: string;
+    attachGraph(): void;
+    bind(handle: IFluidHandleInternal): void;
+    readonly isAttached: boolean;
 }
 
 // @public (undocumented)
@@ -290,10 +332,10 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @public (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
-    // (undocumented)
-    readonly IFluidHandle: IFluidHandle;
+    // @deprecated (undocumented)
+    readonly [IFluidHandle]: IFluidHandleInternal;
 }
 
 // @public (undocumented)
@@ -343,6 +385,9 @@ export interface IResponse {
     // (undocumented)
     value: any;
 }
+
+// @internal
+export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 // @internal (undocumented)
 export interface ISignalEnvelope {
@@ -397,6 +442,9 @@ export const LogLevel: {
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
+// @internal
+export type NameFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<unknown, infer Name> ? Name : never;
+
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
@@ -413,8 +461,17 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
+// @alpha
+export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
+
+// @alpha
+export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
+
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
+
+// @internal
+export type ValueFromBranded<T extends BrandedType<unknown, unknown>> = T extends BrandedType<infer ValueType, unknown> ? ValueType : never;
 
 // (No @packageDocumentation comment for this package)
 

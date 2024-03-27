@@ -4,6 +4,7 @@
  */
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
@@ -614,7 +615,7 @@ describe('EditUtilities', () => {
 				// `/` prefix is needed to prevent serializing from modifying handle.
 				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
 				handleObject.IFluidHandle = handleObject;
-				return handleObject as IFluidHandle;
+				return handleObject as IFluidHandleInternal;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
 			// so use allEqualUnstable not allEqual.

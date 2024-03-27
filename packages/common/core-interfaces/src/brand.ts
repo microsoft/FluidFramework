@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
 import type { Covariant, isAny } from "./typeCheck.js";
 
 /**
@@ -17,9 +16,9 @@ import type { Covariant, isAny } from "./typeCheck.js";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
- * @internal
+ * @alpha
  */
-export type Brand<ValueType, Name extends unknown | ErasedType> = ValueType &
+export type Brand<ValueType, Name extends string | ErasedType> = ValueType &
 	BrandedType<ValueType, Name extends Erased<infer TName> ? TName : Name>;
 
 /**
@@ -68,8 +67,9 @@ export abstract class ErasedType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
-	 * @privateRemarks
 	 * See {@link Brand} for details.
+	 *
+	 * @privateRemarks
 	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
 	 * The method takes in never to help emphasize that its not callable.
 	 */
@@ -86,7 +86,7 @@ export abstract class ErasedType<out Name = unknown> {
 	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
 	 */
 	public static [Symbol.hasInstance](value: never): value is never {
-		throw new UsageError(
+		throw new Error(
 			"ErasedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
 		);
 	}
@@ -112,7 +112,7 @@ export abstract class ErasedType<out Name = unknown> {
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  *
  * @sealed
- * @internal
+ * @alpha
  */
 export abstract class BrandedType<out ValueType, Name> {
 	protected _typeCheck?: Covariant<ValueType>;
@@ -138,7 +138,7 @@ export abstract class BrandedType<out ValueType, Name> {
 	 * and in TypeScript 5.3 and newer will produce a compile time error if used.
 	 */
 	public static [Symbol.hasInstance](value: never): value is never {
-		throw new UsageError(
+		throw new Error(
 			"BrandedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
 		);
 	}

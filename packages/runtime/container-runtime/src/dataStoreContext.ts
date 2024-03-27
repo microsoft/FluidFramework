@@ -12,8 +12,9 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
+	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent, IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
@@ -706,11 +707,17 @@ export abstract class FluidDataStoreContext
 	 * @param srcHandle - The handle of the node that added the reference.
 	 * @param outboundHandle - The handle of the outbound node that is referenced.
 	 */
-	public addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) {
+	public addedGCOutboundReference(
+		srcHandle: IFluidHandleInternal,
+		outboundHandle: IFluidHandleInternal,
+	): void {
 		// By default, skip this call since the ContainerRuntime will detect the outbound route directly.
 		if (this.mc.config.getBoolean(detectOutboundRoutesViaDDSKey) === true) {
 			// Note: The ContainerRuntime code will check this same setting to avoid double counting.
-			this.parentContext.addedGCOutboundReference?.(srcHandle, outboundHandle);
+			this.parentContext.addedGCOutboundReference?.(
+				toFluidHandleInternal(srcHandle),
+				toFluidHandleInternal(outboundHandle),
+			);
 		}
 	}
 

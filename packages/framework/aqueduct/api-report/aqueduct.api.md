@@ -23,7 +23,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
+import { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
@@ -122,11 +122,11 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject>;
-    get handle(): IFluidHandle<this>;
+    get handle(): IFluidHandleInternal<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     get id(): string;
-    get IFluidHandle(): IFluidHandle<this>;
+    get IFluidHandle(): IFluidHandleInternal<this>;
     get IFluidLoadable(): this;
     initializeInternal(existing: boolean): Promise<void>;
     // (undocumented)

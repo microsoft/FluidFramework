@@ -12,6 +12,7 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
@@ -260,7 +261,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	private dataStoresSinceLastGC: string[] = [];
 	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
 	// the container runtime to other nodes.
-	private readonly containerRuntimeHandle: IFluidHandle;
+	private readonly containerRuntimeHandle: IFluidHandleInternal;
 	private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<
 		string,
 		Promise<AliasResult>

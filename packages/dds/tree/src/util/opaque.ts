@@ -24,7 +24,7 @@ import type { isAny } from "./typeCheck.js";
  * ```
  * @internal
  */
-export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
+export type Opaque<T extends Brand<any, unknown>> = T extends BrandedType<
 	infer ValueType,
 	infer Name
 >
@@ -35,7 +35,7 @@ export type Opaque<T extends Brand<any, string>> = T extends BrandedType<
  * See {@link extractFromOpaque}.
  * @internal
  */
-export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
+export type ExtractFromOpaque<TOpaque extends BrandedType<any, unknown>> =
 	TOpaque extends BrandedType<infer ValueType, infer Name>
 		? isAny<ValueType> extends true
 			? unknown
@@ -49,7 +49,7 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> =
  * allowing these handles to be considered opaque.
  * @internal
  */
-export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
+export function extractFromOpaque<TOpaque extends BrandedType<any, unknown>>(
 	value: TOpaque,
 ): ExtractFromOpaque<TOpaque> {
 	return value as ExtractFromOpaque<TOpaque>;
@@ -61,7 +61,7 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @internal
  */
-export function brandOpaque<T extends BrandedType<any, string>>(
+export function brandOpaque<T extends BrandedType<any, unknown>>(
 	value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>,
 ): BrandedType<ValueFromBranded<T>, NameFromBranded<T>> {
 	return value as BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;

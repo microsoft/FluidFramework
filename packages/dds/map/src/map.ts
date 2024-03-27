@@ -89,7 +89,6 @@ export class MapFactory implements IChannelFactory<ISharedMap> {
 
 /**
  * {@inheritDoc ISharedMap}
- * @public
  * @deprecated Please use SharedTree for new containers.  SharedMap is supported for loading preexisting Fluid Framework 1.0 containers only.
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
