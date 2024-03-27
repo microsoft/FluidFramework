@@ -184,6 +184,27 @@ interface IPendingConnection {
 	 * Desired ConnectionMode of this in-progress connection attempt.
 	 */
 	connectionMode: ConnectionMode;
+
+	status: ConnectStatus;
+}
+
+interface ConnectStatus {
+	/** false means we're not trying to reconnect */
+	connecting: boolean;
+	/** covers the states traversed before reaching Connected. Redundant with stateTransitions but easy to use */
+	connectionState: "Disconnected" | "EstablishingConnection" | "CatchingUp";
+	/** For understanding macro time spent in these states */
+	stateTransitionTimes: {
+		Disconnected: Date;
+		EstablishingConnection?: Date;
+		CatchingUp?: Date;
+	};
+	steps: {
+		name: string; // Free-form, for telemetry only
+		type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
+		durationMs: number; // N/A for the current step
+		retryableError?: Error; // with errorType (maybe AnyDriverError)
+	}[];
 }
 
 /**
@@ -547,6 +568,16 @@ export class ConnectionManager implements IConnectionManager {
 		const connectStartTime = performance.now();
 		let lastError: any;
 
+		//* This needs to be created when Disconnecting, and included on the event
+		const status: ConnectStatus = {
+			connecting: true,
+			connectionState: "Disconnected",
+			stateTransitionTimes: {
+				Disconnected: new Date(),
+			},
+			steps: [],
+		};
+
 		const abortController = new AbortController();
 		const abortSignal = abortController.signal;
 		this.pendingConnection = {
@@ -554,9 +585,13 @@ export class ConnectionManager implements IConnectionManager {
 				abortController.abort();
 			},
 			connectionMode: requestedMode,
+			status,
 		};
 
 		this.props.establishConnectionHandler(reason);
+		this.pendingConnection.status.connectionState = "EstablishingConnection";
+		this.pendingConnection.status.stateTransitionTimes.EstablishingConnection = new Date();
+
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
 		while (connection === undefined) {
 			if (this._disposed) {
@@ -575,10 +610,13 @@ export class ConnectionManager implements IConnectionManager {
 
 			try {
 				this.client.mode = requestedMode;
-				connection = await docService.connectToDeltaStream({
-					...this.client,
-					mode: requestedMode,
-				});
+				connection = await docService.connectToDeltaStream(
+					{
+						...this.client,
+						mode: requestedMode,
+					},
+					status,
+				);
 
 				if (connection.disposed) {
 					// Nobody observed this connection, so drop it on the floor and retry.

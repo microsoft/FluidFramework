@@ -246,19 +246,24 @@ export class OdspDocumentService
 	 *
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+		status?: { steps: string[] },
+	): Promise<IDocumentDeltaConnection> {
 		if (this.socketModuleP === undefined) {
+			status?.steps.push("delayLoadedDeltaStream");
 			this.socketModuleP = this.getDelayLoadedDeltaStream();
 		}
 		return this.socketModuleP
 			.then(async (m) => {
 				this.odspSocketModuleLoaded = true;
-				return m.connectToDeltaStream(client);
+				return m.connectToDeltaStream(client, status!);
 			})
 			.catch((error) => {
 				// Setting undefined in case someone tries to recover from module failure by calling again.
 				this.socketModuleP = undefined;
 				this.odspSocketModuleLoaded = false;
+				//* Do something with this error and status here?
 				throw error;
 			});
 	}
