@@ -190,7 +190,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 			return { shouldSummarize: false, stopReason: "notElectedClient" };
 		}
 
-		if (!this.connectedState.connected || this.disposed) {
+		if (!this.connectedState.connected) {
 			return { shouldSummarize: false, stopReason: "parentNotConnected" };
 		}
 
