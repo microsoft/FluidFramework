@@ -153,7 +153,13 @@ module.exports = {
 			},
 		],
 		"import/no-unused-modules": "error",
-		"import/order": "off",
+		"import/order": [
+			"error",
+			{
+				"newlines-between": "always",
+				"alphabetize": { order: "asc", caseInsensitive: true },
+			},
+		],
 
 		// eslint-plugin-unicorn
 		"unicorn/better-regex": "error",
