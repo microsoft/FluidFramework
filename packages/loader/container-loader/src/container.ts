@@ -1151,7 +1151,7 @@ export class Container
 		stopBlobAttachingSignal?: AbortSignal;
 	}): Promise<string> | string {
 		return this.attachmentData.state === AttachState.Attached
-			? await this.serializeAttachedContainer(closeProps)
+			? this.serializeAttachedContainer(closeProps)
 			: this.serializeNonAttachedContainer();
 	}
 
