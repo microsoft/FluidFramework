@@ -304,52 +304,6 @@ function visualRepresentationMapper(tree: VisualSharedTreeNode): VisualChildNode
 	}
 }
 
-// function visualRepresentationMapper(tree: VisualSharedTreeNode): VisualChildNode {
-// 	if ("value" in tree) {
-// 		// Handling SharedTreeLeafNode
-// 		const result: VisualValueNode = {
-// 			value: tree.value,
-// 			nodeKind: VisualNodeKind.ValueNode,
-// 			metadata: { allowedTypes: tree.schema.allowedTypes ?? "" },
-// 		};
-// 		return result;
-// 	} else {
-// 		// Handling SharedTreeNode
-// 		const children: Record<string, VisualChildNode> = {};
-
-// 		for (const [key, nodes] of Object.entries(tree.fields)) {
-// 			let child: VisualChildNode;
-// 			if (nodes.length === 0) {
-// 				child = {
-// 					nodeKind: VisualNodeKind.UnknownObjectNode,
-// 				};
-// 			} else if (nodes.length === 1) {
-// 				// Inline
-// 				child = visualRepresentationMapper(nodes[0]);
-// 			} else {
-// 				const mappedNodes: Record<number, VisualChildNode> = nodes.map((node) =>
-// 					visualRepresentationMapper(node),
-// 				);
-// 				child = {
-// 					nodeKind: VisualNodeKind.TreeNode,
-// 					children: mappedNodes,
-// 				};
-// 			}
-
-// 			children[key] = child;
-// 		}
-
-// 		const result: VisualTreeNode = {
-// 			children,
-// 			nodeKind: VisualNodeKind.TreeNode,
-// 			metadata: {
-// 				allowedTypes: tree.schema.allowedTypes ?? "",
-// 			},
-// 		};
-// 		return result;
-// 	}
-// }
-
 /**
  * Helper function to generate the allowed fields & types for the fields of the tree.
  */
@@ -395,12 +349,8 @@ function allowedTypesMapHelper(
 	fields: FieldMapObject<JsonableTree> | undefined,
 	schema: MapNodeStoredSchema,
 ): string {
+	// TODO: Write this function.
 	const result = "";
-	console.log(fields);
-	for (const [fieldKey, treeFieldStoredSchema] of Object.entries(schema.mapFields)) {
-		console.log(fieldKey, treeFieldStoredSchema);
-	}
-
 	return result;
 }
 

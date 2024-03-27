@@ -246,6 +246,12 @@ export class AppData extends DataObject {
 				),
 			}),
 			baz: [builder.number, builder.string, builder.boolean],
+			foobar: builder.map([
+				builder.string,
+				builder.number,
+				builder.handle,
+				builder.object("map-object", { acorn: builder.boolean }),
+			]),
 		}) {}
 
 		sharedTree.schematize(
@@ -289,6 +295,11 @@ export class AppData extends DataObject {
 							],
 						},
 						baz: 128,
+						foobar: new Map([
+							["anthropology", 1],
+							["biology", 2],
+							["choreography", 3],
+						]),
 					}),
 			),
 		);
