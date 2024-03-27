@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
@@ -125,11 +124,7 @@ export function nodeDataToMapTree(data: InsertableContent, allowedTypes: Allowed
 	}
 }
 
-function valueToMapTree(
-	// eslint-disable-next-line @rushstack/no-new-null
-	value: boolean | number | string | IFluidHandle | null,
-	allowedTypes: AllowedTypes,
-): MapTree {
+function valueToMapTree(value: TreeValue, allowedTypes: AllowedTypes): MapTree {
 	const mappedValue = mapValueWithFallbacks(value, allowedTypes);
 
 	const schema = getType(mappedValue, allowedTypes);
@@ -151,12 +146,7 @@ function valueToMapTree(
  * For unsupported values without a schema-compatible replacement, throw.
  * For supported values, return the input.
  */
-function mapValueWithFallbacks(
-	// eslint-disable-next-line @rushstack/no-new-null
-	value: boolean | number | string | IFluidHandle | null,
-	allowedTypes: AllowedTypes,
-	// eslint-disable-next-line @rushstack/no-new-null
-): boolean | number | string | IFluidHandle | null {
+function mapValueWithFallbacks(value: TreeValue, allowedTypes: AllowedTypes): TreeValue {
 	switch (typeof value) {
 		case "number": {
 			if (Object.is(value, -0)) {
