@@ -261,6 +261,11 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 					// intermidiate states are exposed to remote clients half way through operations.
 					// It also results in op compressionto to not be very effective (as it compresses individual ops, not batches of ops)
 					flushMode: FlushMode.TurnBased,
+					// Enable explicit container runtime schema changes.
+					// This helps with future changes in schema, and will result in deterministic failure of old versions of runtime
+					// that do not understand the scheme.
+					// This option is not compatible with 1.3 versions of the runtime (same with all the other settings below)
+					explicitSchemaControl: true,
 					// Id Compressor is required for SharedTree scenarios. This is breaking change (even if SharedTree is not used) - this
 					// setting results in new type of ops that 1.3.x clients do not understand.
 					enableRuntimeIdCompressor: "on",

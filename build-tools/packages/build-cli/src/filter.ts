@@ -79,7 +79,7 @@ export const parsePackageSelectionFlags = (
 					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
 					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
 					directory: flags.dir,
-			  };
+				};
 
 	return options;
 };

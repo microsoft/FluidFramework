@@ -84,7 +84,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.6.1",
+		"@biomejs/biome": "^1.6.2",
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
@@ -137,7 +137,6 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^17.0.1",
 		"sinon-chrome": "^3.0.1",
-		"start-server-and-test": "^1.11.7",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.3.0",
 		"typescript": "~5.1.6",
