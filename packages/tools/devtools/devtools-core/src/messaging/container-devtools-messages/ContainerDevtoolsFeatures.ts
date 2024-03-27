@@ -30,8 +30,6 @@ export namespace ContainerDevtoolsFeatures {
 		 * {@inheritDoc ContainerDevtoolsFeatureFlags}
 		 */
 		features: ContainerDevtoolsFeatureFlags;
-
-		unsampledTelemetry?: string;
 	}
 
 	/**

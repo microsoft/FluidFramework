@@ -86,8 +86,6 @@ export namespace ContainerDevtoolsFeatures {
     }
     export interface MessageData extends HasContainerKey {
         features: ContainerDevtoolsFeatureFlags;
-        // (undocumented)
-        unsampledTelemetry?: string;
     }
 }
 
