@@ -3,11 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { Body1, Body1Strong, Link, Subtitle1, makeStyles } from "@fluentui/react-components";
 import {
+	Body1,
+	Body1Strong,
+	Button,
+	Link,
+	Subtitle1,
+	makeStyles,
+} from "@fluentui/react-components";
+import {
+	DevtoolsFeatures,
+	GetDevtoolsFeatures,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	TelemetryEvent,
+	ToggleUnsampledTelemetry,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import React from "react";
@@ -84,13 +94,59 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const unsampledTelemetry = localStorage.getItem("Fluid.Telemetry.DisableSampling");
+	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(
+		sessionStorage.getItem("Fluid.Telemetry.DisableSampling") === "true",
+	);
+
+	React.useEffect(() => {
+		// Handler for incoming messages
+		const inboundMessageHandlers: InboundHandlers = {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as DevtoolsFeatures.Message;
+				if (message.data.unsampledTelemetry !== undefined) {
+					setUnsampledTelemetry(JSON.parse(message.data.unsampledTelemetry) as boolean);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers);
+		}
+
+		messageRelay.on("message", messageHandler);
+
+		// Cleanup the event listener
+		return () => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [messageRelay]);
+
+	React.useEffect(() => {
+		messageRelay.postMessage(GetDevtoolsFeatures.createMessage());
+	}, [messageRelay]);
+
 	// Render the text conditionally
-	const renderInstructions = unsampledTelemetry !== "true";
+	const renderInstructions = unsampledTelemetry !== true;
 
 	function formatTimestamp(timestamp: number): string {
 		return new Date(timestamp).toTimeString().slice(0, 8);
 	}
+
+	const toggleUnsampledTelemetry = (): void => {
+		const newValue = !unsampledTelemetry;
+		const toggleMessage = ToggleUnsampledTelemetry.createMessage({
+			unsampledTelemetry: String(newValue),
+		});
+		setUnsampledTelemetry(newValue);
+		messageRelay.postMessage(toggleMessage);
+	};
+
+	React.useEffect(() => {
+		console.debug("Unsampled Telemetry:", unsampledTelemetry);
+	}, [unsampledTelemetry]);
+
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
@@ -161,10 +217,7 @@ export function OpLatencyView(): React.ReactElement {
 			<h3>Op Latency</h3>
 			{renderInstructions ? (
 				<Body1>
-					{`Unsampled telemetry has not been enabled and is necessary for this feature to work as designed. To enable it, open the web console and set the Disable Sampling flag to true using the following command:`}
-					<pre
-						style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
-					>{`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`}</pre>
+					{`Unsampled telemetry is not currently enabled in the Fluid-based application and is necessary for this feature to work as designed.`}
 					{`\nIMPORTANT: This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
 				</Body1>
 			) : (
@@ -254,6 +307,10 @@ export function OpLatencyView(): React.ReactElement {
 					</div>
 				</>
 			)}
+			<Button size="small" onClick={toggleUnsampledTelemetry}>
+				{unsampledTelemetry ? "Disable Unsampled Telemetry" : "Enable Unsampled Telemetry"}
+			</Button>
+			<Body1>The page will refresh upon clicking the button</Body1>
 		</div>
 	);
 }

@@ -22,7 +22,7 @@ import { MockMessageRelay } from "../utils/index.js";
 
 describe("OpLatencyView component tests", () => {
 	it("Renders as expected when unsampled telemetry is enabled in localStorage", async (): Promise<void> => {
-		window.localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");
+		window.sessionStorage.setItem("Fluid.Telemetry.DisableSampling", "true");
 		render(
 			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
 				<OpLatencyView />
@@ -54,7 +54,7 @@ describe("OpLatencyView component tests", () => {
 	});
 
 	it("Renders as expected when unsampled telemetry is disabled in localStorage", async (): Promise<void> => {
-		window.localStorage.setItem("Fluid.Telemetry.DisableSampling", "false");
+		window.sessionStorage.setItem("Fluid.Telemetry.DisableSampling", "false");
 		render(
 			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
 				<OpLatencyView />
@@ -67,9 +67,7 @@ describe("OpLatencyView component tests", () => {
 		expect(opLatencyHeaderElement).toBeDefined();
 
 		// Confirm helper text header exists
-		const instructionsText = await screen.findByText(
-			`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`,
-		);
+		const instructionsText = await screen.findByText(`Enable Unsampled Telemetry`);
 		expect(instructionsText).not.toBeNull();
 		expect(instructionsText).toBeDefined();
 	});
