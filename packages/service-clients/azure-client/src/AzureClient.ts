@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
-	type ContainerSchema,
+	type AzureContainerSchema,
 	type IFluidContainer,
 	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
@@ -124,7 +124,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer<const TContainerSchema extends ContainerSchema>(
+	public async createContainer<const TContainerSchema extends AzureContainerSchema>(
 		containerSchema: TContainerSchema,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
@@ -155,7 +155,7 @@ export class AzureClient {
 	 * It defaults to latest version if parameter not provided.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async copyContainer<TContainerSchema extends ContainerSchema>(
+	public async copyContainer<TContainerSchema extends AzureContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		version?: AzureContainerVersion,
@@ -206,7 +206,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer<TContainerSchema extends ContainerSchema>(
+	public async getContainer<TContainerSchema extends AzureContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 	): Promise<{
@@ -276,8 +276,11 @@ export class AzureClient {
 		};
 	}
 
-	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+	private createLoader(schema: AzureContainerSchema): Loader {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			minRuntimeVersion: schema.minRuntimeVersion,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -306,7 +309,7 @@ export class AzureClient {
 		});
 	}
 
-	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
+	private async createFluidContainer<TContainerSchema extends AzureContainerSchema>(
 		container: IContainer,
 		connection: AzureConnectionConfig,
 	): Promise<IFluidContainer<TContainerSchema>> {

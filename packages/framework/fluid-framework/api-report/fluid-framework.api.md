@@ -32,6 +32,12 @@ export enum AttachState {
     Detached = "Detached"
 }
 
+// @public (undocumented)
+export interface AzureContainerSchema extends ContainerSchema {
+    // (undocumented)
+    minRuntimeVersion?: FluidRuntimeMinVersion;
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -150,6 +156,12 @@ export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public
 export type FlexListToUnion<TList extends FlexList> = ExtractItemType<ArrayToUnion<TList>>;
+
+// @public
+export enum FluidRuntimeMinVersion {
+    V1 = 0,
+    V2 = 1
+}
 
 // @public
 export interface IConnection {

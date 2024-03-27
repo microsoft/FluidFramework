@@ -4,7 +4,7 @@
 
 ```ts
 
-import { ContainerSchema } from '@fluidframework/fluid-static';
+import { AzureContainerSchema } from '@fluidframework/fluid-static';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
@@ -21,15 +21,15 @@ import { ScopeType } from '@fluidframework/protocol-definitions';
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
+    copyContainer<TContainerSchema extends AzureContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+    createContainer<const TContainerSchema extends AzureContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+    getContainer<TContainerSchema extends AzureContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
