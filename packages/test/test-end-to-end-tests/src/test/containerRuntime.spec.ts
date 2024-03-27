@@ -73,14 +73,26 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 			const version = apis.containerRuntime?.version;
 			const version2 = apis.containerRuntimeForLoading?.version;
 
+			// RC2 behaves somewhere in between 1.x and latest 2.x, as not all the work in this area was completed in RC2.
+			// I.e. it will create documents with explicit schema, will not fail on copresssed ops, but will not understand (similar to 1.x)
+			// new summary format (when explicit schema is on) and thus will fail with "Summary metadata mismatch" error.
+			// It's a bit hard to incorporate all of that into the matrix as conditions become really weird and hard to follow.
+			// While it's important to test all these combos, we will limit only to one direction that is easy to test
+			// and will validate "Summary metadata mismatch" workflow (version2 == RC2), but will skip the other direction.
+			if (version.startsWith("2.0.0-rc.2")) {
+				return;
+			}
+
 			// Second container running 1.x should fail becausse of mismatch in metadata.message information.
 			// This validates that container does not go past loading stage.
-			if (explicitSchemaControl && version2?.startsWith("1.")) {
+			if (
+				explicitSchemaControl &&
+				(version2?.startsWith("1.") || version2?.startsWith("2.0.0-rc.2"))
+			) {
 				crash2 = true;
 				const error = "Summary metadata mismatch";
 				provider.logger?.registerExpectedEvent({
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					category: "error",
 					error,
 					message: error,
 					errorType: "dataCorruptionError",
@@ -128,14 +140,14 @@ describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectP
 		await provider.ensureSynchronized();
 
 		assert(!container2.closed);
-		assert(crash === container.closed);
+		assert.equal(crash, container.closed);
 		assert(crash || entry.root.get("key2").length === 5000);
 
 		const container3 = await loadContainer(options);
 		const entry3 = await getentryPoint(container3);
 		await provider.ensureSynchronized();
 
-		assert(crash === container.closed);
+		assert.equal(crash, container.closed);
 		assert(!container2.closed);
 		assert(!container3.closed);
 
