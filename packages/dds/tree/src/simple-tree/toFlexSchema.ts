@@ -23,12 +23,8 @@ import {
 import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexList.js";
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
-import {
-	InsertableContent,
-	extractFactoryContent,
-	simpleNodeSchemaSymbol,
-	tryGetSimpleNodeSchema,
-} from "./proxies.js";
+import { InsertableContent, extractFactoryContent, tryGetSimpleNodeSchema } from "./proxies.js";
+import { cachedFlexSchemaFromClassSchema, setFlexSchemaFromClassSchema } from "./schemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -255,26 +251,4 @@ export function convertNodeSchema(
 	};
 	schemaMap.set(brand(schema.identifier), { original: schema, toFlex });
 	return toFlex;
-}
-
-/**
- * A symbol for storing FlexTreeSchema on TreeNodeSchema.
- * Eagerly set on leaves, and lazily set for other cases.
- */
-export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
-
-export function cachedFlexSchemaFromClassSchema(
-	schema: TreeNodeSchema,
-): TreeNodeSchemaBase | undefined {
-	return (schema as any)[flexSchemaSymbol] as TreeNodeSchemaBase | undefined;
-}
-
-export function setFlexSchemaFromClassSchema(
-	simple: TreeNodeSchema,
-	flex: TreeNodeSchemaBase,
-): void {
-	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
-	assert(!(simpleNodeSchemaSymbol in flex), "flex schema already marked");
-	(simple as any)[flexSchemaSymbol] = flex;
-	(flex as any)[simpleNodeSchemaSymbol] = simple;
 }

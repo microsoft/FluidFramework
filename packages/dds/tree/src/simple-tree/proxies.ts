@@ -27,6 +27,7 @@ import {
 import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
+import { simpleNodeSchemaSymbol } from "./schemaCaching.js";
 import {
 	FieldSchema,
 	type ImplicitAllowedTypes,
@@ -98,11 +99,6 @@ export function getProxyForField(field: FlexTreeField): TreeNode | TreeValue | u
 			fail("invalid field kind");
 	}
 }
-
-/**
- * A symbol for storing TreeNodeSchema on FlexTreeNode's schema.
- */
-export const simpleNodeSchemaSymbol: unique symbol = Symbol(`simpleNodeSchema`);
 
 /**
  * Gets the {@link TreeNodeSchema} cached on the provided {@link FlexTreeNodeSchema | flexSchema}.
