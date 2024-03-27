@@ -21,10 +21,11 @@ import {
 	FlexTreeRequiredField,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
+	Multiplicity,
 	isFluidHandle,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
-import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
+import { Mutable, brand, fail, filterIterable, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
@@ -193,15 +194,25 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 
 			return true;
 		},
-		has: (target, key) => {
-			return (
-				schema.objectNodeFields.has(key as FieldKey) ||
-				(allowAdditionalProperties ? Reflect.has(target, key) : false)
-			);
+		// The "has" trap is called when a user checks for a property with "in" (e.g. `if ("z" in point) {...}`).
+		has: (target, key: FieldKey) => {
+			const fieldSchema = schema.objectNodeFields.get(key);
+			if (fieldSchema !== undefined) {
+				if (fieldSchema.kind.multiplicity === Multiplicity.Optional) {
+					const field = getFlexNode(proxy).tryGetField(key);
+					if (field === undefined) {
+						return false; // Don't include the keys of optional undefined fields
+					}
+				}
+				return true;
+			}
+
+			return allowAdditionalProperties ? Reflect.has(target, key) : false;
 		},
+		// The "ownKeys" trap is called by Reflect.ownKeys(), Object.keys() and for-in loops.
 		ownKeys: (target) => {
 			return [
-				...schema.objectNodeFields.keys(),
+				...filterIterable(schema.objectNodeFields.keys(), (k) => k in proxy),
 				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
 			];
 		},
