@@ -9,9 +9,9 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, ITaskData } from "../model-interface/index.js";
-import { MockWebhook } from "./webhook.js";
+import { ITaskData, assertValidTaskData } from "../model-interface/index.js";
 import { ExternalDataSource } from "./externalDataSource.js";
+import { MockWebhook } from "./webhook.js";
 
 /**
  * Represents the external data servers query url or uuid.

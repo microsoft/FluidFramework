@@ -2,8 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Context, MonoRepo, Package, isMonoRepoKind } from "@fluidframework/build-tools";
+
+import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
+// eslint-disable-next-line import/no-deprecated
+import { Context, isMonoRepoKind } from "./library";
 
 /**
  * A re-usable CLI argument for package or release group names.
@@ -22,6 +25,7 @@ export const findPackageOrReleaseGroup = (
 	name: string,
 	context: Context,
 ): Package | MonoRepo | undefined => {
+	// eslint-disable-next-line import/no-deprecated
 	if (isMonoRepoKind(name)) {
 		return context.repo.releaseGroups.get(name);
 	}

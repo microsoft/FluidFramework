@@ -3,46 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	isFluidError,
-	MonitoringContext,
-	createChildMonitoringContext,
-	createChildLogger,
-	UsageError,
-} from "@fluidframework/telemetry-utils";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { assert, Deferred, PromiseTimer, delay } from "@fluidframework/core-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import {
+	MonitoringContext,
+	UsageError,
+	createChildLogger,
+	createChildMonitoringContext,
+	isFluidError,
+} from "@fluidframework/telemetry-utils";
 import { ISummaryConfiguration } from "../containerRuntime.js";
 import { opSize } from "../opProperties.js";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
+	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
-	ISummarizeOptions,
+	IOnDemandSummarizeOptions,
+	IRefreshSummaryAckOptions,
+	ISubmitSummaryOptions,
+	ISummarizeEventProps,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
-	IOnDemandSummarizeOptions,
-	EnqueueSummarizeResult,
-	SummarizerStopReason,
-	ISubmitSummaryOptions,
-	SubmitSummaryResult,
-	ISummaryCancellationToken,
+	ISummarizeOptions,
 	ISummarizeResults,
-	ISummarizeTelemetryProperties,
-	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
-	IRefreshSummaryAckOptions,
+	ISummarizeTelemetryProperties,
 	ISummarizerEvents,
-	ISummarizeEventProps,
+	ISummarizerRuntime,
+	ISummaryCancellationToken,
+	SubmitSummaryResult,
+	SummarizerStopReason,
 } from "./summarizerTypes.js";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection.js";
 import {
-	raceTimer,
 	SummarizeReason,
 	SummarizeResultBuilder,
 	SummaryGenerator,
+	raceTimer,
 } from "./summaryGenerator.js";
 
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes

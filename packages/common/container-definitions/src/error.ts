@@ -20,6 +20,7 @@ export const ContainerErrorTypes = {
 } as const;
 
 /**
+ * {@inheritDoc (ContainerErrorTypes:variable)}
  * @alpha
  */
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];

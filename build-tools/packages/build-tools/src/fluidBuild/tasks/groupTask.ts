@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { AsyncPriorityQueue } from "async";
 
 import { BuildPackage, BuildResult } from "../buildGraph";
@@ -34,6 +35,19 @@ export class GroupTask extends Task {
 				}
 				prevTask = task;
 			}
+		}
+	}
+
+	public addDependentTasks(dependentTasks: Task[], isDefault: boolean): void {
+		if (isDefault) {
+			// Propagate to unnamed subtasks only if it's a default dependency
+			for (const task of this.subTasks) {
+				if (task.taskName === undefined) {
+					task.addDependentTasks(dependentTasks, isDefault);
+				}
+			}
+		} else {
+			super.addDependentTasks(dependentTasks, isDefault);
 		}
 	}
 

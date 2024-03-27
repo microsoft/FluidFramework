@@ -12,9 +12,9 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform.js";
 import type {
+	IInventoryList,
 	IInventoryListAppModel,
 	IInventoryListAppModelEvents,
-	IInventoryList,
 } from "../modelInterfaces.js";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.

@@ -602,7 +602,8 @@
             "error",
             {
                 "allow": [
-                    "@fluidframework/*/beta",
+                    "@fluid*/*/test*",
+                    "@fluid*/*/internal/test*",
                     "@fluidframework/*/internal",
                     "*/index.js"
                 ]
@@ -631,7 +632,7 @@
             "error"
         ],
         "import/order": [
-            "error"
+            "off"
         ],
         "indent": [
             "off"

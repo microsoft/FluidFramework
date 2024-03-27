@@ -4,9 +4,9 @@
  */
 
 import {
-	LoaderHeader,
 	type IContainer,
 	type IHostLoader,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IRequest } from "@fluidframework/core-interfaces";

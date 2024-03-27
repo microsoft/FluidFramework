@@ -3,18 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
+import { assert } from "@fluidframework/core-utils";
 import {
 	ChangesetLocalId,
-	makeAnonChange,
+	RevisionInfo,
 	RevisionTag,
+	TaggedChange,
+	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
-	RevisionInfo,
-	TaggedChange,
 } from "../../../core/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
 import {
 	BoundFieldChangeRebaser,
 	ChildStateGenerator,
@@ -22,31 +27,26 @@ import {
 } from "../../exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests.js";
 import { TestChange } from "../../testChange.js";
-import { deepFreeze, mintRevisionTag } from "../../utils.js";
-import { IdAllocator, brand, idAllocatorFromMaxId, makeArray } from "../../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { RebaseRevisionMetadata } from "../../../feature-libraries/modular-schema/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { deepFreeze, defaultRevisionMetadataFromChanges, mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
+	DetachedNodeTracker,
+	areRebasable,
+	assertChangesetsEqual,
 	compose,
+	describeForBothConfigs,
 	invert,
+	prune,
+	rebase,
 	rebaseOverChanges,
 	rebaseOverComposition,
 	rebaseTagged,
-	withNormalizedLineage,
-	withoutLineage,
-	rebase,
-	prune,
-	describeForBothConfigs,
-	withOrderingMethod,
-	assertChangesetsEqual,
-	withoutTombstones,
 	skipOnLineageMethod,
-	areRebasable,
-	DetachedNodeTracker,
+	withNormalizedLineage,
+	withOrderingMethod,
+	withoutLineage,
+	withoutTombstones,
 } from "./utils.js";
-import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 // TODO: Rename these to make it clear which ones are used in `testChanges`.
 const tag0: RevisionTag = mintRevisionTag();
@@ -673,6 +673,16 @@ const fieldRebaser: BoundFieldChangeRebaser<TestChangeset> = {
 		const pruned2 = prune(change2.change);
 
 		return assertChangesetsEqual(withoutLineage(pruned1), withoutLineage(pruned2));
+	},
+	isEmpty: (change: TestChangeset): boolean => {
+		return withoutTombstones(prune(change)).length === 0;
+	},
+	assertChangesetsEquivalent: (change1, change2) => {
+		const metadata = defaultRevisionMetadataFromChanges([change1, change2]);
+		// We are composing the single changesets to inline the revision tags, as some are undefined.
+		const pruned1 = prune(compose([change1], metadata));
+		const pruned2 = prune(compose([change2], metadata));
+		return assertChangesetsEqual(withoutTombstones(pruned1), withoutTombstones(pruned2));
 	},
 };
 

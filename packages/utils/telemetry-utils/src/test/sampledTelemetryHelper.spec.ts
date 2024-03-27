@@ -11,10 +11,10 @@ import type {
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import {
-	ITelemetryLoggerExt,
 	type ITelemetryErrorEventExt,
-	type ITelemetryPerformanceEventExt,
 	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	type ITelemetryPerformanceEventExt,
 } from "../telemetryTypes.js";
 
 /**

@@ -8,14 +8,14 @@ import { UsageError } from "@fluidframework/telemetry-utils";
 import { DoublyLinkedList } from "./collections/index.js";
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
+import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
-import { ISegmentLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
+import { ISegment, ISegmentLeaf, toRemovalInfo } from "./mergeTreeNodes.js";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
-import { matchProperties, PropertySet } from "./properties.js";
+import { PropertySet, matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
-import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 
 /**
  * @alpha

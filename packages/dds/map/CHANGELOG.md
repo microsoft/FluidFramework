@@ -1,5 +1,16 @@
 # @fluidframework/map
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   map, tree: DDS classes are no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    SharedMap and SharedTree now only export their factories and the interface types.
+    The actual concrete classes which leak implementation details are no longer exported.
+    Users of the `SharedMap` type should use `ISharedMap`.
+    Users of the `SharedTree` type should use `ISharedTree`.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

@@ -11,19 +11,19 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { ISharedMap, IValueChanged } from "@fluidframework/map";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -589,10 +589,9 @@ describeCompat(
 
 		it("addChannel should add the channel successfully to the runtime", async () => {
 			// Create a new map in local (detached) state.
-			const newSharedMap1 = new SharedMap(
-				"newSharedMapId",
+			const newSharedMap1 = SharedMap.getFactory().create(
 				dataObject1.runtime,
-				SharedMap.getFactory().attributes,
+				"newSharedMapId",
 			);
 
 			// Set a value while in local state.
@@ -615,10 +614,9 @@ describeCompat(
 
 		it("should create error when channel created with different runtime is added to different runtime", async () => {
 			// Create a new map in local (detached) state.
-			const newSharedMap1 = new SharedMap(
-				"newSharedMapId",
+			const newSharedMap1 = SharedMap.getFactory().create(
 				dataObject1.runtime,
-				SharedMap.getFactory().attributes,
+				"newSharedMapId",
 			);
 
 			// Set a value while in local state.

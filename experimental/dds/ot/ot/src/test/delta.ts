@@ -5,9 +5,9 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import Delta from "quill-delta";
 import { SharedOT } from "../index.js";

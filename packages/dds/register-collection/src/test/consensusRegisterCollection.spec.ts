@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { BlobTreeEntry } from "@fluidframework/driver-utils";
 import { ISummaryBlob, ITree } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

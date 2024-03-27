@@ -6,21 +6,21 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
 } from "@fluidframework/datastore";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString, ReferenceType, reservedRangeLabelsKey } from "@fluidframework/sequence";
-import { EditorView } from "prosemirror-view";
 import { create404Response } from "@fluidframework/runtime-utils";
+import { ReferenceType, SharedString, reservedRangeLabelsKey } from "@fluidframework/sequence";
+import { EditorView } from "prosemirror-view";
 
 import React, { useEffect, useRef } from "react";
 

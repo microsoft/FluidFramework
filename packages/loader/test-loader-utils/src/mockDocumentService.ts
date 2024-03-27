@@ -13,8 +13,8 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { IClient, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockDocumentDeltaStorageService } from "./mockDeltaStorage";
-import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection";
+import { MockDocumentDeltaStorageService } from "./mockDeltaStorage.js";
+import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection.js";
 
 /**
  * Mock Document Service for testing.

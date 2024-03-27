@@ -5,15 +5,15 @@
 
 import Deque from "double-ended-queue";
 
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
-import { pkgVersion } from "./packageVersion.js";
 import { IBatchMetadata } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the

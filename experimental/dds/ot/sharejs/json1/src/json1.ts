@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import { SharedOT } from "@fluid-experimental/ot";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
-import { SharedOT } from "@fluid-experimental/ot";
 import {
 	Doc,
-	type as Json1OTType,
 	JSONOp,
-	replaceOp,
+	type as Json1OTType,
+	Path,
 	insertOp,
 	moveOp,
 	removeOp,
-	Path,
+	replaceOp,
 } from "ot-json1";
 import { Json1Factory } from "./factory.js";
 

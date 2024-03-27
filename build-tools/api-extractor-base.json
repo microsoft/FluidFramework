@@ -7,8 +7,8 @@
 		"extractorMessageReporting": {
 			// TODO: Consider enabling this in the future.
 			"ae-missing-release-tag": {
-				"logLevel": "none"
-			}
-		}
-	}
+				"logLevel": "none",
+			},
+		},
+	},
 }

@@ -4,15 +4,15 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
 import { CursorLocationType, StoredSchemaCollection } from "../../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
 import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
 import { decode } from "./chunkDecoding.js";
-import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { FieldBatch } from "./fieldBatch.js";
+import { EncodedFieldBatch, validVersions } from "./format.js";
+import { schemaCompressedEncode } from "./schemaBasedEncoding.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 
 export interface FieldBatchEncodingContext {

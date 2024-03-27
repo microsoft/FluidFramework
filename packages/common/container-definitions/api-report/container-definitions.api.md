@@ -63,7 +63,7 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha (undocumented)
+// @alpha
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 // @alpha
@@ -91,7 +91,7 @@ export interface IBatchMessage {
     // (undocumented)
     contents?: string;
     // (undocumented)
-    metadata: Record<string, unknown> | undefined;
+    metadata?: Record<string, unknown>;
     // (undocumented)
     referenceSequenceNumber?: number;
 }
@@ -163,8 +163,6 @@ export interface IContainerContext {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
-    // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // @deprecated
     readonly id: string;
     // (undocumented)
@@ -183,7 +181,7 @@ export interface IContainerContext {
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
-    readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
+    readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)

@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Named, fail } from "../../util/index.js";
 import {
-	TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeStoredSchema,
-	Adapters,
 	AdaptedViewSchema,
+	Adapters,
 	Compatibility,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeStoredSchema,
 } from "../../core/index.js";
+import { Named, fail } from "../../util/index.js";
 import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema/index.js";
 import { FlexFieldSchema, FlexTreeSchema, intoStoredSchema } from "./typedTreeSchema.js";
 

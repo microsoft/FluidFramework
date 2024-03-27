@@ -5,42 +5,54 @@
 
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
+import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
 import {
+	ChangeEncodingContext,
+	DeltaDetachedNodeId,
+	DeltaFieldChanges,
+	DeltaRoot,
+	FieldKey,
+	FieldKindIdentifier,
+	ITreeCursorSynchronous,
+	RevisionTag,
+	TaggedChange,
+	UpPath,
+	makeAnonChange,
+	makeDetachedNodeId,
+	revisionMetadataSourceFromInfo,
+	tagChange,
+} from "../../../core/index.js";
+import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
+import {
+	FieldChange,
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	Multiplicity,
 	FieldEditor,
-	NodeChangeset,
-	genericFieldKind,
-	FieldChange,
-	ModularChangeset,
 	FieldKindWithEditor,
+	ModularChangeset,
+	Multiplicity,
+	NodeChangeset,
 	RelevantRemovedRootsFromChild,
-	chunkTree,
-	defaultChunkPolicy,
 	TreeChunk,
-	cursorForJsonableTreeField,
 	chunkFieldSingle,
+	chunkTree,
+	cursorForJsonableTreeField,
+	defaultChunkPolicy,
+	genericFieldKind,
 	makeFieldBatchCodec,
 } from "../../../feature-libraries/index.js";
 import {
-	makeAnonChange,
-	makeDetachedNodeId,
-	RevisionTag,
-	tagChange,
-	TaggedChange,
-	FieldKindIdentifier,
-	FieldKey,
-	UpPath,
-	revisionMetadataSourceFromInfo,
-	ITreeCursorSynchronous,
-	DeltaFieldChanges,
-	DeltaRoot,
-	DeltaDetachedNodeId,
-	ChangeEncodingContext,
-} from "../../../core/index.js";
+	ModularChangeFamily,
+	intoDelta,
+	relevantRemovedRoots as relevantDetachedTreesImplementation,
+	updateRefreshers,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// Allows typechecking test data used in modulaChangeFamily's codecs.
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat.js";
 import { brand, nestedMapFromFlatList, tryGetFromNestedMap } from "../../../util/index.js";
-import { ICodecOptions, makeCodecFamily } from "../../../codec/index.js";
+import { ajvValidator } from "../../codec/index.js";
 import {
 	EncodingTestData,
 	assertDeltaEqual,
@@ -50,18 +62,6 @@ import {
 	testChangeReceiver,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import {
-	ModularChangeFamily,
-	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	intoDelta,
-	updateRefreshers,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
-// Allows typechecking test data used in modulaChangeFamily's codecs.
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat.js";
-import { ajvValidator } from "../../codec/index.js";
 import { ValueChangeset, valueField } from "./basicRebasers.js";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
@@ -1335,6 +1335,33 @@ describe("ModularChangeFamily", () => {
 				assert.throws(() =>
 					updateRefreshers(makeAnonChange(input), getDetachedNode, [{ minor: 2 }]),
 				);
+			});
+		});
+
+		describe("handles implicit and explicit build revision representations", () => {
+			it("explicit builds", () => {
+				const explicitBuild: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([[tag1, new Map([[brand(1), node1Chunk]])]]),
+				};
+				const withBuilds = updateRefreshers(
+					makeAnonChange(explicitBuild),
+					getDetachedNode,
+					[{ major: tag1, minor: 1 }],
+				);
+				assert.deepEqual(withBuilds, explicitBuild);
+			});
+			it("implicit builds", () => {
+				const implicitBuild: ModularChangeset = {
+					fieldChanges: new Map([]),
+					builds: new Map([[undefined, new Map([[brand(1), node1Chunk]])]]),
+				};
+				const withBuilds = updateRefreshers(
+					tagChange(implicitBuild, tag1),
+					getDetachedNode,
+					[{ major: tag1, minor: 1 }],
+				);
+				assert.deepEqual(withBuilds, implicitBuild);
 			});
 		});
 	});

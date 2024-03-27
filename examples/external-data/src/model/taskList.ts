@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
 
+import { customerServicePort } from "../mock-customer-service-interface/index.js";
+import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
 import type {
 	ExternalSnapshotTask,
-	ITask,
-	ITaskEvents,
-	ITaskData,
-	ITaskList,
-	IBaseDocumentInitialState,
 	IBaseDocument,
+	IBaseDocumentInitialState,
+	ITask,
+	ITaskData,
+	ITaskEvents,
+	ITaskList,
 } from "../model-interface/index.js";
-import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";
-import { customerServicePort } from "../mock-customer-service-interface/index.js";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {

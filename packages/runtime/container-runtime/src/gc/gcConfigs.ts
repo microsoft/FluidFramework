@@ -10,14 +10,20 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary/index.js";
 import {
+	GCFeatureMatrix,
+	GCVersion,
+	IGCMetadata_Deprecated,
+	IGCRuntimeOptions,
+	IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	disableDatastoreSweepKey,
 	disableTombstoneKey,
-	GCFeatureMatrix,
+	gcDisableDataStoreSweepOptionName,
+	gcDisableThrowOnTombstoneLoadOptionName,
+	gcGenerationOptionName,
 	gcTestModeKey,
-	GCVersion,
-	IGarbageCollectorConfigs,
-	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
 	oneDayMs,
 	runGCKey,
@@ -25,12 +31,6 @@ import {
 	runSweepKey,
 	throwOnTombstoneLoadOverrideKey,
 	throwOnTombstoneUsageKey,
-	gcDisableThrowOnTombstoneLoadOptionName,
-	defaultSweepGracePeriodMs,
-	gcGenerationOptionName,
-	IGCMetadata_Deprecated,
-	disableDatastoreSweepKey,
-	gcDisableDataStoreSweepOptionName,
 } from "./gcDefinitions.js";
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 

@@ -4,15 +4,15 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 import {
-	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
 	defaultTinyliciousPort,
 } from "@fluidframework/tinylicious-driver";
-import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { RouterliciousDriverApiType, RouterliciousDriverApi } from "./routerliciousDriverApi";
+import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
 
 /**
  * @internal

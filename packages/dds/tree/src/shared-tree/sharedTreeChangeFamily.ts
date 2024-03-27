@@ -15,11 +15,11 @@ import {
 	mapTaggedChange,
 } from "../core/index.js";
 import {
-	fieldKinds,
+	FieldBatchCodec,
 	ModularChangeFamily,
 	ModularChangeset,
-	FieldBatchCodec,
 	TreeCompressionStrategy,
+	fieldKinds,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";

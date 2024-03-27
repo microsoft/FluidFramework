@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { ITelemetryBaseProperties, IThrottlingWarning } from "@fluidframework/core-interfaces";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,

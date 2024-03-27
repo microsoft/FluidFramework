@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	Jsonable,
 	IChannelFactory,
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+	Jsonable,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	createSingleBlobSummary,
 	IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
-import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory.js";
 import { ISharedSummaryBlock } from "./interfaces.js";
+import { SharedSummaryBlockFactory } from "./sharedSummaryBlockFactory.js";
 
 const snapshotFileName = "header";
 

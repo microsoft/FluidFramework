@@ -3,32 +3,32 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
-	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
 	BaseSegment,
-	ISegment,
 	// eslint-disable-next-line import/no-deprecated
 	Client,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeDeltaCallbackArgs,
-	MergeTreeDeltaType,
-	IMergeTreeMaintenanceCallbackArgs,
-	MergeTreeMaintenanceType,
 	IJSONSegment,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+	ISegment,
+	MergeTreeDeltaType,
+	MergeTreeMaintenanceType,
 } from "@fluidframework/merge-tree";
-import { ITelemetryBaseLogger, IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { HandleTable, Handle, isHandleValid } from "./handletable.js";
-import { deserializeBlob } from "./serialization.js";
+import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { HandleCache } from "./handlecache.js";
+import { Handle, HandleTable, isHandleValid } from "./handletable.js";
+import { deserializeBlob } from "./serialization.js";
 import { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
@@ -191,7 +191,10 @@ export class PermutationVector extends Client {
 		return handle;
 	}
 
-	public adjustPosition(pos: number, op: ISequencedDocumentMessage) {
+	public adjustPosition(
+		pos: number,
+		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
+	) {
 		const { segment, offset } = this.getContainingSegment(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,

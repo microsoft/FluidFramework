@@ -33,7 +33,7 @@ variables:
 
 stages:
   # Run Azure Client FRS Tests
-  - stage:
+  - stage: e2e_azure_client_frs
     displayName: e2e - azure client with frs
     dependsOn: []
     jobs:
@@ -50,7 +50,7 @@ stages:
           azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
           azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
-  - stage:
+  - stage: e2e_azure_client_local_server
     displayName: e2e - azure client with azure local service
     dependsOn: []
     jobs:
@@ -67,7 +67,7 @@ stages:
           logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
   
-  - stage:
+  - stage: e2e_odsp_client_odsp_server
     displayName: e2e - odsp client with odsp service
     dependsOn: []
     jobs:
@@ -88,3 +88,46 @@ stages:
           odsp__client__login__password: $(odsp-client-login-password)
           odsp__client2__login__username: $(odsp-client2-login-username)
           odsp__client2__login__password: $(odsp-client2-login-password)
+
+  # Capture pipeline stage results
+  - stage: upload_run_telemetry
+    displayName: Upload pipeline run telemetry to Kusto
+    condition: succeededOrFailed()
+    dependsOn:
+      - e2e_azure_client_frs
+      - e2e_azure_client_local_server
+      - e2e_odsp_client_odsp_server
+    jobs:
+      - job: upload_run_telemetry
+        displayName: Upload pipeline run telemetry to Kusto
+        pool: Small
+        variables:
+        - group: ado-feeds
+        - name: absolutePathToTelemetryGenerator
+          value: $(Build.SourcesDirectory)/tools/telemetry-generator
+          readonly: true
+        steps:
+        - template: templates/include-telemetry-setup.yml
+          parameters:
+            devFeedUrl: $(ado-feeds-dev)
+            officeFeedUrl: $(ado-feeds-office)
+            isCheckoutNeeded: true
+        - task: Bash@3
+          displayName: Retrieve buildId results
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(absolutePathToTelemetryGenerator)
+            script: |
+              echo "creating output folder"
+              mkdir -p ${{ variables.testWorkspace }}/timingOutput
+              echo "Retrieving pipeline run timeline data command ..."
+              echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+              curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+              pwd;
+              ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+              cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            ADO_API_TOKEN: $(System.AccessToken)
+            PIPELINE: ServiceClientsEndToEndTests

@@ -5,19 +5,19 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder, leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { structuralName } from "../../domains/schemaBuilder.js";
 import {
 	Any,
 	FieldKinds,
 	FlexFieldSchema,
-	FlexTreeSequenceField,
 	FlexTreeNodeSchema,
+	FlexTreeSequenceField,
+	FlexTreeTypedNode,
 	schemaIsFieldNode,
 	schemaIsMap,
-	FlexTreeTypedNode,
 } from "../../feature-libraries/index.js";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { structuralName } from "../../domains/schemaBuilder.js";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -96,7 +96,7 @@ describe("domains - SchemaBuilder", () => {
 						>
 					>
 				>;
-				// TODO: this should compile: ideally EditableTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
+				// TODO: this should compile: ideally FlexTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
 				type _check2 = requireTrue<
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<
@@ -232,34 +232,6 @@ describe("domains - SchemaBuilder", () => {
 		type _0 = requireFalse<isAny<typeof recursiveObject>>;
 
 		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject>) {
-			const y: number = x.number;
-			const z: number | undefined = x.recursive?.recursive?.number;
-		}
-	});
-
-	it("fixRecursiveReference", () => {
-		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
-
-		const recursiveReference = () => recursiveObject2;
-		builder.fixRecursiveReference(recursiveReference);
-
-		// Renaming this to recursiveObject causes IntelliSense to never work for this, instead of work after restarted until this code it touched.
-		const recursiveObject2 = builder.object("object2", {
-			recursive: builder.optional([recursiveReference]),
-			number: leaf.number,
-		});
-
-		type _0 = requireFalse<isAny<typeof recursiveObject2>>;
-		type _1 = requireTrue<
-			areSafelyAssignable<
-				typeof recursiveObject2,
-				ReturnType<
-					(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]
-				>
-			>
-		>;
-
-		function typeTests2(x: FlexTreeTypedNode<typeof recursiveObject2>) {
 			const y: number = x.number;
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}

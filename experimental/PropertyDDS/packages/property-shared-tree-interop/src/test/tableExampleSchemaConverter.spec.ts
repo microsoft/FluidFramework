@@ -6,15 +6,15 @@
 import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
-	brand,
 	FieldKinds,
-	TreeNodeSchemaIdentifier,
-	schemaIsFieldNode,
-	FlexFieldSchema,
-	leaf,
-	FlexObjectNodeSchema,
-	FlexMapNodeSchema,
 	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	TreeNodeSchemaIdentifier,
+	brand,
+	leaf,
+	schemaIsFieldNode,
 } from "@fluidframework/tree/internal";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter.js";
 

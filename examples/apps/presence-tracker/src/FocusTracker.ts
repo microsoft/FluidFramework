@@ -4,9 +4,9 @@
  */
 
 import { Signaler } from "@fluid-experimental/data-objects";
-import { IEvent } from "@fluidframework/core-interfaces";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { IEvent } from "@fluidframework/core-interfaces";
 import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 import { IMember } from "fluid-framework";
 

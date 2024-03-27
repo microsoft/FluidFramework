@@ -8,19 +8,19 @@ import { SessionId } from "@fluidframework/id-compressor";
 import { TaggedChange } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
-	TestChange,
-	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 	NoOpChangeRebaser,
+	TestChange,
+	UnrebasableTestChangeRebaser,
 } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
+import { runUnitTestScenario } from "./editManagerScenario.js";
 import {
-	testChangeEditManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,
 	rebaseLocalEditsOverTrunkEdits,
 	rebasePeerEditsOverTrunkEdits,
+	testChangeEditManagerFactory,
 } from "./editManagerTestUtils.js";
-import { runUnitTestScenario } from "./editManagerScenario.js";
 
 const peer1: SessionId = "1" as SessionId;
 const peer2: SessionId = "2" as SessionId;

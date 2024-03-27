@@ -9,6 +9,8 @@
 import { assert, Heap, IComparer } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
+// eslint-disable-next-line import/no-deprecated
+import { Client } from "./client.js";
 import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
 	NonCollabClient,
@@ -16,37 +18,14 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants.js";
+import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
-	anyLocalReferencePosition,
-	filterLocalReferencePositions,
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
+	anyLocalReferencePosition,
+	filterLocalReferencePositions,
 } from "./localReference.js";
-import {
-	BlockAction,
-	// eslint-disable-next-line import/no-deprecated
-	CollaborationWindow,
-	IHierBlock,
-	IMergeBlock,
-	ISegmentLeaf,
-	IMergeNode,
-	IMoveInfo,
-	InsertContext,
-	IRemovalInfo,
-	ISegment,
-	ISegmentAction,
-	ISegmentChanges,
-	Marker,
-	MaxNodesInBlock,
-	MergeBlock,
-	reservedMarkerIdKey,
-	// eslint-disable-next-line import/no-deprecated
-	SegmentGroup,
-	toMoveInfo,
-	seqLTE,
-	toRemovalInfo,
-} from "./mergeTreeNodes.js";
 import {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeSegmentDelta,
@@ -54,31 +33,52 @@ import {
 	MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
+import {
+	NodeAction,
+	backwardExcursion,
+	depthFirstNodeWalk,
+	forwardExcursion,
+	walkAllChildSegments,
+} from "./mergeTreeNodeWalk.js";
+import {
+	BlockAction,
+	// eslint-disable-next-line import/no-deprecated
+	CollaborationWindow,
+	IHierBlock,
+	IMergeBlock,
+	IMergeNode,
+	IMoveInfo,
+	IRemovalInfo,
+	ISegment,
+	ISegmentAction,
+	ISegmentChanges,
+	ISegmentLeaf,
+	InsertContext,
+	Marker,
+	MaxNodesInBlock,
+	MergeBlock,
+	// eslint-disable-next-line import/no-deprecated
+	SegmentGroup,
+	reservedMarkerIdKey,
+	seqLTE,
+	toMoveInfo,
+	toRemovalInfo,
+} from "./mergeTreeNodes.js";
+import type { TrackingGroup } from "./mergeTreeTracking.js";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder.js";
 import { IMergeTreeDeltaOp, IRelativePosition, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 // eslint-disable-next-line import/no-deprecated
-import { createMap, extend, extendIfUndefined, MapLike, PropertySet } from "./properties.js";
+import { MapLike, PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
 import {
-	refTypeIncludesFlag,
-	ReferencePosition,
 	DetachedReferencePosition,
+	ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
+	refTypeIncludesFlag,
 } from "./referencePositions.js";
 import { PropertiesRollback } from "./segmentPropertiesManager.js";
-import {
-	backwardExcursion,
-	depthFirstNodeWalk,
-	forwardExcursion,
-	NodeAction,
-	walkAllChildSegments,
-} from "./mergeTreeNodeWalk.js";
-import type { TrackingGroup } from "./mergeTreeTracking.js";
 import { zamboniSegments } from "./zamboni.js";
-// eslint-disable-next-line import/no-deprecated
-import { Client } from "./client.js";
-import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 
 function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	return (
@@ -1331,10 +1331,16 @@ export class MergeTree {
 
 		// opArgs == undefined => loading snapshot or test code
 		if (opArgs !== undefined) {
-			this.mergeTreeDeltaCallback?.(opArgs, {
-				operation: MergeTreeDeltaType.INSERT,
-				deltaSegments: segments.map((segment) => ({ segment })),
-			});
+			const deltaSegments = segments
+				.filter((segment) => !toMoveInfo(segment))
+				.map((segment) => ({ segment }));
+
+			if (deltaSegments.length > 0) {
+				this.mergeTreeDeltaCallback?.(opArgs, {
+					operation: MergeTreeDeltaType.INSERT,
+					deltaSegments,
+				});
+			}
 		}
 
 		if (
@@ -1960,7 +1966,9 @@ export class MergeTree {
 				segment.localMovedSeq = localSeq;
 				segment.movedSeqs = [seq];
 
-				movedSegments.push({ segment });
+				if (!toRemovalInfo(segment)) {
+					movedSegments.push({ segment });
+				}
 			}
 
 			// Save segment so can assign moved sequence number when acked by server
@@ -2070,7 +2078,9 @@ export class MergeTree {
 				segment.removedSeq = seq;
 				segment.localRemovedSeq = localSeq;
 
-				removedSegments.push({ segment });
+				if (!toMoveInfo(segment)) {
+					removedSegments.push({ segment });
+				}
 			}
 
 			// Save segment so we can assign removed sequence number when acked by server

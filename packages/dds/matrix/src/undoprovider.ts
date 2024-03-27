@@ -5,18 +5,19 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	MergeTreeDeltaType,
-	MergeTreeDeltaRevertible,
 	IMergeTreeDeltaCallbackArgs,
-	appendToMergeTreeDeltaRevertibles,
-	revertMergeTreeDeltaRevertibles,
-	MergeTreeRevertibleDriver,
-	discardMergeTreeDeltaRevertible,
-	TrackingGroup,
 	ITrackingGroup,
+	MergeTreeDeltaRevertible,
+	MergeTreeDeltaType,
+	MergeTreeRevertibleDriver,
+	TrackingGroup,
+	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree";
-import { MatrixItem, SharedMatrix } from "./matrix.js";
 import { Handle, isHandleValid } from "./handletable.js";
+import { SharedMatrix } from "./matrix.js";
+import { MatrixItem } from "./ops.js";
 import { PermutationSegment, PermutationVector } from "./permutationvector.js";
 import { IUndoConsumer } from "./types.js";
 

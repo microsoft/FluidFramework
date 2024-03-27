@@ -3,46 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import {
-	IThrottlingWarning,
-	IEventProvider,
-	ITelemetryBaseProperties,
-	type ITelemetryBaseEvent,
-} from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	ICriticalContainerError,
 	IDeltaManager,
 	IDeltaManagerEvents,
 	IDeltaQueue,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	IEventProvider,
+	type ITelemetryBaseEvent,
+	ITelemetryBaseProperties,
+	IThrottlingWarning,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	normalizeError,
-	safeRaiseEvent,
-	isFluidError,
-	ITelemetryLoggerExt,
-	DataCorruptionError,
-	UsageError,
-	type ITelemetryGenericEventExt,
-	type ITelemetryErrorEventExt,
-} from "@fluidframework/telemetry-utils";
-import {
+	DriverErrorTypes,
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions";
+import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
+	ConnectionMode,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	MessageType,
-	ConnectionMode,
 } from "@fluidframework/protocol-definitions";
-import { NonRetryableError, isRuntimeMessage, MessageType2 } from "@fluidframework/driver-utils";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
+	UsageError,
+	extractSafePropertiesFromMessage,
+	isFluidError,
+	normalizeError,
+	safeRaiseEvent,
+} from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
 
 import {
 	IConnectionDetailsInternal,
@@ -325,7 +325,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any, targetClientId?: string) {
+	public submitSignal(content: string, targetClientId?: string) {
 		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 

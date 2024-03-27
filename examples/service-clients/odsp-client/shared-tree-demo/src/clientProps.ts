@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { OdspClientProps, OdspConnectionConfig } from "@fluid-experimental/odsp-client";
 import { OdspTestTokenProvider } from "./tokenProvider.js";
 

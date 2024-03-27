@@ -7,15 +7,15 @@
 
 import { strict as assert } from "assert";
 import * as fs from "fs";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IRandom } from "@fluid-private/stochastic-test-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
-import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes.js";
-import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { _dirname } from "./dirname.cjs";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
-import { _dirname } from "./dirname.cjs";
 
 export type TestOperation = (
 	client: TestClient,

@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
-import {
-	SummaryTree,
-	ISummaryTree,
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
+	ISummaryTree,
 	ITree,
+	SummaryTree,
 } from "@fluidframework/protocol-definitions";
-import {
+import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "./garbageCollectionDefinitions";
+} from "./garbageCollectionDefinitions.js";
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
@@ -228,7 +228,9 @@ export interface ISummarizerNode {
 
 	getChild(id: string): ISummarizerNode | undefined;
 
-	/** True if a summary is currently in progress */
+	/**
+	 * True if a summary is currently in progress
+	 */
 	isSummaryInProgress?(): boolean;
 }
 

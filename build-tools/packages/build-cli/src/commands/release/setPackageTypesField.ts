@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 import { Package, updatePackageJsonFile, PackageJson } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand";
@@ -85,9 +86,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			const types: string | undefined = json.types ?? json.typings;
 
 			if (types === undefined) {
-				throw new Error(
-					"Neither 'types' nor 'typings' field is defined in the package.json.",
-				);
+				throw new Error("Neither 'types' nor 'typings' field is defined in the package.json.");
 			}
 
 			/**

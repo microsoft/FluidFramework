@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "fs";
-import path from "path";
 import { strict as assert } from "assert";
 import { spawnSync } from "child_process";
+import * as fs from "fs";
+import path from "path";
 
 describe("fluid-runner from command line", () => {
 	const command = path.join(__dirname, "../../bin/fluid-runner");

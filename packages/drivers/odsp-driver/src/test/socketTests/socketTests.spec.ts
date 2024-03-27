@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "node:assert";
-import { stub } from "sinon";
-import { v4 as uuid } from "uuid";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
-import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
+import { stub } from "sinon";
 import { Socket } from "socket.io-client";
+import { v4 as uuid } from "uuid";
 import { EpochTracker } from "../../epochTracker.js";
 import { LocalPersistentCache } from "../../odspCache.js";
-import { getHashedDocumentId } from "../../odspPublicUtils.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
+import { getHashedDocumentId } from "../../odspPublicUtils.js";
 import * as socketModule from "../../socketModule.js";
 import { ClientSocketMock } from "./socketMock.js";
 

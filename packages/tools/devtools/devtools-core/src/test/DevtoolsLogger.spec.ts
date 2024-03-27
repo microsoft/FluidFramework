@@ -8,7 +8,7 @@ import { expect } from "chai";
 import { type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
-import { createDevtoolsLogger, type IDevtoolsLogger } from "../DevtoolsLogger.js";
+import { type IDevtoolsLogger, createDevtoolsLogger } from "../DevtoolsLogger.js";
 
 // TODOs:
 // - Test window messaging

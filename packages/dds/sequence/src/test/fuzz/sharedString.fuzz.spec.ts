@@ -4,21 +4,21 @@
  */
 
 import {
-	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
+	createWeightedAsyncGenerator as createWeightedGenerator,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
-	Operation,
 	FuzzTestState,
-	defaultIntervalOperationGenerationConfig,
-	createSharedStringGeneratorOperations,
+	Operation,
 	SharedStringOperationGenerationConfig,
 	baseModel,
+	createSharedStringGeneratorOperations,
 	defaultFuzzOptions,
-} from "./fuzzUtils";
+	defaultIntervalOperationGenerationConfig,
+} from "./fuzzUtils.js";
 
 type ClientOpState = FuzzTestState;
 export function makeSharedStringOperationGenerator(

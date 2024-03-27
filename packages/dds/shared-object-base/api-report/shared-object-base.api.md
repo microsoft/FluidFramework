@@ -8,6 +8,7 @@ import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
+import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IErrorEvent } from '@fluidframework/core-interfaces';
@@ -69,6 +70,12 @@ export interface ISharedObjectEvents extends IErrorEvent {
     (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
+// @public
+export interface ISharedObjectKind<TSharedObject> {
+    create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
+    getFactory(): IChannelFactory<TSharedObject>;
+}
+
 // @alpha
 export function makeHandlesSerializable(value: any, serializer: IFluidSerializer, bind: IFluidHandle): any;
 
@@ -78,7 +85,7 @@ export function parseHandles(value: any, serializer: IFluidSerializer): any;
 // @internal
 export function serializeHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): string | undefined;
 
-// @public
+// @alpha
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, telemetryContextPrefix: string);
     getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -90,7 +97,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
 }
 
-// @public
+// @alpha
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     protected abstract applyStashedOp(content: any): void;

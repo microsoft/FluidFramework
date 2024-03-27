@@ -4,6 +4,13 @@
  */
 
 import { strict as assert, fail } from "assert";
+import { JsonableTree } from "../../../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+// eslint-disable-next-line import/no-internal-modules
+import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import/no-internal-modules
+import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	BufferFormat,
 	EncoderCache,
@@ -11,24 +18,17 @@ import {
 	NodeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
-// eslint-disable-next-line import/no-internal-modules
-import { CounterFilter } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
-// eslint-disable-next-line import/no-internal-modules
-import { handleShapesAndIdentifiers } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
 	EncodedFieldBatch,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
-import { JsonableTree } from "../../../../core/index.js";
-import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 import {
-	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
+	cursorForJsonableTreeNode,
 	isFluidHandle,
 } from "../../../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+import { assertChunkCursorBatchEquals } from "../fieldCursorTestUtilities.js";
 
 export function checkNodeEncode(
 	shape: NodeEncoder,

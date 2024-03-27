@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "node:assert";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -12,8 +14,6 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
 import {
 	DirectoryFactory,
 	DirectoryLocalOpMetadata,

@@ -3,16 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IIdCompressorCore,
-	SerializedIdCompressorWithNoSession,
-} from "@fluidframework/id-compressor";
-import type {
-	MockFluidDataStoreRuntime,
-	MockContainerRuntimeForReconnection,
-} from "@fluidframework/test-runtime-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions";
+import type { SerializedIdCompressorWithNoSession } from "@fluidframework/id-compressor";
 import type { ISummaryTree } from "@fluidframework/protocol-definitions";
+import type {
+	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils";
 
 /**
  * @internal
@@ -48,21 +45,11 @@ export const hasStashData = <TChannelFactory extends IChannelFactory>(
 	client.stashData !== null &&
 	typeof client.stashData == "object";
 
-function finalizeAllocatedIds(compressor: IIdCompressorCore | undefined): void {
-	if (compressor !== undefined) {
-		const range = compressor.takeNextCreationRange();
-		if (range.ids !== undefined) {
-			compressor.finalizeCreationRange(range);
-		}
-	}
-}
-
 /**
  * Creates the load data from the client. The load data include everything needed to load a new client. It includes the summaries and the minimumSequenceNumber.
  * @internal
  */
 export function createLoadData(client: Client<IChannelFactory>): ClientLoadData {
-	finalizeAllocatedIds(client.dataStoreRuntime.idCompressor);
 	return {
 		minimumSequenceNumber: client.dataStoreRuntime.deltaManager.lastSequenceNumber,
 		summaries: {

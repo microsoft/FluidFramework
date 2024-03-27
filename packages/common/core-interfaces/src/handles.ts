@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest, IResponse } from "./fluidRouter.js";
 import type { IFluidLoadable } from "./fluidLoadable.js";
+import type { IRequest, IResponse } from "./fluidRouter.js";
 import type { FluidObject } from "./provider.js";
 
 /**

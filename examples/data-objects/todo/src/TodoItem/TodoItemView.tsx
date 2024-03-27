@@ -7,7 +7,7 @@ import {
 	CollaborativeInput,
 	CollaborativeTextArea,
 	SharedStringHelper,
-} from "@fluid-experimental/react-inputs";
+} from "@fluid-example/example-utils";
 import React, { useEffect, useState } from "react";
 import { TodoItem } from "./TodoItem.js";
 

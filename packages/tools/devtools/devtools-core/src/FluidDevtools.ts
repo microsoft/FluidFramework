@@ -5,24 +5,24 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools.js";
+import { type ContainerKey } from "./CommonInterfaces.js";
+import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import { type IDevtoolsLogger } from "./DevtoolsLogger.js";
+import { type DevtoolsFeatureFlags } from "./Features.js";
 import { type IContainerDevtools } from "./IContainerDevtools.js";
+import { type IFluidDevtools } from "./IFluidDevtools.js";
 import {
 	ContainerList,
 	DevtoolsDisposed,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
-	handleIncomingWindowMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	type MessageLoggingOptions,
+	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
-import { type IFluidDevtools } from "./IFluidDevtools.js";
-import { type DevtoolsFeatureFlags } from "./Features.js";
-import { type IDevtoolsLogger } from "./DevtoolsLogger.js";
-import { type ContainerKey } from "./CommonInterfaces.js";
 import { pkgVersion as devtoolsVersion } from "./packageVersion.js";
 
 /**
