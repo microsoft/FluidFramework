@@ -43,6 +43,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 /**
  * @internal
@@ -262,10 +263,12 @@ export async function getVersionedTestObjectProvider(
 ): Promise<TestObjectProvider> {
 	return getVersionedTestObjectProviderFromApis(
 		{
-			loader: getLoaderApi(baseVersion, loaderVersion),
-			containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
-			dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
-			driver: getDriverApi(baseVersion, driverConfig?.version),
+			loader: getLoaderApi(getRequestedVersion(baseVersion, loaderVersion)),
+			containerRuntime: getContainerRuntimeApi(
+				getRequestedVersion(baseVersion, runtimeVersion),
+			),
+			dataRuntime: getDataRuntimeApi(getRequestedVersion(baseVersion, dataRuntimeVersion)),
+			driver: getDriverApi(getRequestedVersion(baseVersion, driverConfig?.version)),
 		},
 		driverConfig,
 	);
