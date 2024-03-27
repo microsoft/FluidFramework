@@ -62,7 +62,10 @@ export class SharedTreeEditBuilder
 					changes: [
 						{
 							type: "schema",
-							innerChange: { schema: { new: newSchema, old: oldSchema } },
+							innerChange: {
+								schema: { new: newSchema, old: oldSchema },
+								isInverse: false,
+							},
 						},
 					],
 				});
