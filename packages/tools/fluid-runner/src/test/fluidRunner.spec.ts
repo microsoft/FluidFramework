@@ -10,10 +10,10 @@ import path from "path";
 import { _dirname } from "./dirname.cjs";
 
 describe("fluid-runner from command line", () => {
-	const command = path.join(_dirname, "../../bin/fluid-runner.js");
+	const command = path.join(_dirname, "../../bin/fluid-runner");
 
 	describe("exportFile", () => {
-		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader.js");
+		const codeLoader = path.join(_dirname, "sampleCodeLoaders", "sampleCodeLoader");
 		const folderRoot = path.join(_dirname, "../../src/test");
 		const snapshot = path.join(folderRoot, "localOdspSnapshots", "odspSnapshot2.json");
 		const outputFolder = path.join(folderRoot, "outputFolder");
@@ -193,11 +193,7 @@ describe("fluid-runner from command line", () => {
 });
 
 describe("custom fluidFileConverter provided", () => {
-	const command = path.join(
-		_dirname,
-		"../../src/test/sampleCodeLoaders",
-		"sample-executable.mjs",
-	);
+	const command = path.join(_dirname, "../../src/test/sampleCodeLoaders", "sample-executable");
 
 	describe("exportFile", () => {
 		const folderRoot = path.join(_dirname, "../../src/test");

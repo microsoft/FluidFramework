@@ -64,7 +64,7 @@
 		}
 	},
 	"bin": {
-		"fluid-runner": "bin/fluid-runner.mjs"
+		"fluid-runner": "bin/fluid-runner.js"
 	},
 	"scripts": {
 		"api": "fluid-build . --task api",
