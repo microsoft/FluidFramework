@@ -435,6 +435,7 @@ describe("DefaultVisualizers unit tests", () => {
 				),
 			}),
 			baz: [builder.number, builder.string, builder.boolean],
+			// foobar: builder.map([builder.string, builder.number, builder.handle]),
 		}) {}
 
 		// TODO: Make Map Schema.
@@ -479,6 +480,11 @@ describe("DefaultVisualizers unit tests", () => {
 							],
 						},
 						baz: 128,
+						// foobar: new Map([
+						// 	["foo", 1],
+						// 	["bar", 2],
+						// 	["baz", 3],
+						// ]),
 					}),
 			),
 		);

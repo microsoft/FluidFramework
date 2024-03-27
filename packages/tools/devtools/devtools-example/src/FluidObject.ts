@@ -214,38 +214,83 @@ export class AppData extends DataObject {
 
 		// TODO: Maybe include example handle
 
-		class LeafSchema extends builder.object("leaf-item", {
-			cherry: [builder.boolean, builder.handle, builder.string],
+		class BroccoliSchema extends builder.object("broccoli-object-schema", {
+			alpaca: builder.string,
 		}) {}
 
-		class ChildSchema extends builder.object("child-item", {
-			apple: [builder.string, builder.boolean],
-			banana: builder.optional(LeafSchema),
+		class AppleSchema extends builder.object("apple-object-schema", {
+			avocado: [builder.number, builder.string],
+			broccoli: builder.array(BroccoliSchema),
+		}) {}
+
+		class FooSchema extends builder.object("foo-item", {
+			apple: builder.array(AppleSchema),
+			banana: builder.object("banana-object", {
+				miniBanana: [builder.boolean, builder.string, builder.number],
+			}),
+			cherry: builder.optional(builder.number),
 		}) {}
 
 		class RootNodeSchema extends builder.object("root-item", {
-			foo: builder.array(ChildSchema),
-			bar: builder.number,
+			foo: builder.array(FooSchema),
+			bar: builder.object("bar-item", {
+				americano: builder.boolean,
+				bubbleTea: builder.string,
+				chaiLatte: builder.object("chai-latte-object", {
+					appleCider: [builder.boolean, builder.string, builder.handle],
+				}),
+				dalgona: builder.array(
+					builder.object("dalgona-object", {
+						avengers: builder.boolean,
+					}),
+				),
+			}),
+			baz: [builder.number, builder.string, builder.boolean],
 		}) {}
 
-		const config = new TreeConfiguration(RootNodeSchema, () => ({
-			foo: [
-				{
-					apple: "Hello world!",
-					banana: {
-						cherry: "Hello world again!",
-					},
-				},
-				{
-					apple: true,
-					banana: {
-						cherry: false,
-					},
-				},
-			],
-			bar: 32,
-		}));
-
-		sharedTree.schematize(config);
+		sharedTree.schematize(
+			new TreeConfiguration(
+				RootNodeSchema,
+				() =>
+					new RootNodeSchema({
+						foo: [
+							{
+								apple: [
+									{ avocado: 16, broccoli: [{ alpaca: "Llama but cuter." }] },
+								],
+								banana: {
+									miniBanana: true,
+								},
+								cherry: 32,
+							},
+							{
+								apple: [
+									{
+										avocado: "Avacado Advocate.",
+										broccoli: [{ alpaca: "Llama but not LLM." }],
+									},
+								],
+								banana: {
+									miniBanana: false,
+								},
+								cherry: undefined,
+							},
+						],
+						bar: {
+							americano: false,
+							bubbleTea: "Taro Bubble Tea",
+							chaiLatte: {
+								appleCider: true,
+							},
+							dalgona: [
+								{
+									avengers: true,
+								},
+							],
+						},
+						baz: 128,
+					}),
+			),
+		);
 	}
 }
