@@ -33,7 +33,6 @@
 		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:webpack": "webpack --config webpack.svgs.cjs && copyfiles -u 2 \"dist/assets/**/*\" lib/assets",
-		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",

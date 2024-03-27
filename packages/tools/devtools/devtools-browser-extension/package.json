@@ -21,7 +21,6 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./e2e-tests/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "npm run webpack",
-		"check:biome": "biome check .",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"clean": "rimraf --glob coverage dist lib nyc \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
