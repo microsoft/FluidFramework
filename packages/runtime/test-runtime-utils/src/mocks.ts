@@ -14,11 +14,8 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import {
-	IIdCompressor,
-	IIdCompressorCore,
-	IdCreationRange,
-} from "@fluidframework/id-compressor/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
