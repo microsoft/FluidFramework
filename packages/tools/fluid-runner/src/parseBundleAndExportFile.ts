@@ -5,13 +5,13 @@
 
 import * as fs from "fs";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
-import { IExportFileResponse, createContainerAndExecute } from "./exportFile";
+import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
+import { IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
 /* eslint-disable import/no-internal-modules */
-import { ITelemetryOptions } from "./logger/fileLogger";
-import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
+import { ITelemetryOptions } from "./logger/fileLogger.js";
+import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
 /* eslint-enable import/no-internal-modules */
-import { getArgsValidationError, getSnapshotFileContent } from "./utils";
+import { getArgsValidationError, getSnapshotFileContent } from "./utils.js";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
@@ -42,8 +42,7 @@ export async function parseBundleAndExportFile(
 			logger,
 			{ eventName: "ParseBundleAndExportFile" },
 			async () => {
-				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-				const codeLoaderBundle = require(codeLoader);
+				const codeLoaderBundle = await import(codeLoader);
 				if (!isCodeLoaderBundle(codeLoaderBundle)) {
 					const eventName = clientArgsValidationError;
 					const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
