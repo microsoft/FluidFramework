@@ -79,8 +79,8 @@ import {
 	LocalChannelContextBase,
 	RehydratedLocalChannelContext,
 } from "./localChannelContext.js";
-import { RemoteChannelContext } from "./remoteChannelContext.js";
 import { pkgVersion } from "./packageVersion.js";
+import { RemoteChannelContext } from "./remoteChannelContext.js";
 
 /**
  * @alpha
