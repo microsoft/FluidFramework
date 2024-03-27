@@ -194,7 +194,9 @@ function arrayToMapTreeFields(data: InsertableContent[], allowedTypes: AllowedTy
 function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): MapTree {
 	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Array) {
-		fail(`Provided array input is incompatible with schema "${schema.identifier}".`);
+		throw new UsageError(
+			`Provided array input is incompatible with schema "${schema.identifier}".`,
+		);
 	}
 
 	const childSchema = FieldSchema.normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
@@ -215,7 +217,9 @@ function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): 
 function mapToMapTree(data: Map<string, InsertableContent>, allowedTypes: AllowedTypes): MapTree {
 	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Map) {
-		fail(`Provided map input is incompatible with schema "${schema.identifier}".`);
+		throw new UsageError(
+			`Provided map input is incompatible with schema "${schema.identifier}".`,
+		);
 	}
 
 	const childSchema = FieldSchema.normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
@@ -242,7 +246,9 @@ function objectToMapTree(
 ): MapTree {
 	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Object) {
-		fail(`Provided object input is incompatible with schema "${schema.identifier}".`);
+		throw new UsageError(
+			`Provided object input is incompatible with schema "${schema.identifier}".`,
+		);
 	}
 
 	const fields = new Map<FieldKey, MapTree[]>();
