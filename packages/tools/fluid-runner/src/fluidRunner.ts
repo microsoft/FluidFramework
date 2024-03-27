@@ -4,12 +4,12 @@
  */
 
 import * as yargs from "yargs";
-import { IFluidFileConverter } from "./codeLoaderBundle";
-import { exportFile } from "./exportFile";
+import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import { exportFile } from "./exportFile.js";
 // eslint-disable-next-line import/no-internal-modules
-import { validateAndParseTelemetryOptions } from "./logger/loggerUtils";
-import { parseBundleAndExportFile } from "./parseBundleAndExportFile";
-import { validateCommandLineArgs } from "./utils";
+import { validateAndParseTelemetryOptions } from "./logger/loggerUtils.js";
+import { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
+import { validateCommandLineArgs } from "./utils.js";
 
 /**
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
@@ -18,8 +18,6 @@ import { validateCommandLineArgs } from "./utils";
 export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	yargs
-		.strict()
-		.version(false)
 		.command(
 			"exportFile",
 			"Generate an output for a local ODSP snapshot",

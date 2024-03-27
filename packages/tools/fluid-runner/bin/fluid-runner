@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-require("../dist/fluidRunner.js").fluidRunner();
+
+import { fluidRunner } from "../dist/fluidRunner.js";
+fluidRunner();

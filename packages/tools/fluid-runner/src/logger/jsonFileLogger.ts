@@ -4,7 +4,7 @@
  */
 
 import * as fs from "fs";
-import { BaseFileLogger } from "./baseFileLogger";
+import { BaseFileLogger } from "./baseFileLogger.js";
 
 /**
  * FileLogger that writes events into a defined CSV file
