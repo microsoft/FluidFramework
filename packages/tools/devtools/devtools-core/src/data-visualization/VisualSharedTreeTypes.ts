@@ -5,47 +5,40 @@
 import { type Primitive } from "./VisualTree.js";
 
 /**
- * Base visualizer interface for {@link VisualSharedTreeNode}.
+ * Base visualizer for SharedTree.
  */
-export interface SharedTreeNodeBase {
-	/**
-	 * Contains schema information for the current node.
-	 */
+interface SharedTreeNodeBase {
 	schema: SharedTreeSchemaNode;
 }
-
 /**
- * Base schema interface.
+ * TODO
  */
-export interface SharedTreeSchemaNode {
+interface SharedTreeSchemaNode {
 	/**
 	 * Name of the SharedTree schema.
 	 */
-	name: string;
+	name?: string;
 
 	/**
-	 * Allowed fields or types of the current node.
-	 * If the node contains fields: expected field name and its allowed type(s) (e.g., `{ "field1": "string | boolean", "field2": "number" }`).
-	 * Else if the node is a leaf node: allowed types (e.g., string, number, boolean, handle & etc.).
+	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
 	 */
 	allowedTypes: string;
 }
-
 /**
- * Visual interface for SharedTree node with child field(s).
+ * TODO
  */
-export interface SharedTreeNode extends SharedTreeNodeBase {
-	fields: Record<string | number, VisualSharedTreeNode | SharedTreeSchemaNode>;
+interface SharedTreeNode extends SharedTreeNodeBase {
+	// TODO: Fix types.
+	fields: Record<string | number, VisualSharedTreeNode>;
 }
-
 /**
- * Visual interface for SharedTree leaf node.
+ * TODO
  */
 export interface SharedTreeLeafNode extends SharedTreeNodeBase {
 	value: Primitive;
 }
 
 /**
- * VisualSharedTreeNode type encompassing leaf / parent SharedTree node.
+ * TODO
  */
 export type VisualSharedTreeNode = SharedTreeNode | SharedTreeLeafNode;
