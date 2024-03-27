@@ -11,6 +11,7 @@ import {
 	IConnected,
 	IDocumentMessage,
 	INack,
+	ISentSignalMessage,
 	ISignalMessage,
 	NackErrorType,
 	ScopeType,
@@ -58,6 +59,10 @@ function getRoomId(room: IRoom) {
 	return `${room.tenantId}/${room.documentId}`;
 }
 
+function getClientRoomId(clientId: string) {
+	return `client#${clientId}`;
+}
+
 const getMessageMetadata = (documentId: string, tenantId: string) => ({
 	documentId,
 	tenantId,
@@ -98,6 +103,12 @@ function sanitizeMessage(message: any): IDocumentMessage {
 }
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
+
+const serverSupportedFeatures: Exclude<IConnected["supportedFeatures"], undefined> = {
+	submit_signals_v2: true,
+};
+
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 function selectProtocolVersion(connectVersions: string[]): string | undefined {
 	for (const connectVersion of connectVersions) {
@@ -242,6 +253,8 @@ export function configureWebSocketServices(
 		const scopeMap = new Map<string, string[]>();
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
+		// Map from client Ids to supportedFeatures
+		const supportedFeaturesMap = new Map<string, Record<string, any>>();
 
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
@@ -368,7 +381,7 @@ export function configureWebSocketServices(
 				// Subscribe to channels.
 				await Promise.all([
 					socket.join(getRoomId(room)),
-					socket.join(`client#${clientId}`),
+					socket.join(getClientRoomId(clientId)),
 				]);
 			} catch (err) {
 				const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
@@ -447,6 +460,12 @@ export function configureWebSocketServices(
 
 			// Join the room to receive signals.
 			roomMap.set(clientId, room);
+
+			// Store the supported features for the client
+			supportedFeaturesMap.set(
+				clientId,
+				message.supportedFeatures ? message.supportedFeatures : {},
+			);
 
 			// Iterate over the version ranges provided by the client and select the best one that works
 			const connectVersions = message.versions ? message.versions : ["^0.1.0"];
@@ -604,6 +623,7 @@ export function configureWebSocketServices(
 					initialMessages: [],
 					initialSignals: [],
 					supportedVersions: protocolVersions,
+					supportedFeatures: serverSupportedFeatures,
 					version,
 				};
 			} else {
@@ -621,6 +641,7 @@ export function configureWebSocketServices(
 					initialMessages: [],
 					initialSignals: [],
 					supportedVersions: protocolVersions,
+					supportedFeatures: serverSupportedFeatures,
 					version,
 				};
 			}
@@ -1056,7 +1077,7 @@ export function configureWebSocketServices(
 			 * [DocumentDeltaConnection.emitMessages](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4)),
 			 * but actual content is passed-thru and not decoded.
 			 */
-			(clientId: string, contentBatches: unknown[]) => {
+			(clientId: string, contentBatches: unknown[] | ISentSignalMessage[]) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
 				if (!room) {
@@ -1097,20 +1118,38 @@ export function configureWebSocketServices(
 						socket.emit("nack", "", [nackMessage]);
 						return;
 					}
-					contentBatches.forEach((contentBatch) => {
-						const contents = Array.isArray(contentBatch)
-							? contentBatch
-							: [contentBatch];
 
-						for (const content of contents) {
+					if (supportedFeaturesMap.get(clientId)?.[feature_submit_signals_v2]) {
+						for (const signal of contentBatches as ISentSignalMessage[]) {
 							const signalMessage: ISignalMessage = {
 								clientId,
-								content,
+								content: signal.content,
+								targetClientId: signal.targetClientId,
 							};
 
-							socket.emitToRoom(getRoomId(room), "signal", signalMessage);
+							const roomId: string =
+								signal.targetClientId !== undefined
+									? getClientRoomId(signal.targetClientId)
+									: getRoomId(room);
+
+							socket.emitToRoom(roomId, "signal", signalMessage);
 						}
-					});
+					} else {
+						contentBatches.forEach((contentBatch) => {
+							const contents = Array.isArray(contentBatch)
+								? contentBatch
+								: [contentBatch];
+							for (const content of contents) {
+								const signalMessage: ISignalMessage = {
+									clientId,
+									content,
+								};
+								const roomId: string = getRoomId(room);
+
+								socket.emitToRoom(roomId, "signal", signalMessage);
+							}
+						});
+					}
 				}
 			},
 		);
