@@ -1,3 +1,0 @@
-#!/usr/bin/env node
-import { fluidRunner } from "../dist/fluidRunner.js";
-fluidRunner();
