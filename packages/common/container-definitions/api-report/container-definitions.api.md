@@ -91,7 +91,7 @@ export interface IBatchMessage {
     // (undocumented)
     contents?: string;
     // (undocumented)
-    metadata: Record<string, unknown> | undefined;
+    metadata?: Record<string, unknown>;
     // (undocumented)
     referenceSequenceNumber?: number;
 }
@@ -163,8 +163,6 @@ export interface IContainerContext {
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
-    // @deprecated (undocumented)
-    getSpecifiedCodeDetails?(): IFluidCodeDetails | undefined;
     // @deprecated
     readonly id: string;
     // (undocumented)

@@ -151,9 +151,7 @@ function rebase(
 
 	const metadata =
 		metadataArg ??
-		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base, makeAnonChange(change)]), [
-			base.revision,
-		]);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([base]), [base.revision]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	const rebased = optionalChangeRebaser.rebase(
@@ -247,6 +245,22 @@ function compose(
 		idAllocator,
 		moveEffects,
 		metadata ?? defaultRevisionMetadataFromChanges([change1, change2]),
+	);
+}
+
+// This is only valid for optional changesets for childchanges of type TestChange
+function isChangeEmpty(change: OptionalChangeset): boolean {
+	const delta = toDelta(change);
+	return !isDeltaVisible(delta);
+}
+
+function assertChangesetsEquivalent(
+	change1: TaggedChange<OptionalChangeset>,
+	change2: TaggedChange<OptionalChangeset>,
+) {
+	assert.deepEqual(
+		toDelta(change1.change, change1.revision),
+		toDelta(change2.change, change2.revision),
 	);
 }
 
@@ -518,6 +532,8 @@ export function testRebaserAxioms() {
 					invert,
 					assertEqual: assertTaggedEqual,
 					createEmpty: Change.empty,
+					isEmpty: isChangeEmpty,
+					assertChangesetsEquivalent,
 				},
 				{
 					numberOfEditsToRebase: 3,
