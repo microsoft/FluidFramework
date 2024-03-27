@@ -302,8 +302,10 @@ export const makeEditGenerator = (
 				const { type: fieldType, content: field } = fieldInfo;
 				const contents: FuzzSet = {
 					type: "set",
-					parent: maybeDownPathFromNode(field.parent),
-					key: field.key,
+					field: {
+						parent: maybeDownPathFromNode(field.parent),
+						key: field.key,
+					},
 					value: jsonableTree(state),
 				};
 				return {
@@ -315,8 +317,10 @@ export const makeEditGenerator = (
 				const { content: field } = fieldInfo;
 				const contents: FuzzInsert = {
 					type: "insert",
-					parent: maybeDownPathFromNode(field.parent),
-					key: field.key,
+					field: {
+						parent: maybeDownPathFromNode(field.parent),
+						key: field.key,
+					},
 					index: state.random.integer(0, field.length),
 					content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
 				};
@@ -356,9 +360,11 @@ export const makeEditGenerator = (
 				return {
 					type: "optional",
 					edit: {
-						type: "remove",
-						firstNode: downPathFromNode(content),
-						count: 1,
+						type: "clear",
+						field: {
+							parent: maybeDownPathFromNode(field.parent),
+							key: field.key,
+						},
 					},
 				};
 			}
@@ -380,8 +386,10 @@ export const makeEditGenerator = (
 					type: "sequence",
 					edit: {
 						type: "remove",
-						firstNode: downPathFromNode(node),
-						count,
+						content: {
+							firstNode: downPathFromNode(node),
+							count,
+						},
 					},
 				};
 			}
@@ -411,10 +419,12 @@ export const makeEditGenerator = (
 		return {
 			type: "sequence",
 			edit: {
-				type: "move",
+				type: "intra-field move",
+				content: {
+					count,
+					firstNode: downPathFromNode(node),
+				},
 				dstIndex,
-				count,
-				firstNode: downPathFromNode(node),
 			},
 		};
 	};

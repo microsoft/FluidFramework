@@ -28,12 +28,15 @@ import {
 } from "./fuzzEditGenerators.js";
 import { createTreeViewSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import {
+	FieldDownPath,
 	FieldEdit,
-	FuzzFieldChange,
+	FuzzClear,
+	FuzzInsert,
 	FuzzRemove,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
+	IntraFieldMove,
 	Operation,
 	SchemaChange,
 } from "./operationTypes.js";
@@ -134,39 +137,43 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 	}
 }
 
-function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
+function applySequenceFieldEdit(
+	tree: FuzzView,
+	change: FuzzInsert | FuzzRemove | IntraFieldMove,
+): void {
 	const nodeSchema = tree.currentSchema;
 	switch (change.type) {
 		case "insert": {
-			assert(change.parent !== undefined, "Sequence change should not occur at the root.");
+			assert(
+				change.field.parent !== undefined,
+				"Sequence change should not occur at the root.",
+			);
 
-			const parent = navigateToNode(tree, change.parent);
-			assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
+			const parent = navigateToNode(tree, change.field.parent);
+			assert(parent.is(nodeSchema), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
 			assert(field !== undefined);
 			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
 		case "remove": {
-			const firstNode = navigateToNode(tree, change.firstNode);
-			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+			const firstNode = navigateToNode(tree, change.content.firstNode);
 			const { parent: field, index } = firstNode.parentField;
 			assert(
 				field?.is(nodeSchema.objectNodeFieldsObject.sequenceChildren),
 				"Defined down-path should point to a valid parent",
 			);
-			field.removeRange(index, index + change.count);
+			field.removeRange(index, index + change.content.count);
 			break;
 		}
-		case "move": {
-			const firstNode = navigateToNode(tree, change.firstNode);
-			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+		case "intra-field move": {
+			const firstNode = navigateToNode(tree, change.content.firstNode);
 			const { parent: field, index } = firstNode.parentField;
 			assert(
 				field?.is(nodeSchema.objectNodeFieldsObject.sequenceChildren),
 				"Defined down-path should point to a valid parent",
 			);
-			field.moveRangeToIndex(change.dstIndex, index, index + change.count);
+			field.moveRangeToIndex(change.dstIndex, index, index + change.content.count);
 			break;
 		}
 		default:
@@ -175,27 +182,32 @@ function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
 }
 
 function applyValueFieldEdit(tree: FuzzView, change: FuzzSet): void {
-	const nodeSchema = tree.currentSchema;
-	assert(change.parent !== undefined, "Value change should not occur at the root.");
-	const parent = navigateToNode(tree, change.parent);
-	assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
-	const field = parent.tryGetField(change.key);
-	assert(
-		field?.is(nodeSchema.objectNodeFieldsObject.requiredChild),
-		"Parent of Value change should have an optional field to modify",
-	);
+	assert(change.field.parent !== undefined, "Value change should not occur at the root.");
+	const field = navigateToField(tree, change.field);
+	assert(field.is(tree.currentSchema.objectNodeFieldsObject.requiredChild));
 	field.content = cursorForJsonableTreeNode(change.value) as any;
 }
 
-function navigateToNode(tree: FuzzView, path: DownPath | undefined): FlexTreeNode | undefined {
+function navigateToField(tree: FuzzView, path: FieldDownPath): FlexTreeField {
+	const nodeSchema = tree.currentSchema;
+	if (path.parent === undefined) {
+		return tree.flexTree;
+	} else {
+		const parent = navigateToNode(tree, path.parent);
+		assert(parent.is(nodeSchema), "Defined down-path should point to a valid parent");
+		if (path.key === "optionalChild") {
+			return parent.boxedOptionalChild;
+		}
+		return parent.tryGetField(path.key) ?? fail("Field not found.");
+	}
+}
+
+function navigateToNode(tree: FuzzView, path: DownPath): FlexTreeNode {
 	const nodeSchema = tree.currentSchema;
 	const rootField = tree.flexTree;
-	if (path === undefined) {
-		return undefined;
-	}
 	const finalLocation = path.reduce<{
 		field: FlexTreeField;
-		containedNode: FlexTreeNode | undefined;
+		containedNode: FlexTreeNode;
 	}>(
 		({ containedNode }, nextStep) => {
 			const childField = containedNode?.tryGetField(nextStep.field);
@@ -206,42 +218,37 @@ function navigateToNode(tree: FuzzView, path: DownPath | undefined): FlexTreeNod
 				assert(nextStep.index !== undefined);
 				return {
 					field: childField,
-					containedNode: childField.at(nextStep.index),
+					containedNode: childField.at(nextStep.index) ?? fail("Index out of bounds."),
 				};
 			} else if (
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				childField?.is(nodeSchema.objectNodeFieldsObject.optionalChild) ||
 				childField?.is(nodeSchema.objectNodeFieldsObject.requiredChild)
 			) {
-				return { field: childField, containedNode: childField.content };
+				return {
+					field: childField,
+					containedNode: childField.content ?? fail("Missing child"),
+				};
 			}
 			/* eslint-enable @typescript-eslint/strict-boolean-expressions */
 
 			fail(`Unexpected field type: ${childField?.key}`);
 		},
-		{ field: rootField, containedNode: rootField.content },
+		{ field: rootField, containedNode: rootField.content ?? fail("Missing root") },
 	);
 
 	return finalLocation.containedNode;
 }
 
-function applyOptionalFieldEdit(tree: FuzzView, change: FuzzSet | FuzzRemove): void {
-	const nodeSchema = tree.currentSchema;
+function applyOptionalFieldEdit(tree: FuzzView, change: FuzzSet | FuzzClear): void {
+	const field = navigateToField(tree, change.field);
+	assert(field.is(tree.currentSchema.objectNodeFieldsObject.optionalChild));
 	switch (change.type) {
 		case "set": {
-			const rootField = tree.flexTree;
-			if (change.parent === undefined) {
-				rootField.content = cursorForJsonableTreeNode(change.value) as any;
-			} else {
-				const parent = navigateToNode(tree, change.parent);
-				assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
-				parent.boxedOptionalChild.content = cursorForJsonableTreeNode(change.value) as any;
-			}
+			field.content = cursorForJsonableTreeNode(change.value);
 			break;
 		}
-		case "remove": {
-			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
-			assert(field?.is(nodeSchema.objectNodeFieldsObject.optionalChild));
+		case "clear": {
 			field.content = undefined;
 			break;
 		}

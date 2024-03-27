@@ -30,23 +30,28 @@ export interface SchemaChange {
 	contents: SchemaOp;
 }
 
-export type FuzzFieldChange = FuzzInsert | FuzzRemove | FuzzMove;
-
 export interface FieldEdit {
 	type: "fieldEdit";
 	change: FieldEditTypes;
 }
 
-export interface FuzzInsert {
-	type: "insert";
+export interface FieldDownPath {
 	/**
-	 * DownPath to the field's parent node. Undefined iff this is the root trait.
+	 * The field's parent node. Undefined when targeting the root field.
 	 */
 	parent: DownPath | undefined;
 	/**
 	 * Key on the parent node corresponding to this field.
 	 */
 	key: FieldKey;
+}
+
+export interface FuzzInsert {
+	type: "insert";
+	/**
+	 * The field in which to insert.
+	 */
+	field: FieldDownPath;
 	/**
 	 * Index to insert at within the field.
 	 */
@@ -57,15 +62,11 @@ export interface FuzzInsert {
 export interface FuzzSet {
 	type: "set";
 	/**
-	 * DownPath to the field's parent node. Undefined iff this is the root trait.
+	 * The field to set.
 	 */
-	parent: DownPath | undefined;
+	field: FieldDownPath;
 	/**
-	 * Key on the parent node corresponding to this field.
-	 */
-	key: FieldKey;
-	/**
-	 * @privateRemarks - Optional fields use {@link FuzzRemove} to mean "remove the field's contents" rather than
+	 * @privateRemarks - Optional fields use {@link FuzzClear} to mean "remove the field's contents" rather than
 	 * a `FuzzSet` with undefined value, hence why this property is required.
 	 */
 	value: JsonableTree;
@@ -75,7 +76,7 @@ export type FieldEditTypes = SequenceFieldEdit | RequiredFieldEdit | OptionalFie
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: FuzzInsert | FuzzRemove | FuzzMove;
+	edit: FuzzInsert | FuzzRemove | IntraFieldMove;
 }
 
 export interface RequiredFieldEdit {
@@ -85,19 +86,35 @@ export interface RequiredFieldEdit {
 
 export interface OptionalFieldEdit {
 	type: "optional";
-	edit: FuzzSet | FuzzRemove;
+	edit: FuzzSet | FuzzClear;
 }
 
-export interface FuzzRemove extends NodeRangePath {
+export interface FuzzRemove {
 	type: "remove";
+	content: NodeRangePath;
 }
 
-export interface FuzzMove extends NodeRangePath {
-	type: "move";
+export interface FuzzClear {
+	type: "clear";
 	/**
-	 * The index (pre-move) to move the sequence to.
+	 * The field to clear.
+	 */
+	field: FieldDownPath;
+}
+
+export interface FuzzMove {
+	/**
+	 * The nodes to move.
+	 */
+	content: NodeRangePath;
+	/**
+	 * The index (pre-move) to move the content to.
 	 */
 	dstIndex: number;
+}
+
+export interface IntraFieldMove extends FuzzMove {
+	type: "intra-field move";
 }
 
 export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;
