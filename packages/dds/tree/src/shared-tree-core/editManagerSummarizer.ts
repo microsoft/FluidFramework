@@ -4,14 +4,14 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { assert } from "@fluidframework/core-utils/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	ChangeEncodingContext,

@@ -7,8 +7,8 @@ import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { AttachState, IContainer } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	FileDeltaStorageService,
 	FileDocumentServiceFactory,
@@ -19,7 +19,7 @@ import {
 	ReplayFileDeltaConnection,
 	Replayer,
 } from "@fluidframework/file-driver";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,

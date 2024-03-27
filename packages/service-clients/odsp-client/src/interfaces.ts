@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import type { IMember, IServiceAudience } from "@fluidframework/fluid-static/internal";
 import { IOdspTokenProvider } from "./token.js";
 

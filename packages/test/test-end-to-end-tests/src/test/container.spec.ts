@@ -25,15 +25,15 @@ import {
 	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IErrorBase,
 	IRequest,
 	IRequestHeader,
-} from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	DriverErrorTypes,
 	FiveDaysMs,

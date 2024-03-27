@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
-} from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
 	IDocumentMessage,

@@ -4,7 +4,7 @@
  */
 
 import { type IAudience, type IContainer } from "@fluidframework/container-definitions/internal";
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
 import { type AudienceClientMetadata } from "./AudienceMetadata.js";

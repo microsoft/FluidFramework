@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
-import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces/internal";
+import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 /**
  * Type of "valueChanged" event parameter.
  * @internal

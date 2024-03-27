@@ -4,7 +4,7 @@
 
 ```ts
 
-import { Deferred } from '@fluidframework/core-utils';
+import { Deferred } from '@fluidframework/core-utils/internal';
 import { IDocumentService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';

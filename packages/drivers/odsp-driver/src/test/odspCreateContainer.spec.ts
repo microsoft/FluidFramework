@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";

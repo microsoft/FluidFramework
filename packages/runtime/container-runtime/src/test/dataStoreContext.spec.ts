@@ -13,9 +13,9 @@ import {
 	ITelemetryBaseLogger,
 	Tagged,
 	TelemetryBaseEventPropertyType,
-} from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
-import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
+} from "@fluidframework/core-interfaces/internal";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
+import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IBlob,
@@ -35,7 +35,7 @@ import {
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	MockLogger,

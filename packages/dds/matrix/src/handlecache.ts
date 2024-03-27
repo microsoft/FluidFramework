@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IVectorConsumer } from "@tiny-calc/nano";
 import { Handle, isHandleValid } from "./handletable.js";
 import { PermutationSegment, PermutationVector } from "./permutationvector.js";

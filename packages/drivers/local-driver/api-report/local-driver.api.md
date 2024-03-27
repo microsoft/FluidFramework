@@ -20,7 +20,7 @@ import { IDocumentServicePolicies } from '@fluidframework/driver-definitions/int
 import { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions/internal';
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
@@ -30,7 +30,7 @@ import { IStream } from '@fluidframework/driver-definitions/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITestDbFactory } from '@fluidframework/server-test-utils';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';

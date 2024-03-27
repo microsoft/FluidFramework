@@ -7,10 +7,10 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

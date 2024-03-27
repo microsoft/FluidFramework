@@ -11,7 +11,7 @@ import type {
 	IContainerEvents,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader/internal";
-import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
+import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces/internal";
 import type { IClient } from "@fluidframework/protocol-definitions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

@@ -47,7 +47,7 @@ export interface IClpCompliantAppHeader {
 	[ClpCompliantAppHeader.isClpCompliantApp]: boolean;
 }
 
-declare module "@fluidframework/core-interfaces" {
+declare module "@fluidframework/core-interfaces/internal" {
 	export interface IRequestHeader
 		extends Partial<ISharingLinkHeader>,
 			Partial<IClpCompliantAppHeader> {}

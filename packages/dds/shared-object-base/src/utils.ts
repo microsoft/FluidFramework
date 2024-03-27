@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer } from "./serializer.js";
 

@@ -4,7 +4,7 @@
  */
 
 import { AzureClient } from "@fluidframework/azure-client/internal";
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider } from "@fluidframework/core-interfaces/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CommanderStatic } from "commander";
 

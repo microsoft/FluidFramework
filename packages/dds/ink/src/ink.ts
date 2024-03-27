@@ -7,15 +7,15 @@ import {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
-} from "@fluidframework/shared-object-base";
+} from "@fluidframework/shared-object-base/internal";
 import { v4 as uuid } from "uuid";
 import { InkFactory } from "./inkFactory.js";
 import {

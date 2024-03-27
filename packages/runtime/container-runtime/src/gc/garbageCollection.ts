@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, Timer } from "@fluidframework/core-utils";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
+import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
 	ITelemetryContext,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createResponseError, responseToException } from "@fluidframework/runtime-utils";
 import {
 	DataProcessingError,

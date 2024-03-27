@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, Deferred, Lazy } from "@fluidframework/core-utils";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 

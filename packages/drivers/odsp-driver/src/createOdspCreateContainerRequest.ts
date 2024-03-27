@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
 import { buildOdspShareLinkReqParams } from "./odspUtils.js";

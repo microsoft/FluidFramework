@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IEvent, type IEventProvider } from "@fluidframework/core-interfaces";
+import { type IEvent, type IEventProvider } from "@fluidframework/core-interfaces/internal";
 import { type IDevtoolsMessage, type ISourcedDevtoolsMessage } from "./Messages.js";
 
 /**

@@ -9,8 +9,8 @@ import type {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import type { ISharedMap } from "./interfaces.js";
 import { SharedMap as SharedMapInternal } from "./map.js";
 import { pkgVersion } from "./packageVersion.js";

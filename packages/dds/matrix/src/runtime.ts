@@ -9,7 +9,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { type ISharedMatrix, SharedMatrix } from "./matrix.js";
 import { pkgVersion } from "./packageVersion.js";
 

@@ -12,7 +12,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/inte
 import { ILocalDeltaConnectionServer } from '@fluidframework/server-local-server';
 import { InsecureTinyliciousUrlResolver } from '@fluidframework/tinylicious-driver';
 import { InsecureUrlResolver } from '@fluidframework/driver-utils';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';

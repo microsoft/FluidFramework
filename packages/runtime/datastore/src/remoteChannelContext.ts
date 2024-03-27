@@ -4,9 +4,9 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -18,7 +18,7 @@ import {
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	ThresholdCounter,

@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClient,

@@ -9,11 +9,11 @@ import { ConnectionState } from '@fluidframework/container-definitions/internal'
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions/internal';
 import { ICriticalContainerError } from '@fluidframework/container-definitions/internal';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @public
 export type ContainerAttachProps<T = unknown> = T;

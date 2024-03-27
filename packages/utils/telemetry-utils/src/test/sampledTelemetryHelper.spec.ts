@@ -7,7 +7,7 @@ import assert from "node:assert";
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import {

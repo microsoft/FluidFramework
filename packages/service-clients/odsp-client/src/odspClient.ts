@@ -13,8 +13,8 @@ import {
 	type FluidObject,
 	type IConfigProviderBase,
 	type IRequest,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	ContainerAttachProps,

@@ -15,7 +15,7 @@ import {
 	repeat,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	type IIdCompressor,
 	type IIdCompressorCore,

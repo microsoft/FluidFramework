@@ -4,14 +4,14 @@
 
 ```ts
 
-import { AttributionKey } from '@fluidframework/runtime-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { AttributionKey } from '@fluidframework/runtime-definitions/internal';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 

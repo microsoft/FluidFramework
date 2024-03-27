@@ -4,12 +4,12 @@
  */
 
 import { type IAudience, type IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { type AttributionInfo } from "@fluidframework/runtime-definitions";
+import { type AttributionInfo } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**

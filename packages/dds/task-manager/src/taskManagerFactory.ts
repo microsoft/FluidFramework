@@ -8,7 +8,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ITaskManager } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 import { TaskManager } from "./taskManager.js";

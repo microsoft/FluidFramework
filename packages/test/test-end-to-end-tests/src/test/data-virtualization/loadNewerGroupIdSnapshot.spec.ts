@@ -10,9 +10,9 @@ import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
 	SummarizerStopReason,
-} from "@fluidframework/container-runtime";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Deferred, delay } from "@fluidframework/core-utils";
+} from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";

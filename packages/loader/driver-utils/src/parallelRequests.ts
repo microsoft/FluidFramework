@@ -4,8 +4,8 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";

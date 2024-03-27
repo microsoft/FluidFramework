@@ -4,7 +4,7 @@
  */
 
 import { EventEmitterEventType, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Event Emitter helper class

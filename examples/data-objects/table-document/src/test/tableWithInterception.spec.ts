@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
-import { PropertySet } from "@fluidframework/sequence";
+import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import { PropertySet } from "@fluidframework/sequence/internal";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
 import { TableDocument } from "../document.js";
 // eslint-disable-next-line import/no-internal-modules

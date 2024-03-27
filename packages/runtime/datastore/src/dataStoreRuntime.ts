@@ -15,14 +15,14 @@ import {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-} from "@fluidframework/core-interfaces";
-import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -48,7 +48,7 @@ import {
 	ITelemetryContext,
 	VisibilityState,
 	gcDataBlobKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,

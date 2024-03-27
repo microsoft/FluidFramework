@@ -12,12 +12,12 @@ import {
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	IChannel,
 	IChannelServices,
@@ -25,7 +25,7 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -41,7 +41,7 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	VisibilityState,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";

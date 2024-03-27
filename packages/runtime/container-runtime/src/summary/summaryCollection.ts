@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+import { IDisposable, IEvent } from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

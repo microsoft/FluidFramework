@@ -5,30 +5,30 @@
 ```ts
 
 import type { AttachState } from '@fluidframework/container-definitions/internal';
-import type { FluidObject } from '@fluidframework/core-interfaces';
+import type { FluidObject } from '@fluidframework/core-interfaces/internal';
 import type { IAudience } from '@fluidframework/container-definitions/internal';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
 import type { IDeltaManager } from '@fluidframework/container-definitions/internal';
-import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IEvent } from '@fluidframework/core-interfaces/internal';
+import type { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import type { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
-import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
+import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
-import type { IRequest } from '@fluidframework/core-interfaces';
-import type { IResponse } from '@fluidframework/core-interfaces';
+import type { IRequest } from '@fluidframework/core-interfaces/internal';
+import type { IResponse } from '@fluidframework/core-interfaces/internal';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISignalMessage } from '@fluidframework/protocol-definitions';
 import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import type { ISummaryTree } from '@fluidframework/protocol-definitions';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import type { ITree } from '@fluidframework/protocol-definitions';
 import type { IUser } from '@fluidframework/protocol-definitions';
 import type { SummaryTree } from '@fluidframework/protocol-definitions';
-import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces/internal';
 
 // @alpha
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";

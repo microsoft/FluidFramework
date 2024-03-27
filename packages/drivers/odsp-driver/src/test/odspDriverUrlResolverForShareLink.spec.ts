@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 
 import { strict as assert } from "node:assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { stub } from "sinon";
 import { SharingLinkHeader } from "../contractsPublic.js";

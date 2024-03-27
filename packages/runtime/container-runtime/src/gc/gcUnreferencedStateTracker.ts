@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Timer } from "@fluidframework/core-utils";
+import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { validatePrecondition } from "@fluidframework/telemetry-utils";
 import { UnreferencedState } from "./gcDefinitions.js";
 

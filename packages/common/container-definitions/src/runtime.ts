@@ -7,7 +7,7 @@ import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 
 import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import type {

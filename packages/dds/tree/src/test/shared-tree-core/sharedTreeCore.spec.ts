@@ -5,16 +5,16 @@
 
 import { strict as assert } from "assert";
 import { IsoBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import {
 	ITestContainerConfig,
 	ITestFluidObject,

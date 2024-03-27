@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
+import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { IFluidSerializer, serializeHandles } from "@fluidframework/shared-object-base/internal";
 import { fail } from './Common.js';
 import type { EditHandle } from './EditLog.js';
 import type { MutableStringInterner } from './StringInterner.js';

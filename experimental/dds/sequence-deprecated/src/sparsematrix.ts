@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
 	Jsonable,
-} from "@fluidframework/datastore-definitions";
-import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
-import { SharedSegmentSequence } from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree/internal";
+import { SharedSegmentSequence } from "@fluidframework/sequence/internal";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { pkgVersion } from "./packageVersion.js";
 import { SubSequence } from "./sharedSequence.js";
 

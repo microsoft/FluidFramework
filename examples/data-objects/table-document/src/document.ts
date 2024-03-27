@@ -10,7 +10,7 @@ import {
 	rowColToPosition,
 } from "@fluid-experimental/sequence-deprecated";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	PropertySet,
@@ -18,7 +18,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	createEndpointIndex,
-} from "@fluidframework/sequence";
+} from "@fluidframework/sequence/internal";
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";
 import { ConfigKey } from "./configKey.js";

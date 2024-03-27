@@ -16,8 +16,8 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 
 const counterId = "counterKey";
 

@@ -5,7 +5,7 @@
 
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import {
 	CompatConfig,

@@ -5,14 +5,14 @@
 
 import { type EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { type IEvent, type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
 	IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
@@ -20,7 +20,7 @@ import {
 	type IGarbageCollectionData,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from '@fluidframework/runtime-definitions';
+} from "@fluidframework/runtime-definitions/internal";
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { type ITree } from "@fluidframework/tree/internal";
 import {

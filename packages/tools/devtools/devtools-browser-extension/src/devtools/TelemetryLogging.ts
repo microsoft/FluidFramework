@@ -8,7 +8,7 @@ import {
 	type ITelemetryBaseLogger,
 	isTelemetryOptInEnabled,
 } from "@fluid-internal/devtools-view";
-import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces/internal";
 import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import { type IChannelConfiguration, type IXHROverride, PostChannel } from "@microsoft/1ds-post-js";
 import { v4 as uuidv4 } from "uuid";

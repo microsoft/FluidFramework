@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import {
 	DriverErrorTypes,
 	IAuthorizationError,

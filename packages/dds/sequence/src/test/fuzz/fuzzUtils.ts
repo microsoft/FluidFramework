@@ -17,8 +17,8 @@ import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { PropertySet } from "@fluidframework/merge-tree";
+} from "@fluidframework/datastore-definitions/internal";
+import { PropertySet } from "@fluidframework/merge-tree/internal";
 import type { SequenceInterval } from "../../index.js";
 import { type IIntervalCollection, Side } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";

@@ -11,7 +11,7 @@ import type {
 	IFluidHandleContext,
 	IRequest,
 	IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	type IClientDetails,
@@ -23,7 +23,7 @@ import {
 	type IContainerRuntimeBase,
 	type IContainerRuntimeBaseEvents,
 	type IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md

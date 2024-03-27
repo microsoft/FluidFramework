@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "./auth.js";

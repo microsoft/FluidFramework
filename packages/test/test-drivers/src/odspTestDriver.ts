@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import os from "os";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientConfig,

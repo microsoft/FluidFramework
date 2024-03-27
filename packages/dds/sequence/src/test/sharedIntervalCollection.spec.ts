@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Client } from "@fluidframework/merge-tree";
+import { Client } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,

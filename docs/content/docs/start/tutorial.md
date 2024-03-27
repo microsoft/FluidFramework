@@ -36,7 +36,7 @@ The app creates Fluid containers using a schema that defines a set of *initial o
 Lastly, `root` defines the HTML element that the Dice will render on.
 
 ```js
-import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
+import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework/internal";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
 const client = new TinyliciousClient();
@@ -217,7 +217,7 @@ The [full code for this application is available](https://github.com/microsoft/F
 
 <!-- API links -->
 
-[fluid-framework]: {{< packageref "fluid-framework" "v2" >}}
+[fluid-framework]: {{< packageref "fluid-framework/internal" "v2" >}}
 [@fluidframework/azure-client]: {{< packageref "azure-client" "v2" >}}
 [@fluidframework/tinylicious-client]: {{< packageref "tinylicious-client" "v1" >}}
 [@fluid-experimental/odsp-client]: {{< packageref "odsp-client" "v2" >}}

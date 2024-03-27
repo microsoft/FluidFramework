@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces/internal";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { IFluidMountableView } from "./interface.js";

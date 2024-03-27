@@ -5,7 +5,7 @@
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
 	MockContainerRuntimeFactory,

@@ -10,7 +10,7 @@ import { DriverApi } from "@fluid-private/test-drivers";
 import { Loader } from "@fluidframework/container-loader/internal";
 
 // ContainerRuntime API
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 
 // Data Runtime API
 import * as agentScheduler from "@fluidframework/agent-scheduler";
@@ -20,17 +20,17 @@ import * as counter from "@fluidframework/counter";
 import { SharedCounter } from "@fluidframework/counter";
 import * as map from "@fluidframework/map/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
-import * as matrix from "@fluidframework/matrix";
-import { SharedMatrix } from "@fluidframework/matrix";
+import * as matrix from "@fluidframework/matrix/internal";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
 import * as orderedCollection from "@fluidframework/ordered-collection";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import * as registerCollection from "@fluidframework/register-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import * as sequence from "@fluidframework/sequence";
-import { SharedString } from "@fluidframework/sequence";
+import * as sequence from "@fluidframework/sequence/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { TestFluidObjectFactory } from "@fluidframework/test-utils";
-import * as datastore from "@fluidframework/datastore";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import * as datastore from "@fluidframework/datastore/internal";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 
 // ContainerRuntime and Data Runtime API
 import {
@@ -55,17 +55,17 @@ import {
 // List of package that needs to be install for legacy versions
 const packageList = [
 	"@fluidframework/aqueduct",
-	"@fluidframework/datastore",
+	"@fluidframework/datastore/internal",
 	"@fluidframework/test-utils",
 	"@fluidframework/container-loader/internal",
-	"@fluidframework/container-runtime",
+	"@fluidframework/container-runtime/internal",
 	"@fluidframework/cell",
 	"@fluidframework/counter",
 	"@fluidframework/map/internal",
-	"@fluidframework/matrix",
+	"@fluidframework/matrix/internal",
 	"@fluidframework/ordered-collection",
 	"@fluidframework/register-collection",
-	"@fluidframework/sequence",
+	"@fluidframework/sequence/internal",
 	"@fluidframework/local-driver",
 	"@fluidframework/odsp-driver",
 	"@fluidframework/routerlicious-driver",
@@ -207,7 +207,7 @@ async function loadContainerRuntime(
 	const { version, modulePath } = checkInstalled(requestedStr);
 	if (!containerRuntimeCache.has(version)) {
 		const [containerRuntimePkg, aqueductPkg] = await Promise.all([
-			loadPackage(modulePath, "@fluidframework/container-runtime"),
+			loadPackage(modulePath, "@fluidframework/container-runtime/internal"),
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
 		]);
 
@@ -250,20 +250,20 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			agentScheduler,
 		] = await Promise.all([
 			loadPackage(modulePath, "@fluidframework/aqueduct"),
-			loadPackage(modulePath, "@fluidframework/datastore"),
+			loadPackage(modulePath, "@fluidframework/datastore/internal"),
 			loadPackage(modulePath, "@fluidframework/test-utils"),
 			loadPackage(modulePath, "@fluidframework/map/internal"),
-			loadPackage(modulePath, "@fluidframework/sequence"),
+			loadPackage(modulePath, "@fluidframework/sequence/internal"),
 			loadPackage(modulePath, "@fluidframework/cell"),
 			loadPackage(modulePath, "@fluidframework/counter"),
-			loadPackage(modulePath, "@fluidframework/matrix"),
+			loadPackage(modulePath, "@fluidframework/matrix/internal"),
 			loadPackage(modulePath, "@fluidframework/ordered-collection"),
 			loadPackage(modulePath, "@fluidframework/register-collection"),
 			loadPackage(
 				modulePath,
 				versionHasMovedSparsedMatrix(version)
 					? "@fluid-experimental/sequence-deprecated"
-					: "@fluidframework/sequence",
+					: "@fluidframework/sequence/internal",
 			),
 			loadPackage(modulePath, "@fluidframework/agent-scheduler"),
 		]);

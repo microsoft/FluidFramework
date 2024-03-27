@@ -8,7 +8,7 @@ import type {
 	IEvent,
 	IEventProvider,
 	IRequest,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,

@@ -5,21 +5,21 @@
 ```ts
 
 import type { EventEmitter } from 'events_pkg';
-import type { FluidObject } from '@fluidframework/core-interfaces';
+import type { FluidObject } from '@fluidframework/core-interfaces/internal';
 import type { IAnyDriverError } from '@fluidframework/driver-definitions/internal';
 import type { IClient } from '@fluidframework/protocol-definitions';
 import type { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import type { IClientDetails } from '@fluidframework/protocol-definitions';
-import type { IDisposable } from '@fluidframework/core-interfaces';
+import type { IDisposable } from '@fluidframework/core-interfaces/internal';
 import type { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { IDocumentStorageService } from '@fluidframework/driver-definitions/internal';
-import { IErrorBase } from '@fluidframework/core-interfaces';
-import type { IErrorEvent } from '@fluidframework/core-interfaces';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import type { IEventProvider } from '@fluidframework/core-interfaces';
-import { IGenericError } from '@fluidframework/core-interfaces';
+import { IErrorBase } from '@fluidframework/core-interfaces/internal';
+import type { IErrorEvent } from '@fluidframework/core-interfaces/internal';
+import type { IEvent } from '@fluidframework/core-interfaces/internal';
+import type { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IGenericError } from '@fluidframework/core-interfaces/internal';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
-import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IRequest } from '@fluidframework/core-interfaces/internal';
 import type { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import type { ISequencedProposal } from '@fluidframework/protocol-definitions';
@@ -28,10 +28,10 @@ import type { ISnapshot } from '@fluidframework/driver-definitions/internal';
 import type { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import type { ISummaryContent } from '@fluidframework/protocol-definitions';
 import type { ISummaryTree } from '@fluidframework/protocol-definitions';
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { IThrottlingWarning } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import { IThrottlingWarning } from '@fluidframework/core-interfaces/internal';
 import type { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { IUsageError } from '@fluidframework/core-interfaces';
+import { IUsageError } from '@fluidframework/core-interfaces/internal';
 import type { IVersion } from '@fluidframework/protocol-definitions';
 import type { MessageType } from '@fluidframework/protocol-definitions';
 

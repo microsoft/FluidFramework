@@ -19,7 +19,7 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { IDriverErrorBase } from '@fluidframework/driver-definitions/internal';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions/internal';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshot } from '@fluidframework/driver-definitions/internal';
@@ -30,7 +30,7 @@ import { IStreamResult } from '@fluidframework/driver-definitions/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryErrorEventExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IThrottlingWarning } from '@fluidframework/driver-definitions/internal';

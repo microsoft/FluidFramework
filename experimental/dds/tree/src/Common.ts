@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 const defaultFailMessage = 'Assertion failed';

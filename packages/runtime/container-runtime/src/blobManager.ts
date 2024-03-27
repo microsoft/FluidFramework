@@ -11,9 +11,9 @@ import {
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
-} from "@fluidframework/container-runtime-definitions";
-import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { assert, Deferred } from "@fluidframework/core-utils";
+} from "@fluidframework/container-runtime-definitions/internal";
+import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	ICreateBlobResponse,
@@ -24,7 +24,7 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	SummaryTreeBuilder,
 	createResponseError,

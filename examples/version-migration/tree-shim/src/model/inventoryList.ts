@@ -13,7 +13,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { ITree, SharedTree } from "@fluidframework/tree/internal";
 
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";

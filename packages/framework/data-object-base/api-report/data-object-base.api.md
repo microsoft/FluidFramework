@@ -4,11 +4,11 @@
 
 ```ts
 
-import { ContainerRuntime } from '@fluidframework/container-runtime';
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 

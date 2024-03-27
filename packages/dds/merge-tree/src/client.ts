@@ -6,15 +6,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { DoublyLinkedList, RedBlackTree } from "./collections/index.js";

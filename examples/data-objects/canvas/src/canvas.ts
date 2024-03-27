@@ -5,7 +5,7 @@
 
 import { IInk, Ink } from "@fluid-experimental/ink";
 import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 
 export class Canvas extends DataObject {
 	private _ink: IInk | undefined;

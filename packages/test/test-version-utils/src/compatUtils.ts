@@ -10,15 +10,15 @@ import {
 	IFluidHandleContext,
 	IFluidLoadable,
 	IRequest,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+} from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -34,7 +34,7 @@ import {
 	DefaultSummaryConfiguration,
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,

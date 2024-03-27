@@ -5,28 +5,28 @@
 ```ts
 
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import { IDisposable } from "@fluidframework/core-interfaces/internal";
+import { IErrorEvent } from "@fluidframework/core-interfaces/internal";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
+import { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
+import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from "@fluidframework/tree/internal";
-import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal

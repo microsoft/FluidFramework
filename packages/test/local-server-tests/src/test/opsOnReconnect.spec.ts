@@ -7,14 +7,14 @@ import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState, Loader } from "@fluidframework/container-loader/internal";
-import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { ContainerMessageType, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions";
+import { FlushMode, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

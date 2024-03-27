@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	LocalNodeKey,

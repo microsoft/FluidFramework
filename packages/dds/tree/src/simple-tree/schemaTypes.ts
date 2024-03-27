@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
 import { MakeNominal, RestrictiveReadonlyRecord } from "../util/index.js";
 import { TreeNode, Unhydrated } from "./types.js";

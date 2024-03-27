@@ -4,8 +4,8 @@
  */
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

@@ -5,7 +5,7 @@
 
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 
 import { Layout } from "react-grid-layout";
 import { v4 as uuid } from "uuid";

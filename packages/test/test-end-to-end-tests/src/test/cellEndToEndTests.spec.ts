@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -17,8 +17,8 @@ import {
 } from "@fluidframework/test-utils";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 
 const cellId = "cellKey";
 

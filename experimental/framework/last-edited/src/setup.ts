@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerMessageType } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IQuorumClients, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
 

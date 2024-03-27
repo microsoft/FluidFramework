@@ -4,7 +4,7 @@
  */
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/protocol-definitions";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob.js";
 import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IChannel } from "@fluidframework/datastore-definitions";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { CommitMetadata, Revertible } from "../core/index.js";
 import { ISubscribable } from "../events/index.js";
 import { IDisposable } from "../util/index.js";

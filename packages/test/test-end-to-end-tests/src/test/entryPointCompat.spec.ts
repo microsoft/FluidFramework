@@ -17,8 +17,8 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { pkgVersion } from "../packageVersion.js";
 

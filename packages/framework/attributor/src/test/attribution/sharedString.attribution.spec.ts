@@ -26,10 +26,10 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 	type Jsonable,
-} from "@fluidframework/datastore-definitions";
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+} from "@fluidframework/datastore-definitions/internal";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 import { type IClient, type ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,

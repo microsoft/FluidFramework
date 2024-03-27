@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import type { IEvent } from '@fluidframework/core-interfaces';
-import { assert, compareArrays } from '@fluidframework/core-utils';
+import type { IEvent } from "@fluidframework/core-interfaces/internal";
+import { assert, compareArrays } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 import type { ChangeCompressor } from './ChangeCompression.js';

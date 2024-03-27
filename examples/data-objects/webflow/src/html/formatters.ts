@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
-import { Marker, TextSegment } from "@fluidframework/sequence";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Marker, TextSegment } from "@fluidframework/sequence/internal";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
 import { getAttrs, syncAttrs } from "../util/attr.js";
 import { TagName, emptyObject } from "../util/index.js";

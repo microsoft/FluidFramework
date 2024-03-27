@@ -8,7 +8,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 
 import {
 	ITelemetryLoggerExt,

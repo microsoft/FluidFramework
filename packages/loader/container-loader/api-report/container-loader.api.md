@@ -4,10 +4,10 @@
 
 ```ts
 
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { IAudienceOwner } from '@fluidframework/container-definitions/internal';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces/internal';
 import { IContainer } from '@fluidframework/container-definitions/internal';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/internal';
@@ -20,9 +20,9 @@ import { ILocationRedirectionError } from '@fluidframework/driver-definitions/in
 import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions/internal';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 

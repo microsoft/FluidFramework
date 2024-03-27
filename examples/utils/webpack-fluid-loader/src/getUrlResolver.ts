@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { LocalResolver } from "@fluidframework/local-driver";
 import { ITinyliciousRouteOptions, RouteOptions } from "./loader.js";

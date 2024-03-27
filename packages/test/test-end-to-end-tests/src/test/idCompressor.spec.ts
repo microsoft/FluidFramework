@@ -17,9 +17,9 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IdCompressorMode,
-} from "@fluidframework/container-runtime";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import type { ISharedMap } from "@fluidframework/map/internal";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports

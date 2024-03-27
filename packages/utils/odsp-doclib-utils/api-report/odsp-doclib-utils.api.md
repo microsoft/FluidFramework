@@ -7,7 +7,7 @@
 import { DriverErrorTelemetryProps } from '@fluidframework/driver-utils';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IOdspErrorAugmentations } from '@fluidframework/odsp-driver-definitions';
-import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
+import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces/internal';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 import { OdspError } from '@fluidframework/odsp-driver-definitions';
 

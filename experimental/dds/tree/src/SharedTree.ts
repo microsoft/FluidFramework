@@ -5,23 +5,23 @@
 
 import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats, ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
 	SharedObject,
 	createSingleBlobSummary,
-} from '@fluidframework/shared-object-base';
+} from "@fluidframework/shared-object-base/internal";
 import {
 	IEventSampler,
 	ITelemetryLoggerExt,

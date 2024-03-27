@@ -5,7 +5,7 @@
 ```ts
 
 import { IContainerPackageInfo } from '@fluidframework/driver-definitions/internal';
-import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 

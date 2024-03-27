@@ -4,8 +4,8 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,

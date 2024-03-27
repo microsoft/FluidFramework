@@ -8,14 +8,14 @@ import { AttachState } from '@fluidframework/container-definitions/internal';
 import { ConnectionState } from '@fluidframework/container-loader/internal';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions/internal';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { Serializable } from '@fluidframework/datastore-definitions';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
+import { Serializable } from '@fluidframework/datastore-definitions/internal';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {

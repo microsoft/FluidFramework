@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -19,7 +19,7 @@ import {
 	ISummarizerNodeConfig,
 	ITelemetryContext,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils";
 import {
 	type ITelemetryErrorEventExt,

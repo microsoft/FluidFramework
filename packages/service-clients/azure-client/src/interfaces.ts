@@ -6,7 +6,7 @@
 import {
 	type IConfigProviderBase,
 	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static/internal";
 import { type IUser } from "@fluidframework/protocol-definitions";

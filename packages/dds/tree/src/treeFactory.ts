@@ -8,8 +8,8 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { ISharedObjectKind } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { pkgVersion } from "./packageVersion.js";
 import { SharedTree as SharedTreeImpl, SharedTreeOptions } from "./shared-tree/index.js";
 import { ITree } from "./simple-tree/index.js";

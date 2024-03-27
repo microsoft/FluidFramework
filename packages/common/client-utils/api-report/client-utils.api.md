@@ -5,10 +5,10 @@
 ```ts
 
 import { EventEmitter } from 'events_pkg';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventTransformer } from '@fluidframework/core-interfaces';
-import { TransformedEvent } from '@fluidframework/core-interfaces';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IEventTransformer } from '@fluidframework/core-interfaces/internal';
+import { TransformedEvent } from '@fluidframework/core-interfaces/internal';
 
 // @internal
 export class Buffer extends Uint8Array {

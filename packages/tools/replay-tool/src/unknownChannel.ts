@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { FluidDataStoreRuntime, ISharedObjectRegistry } from "@fluidframework/datastore/internal";
 import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
 	constructor(

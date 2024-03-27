@@ -11,9 +11,9 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils";
-import { FluidObjectHandle } from "@fluidframework/datastore";
+} from "@fluidframework/core-interfaces/internal";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -35,7 +35,7 @@ import {
 	InboundAttachMessage,
 	NamedFluidDataStoreRegistryEntries,
 	channelsTreeName,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
 	RequestParser,

@@ -9,12 +9,12 @@ import {
 	IConfigProviderBase,
 	IErrorBase,
 	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,

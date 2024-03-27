@@ -9,13 +9,13 @@
 import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { SharedCounter } from "@fluidframework/counter";
 import { createIdCompressor } from "@fluidframework/id-compressor";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree/internal";
 

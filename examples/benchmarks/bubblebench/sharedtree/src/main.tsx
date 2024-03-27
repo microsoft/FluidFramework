@@ -6,7 +6,7 @@
 import { IArrayish, IClient } from "@fluid-example/bubblebench-common";
 import { SharedTree, WriteFormat } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { TreeObjectProxy } from "./proxy/index.js";
 import { AppState } from "./state.js";
 

@@ -13,7 +13,7 @@ import {
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces/internal";
 
 /**
  * The Request Parser takes an IRequest provides parsing and sub request creation

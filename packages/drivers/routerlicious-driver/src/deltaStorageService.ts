@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,

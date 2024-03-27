@@ -137,7 +137,7 @@ summary: "An open-source client technology stack that enables real-time collabor
         <div class="col-md-8" style="text-left; height:650px; overflow-x: auto; padding-left: 50px;">
             <code>
                 {{< highlight typescript >}}
-                import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework";
+                import { SharedTree, TreeConfiguration, SchemaFactory, Tree } from "fluid-framework/internal";
                 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 
                 const client = new TinyliciousClient();

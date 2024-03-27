@@ -33,8 +33,8 @@ import {
 	type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
-} from "@fluidframework/core-interfaces";
-import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,

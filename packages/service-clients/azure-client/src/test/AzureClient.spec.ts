@@ -17,7 +17,7 @@ import { SchemaFactory, SharedTree } from "@fluidframework/tree/internal";
 import { v4 as uuid } from "uuid";
 
 import { ConnectionState } from "@fluidframework/container-loader/internal";
-import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { AzureClient } from "../AzureClient.js";
 import { type AzureLocalConnectionConfig } from "../interfaces.js";
 

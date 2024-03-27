@@ -9,7 +9,7 @@ import {
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client/internal";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";

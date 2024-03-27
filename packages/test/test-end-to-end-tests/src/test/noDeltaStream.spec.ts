@@ -9,7 +9,7 @@ import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator"
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { DefaultSummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime";
+import { DefaultSummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime/internal";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,

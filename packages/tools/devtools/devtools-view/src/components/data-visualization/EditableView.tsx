@@ -24,7 +24,7 @@ import {
 	type HasContainerKey,
 } from "@fluidframework/devtools-core";
 
-import { type Serializable } from "@fluidframework/datastore-definitions";
+import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import { useMessageRelay } from "../../MessageRelayContext.js";
 import { type HasLabel } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";

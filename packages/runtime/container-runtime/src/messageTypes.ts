@@ -9,7 +9,7 @@ import {
 	IAttachMessage,
 	IEnvelope,
 	InboundAttachMessage,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { IDataStoreAliasMessage } from "./dataStore.js";
 import { GarbageCollectionMessage } from "./gc/index.js";
 import { IChunkedOp } from "./opLifecycle/index.js";

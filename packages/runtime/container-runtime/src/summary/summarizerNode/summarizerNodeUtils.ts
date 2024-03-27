@@ -4,7 +4,7 @@
  */
 
 import { ISnapshotTree, SummaryObject } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 
 export interface IRefreshSummaryResult {

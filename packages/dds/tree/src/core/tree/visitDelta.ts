@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { NestedMap } from "../../index.js";
 import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";

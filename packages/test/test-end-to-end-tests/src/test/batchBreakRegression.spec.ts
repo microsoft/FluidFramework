@@ -7,8 +7,8 @@
 import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { CompressionAlgorithms, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces";
+import { CompressionAlgorithms, IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentDeltaConnectionEvents,
 	IDocumentServiceFactory,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces/internal";
 
 import type { IMigratableModel, MigrationState } from "../migrationInterfaces/index.js";
 

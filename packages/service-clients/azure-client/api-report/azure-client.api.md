@@ -6,12 +6,12 @@
 
 import { ContainerSchema } from '@fluidframework/fluid-static/internal';
 import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
-import { IConfigProviderBase } from '@fluidframework/core-interfaces';
+import { IConfigProviderBase } from '@fluidframework/core-interfaces/internal';
 import { IFluidContainer } from '@fluidframework/fluid-static/internal';
 import { IMember } from '@fluidframework/fluid-static/internal';
 import { IServiceAudience } from '@fluidframework/fluid-static/internal';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ITokenProvider } from '@fluidframework/routerlicious-driver';
 import { ITokenResponse } from '@fluidframework/routerlicious-driver';

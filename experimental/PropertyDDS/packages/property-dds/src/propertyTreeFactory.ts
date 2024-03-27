@@ -8,7 +8,7 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { SharedPropertyTree, SharedPropertyTreeOptions } from "./propertyTree.js";
 
 /**

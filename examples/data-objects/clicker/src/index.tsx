@@ -5,7 +5,7 @@
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { SharedCounter } from "@fluidframework/counter";
 import { TaskManager } from "@fluidframework/task-manager";
 import React from "react";

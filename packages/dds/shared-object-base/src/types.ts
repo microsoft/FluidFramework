@@ -7,10 +7,10 @@ import {
 	IErrorEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
-} from "@fluidframework/core-interfaces";
-import { IChannel } from "@fluidframework/datastore-definitions";
+} from "@fluidframework/core-interfaces/internal";
+import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.

@@ -12,10 +12,10 @@ import {
 	IFluidLoadable,
 	IProvideFluidHandle,
 	IProvideFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import { FluidObjectHandle } from "@fluidframework/datastore";
+} from "@fluidframework/core-interfaces/internal";
+import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 
-import { LazyPromise } from "@fluidframework/core-utils";
+import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
 import { DependencyContainer } from "../index.js";
 import {

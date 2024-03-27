@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { type ContainerSchema } from "@fluidframework/fluid-static/internal";
 import { SharedMap } from "@fluidframework/map/internal";
 // import { ConnectionState } from "@fluidframework/container-loader/internal";

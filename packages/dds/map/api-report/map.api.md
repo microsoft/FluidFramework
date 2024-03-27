@@ -4,17 +4,17 @@
 
 ```ts
 
-import type { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import type { IChannelFactory } from '@fluidframework/datastore-definitions';
-import type { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import type { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import type { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import type { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import type { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces/internal';
+import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import type { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 
 // @alpha @sealed
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {

@@ -9,9 +9,9 @@ import type {
 	IChannelServices,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import type { BaseOperation, ChangeConnectionState, DDSFuzzModel } from "../ddsFuzzHarness.js";
 
 /**

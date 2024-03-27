@@ -12,7 +12,7 @@ import type {
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import type { IErrorBase } from "@fluidframework/core-interfaces";
+import type { IErrorBase } from "@fluidframework/core-interfaces/internal";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientConfiguration,

@@ -12,7 +12,7 @@ import {
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
@@ -32,7 +32,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

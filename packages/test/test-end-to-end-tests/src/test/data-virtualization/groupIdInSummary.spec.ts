@@ -9,8 +9,8 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { type ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -20,7 +20,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 
 const interceptResult = <T>(
 	parent: any,

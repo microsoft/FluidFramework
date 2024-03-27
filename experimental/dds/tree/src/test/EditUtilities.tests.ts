@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
-import { FluidSerializer } from '@fluidframework/shared-object-base';
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';

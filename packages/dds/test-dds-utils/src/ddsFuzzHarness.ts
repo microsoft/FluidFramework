@@ -30,8 +30,8 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { unreachableCase } from "@fluidframework/core-utils";
-import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IIdCompressor,
 	IIdCompressorCore,

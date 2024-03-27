@@ -7,8 +7,8 @@
 import { IDevtoolsMessage } from '@fluidframework/devtools-core';
 import { IMessageRelay } from '@fluidframework/devtools-core';
 import { IMessageRelayEvents } from '@fluidframework/devtools-core';
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { default as React_2 } from 'react';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 

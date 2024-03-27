@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from 'assert';
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage, SummaryType } from '@fluidframework/protocol-definitions';
 import {
 	MockContainerRuntime,

@@ -5,10 +5,10 @@
 
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IErrorEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { Jsonable } from "@fluidframework/datastore-definitions";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import { IErrorEvent } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops

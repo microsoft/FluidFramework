@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { loggerToMonitoringContext } from "./config.js";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
 

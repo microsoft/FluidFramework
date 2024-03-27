@@ -11,7 +11,7 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { IRefreshSummaryResult } from "../summary/index.js";
 import { GCVersion, IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";

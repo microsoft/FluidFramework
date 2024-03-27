@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import type { SharedString } from "@fluidframework/sequence";
+import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,

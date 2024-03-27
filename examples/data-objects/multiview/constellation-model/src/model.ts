@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IValueChanged } from "@fluidframework/map/internal";
 
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";

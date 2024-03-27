@@ -9,7 +9,7 @@ import {
 	IGenericError,
 	ITelemetryBaseProperties,
 	IUsageError,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import {

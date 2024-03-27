@@ -8,8 +8,8 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { Marker, TextSegment } from "@fluidframework/merge-tree";
+} from "@fluidframework/datastore-definitions/internal";
+import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { pkgVersion } from "./packageVersion.js";
 import { SharedString, SharedStringSegment } from "./sharedString.js";
 

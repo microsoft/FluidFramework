@@ -4,23 +4,23 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { RedBlackTree } from "@fluidframework/merge-tree";
+import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	SharedObject,
 	ValueType,
 	parseHandles,
-} from "@fluidframework/shared-object-base";
+} from "@fluidframework/shared-object-base/internal";
 import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import path from "path-browserify";
 import {

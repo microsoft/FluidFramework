@@ -9,7 +9,7 @@
  */
 
 import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";

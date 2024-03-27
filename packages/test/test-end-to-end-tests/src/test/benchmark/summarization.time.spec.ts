@@ -8,9 +8,9 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName } from "@fluidframework/runtime-definitions";
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 
 const defaultDataStoreId = "default";

@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
-import { IErrorBase } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils";
+import { IErrorBase } from "@fluidframework/core-interfaces/internal";
+import { Timer } from "@fluidframework/core-utils/internal";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,

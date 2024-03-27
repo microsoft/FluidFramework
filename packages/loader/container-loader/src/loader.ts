@@ -18,7 +18,7 @@ import {
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,

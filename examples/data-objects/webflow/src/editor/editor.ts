@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { paste } from "../clipboard/paste.js";
 import { FlowDocument } from "../document/index.js";
 import { Direction, KeyCode, getDeltaX } from "../util/index.js";

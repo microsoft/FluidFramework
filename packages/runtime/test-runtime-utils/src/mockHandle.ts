@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Mock implementation of IFluidHandle.

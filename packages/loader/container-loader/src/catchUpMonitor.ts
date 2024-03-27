@@ -4,8 +4,8 @@
  */
 
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { IDisposable } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /** @see CatchUpMonitor for usage */

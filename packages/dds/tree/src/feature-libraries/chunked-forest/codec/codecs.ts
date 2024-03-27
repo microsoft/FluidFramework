@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
 import { CursorLocationType, StoredSchemaCollection } from "../../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../../util/index.js";

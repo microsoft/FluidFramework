@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/test";
 import {

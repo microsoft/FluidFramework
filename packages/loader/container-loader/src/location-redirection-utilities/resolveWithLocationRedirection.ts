@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	DriverErrorTypes,
 	ILocationRedirectionError,

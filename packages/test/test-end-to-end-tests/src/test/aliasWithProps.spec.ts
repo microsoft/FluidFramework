@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { DataObjectFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject, IEvent, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { type ITestObjectProvider } from "@fluidframework/test-utils";
 
 interface TestDataObjectTypes {

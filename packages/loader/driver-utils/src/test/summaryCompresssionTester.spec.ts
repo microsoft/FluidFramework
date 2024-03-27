@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/dot-notation */
 import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	FetchSource,
 	IDocumentDeltaConnection,

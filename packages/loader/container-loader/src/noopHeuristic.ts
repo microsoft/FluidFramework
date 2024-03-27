@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { assert, Timer } from "@fluidframework/core-utils";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
+import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 

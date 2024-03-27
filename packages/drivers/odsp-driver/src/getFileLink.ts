@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils";
 import {
 	IOdspUrlParts,

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils';
+import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
 	type IDeltaConnection,
 	type IDeltaHandler,
-} from '@fluidframework/datastore-definitions';
+} from "@fluidframework/datastore-definitions/internal";
 import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 
 /**

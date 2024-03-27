@@ -10,7 +10,7 @@ import {
 	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SequencePlace, Side } from "../intervalCollection.js";
 

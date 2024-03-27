@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import type { IProvideFluidCodeDetailsComparer } from "./fluidPackage.js";
 import type { IRuntimeFactory } from "./runtime.js";
 

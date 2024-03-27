@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { ChangesetLocalId } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import { FieldEditor } from "../modular-schema/index.js";

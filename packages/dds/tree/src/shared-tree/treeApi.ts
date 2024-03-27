@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { Context } from "../feature-libraries/index.js";
 import { TreeNode, TreeNodeApi, TreeView, getFlexNode, treeNodeApi } from "../simple-tree/index.js";
 import { fail } from "../util/index.js";

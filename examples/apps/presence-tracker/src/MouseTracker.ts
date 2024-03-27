@@ -5,7 +5,7 @@
 
 import { Signaler } from "@fluid-experimental/data-objects";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
 import { IMember, IServiceAudience } from "fluid-framework/internal";
 
 export interface IMouseTrackerEvents extends IEvent {

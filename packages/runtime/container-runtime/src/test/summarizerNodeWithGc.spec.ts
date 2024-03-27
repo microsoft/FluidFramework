@@ -14,7 +14,7 @@ import {
 	ISummarizerNodeConfig,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 import { cloneGCData } from "../gc/index.js";

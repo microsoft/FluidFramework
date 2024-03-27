@@ -8,8 +8,8 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { Client } from "@fluidframework/merge-tree";
+} from "@fluidframework/datastore-definitions/internal";
+import { Client } from "@fluidframework/merge-tree/internal";
 import {
 	ISerializedIntervalCollectionV2,
 	IntervalCollection,

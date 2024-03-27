@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static/internal";
 import { type IUser } from "@fluidframework/protocol-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
@@ -11,7 +11,7 @@ import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
 export {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * Props for initializing a {@link TinyliciousClient}

@@ -554,7 +554,7 @@ This functionality is off by default.
 To enable this functionality, first ensure that all clients are created with an attribution policy factory in the loader settings:
 
 ```typescript
-import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
+import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree/internal";
 // Use these options in the IContainerContext used to instantiate your container runtime.
 const options: ILoaderOptions = {
 	attribution: {

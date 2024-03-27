@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { compareArrays } from "@fluidframework/core-utils";
+import { compareArrays } from "@fluidframework/core-utils/internal";
 
 const o = { o: "o" };
 const s = Symbol("s");

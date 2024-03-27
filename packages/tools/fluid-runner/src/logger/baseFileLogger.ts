@@ -4,7 +4,7 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { IFileLogger } from "./fileLogger";
 
 /**

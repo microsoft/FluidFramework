@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions/internal";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,

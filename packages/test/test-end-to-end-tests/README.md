@@ -38,7 +38,7 @@ See "Change contents of dds, then rehydrate and then check summary" for an examp
 ### ❌ Incorrect
 
 ```typescript
-import { SharedString, createOverlappingIntervalsIndex } from "@fluidframework/sequence";
+import { SharedString, createOverlappingIntervalsIndex } from "@fluidframework/sequence/internal";
 
 const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
@@ -94,7 +94,7 @@ If your code needs to refer to a DDS's type (e.g. to explicitly annotate the typ
 use `import type` expressions freely:
 
 ```typescript
-import type { SharedString } from "@fluidframework/sequence";
+import type { SharedString } from "@fluidframework/sequence/internal";
 
 function insert(str: SharedString): void {
 	str.insertText(0, "hello");

@@ -14,7 +14,7 @@ import {
 	type IEvent,
 	type IEventProvider,
 	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	ContainerAttachProps,
 	ContainerSchema,

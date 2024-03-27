@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { SharedCounter } from "@fluidframework/counter";
 
 export class TestDataObject extends DataObject {

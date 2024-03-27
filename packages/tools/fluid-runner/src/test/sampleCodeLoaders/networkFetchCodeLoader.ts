@@ -4,7 +4,7 @@
  */
 
 import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { IFluidFileConverter } from "../../codeLoaderBundle";
 import { SampleCodeLoader } from "./sampleCodeLoader";
 

@@ -11,7 +11,7 @@ import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 import {
 	ISummarizeEventProps,
 	defaultMaxAttemptsForSubmitFailures,
@@ -22,10 +22,10 @@ import {
 	IFluidHandle,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+} from "@fluidframework/core-interfaces/internal";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,

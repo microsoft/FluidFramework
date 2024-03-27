@@ -9,7 +9,7 @@ import type {
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	ConnectionMode,
 	IClient,

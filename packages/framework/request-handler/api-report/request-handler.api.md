@@ -4,9 +4,9 @@
 
 ```ts
 
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
+import { IResponse } from '@fluidframework/core-interfaces/internal';
 import { RequestParser } from '@fluidframework/runtime-utils';
 
 // @internal @deprecated

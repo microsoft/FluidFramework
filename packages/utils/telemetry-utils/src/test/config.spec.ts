@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import {
 	CachedConfigProvider,
 	inMemoryConfigProvider,

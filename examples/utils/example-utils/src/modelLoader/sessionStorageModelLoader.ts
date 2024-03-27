@@ -4,7 +4,7 @@
  */
 
 import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,

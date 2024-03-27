@@ -11,14 +11,14 @@ import {
 	IContainerContext,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	IErrorBase,
 	IResponse,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentStorageService,
 	ISnapshot,
@@ -39,7 +39,7 @@ import {
 	IFluidDataStoreRegistry,
 	ISummaryTreeWithStats,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,

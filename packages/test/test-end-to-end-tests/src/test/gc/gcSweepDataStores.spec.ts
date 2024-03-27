@@ -19,7 +19,7 @@ import {
 	ISummarizeEventProps,
 	ISummarizer,
 	TombstoneResponseHeaderKey,
-} from "@fluidframework/container-runtime";
+} from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ISweepMessage } from "@fluidframework/container-runtime/test/gc";
 import {
@@ -27,10 +27,10 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/summary";
-import { IErrorBase } from "@fluidframework/core-interfaces";
-import { delay } from "@fluidframework/core-utils";
+import { IErrorBase } from "@fluidframework/core-interfaces/internal";
+import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

@@ -8,7 +8,7 @@ import {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { mixinMonitoringContext } from "../config.js";
 import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "../telemetryTypes.js";

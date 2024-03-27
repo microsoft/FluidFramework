@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { SessionId } from "@fluidframework/id-compressor";
 import { ChangeFamilyEditor, ChangeRebaser, emptyDelta } from "../../../core/index.js";
 import { Commit, EditManager, SeqNumber } from "../../../shared-tree-core/index.js";

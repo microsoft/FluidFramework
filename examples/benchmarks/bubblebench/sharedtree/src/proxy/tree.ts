@@ -13,7 +13,7 @@ import {
 	StableRange,
 	TraitLabel,
 } from "@fluid-experimental/tree";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { NodeKind, fromJson } from "./treeutils.js";
 
 function getChild(

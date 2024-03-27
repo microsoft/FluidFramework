@@ -4,8 +4,8 @@
  */
 
 import { DataObject } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	ITree,
 	type ImplicitFieldSchema,

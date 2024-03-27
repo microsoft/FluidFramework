@@ -9,8 +9,8 @@ import {
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces/internal";
 import React from "react";
 import { Todo, TodoFactory, TodoView } from "./Todo/index.js";
 import { TodoItem, TodoItemView } from "./TodoItem/index.js";

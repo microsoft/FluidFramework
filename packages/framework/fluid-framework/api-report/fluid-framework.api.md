@@ -5,23 +5,23 @@
 ```ts
 
 import { FieldSchemaUnsafe as FieldSchemaUnsafe_2 } from './typesUnsafe.js';
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { Forbidden as Forbidden_2 } from '../default-schema/defaultFieldKinds.js';
-import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelAttributes } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
-import { IChannelServices } from '@fluidframework/datastore-definitions';
-import type { IErrorBase } from '@fluidframework/core-interfaces';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IChannel } from '@fluidframework/datastore-definitions/internal';
+import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
+import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
+import { IChannelServices } from '@fluidframework/datastore-definitions/internal';
+import type { IErrorBase } from '@fluidframework/core-interfaces/internal';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces/internal';
+import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
+import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { InsertableObjectFromSchemaRecordUnsafe as InsertableObjectFromSchemaRecordUnsafe_2 } from './typesUnsafe.js';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
-import { ISharedObjectKind } from '@fluidframework/shared-object-base';
+import { ISharedObject } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { LeafNodeSchema as LeafNodeSchema_2 } from '../feature-libraries/index.js';
 import { SchemaLibrary as SchemaLibrary_2 } from '../feature-libraries/schemaBuilderBase.js';
 import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';

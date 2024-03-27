@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider } from "@fluidframework/core-interfaces/internal";
 import { IQuorumClients } from "@fluidframework/protocol-definitions";
 
 /**

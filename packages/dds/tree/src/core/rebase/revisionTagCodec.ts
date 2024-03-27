@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext } from "../change-family/index.js";

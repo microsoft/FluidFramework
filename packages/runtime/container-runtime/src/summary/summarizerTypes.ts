@@ -4,13 +4,13 @@
  */
 
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryStats } from "@fluidframework/runtime-definitions";
+import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";

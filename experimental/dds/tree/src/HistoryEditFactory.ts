@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from "@fluidframework/core-utils/internal";
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { StablePlace } from './ChangeTypes.js';
 import { fail } from './Common.js';

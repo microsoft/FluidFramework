@@ -12,7 +12,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import { ConnectionState } from "@fluidframework/container-loader/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 

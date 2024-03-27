@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	blobHeadersBlobName as blobNameForBlobHeaders,
@@ -18,7 +18,7 @@ import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { IGCMetadata } from "../gc/index.js";
 import { IDocumentSchema } from "./documentSchema.js";
 

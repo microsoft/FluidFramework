@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidLoadable } from "@fluidframework/core-interfaces";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type IFluidLoadable } from "@fluidframework/core-interfaces/internal";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IFluidDataStoreFactory,
 	type NamedFluidDataStoreRegistryEntry,
-} from "@fluidframework/runtime-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+} from "@fluidframework/runtime-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 

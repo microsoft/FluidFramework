@@ -24,9 +24,9 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions";
+} from "@fluidframework/container-runtime/internal";
+import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
 	createSummarizerFromFactory,

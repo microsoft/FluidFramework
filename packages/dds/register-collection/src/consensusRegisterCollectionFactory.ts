@@ -7,7 +7,7 @@ import {
 	IChannelAttributes,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ConsensusRegisterCollection } from "./consensusRegisterCollection.js";
 import { IConsensusRegisterCollection, IConsensusRegisterCollectionFactory } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";

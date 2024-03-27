@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { Suite } from "benchmark";
 import { FluidSerializer } from "../..";
 import { MockHandleContext, makeJson } from "../../src/test/utils";

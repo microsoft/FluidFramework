@@ -14,13 +14,13 @@ import {
 	IDeltaConnection,
 	type IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeEvents,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	type ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";

@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
-import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { IErrorEvent } from "@fluidframework/core-interfaces/internal";
 import { Change } from './ChangeTypes.js';
 import { RestOrArray, unwrapRestOrArray } from './Common.js';
 import { newEditId } from './EditUtilities.js';

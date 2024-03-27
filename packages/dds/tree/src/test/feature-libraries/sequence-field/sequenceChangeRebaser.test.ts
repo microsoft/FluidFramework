@@ -4,7 +4,7 @@
  */
 
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	ChangesetLocalId,
 	RevisionInfo,

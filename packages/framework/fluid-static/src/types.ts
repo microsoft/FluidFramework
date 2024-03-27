@@ -7,8 +7,8 @@ import {
 	type IEvent,
 	type IEventProvider,
 	type IFluidLoadable,
-} from "@fluidframework/core-interfaces";
-import { type ISharedObjectKind } from "@fluidframework/shared-object-base";
+} from "@fluidframework/core-interfaces/internal";
+import { type ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.

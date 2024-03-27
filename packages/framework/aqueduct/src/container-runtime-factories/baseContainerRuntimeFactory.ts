@@ -8,9 +8,9 @@ import {
 	ContainerRuntime,
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { type FluidObject } from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type FluidObject } from "@fluidframework/core-interfaces/internal";
 // eslint-disable-next-line import/no-deprecated
 import {
 	type RuntimeRequestHandler,
@@ -20,7 +20,7 @@ import {
 	type IFluidDataStoreRegistry,
 	type IProvideFluidDataStoreRegistry,
 	type NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
 	DependencyContainer,

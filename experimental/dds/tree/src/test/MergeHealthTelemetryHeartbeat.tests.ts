@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { Change, ChangeType, StablePlace, StableRange } from '../ChangeTypes.js';

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IChannel } from "@fluidframework/datastore-definitions";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import type { InitialObjects } from "../index.js";
 import type { ContainerSchema, DataObjectClass, LoadableObjectClass } from "../types.js";
 

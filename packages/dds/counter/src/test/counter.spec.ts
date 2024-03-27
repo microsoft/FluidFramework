@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { type IChannelFactory } from "@fluidframework/datastore-definitions";
+import { type IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,

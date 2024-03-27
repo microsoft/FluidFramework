@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
-import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces/internal";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,

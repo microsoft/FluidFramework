@@ -15,7 +15,7 @@ import {
 } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
-import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import {
 	type ContainerKey,
 	ContainerList,

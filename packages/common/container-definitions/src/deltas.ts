@@ -9,7 +9,7 @@ import type {
 	IErrorEvent,
 	IEvent,
 	IEventProvider,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClientConfiguration,

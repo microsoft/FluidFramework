@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";

@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	LocalReferencePosition,
 	MergeTreeDeltaOperationType,
@@ -22,7 +22,7 @@ import {
 	isMergeTreeDeltaRevertible,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { InteriorSequencePlace, Side } from "./intervalCollection.js";
 import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";

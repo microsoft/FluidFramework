@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import nodePath from "path";
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
-import { Deferred } from "@fluidframework/core-utils";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { _dirname } from "./dirname.cjs";
 import { getMetadata, writeMetadataFile } from "./metadata.js";

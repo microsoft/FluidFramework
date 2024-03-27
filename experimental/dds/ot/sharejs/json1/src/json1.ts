@@ -8,7 +8,7 @@ import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	Serializable,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	Doc,
 	JSONOp,

@@ -9,10 +9,10 @@
  */
 
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 import { SharedCell } from "@fluidframework/cell";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { type Edit, type EditSharedObject } from "./DataEditing.js";
 
 /**

@@ -5,7 +5,7 @@
 ```ts
 
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
 
 // @beta

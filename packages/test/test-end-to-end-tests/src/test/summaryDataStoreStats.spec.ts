@@ -11,8 +11,8 @@ import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,
 	SummaryCollection,
-} from "@fluidframework/container-runtime";
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-runtime/internal";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 

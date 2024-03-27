@@ -4,13 +4,13 @@
 
 ```ts
 
-import { FluidDataStoreRuntime } from '@fluidframework/datastore';
-import { IEvent } from '@fluidframework/core-interfaces';
-import { IEventProvider } from '@fluidframework/core-interfaces';
-import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
+import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
+import { IEvent } from '@fluidframework/core-interfaces/internal';
+import { IEventProvider } from '@fluidframework/core-interfaces/internal';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
+import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha (undocumented)

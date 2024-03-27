@@ -14,7 +14,7 @@ import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';

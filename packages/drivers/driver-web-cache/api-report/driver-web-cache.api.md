@@ -8,7 +8,7 @@ import { DeleteDBCallbacks } from 'idb';
 import { ICacheEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 
 // @alpha
 export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCallbacks): Promise<void>;

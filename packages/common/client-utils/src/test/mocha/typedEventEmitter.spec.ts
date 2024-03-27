@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IErrorEvent } from "@fluidframework/core-interfaces";
+import { IErrorEvent } from "@fluidframework/core-interfaces/internal";
 import { TypedEventEmitter } from "../../typedEventEmitter.js";
 
 describe("TypedEventEmitter", () => {

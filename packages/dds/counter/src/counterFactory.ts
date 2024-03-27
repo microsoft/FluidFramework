@@ -8,7 +8,7 @@ import {
 	type IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { SharedCounter } from "./counter.js";
 import { type ISharedCounter } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";

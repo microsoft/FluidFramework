@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
-// NOTE: This test vets that '@fluidframework/matrix' is compatible with the UndoRedoStackManager
+// NOTE: This test vets that "@fluidframework/matrix/internal" is compatible with the UndoRedoStackManager
 //       defined in '@fluidframework/undo-redo'.  For more extensive testing of the matrix
-//       undo/redo implementation, see 'matrix.undo.spec.ts' in the '@fluidframework/matrix' package.
+//       undo/redo implementation, see 'matrix.undo.spec.ts' in the "@fluidframework/matrix/internal" package.
 
 describe("Matrix", () => {
 	let dataStoreRuntime: MockFluidDataStoreRuntime;

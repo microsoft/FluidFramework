@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces/internal";
 
 /**
  * @alpha
@@ -92,7 +92,7 @@ export interface IDriverHeader {
 	[DriverHeader.createNew]: any;
 }
 
-declare module "@fluidframework/core-interfaces" {
+declare module "@fluidframework/core-interfaces/internal" {
 	// TODO: This interface should be documented. AB#7164
 	// eslint-disable-next-line @typescript-eslint/no-empty-interface, jsdoc/require-jsdoc
 	export interface IRequestHeader extends Partial<IDriverHeader> {}

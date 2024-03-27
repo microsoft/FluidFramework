@@ -8,7 +8,7 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	LogLevel,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { ChildLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 

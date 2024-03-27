@@ -4,31 +4,31 @@
 
 ```ts
 
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IChannelStorageService } from '@fluidframework/datastore-definitions/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
-import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
-import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IRequestHeader } from '@fluidframework/core-interfaces';
-import { IResponse } from '@fluidframework/core-interfaces';
+import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
+import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
+import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
+import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
+import { IRequest } from '@fluidframework/core-interfaces/internal';
+import { IRequestHeader } from '@fluidframework/core-interfaces/internal';
+import { IResponse } from '@fluidframework/core-interfaces/internal';
 import { IRuntime } from '@fluidframework/container-definitions/internal';
 import { IRuntimeFactory } from '@fluidframework/container-definitions/internal';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions/internal';
-import { ISummarizeResult } from '@fluidframework/runtime-definitions';
+import { ISummarizeResult } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryBlob } from '@fluidframework/protocol-definitions';
-import { ISummaryStats } from '@fluidframework/runtime-definitions';
+import { ISummaryStats } from '@fluidframework/runtime-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { ITelemetryContext } from '@fluidframework/runtime-definitions';
+import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
+import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
-import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces';
+import type { TelemetryBaseEventPropertyType } from '@fluidframework/core-interfaces/internal';
 
 // @internal (undocumented)
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;

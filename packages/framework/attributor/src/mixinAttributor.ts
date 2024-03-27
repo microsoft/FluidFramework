@@ -9,11 +9,11 @@ import {
 	type IContainerContext,
 	type IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
-import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type IDocumentMessage,
 	type ISequencedDocumentMessage,
@@ -25,7 +25,7 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 	type NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder, addSummarizeResultToSummary } from "@fluidframework/runtime-utils";
 import {
 	PerformanceEvent,

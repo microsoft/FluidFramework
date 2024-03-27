@@ -6,10 +6,10 @@
 
 /// <reference types="node" />
 
-import { FluidObject } from '@fluidframework/core-interfaces';
+import { FluidObject } from '@fluidframework/core-interfaces/internal';
 import { ICodeDetailsLoader } from '@fluidframework/container-definitions/internal';
 import { IContainer } from '@fluidframework/container-definitions/internal';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 
 // @internal

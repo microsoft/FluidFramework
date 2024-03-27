@@ -4,7 +4,7 @@
  */
 
 import { performance } from "@fluid-internal/client-utils";
-import { delay } from "@fluidframework/core-utils";
+import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
 import { NonRetryableError, canRetryOnError, getRetryDelayFromError } from "./network.js";

@@ -11,7 +11,7 @@ import {
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**

@@ -16,9 +16,9 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces";
-import { IEvent } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { IEvent } from "@fluidframework/core-interfaces/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -53,7 +53,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	gcDataBlobKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import {
 	DataCorruptionError,

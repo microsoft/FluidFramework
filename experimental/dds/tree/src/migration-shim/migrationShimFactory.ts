@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/core-utils';
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
-} from '@fluidframework/datastore-definitions';
+} from "@fluidframework/datastore-definitions/internal";
 import { type ITree } from "@fluidframework/tree/internal";
 import {
 	type SharedTree as LegacySharedTree,

@@ -10,8 +10,8 @@ import {
 	fromBase64ToUtf8,
 } from "@fluid-internal/client-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	ISummaryBlob,
@@ -28,7 +28,7 @@ import {
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Combines summary stats by adding their totals together.

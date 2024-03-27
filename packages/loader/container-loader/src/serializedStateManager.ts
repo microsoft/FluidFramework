@@ -4,7 +4,7 @@
  */
 
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions/internal";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentStorageService,
 	IResolvedUrl,

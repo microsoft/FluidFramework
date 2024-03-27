@@ -4,8 +4,8 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { Deferred } from "@fluidframework/core-utils";
+import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,

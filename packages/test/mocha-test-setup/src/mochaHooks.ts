@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import * as mochaModule from "mocha";
 import { pkgName } from "./packageVersion.js";

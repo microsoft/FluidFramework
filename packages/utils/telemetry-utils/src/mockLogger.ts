@@ -7,8 +7,8 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	LogLevel,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { createChildLogger } from "./logger.js";
 import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 

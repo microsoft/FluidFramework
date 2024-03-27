@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";

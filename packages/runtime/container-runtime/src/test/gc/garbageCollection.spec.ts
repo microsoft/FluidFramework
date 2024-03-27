@@ -8,8 +8,8 @@ import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
-import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils";
+import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
+import { Timer } from "@fluidframework/core-utils/internal";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
@@ -20,7 +20,7 @@ import {
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
 	MonitoringContext,

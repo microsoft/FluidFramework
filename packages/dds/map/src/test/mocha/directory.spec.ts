@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import {

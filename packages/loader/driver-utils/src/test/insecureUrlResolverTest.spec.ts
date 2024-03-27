@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { DriverHeader, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "../insecureUrlResolver.js";
 

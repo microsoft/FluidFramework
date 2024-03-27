@@ -8,7 +8,7 @@ import * as api from '@fluidframework/protocol-definitions';
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
-import { IDisposable } from '@fluidframework/core-interfaces';
+import { IDisposable } from '@fluidframework/core-interfaces/internal';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions/internal';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions/internal';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions/internal';
@@ -27,7 +27,7 @@ import { ISnapshotFetchOptions } from '@fluidframework/driver-definitions/intern
 import { IStream } from '@fluidframework/driver-definitions/internal';
 import { ISummaryContext } from '@fluidframework/driver-definitions/internal';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { ReadDocumentStorageServiceBase } from '@fluidframework/replay-driver';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';

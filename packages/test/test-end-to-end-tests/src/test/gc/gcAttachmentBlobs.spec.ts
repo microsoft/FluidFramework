@@ -8,10 +8,10 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/test/blobManager";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

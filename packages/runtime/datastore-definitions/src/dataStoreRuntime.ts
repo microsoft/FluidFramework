@@ -16,14 +16,14 @@ import type {
 	IFluidHandle,
 	IFluidHandleContext,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IDocumentMessage,
 	IQuorumClients,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { IChannel } from "./channel.js";
 
 /**

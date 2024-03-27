@@ -11,9 +11,9 @@
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { type IDirectory, type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map/internal";
-import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
-import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedMatrix } from "@fluidframework/matrix/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
+import { type ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree, encodeTreeSchema } from "@fluidframework/tree/internal";
 import { EditType } from "../CommonInterfaces.js";

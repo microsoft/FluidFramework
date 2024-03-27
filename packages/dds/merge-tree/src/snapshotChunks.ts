@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { SerializedAttributionCollection } from "./attributionCollection.js";
 import { IJSONSegment } from "./ops.js";

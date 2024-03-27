@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-deprecated */
 
-import { Client } from "@fluidframework/merge-tree";
+import { Client } from "@fluidframework/merge-tree/internal";
 import { SequencePlace, endpointPosAndSide } from "../intervalCollection.js";
 import { IntervalNode, IntervalTree } from "../intervalTree.js";
 import {

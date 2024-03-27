@@ -4,19 +4,19 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
-} from "@fluidframework/shared-object-base";
+} from "@fluidframework/shared-object-base/internal";
 import { ConsensusRegisterCollectionFactory } from "./consensusRegisterCollectionFactory.js";
 import {
 	IConsensusRegisterCollection,

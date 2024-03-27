@@ -7,7 +7,7 @@ import type {
 	ILoggingError,
 	ITelemetryBaseProperties,
 	Tagged,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { v4 as uuid } from "uuid";
 import {
 	IFluidErrorBase,

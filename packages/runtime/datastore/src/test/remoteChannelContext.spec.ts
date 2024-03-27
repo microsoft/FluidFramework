@@ -9,7 +9,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,

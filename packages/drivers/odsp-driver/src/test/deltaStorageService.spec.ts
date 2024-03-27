@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions/internal";
 import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

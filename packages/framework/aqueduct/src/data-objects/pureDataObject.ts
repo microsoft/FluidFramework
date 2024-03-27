@@ -11,10 +11,10 @@ import {
 	type IProvideFluidHandle,
 	type IRequest,
 	type IResponse,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
-import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils";
 import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { type DataObjectTypes, type IDataObjectProps } from "./types.js";

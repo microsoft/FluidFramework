@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils";
+import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import {
 	IContainerPackageInfo,
 	IResolvedUrl,

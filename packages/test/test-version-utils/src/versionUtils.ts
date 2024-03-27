@@ -20,7 +20,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import { lock } from "proper-lockfile";
 import * as semver from "semver";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { pkgVersion } from "./packageVersion.js";
 import { InstalledPackage } from "./testApi.js";
 

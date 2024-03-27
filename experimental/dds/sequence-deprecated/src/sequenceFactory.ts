@@ -8,10 +8,10 @@ import {
 	IChannelFactory,
 	IChannelServices,
 	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
-import { IJSONSegment } from "@fluidframework/merge-tree";
-import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+} from "@fluidframework/datastore-definitions/internal";
+import { IJSONSegment } from "@fluidframework/merge-tree/internal";
+import { IJSONRunSegment, SubSequence } from "@fluidframework/sequence/internal";
+import { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { pkgVersion } from "./packageVersion.js";
 import { SharedNumberSequence } from "./sharedNumberSequence.js";
 import { SharedObjectSequence } from "./sharedObjectSequence.js";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IRequest, IResponse } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces/internal";
+import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 export class TestFluidSerializer implements IFluidSerializer {
 	public constructor() {}

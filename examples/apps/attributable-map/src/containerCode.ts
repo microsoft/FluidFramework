@@ -6,8 +6,8 @@
 import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import { IProvideRuntimeAttributor, IRuntimeAttributor } from "@fluid-experimental/attributor";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { FluidObject } from "@fluidframework/core-interfaces/internal";
 import { HitCounter } from "./dataObject.js";
 import { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution.js";
 

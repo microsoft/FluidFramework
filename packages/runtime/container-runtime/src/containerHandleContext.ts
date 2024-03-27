@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces/internal";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime.js";
 

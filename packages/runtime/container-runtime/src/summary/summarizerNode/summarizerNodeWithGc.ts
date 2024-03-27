@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { assert, LazyPromise } from "@fluidframework/core-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
+import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
@@ -16,7 +16,7 @@ import {
 	ISummarizerNodeWithGC,
 	ITelemetryContext,
 	SummarizeInternalFn,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
 import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";

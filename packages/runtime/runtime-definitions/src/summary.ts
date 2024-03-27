@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type { TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces/internal";
 import type {
 	ISequencedDocumentMessage,
 	ISnapshotTree,

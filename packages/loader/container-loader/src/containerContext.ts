@@ -13,7 +13,7 @@ import {
 	ILoader,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
-import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces";
+import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,

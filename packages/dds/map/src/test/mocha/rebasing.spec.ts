@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntime,
 	MockContainerRuntimeFactory,

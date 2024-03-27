@@ -8,20 +8,20 @@ import { strict as assert } from "assert";
 import * as crypto from "crypto";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
+import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import {
 	ConfigTypes,
 	FluidErrorTypes,
 	IConfigProviderBase,
 	IErrorBase,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,

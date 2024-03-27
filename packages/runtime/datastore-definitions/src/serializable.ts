@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type { Jsonable } from "./jsonable.js";
 
 /**

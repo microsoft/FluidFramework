@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConfigTypes } from "@fluidframework/core-interfaces";
+import { ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 
 /**

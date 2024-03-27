@@ -6,7 +6,7 @@
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import { type ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import React from "react";
 

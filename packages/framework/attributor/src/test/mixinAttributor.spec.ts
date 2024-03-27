@@ -10,7 +10,7 @@ import {
 	type IContainerContext,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
-import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
+import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces/internal";
 import { type IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	type ISequencedDocumentMessage,

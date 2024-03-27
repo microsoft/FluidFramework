@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";

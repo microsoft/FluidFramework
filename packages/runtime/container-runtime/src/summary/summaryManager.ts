@@ -9,8 +9,8 @@ import {
 	IEvent,
 	IEventProvider,
 	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+} from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,

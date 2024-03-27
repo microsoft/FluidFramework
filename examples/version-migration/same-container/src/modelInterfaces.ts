@@ -8,8 +8,8 @@ import type {
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,
 } from "@fluid-example/example-utils";
-import type { IEventProvider } from "@fluidframework/core-interfaces";
-import { SharedString } from "@fluidframework/sequence";
+import type { IEventProvider } from "@fluidframework/core-interfaces/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IInventoryListAppModelEvents extends ISameContainerMigratableModelEvents {}

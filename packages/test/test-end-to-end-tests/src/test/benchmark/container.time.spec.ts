@@ -8,7 +8,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	ITestObjectProvider,

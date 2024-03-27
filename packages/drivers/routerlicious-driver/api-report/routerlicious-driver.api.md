@@ -9,7 +9,7 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions/inte
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
 import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 
 // @internal

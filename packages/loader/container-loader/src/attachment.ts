@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";

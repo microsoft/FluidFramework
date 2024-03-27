@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
-} from "@fluidframework/merge-tree";
+} from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
 	MockContainerRuntimeFactory,

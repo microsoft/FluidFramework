@@ -9,13 +9,13 @@ import { CollaborativeText, CollaborativeTextView } from "@fluid-example/collabo
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import { ProseMirror, ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions";
+} from "@fluidframework/runtime-definitions/internal";
 
 import * as React from "react";
 

@@ -4,21 +4,21 @@
  */
 
 import { EventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IChannelAttributes,
 	type IChannelFactory,
 	type IChannelStorageService,
 	type IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+} from "@fluidframework/datastore-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	type IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
-} from "@fluidframework/shared-object-base";
+} from "@fluidframework/shared-object-base/internal";
 import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
 import { PactMapFactory } from "./pactMapFactory.js";
 

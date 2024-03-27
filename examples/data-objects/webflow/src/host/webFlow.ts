@@ -4,8 +4,8 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { FlowDocument } from "../document/index.js";
 import { hostType } from "../package.js";
 

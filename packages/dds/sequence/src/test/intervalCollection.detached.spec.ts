@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TextSegment } from "@fluidframework/merge-tree";
+import { TextSegment } from "@fluidframework/merge-tree/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,

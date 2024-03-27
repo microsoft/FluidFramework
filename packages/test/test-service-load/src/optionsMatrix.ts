@@ -15,8 +15,8 @@ import {
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
-import { ConfigTypes } from "@fluidframework/core-interfaces";
+} from "@fluidframework/container-runtime/internal";
+import { ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";

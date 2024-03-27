@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces/internal";
 
 /**
  * The categories FF uses when instrumenting the code.

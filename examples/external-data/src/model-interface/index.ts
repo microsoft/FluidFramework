@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence/internal";
 
 /**
  * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.

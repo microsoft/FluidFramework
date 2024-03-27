@@ -29,7 +29,7 @@ To turn on op-stream based attribution in your container, use `mixinAttributor` 
 When you instantiate your container runtime, pass a scope which implements `IProvideRuntimeAttributor`.
 
 ```typescript
-import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
 
 const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);

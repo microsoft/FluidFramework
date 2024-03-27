@@ -11,7 +11,7 @@ import {
 	LogLevel,
 	Tagged,
 	TelemetryBaseEventPropertyType,
-} from "@fluidframework/core-interfaces";
+} from "@fluidframework/core-interfaces/internal";
 import {
 	CachedConfigProvider,
 	loggerIsMonitoringContext,
