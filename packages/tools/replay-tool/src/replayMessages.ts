@@ -42,8 +42,8 @@ import {
 	getNormalizedFileSnapshot,
 	loadContainer,
 	uploadSummary,
-} from "./helpers";
-import { ReplayArgs } from "./replayArgs";
+} from "./helpers.js";
+import { ReplayArgs } from "./replayArgs.js";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
