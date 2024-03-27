@@ -19,6 +19,7 @@ import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	ContainerAttachProps,
 	type ContainerSchema,
+	FluidRuntimeMinVersion,
 	IFluidContainer,
 	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
@@ -169,7 +170,10 @@ export class OdspClient {
 	}
 
 	private createLoader(schema: ContainerSchema): Loader {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({ schema });
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
+			schema,
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },

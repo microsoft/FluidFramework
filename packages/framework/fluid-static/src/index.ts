@@ -32,4 +32,6 @@ export {
 	type MemberChangedListener,
 	type Myself,
 	type IProvideRootDataObject,
+	FluidRuntimeMinVersion,
+	type AzureContainerSchema,
 } from "./types.js";

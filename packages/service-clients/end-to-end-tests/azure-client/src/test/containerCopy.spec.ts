@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
@@ -22,7 +22,8 @@ describe("Container copy scenarios", () => {
 		initialObjects: {
 			map1: SharedMap,
 		},
-	} satisfies ContainerSchema;
+		minRuntimeVersion: FluidRuntimeMinVersion.V2,
+	} satisfies AzureContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();

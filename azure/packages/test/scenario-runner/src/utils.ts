@@ -13,7 +13,7 @@ import {
 	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import commander from "commander";
@@ -31,9 +31,10 @@ export interface AzureClientConfig {
 export const delay = async (timeMs: number): Promise<void> =>
 	new Promise((resolve) => setTimeout(() => resolve(), timeMs));
 
-export function loadInitialObjSchema(source: ContainerFactorySchema): ContainerSchema {
-	const schema: ContainerSchema = {
+export function loadInitialObjSchema(source: ContainerFactorySchema): AzureContainerSchema {
+	const schema: AzureContainerSchema = {
 		initialObjects: {},
+		minRuntimeVersion: FluidRuntimeMinVersion.V2,
 	};
 
 	for (const k of Object.keys(source.initialObjects)) {

@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/server-local-server";
 
 import {
+	FluidRuntimeMinVersion,
 	IFluidContainer,
 	createDOProviderContainerRuntimeFactory,
 } from "@fluidframework/fluid-static";
@@ -131,7 +132,10 @@ export async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		documentId,
-		createDOProviderContainerRuntimeFactory({ schema: containerConfig }),
+		createDOProviderContainerRuntimeFactory({
+			schema: containerConfig,
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
+		}),
 		createNewFlag,
 	);
 

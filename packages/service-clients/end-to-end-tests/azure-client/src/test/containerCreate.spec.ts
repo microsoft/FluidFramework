@@ -8,7 +8,7 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { ContainerSchema } from "@fluidframework/fluid-static";
+import { AzureContainerSchema, FluidRuntimeMinVersion } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
@@ -22,7 +22,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
-	let schema: ContainerSchema;
+	let schema: AzureContainerSchema;
 
 	beforeEach("createAzureClient", () => {
 		client = createAzureClient();
@@ -30,6 +30,7 @@ describe("Container create scenarios", () => {
 			initialObjects: {
 				map1: SharedMap,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 	});
 
@@ -162,7 +163,7 @@ describe("Container create scenarios", () => {
 
 describe("Container create with feature flags", () => {
 	let client: AzureClient;
-	let schema: ContainerSchema;
+	let schema: AzureContainerSchema;
 	let mockLogger: MockLogger;
 
 	beforeEach("createAzureClient", () => {
@@ -179,6 +180,7 @@ describe("Container create with feature flags", () => {
 			initialObjects: {
 				map1: SharedMap,
 			},
+			minRuntimeVersion: FluidRuntimeMinVersion.V2,
 		};
 	});
 

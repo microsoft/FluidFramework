@@ -5,7 +5,7 @@
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { AzureContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
@@ -163,7 +163,7 @@ export class NestedMapRunner extends ScenarioRunner<
 			return runConfig.container;
 		}
 
-		let schema: ContainerSchema;
+		let schema: AzureContainerSchema;
 		try {
 			schema = loadInitialObjSchema(runConfig.schema);
 		} catch {

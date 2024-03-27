@@ -15,6 +15,12 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
+// @public (undocumented)
+export interface AzureContainerSchema extends ContainerSchema {
+    // (undocumented)
+    minRuntimeVersion: FluidRuntimeMinVersion;
+}
+
 // @public
 export type ContainerAttachProps<T = unknown> = T;
 
@@ -27,6 +33,7 @@ export interface ContainerSchema {
 // @internal
 export function createDOProviderContainerRuntimeFactory(props: {
     schema: ContainerSchema;
+    minRuntimeVersion: FluidRuntimeMinVersion;
 }): IRuntimeFactory;
 
 // @internal
@@ -47,6 +54,12 @@ export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
 } & (new (...args: any[]) => T);
+
+// @public
+export enum FluidRuntimeMinVersion {
+    V1 = 0,
+    V2 = 1
+}
 
 // @public
 export interface IConnection {
