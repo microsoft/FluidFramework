@@ -6,28 +6,28 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { bufferToString } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
+import {
+	IChannelStorageService,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import {
-	createChildLogger,
 	ITelemetryLoggerExt,
 	UsageError,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
+import { MergeTree } from "./mergeTree.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
-import { IJSONSegmentWithMergeInfo, hasMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks.js";
+import { IJSONSegmentWithMergeInfo, MergeTreeChunkV1, hasMergeInfo } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
-import { MergeTree } from "./mergeTree.js";
 
 export class SnapshotLoader {
 	private readonly logger: ITelemetryLoggerExt;

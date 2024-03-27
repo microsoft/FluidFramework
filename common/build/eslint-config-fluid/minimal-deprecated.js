@@ -4,6 +4,19 @@
  */
 
 /**
+ * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
+ */
+const permittedImports = [
+	// Within Fluid Framework allow import of '/internal' from other FF packages.
+	"@fluidframework/*/internal",
+
+	// Allow imports from sibling and ancestral sibling directories,
+	// but not from cousin directories. Parent is allowed but only
+	// because there isn't a known way to deny it.
+	"*/index.js",
+];
+
+/**
  * "Minimal" eslint configuration.
  *
  * This configuration is primarily intended for use in packages during prototyping / initial setup.
@@ -379,16 +392,7 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				allow: [
-					// Within Fluid Framework, allow import of '/internal' and '/beta' exports.
-					"@fluidframework/*/beta",
-					"@fluidframework/*/internal",
-
-					// Allow imports from sibling and ancestral sibling directories,
-					// but not from cousin directories. Parent is allowed but only
-					// because there isn't a known way to deny it.
-					"*/index.js",
-				],
+				allow: permittedImports,
 			},
 		],
 	},
@@ -435,6 +439,16 @@ module.exports = {
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
+
+				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
+				"import/no-internal-modules": [
+					"error",
+					{
+						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
+							permittedImports,
+						),
+					},
+				],
 			},
 		},
 	],

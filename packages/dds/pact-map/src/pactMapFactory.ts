@@ -5,13 +5,13 @@
 
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
 	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { PactMap } from "./pactMap.js";
 import { type IPactMap } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
+import { PactMap } from "./pactMap.js";
 
 /**
  * The factory that produces the PactMap

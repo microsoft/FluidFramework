@@ -4,13 +4,13 @@
  */
 
 import {
-	RBNode,
 	IRBAugmentation,
 	IRBMatcher,
-	RedBlackTree,
+	RBNode,
 	RBNodeActions,
+	RedBlackTree,
 } from "@fluidframework/merge-tree";
-import { IInterval } from "./intervals";
+import { IInterval } from "./intervals/index.js";
 
 export interface AugmentedIntervalNode {
 	minmax: IInterval;

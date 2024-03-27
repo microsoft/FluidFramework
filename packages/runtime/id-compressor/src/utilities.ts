@@ -6,8 +6,8 @@
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/core-utils";
 import { v4 } from "uuid";
-import { SessionId, StableId } from "./types/index.js";
 import { LocalCompressedId, NumericUuid } from "./identifiers.js";
+import { SessionId, StableId } from "./types/index.js";
 
 const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
 	zero: number,

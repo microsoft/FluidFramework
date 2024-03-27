@@ -5,25 +5,25 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	TreeStoredSchema,
-	TreeNodeSchemaIdentifier,
-	TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeStoredSchema,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
-	FlexTreeSchema,
-	FlexTreeNodeSchema,
-	FlexMapFieldSchema,
-	FlexFieldSchema,
-	FlexAllowedTypes,
 	Any,
-	LeafNodeSchema,
+	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexMapFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	LeafNodeSchema,
 } from "./typed-schema/index.js";
 
 /**

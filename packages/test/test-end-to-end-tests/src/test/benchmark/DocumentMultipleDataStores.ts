@@ -2,32 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import {
+	assertDocumentTypeInfo,
+	isDocumentMultipleDataStoresInfo,
+} from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
 } from "@fluidframework/container-runtime";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
-import {
 	ConfigTypes,
 	IConfigProviderBase,
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import {
-	assertDocumentTypeInfo,
-	isDocumentMultipleDataStoresInfo,
-} from "@fluid-private/test-version-utils";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,
@@ -54,7 +55,7 @@ class TestDataObject extends DataObject {
 	}
 
 	private readonly mapKey = "map";
-	public map!: SharedMap;
+	public map!: ISharedMap;
 
 	private readonly sharedStringKey = "sharedString";
 	public sharedString!: SharedString;
@@ -68,7 +69,7 @@ class TestDataObject extends DataObject {
 	}
 
 	protected async hasInitialized() {
-		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.mapKey);
+		const mapHandle = this.root.get<IFluidHandle<ISharedMap>>(this.mapKey);
 		assert(mapHandle !== undefined, "SharedMap not found");
 		this.map = await mapHandle.get();
 

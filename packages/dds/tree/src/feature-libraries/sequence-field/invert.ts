@@ -7,20 +7,21 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
+import { DetachIdOverrideType } from "./format.js";
+import { MarkListFactory } from "./markListFactory.js";
 import {
+	CellId,
+	CellMark,
 	Changeset,
 	Mark,
+	MarkEffect,
 	MarkList,
-	NoopMarkType,
+	MoveIn,
 	MoveOut,
 	NoopMark,
+	NoopMarkType,
 	Remove,
-	CellMark,
-	MoveIn,
-	MarkEffect,
-	CellId,
 } from "./types.js";
-import { MarkListFactory } from "./markListFactory.js";
 import {
 	extractMarkEffect,
 	getDetachOutputId,
@@ -35,7 +36,6 @@ import {
 	splitMark,
 	withNodeChange,
 } from "./utils.js";
-import { DetachIdOverrideType } from "./format.js";
 
 export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
@@ -50,6 +50,7 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
 	invertChild: NodeChangeInverter<TNodeChange>,
+	isRollback: boolean,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,

@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
 import { strict as assert } from "assert";
+import * as path from "path";
 import {
+	AsyncGenerator as Generator,
+	AsyncReducer as Reducer,
 	combineReducersAsync as combineReducers,
 	createWeightedAsyncGenerator as createWeightedGenerator,
-	AsyncGenerator as Generator,
 	makeRandom,
-	AsyncReducer as Reducer,
 	takeAsync as take,
 } from "@fluid-private/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { TaskManagerFactory } from "../taskManagerFactory.js";
 import { ITaskManager } from "../interfaces.js";
+import { TaskManagerFactory } from "../taskManagerFactory.js";
 import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<TaskManagerFactory>;

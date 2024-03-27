@@ -6,18 +6,18 @@
 import { strict as assert } from "assert";
 import { SessionId } from "@fluidframework/id-compressor";
 import {
-	makeAnonChange,
+	ChangeEncodingContext,
 	FieldKey,
-	tagChange,
+	RevisionMetadataSource,
 	RevisionTag,
 	TaggedChange,
-	RevisionMetadataSource,
-	ChangeEncodingContext,
+	makeAnonChange,
+	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
-import { TestChange } from "./testChange.js";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
+import { TestChange } from "./testChange.js";
 import { deepFreeze, mintRevisionTag } from "./utils.js";
 
 describe("TestChange", () => {
@@ -111,6 +111,13 @@ describe("TestChange", () => {
 		return rebaseResult;
 	}
 
+	function assertChangesetsEquivalent(
+		change1: TaggedChange<TestChange>,
+		change2: TaggedChange<TestChange>,
+	) {
+		assert.deepEqual(change1, change2);
+	}
+
 	/**
 	 * See {@link ChildStateGenerator}
 	 */
@@ -150,6 +157,8 @@ describe("TestChange", () => {
 					},
 					rebaseComposed,
 					createEmpty: () => TestChange.emptyChange,
+					isEmpty: TestChange.isEmpty,
+					assertChangesetsEquivalent,
 				},
 				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
 			);

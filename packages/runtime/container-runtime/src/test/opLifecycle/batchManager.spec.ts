@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle/index.js";
 import { ContainerMessageType } from "../../messageTypes.js";
+import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle/index.js";
 
 describe("BatchManager", () => {
 	const softLimit = 1024;

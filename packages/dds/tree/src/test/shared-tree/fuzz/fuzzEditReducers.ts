@@ -6,33 +6,37 @@
 import { strict as assert } from "assert";
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
 	DownPath,
 	FlexTreeField,
 	FlexTreeNode,
-	cursorForJsonableTreeNode,
+	SchemaBuilderInternal,
 	cursorForJsonableTreeField,
+	cursorForJsonableTreeNode,
+	intoStoredSchema,
 } from "../../../feature-libraries/index.js";
-import { fail } from "../../../util/index.js";
+import { ISharedTree, SharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
+import { brand, fail } from "../../../util/index.js";
 import { validateTreeConsistency } from "../../utils.js";
-import { ISharedTree, SharedTreeFactory } from "../../../shared-tree/index.js";
-import { Revertible } from "../../../core/index.js";
-import {
-	FieldEdit,
-	FuzzRemove,
-	FuzzFieldChange,
-	FuzzSet,
-	FuzzTransactionType,
-	FuzzUndoRedoType,
-	Operation,
-} from "./operationTypes.js";
-import { isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import {
 	FuzzTestState,
 	FuzzTransactionView,
 	FuzzView,
+	getAllowableNodeTypes,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
+import { createTreeViewSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import {
+	FieldEdit,
+	FuzzFieldChange,
+	FuzzRemove,
+	FuzzSet,
+	FuzzTransactionType,
+	FuzzUndoRedoType,
+	Operation,
+	SchemaChange,
+} from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
@@ -57,6 +61,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 	},
+	schema: (state, operation) => {
+		applySchemaOp(state, operation);
+	},
 });
 export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
 	state,
@@ -78,6 +85,33 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 			validateTreeConsistency(channel, readonlyChannel);
 		}
 	}
+}
+
+// TODO: Update this function to be done in a more ergonomic way using libraries
+function generateLeafNodeSchemas(nodeTypes: string[]) {
+	const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
+	const leafNodeSchemas = [];
+	for (const nodeType of nodeTypes) {
+		if (
+			nodeType !== "treefuzz.node" &&
+			nodeType !== "com.fluidframework.leaf.number" &&
+			nodeType !== "com.fluidframework.leaf.string"
+		) {
+			if (!nodeType.startsWith("com.fluidframework.leaf")) {
+				leafNodeSchemas.push(builder.leaf(nodeType, ValueSchema.Number));
+			}
+		}
+	}
+	const library = builder.intoLibrary();
+	return { leafNodeSchemas, library };
+}
+export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
+	const tree = state.client.channel as SharedTree;
+	const nodeTypes = getAllowableNodeTypes(state);
+	nodeTypes.push(brand(operation.contents.type));
+	const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
+	const newSchema = createTreeViewSchema(leafNodeSchemas, library);
+	tree.checkout.updateSchema(intoStoredSchema(newSchema));
 }
 
 /**
@@ -110,7 +144,7 @@ function applySequenceFieldEdit(tree: FuzzView, change: FuzzFieldChange): void {
 			assert(parent?.is(nodeSchema), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
 			assert(field !== undefined);
-			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
+			field.insertAt(change.index, cursorForJsonableTreeField(change.content));
 			break;
 		}
 		case "remove": {

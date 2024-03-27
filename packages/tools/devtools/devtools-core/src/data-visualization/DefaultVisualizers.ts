@@ -10,7 +10,7 @@
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
-import { type IDirectory, SharedDirectory, SharedMap, type ISharedMap } from "@fluidframework/map";
+import { type IDirectory, type ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import type {
@@ -23,7 +23,6 @@ import type {
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
-	// MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	SharedTree,
 } from "@fluidframework/tree/internal";
@@ -36,8 +35,8 @@ import {
 	type FluidObjectTreeNode,
 	type FluidObjectValueNode,
 	type FluidUnknownObjectNode,
-	VisualNodeKind,
 	type VisualChildNode,
+	VisualNodeKind,
 	type VisualTreeNode,
 	type Primitive,
 	type VisualValueNode,

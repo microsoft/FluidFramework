@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { IMergeTreeAnnotateMsg } from "./ops.js";
 // eslint-disable-next-line import/no-deprecated
-import { createMap, MapLike, PropertySet } from "./properties.js";
+import { MapLike, PropertySet, createMap } from "./properties.js";
 
 /**
  * @alpha

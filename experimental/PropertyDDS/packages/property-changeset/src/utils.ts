@@ -2,25 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // @ts-ignore
-import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
-import { eachOfSeries, eachSeries, ErrorCallback, series, timesSeries, whilst } from "async";
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
+import { ErrorCallback, eachOfSeries, eachSeries, series, timesSeries, whilst } from "async";
 
 import { copy as cloneDeep } from "fastest-json-copy";
-import isNumber from "lodash/isNumber";
-import isString from "lodash/isString";
-import isEmpty from "lodash/isEmpty";
-import extend from "lodash/extend";
-import each from "lodash/each";
-import isEqual from "lodash/isEqual";
-import find from "lodash/find";
+import each from "lodash/each.js";
+import extend from "lodash/extend.js";
+import find from "lodash/find.js";
+import isEmpty from "lodash/isEmpty.js";
+import isEqual from "lodash/isEqual.js";
+import isNumber from "lodash/isNumber.js";
+import isString from "lodash/isString.js";
 
-import { SerializedChangeSet } from "./changeset";
-import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator";
-import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper";
-import { isReservedKeyword } from "./isReservedKeyword";
-import { PathHelper, PathTree } from "./pathHelper";
-import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes";
+import { SerializedChangeSet } from "./changeset.js";
+import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator.js";
+import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes.js";
+import { ExtractedContext, TypeIdHelper } from "./helpers/typeidHelper.js";
+import { isReservedKeyword } from "./isReservedKeyword.js";
+import { PathHelper, PathTree } from "./pathHelper.js";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
@@ -1831,11 +1832,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * new Map([
-	 *   ['entry', new Map()],
-	 *   ['nested', new Map([
-	 *     ['entry2', new Map()],
-	 *     ['entry3', new Map()]
-	 *   ])]
+	 * ['entry', new Map()],
+	 * ['nested', new Map([
+	 * ['entry2', new Map()],
+	 * ['entry3', new Map()]
+	 * ])]
 	 * ])
 	 * ```
 	 *
@@ -1843,11 +1844,11 @@ export namespace Utils {
 	 *
 	 * ```typescript
 	 * {
-	 *   entry: {},
-	 *   nested: {
-	 *     entry2: {}
-	 *     entry3: {}
-	 *   }
+	 * entry: {},
+	 * nested: {
+	 * entry2: {}
+	 * entry3: {}
+	 * }
 	 * }
 	 * ```
 	 *

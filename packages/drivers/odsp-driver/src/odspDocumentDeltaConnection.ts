@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import {
-	ITelemetryLoggerExt,
-	IFluidErrorBase,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
-import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
+import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import {
 	IClient,
@@ -23,14 +19,18 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
+import {
+	IFluidErrorBase,
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
-import { IOdspSocketError, IGetOpsResponse, IFlushOpsResponse } from "./contracts";
-import { EpochTracker } from "./epochTracker";
-import { errorObjectFromSocketError } from "./odspError";
-import { SocketIOClientStatic } from "./socketModule";
-import { pkgVersion } from "./packageVersion";
+import { IFlushOpsResponse, IGetOpsResponse, IOdspSocketError } from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { errorObjectFromSocketError } from "./odspError.js";
+import { pkgVersion } from "./packageVersion.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -740,7 +740,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		return !this.disposed && this.socket.connected;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]): void {
+	protected override emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected override emitMessages(
+		type: "submitSignal",
+		messages: string[][] | ISentSignalMessage[],
+	): void;
+	protected override emitMessages(type: string, messages: unknown): void {
 		// Only submit the op/signals if we are connected.
 		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
@@ -761,15 +766,13 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		const signal: ISentSignalMessage = {
 			content,
 			targetClientId,
 		};
 
-		// back-compat: the typing for this method and emitMessages is incorrect, will be fixed in a future PR
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-		this.emitMessages("submitSignal", [signal] as any);
+		this.emitMessages("submitSignal", [signal]);
 	}
 
 	/**

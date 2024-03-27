@@ -2,11 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	type IDocumentMessage,
-	type ISequencedDocumentMessage,
-	type ISnapshotTree,
-} from "@fluidframework/protocol-definitions";
+
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	type IAudience,
 	type IContainerContext,
@@ -14,6 +11,14 @@ import {
 } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { type FluidObject, type IRequest, type IResponse } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import {
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type ISnapshotTree,
+} from "@fluidframework/protocol-definitions";
 import {
 	type AttributionInfo,
 	type AttributionKey,
@@ -21,19 +26,15 @@ import {
 	type ITelemetryContext,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-import { addSummarizeResultToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { type IRequest, type IResponse, type FluidObject } from "@fluidframework/core-interfaces";
-import { bufferToString } from "@fluid-internal/client-utils";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { SummaryTreeBuilder, addSummarizeResultToSummary } from "@fluidframework/runtime-utils";
 import {
-	createChildLogger,
-	loggerToMonitoringContext,
 	PerformanceEvent,
 	UsageError,
+	createChildLogger,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { Attributor, type IAttributor, OpStreamAttributor } from "./attributor.js";
-import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders.js";
+import { AttributorSerializer, type Encoder, chain, deltaEncoder } from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
 
 // Summary tree keys

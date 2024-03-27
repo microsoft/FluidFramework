@@ -5,8 +5,8 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ConsensusQueue } from "./consensusQueue.js";
 import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";

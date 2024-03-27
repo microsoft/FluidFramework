@@ -48,26 +48,14 @@ use_old_ClassDeclaration_DirectoryFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICreateInfo": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICreateInfo": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICreateInfo():
-    TypeOnly<old.ICreateInfo>;
-declare function use_current_InterfaceDeclaration_ICreateInfo(
-    use: TypeOnly<current.ICreateInfo>): void;
-use_current_InterfaceDeclaration_ICreateInfo(
-    get_old_InterfaceDeclaration_ICreateInfo());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICreateInfo": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICreateInfo": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICreateInfo():
-    TypeOnly<current.ICreateInfo>;
-declare function use_old_InterfaceDeclaration_ICreateInfo(
-    use: TypeOnly<old.ICreateInfo>): void;
-use_old_InterfaceDeclaration_ICreateInfo(
-    get_current_InterfaceDeclaration_ICreateInfo());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -96,122 +84,62 @@ use_old_InterfaceDeclaration_IDirectory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryClearOperation": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryClearOperation": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectoryClearOperation():
-    TypeOnly<old.IDirectoryClearOperation>;
-declare function use_current_InterfaceDeclaration_IDirectoryClearOperation(
-    use: TypeOnly<current.IDirectoryClearOperation>): void;
-use_current_InterfaceDeclaration_IDirectoryClearOperation(
-    get_old_InterfaceDeclaration_IDirectoryClearOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryClearOperation": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryClearOperation": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectoryClearOperation():
-    TypeOnly<current.IDirectoryClearOperation>;
-declare function use_old_InterfaceDeclaration_IDirectoryClearOperation(
-    use: TypeOnly<old.IDirectoryClearOperation>): void;
-use_old_InterfaceDeclaration_IDirectoryClearOperation(
-    get_current_InterfaceDeclaration_IDirectoryClearOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
-    TypeOnly<old.IDirectoryCreateSubDirectoryOperation>;
-declare function use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
-    use: TypeOnly<current.IDirectoryCreateSubDirectoryOperation>): void;
-use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
-    get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
-    TypeOnly<current.IDirectoryCreateSubDirectoryOperation>;
-declare function use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
-    use: TypeOnly<old.IDirectoryCreateSubDirectoryOperation>): void;
-use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
-    get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryDataObject": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryDataObject": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectoryDataObject():
-    TypeOnly<old.IDirectoryDataObject>;
-declare function use_current_InterfaceDeclaration_IDirectoryDataObject(
-    use: TypeOnly<current.IDirectoryDataObject>): void;
-use_current_InterfaceDeclaration_IDirectoryDataObject(
-    get_old_InterfaceDeclaration_IDirectoryDataObject());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryDataObject": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryDataObject": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectoryDataObject():
-    TypeOnly<current.IDirectoryDataObject>;
-declare function use_old_InterfaceDeclaration_IDirectoryDataObject(
-    use: TypeOnly<old.IDirectoryDataObject>): void;
-use_old_InterfaceDeclaration_IDirectoryDataObject(
-    get_current_InterfaceDeclaration_IDirectoryDataObject());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryDeleteOperation": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectoryDeleteOperation():
-    TypeOnly<old.IDirectoryDeleteOperation>;
-declare function use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
-    use: TypeOnly<current.IDirectoryDeleteOperation>): void;
-use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
-    get_old_InterfaceDeclaration_IDirectoryDeleteOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryDeleteOperation": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectoryDeleteOperation():
-    TypeOnly<current.IDirectoryDeleteOperation>;
-declare function use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
-    use: TypeOnly<old.IDirectoryDeleteOperation>): void;
-use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
-    get_current_InterfaceDeclaration_IDirectoryDeleteOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
-    TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>;
-declare function use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
-    use: TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>): void;
-use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
-    get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
-    TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>;
-declare function use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
-    use: TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>): void;
-use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
-    get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -240,146 +168,74 @@ use_old_InterfaceDeclaration_IDirectoryEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectoryKeyOperation": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IDirectoryKeyOperation():
-    TypeOnly<old.IDirectoryKeyOperation>;
-declare function use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
-    use: TypeOnly<current.IDirectoryKeyOperation>): void;
-use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
-    get_old_TypeAliasDeclaration_IDirectoryKeyOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectoryKeyOperation": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IDirectoryKeyOperation():
-    TypeOnly<current.IDirectoryKeyOperation>;
-declare function use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
-    use: TypeOnly<old.IDirectoryKeyOperation>): void;
-use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
-    get_current_TypeAliasDeclaration_IDirectoryKeyOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryNewStorageFormat": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryNewStorageFormat": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectoryNewStorageFormat():
-    TypeOnly<old.IDirectoryNewStorageFormat>;
-declare function use_current_InterfaceDeclaration_IDirectoryNewStorageFormat(
-    use: TypeOnly<current.IDirectoryNewStorageFormat>): void;
-use_current_InterfaceDeclaration_IDirectoryNewStorageFormat(
-    get_old_InterfaceDeclaration_IDirectoryNewStorageFormat());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectoryNewStorageFormat": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectoryNewStorageFormat": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectoryNewStorageFormat():
-    TypeOnly<current.IDirectoryNewStorageFormat>;
-declare function use_old_InterfaceDeclaration_IDirectoryNewStorageFormat(
-    use: TypeOnly<old.IDirectoryNewStorageFormat>): void;
-use_old_InterfaceDeclaration_IDirectoryNewStorageFormat(
-    get_current_InterfaceDeclaration_IDirectoryNewStorageFormat());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectoryOperation": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectoryOperation": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IDirectoryOperation():
-    TypeOnly<old.IDirectoryOperation>;
-declare function use_current_TypeAliasDeclaration_IDirectoryOperation(
-    use: TypeOnly<current.IDirectoryOperation>): void;
-use_current_TypeAliasDeclaration_IDirectoryOperation(
-    get_old_TypeAliasDeclaration_IDirectoryOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectoryOperation": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectoryOperation": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IDirectoryOperation():
-    TypeOnly<current.IDirectoryOperation>;
-declare function use_old_TypeAliasDeclaration_IDirectoryOperation(
-    use: TypeOnly<old.IDirectoryOperation>): void;
-use_old_TypeAliasDeclaration_IDirectoryOperation(
-    get_current_TypeAliasDeclaration_IDirectoryOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectorySetOperation": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IDirectorySetOperation": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IDirectorySetOperation():
-    TypeOnly<old.IDirectorySetOperation>;
-declare function use_current_InterfaceDeclaration_IDirectorySetOperation(
-    use: TypeOnly<current.IDirectorySetOperation>): void;
-use_current_InterfaceDeclaration_IDirectorySetOperation(
-    get_old_InterfaceDeclaration_IDirectorySetOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDirectorySetOperation": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IDirectorySetOperation": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IDirectorySetOperation():
-    TypeOnly<current.IDirectorySetOperation>;
-declare function use_old_InterfaceDeclaration_IDirectorySetOperation(
-    use: TypeOnly<old.IDirectorySetOperation>): void;
-use_old_InterfaceDeclaration_IDirectorySetOperation(
-    get_current_InterfaceDeclaration_IDirectorySetOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectoryStorageOperation": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IDirectoryStorageOperation():
-    TypeOnly<old.IDirectoryStorageOperation>;
-declare function use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
-    use: TypeOnly<current.IDirectoryStorageOperation>): void;
-use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
-    get_old_TypeAliasDeclaration_IDirectoryStorageOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectoryStorageOperation": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IDirectoryStorageOperation():
-    TypeOnly<current.IDirectoryStorageOperation>;
-declare function use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
-    use: TypeOnly<old.IDirectoryStorageOperation>): void;
-use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
-    get_current_TypeAliasDeclaration_IDirectoryStorageOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectorySubDirectoryOperation": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
-    TypeOnly<old.IDirectorySubDirectoryOperation>;
-declare function use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
-    use: TypeOnly<current.IDirectorySubDirectoryOperation>): void;
-use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
-    get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IDirectorySubDirectoryOperation": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
-    TypeOnly<current.IDirectorySubDirectoryOperation>;
-declare function use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
-    use: TypeOnly<old.IDirectorySubDirectoryOperation>): void;
-use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
-    get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -408,74 +264,38 @@ use_old_InterfaceDeclaration_IDirectoryValueChanged(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ILocalValue": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ILocalValue": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ILocalValue():
-    TypeOnly<old.ILocalValue>;
-declare function use_current_InterfaceDeclaration_ILocalValue(
-    use: TypeOnly<current.ILocalValue>): void;
-use_current_InterfaceDeclaration_ILocalValue(
-    get_old_InterfaceDeclaration_ILocalValue());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ILocalValue": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ILocalValue": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ILocalValue():
-    TypeOnly<current.ILocalValue>;
-declare function use_old_InterfaceDeclaration_ILocalValue(
-    use: TypeOnly<old.ILocalValue>): void;
-use_old_InterfaceDeclaration_ILocalValue(
-    get_current_InterfaceDeclaration_ILocalValue());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializableValue": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISerializableValue": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISerializableValue():
-    TypeOnly<old.ISerializableValue>;
-declare function use_current_InterfaceDeclaration_ISerializableValue(
-    use: TypeOnly<current.ISerializableValue>): void;
-use_current_InterfaceDeclaration_ISerializableValue(
-    get_old_InterfaceDeclaration_ISerializableValue());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializableValue": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISerializableValue": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISerializableValue():
-    TypeOnly<current.ISerializableValue>;
-declare function use_old_InterfaceDeclaration_ISerializableValue(
-    use: TypeOnly<old.ISerializableValue>): void;
-use_old_InterfaceDeclaration_ISerializableValue(
-    get_current_InterfaceDeclaration_ISerializableValue());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializedValue": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedValue": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISerializedValue():
-    TypeOnly<old.ISerializedValue>;
-declare function use_current_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<current.ISerializedValue>): void;
-use_current_InterfaceDeclaration_ISerializedValue(
-    get_old_InterfaceDeclaration_ISerializedValue());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISerializedValue": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISerializedValue": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISerializedValue():
-    TypeOnly<current.ISerializedValue>;
-declare function use_old_InterfaceDeclaration_ISerializedValue(
-    use: TypeOnly<old.ISerializedValue>): void;
-use_old_InterfaceDeclaration_ISerializedValue(
-    get_current_InterfaceDeclaration_ISerializedValue());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -600,26 +420,14 @@ use_old_InterfaceDeclaration_IValueChanged(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_LocalValueMaker": {"forwardCompat": false}
+* "RemovedClassDeclaration_LocalValueMaker": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_LocalValueMaker():
-    TypeOnly<old.LocalValueMaker>;
-declare function use_current_ClassDeclaration_LocalValueMaker(
-    use: TypeOnly<current.LocalValueMaker>): void;
-use_current_ClassDeclaration_LocalValueMaker(
-    get_old_ClassDeclaration_LocalValueMaker());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_LocalValueMaker": {"backCompat": false}
+* "RemovedClassDeclaration_LocalValueMaker": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_LocalValueMaker():
-    TypeOnly<current.LocalValueMaker>;
-declare function use_old_ClassDeclaration_LocalValueMaker(
-    use: TypeOnly<old.LocalValueMaker>): void;
-use_old_ClassDeclaration_LocalValueMaker(
-    get_current_ClassDeclaration_LocalValueMaker());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -648,47 +456,29 @@ use_old_ClassDeclaration_MapFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedDirectory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedDirectory": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_SharedDirectory():
     TypeOnly<old.SharedDirectory>;
-declare function use_current_ClassDeclaration_SharedDirectory(
+declare function use_current_RemovedClassDeclaration_SharedDirectory(
     use: TypeOnly<current.SharedDirectory>): void;
-use_current_ClassDeclaration_SharedDirectory(
+use_current_RemovedClassDeclaration_SharedDirectory(
     get_old_ClassDeclaration_SharedDirectory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedDirectory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedDirectory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedDirectory():
-    TypeOnly<current.SharedDirectory>;
-declare function use_old_ClassDeclaration_SharedDirectory(
-    use: TypeOnly<old.SharedDirectory>): void;
-use_old_ClassDeclaration_SharedDirectory(
-    get_current_ClassDeclaration_SharedDirectory());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedMap": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedMap": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedMap():
-    TypeOnly<old.SharedMap>;
-declare function use_current_ClassDeclaration_SharedMap(
-    use: TypeOnly<current.SharedMap>): void;
-use_current_ClassDeclaration_SharedMap(
-    get_old_ClassDeclaration_SharedMap());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedMap": {"backCompat": false}
+* "RemovedClassDeclaration_SharedMap": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedMap():
-    TypeOnly<current.SharedMap>;
-declare function use_old_ClassDeclaration_SharedMap(
-    use: TypeOnly<old.SharedMap>): void;
-use_old_ClassDeclaration_SharedMap(
-    get_current_ClassDeclaration_SharedMap());

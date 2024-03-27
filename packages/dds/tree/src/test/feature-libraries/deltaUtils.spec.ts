@@ -13,9 +13,9 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import {
-	mapTreeFromCursor,
 	cursorForMapTreeNode,
 	mapRootChanges,
+	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import { deepFreeze } from "../utils.js";

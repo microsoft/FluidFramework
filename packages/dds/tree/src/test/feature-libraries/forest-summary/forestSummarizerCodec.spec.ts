@@ -12,24 +12,24 @@ import {
 	makeFieldBatchCodec,
 } from "../../../feature-libraries/index.js";
 
-import {
-	FieldSet,
-	makeForestSummarizerCodec,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/forest-summary/codec.js";
-import { emptySchema } from "../../cursorTestSuite.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Format, version } from "../../../feature-libraries/forest-summary/format.js";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import { ICodecOptions } from "../../../codec/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
 import {
 	chunkField,
 	defaultChunkPolicy,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeChunk } from "../../../feature-libraries/chunked-forest/index.js";
+import {
+	FieldSet,
+	makeForestSummarizerCodec,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/forest-summary/codec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { Format, version } from "../../../feature-libraries/forest-summary/format.js";
 import { brand } from "../../../util/index.js";
-import { ICodecOptions } from "../../../codec/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
+import { emptySchema } from "../../cursorTestSuite.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
 const fieldBatchCodec = makeFieldBatchCodec(codecOptions);

@@ -2,34 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert, fail } from "assert";
-import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import { createIdCompressor } from "@fluidframework/id-compressor";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import Table from "easy-table";
+import {
+	AllowedUpdateType,
+	FieldKey,
+	JsonableTree,
+	Value,
+	forEachNode,
+	moveToDetachedField,
+	rootFieldKey,
+} from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
-import {
-	AllowedUpdateType,
-	FieldKey,
-	forEachNode,
-	JsonableTree,
-	moveToDetachedField,
-	rootFieldKey,
-	Value,
-} from "../../core/index.js";
-import { SchemaBuilder, leaf } from "../../domains/index.js";
 import { schematizeFlexTree, treeTestFactory } from "../utils.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.

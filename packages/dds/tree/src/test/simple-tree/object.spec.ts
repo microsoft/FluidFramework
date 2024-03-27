@@ -44,11 +44,9 @@ function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEqual'", () => {
 			for (const { schema, initialTree } of testCases) {
-				const proxy = hydrate(schema, initialTree);
-				const real = initialTree;
-
-				it(`deepEqual(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEqual'.");
+				it(`deepEqual(${pretty(initialTree)})`, () => {
+					const proxy = hydrate(schema, initialTree);
+					assert.deepEqual(proxy, initialTree, "Proxy must satisfy 'deepEqual'.");
 				});
 			}
 		});
@@ -203,14 +201,14 @@ function testObjectLike(testCases: TestCase[]) {
 const tcs: TestCase[] = [
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testA");
 			return _.object("empty", {});
 		})(),
 		initialTree: {},
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testB");
 			return _.object("primitives", {
 				boolean: _.boolean,
 				number: _.number,
@@ -225,7 +223,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testC");
 			return _.object("optional", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
@@ -236,7 +234,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testD");
 			return _.object("optional (defined)", {
 				boolean: _.optional(_.boolean),
 				number: _.optional(_.number),
@@ -251,7 +249,7 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testE");
 
 			const inner = _.object("inner", {});
 
@@ -263,28 +261,28 @@ const tcs: TestCase[] = [
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testF");
 			return _.array(_.string);
 		})(),
 		initialTree: [],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testG");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A"],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testH");
 			return _.array(_.string);
 		})(),
 		initialTree: ["A", "B"],
 	},
 	{
 		schema: (() => {
-			const _ = new SchemaFactory("test");
+			const _ = new SchemaFactory("testI");
 			return _.object("special keys", {
 				value: _.number,
 				[""]: _.number,

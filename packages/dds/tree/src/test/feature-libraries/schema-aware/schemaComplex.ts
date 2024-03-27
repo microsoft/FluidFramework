@@ -9,9 +9,9 @@ import { SchemaBuilder } from "../../../domains/index.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	FieldKinds,
-	InsertableFlexNode,
 	FlexFieldSchema,
 	FlexTreeNodeSchema,
+	InsertableFlexNode,
 } from "../../../feature-libraries/index.js";
 import { requireAssignableTo } from "../../../util/index.js";
 

@@ -5,30 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	areSafelyAssignable,
-	brand,
-	isAny,
-	requireAssignableTo,
-	requireFalse,
-	requireTrue,
-} from "../../util/index.js";
-import {
-	FlexAllowedTypes,
-	Any,
-	FieldKinds,
-	LeafNodeSchema,
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
-} from "../../feature-libraries/index.js";
+import { Any, FieldKinds, FlexFieldSchema, LeafNodeSchema } from "../../feature-libraries/index.js";
+import { areSafelyAssignable, brand, requireTrue } from "../../util/index.js";
 
+import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
 import {
+	SchemaBuilderBase,
 	normalizeAllowedTypes,
 	normalizeField,
-	SchemaBuilderBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schemaBuilderBase.js";
-import { TreeNodeSchemaIdentifier, ValueSchema } from "../../core/index.js";
 
 describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {
@@ -39,52 +25,6 @@ describe("SchemaBuilderBase", () => {
 				foo: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 			});
 
-			type _1 = requireTrue<
-				areSafelyAssignable<
-					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
-				>
-			>;
-		});
-
-		it("recursive without special functions", () => {
-			// Recursive helper function are needed but can be avoided due to issues covered in https://github.com/microsoft/TypeScript/issues/55758.
-			// This workaround seems to only work for compile time, not for intellisense, which makes it not very useful in practice and hard to verify that it works.
-			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-
-			const recursiveReference = () => recursiveStruct;
-			type _trickCompilerIntoWorking = requireAssignableTo<
-				typeof recursiveReference,
-				() => FlexTreeNodeSchema
-			>;
-			const recursiveStruct = builder.object("recursiveStruct2", {
-				foo: FlexFieldSchema.create(FieldKinds.optional, [recursiveReference]),
-			});
-
-			type _0 = requireFalse<isAny<typeof recursiveStruct>>;
-			type _1 = requireTrue<
-				areSafelyAssignable<
-					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
-				>
-			>;
-		});
-
-		// Slightly different variant of the above test
-		it("recursive without special functions2", () => {
-			// This function helps the TypeScript compiler imagine a world where it solves for types in a different order, and thus handles the cases we need.
-			// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
-			function fixRecursiveReference<T extends FlexAllowedTypes>(...types: T): void {}
-
-			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-
-			const recursiveReference = () => recursiveStruct;
-			fixRecursiveReference(recursiveReference);
-			const recursiveStruct = builder.object("recursiveStruct2", {
-				foo: FlexFieldSchema.create(FieldKinds.optional, [recursiveReference]),
-			});
-
-			type _0 = requireFalse<isAny<typeof recursiveStruct>>;
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,

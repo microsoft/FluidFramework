@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../base";
@@ -14,7 +15,7 @@ import {
 	packagePublishesToFeed,
 	feeds,
 	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
-} from "@fluidframework/build-tools/dist/repoPolicyCheck/handlers/npmPackages";
+} from "../library/repoPolicyCheck/npmPackages";
 import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
 import { writeFileSync } from "node:fs";
 

@@ -21,18 +21,18 @@
  * @packageDocumentation
  */
 
-export type { AudienceClientMetadata } from "./AudienceMetadata";
-export { MemberChangeKind } from "./AudienceMetadata";
+export type { AudienceClientMetadata } from "./AudienceMetadata.js";
+export { MemberChangeKind } from "./AudienceMetadata.js";
 export type {
 	ContainerKey,
 	FluidObjectId,
 	HasContainerKey,
 	HasFluidObjectId,
-} from "./CommonInterfaces";
-export { EditType } from "./CommonInterfaces";
-export { ContainerStateChangeKind } from "./Container";
-export type { ContainerDevtoolsProps } from "./ContainerDevtools";
-export type { ContainerStateMetadata } from "./ContainerMetadata";
+} from "./CommonInterfaces.js";
+export { EditType } from "./CommonInterfaces.js";
+export { ContainerStateChangeKind } from "./Container.js";
+export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
+export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type {
 	Edit,
 	EditData,
@@ -54,19 +54,19 @@ export type {
 	VisualTreeNode,
 	VisualValueNode,
 	UnknownObjectNode,
-} from "./data-visualization";
-export { VisualNodeKind } from "./data-visualization";
-export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features";
-export type { IFluidDevtools } from "./IFluidDevtools";
-export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger";
-export type { FluidDevtoolsProps } from "./FluidDevtools";
-export { initializeDevtools } from "./FluidDevtools";
+} from "./data-visualization/index.js";
+export { VisualNodeKind } from "./data-visualization/index.js";
+export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Features.js";
+export type { IFluidDevtools } from "./IFluidDevtools.js";
+export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
+export type { FluidDevtoolsProps } from "./FluidDevtools.js";
+export { initializeDevtools } from "./FluidDevtools.js";
 export type {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
 	LogEntry,
 	StateChangeLogEntry,
-} from "./Logs";
+} from "./Logs.js";
 export type {
 	IDevtoolsMessage,
 	IMessageRelay,
@@ -74,7 +74,7 @@ export type {
 	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
-} from "./messaging";
+} from "./messaging/index.js";
 export {
 	AudienceSummary,
 	CloseContainer,
@@ -103,5 +103,5 @@ export {
 	RootDataVisualizations,
 	TelemetryEvent,
 	TelemetryHistory,
-} from "./messaging";
-export type { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
+} from "./messaging/index.js";
+export type { ITimestampedTelemetryEvent } from "./TelemetryMetadata.js";

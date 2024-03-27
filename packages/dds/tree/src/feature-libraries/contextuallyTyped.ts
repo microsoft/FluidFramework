@@ -4,44 +4,44 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail, isReadonlyArray } from "../util/index.js";
 import {
+	CursorLocationType,
 	EmptyKey,
 	FieldKey,
-	Value,
-	MapTree,
 	ITreeCursorSynchronous,
-	isCursor,
+	MapTree,
 	TreeValue,
-	CursorLocationType,
+	Value,
+	isCursor,
 } from "../core/index.js";
+import { fail, isReadonlyArray } from "../util/index.js";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./default-schema/index.js";
-import { FlexFieldKind } from "./modular-schema/index.js";
-import {
-	AllowedTypeSet,
-	FlexAllowedTypes,
-	Any,
-	FlexFieldNodeSchema,
-	FlexTreeSchema,
-	LeafNodeSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexFieldSchema,
-	FlexTreeNodeSchema,
-	allowedTypesSchemaSet,
-} from "./typed-schema/index.js";
+import { TreeDataContext } from "./fieldGenerator.js";
 import { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor.js";
+import { FlexFieldKind } from "./modular-schema/index.js";
+import { Multiplicity } from "./multiplicity.js";
 import {
 	AllowedTypesToFlexInsertableTree,
 	InsertableFlexField,
 	InsertableFlexNode,
 } from "./schema-aware/index.js";
-import { isFluidHandle, allowsValue } from "./valueUtilities.js";
-import { TreeDataContext } from "./fieldGenerator.js";
-import { Multiplicity } from "./multiplicity.js";
+import {
+	AllowedTypeSet,
+	Any,
+	FlexAllowedTypes,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	FlexTreeNodeSchema,
+	FlexTreeSchema,
+	LeafNodeSchema,
+	allowedTypesSchemaSet,
+} from "./typed-schema/index.js";
+import { allowsValue, isFluidHandle } from "./valueUtilities.js";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -53,7 +53,7 @@ import { Multiplicity } from "./multiplicity.js";
  * APIs exposing data in this format should likely further constrain what is allowed.
  * For example guarantee which fields and nodes should be inlined, and that types will be required everywhere.
  *
- * This is from Editable tree one which has been deleted and should no longer be used!
+ * This is from Flex tree one which has been deleted and should no longer be used!
  */
 
 /**
@@ -259,7 +259,7 @@ export interface ContextuallyTypedNodeDataObject {
 	/**
 	 * Fields of this node, indexed by their field keys.
 	 *
-	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
+	 * Allow explicit undefined for compatibility with FlexTree, and type-safety on read.
 	 */
 	// TODO: make sure explicit undefined is actually handled correctly.
 	[key: FieldKey]: ContextuallyTypedFieldData;

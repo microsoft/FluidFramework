@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import Dialog from "@material-ui/core/Dialog";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -10,8 +11,8 @@ import IconButton from "@material-ui/core/IconButton";
 import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
-import { ModalConsumer } from "./ModalManager";
-import { SvgIcon } from "./SVGIcon";
+import { ModalConsumer } from "./ModalManager.js";
+import { SvgIcon } from "./SVGIcon.js";
 
 const useStyles = makeStyles(
 	{

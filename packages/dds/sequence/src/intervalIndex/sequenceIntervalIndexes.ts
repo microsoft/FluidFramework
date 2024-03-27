@@ -4,8 +4,8 @@
  */
 
 import { ISegment } from "@fluidframework/merge-tree";
-import { SequenceInterval } from "../intervals";
-import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
+import { SequenceInterval } from "../intervals/index.js";
+import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 
 /**
  * This namespace contains specialiazations of indexes which support spatial queries

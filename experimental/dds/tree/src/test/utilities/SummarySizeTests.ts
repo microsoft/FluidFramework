@@ -6,13 +6,13 @@
 import { IsoBuffer } from '@fluid-internal/client-utils';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
-import { fail } from '../../Common.js';
-import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
 import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
-import { SharedTree } from '../../SharedTree.js';
-import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
+import { fail } from '../../Common.js';
 import { revert } from '../../HistoryEditFactory.js';
+import { Definition, EditId, SessionId, TraitLabel } from '../../Identifiers.js';
+import { SharedTree } from '../../SharedTree.js';
 import { IdCompressor } from '../../id-compressor/index.js';
+import { ChangeInternal, ChangeNode, Edit, TraitMap } from '../../persisted-types/index.js';
 import { TestTree } from './TestNode.js';
 import {
 	LocalServerSharedTreeTestingComponents,

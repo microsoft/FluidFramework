@@ -8,21 +8,21 @@ import assert from "assert";
 import { EventEmitter } from "@fluid-example/example-utils";
 import { MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import {
-	SequenceEvent,
 	ISegment,
-	ReferencePosition,
 	LocalReferencePosition,
+	ReferencePosition,
+	SequenceEvent,
 } from "@fluidframework/sequence";
 import { FlowDocument } from "../document/index.js";
 import {
-	clamp,
 	Dom,
+	TagName,
+	clamp,
 	done,
 	emptyObject,
 	getSegmentRange,
 	hasTagName,
 	isTextNode,
-	TagName,
 } from "../util/index.js";
 import { extractRef, updateRef } from "../util/localref.js";
 import { debug } from "./debug.js";

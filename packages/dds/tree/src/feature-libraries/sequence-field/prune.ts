@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Changeset } from "./types.js";
 import { MarkListFactory } from "./markListFactory.js";
+import { Changeset } from "./types.js";
 import { withNodeChange } from "./utils.js";
 
 export type NodeChangePruner<TNodeChange> = (change: TNodeChange) => TNodeChange | undefined;

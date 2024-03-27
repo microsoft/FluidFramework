@@ -4,7 +4,7 @@
  */
 
 import { Static, TSchema } from "@sinclair/typebox";
-import { JsonValidator, IJsonCodec, withSchemaValidation } from "../../codec/index.js";
+import { IJsonCodec, JsonValidator, withSchemaValidation } from "../../codec/index.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
 
 /**

@@ -4,9 +4,9 @@
  */
 
 import {
-	SessionSpaceCompressedId,
 	OpSpaceCompressedId,
 	SessionId,
+	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
 import {

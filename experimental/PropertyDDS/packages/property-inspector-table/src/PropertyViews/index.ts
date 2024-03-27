@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BooleanView } from "./Boolean";
-import { EnumView } from "./Enum";
-import { NumberView } from "./Number";
-import { StringView } from "./String";
+import { BooleanView } from "./Boolean.js";
+import { EnumView } from "./Enum.js";
+import { NumberView } from "./Number.js";
+import { StringView } from "./String.js";
 
 export { BooleanView, StringView, NumberView, EnumView };
 

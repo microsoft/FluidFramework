@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 
 import { Attributor, type IAttributor } from "../attributor.js";
 import {
 	AttributorSerializer,
-	chain,
 	type Encoder,
 	type SerializedAttributor,
+	chain,
 } from "../encoders.js";
 import { type InternedStringId } from "../stringInterner.js";
 

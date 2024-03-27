@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 
-import { Deferred } from "@fluidframework/core-utils";
 import {
-	bufferToString,
-	gitHashFile,
 	IsoBuffer,
 	TypedEventEmitter,
+	bufferToString,
+	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
@@ -21,6 +20,7 @@ import {
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
@@ -28,10 +28,10 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	mixinMonitoringContext,
+	LoggingError,
 	MonitoringContext,
 	createChildLogger,
-	LoggingError,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
 

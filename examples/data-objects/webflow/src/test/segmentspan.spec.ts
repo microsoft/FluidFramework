@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { TextSegment } from "@fluidframework/sequence";
 import { ITestObjectProvider, getContainerEntryPointBackCompat } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { FlowDocument } from "../document/index.js";
 import { SegmentSpan } from "../document/segmentspan.js";
 

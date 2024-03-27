@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
+
+import { CollaborativeInput } from "@fluid-example/example-utils";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 

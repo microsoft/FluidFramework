@@ -85,13 +85,9 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     static getFactory(): InkFactory;
     getStroke(key: string): IInkStroke;
     getStrokes(): IInkStroke[];
-    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
     protected onDisconnect(): void;
-    // (undocumented)
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
@@ -110,17 +106,11 @@ export class InkCanvas {
 
 // @internal @sealed
 export class InkFactory implements IChannelFactory {
-    // (undocumented)
     static readonly Attributes: IChannelAttributes;
-    // (undocumented)
     get attributes(): IChannelAttributes;
-    // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedObject;
-    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
-    // (undocumented)
     static Type: string;
-    // (undocumented)
     get type(): string;
 }
 

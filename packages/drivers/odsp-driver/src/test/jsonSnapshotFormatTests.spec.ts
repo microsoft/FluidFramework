@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-import { IOdspSnapshot } from "../contracts";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
+// eslint-disable-next-line unicorn/prefer-node-protocol
+import { strict as assert } from "assert";
+import { IOdspSnapshot } from "../contracts.js";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 
 const snapshotTree: IOdspSnapshot = {
 	id: "bBzkVAgAHAAAA",

@@ -3,19 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-// eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
+import { ISharedMapEvents } from "./interfaces.js";
 import {
-	IMapSetOperation,
-	IMapDeleteOperation,
-	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
-	IMapKeyAddLocalOpMetadata,
 	IMapClearLocalOpMetadata,
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapKeyAddLocalOpMetadata,
+	IMapKeyEditLocalOpMetadata,
+	IMapSetOperation,
+	// eslint-disable-next-line import/no-deprecated
+	ISerializableValue,
+	ISerializedValue,
 } from "./internalInterfaces.js";
 import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 

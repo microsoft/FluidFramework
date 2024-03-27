@@ -2,22 +2,23 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDeltaManager } from "@fluidframework/container-definitions";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	createChildLogger,
-	DataCorruptionError,
-	DataProcessingError,
-	extractSafePropertiesFromMessage,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/core-utils";
+
 import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+	ITelemetryLoggerExt,
+	createChildLogger,
+	extractSafePropertiesFromMessage,
+} from "@fluidframework/telemetry-utils";
 import { DeltaScheduler } from "./deltaScheduler.js";
-import { pkgVersion } from "./packageVersion.js";
 import { IBatchMetadata } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
 
 type IRuntimeMessageMetadata =
 	| undefined

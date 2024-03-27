@@ -4,12 +4,12 @@
  */
 
 import {
-	getTextAndMarkers,
-	MergeTreeDeltaType,
-	TextSegment,
-	ReferenceType,
-	reservedTileLabelsKey,
 	Marker,
+	MergeTreeDeltaType,
+	ReferenceType,
+	TextSegment,
+	getTextAndMarkers,
+	reservedTileLabelsKey,
 } from "@fluidframework/sequence";
 
 import React, { useEffect, useRef } from "react";

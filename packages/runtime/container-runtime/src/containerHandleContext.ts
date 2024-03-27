@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandleContext, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { ContainerRuntime } from "./containerRuntime.js";
 

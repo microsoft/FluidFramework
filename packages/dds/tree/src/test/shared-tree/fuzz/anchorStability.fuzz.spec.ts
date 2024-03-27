@@ -2,38 +2,39 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
+	DDSFuzzHarnessEvents,
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
-	DDSFuzzHarnessEvents,
 } from "@fluid-private/test-dds-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value } from "../../../core/index.js";
-import { TreeContent } from "../../../shared-tree/index.js";
+import { Anchor, UpPath, Value } from "../../../core/index.js";
 import {
 	cursorsFromContextualData,
 	jsonableTreeFromFieldCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries/index.js";
+import { TreeContent } from "../../../shared-tree/index.js";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
 import {
-	makeOpGenerator,
 	EditGeneratorOpWeights,
 	FuzzTestState,
+	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
-	createAnchors,
-	validateAnchors,
-	fuzzNode,
-	fuzzSchema,
-	failureDirectory,
 	RevertibleSharedTreeView,
+	createAnchors,
 	deterministicIdCompressorFactory,
+	failureDirectory,
+	fuzzNode,
+	initialFuzzSchema,
+	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
@@ -43,7 +44,7 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const config = {
-	schema: fuzzSchema,
+	schema: initialFuzzSchema,
 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
 	initialTree: {
@@ -84,6 +85,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -150,6 +152,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -209,9 +212,6 @@ describe("Fuzz - anchor stability", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			// TODO: AB#6664 tracks investigating and resolving.
-			// These seeds encounter issues in delta application (specifically 0x7ce and 0x7cf)
-			skip: [0, 19, 38],
 		});
 	});
 });

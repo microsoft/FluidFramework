@@ -8,7 +8,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { IDataStore } from "@fluidframework/runtime-definitions";
-import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtils.js";
+import { PromiseExecutor, TimeoutWithError, timeoutPromise } from "./timeoutUtils.js";
 
 /**
  * Utility function to wait for the specified Container to be in Connected state.

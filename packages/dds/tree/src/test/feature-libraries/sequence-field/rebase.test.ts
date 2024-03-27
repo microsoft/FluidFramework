@@ -4,27 +4,27 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag } from "../../utils.js";
-import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { ChangeAtomId, RevisionTag, tagChange } from "../../../core/index.js";
-import { TestChange } from "../../testChange.js";
-import { brand } from "../../../util/index.js";
+import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { brand } from "../../../util/index.js";
+import { TestChange } from "../../testChange.js";
+import { mintRevisionTag } from "../../utils.js";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset, cases } from "./testEdits.js";
 import {
-	checkDeltaEquality,
-	rebaseTagged,
-	rebase as rebaseI,
-	shallowCompose,
-	rebaseOverComposition,
-	rebaseOverChanges,
-	describeForBothConfigs,
-	assertChangesetsEqual,
-	withoutTombstones,
-	withOrderingMethod,
 	RebaseConfig,
+	assertChangesetsEqual,
+	checkDeltaEquality,
+	describeForBothConfigs,
+	rebase as rebaseI,
+	rebaseOverChanges,
+	rebaseOverComposition,
+	rebaseTagged,
+	shallowCompose,
+	withOrderingMethod,
+	withoutTombstones,
 } from "./utils.js";
-import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

@@ -4,22 +4,22 @@
  */
 
 import {
-	IJsonCodec,
-	ICodecOptions,
-	ICodecFamily,
-	makeCodecFamily,
 	DiscriminatedUnionDispatcher,
+	ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	makeCodecFamily,
 } from "../codec/index.js";
 import { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
-import { Mutable } from "../util/index.js";
 import {
 	EncodedModularChangeset,
 	ModularChangeset,
 	defaultSchemaPolicy,
 	makeSchemaChangeCodec,
 } from "../feature-libraries/index.js";
-import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+import { Mutable } from "../util/index.js";
 import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
+import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<

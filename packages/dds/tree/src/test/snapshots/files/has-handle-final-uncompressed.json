@@ -18,65 +18,6 @@
                     {
                       "change": [
                         {
-                          "schema": {
-                            "new": {
-                              "version": 1,
-                              "nodes": {
-                                "com.fluidframework.leaf.boolean": {
-                                  "leaf": 2
-                                },
-                                "com.fluidframework.leaf.handle": {
-                                  "leaf": 3
-                                },
-                                "com.fluidframework.leaf.null": {
-                                  "leaf": 4
-                                },
-                                "com.fluidframework.leaf.number": {
-                                  "leaf": 0
-                                },
-                                "com.fluidframework.leaf.string": {
-                                  "leaf": 1
-                                }
-                              },
-                              "root": {
-                                "kind": "Optional",
-                                "types": [
-                                  "com.fluidframework.leaf.handle"
-                                ]
-                              }
-                            },
-                            "old": {
-                              "version": 1,
-                              "nodes": {},
-                              "root": {
-                                "kind": "Forbidden",
-                                "types": []
-                              }
-                            }
-                          }
-                        },
-                        {
-                          "data": {
-                            "maxId": 0,
-                            "changes": [
-                              {
-                                "fieldKey": "rootFieldKey",
-                                "fieldKind": "Optional",
-                                "change": {
-                                  "d": 0
-                                }
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      "revision": 2,
-                      "sequenceNumber": -9007199254740990,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
-                    },
-                    {
-                      "change": [
-                        {
                           "data": {
                             "maxId": 1,
                             "changes": [
@@ -127,7 +68,7 @@
                                       true,
                                       {
                                         "type": "__fluid_handle__",
-                                        "url": "/test/tree"
+                                        "url": "/test/TestSharedTree"
                                       },
                                       []
                                     ]
@@ -139,8 +80,8 @@
                         }
                       ],
                       "revision": 3,
-                      "sequenceNumber": -9007199254740989,
-                      "sessionId": "beefbeef-beef-4000-8000-000000000001"
+                      "sequenceNumber": 4,
+                      "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
                   ],
                   "branches": [],
@@ -223,7 +164,7 @@
                           true,
                           {
                             "type": "__fluid_handle__",
-                            "url": "/test/tree"
+                            "url": "/test/TestSharedTree"
                           },
                           []
                         ]

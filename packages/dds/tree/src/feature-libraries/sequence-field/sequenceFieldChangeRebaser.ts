@@ -5,10 +5,10 @@
 
 import { FieldChangeRebaser } from "../modular-schema/index.js";
 import { compose } from "./compose.js";
-import { Changeset } from "./types.js";
 import { invert } from "./invert.js";
-import { rebase } from "./rebase.js";
 import { prune } from "./prune.js";
+import { rebase } from "./rebase.js";
+import { Changeset } from "./types.js";
 
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
