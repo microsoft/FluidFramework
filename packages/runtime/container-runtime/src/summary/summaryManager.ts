@@ -168,6 +168,10 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
 	private getShouldSummarizeState(): ShouldSummarizeState {
+		if (this.disposed) {
+			return { shouldSummarize: false, stopReason: "parentNotConnected" };
+		}
+
 		// Note that if we're in the Running state, the electedClient may be a summarizer client, so we can't
 		// enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
 		// only transition to Stopping when the electedParentId changes. Stopping the summarizer without
