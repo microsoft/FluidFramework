@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Lazy } from "@fluidframework/core-utils";
 import { fromInternalScheme } from "@fluid-tools/version-tools";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import * as semver from "semver";
-import {
-	CompatKind,
-	compatKind,
-	compatVersions,
-	driver,
-	r11sEndpointName,
-	tenantIndex,
-	reinstall,
-} from "./compatOptions.js";
-import { ensurePackageInstalled } from "./testApi.js";
-import { pkgVersion } from "./packageVersion.js";
 import {
 	baseVersion,
 	baseVersionForMinCompat,
 	codeVersion,
 	testBaseVersion,
 } from "./baseVersion.js";
+import {
+	CompatKind,
+	compatKind,
+	compatVersions,
+	driver,
+	r11sEndpointName,
+	reinstall,
+	tenantIndex,
+} from "./compatOptions.js";
+import { pkgVersion } from "./packageVersion.js";
+import { ensurePackageInstalled } from "./testApi.js";
 import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
 
 /**
