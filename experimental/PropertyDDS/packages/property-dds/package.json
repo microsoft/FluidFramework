@@ -66,7 +66,6 @@
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "fluid-build --task format .",
-		"format:biome": "biome check --apply .",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",

@@ -1,0 +1,144 @@
+{
+	"@fluidframework/map": [
+		{
+			"name": "DirectoryFactory",
+			"kind": "class",
+			"level": "alpha"
+		},
+		{
+			"name": "ICreateInfo",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectory",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryClearOperation",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryCreateSubDirectoryOperation",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryDataObject",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryDeleteOperation",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryDeleteSubDirectoryOperation",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryEvents",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryKeyOperation",
+			"kind": "typealias",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryOperation",
+			"kind": "typealias",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectorySetOperation",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryStorageOperation",
+			"kind": "typealias",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectorySubDirectoryOperation",
+			"kind": "typealias",
+			"level": "alpha"
+		},
+		{
+			"name": "IDirectoryValueChanged",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "ILocalValue",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "ISerializableValue",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "ISerializedValue",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "ISharedDirectory",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "ISharedDirectoryEvents",
+			"kind": "interface",
+			"level": "alpha"
+		},
+		{
+			"name": "ISharedMap",
+			"kind": "interface",
+			"level": "public"
+		},
+		{
+			"name": "ISharedMapEvents",
+			"kind": "interface",
+			"level": "public"
+		},
+		{
+			"name": "IValueChanged",
+			"kind": "interface",
+			"level": "public"
+		},
+		{
+			"name": "LocalValueMaker",
+			"kind": "class",
+			"level": "alpha"
+		},
+		{
+			"name": "MapFactory",
+			"kind": "class",
+			"level": "alpha"
+		},
+		{
+			"name": "SharedDirectory",
+			"kind": "class",
+			"level": "alpha"
+		},
+		{
+			"name": "SharedMap",
+			"kind": "typealias",
+			"level": "public"
+		},
+		{
+			"name": "SharedMap",
+			"kind": "variable",
+			"level": "public"
+		}
+	]
+}
