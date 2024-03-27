@@ -83,7 +83,21 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	public delete(id: string): boolean {
 		this.deferredContexts.delete(id);
 		this.notBoundContexts.delete(id);
+
+		// Stash the context here in case it's requested in this session, we can log some details about it
+		const context = this._contexts.get(id);
+		this._recentlyDeletedContexts.set(id, context);
+
 		return this._contexts.delete(id);
+	}
+
+	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
+		new Map();
+
+	public getRecentlyDeletedContextPath(id: string): string | undefined {
+		// context.packagePath will throw if pkg is undefined - just reach in and get the value
+		const context = this.get(id) as { pkg: readonly string[] | undefined } | undefined;
+		return context?.pkg?.join("/");
 	}
 
 	/**

@@ -887,6 +887,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public async getDataStore(
 		id: string,
 		requestHeaderData: RuntimeHeaderData,
+		requestedNodePath: string,
 	): Promise<IFluidDataStoreContextInternal> {
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		if (
@@ -896,6 +897,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				"Requested",
 				"getDataStore",
 				requestHeaderData,
+				requestedNodePath,
 			)
 		) {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
@@ -946,25 +948,33 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * Checks if the data store has been deleted by GC. If so, log an error.
 	 * @param id - The data store's id.
 	 * @param context - The data store context.
+	 * @param deletedLogSuffix - Whether it was Changed or Requested (will go into the eventName)
 	 * @param callSite - The function name this is called from.
 	 * @param requestHeaderData - The request header information to log if the data store is deleted.
+	 * @param requestedNodePath - The full GC node path of the node being requested (could be a child of the DataStore)
 	 * @returns true if the data store is deleted. Otherwise, returns false.
 	 */
 	private checkAndLogIfDeleted(
 		id: string,
 		context: IFluidDataStoreContext | undefined,
-		deletedLogSuffix: string,
+		deletedLogSuffix: "Changed" | "Requested",
 		callSite: string,
 		requestHeaderData?: RuntimeHeaderData,
+		requestedNodePath?: string,
 	) {
 		const dataStoreNodePath = `/${id}`;
 		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
 			return false;
 		}
 
+		const pkg = this.contexts.getRecentlyDeletedContextPath(id);
+
 		this.mc.logger.sendErrorEvent({
 			eventName: `GC_Deleted_DataStore_${deletedLogSuffix}`,
-			...tagCodeArtifacts({ id }),
+			...tagCodeArtifacts({
+				id: requestedNodePath ?? dataStoreNodePath,
+				pkg,
+			}),
 			callSite,
 			headers: JSON.stringify(requestHeaderData),
 			exists: context !== undefined,
@@ -1360,20 +1370,20 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			headerData.allowTombstone = true;
 		}
 
+		// Normalize the URL to the GC node path format
+		const gcNodePath = `/${trimLeadingAndTrailingSlashes(request.url.split("?")[0])}`;
+
 		await this.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
-		const dataStoreContext = await this.getDataStore(internalId, headerData);
+		const dataStoreContext = await this.getDataStore(internalId, headerData, gcNodePath);
 
-		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
-		// the same as GC nodes id.
-		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
 
 		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
 		// is configured.
 		this.gcNodeUpdated(
-			`/${urlWithoutQuery}`,
+			gcNodePath,
 			"Loaded",
 			undefined /* timestampMs */,
 			details.pkg,
