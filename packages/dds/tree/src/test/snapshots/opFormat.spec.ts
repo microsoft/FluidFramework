@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { type SessionId, createIdCompressor } from "@fluidframework/id-compressor";
 import {
