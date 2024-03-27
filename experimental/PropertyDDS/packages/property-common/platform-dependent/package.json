@@ -16,6 +16,5 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"scripts": {}
+	}
 }

@@ -15,6 +15,5 @@
   "types": "index.d.ts",
   "devDependencies": {
     "jest-environment-puppeteer": "^9.0.2"
-  },
-  "scripts": {}
+  }
 }
