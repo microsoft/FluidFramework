@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces/internal";
+import {
+	IDisposable,
+	ITelemetryBaseProperties,
+	LogLevel,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IAnyDriverError,

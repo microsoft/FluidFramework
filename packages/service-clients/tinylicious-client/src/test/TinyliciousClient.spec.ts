@@ -11,8 +11,8 @@
 
 import { strict as assert } from "node:assert";
 import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
+import {
+	AttachmentTreeEntry,
+	BlobTreeEntry,
+	TreeTreeEntry,
+} from "@fluidframework/driver-utils/internal";
 import { ITree, ITreeEntry, TreeEntry } from "@fluidframework/protocol-definitions";
 
 /** The name of the metadata blob added to the root of the container runtime. */
