@@ -70,7 +70,11 @@ export const after = (
 	baseDir: string,
 	env: Partial<RouteOptions>,
 ) => {
-	const options: RouteOptions = { mode: "local", ...env, ...{ port: server.options.port } };
+	const options: RouteOptions = {
+		mode: "local",
+		...env,
+		...{ port: server.options.port ?? 8080 },
+	};
 	const config: nconf.Provider = nconf
 		.env({ parseValues: true, separator: "__" })
 		.file(path.join(baseDir, "config.json"));

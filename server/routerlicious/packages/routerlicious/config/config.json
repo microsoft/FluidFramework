@@ -279,7 +279,9 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"redisForTenantCache": {
 		"host": "redis",
@@ -290,7 +292,9 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"redis2": {
 		"host": "redis",
@@ -301,7 +305,9 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"redisForThrottling": {
 		"host": "redis",
@@ -312,7 +318,9 @@
 		"maxRetriesPerRequest": 20,
 		"enableAutoPipelining": false,
 		"enableOfflineQueue": true,
-		"enableClustering": false
+		"enableClustering": false,
+		"retryDelayOnMoved": 100,
+		"maxRedirections": 16
 	},
 	"error": {
 		"track": false,

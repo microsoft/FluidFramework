@@ -15,7 +15,7 @@ import { assert } from "@fluidframework/core-utils";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, StaticStorageDocumentServiceFactory } from "@fluidframework/replay-driver";
-import { SnapshotStorageService } from "./snapshotStorageService";
+import { SnapshotStorageService } from "./snapshotStorageService.js";
 
 const metadataBlobName = ".metadata";
 

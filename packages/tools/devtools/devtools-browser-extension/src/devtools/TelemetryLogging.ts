@@ -12,7 +12,7 @@ import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/cor
 import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import { type IChannelConfiguration, type IXHROverride, PostChannel } from "@microsoft/1ds-post-js";
 import { v4 as uuidv4 } from "uuid";
-import { formatDevtoolsScriptMessageForLogging } from "./Logging";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
 
 const extensionVersion = chrome.runtime.getManifest().version;
 

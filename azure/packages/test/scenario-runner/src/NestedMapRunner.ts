@@ -47,7 +47,7 @@ export class NestedMapRunner extends ScenarioRunner<
 	NestedMapRunConfig,
 	string
 > {
-	protected runnerClientFilePath: string = "./dist/nestedMapRunnerClient.js";
+	protected runnerClientFilePath: string = "./lib/nestedMapRunnerClient.js";
 
 	constructor(scenarioConfig: NestedMapRunnerConfig) {
 		super({

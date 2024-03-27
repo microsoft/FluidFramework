@@ -19,10 +19,10 @@ import {
 	ValueProperty,
 } from "@fluid-experimental/property-properties";
 
-import { ComponentMap } from "./componentMap";
-import { PropertyProxyErrors } from "./errors";
-import { NonPrimitiveTypes, ReferenceType } from "./interfaces";
-import { PropertyProxy } from "./propertyProxy";
+import { ComponentMap } from "./componentMap.js";
+import { PropertyProxyErrors } from "./errors.js";
+import { NonPrimitiveTypes, ReferenceType } from "./interfaces.js";
+import { PropertyProxy } from "./propertyProxy.js";
 
 // TODO(marcus): this function should be removed in the future and a safer
 // way to determine the corrent types is useed

@@ -5,11 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import {
-	IForestSubscription,
-	ITreeCursorSynchronous,
-	TreeNodeSchemaIdentifier,
-} from "../core/index.js";
+import { ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../core/index.js";
 import {
 	FieldKinds,
 	FlexAllowedTypes,
@@ -29,8 +25,8 @@ import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 import {
 	InsertableContent,
+	extractFactoryContent,
 	getSimpleSchema,
-	prepareContentForInsert,
 	simpleSchemaSymbol,
 } from "./proxies.js";
 import {
@@ -56,22 +52,19 @@ import { TreeConfiguration } from "./tree.js";
 function cursorFromUnhydratedRoot(
 	schema: FlexTreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
-	forest: IForestSubscription,
 ): ITreeCursorSynchronous {
-	const data = prepareContentForInsert(tree as InsertableContent, forest);
+	const data = extractFactoryContent(tree as InsertableContent);
 	return (
 		cursorFromNodeData(data, schema, schema.rootFieldSchema.allowedTypeSet) ??
 		fail("failed to decode tree")
 	);
 }
 
-export function toFlexConfig(config: TreeConfiguration, forest: IForestSubscription): TreeContent {
+export function toFlexConfig(config: TreeConfiguration): TreeContent {
 	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
-		unhydrated === undefined
-			? undefined
-			: [cursorFromUnhydratedRoot(schema, unhydrated, forest)];
+		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
 	return {
 		schema,
 		initialTree,

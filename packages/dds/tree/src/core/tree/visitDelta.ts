@@ -5,7 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils";
 
+import { NestedMap } from "../../index.js";
+import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+import { ITreeCursorSynchronous } from "./cursor.js";
 import * as Delta from "./delta.js";
 import { ProtoNodes } from "./delta.js";
 import {
@@ -16,6 +19,7 @@ import {
 	offsetDetachId,
 } from "./deltaUtil.js";
 import { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex.js";
+import { Major, Minor } from "./detachedFieldIndexTypes.js";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
 
 /**
@@ -70,8 +74,16 @@ export function visitDelta(
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
+	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
+	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {
+		for (let i = 0; i < trees.length; i += 1) {
+			const offsettedId = minor + i;
+			setInNestedMap(refreshers, major, offsettedId, trees[i]);
+		}
+	});
 	const detachConfig: PassConfig = {
 		func: detachPass,
+		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
 		attachPassRoots,
@@ -84,6 +96,7 @@ export function visitDelta(
 	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
 	const attachConfig: PassConfig = {
 		func: attachPass,
+		refreshers,
 		detachedFieldIndex,
 		detachPassRoots,
 		attachPassRoots,
@@ -289,7 +302,11 @@ export interface DeltaVisitor {
 interface PassConfig {
 	readonly func: Pass;
 	readonly detachedFieldIndex: DetachedFieldIndex;
-
+	/**
+	 * A mapping between forest root id and trees that represent refresher data. Each entry is only
+	 * created in the forest once needed.
+	 */
+	readonly refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous>;
 	/**
 	 * Nested changes on roots that need to be visited as part of the detach pass.
 	 * Each entry is removed when its associated changes are visited.
@@ -359,7 +376,13 @@ function visitNode(
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
-			const root = config.detachedFieldIndex.getEntry(id);
+			let root = config.detachedFieldIndex.tryGetEntry(id);
+			if (root === undefined) {
+				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
+				assert(tree !== undefined, "refresher data not found");
+				buildTrees(id, [tree], config, visitor);
+				root = config.detachedFieldIndex.getEntry(id);
+			}
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
 		}
@@ -396,6 +419,25 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	}
 }
 
+function buildTrees(
+	id: Delta.DetachedNodeId,
+	trees: readonly ITreeCursorSynchronous[],
+	config: PassConfig,
+	visitor: DeltaVisitor,
+) {
+	for (let i = 0; i < trees.length; i += 1) {
+		const offsettedId = offsetDetachId(id, i);
+		let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+		// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
+		// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
+		if (root === undefined) {
+			root = config.detachedFieldIndex.createEntry(offsettedId);
+			const field = config.detachedFieldIndex.toFieldKey(root);
+			visitor.create([trees[i]], field);
+		}
+	}
+}
+
 function processBuilds(
 	builds: readonly Delta.DetachedNodeBuild[] | undefined,
 	config: PassConfig,
@@ -403,17 +445,7 @@ function processBuilds(
 ) {
 	if (builds !== undefined) {
 		for (const { id, trees } of builds) {
-			for (let i = 0; i < trees.length; i += 1) {
-				const offsettedId = offsetDetachId(id, i);
-				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
-				// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
-				// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
-				if (root === undefined) {
-					root = config.detachedFieldIndex.createEntry(offsettedId);
-					const field = config.detachedFieldIndex.toFieldKey(root);
-					visitor.create([trees[i]], field);
-				}
-			}
+			buildTrees(id, trees, config, visitor);
 		}
 	}
 }
@@ -441,7 +473,17 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				for (let i = 0; i < mark.count; i += 1) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const offsetAttachId = offsetDetachId(mark.attach!, i);
-					const sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
+					let sourceRoot = config.detachedFieldIndex.tryGetEntry(offsetAttachId);
+					if (sourceRoot === undefined) {
+						const tree = tryGetFromNestedMap(
+							config.refreshers,
+							offsetAttachId.major,
+							offsetAttachId.minor,
+						);
+						assert(tree !== undefined, "refresher data not found");
+						buildTrees(offsetAttachId, [tree], config, visitor);
+						sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
+					}
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 					const offsetIndex = index + i;
 					if (isReplaceMark(mark)) {

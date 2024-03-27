@@ -3,15 +3,17 @@
  * Licensed under the MIT License.
  */
 
-// Note: this file is written in CJS so that it can be imported by the mocharc as well as other version utils in this folder.
-// If mocha begins to support ESM config files (see https://mochajs.org/#current-limitations),
-// this can be converted back to typescript and moved to the 'src' folder.
-const nconf = require("nconf");
+import nconf from "nconf";
+
+import type {
+	RouterliciousEndpoint,
+	TestDriverTypes,
+} from "@fluidframework/test-driver-definitions";
 
 /**
  * Different kind of compat version config
  */
-const CompatKind = {
+export const CompatKind = {
 	None: "None",
 	Loader: "Loader",
 	NewLoader: "NewLoader",
@@ -31,7 +33,7 @@ const CompatKind = {
 	 * will be use version 2.0 for all layers.
 	 */
 	CrossVersion: "CrossVersion",
-};
+} as const;
 
 /*
  * Parse the command line argument and environment variables. Arguments take precedent over environment variable
@@ -84,7 +86,7 @@ const options = {
 nconf
 	.argv({
 		...options,
-		transform: (obj /* { key: string, value: string } */) => {
+		transform: (obj: { key: string; value: string }) => {
 			if (options[obj.key] !== undefined) {
 				obj.key = `fluid:test:${obj.key}`;
 			}
@@ -101,7 +103,7 @@ nconf
 			"fluid__test__r11sEndpointName",
 			"fluid__test__baseVersion",
 		],
-		transform: (obj /* { key: string, value: string } */) => {
+		transform: (obj: { key: string; value: string }) => {
 			if (!obj.key.startsWith("fluid__test__")) {
 				return obj;
 			}
@@ -126,19 +128,36 @@ nconf
 		},
 	});
 
-const compatKind = nconf.get("fluid:test:compatKind");
-const compatVersions = nconf.get("fluid:test:compatVersion");
-const driver = nconf.get("fluid:test:driver");
-const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName");
-const reinstall = nconf.get("fluid:test:reinstall");
-const tenantIndex = nconf.get("fluid:test:tenantIndex");
+/**
+ * Different kind of compat version config
+ */
 
-module.exports = {
-	CompatKind,
-	compatKind,
-	compatVersions,
-	driver,
-	r11sEndpointName,
-	reinstall,
-	tenantIndex,
-};
+/**
+ * @internal
+ */
+export type CompatKind = keyof typeof CompatKind;
+
+/**
+ * @internal
+ */
+export const compatKind = nconf.get("fluid:test:compatKind") as CompatKind[] | undefined;
+/**
+ * @internal
+ */
+export const compatVersions = nconf.get("fluid:test:compatVersion") as string[] | undefined;
+/**
+ * @internal
+ */
+export const driver = nconf.get("fluid:test:driver") as TestDriverTypes;
+/**
+ * @internal
+ */
+export const r11sEndpointName = nconf.get("fluid:test:r11sEndpointName") as RouterliciousEndpoint;
+/**
+ * @internal
+ */
+export const reinstall = nconf.get("fluid:test:reinstall");
+/**
+ * @internal
+ */
+export const tenantIndex = nconf.get("fluid:test:tenantIndex") as number;

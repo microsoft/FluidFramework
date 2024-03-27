@@ -45,6 +45,7 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
+	getGCVersionInEffect,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
 } from "./gcHelpers.js";

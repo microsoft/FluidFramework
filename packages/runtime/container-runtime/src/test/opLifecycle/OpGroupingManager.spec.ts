@@ -32,7 +32,6 @@ describe("OpGroupingManager", () => {
 	});
 	const createMessage = (opHasMetadata: boolean) => ({
 		metadata: opHasMetadata ? { flag: true } : undefined,
-		localOpMetadata: undefined,
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents: "0",
 		referenceSequenceNumber: 0,
@@ -103,10 +102,8 @@ describe("OpGroupingManager", () => {
 				{
 					contents:
 						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: 0,
-					type: "groupedBatch",
 				},
 			]);
 		});

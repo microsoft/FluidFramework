@@ -47,7 +47,6 @@ export class OpCompressor {
 		// Add empty placeholder messages to reserve the sequence numbers
 		for (const message of batch.content.slice(1)) {
 			messages.push({
-				type: message.type,
 				localOpMetadata: message.localOpMetadata,
 				metadata: message.metadata,
 				referenceSequenceNumber: message.referenceSequenceNumber,

@@ -17,7 +17,6 @@ import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
@@ -70,6 +69,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		ConsensusQueue,
 		SparseMatrix,
 	} = apis.dds;
+	const { DataStoreMessageType } = apis.dataRuntime.packages.datastore;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],

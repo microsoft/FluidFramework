@@ -78,6 +78,14 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 				expireAfterSeconds: redisConfig.keyExpireAfterSeconds as number | undefined,
 			};
 
+			const retryDelays = {
+				retryDelayOnFailover: 100,
+				retryDelayOnClusterDown: 100,
+				retryDelayOnTryAgain: 100,
+				retryDelayOnMoved: redisConfig.retryDelayOnMoved ?? 100,
+				maxRedirections: redisConfig.maxRedirections ?? 16,
+			};
+
 			const redisClientConnectionManagerForTenantCache =
 				customizations?.redisClientConnectionManagerForTenantCache
 					? customizations.redisClientConnectionManagerForTenantCache
@@ -86,6 +94,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 							redisConfig,
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
+							retryDelays,
 					  );
 			cache = new RedisCache(redisClientConnectionManagerForTenantCache, redisParams);
 		}

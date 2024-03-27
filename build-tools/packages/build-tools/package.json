@@ -51,7 +51,7 @@
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.4",
 		"detect-indent": "^6.1.0",
-		"find-up": "^5.0.0",
+		"find-up": "^7.0.0",
 		"fs-extra": "^9.1.0",
 		"glob": "^7.2.3",
 		"ignore": "^5.2.4",
@@ -90,7 +90,7 @@
 	},
 	"pnpm": {
 		"updateConfig": {
-			"ignoreDependencies": ["find-up", "type-fest", "typescript"]
+			"ignoreDependencies": ["type-fest", "typescript"]
 		}
 	}
 }

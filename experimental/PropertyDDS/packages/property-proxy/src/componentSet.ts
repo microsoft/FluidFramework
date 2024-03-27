@@ -9,9 +9,9 @@ import {
 	SetProperty,
 } from "@fluid-experimental/property-properties";
 
-import { PropertyProxyErrors } from "./errors";
-import { PropertyProxy } from "./propertyProxy";
-import { Utilities, forceType } from "./utilities";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyProxy } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * The function returns an iterator for {@link external::SetProperty}.

@@ -9,16 +9,16 @@ import {
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core";
 
-import { browser, window } from "../Globals";
+import { browser, window } from "../Globals.js";
 import {
 	extensionPopupMessageSource,
 	extensionViewMessageSource,
 	relayMessageToPort,
-} from "../messaging";
+} from "../messaging/index.js";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
-} from "./Logging";
+} from "./Logging.js";
 
 type Port = chrome.runtime.Port;
 

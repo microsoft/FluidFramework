@@ -555,6 +555,9 @@ function processOp(
 			case ContainerMessageType.GC: {
 				break;
 			}
+			case ContainerMessageType.DocumentSchemaChange: {
+				break;
+			}
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
@@ -580,8 +583,8 @@ function processOp(
 					opCount = chunk.totalChunks; // 1 op for each chunk.
 					const patchedMessage = Object.create(runtimeMessage);
 					patchedMessage.contents = chunks.join("");
-					patchedMessage.type = chunk.originalType;
-					type = chunk.originalType;
+					type = (chunk as any).originalType;
+					patchedMessage.type = type;
 					totalMsgSize = value.totalSize;
 					chunkMap.delete(patchedMessage.clientId);
 				} else {

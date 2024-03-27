@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBufferedLogger } from "./interfaces";
+import type { ITelemetryBufferedLogger } from "./interfaces.js";
 
 declare global {
 	/**
@@ -12,11 +12,11 @@ declare global {
 	export const getTestLogger: (() => ITelemetryBufferedLogger) | undefined;
 }
 
-export {
+export type {
 	DriverEndpoint,
 	ITelemetryBufferedLogger,
 	ITestDriver,
 	OdspEndpoint,
 	RouterliciousEndpoint,
 	TestDriverTypes,
-} from "./interfaces";
+} from "./interfaces.js";

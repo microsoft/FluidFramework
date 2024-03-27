@@ -41,7 +41,7 @@ stages:
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
           env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: westus2
             azure__fluid__relay__service__endpoint: $(fluid-afr-perf-test-westus2-endpoint)
             azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-westus2-tenantId)
@@ -60,7 +60,7 @@ stages:
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
           env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: westus3
             azure__fluid__relay__service__endpoint: $(fluid-afr-perf-test-westus3-endpoint)
             azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-westus3-tenantId)
@@ -79,7 +79,7 @@ stages:
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
           env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: eastus
             azure__fluid__relay__service__endpoint: $(fluid-afr-perf-test-eastus-endpoint)
             azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-eastus-tenantId)
@@ -98,7 +98,7 @@ stages:
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
           env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: westeurope
             azure__fluid__relay__service__endpoint: $(fluid-afr-perf-test-westeurope-endpoint)
             azure__fluid__relay__service__tenantId: $(fluid-afr-perf-test-westeurope-tenantId)

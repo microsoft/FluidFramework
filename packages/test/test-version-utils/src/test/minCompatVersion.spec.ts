@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { CompatKind } from "../../compatOptions.cjs";
+import { CompatKind } from "../compatOptions.js";
 import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
 import { baseVersionForMinCompat } from "../baseVersion.js";
 

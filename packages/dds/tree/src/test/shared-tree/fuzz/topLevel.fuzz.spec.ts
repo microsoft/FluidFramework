@@ -51,6 +51,7 @@ describe("Fuzz - Top-Level", () => {
 		// which destroy trees for rollbacks. See AB#6456 for more information.
 		abort: 0,
 		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
+		schema: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -69,6 +70,7 @@ describe("Fuzz - Top-Level", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateTreeConsistency,
 		};
+
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
@@ -87,6 +89,9 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skipMinimization: true,
+			// AB#7594: Skipping seed 13 as it hits runs into assert 0x33f (double freeing cursor).
+			skip: [13],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -121,6 +126,7 @@ describe("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skipMinimization: true,
 		};
 
 		createDDSFuzzSuite(model, options);

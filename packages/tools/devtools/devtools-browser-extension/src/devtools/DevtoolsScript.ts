@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { browser } from "../Globals";
-import { formatDevtoolsScriptMessageForLogging } from "./Logging";
+import { browser } from "../Globals.js";
+import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
 
 /**
  * This module is the extension's Devtools Script.

@@ -14,7 +14,7 @@ import {
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,

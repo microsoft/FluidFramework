@@ -150,10 +150,9 @@ export const chunkedOpContentsSchema = {
 	properties: {
 		chunkId: { type: "number" },
 		contents: { type: "string" },
-		originalType: { type: "string" },
 		totalChunks: { type: "number" },
 	},
-	required: ["chunkId", "contents", "originalType", "totalChunks"],
+	required: ["chunkId", "contents", "totalChunks"],
 	additionalProperties: false,
 };
 

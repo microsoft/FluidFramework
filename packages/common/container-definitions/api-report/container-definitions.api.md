@@ -91,7 +91,7 @@ export interface IBatchMessage {
     // (undocumented)
     contents?: string;
     // (undocumented)
-    metadata: Record<string, unknown> | undefined;
+    metadata?: Record<string, unknown>;
     // (undocumented)
     referenceSequenceNumber?: number;
 }

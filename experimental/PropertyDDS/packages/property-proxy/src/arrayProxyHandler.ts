@@ -10,10 +10,10 @@ import {
 	PropertyFactory,
 	ReferenceArrayProperty,
 } from "@fluid-experimental/property-properties";
-import { ComponentArray } from "./componentArray";
-import { PropertyProxyErrors } from "./errors";
-import { PropertyProxy, proxySymbol } from "./propertyProxy";
-import { Utilities, forceType } from "./utilities";
+import { ComponentArray } from "./componentArray.js";
+import { PropertyProxyErrors } from "./errors.js";
+import { PropertyProxy, proxySymbol } from "./propertyProxy.js";
+import { Utilities, forceType } from "./utilities.js";
 
 /**
  * Set the length of the {@link external:ArrayProperty ArrayProperty} referenced by the inputted {@link ComponentArray}.

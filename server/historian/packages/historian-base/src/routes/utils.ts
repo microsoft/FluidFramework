@@ -17,6 +17,7 @@ import {
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
 import {
+	runWithRetry,
 	IStorageNameRetriever,
 	IRevokedTokenChecker,
 	IDocumentManager,
@@ -93,9 +94,37 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 				getLumberBaseProperties(documentId, tenantId),
 			);
 			isEphemeral = isEphemeralContainer;
-			await cache?.set(isEphemeralKey, isEphemeral);
+			runWithRetry(
+				async () => cache?.set(isEphemeralKey, isEphemeral) /* api */,
+				"utils.createGitService.set" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+			).catch((error) => {
+				Lumberjack.error(
+					`Error setting ${isEphemeralKey} in redis`,
+					getLumberBaseProperties(documentId, tenantId),
+					error,
+				);
+			});
 		} else {
-			isEphemeral = await cache?.get(isEphemeralKey);
+			runWithRetry<boolean>(
+				async () => cache?.get(isEphemeralKey) /* api */,
+				"utils.createGitService.get" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				getLumberBaseProperties(documentId, tenantId) /* telemetryProperties */,
+			)
+				.then((value) => {
+					isEphemeral = value;
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						`Error getting ${isEphemeralKey} from redis`,
+						getLumberBaseProperties(documentId, tenantId),
+						error,
+					);
+				});
 			if (typeof isEphemeral !== "boolean") {
 				// If isEphemeral was not in the cache, fetch the value from database
 				try {

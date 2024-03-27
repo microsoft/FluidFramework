@@ -27,7 +27,6 @@ describe("OpCompressor", () => {
 	});
 	const createMessage = (contents: string) => ({
 		metadata: { flag: true },
-		localOpMetadata: undefined,
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents,
 		referenceSequenceNumber: 0,

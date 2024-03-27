@@ -8,7 +8,7 @@ import { DownPath } from "../../../feature-libraries/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
-export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo;
+export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo | SchemaChange;
 
 export interface TreeEdit {
 	type: "edit";
@@ -23,6 +23,11 @@ export interface TransactionBoundary {
 export interface UndoRedo {
 	type: "undoRedo";
 	contents: FuzzUndoRedoType;
+}
+
+export interface SchemaChange {
+	type: "schema";
+	contents: SchemaOp;
 }
 
 export type FuzzFieldChange = FuzzInsert | FuzzRemove | FuzzMove;
@@ -43,10 +48,10 @@ export interface FuzzInsert {
 	 */
 	key: FieldKey;
 	/**
-	 * Index to insert within the field.
+	 * Index to insert at within the field.
 	 */
 	index: number;
-	value: JsonableTree;
+	content: JsonableTree[];
 }
 
 export interface FuzzSet {
@@ -117,6 +122,10 @@ export interface UndoOp {
 
 export interface RedoOp {
 	type: "redo";
+}
+
+export interface SchemaOp {
+	type: string;
 }
 
 /**
