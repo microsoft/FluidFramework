@@ -221,7 +221,7 @@ export interface ITestObjectProvider {
     documentServiceFactory: IDocumentServiceFactory;
     driver: ITestDriver;
     ensureSynchronized(timeoutDuration?: number): Promise<void>;
-    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     logger: EventAndErrorTrackingLogger | undefined;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
@@ -334,7 +334,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     get documentServiceFactory(): IDocumentServiceFactory;
     readonly driver: ITestDriver;
     ensureSynchronized(): Promise<void>;
-    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     get logger(): EventAndErrorTrackingLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
@@ -360,7 +360,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get documentServiceFactory(): IDocumentServiceFactory;
     get driver(): ITestDriver;
     ensureSynchronized(): Promise<void>;
-    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     get logger(): EventAndErrorTrackingLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;

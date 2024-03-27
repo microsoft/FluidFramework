@@ -1547,6 +1547,12 @@ export class Container
 		const supportGetSnapshotApi: boolean =
 			this.mc.config.getBoolean("Fluid.Container.UseLoadingGroupIdForSnapshotFetch") ===
 				true && this.service?.policies?.supportGetSnapshotApi === true;
+
+		// Load the pending local virtualized state
+		if (pendingLocalState?.loadingGroupSnapshots !== undefined) {
+			this.storageAdapter.loadingGroupIds = pendingLocalState?.loadingGroupSnapshots;
+		}
+
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } = await this.serializedStateManager.fetchSnapshot(
 			specifiedVersion,
