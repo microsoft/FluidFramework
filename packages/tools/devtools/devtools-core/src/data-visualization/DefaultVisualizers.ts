@@ -14,6 +14,7 @@ import { type IDirectory, SharedDirectory, SharedMap, type ISharedMap } from "@f
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import type {
+	FieldMapObject,
 	ISharedTree,
 	JsonableTree,
 	SharedTreeContentSnapshot,
@@ -21,6 +22,7 @@ import type {
 } from "@fluidframework/tree/internal";
 import {
 	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 	// MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	SharedTree,
@@ -389,6 +391,19 @@ function allowedTypesHelper(schema: ObjectNodeStoredSchema): string {
 	return `{ ${result} }`;
 }
 
+function allowedTypesMapHelper(
+	fields: FieldMapObject<JsonableTree> | undefined,
+	schema: MapNodeStoredSchema,
+): string {
+	const result = "";
+	console.log(fields);
+	for (const [fieldKey, treeFieldStoredSchema] of Object.entries(schema.mapFields)) {
+		console.log(fieldKey, treeFieldStoredSchema);
+	}
+
+	return result;
+}
+
 function leafNodeStoredSchemaHelper(
 	tree: JsonableTree,
 	schema: LeafNodeStoredSchema,
@@ -444,6 +459,38 @@ function objectNodeStoredSchemaHelper(
 	};
 }
 
+function mapNodeStoredSchemaHelper(
+	tree: JsonableTree,
+	schema: MapNodeStoredSchema,
+	contentSnapshot: SharedTreeContentSnapshot,
+): VisualSharedTreeNode {
+	const treeFields = tree.fields;
+
+	if (treeFields === undefined || Object.keys(treeFields).length === 0) {
+		// TODO: what does this case mean?
+		return {
+			schema: { name: tree.type, allowedTypes: allowedTypesMapHelper(treeFields, schema) },
+			fields: {},
+		};
+	}
+
+	const fields: Record<string | number, VisualSharedTreeNode> = {};
+
+	for (const [fieldKey, childField] of Object.entries(treeFields)) {
+		assert(
+			childField.length === 1,
+			"Non-array schema should not have more than one child field.",
+		); // TODO: Change.
+		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
+		fields[fieldKey] = sharedTreeVisualizer(childField[0], fieldSchema, contentSnapshot);
+	}
+
+	return {
+		schema: { name: tree.type, allowedTypes: allowedTypesMapHelper(treeFields, schema) }, // TODO: dedupe
+		fields,
+	};
+}
+
 /**
  * Main recursive helper function to create the visual representation of the SharedTree.
  * Filters tree nodes based on their schema type.
@@ -457,6 +504,8 @@ function sharedTreeVisualizer(
 		return leafNodeStoredSchemaHelper(tree, schema);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		return objectNodeStoredSchemaHelper(tree, schema, contentSnapshot);
+	} else if (schema instanceof MapNodeStoredSchema) {
+		return mapNodeStoredSchemaHelper(tree, schema, contentSnapshot);
 	} else {
 		throw new TypeError("Unrecognized schema type.");
 	}
