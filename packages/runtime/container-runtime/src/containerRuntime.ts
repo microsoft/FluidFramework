@@ -1924,9 +1924,6 @@ export class ContainerRuntime
 			error,
 		);
 
-		// Connected but Disposed doesn't make sense as a valid state, so ensure Disconnected
-		this.setConnectionState(false);
-
 		if (this.summaryManager !== undefined) {
 			this.summaryManager.dispose();
 		}
