@@ -42,8 +42,7 @@ export async function parseBundleAndExportFile(
 			logger,
 			{ eventName: "ParseBundleAndExportFile" },
 			async () => {
-				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-				const codeLoaderBundle = require(codeLoader);
+				const codeLoaderBundle = await import(codeLoader);
 				if (!isCodeLoaderBundle(codeLoaderBundle)) {
 					const eventName = clientArgsValidationError;
 					const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
