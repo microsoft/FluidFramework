@@ -574,7 +574,7 @@ describe("sharedTreeView", () => {
 		});
 	});
 
-	it("schema edits cause all clients to purge all repair data and all revertibles", () => {
+	it("schema edits do not cause clients to purge repair data or revertibles", () => {
 		const provider = new TestTreeProviderLite(2);
 		const checkout1 = provider.trees[0].checkout;
 		const checkout2 = provider.trees[1].checkout;
@@ -621,16 +621,16 @@ describe("sharedTreeView", () => {
 
 		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
 
-		// The undo stack is not empty because it contains the schema change
-		assert.equal(checkout1Revertibles.undoStack.length, 1);
-		assert.equal(checkout1Revertibles.redoStack.length, 0);
-		assert.deepEqual(checkout1.getRemovedRoots(), []);
+		// The undo stack contains both the removal of A and the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 2);
+		assert.equal(checkout1Revertibles.redoStack.length, 1);
+		assert.deepEqual(checkout1.getRemovedRoots().length, 2);
 
 		provider.processMessages();
 
-		assert.equal(checkout2Revertibles.undoStack.length, 0);
-		assert.equal(checkout2Revertibles.redoStack.length, 0);
-		assert.deepEqual(checkout2.getRemovedRoots(), []);
+		assert.equal(checkout2Revertibles.undoStack.length, 1);
+		assert.equal(checkout2Revertibles.redoStack.length, 1);
+		assert.deepEqual(checkout2.getRemovedRoots().length, 2);
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();
@@ -676,15 +676,7 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		// AB#7256: This test fails because purging repair data upon application of schema changes makes it impossible
-		// to roll back the changes that were before that schema change on the branch being rebased.
-		// This is not a problem when the changes before the schema change are applied once rebased (because the
-		// rollback and reapplication cancel out). This is the scenario covered in the test above.
-		// It is a problem here because the rebased change does not apply due to the presence of a schema change on
-		// the destination branch. Note that the presence of a schema change on the destination branch is not strictly
-		// necessary for the problem to occur. For example, if the rebased change had a constraint, and the rebasing
-		// caused that constraint to become violated, then the same issue would occur.
-		it.skip("over schema changes", () => {
+		it("over schema changes", () => {
 			const provider = new TestTreeProviderLite(1);
 			const checkout1 = provider.trees[0].checkout;
 
@@ -718,7 +710,7 @@ describe("sharedTreeView", () => {
 
 			// All changes on the branch should be dropped
 			validateTreeContent(branch, {
-				schema: jsonSequenceRootSchema,
+				schema: stringSequenceRootSchema,
 				initialTree: ["B", "C"],
 			});
 		});
