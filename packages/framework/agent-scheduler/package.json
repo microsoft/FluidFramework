@@ -129,6 +129,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IAgentScheduler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IProvideAgentScheduler": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

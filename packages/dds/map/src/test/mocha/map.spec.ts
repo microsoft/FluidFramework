@@ -42,9 +42,9 @@ export function createConnectedMap(
 	return map;
 }
 
-function createLocalMap(id: string): ISharedMap {
+function createLocalMap(id: string): SharedMapInternal {
 	const map = SharedMap.getFactory().create(new MockFluidDataStoreRuntime(), id);
-	return map;
+	return map as SharedMapInternal;
 }
 
 class TestSharedMap extends SharedMapInternal {

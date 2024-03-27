@@ -158,8 +158,7 @@
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_ContainerSchema": {
-				"backCompat": false,
-				"forwardCompat": false
+				"backCompat": false
 			},
 			"RemovedTypeAliasDeclaration_LoadableObjectCtor": {
 				"backCompat": false,
@@ -170,24 +169,6 @@
 				"backCompat": false
 			},
 			"TypeAliasDeclaration_InitialObjects": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_LoadableObjectClass": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_LoadableObjectClassRecord": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_LoadableObjectRecord": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IProvideRootDataObject": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IRootDataObject": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

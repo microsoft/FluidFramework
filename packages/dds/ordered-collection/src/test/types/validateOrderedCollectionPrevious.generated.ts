@@ -55,6 +55,7 @@ declare function get_old_ClassDeclaration_ConsensusOrderedCollection():
 declare function use_current_ClassDeclaration_ConsensusOrderedCollection(
     use: TypeOnly<current.ConsensusOrderedCollection>): void;
 use_current_ClassDeclaration_ConsensusOrderedCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusOrderedCollection());
 
 /*
@@ -79,6 +80,7 @@ declare function get_old_ClassDeclaration_ConsensusQueue():
 declare function use_current_ClassDeclaration_ConsensusQueue(
     use: TypeOnly<current.ConsensusQueue>): void;
 use_current_ClassDeclaration_ConsensusQueue(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ConsensusQueue());
 
 /*
@@ -127,6 +129,7 @@ declare function get_old_InterfaceDeclaration_IConsensusOrderedCollection():
 declare function use_current_InterfaceDeclaration_IConsensusOrderedCollection(
     use: TypeOnly<current.IConsensusOrderedCollection>): void;
 use_current_InterfaceDeclaration_IConsensusOrderedCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConsensusOrderedCollection());
 
 /*
@@ -139,6 +142,7 @@ declare function get_current_InterfaceDeclaration_IConsensusOrderedCollection():
 declare function use_old_InterfaceDeclaration_IConsensusOrderedCollection(
     use: TypeOnly<old.IConsensusOrderedCollection>): void;
 use_old_InterfaceDeclaration_IConsensusOrderedCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusOrderedCollection());
 
 /*

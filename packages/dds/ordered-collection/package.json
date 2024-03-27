@@ -165,6 +165,17 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ConsensusOrderedCollection": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_ConsensusQueue": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IConsensusOrderedCollection": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

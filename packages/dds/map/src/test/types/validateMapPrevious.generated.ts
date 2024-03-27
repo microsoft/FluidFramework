@@ -462,12 +462,6 @@ use_old_ClassDeclaration_MapFactory(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedClassDeclaration_SharedDirectory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedDirectory():
-    TypeOnly<old.SharedDirectory>;
-declare function use_current_RemovedClassDeclaration_SharedDirectory(
-    use: TypeOnly<current.SharedDirectory>): void;
-use_current_RemovedClassDeclaration_SharedDirectory(
-    get_old_ClassDeclaration_SharedDirectory());
 
 /*
 * Validate back compat by using current type in place of old type

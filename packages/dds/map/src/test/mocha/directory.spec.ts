@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
+import { type IFluidHandleInternal, toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
 import {
@@ -22,10 +22,10 @@ import {
 	IDirectory,
 	IDirectoryValueChanged,
 	type ISharedDirectory,
-	ISharedMap,
 	SharedDirectory,
 	SharedMap,
 } from "../../index.js";
+import { SharedMap as SharedMapInternal } from "../../map.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 export function createConnectedDirectory(
@@ -43,9 +43,9 @@ export function createConnectedDirectory(
 	return directory;
 }
 
-function createLocalMap(id: string): ISharedMap {
+function createLocalMap(id: string): SharedMapInternal {
 	const factory = SharedMap.getFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMap;
+	return factory.create(new MockFluidDataStoreRuntime(), id) as SharedMapInternal;
 }
 
 async function populate(content: unknown): Promise<ISharedDirectory> {

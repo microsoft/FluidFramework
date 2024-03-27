@@ -194,7 +194,8 @@
 				"forwardCompat": false
 			},
 			"RemovedClassDeclaration_SharedDirectory": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"RemovedInterfaceDeclaration_ICreateInfo": {
 				"forwardCompat": false,
