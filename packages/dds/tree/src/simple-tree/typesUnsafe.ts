@@ -16,6 +16,7 @@ import {
 	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
+	WithType,
 } from "./schemaTypes.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
@@ -40,6 +41,15 @@ export type ObjectFromSchemaRecordUnsafe<
 > = {
 	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+/**
+ * {@link Unenforced} version of {@link TreeObjectNode}.
+ * @beta
+ */
+export type TreeObjectNodeUnsafe<
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	TypeName extends string = string,
+> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
