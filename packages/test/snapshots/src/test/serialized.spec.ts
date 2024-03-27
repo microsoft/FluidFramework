@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import fs from "fs";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader";
 import { SharedCounter } from "@fluidframework/counter";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";

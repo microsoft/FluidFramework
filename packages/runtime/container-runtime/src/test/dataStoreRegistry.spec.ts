@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 

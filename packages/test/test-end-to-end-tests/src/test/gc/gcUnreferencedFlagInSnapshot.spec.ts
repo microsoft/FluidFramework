@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";

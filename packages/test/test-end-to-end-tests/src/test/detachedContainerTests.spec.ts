@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
-	AttachState,
 	IContainer,
 	IRuntime,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
+} from "@fluidframework/container-definitions/internal";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";

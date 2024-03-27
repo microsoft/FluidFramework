@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";

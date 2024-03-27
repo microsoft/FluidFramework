@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
