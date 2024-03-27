@@ -17,7 +17,7 @@ import {
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -28,7 +28,7 @@ import {
 	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 

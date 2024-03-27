@@ -9,7 +9,7 @@ import { SharedString, SharedStringFactory } from "@fluidframework/sequence/inte
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { IBenchmarkParameters, benchmarkAll } from "./DocumentCreator.js";
 
 function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {

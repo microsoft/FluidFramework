@@ -18,7 +18,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";

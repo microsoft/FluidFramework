@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor/internal";
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { SchemaAndPolicy } from "../../feature-libraries/index.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";

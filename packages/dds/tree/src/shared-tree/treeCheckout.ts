@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import { noopValidator } from "../codec/index.js";
 import {
 	Anchor,

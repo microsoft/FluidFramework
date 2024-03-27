@@ -20,7 +20,7 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**

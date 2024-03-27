@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import/no-internal-modules */
 import { createContainerAndExecute, exportFile } from "../exportFile";

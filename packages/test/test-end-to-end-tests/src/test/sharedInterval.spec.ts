@@ -26,7 +26,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const assertSequenceIntervals = (
 	sharedString: SharedString,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { TreeDataObject, factory } from "./reactSharedTreeView.js";
 import { type Inventory, treeConfiguration } from "./schema.js";
 

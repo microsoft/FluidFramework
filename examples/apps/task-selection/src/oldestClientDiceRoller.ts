@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IDiceRoller } from "./interface.js";

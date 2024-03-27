@@ -12,7 +12,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { ISerializableValue, IValueChanged } from "../../interfaces.js";
 import {
 	IMapClearLocalOpMetadata,

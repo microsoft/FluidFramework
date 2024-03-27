@@ -10,8 +10,8 @@ import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureClient } from "./AzureClientFactory.js";
 

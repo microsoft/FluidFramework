@@ -6,7 +6,7 @@
 
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
-import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
+import { TelemetryEventCategory } from '@fluidframework/telemetry-utils/internal';
 
 // @beta
 export interface CategoryFilter {

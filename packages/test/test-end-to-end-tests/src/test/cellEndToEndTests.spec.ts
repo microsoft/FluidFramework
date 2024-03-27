@@ -14,7 +14,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";

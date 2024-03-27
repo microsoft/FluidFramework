@@ -5,8 +5,8 @@
 
 import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { IFluidContainer } from "@fluidframework/fluid-static/internal";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";
 import { IRunConfig, IScenarioConfig, IScenarioRunConfig } from "./interface.js";

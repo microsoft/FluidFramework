@@ -9,7 +9,7 @@ import {
 	NonRetryableError,
 	RateLimiter,
 	ThrottlingError,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	type HostStoragePolicy,
 	ICacheEntry,
@@ -22,7 +22,7 @@ import {
 	OdspErrorTypes,
 	maximumCacheDurationMs,
 	snapshotKey,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
@@ -30,7 +30,7 @@ import {
 	loggerToMonitoringContext,
 	normalizeError,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";

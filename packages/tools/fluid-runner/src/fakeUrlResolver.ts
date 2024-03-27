@@ -9,7 +9,7 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 const fakeId = "FakeUrlResolver";
 const fakeUrl = "https://examplehost.com/FakeUrlResolver/";

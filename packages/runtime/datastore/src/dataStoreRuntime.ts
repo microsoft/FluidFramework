@@ -23,8 +23,8 @@ import {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
+import { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -63,7 +63,7 @@ import {
 	generateHandleContextPath,
 	processAttachMessageGCData,
 	unpackChildNodesUsedRoutes,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataProcessingError,
 	ITelemetryLoggerExt,
@@ -74,7 +74,7 @@ import {
 	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import { FluidObjectHandle } from "./fluidHandle.js";

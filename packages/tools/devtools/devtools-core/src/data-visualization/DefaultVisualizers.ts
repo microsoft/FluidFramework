@@ -9,7 +9,7 @@
  */
 
 import { SharedCell } from "@fluidframework/cell";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	type IDirectory,
 	type ISharedMap,

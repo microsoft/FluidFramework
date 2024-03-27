@@ -5,12 +5,12 @@
 
 import { strict as assert } from "assert";
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import { SharedTree, SharedTreeFactory } from "../../shared-tree/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";

@@ -4,7 +4,7 @@
  */
 
 import path from "path";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
 	OptionalChangeset,

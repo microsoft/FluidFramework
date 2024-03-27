@@ -9,7 +9,7 @@ import {
 	ILocationRedirectionError,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Checks if the error is location redirection error.

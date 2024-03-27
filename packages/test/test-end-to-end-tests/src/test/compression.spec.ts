@@ -25,7 +25,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider) => {

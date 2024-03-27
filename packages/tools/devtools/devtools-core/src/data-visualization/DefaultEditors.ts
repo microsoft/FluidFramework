@@ -8,7 +8,7 @@
  * implementations for our DDSs.
  */
 
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 
 import { SharedCell } from "@fluidframework/cell";

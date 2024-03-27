@@ -6,7 +6,7 @@
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IDetachedBlobStorage } from "./loader.js";
 import type { SnapshotWithBlobs } from "./serializedStateManager.js";

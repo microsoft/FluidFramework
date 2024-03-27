@@ -10,7 +10,7 @@ import {
 	ITelemetryLoggerExt,
 	LoggingError,
 	wrapErrorAndLog,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Warning emitted when requests to storage are being throttled.

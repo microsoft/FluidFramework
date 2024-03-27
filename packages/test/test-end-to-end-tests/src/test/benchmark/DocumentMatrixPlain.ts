@@ -13,7 +13,7 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
@@ -28,13 +28,13 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

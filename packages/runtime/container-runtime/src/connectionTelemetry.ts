@@ -20,7 +20,7 @@ import {
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * We report various latency-related errors when waiting for op roundtrip takes longer than that amout of time.

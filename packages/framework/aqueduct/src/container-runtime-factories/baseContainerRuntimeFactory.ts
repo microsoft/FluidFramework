@@ -15,18 +15,18 @@ import { type FluidObject } from "@fluidframework/core-interfaces/internal";
 import {
 	type RuntimeRequestHandler,
 	buildRuntimeRequestHandler,
-} from "@fluidframework/request-handler";
+} from "@fluidframework/request-handler/internal";
 import {
 	type IFluidDataStoreRegistry,
 	type IProvideFluidDataStoreRegistry,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
+import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 import {
 	DependencyContainer,
 	type IFluidDependencySynthesizer,
 	type IProvideFluidDependencySynthesizer,
-} from "@fluidframework/synthesize";
+} from "@fluidframework/synthesize/internal";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.

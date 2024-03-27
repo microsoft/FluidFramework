@@ -9,7 +9,7 @@ import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureClient } from "./AzureClientFactory.js";
 import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";

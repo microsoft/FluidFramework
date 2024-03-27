@@ -12,7 +12,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	createTestConfigProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * Regression tests for issue where clients loading a container with a write connection (vs the read connection

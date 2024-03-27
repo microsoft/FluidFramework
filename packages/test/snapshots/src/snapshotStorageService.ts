@@ -4,7 +4,7 @@
  */
 
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions/internal";
-import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils/internal";
 import { ISummaryTree, ITree, TreeEntry } from "@fluidframework/protocol-definitions";
 import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver";
 

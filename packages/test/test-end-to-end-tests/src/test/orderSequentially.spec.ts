@@ -19,7 +19,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const stringId = "sharedStringKey";
 const string2Id = "sharedString2Key";

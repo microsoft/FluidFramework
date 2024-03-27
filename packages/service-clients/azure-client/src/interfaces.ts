@@ -7,10 +7,10 @@ import {
 	type IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
+import { type ICompressionStorageConfig } from "@fluidframework/driver-utils/internal";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static/internal";
 import { type IUser } from "@fluidframework/protocol-definitions";
-import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { type ITokenProvider } from "@fluidframework/routerlicious-driver/internal";
 
 /**
  * Props for initializing a new AzureClient instance

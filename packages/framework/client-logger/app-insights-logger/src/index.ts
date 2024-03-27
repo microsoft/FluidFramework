@@ -17,4 +17,4 @@ export {
 	createLogger,
 } from "./fluidAppInsightsLogger.js";
 
-export type { TelemetryEventCategory } from "@fluidframework/telemetry-utils";
+export type { TelemetryEventCategory } from "@fluidframework/telemetry-utils/internal";

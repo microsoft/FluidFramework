@@ -15,7 +15,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
-import { canBeCoalescedByService } from "@fluidframework/driver-utils";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,

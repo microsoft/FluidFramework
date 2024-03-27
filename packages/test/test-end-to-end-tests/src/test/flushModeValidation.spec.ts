@@ -17,7 +17,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 /**
  * This test validates that changing the FlushMode does not hit any validation errors in PendingStateManager.

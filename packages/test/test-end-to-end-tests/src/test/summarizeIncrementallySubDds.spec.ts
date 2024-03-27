@@ -14,7 +14,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	MessageType,
@@ -27,7 +27,7 @@ import {
 	ITelemetryContext,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ITestFluidObject,
@@ -35,7 +35,7 @@ import {
 	TestFluidObjectFactory,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { pkgVersion } from "../packageVersion.js";
 
 // Test DDS factory for the blob dds

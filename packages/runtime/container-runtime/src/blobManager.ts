@@ -30,7 +30,7 @@ import {
 	createResponseError,
 	generateHandleContextPath,
 	responseToException,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	GenericError,
 	LoggingError,
@@ -38,10 +38,10 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import { IBlobMetadata } from "./metadata.js";
 
 /**

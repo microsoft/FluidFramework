@@ -4,7 +4,7 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import { DataObject } from "@fluidframework/aqueduct";
+import { DataObject } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 

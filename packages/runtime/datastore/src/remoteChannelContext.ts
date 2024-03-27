@@ -23,7 +23,7 @@ import {
 	ITelemetryLoggerExt,
 	ThresholdCounter,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelServiceEndpoints,
 	IChannelContext,

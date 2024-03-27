@@ -6,8 +6,8 @@
 
 import { IRequest } from '@fluidframework/core-interfaces/internal';
 import { IResolvedUrl } from '@fluidframework/driver-definitions/internal';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { ITokenProvider } from '@fluidframework/routerlicious-driver/internal';
+import { ITokenResponse } from '@fluidframework/routerlicious-driver/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 

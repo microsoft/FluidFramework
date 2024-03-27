@@ -6,7 +6,7 @@
 import axios from "axios";
 
 import { AzureMember } from "@fluidframework/azure-client/internal";
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver/internal";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for

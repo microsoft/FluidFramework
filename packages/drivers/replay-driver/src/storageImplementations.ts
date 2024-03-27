@@ -14,7 +14,7 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	IClient,
 	ISnapshotTree,
@@ -22,7 +22,7 @@ import {
 	ITree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReadDocumentStorageServiceBase } from "./replayController.js";
 

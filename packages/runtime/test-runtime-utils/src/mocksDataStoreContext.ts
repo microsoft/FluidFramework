@@ -13,10 +13,10 @@ import {
 	IFluidHandle,
 	IFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
+import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,

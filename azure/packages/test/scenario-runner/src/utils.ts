@@ -15,11 +15,11 @@ import {
 } from "@fluidframework/azure-client/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import commander from "commander";
 import { v4 as uuid } from "uuid";
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { AzureClientConnectionConfig, ContainerFactorySchema, IRunConfig } from "./interface.js";
 
 export interface AzureClientConfig {

@@ -5,7 +5,7 @@
 
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type IRequest, type IResponse } from "@fluidframework/core-interfaces/internal";
-import { RequestParser, create404Response } from "@fluidframework/runtime-utils";
+import { RequestParser, create404Response } from "@fluidframework/runtime-utils/internal";
 // eslint-disable-next-line import/no-deprecated
 import { type RuntimeRequestHandler } from "./requestHandlers.js";
 

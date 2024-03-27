@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces/internal";
 import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
 import { IOdspSocketError } from "../../contracts.js";

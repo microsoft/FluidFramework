@@ -16,7 +16,7 @@ import {
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 
 describe("FluidDataStoreRuntime Tests", () => {

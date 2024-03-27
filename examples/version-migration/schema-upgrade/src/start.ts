@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 
 import type { IMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
 import { Migrator, ModelLoader } from "@fluid-example/example-utils";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,

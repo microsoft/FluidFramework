@@ -10,7 +10,7 @@ import {
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { type IPactMap } from "../interfaces.js";
 import { PactMap } from "../pactMap.js";
 import { PactMapFactory } from "../pactMapFactory.js";

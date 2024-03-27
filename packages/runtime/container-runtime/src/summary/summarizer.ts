@@ -13,7 +13,7 @@ import {
 	UsageError,
 	createChildLogger,
 	wrapErrorAndLog,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { ISummaryConfiguration } from "../containerRuntime.js";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";

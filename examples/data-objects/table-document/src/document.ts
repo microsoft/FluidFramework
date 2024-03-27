@@ -9,7 +9,7 @@ import {
 	positionToRowCol,
 	rowColToPosition,
 } from "@fluid-experimental/sequence-deprecated";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {

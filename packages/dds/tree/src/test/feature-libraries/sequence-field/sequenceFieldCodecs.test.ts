@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor/internal";
 import { ChangeEncodingContext } from "../../../core/index.js";
 import { SequenceField as SF } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules

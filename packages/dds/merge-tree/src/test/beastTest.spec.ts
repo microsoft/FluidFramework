@@ -14,7 +14,7 @@ import path from "path";
 import { Trace } from "@fluid-internal/client-utils";
 import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import JsDiff from "diff";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {

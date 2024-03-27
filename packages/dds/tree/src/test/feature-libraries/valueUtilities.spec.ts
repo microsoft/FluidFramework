@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { ValueSchema } from "../../core/index.js";
 
 import {

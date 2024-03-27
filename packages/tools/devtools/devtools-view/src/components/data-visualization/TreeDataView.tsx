@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import { type HasContainerKey, VisualNodeKind } from "@fluidframework/devtools-core";
+import { type HasContainerKey, VisualNodeKind } from "@fluidframework/devtools-core/internal";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { FluidHandleView } from "./FluidHandleView.js";

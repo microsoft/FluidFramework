@@ -14,7 +14,7 @@ import {
 	RootDataVisualizations,
 	type RootHandleNode,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { Waiting } from "./Waiting.js";

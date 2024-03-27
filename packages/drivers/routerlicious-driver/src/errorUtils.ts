@@ -13,8 +13,8 @@ import {
 	GenericNetworkError,
 	NonRetryableError,
 	createGenericNetworkError,
-} from "@fluidframework/driver-utils";
-import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/driver-utils/internal";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**

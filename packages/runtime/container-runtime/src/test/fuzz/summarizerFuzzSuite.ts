@@ -20,7 +20,7 @@ import {
 	makeRandom,
 	performFuzzActionsAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
 	IMockContainerRuntimeForSummarizerOptions,

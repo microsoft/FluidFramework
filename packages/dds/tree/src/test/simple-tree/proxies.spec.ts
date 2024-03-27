@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
 // eslint-disable-next-line import/no-internal-modules

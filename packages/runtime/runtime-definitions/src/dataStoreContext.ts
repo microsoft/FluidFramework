@@ -20,7 +20,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	IClientDetails,
 	IDocumentMessage,

@@ -15,8 +15,8 @@ import {
 	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";

@@ -17,7 +17,7 @@ import {
 	ITelemetryLoggerExt,
 	MockLogger,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs } from "../contracts.js";

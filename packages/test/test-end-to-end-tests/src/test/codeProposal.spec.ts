@@ -21,7 +21,7 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;

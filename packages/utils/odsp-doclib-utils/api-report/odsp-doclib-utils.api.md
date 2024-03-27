@@ -4,12 +4,12 @@
 
 ```ts
 
-import { DriverErrorTelemetryProps } from '@fluidframework/driver-utils';
-import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { IOdspErrorAugmentations } from '@fluidframework/odsp-driver-definitions';
+import { DriverErrorTelemetryProps } from '@fluidframework/driver-utils/internal';
+import { IFluidErrorBase } from '@fluidframework/telemetry-utils/internal';
+import { IOdspErrorAugmentations } from '@fluidframework/odsp-driver-definitions/internal';
 import type { ITelemetryBaseProperties } from '@fluidframework/core-interfaces/internal';
-import { LoggingError } from '@fluidframework/telemetry-utils';
-import { OdspError } from '@fluidframework/odsp-driver-definitions';
+import { LoggingError } from '@fluidframework/telemetry-utils/internal';
+import { OdspError } from '@fluidframework/odsp-driver-definitions/internal';
 
 // @internal
 export function authRequestWithRetry(authRequestInfo: IOdspAuthRequestInfo, requestCallback: (config: RequestInit) => Promise<Response>): Promise<Response>;

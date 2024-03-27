@@ -12,7 +12,7 @@ import {
 	gcTombstoneBlobKey,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 import { IRefreshSummaryResult } from "../summary/index.js";
 import { GCVersion, IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";

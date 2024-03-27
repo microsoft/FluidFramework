@@ -32,7 +32,7 @@ import {
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP

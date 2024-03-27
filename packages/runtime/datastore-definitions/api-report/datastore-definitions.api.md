@@ -17,7 +17,7 @@ import type { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import type { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import type { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import type { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressor } from '@fluidframework/id-compressor/internal';
 import type { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
 import type { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';

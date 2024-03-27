@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils/internal";
 import { IBlob, ITree } from "@fluidframework/protocol-definitions";
 import {
 	ISnapshotNormalizerConfig,

@@ -10,7 +10,7 @@ import {
 	type IChannelStorageService,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {

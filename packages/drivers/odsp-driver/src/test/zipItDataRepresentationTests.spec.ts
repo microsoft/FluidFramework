@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { ReadBuffer } from "../ReadBufferUtils.js";
 import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
 import {

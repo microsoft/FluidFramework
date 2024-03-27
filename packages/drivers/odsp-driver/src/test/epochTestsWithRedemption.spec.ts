@@ -10,8 +10,8 @@ import {
 	IOdspResolvedUrl,
 	OdspErrorTypes,
 	snapshotKey,
-} from "@fluidframework/odsp-driver-definitions";
-import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { type IFluidErrorBase, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { EpochTrackerWithRedemption } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";

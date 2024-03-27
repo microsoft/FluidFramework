@@ -18,7 +18,7 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { ReferenceType, SharedString, reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import { EditorView } from "prosemirror-view";
 

@@ -10,14 +10,14 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	AttributionKey,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";

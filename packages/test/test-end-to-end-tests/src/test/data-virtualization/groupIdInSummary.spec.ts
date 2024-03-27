@@ -18,7 +18,7 @@ import {
 	createSummarizerFromFactory,
 	createTestConfigProvider,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 

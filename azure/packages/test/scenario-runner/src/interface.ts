@@ -5,7 +5,7 @@
 
 import { AzureClient } from "@fluidframework/azure-client/internal";
 import { IEvent, IEventProvider } from "@fluidframework/core-interfaces/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { CommanderStatic } from "commander";
 
 export enum RunnerStatus {

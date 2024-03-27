@@ -26,7 +26,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 const map1Id = "map1Key";
 const map2Id = "map2Key";
 

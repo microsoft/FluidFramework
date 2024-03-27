@@ -10,7 +10,7 @@ import {
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;

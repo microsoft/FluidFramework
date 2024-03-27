@@ -43,9 +43,9 @@ import {
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -56,7 +56,7 @@ import {
 	TestObjectProvider,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 

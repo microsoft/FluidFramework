@@ -10,17 +10,17 @@ import type { SharedCell } from "@fluidframework/cell";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
-import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
+import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	ISummaryTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
@@ -31,7 +31,7 @@ import {
 	TestFluidObject,
 	TestFluidObjectFactory,
 	createDocumentId,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";

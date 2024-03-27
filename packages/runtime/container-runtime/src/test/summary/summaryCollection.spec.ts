@@ -10,8 +10,8 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import { ISummaryOpMessage, SummaryCollection } from "../../summary/index.js";
 
 const summaryOp: ISummaryOpMessage = {

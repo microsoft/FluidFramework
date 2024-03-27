@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { describeStress } from "@fluid-private/stochastic-test-utils";
-import { SessionId } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor/internal";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../../../core/index.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SessionId } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { SessionId } from "@fluidframework/id-compressor/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import/no-internal-modules -- test import
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";

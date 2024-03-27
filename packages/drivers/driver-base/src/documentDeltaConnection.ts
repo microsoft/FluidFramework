@@ -10,7 +10,7 @@ import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils";
+import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -31,7 +31,7 @@ import {
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";

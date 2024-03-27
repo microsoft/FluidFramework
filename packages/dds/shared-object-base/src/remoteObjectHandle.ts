@@ -11,7 +11,7 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { responseToException } from "@fluidframework/runtime-utils";
+import { responseToException } from "@fluidframework/runtime-utils/internal";
 
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized

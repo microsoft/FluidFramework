@@ -25,7 +25,7 @@ import {
 	reservedRangeLabelsKey,
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	SequencePlace,
 	Side,

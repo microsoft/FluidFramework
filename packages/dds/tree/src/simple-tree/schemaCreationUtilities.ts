@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { EmptyObject } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
 import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";

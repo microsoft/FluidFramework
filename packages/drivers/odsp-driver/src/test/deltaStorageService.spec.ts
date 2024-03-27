@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { IDeltasFetchResult } from "@fluidframework/driver-definitions/internal";
-import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";

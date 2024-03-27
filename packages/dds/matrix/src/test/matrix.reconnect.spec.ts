@@ -8,7 +8,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { SharedMatrix } from "../matrix.js";
 import { extract } from "./utils.js";
 

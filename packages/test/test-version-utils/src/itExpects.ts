@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils";
+import { getUnexpectedLogErrorException, TestObjectProvider } from "@fluidframework/test-utils/internal";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { createChildLogger, type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils";
+import { createChildLogger, type ITelemetryGenericEventExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * @internal

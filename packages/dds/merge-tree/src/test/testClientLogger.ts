@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions } from "../index.js";
 import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";

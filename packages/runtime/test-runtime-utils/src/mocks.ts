@@ -14,8 +14,8 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -42,7 +42,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions/internal";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";

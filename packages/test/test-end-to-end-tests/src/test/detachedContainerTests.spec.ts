@@ -21,11 +21,11 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-de
 import type { ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree/internal";
-import type { ConsensusQueue } from "@fluidframework/ordered-collection";
-import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
+import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
+import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -39,7 +39,7 @@ import {
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const detachedContainerRefSeqNumber = 0;

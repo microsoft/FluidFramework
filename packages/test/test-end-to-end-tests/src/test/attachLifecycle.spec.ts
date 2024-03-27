@@ -18,7 +18,7 @@ import {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;

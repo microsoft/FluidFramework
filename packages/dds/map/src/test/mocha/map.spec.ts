@@ -13,7 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import {
 	IMapClearLocalOpMetadata,

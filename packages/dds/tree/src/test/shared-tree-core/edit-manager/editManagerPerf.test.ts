@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SessionId } from "@fluidframework/id-compressor";
+import { SessionId } from "@fluidframework/id-compressor/internal";
 import { TaggedChange } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {

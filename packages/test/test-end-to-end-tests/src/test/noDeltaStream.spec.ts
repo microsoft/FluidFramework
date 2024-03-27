@@ -15,7 +15,7 @@ import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestFluidObject,
@@ -23,7 +23,7 @@ import {
 	createLoader,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({

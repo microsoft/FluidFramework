@@ -19,7 +19,7 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelServiceEndpoints,
 	IChannelContext,

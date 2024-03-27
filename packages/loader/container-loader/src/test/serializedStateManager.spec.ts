@@ -20,7 +20,7 @@ import {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<

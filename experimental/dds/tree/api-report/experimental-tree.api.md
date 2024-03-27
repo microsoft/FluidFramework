@@ -4,7 +4,7 @@
 
 ```ts
 
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils/internal";
 import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
 import { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
@@ -24,7 +24,7 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/inter
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces/internal";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { ITree } from "@fluidframework/tree/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { TypedEventEmitter } from '@fluid-internal/client-utils';

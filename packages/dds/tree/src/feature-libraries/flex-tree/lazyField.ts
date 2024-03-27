@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { StableId } from "@fluidframework/id-compressor";
+import { StableId } from "@fluidframework/id-compressor/internal";
 import {
 	CursorLocationType,
 	FieldAnchor,

@@ -48,7 +48,7 @@ For example, when using the `AzureClient` API you would do something like this (
 to `initializeDevtools()` _and_ to `new AzureClient()`):
 
 ```typescript
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
 
 // Instantiate the logger
 const devtoolsLogger = createDevtoolsLogger();
@@ -89,7 +89,7 @@ at the same time, you can pass an existing logger to the `DevtoolsLogger` constr
 it receives to that logger as well:
 
 ```typescript
-import { createDevtoolsLogger } from "@fluidframework/devtools";
+import { createDevtoolsLogger } from "@fluidframework/devtools/internal";
 
 // Your application's logger
 const yourApplicationLogger = getInstanceOfYourApplicationLogger();

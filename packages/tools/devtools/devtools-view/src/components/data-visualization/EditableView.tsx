@@ -22,7 +22,7 @@ import {
 	EditType,
 	type FluidObjectValueNode,
 	type HasContainerKey,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 import { type Serializable } from "@fluidframework/datastore-definitions/internal";
 import { useMessageRelay } from "../../MessageRelayContext.js";

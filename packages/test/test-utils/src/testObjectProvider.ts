@@ -29,7 +29,7 @@ import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";

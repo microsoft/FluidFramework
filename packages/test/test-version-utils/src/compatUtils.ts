@@ -26,7 +26,7 @@ import {
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
 import {

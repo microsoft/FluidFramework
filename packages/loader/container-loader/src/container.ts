@@ -52,7 +52,7 @@ import {
 	isOnline,
 	readAndParse,
 	runWithRetry,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
 	IClient,
@@ -89,7 +89,7 @@ import {
 	normalizeError,
 	raiseConnectedEvent,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";

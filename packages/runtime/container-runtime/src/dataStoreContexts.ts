@@ -5,7 +5,7 @@
 
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
 /** @internal */

@@ -10,9 +10,9 @@ import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces/intern
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import { getRetryDelayFromError } from "@fluidframework/driver-utils";
+import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	DriverEndpoint,
 	ITestDriver,

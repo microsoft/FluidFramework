@@ -25,7 +25,7 @@ export type {
 	IAzureAudience,
 } from "./interfaces.js";
 
-export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver/internal";
 export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";
 export { ScopeType } from "@fluidframework/protocol-definitions";
 

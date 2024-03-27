@@ -7,7 +7,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { SerializedAttributionCollection } from "./attributionCollection.js";
 import { IJSONSegment } from "./ops.js";
 import { PropertySet } from "./properties.js";

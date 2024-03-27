@@ -25,8 +25,8 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,

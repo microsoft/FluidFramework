@@ -4,7 +4,7 @@
  */
 
 import { ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
-import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 

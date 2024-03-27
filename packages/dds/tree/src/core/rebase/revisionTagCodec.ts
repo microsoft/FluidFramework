@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { IIdCompressor, SessionId } from "@fluidframework/id-compressor/internal";
 import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext } from "../change-family/index.js";
 import { EncodedRevisionTag, RevisionTag } from "./types.js";

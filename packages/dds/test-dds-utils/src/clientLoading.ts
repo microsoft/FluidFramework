@@ -4,12 +4,12 @@
  */
 
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { SerializedIdCompressorWithNoSession } from "@fluidframework/id-compressor";
+import type { SerializedIdCompressorWithNoSession } from "@fluidframework/id-compressor/internal";
 import type { ISummaryTree } from "@fluidframework/protocol-definitions";
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 /**
  * @internal

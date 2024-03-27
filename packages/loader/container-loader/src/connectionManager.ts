@@ -26,7 +26,7 @@ import {
 	getRetryDelayFromError,
 	isRuntimeMessage,
 	logNetworkFailure,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	ConnectionMode,
 	IClient,
@@ -50,7 +50,7 @@ import {
 	formatTick,
 	isFluidError,
 	normalizeError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,

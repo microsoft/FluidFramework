@@ -14,7 +14,7 @@ import {
 	createSummarizer,
 	createTestConfigProvider,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat(
 	"Summarizer closes instead of refreshing",

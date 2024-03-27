@@ -16,7 +16,7 @@ import {
 	take,
 } from '@fluid-private/stochastic-test-utils';
 import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { expect } from 'chai';
 import { fail } from '../Common.js';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';

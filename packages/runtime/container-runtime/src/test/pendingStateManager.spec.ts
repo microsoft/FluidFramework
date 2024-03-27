@@ -11,7 +11,7 @@ import {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-import { isILoggingError } from "@fluidframework/telemetry-utils";
+import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	RecentlyAddedContainerRuntimeMessageDetails,

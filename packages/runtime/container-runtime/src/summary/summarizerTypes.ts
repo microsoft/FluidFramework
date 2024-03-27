@@ -11,7 +11,7 @@ import {
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils/internal";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
 import { SummarizeReason } from "./summaryGenerator.js";

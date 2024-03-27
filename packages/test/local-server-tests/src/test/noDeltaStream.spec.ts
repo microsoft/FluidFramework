@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	createLocalResolverCreateNewRequest,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ILocalDeltaConnectionServer,
@@ -25,7 +25,7 @@ import {
 	TestFluidObjectFactory,
 	createAndAttachContainer,
 	createLoader,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";

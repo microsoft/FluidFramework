@@ -8,7 +8,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions/inte
 import {
 	blobHeadersBlobName as blobNameForBlobHeaders,
 	readAndParse,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,

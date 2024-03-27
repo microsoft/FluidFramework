@@ -10,8 +10,8 @@ import {
 	ICacheEntry,
 	IOdspResolvedUrl,
 	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+} from "@fluidframework/odsp-driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	HostStoragePolicyInternal,
 	IOdspSnapshot,

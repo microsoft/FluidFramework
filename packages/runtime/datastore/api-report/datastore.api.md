@@ -19,7 +19,7 @@ import { IFluidDataStoreRuntimeEvents } from '@fluidframework/datastore-definiti
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/internal';
-import { IIdCompressor } from '@fluidframework/id-compressor';
+import { IIdCompressor } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions/internal';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces/internal';
@@ -27,7 +27,7 @@ import { IResponse } from '@fluidframework/core-interfaces/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { VisibilityState } from '@fluidframework/runtime-definitions/internal';
 

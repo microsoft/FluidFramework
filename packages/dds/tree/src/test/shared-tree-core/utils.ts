@@ -4,7 +4,7 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { ICodecOptions } from "../../codec/index.js";
 import { TreeStoredSchemaRepository, TreeStoredSchemaSubscription } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";

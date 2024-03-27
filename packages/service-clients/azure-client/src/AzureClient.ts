@@ -13,7 +13,7 @@ import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { applyStorageCompression } from "@fluidframework/driver-utils";
+import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
 import {
 	type ContainerSchema,
 	type IFluidContainer,
@@ -23,11 +23,11 @@ import {
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
-import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import {

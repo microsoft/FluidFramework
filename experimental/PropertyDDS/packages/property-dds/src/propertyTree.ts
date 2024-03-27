@@ -22,7 +22,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 
 import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import {

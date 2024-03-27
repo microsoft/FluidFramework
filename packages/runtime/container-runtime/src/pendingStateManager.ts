@@ -9,7 +9,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions/i
 import { IDisposable } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
 import { IBatchMetadata } from "./metadata.js";

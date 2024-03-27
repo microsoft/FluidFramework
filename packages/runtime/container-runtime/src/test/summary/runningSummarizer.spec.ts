@@ -13,7 +13,7 @@ import {
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -23,8 +23,8 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {

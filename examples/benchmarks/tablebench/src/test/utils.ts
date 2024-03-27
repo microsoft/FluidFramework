@@ -6,12 +6,12 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IChannel, IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 
 export function create(factory: IChannelFactory) {
 	const runtimeFactory = new MockContainerRuntimeFactory();

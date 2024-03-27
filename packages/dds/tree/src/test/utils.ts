@@ -14,12 +14,12 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -31,7 +31,7 @@ import {
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";

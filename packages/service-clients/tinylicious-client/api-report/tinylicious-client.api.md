@@ -10,7 +10,7 @@ import { IMember } from '@fluidframework/fluid-static/internal';
 import { IServiceAudience } from '@fluidframework/fluid-static/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
+import { ITokenProvider } from '@fluidframework/routerlicious-driver/internal';
 import { IUser } from '@fluidframework/protocol-definitions';
 
 export { ITelemetryBaseEvent }

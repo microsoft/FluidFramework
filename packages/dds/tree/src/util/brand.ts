@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { Covariant, isAny } from "./typeCheck.js";
 import type { Assume } from "./typeUtils.js";
 

@@ -7,8 +7,8 @@ import { AzureClient } from "@fluidframework/azure-client/internal";
 import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { ScenarioRunner } from "./ScenarioRunner.js";

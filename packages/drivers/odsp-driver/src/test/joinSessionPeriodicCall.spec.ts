@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
+import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, SinonStub, stub, useFakeTimers } from "sinon";
 import { OdspFluidDataStoreLocator } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";

@@ -4,11 +4,11 @@
 
 ```ts
 
-import { AsyncFluidObjectProvider } from '@fluidframework/synthesize';
+import { AsyncFluidObjectProvider } from '@fluidframework/synthesize/internal';
 import { ContainerRuntime } from '@fluidframework/container-runtime/internal';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore/internal';
 import { FluidObject } from '@fluidframework/core-interfaces/internal';
-import { FluidObjectSymbolProvider } from '@fluidframework/synthesize';
+import { FluidObjectSymbolProvider } from '@fluidframework/synthesize/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
 import { IContainerContext } from '@fluidframework/container-definitions/internal';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions/internal';
@@ -22,7 +22,7 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions/internal';
-import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
+import { IFluidDependencySynthesizer } from '@fluidframework/synthesize/internal';
 import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions/internal';
@@ -32,8 +32,8 @@ import { IResponse } from '@fluidframework/core-interfaces/internal';
 import { ISharedDirectory } from '@fluidframework/map/internal';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions/internal';
 import { NamedFluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions/internal';
-import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils';
-import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { RuntimeFactoryHelper } from '@fluidframework/runtime-utils/internal';
+import { RuntimeRequestHandler } from '@fluidframework/request-handler/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @alpha

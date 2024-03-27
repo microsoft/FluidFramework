@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, type FieldKey, type MapTree } from "../core/index.js";
 // Drilling into `domains` to reduce the magnitude of cycles introduced here

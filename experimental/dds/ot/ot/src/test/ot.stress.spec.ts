@@ -10,7 +10,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { Random } from "best-random";
 import { SharedDelta } from "./delta.js";
 

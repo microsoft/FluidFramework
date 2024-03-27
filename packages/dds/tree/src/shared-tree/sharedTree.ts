@@ -11,7 +11,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { ICodecOptions, noopValidator } from "../codec/index.js";
 import {
 	JsonableTree,

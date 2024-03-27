@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
@@ -18,7 +18,7 @@ import {
 	IProvideFluidDataStoreFactory,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 
 /**
  * @internal

@@ -24,8 +24,8 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base/internal
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
 import { LeafNodeSchema as LeafNodeSchema_2 } from '../feature-libraries/index.js';
 import { SchemaLibrary as SchemaLibrary_2 } from '../feature-libraries/schemaBuilderBase.js';
-import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import { StableId } from '@fluidframework/id-compressor';
+import { SessionSpaceCompressedId } from '@fluidframework/id-compressor/internal';
+import { StableId } from '@fluidframework/id-compressor/internal';
 import type { Static } from '@sinclair/typebox';
 import { TreeNodeSchema as TreeNodeSchema_2 } from './schemaTypes.js';
 import { TreeNodeSchemaClass as TreeNodeSchemaClass_2 } from './schemaTypes.js';

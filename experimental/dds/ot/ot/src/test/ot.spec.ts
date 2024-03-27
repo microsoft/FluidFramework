@@ -8,7 +8,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { DeltaFactory, SharedDelta } from "./delta.js";
 
 const createLocalOT = (id: string) => {

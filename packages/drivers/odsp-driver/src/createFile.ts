@@ -5,16 +5,16 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError } from "@fluidframework/driver-utils";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	ShareLinkInfoType,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { ICreateFileResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {

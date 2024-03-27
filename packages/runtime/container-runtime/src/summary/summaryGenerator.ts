@@ -8,7 +8,7 @@ import {
 	ITelemetryLoggerExt,
 	LoggingError,
 	PerformanceEvent,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	assert,
@@ -18,7 +18,7 @@ import {
 	Timer,
 } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
-import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
+import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IAckSummaryResult,

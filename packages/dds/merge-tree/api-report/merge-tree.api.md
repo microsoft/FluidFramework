@@ -12,7 +12,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidSerializer } from '@fluidframework/shared-object-base/internal';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal @deprecated (undocumented)

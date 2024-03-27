@@ -9,7 +9,7 @@ import path from "node:path";
 import * as yaml from "js-yaml";
 import { v4 as uuid } from "uuid";
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner.js";
 import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner.js";

@@ -15,7 +15,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
 import { type HasLabel } from "./CommonInterfaces.js";

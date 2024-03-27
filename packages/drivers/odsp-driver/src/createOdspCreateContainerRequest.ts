@@ -5,7 +5,7 @@
 
 import { IRequest } from "@fluidframework/core-interfaces/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions";
+import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
 import { buildOdspShareLinkReqParams } from "./odspUtils.js";
 
 /**

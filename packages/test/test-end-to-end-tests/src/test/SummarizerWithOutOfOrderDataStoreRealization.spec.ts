@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type { PureDataObject } from "@fluidframework/aqueduct";
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions, ISummarizer } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces/internal";
@@ -19,7 +19,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;

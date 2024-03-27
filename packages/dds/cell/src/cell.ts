@@ -11,7 +11,7 @@ import {
 	type IFluidDataStoreRuntime,
 	type Serializable,
 } from "@fluidframework/datastore-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	type AttributionKey,

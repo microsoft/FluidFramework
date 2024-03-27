@@ -5,7 +5,7 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static/internal';
-import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
+import { ICompressionStorageConfig } from '@fluidframework/driver-utils/internal';
 import { IConfigProviderBase } from '@fluidframework/core-interfaces/internal';
 import { IFluidContainer } from '@fluidframework/fluid-static/internal';
 import { IMember } from '@fluidframework/fluid-static/internal';
@@ -13,8 +13,8 @@ import { IServiceAudience } from '@fluidframework/fluid-static/internal';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
-import { ITokenResponse } from '@fluidframework/routerlicious-driver';
+import { ITokenProvider } from '@fluidframework/routerlicious-driver/internal';
+import { ITokenResponse } from '@fluidframework/routerlicious-driver/internal';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 

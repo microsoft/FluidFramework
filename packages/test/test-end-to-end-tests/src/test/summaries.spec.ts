@@ -29,7 +29,7 @@ import {
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -42,7 +42,7 @@ import {
 	summarizeNow,
 	timeoutPromise,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {

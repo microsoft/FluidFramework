@@ -14,7 +14,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { ISummaryConfiguration } from "../containerRuntime.js";
 import { opSize } from "../opProperties.js";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";

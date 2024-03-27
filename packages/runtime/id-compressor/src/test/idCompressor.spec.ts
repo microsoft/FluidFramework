@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,

@@ -16,7 +16,7 @@ import {
 	ITelemetryLoggerExt,
 	PerformanceEvent,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { IThrottler } from "../throttler.js";
 import { Summarizer } from "./summarizer.js";
 import { ISummarizerClientElection } from "./summarizerClientElection.js";

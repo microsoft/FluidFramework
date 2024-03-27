@@ -13,7 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { CounterFactory } from "../counterFactory.js";
 import { type ISharedCounter, SharedCounter } from "../index.js";
 

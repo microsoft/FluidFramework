@@ -10,7 +10,7 @@ import { IFluidContainer } from '@fluidframework/fluid-static/internal';
 import type { IMember } from '@fluidframework/fluid-static/internal';
 import type { IServiceAudience } from '@fluidframework/fluid-static/internal';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
-import { TokenResponse } from '@fluidframework/odsp-driver-definitions';
+import { TokenResponse } from '@fluidframework/odsp-driver-definitions/internal';
 
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;

@@ -32,7 +32,7 @@ import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces/internal';
 import { ITestDbFactory } from '@fluidframework/server-test-utils';
-import { ITokenProvider } from '@fluidframework/routerlicious-driver';
+import { ITokenProvider } from '@fluidframework/routerlicious-driver/internal';
 import { IUrlResolver } from '@fluidframework/driver-definitions/internal';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { IWebSocketServer } from '@fluidframework/server-services-core';

@@ -13,7 +13,7 @@ import {
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
-} from "@fluidframework/odsp-driver";
+} from "@fluidframework/odsp-driver/internal";
 
 export class OdspUrlResolver implements IUrlResolver {
 	private readonly driverUrlResolver = new OdspDriverUrlResolver();

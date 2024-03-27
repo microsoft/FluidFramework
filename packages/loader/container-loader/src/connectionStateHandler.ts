@@ -13,7 +13,7 @@ import {
 	PerformanceEvent,
 	type TelemetryEventCategory,
 	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor.js";
 import { ConnectionState } from "./connectionState.js";
 import { IConnectionDetailsInternal, IConnectionStateChangeReason } from "./contracts.js";

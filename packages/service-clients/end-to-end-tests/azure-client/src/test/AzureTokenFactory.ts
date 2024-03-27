@@ -4,7 +4,7 @@
  */
 
 import { ITokenProvider } from "@fluidframework/azure-client/internal";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 
 export function createAzureTokenProvider(userId: string, userName: string): ITokenProvider {
 	const key = process.env.azure__fluid__relay__service__key as string;

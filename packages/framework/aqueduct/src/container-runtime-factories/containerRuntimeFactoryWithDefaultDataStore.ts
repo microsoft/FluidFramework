@@ -13,13 +13,13 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces/internal";
-import { type RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { type RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import {
 	type IFluidDataStoreFactory,
 	type NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { RequestParser } from "@fluidframework/runtime-utils";
-import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize";
+import { RequestParser } from "@fluidframework/runtime-utils/internal";
+import { type IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";

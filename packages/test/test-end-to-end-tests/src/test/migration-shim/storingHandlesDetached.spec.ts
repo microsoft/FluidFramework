@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
-import { type ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import { type ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils/internal";
 import {
 	type ITree,
 	SchemaFactory,

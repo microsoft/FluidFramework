@@ -31,7 +31,7 @@ import {
 	type AsyncFluidObjectProvider,
 	type FluidObjectSymbolProvider,
 	type IFluidDependencySynthesizer,
-} from "@fluidframework/synthesize";
+} from "@fluidframework/synthesize/internal";
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {

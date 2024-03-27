@@ -11,10 +11,10 @@ import {
 	IDocumentDeltaStorageService,
 	type IStream,
 } from "@fluidframework/driver-definitions/internal";
-import { requestOps, streamObserver } from "@fluidframework/driver-utils";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
+import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";

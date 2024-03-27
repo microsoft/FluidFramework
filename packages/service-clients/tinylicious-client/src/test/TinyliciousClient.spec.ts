@@ -16,7 +16,7 @@ import { type IContainerRuntime } from "@fluidframework/container-runtime-defini
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static/internal";
 import { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
 import { TinyliciousClient } from "../index.js";
 import { TestDataObject } from "./TestDataObject.js";

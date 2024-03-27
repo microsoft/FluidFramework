@@ -11,7 +11,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { SparseMatrix, SparseMatrixFactory, SparseMatrixItem } from "../sparsematrix.js";
 
 describe("SparseMatrix", () => {

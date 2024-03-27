@@ -16,7 +16,7 @@ import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 	LocalSessionStorageDbFactory,
-} from "@fluidframework/local-driver";
+} from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,

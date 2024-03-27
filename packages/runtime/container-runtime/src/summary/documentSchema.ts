@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { DataProcessingError } from "@fluidframework/telemetry-utils";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Descripe allowed type for properties in document schema.

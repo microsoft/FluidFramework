@@ -11,7 +11,7 @@ import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;

@@ -14,19 +14,19 @@ import {
 	IRequest,
 } from "@fluidframework/core-interfaces/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
-} from "@fluidframework/aqueduct";
+} from "@fluidframework/aqueduct/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,

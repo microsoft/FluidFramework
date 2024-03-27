@@ -17,7 +17,7 @@ import type {
 	IFluidHandleContext,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	IDocumentMessage,
 	IQuorumClients,

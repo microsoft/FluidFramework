@@ -9,7 +9,7 @@ import {
 	IPersistedCache,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 
 /**

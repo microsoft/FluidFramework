@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
+import { IIdCompressor, SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedDirectory } from "@fluidframework/map/internal";
@@ -35,7 +35,7 @@ import {
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 function getIdCompressor(dds: IChannel): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;

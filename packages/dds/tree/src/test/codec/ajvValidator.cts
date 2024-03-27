@@ -4,9 +4,9 @@
  */
 
 import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces/internal";
-import { create404Response } from "@fluidframework/runtime-utils";
+import { create404Response } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { JsonValidator } from "@fluidframework/tree/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
 import Ajv from "ajv";

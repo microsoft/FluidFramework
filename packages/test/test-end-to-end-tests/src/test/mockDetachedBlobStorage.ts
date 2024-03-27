@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();

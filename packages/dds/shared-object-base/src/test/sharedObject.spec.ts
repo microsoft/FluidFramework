@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 

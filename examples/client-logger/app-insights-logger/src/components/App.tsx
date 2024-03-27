@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
-import { SharedCounter } from "@fluidframework/counter";
+import { SharedCounter } from "@fluidframework/counter/internal";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 
 // NOTE: This test vets that "@fluidframework/matrix/internal" is compatible with the UndoRedoStackManager

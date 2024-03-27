@@ -9,7 +9,7 @@ import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { ISharedSummaryBlock } from "../interfaces.js";
 import { SharedSummaryBlockFactory } from "../sharedSummaryBlockFactory.js";
 

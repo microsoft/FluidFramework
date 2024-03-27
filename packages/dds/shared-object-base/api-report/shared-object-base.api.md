@@ -5,7 +5,7 @@
 ```ts
 
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
 import { IChannel } from '@fluidframework/datastore-definitions/internal';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions/internal';
 import { IChannelFactory } from '@fluidframework/datastore-definitions/internal';
@@ -22,7 +22,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions/inte
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions/internal';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 // @internal
 export function bindHandles(value: any, serializer: IFluidSerializer, bind: IFluidHandle): void;

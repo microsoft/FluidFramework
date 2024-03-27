@@ -10,7 +10,7 @@ import {
 	IResolvedUrl,
 	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import { isInstanceOfISnapshot } from "@fluidframework/driver-utils";
+import { isInstanceOfISnapshot } from "@fluidframework/driver-utils/internal";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -22,7 +22,7 @@ import {
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { ISerializableBlobContents, getBlobContentsFromTree } from "./containerStorageAdapter.js";
 
 export interface SnapshotWithBlobs {

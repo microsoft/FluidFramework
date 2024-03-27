@@ -17,8 +17,8 @@ import {
 	type ISnapshotTree,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 import { Attributor } from "../attributor.js";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders.js";
 import { makeLZ4Encoder } from "../lz4Encoder.js";

@@ -17,7 +17,7 @@ import {
 	OnlineStatus,
 	RetryableError,
 	isOnline,
-} from "@fluidframework/driver-utils";
+} from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	getSPOAndGraphRequestIdsFromResponse,
@@ -36,7 +36,7 @@ import {
 	isTokenFromCache,
 	snapshotKey,
 	tokenFromResponse,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
 	ITelemetryLoggerExt,
@@ -44,7 +44,7 @@ import {
 	TelemetryDataTag,
 	createChildLogger,
 	wrapError,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { IOdspSnapshot } from "./contracts.js";
 import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated

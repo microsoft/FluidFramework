@@ -24,7 +24,7 @@ import { Loader as ContainerLoader } from "@fluidframework/container-loader/inte
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
-import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
+import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -41,7 +41,7 @@ import {
 	createLoader,
 	createSummarizer,
 	summarizeNow,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { expect } from "chai";
 import { SharedPropertyTree } from "../propertyTree.js";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";

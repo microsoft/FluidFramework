@@ -14,8 +14,8 @@ import { IFluidHandle } from '@fluidframework/core-interfaces/internal';
 import { IFluidLoadable } from '@fluidframework/core-interfaces/internal';
 import { ISharedObject } from '@fluidframework/shared-object-base/internal';
 import { ISharedObjectKind } from '@fluidframework/shared-object-base/internal';
-import { SessionSpaceCompressedId } from '@fluidframework/id-compressor';
-import { StableId } from '@fluidframework/id-compressor';
+import { SessionSpaceCompressedId } from '@fluidframework/id-compressor/internal';
+import { StableId } from '@fluidframework/id-compressor/internal';
 import type { Static } from '@sinclair/typebox';
 import type { TSchema } from '@sinclair/typebox';
 

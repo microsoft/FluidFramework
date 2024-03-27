@@ -9,7 +9,7 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IExperimentalIncrementalSummaryContext,
@@ -17,7 +17,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base/internal";
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit, RevisionTagCodec } from "../core/index.js";

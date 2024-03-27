@@ -13,7 +13,7 @@ import {
 	createChildLogger,
 	mixinMonitoringContext,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { BlobManager } from "../../blobManager.js";
 import {

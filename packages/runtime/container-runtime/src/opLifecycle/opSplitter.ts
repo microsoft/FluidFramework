@@ -11,7 +11,7 @@ import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";

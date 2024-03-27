@@ -4,7 +4,7 @@
  */
 
 import { AzureClient, AzureLocalConnectionConfig } from "@fluidframework/azure-client/internal";
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
+import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 const userId = Math.random().toString(36).slice(2);

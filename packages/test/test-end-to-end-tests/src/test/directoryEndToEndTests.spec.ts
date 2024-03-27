@@ -23,7 +23,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;

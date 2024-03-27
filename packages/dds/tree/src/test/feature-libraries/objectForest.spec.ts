@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FieldKey, initializeForest, rootFieldKey } from "../../core/index.js";
 // Allow importing from this specific file which is being tested:

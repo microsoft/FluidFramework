@@ -15,7 +15,7 @@ import {
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
-import { isFluidError } from "@fluidframework/telemetry-utils";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";

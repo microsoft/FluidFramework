@@ -32,7 +32,7 @@ import {
 	TelemetryEvent,
 	TelemetryHistory,
 	handleIncomingMessage,
-} from "@fluidframework/devtools-core";
+} from "@fluidframework/devtools-core/internal";
 import React, { useState, useRef } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";

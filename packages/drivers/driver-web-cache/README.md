@@ -23,7 +23,7 @@ library consumers should always prefer `^`.
 ## Usage
 
 ```typescript
-import { FluidCache } from "@fluidframework/driver-web-cache";
+import { FluidCache } from "@fluidframework/driver-web-cache/internal";
 
 new FluidCache({
 	partitionKey: userId,
@@ -57,7 +57,7 @@ customer promises, such as clearing out storage when appropriate or disabling sn
 such as when it is known the user is logged in to a public computer.
 
 ```typescript
-import { deleteFluidCacheIndexDbInstance } from "@fluidframework/driver-web-cache";
+import { deleteFluidCacheIndexDbInstance } from "@fluidframework/driver-web-cache/internal";
 
 // We put a catch here because Firefox Incognito will throw an error here. This is why we claim this method is a "best effort", since sometimes the browser won't let us access storage
 deleteFluidCacheIndexDbInstance().catch(() => {});

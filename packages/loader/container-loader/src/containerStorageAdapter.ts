@@ -16,7 +16,7 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/driver-utils";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -24,7 +24,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";

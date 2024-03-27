@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { FluidObject } from "@fluidframework/core-interfaces/internal";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,

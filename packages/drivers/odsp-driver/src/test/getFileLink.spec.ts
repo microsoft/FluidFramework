@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { getFileLink } from "../getFileLink.js";
 import {
 	MockResponse,

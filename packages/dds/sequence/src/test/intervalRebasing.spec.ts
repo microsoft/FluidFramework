@@ -11,7 +11,7 @@ import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { Side } from "../intervalCollection.js";
 import { IntervalStickiness } from "../intervals/index.js";
 import { SharedStringFactory } from "../sequenceFactory.js";

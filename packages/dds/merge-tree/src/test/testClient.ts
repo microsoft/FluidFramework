@@ -14,8 +14,8 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";

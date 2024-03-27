@@ -9,13 +9,13 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
-import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 

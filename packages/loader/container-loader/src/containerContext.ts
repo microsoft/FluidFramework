@@ -25,7 +25,7 @@ import {
 	IVersion,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}

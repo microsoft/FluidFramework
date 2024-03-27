@@ -7,7 +7,7 @@ import {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
 import { Type } from "@sinclair/typebox";
 import {
 	Brand,

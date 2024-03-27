@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules

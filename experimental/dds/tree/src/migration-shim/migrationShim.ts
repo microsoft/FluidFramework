@@ -13,7 +13,7 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore, SessionId } from "@fluidframework/id-compressor/internal";
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -21,7 +21,7 @@ import {
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { DataProcessingError, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils/internal";
 import { type ITree } from "@fluidframework/tree/internal";
 import {
 	type SharedTree as LegacySharedTree,

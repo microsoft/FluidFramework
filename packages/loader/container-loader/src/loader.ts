@@ -34,7 +34,7 @@ import {
 	createChildMonitoringContext,
 	mixinMonitoringContext,
 	sessionStorageConfigProvider,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";

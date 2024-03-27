@@ -5,7 +5,7 @@
 
 import child_process from "child_process";
 import fs from "fs";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	DriverEndpoint,
 	ITestDriver,

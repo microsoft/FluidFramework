@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	AliasResult,
@@ -49,7 +49,7 @@ import {
 	processAttachMessageGCData,
 	responseToException,
 	unpackChildNodesUsedRoutes,
-} from "@fluidframework/runtime-utils";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	DataCorruptionError,
 	DataProcessingError,
@@ -59,7 +59,7 @@ import {
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { RuntimeHeaderData, defaultRuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,

@@ -13,7 +13,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { SharedCell } from "../cell.js";
 import { CellFactory } from "../cellFactory.js";
 import { type ICellOptions, type ISharedCell } from "../interfaces.js";

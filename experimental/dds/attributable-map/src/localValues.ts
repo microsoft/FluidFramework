@@ -5,7 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
-import { ISerializedHandle } from "@fluidframework/runtime-utils";
+import { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidSerializer,
 	ValueType,

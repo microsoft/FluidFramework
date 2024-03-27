@@ -13,7 +13,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
 import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";

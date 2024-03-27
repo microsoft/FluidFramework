@@ -4,13 +4,13 @@
  */
 
 import fs from "fs";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
 	TestObjectProvider,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { configList } from "./compatConfig.js";
 import { testBaseVersion } from "./baseVersion.js";

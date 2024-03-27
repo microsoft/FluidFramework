@@ -6,7 +6,7 @@
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces/internal";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static/internal";
 import { type IUser } from "@fluidframework/protocol-definitions";
-import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { type ITokenProvider } from "@fluidframework/routerlicious-driver/internal";
 // Re-export so developers can build loggers without pulling in core-interfaces
 export {
 	type ITelemetryBaseEvent,

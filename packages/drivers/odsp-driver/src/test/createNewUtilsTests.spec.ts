@@ -12,9 +12,9 @@ import {
 	ISharingLinkKind,
 	SharingLinkRole,
 	SharingLinkScope,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { createNewFluidFile } from "../createFile.js";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile.js";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils.js";

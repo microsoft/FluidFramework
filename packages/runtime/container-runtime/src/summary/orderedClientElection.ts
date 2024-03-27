@@ -14,7 +14,7 @@ import {
 	ITelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import { summarizerClientType } from "./summarizerClientElection.js";
 
 // helper types for recursive readonly.

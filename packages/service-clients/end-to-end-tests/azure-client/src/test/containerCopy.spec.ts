@@ -9,7 +9,7 @@ import { AzureClient } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import { timeoutPromise } from "@fluidframework/test-utils";
+import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { createAzureClient } from "./AzureClientFactory.js";

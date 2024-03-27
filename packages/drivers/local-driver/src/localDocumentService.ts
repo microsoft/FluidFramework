@@ -15,7 +15,7 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { ITokenProvider } from "@fluidframework/routerlicious-driver/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";

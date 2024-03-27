@@ -12,7 +12,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	createAndAttachContainer,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 
 const mapId = "map";
 

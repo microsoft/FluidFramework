@@ -9,7 +9,7 @@ import {
 	IDocumentService,
 	IDocumentStorageService,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IDocumentAttributes,
 	ISequencedDocumentMessage,

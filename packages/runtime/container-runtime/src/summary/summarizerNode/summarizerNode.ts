@@ -20,7 +20,7 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
-import { mergeStats } from "@fluidframework/runtime-utils";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryErrorEventExt,
 	ITelemetryLoggerExt,
@@ -29,7 +29,7 @@ import {
 	TelemetryDataTag,
 	createChildLogger,
 	tagCodeArtifacts,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	EscapedPath,
 	ICreateChildDetails,

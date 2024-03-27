@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,

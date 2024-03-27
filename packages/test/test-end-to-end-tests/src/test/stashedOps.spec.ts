@@ -26,7 +26,7 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { SharedCounter } from "@fluidframework/counter";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory, ISharedMap, SharedDirectory } from "@fluidframework/map/internal";
 import {
@@ -46,7 +46,7 @@ import {
 	createAndAttachContainer,
 	createDocumentId,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { wrapObjectAndOverride } from "../mocking.js";
 const mapId = "map";
 const stringId = "sharedStringKey";

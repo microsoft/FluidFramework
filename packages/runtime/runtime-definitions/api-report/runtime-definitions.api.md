@@ -15,7 +15,7 @@ import type { IDocumentStorageService } from '@fluidframework/driver-definitions
 import type { IEvent } from '@fluidframework/core-interfaces/internal';
 import type { IEventProvider } from '@fluidframework/core-interfaces/internal';
 import type { IFluidHandle } from '@fluidframework/core-interfaces/internal';
-import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressor } from '@fluidframework/id-compressor/internal';
 import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces/internal';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
 import type { IRequest } from '@fluidframework/core-interfaces/internal';

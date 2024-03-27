@@ -12,7 +12,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import { Ink } from "../ink.js";
 import { InkFactory } from "../inkFactory.js";
 import { IPen } from "../interfaces.js";

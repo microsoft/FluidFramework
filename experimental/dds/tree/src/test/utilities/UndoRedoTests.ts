@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
+import { MockContainerRuntimeFactory } from "@fluidframework/test-runtime-utils/internal";
 import { expect } from 'chai';
 import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { noop } from '../../Common.js';

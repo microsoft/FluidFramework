@@ -36,13 +36,13 @@ import type {
 	IIdCompressor,
 	IIdCompressorCore,
 	SerializedIdCompressorWithNoSession,
-} from "@fluidframework/id-compressor";
-import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/id-compressor/internal";
+import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils";
+} from "@fluidframework/test-runtime-utils/internal";
 import {
 	type Client,
 	type ClientLoadData,

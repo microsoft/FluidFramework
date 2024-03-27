@@ -10,7 +10,7 @@ import {
 	type getDataRuntimeApi,
 	type getLoaderApi,
 } from "@fluid-private/test-version-utils";
-import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
+import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeOptions,
@@ -24,7 +24,7 @@ import {
 	createSummarizerCore,
 	summarizeNow,
 	waitForContainerConnection,
-} from "@fluidframework/test-utils";
+} from "@fluidframework/test-utils/internal";
 import { getGCFeatureFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 interface LayerApis {

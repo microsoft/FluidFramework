@@ -23,9 +23,9 @@ import {
 } from "@fluidframework/merge-tree/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { HandleCache } from "./handlecache.js";
 import { Handle, HandleTable, isHandleValid } from "./handletable.js";
 import { deserializeBlob } from "./serialization.js";

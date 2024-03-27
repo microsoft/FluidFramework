@@ -13,14 +13,14 @@ import {
 	ISnapshotFetchOptions,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
+import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
 	InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	getKeyForCacheEntry,
-} from "@fluidframework/odsp-driver-definitions";
+} from "@fluidframework/odsp-driver-definitions/internal";
 import * as api from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
@@ -29,7 +29,7 @@ import {
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-} from "@fluidframework/telemetry-utils";
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,

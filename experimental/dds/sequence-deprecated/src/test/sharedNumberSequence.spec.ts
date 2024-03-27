@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { SharedNumberSequenceFactory } from "../sequenceFactory.js";
 import { SharedNumberSequence } from "../sharedNumberSequence.js";
 

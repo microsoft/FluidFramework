@@ -4,12 +4,12 @@
  */
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import {
 	ConsensusRegisterCollection,
 	IConsensusRegisterCollection,
-} from "@fluidframework/register-collection";
+} from "@fluidframework/register-collection/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 
 import type { IMigrationTool, MigrationState } from "../migrationInterfaces/index.js";
