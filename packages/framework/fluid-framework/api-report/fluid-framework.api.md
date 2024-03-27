@@ -137,11 +137,12 @@ export enum FieldKind {
 
 // @public @sealed
 export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types extends ImplicitAllowedTypes = ImplicitAllowedTypes> {
-    constructor(kind: Kind, allowedTypes: Types);
-    // (undocumented)
+    constructor(
+    kind: Kind,
+    allowedTypes: Types);
     readonly allowedTypes: Types;
-    // (undocumented)
     readonly kind: Kind;
+    readonly normalizedAllowedTypes: AllowedTypes;
     protected _typeCheck?: MakeNominal;
 }
 
