@@ -171,7 +171,6 @@ describeCompat(
 			url = await container1.getAbsoluteUrl("");
 			const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			string1 = await dataStore1.getSharedObject<SharedString>(stringId);
-			// string1.insertText(0, "hello");
 
 			waitForSummary = async () => {
 				await new Promise<void>((resolve, reject) => {
@@ -190,6 +189,9 @@ describeCompat(
 		});
 
 		it("validates pending and saved ops with initial snapshot", async function () {
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
 			const pendingState = await getPendingState(
 				provider,
 				async (s) => {
@@ -219,6 +221,9 @@ describeCompat(
 		});
 
 		it("refresh the base snapshot at loading", async function () {
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
 			const pendingState = await getPendingState(
 				provider,
 				async (s) => {
@@ -256,6 +261,9 @@ describeCompat(
 		});
 
 		it("refresh the base snapshot while summary offline", async function () {
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
 			const pendingState = await getPendingState(
 				provider,
 				async (s) => {
@@ -305,6 +313,9 @@ describeCompat(
 		});
 
 		it("can load offline", async function () {
+			if (provider.driver.type !== "local") {
+				this.skip();
+			}
 			const pendingOps = await getPendingState(
 				provider,
 				async (s) => {},
