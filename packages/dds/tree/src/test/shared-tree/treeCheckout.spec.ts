@@ -142,6 +142,62 @@ describe("sharedTreeView", () => {
 				"editStart",
 			]);
 		});
+
+		describe("commitApplied", () => {
+			it("is fired for data and schema changes", () => {
+				const provider = new TestTreeProviderLite(1);
+				const checkout = provider.trees[0].checkout;
+
+				const log: string[] = [];
+				const unsubscribe = checkout.events.on("commitApplied", () =>
+					log.push("commitApplied"),
+				);
+
+				assert.equal(log.length, 0);
+
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+
+				assert.equal(log.length, 1);
+
+				checkout.editor
+					.sequenceField(rootField)
+					.insert(
+						0,
+						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
+					);
+
+				assert.equal(log.length, 2);
+
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				assert.equal(log.length, 3);
+				unsubscribe();
+			});
+
+			it("does not allow schema changes to be reverted", () => {
+				const provider = new TestTreeProviderLite(1);
+				const checkout = provider.trees[0].checkout;
+
+				const log: string[] = [];
+				const unsubscribe = checkout.events.on("commitApplied", (data, getRevertible) =>
+					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
+				);
+
+				assert.deepEqual(log, []);
+
+				checkout.updateSchema(intoStoredSchema(jsonSequenceRootSchema));
+				checkout.editor
+					.sequenceField(rootField)
+					.insert(
+						0,
+						cursorForJsonableTreeField([{ type: leaf.string.name, value: "A" }]),
+					);
+				checkout.updateSchema(intoStoredSchema(stringSequenceRootSchema));
+
+				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
+				unsubscribe();
+			});
+		});
 	});
 
 	describe("Views", () => {
@@ -621,8 +677,8 @@ describe("sharedTreeView", () => {
 
 		checkout1.updateSchema(intoStoredSchema(numberSequenceRootSchema));
 
-		// The undo stack contains both the removal of A and the schema change
-		assert.equal(checkout1Revertibles.undoStack.length, 2);
+		// The undo stack contains the removal of A but not the schema change
+		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
 		assert.deepEqual(checkout1.getRemovedRoots().length, 2);
 

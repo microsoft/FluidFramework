@@ -192,6 +192,73 @@
 			},
 			"ClassDeclaration_SharedDirectory": {
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SharedDirectory": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICreateInfo": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectoryClearOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectoryDataObject": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectoryNewStorageFormat": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IDirectoryOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IDirectorySetOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ILocalValue": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_LocalValueMaker": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializableValue": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializedValue": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
