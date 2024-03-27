@@ -30,6 +30,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type {
@@ -43,6 +44,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { v4 as uuid } from "uuid";
+import type { FluidObject , IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type Client,
 	type ClientLoadData,
@@ -105,6 +108,14 @@ export interface ChangeConnectionState {
 export interface StashClient {
 	type: "stashClient";
 	clientId: string;
+}
+
+/**
+ * @internal
+ */
+export interface HandleCreated {
+	type: "handle";
+	handles: DDSFuzzHandle<IChannelFactory>[];
 }
 
 /**
@@ -182,6 +193,34 @@ function getSaveInfo(
 	}
 	const filepath = path.join(directory, `${seed}.json`);
 	return { saveOnFailure: true, filepath };
+}
+
+export class DDSFuzzHandle<T = IFluidLoadable & FluidObject> implements IFluidHandle {
+	readonly absolutePath: string;
+
+	public get IFluidHandle(): DDSFuzzHandle<T> {
+		return this;
+	}
+
+	public get isAttached(): boolean {
+		throw new Error("Method not implemented.");
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	public async get(): Promise<any> { // i know this isn't right
+		return this;
+	}
+
+	constructor() {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+		this.absolutePath = uuid() as string;
+	}
+	attachGraph(): void {
+		throw new Error("Method not implemented.");
+	}
+	bind(handle: IFluidHandle): void {
+		throw new Error("Method not implemented.");		
+	}
 }
 
 /**
@@ -371,6 +410,11 @@ export interface DDSFuzzSuiteOptions {
 	};
 
 	/**
+	 * Defines whether or not ops can be submitted with handles.
+	 */
+	handles: boolean;
+
+	/**
 	 * Event emitter which allows hooking into interesting points of DDS harness execution.
 	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
 	 * do so, and pass it in when creating the suite.
@@ -507,6 +551,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
+	handles: false,
 	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
@@ -1127,6 +1172,47 @@ export function mixinStashedClient<
 	};
 }
 
+export function mixinHandle<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState> {
+	if (options.handles === false) {
+		return model as DDSFuzzModel<TChannelFactory, TOperation | HandleCreated, TState>;
+	}
+
+	const generatorFactory: () => AsyncGenerator<TOperation | HandleCreated, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | HandleCreated | typeof done> => {
+			const baseOp = baseGenerator(state);
+			if (state.random.bool(0.5)) {
+				const handle1 = new DDSFuzzHandle();
+				return {
+					type: "handle",
+					handles: [handle1],
+				};
+			}
+			return baseOp;
+		};
+	};
+
+	const reducer: AsyncReducer<TOperation | HandleCreated, TState> = async (state, operation) => {
+		return model.reducer(state, operation);
+	};
+
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+		minimizationTransforms: model.minimizationTransforms as MinimizationTransform<
+			TOperation | HandleCreated
+		>[],
+	};
+}
+
 /**
  * This modifies the value of "client" while callback is running, then restores it.
  * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
@@ -1574,6 +1660,7 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	| AddClient
 	| Attach
 	| Attaching
+	| HandleCreated
 	| Rehydrate
 	| ChangeConnectionState
 	| TriggerRebase
@@ -1585,7 +1672,10 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-						mixinReconnect(mixinRebase(ddsModel, options), options),
+						mixinHandle(
+							mixinReconnect(mixinRebase(ddsModel, options), options),
+							options,
+						),
 						options,
 					),
 					options,
