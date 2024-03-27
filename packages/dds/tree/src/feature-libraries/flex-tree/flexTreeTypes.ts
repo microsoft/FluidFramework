@@ -185,6 +185,11 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 
 	/**
 	 * The anchor node associated with this node
+	 *
+	 * @remarks
+	 * The ref count keeping this alive is owned by the FlexTreeNode:
+	 * if holding onto this anchor for longer than the FlexTreeNode might be alive,
+	 * a separate Anchor (and thus ref count) must be allocated to keep it alive.
 	 */
 	readonly anchorNode: AnchorNode;
 }
@@ -560,6 +565,7 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
  * @internal
  */
 export const reservedObjectNodeFieldPropertyNames = [
+	"anchor",
 	"anchorNode",
 	"constructor",
 	"context",

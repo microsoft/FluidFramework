@@ -140,7 +140,7 @@ export function ReactApp(props: {
 	// For more complex apps, this code can be included
 	// on lower level components.
 	useEffect(() => {
-		const unsubscribe = Tree.on(appRoot, "afterChange", () => {
+		const unsubscribe = Tree.on(appRoot, "afterDeepChange", () => {
 			setInvalidations(invalidations + Math.random());
 		});
 		return unsubscribe;

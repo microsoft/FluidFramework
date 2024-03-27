@@ -276,7 +276,7 @@ export {
 	TreeNodeApi,
 	ImplicitFieldSchema,
 	TreeFieldFromImplicitField,
-	TreeNodeEvents,
+	TreeChangeEvents,
 	NodeFromSchema,
 	TreeMapNode,
 	InsertableTreeNodeFromImplicitAllowedTypes,

@@ -1473,7 +1473,7 @@ export const reservedObjectNodeFieldPropertyNamePrefixes: readonly ["set", "boxe
 export type ReservedObjectNodeFieldPropertyNames = (typeof reservedObjectNodeFieldPropertyNames)[number];
 
 // @internal
-export const reservedObjectNodeFieldPropertyNames: readonly ["anchorNode", "constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
+export const reservedObjectNodeFieldPropertyNames: readonly ["anchor", "anchorNode", "constructor", "context", "is", "on", "parentField", "schema", "treeStatus", "tryGetField", "type", "value", "localNodeKey", "boxedIterator", "iterator"];
 
 // @public
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -1795,6 +1795,12 @@ export interface TreeArrayNodeBase<out T, in TNew, in TMoveFrom> extends Readonl
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>> extends TreeArrayNodeBase<TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>, TreeArrayNode> {
 }
 
+// @public
+export interface TreeChangeEvents {
+    afterDeepChange(): void;
+    afterShallowChange(): void;
+}
+
 // @internal
 export enum TreeCompressionStrategy {
     Compressed = 0,
@@ -1878,15 +1884,10 @@ export abstract class TreeNode implements WithType {
 export interface TreeNodeApi {
     is<TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema): value is NodeFromSchema<TSchema>;
     key(node: TreeNode): string | number;
-    on<K extends keyof TreeNodeEvents>(node: TreeNode, eventName: K, listener: TreeNodeEvents[K]): () => void;
+    on<K extends keyof TreeChangeEvents>(node: TreeNode, eventName: K, listener: TreeChangeEvents[K]): () => void;
     parent(node: TreeNode): TreeNode | undefined;
     schema<T extends TreeNode | TreeLeafValue>(node: T): TreeNodeSchema<string, NodeKind, unknown, T>;
     readonly status: (node: TreeNode) => TreeStatus;
-}
-
-// @public
-export interface TreeNodeEvents {
-    afterChange(): void;
 }
 
 // @public
