@@ -208,6 +208,7 @@ export enum NodeKind {
 
 /**
  * The unique identifier of a field, used in the persisted form of the tree.
+ * If not explicitly set via the schema, this is the same as the schema's property key.
  *
  * TODO: implications (persistance, behavior with things like Object.keys, potential for collisions, etc.)
  *
@@ -251,8 +252,19 @@ export class FieldSchema<
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
 	public constructor(
+		/**
+		 * The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind } of this field.
+		 * Determines the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+		 */
 		public readonly kind: Kind,
+		/**
+		 * What types of tree nodes are allowed in this field.
+		 */
 		public readonly allowedTypes: Types,
+		/**
+		 * Optional properties associated with the field.
+		 */
+		public readonly props?: FieldProps,
 	) {}
 }
 
@@ -263,6 +275,7 @@ export class FieldSchema<
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
+
 /**
  * Schema for a field of a tree node.
  * @remarks
