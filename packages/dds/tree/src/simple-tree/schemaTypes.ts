@@ -207,6 +207,28 @@ export enum NodeKind {
 }
 
 /**
+ * The unique identifier of a field, used in the persisted form of the tree.
+ *
+ * TODO: implications (persistance, behavior with things like Object.keys, potential for collisions, etc.)
+ *
+ * @public
+ */
+export type StoredKey = string;
+
+/**
+ * Properties associated with a field.
+ *
+ * @public
+ */
+export interface FieldProps {
+	/**
+	 * {@inheritDoc StoredKey}
+	 * @defaultValue TODO
+	 */
+	key?: string;
+}
+
+/**
  * All policy for a specific field,
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
