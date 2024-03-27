@@ -4,25 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import {
-	LocalCodeLoader,
-	ITestFluidObject,
-	TestFluidObjectFactory,
-	TestFluidObject,
-	createDocumentId,
-	LoaderContainerTracker,
-	ITestObjectProvider,
-} from "@fluidframework/test-utils";
-import { SharedObject } from "@fluidframework/shared-object-base";
+import { IRequest } from "@fluidframework/core-interfaces";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	IContainerRuntimeBase,
 	type IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
-import type { ISharedMap } from "@fluidframework/map";
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { SharedObject } from "@fluidframework/shared-object-base";
+import {
+	ITestFluidObject,
+	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
+	TestFluidObject,
+	TestFluidObjectFactory,
+	createDocumentId,
+} from "@fluidframework/test-utils";
 
 /*
 Context no longer provides observability point to when context changes its attach states

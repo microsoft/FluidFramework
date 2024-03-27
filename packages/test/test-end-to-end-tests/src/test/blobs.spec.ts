@@ -6,6 +6,13 @@
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
+	ExpectedEvents,
+	ITestDataObject,
+	describeCompat,
+	itExpects,
+} from "@fluid-private/test-version-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
@@ -16,6 +23,8 @@ import {
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
+import { Deferred } from "@fluidframework/core-utils";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { ReferenceType } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
 import {
@@ -25,21 +34,12 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ExpectedEvents,
-	ITestDataObject,
-	itExpects,
-} from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { AttachState } from "@fluidframework/container-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { Deferred } from "@fluidframework/core-utils";
 import { wrapObjectAndOverride } from "../mocking.js";
 import {
+	MockDetachedBlobStorage,
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
-	MockDetachedBlobStorage,
 } from "./mockDetachedBlobStorage.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

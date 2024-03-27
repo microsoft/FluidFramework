@@ -33,7 +33,7 @@ import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	fuzzNode,
-	fuzzSchema,
+	initialFuzzSchema,
 	validateAnchors,
 } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
@@ -44,7 +44,7 @@ interface AnchorFuzzTestState extends FuzzTestState {
 }
 
 const config = {
-	schema: fuzzSchema,
+	schema: initialFuzzSchema,
 	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
 	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
 	initialTree: {
@@ -85,6 +85,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -151,6 +152,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -210,9 +212,6 @@ describe("Fuzz - anchor stability", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			// TODO: AB#6664 tracks investigating and resolving.
-			// These seeds encounter issues in delta application (specifically 0x7ce and 0x7cf)
-			skip: [0, 19, 38],
 		});
 	});
 });

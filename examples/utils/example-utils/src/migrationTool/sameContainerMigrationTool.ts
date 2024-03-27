@@ -11,7 +11,10 @@ import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definit
 import { MessageType } from "@fluidframework/protocol-definitions";
 
 import { assert } from "@fluidframework/core-utils";
-import type { ISameContainerMigrationTool } from "../migrationInterfaces/index.js";
+import type {
+	ISameContainerMigrationTool,
+	SameContainerMigrationState,
+} from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";
@@ -89,7 +92,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		return this._pactMap;
 	}
 
-	public get migrationState() {
+	public get migrationState(): SameContainerMigrationState {
 		// TODO: Other states
 		if (this._v2SummaryDone) {
 			return "migrated";

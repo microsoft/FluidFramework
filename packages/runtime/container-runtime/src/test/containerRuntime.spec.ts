@@ -1574,10 +1574,11 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
-				enableRuntimeIdCompressor: "off",
+				enableRuntimeIdCompressor: undefined,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
-			};
+				explicitSchemaControl: false,
+			} satisfies IContainerRuntimeOptions;
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
 			it("Container load stats", async () => {
@@ -1622,6 +1623,7 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						idCompressorMode: "on",
 						featureGates: JSON.stringify({
+							disableGroupedBatching: true,
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,

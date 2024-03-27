@@ -5,8 +5,8 @@
 
 import {
 	IContainer,
-	IHostLoader,
 	IFluidCodeDetails,
+	IHostLoader,
 	ILoader,
 } from "@fluidframework/container-definitions";
 import {
@@ -16,24 +16,24 @@ import {
 } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
-	ITelemetryBaseLogger,
-	ITelemetryBaseEvent,
 	IRequestHeader,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { v4 as uuid } from "uuid";
 import {
+	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
-	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
+import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { v4 as uuid } from "uuid";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
-import { fluidEntryPoint, LocalCodeLoader } from "./localCodeLoader.js";
+import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
@@ -108,10 +108,13 @@ export interface ITestObjectProvider {
 	 * containerRuntime/dataRuntime used in fluidEntryPoint will be used as is from what is passed in.
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
+	 * @param loaderProps - Optional loader properties
+	 * @param forceUseCreateVersion - For Cross-Version compat testing, create a loader based on the create version
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
+		forceUseCreateVersion?: boolean,
 	): IHostLoader;
 
 	/**
@@ -835,7 +838,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-		forceUseCreateVersion?: true,
+		forceUseCreateVersion = false,
 	) {
 		const useCreateVersion = forceUseCreateVersion === true || this.useCreateApi;
 		if (this.useCreateApi) {

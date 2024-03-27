@@ -11,6 +11,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "module",
 	"scripts": {
 		"build": "concurrently npm:build:api npm:build:md-magic && npm run hugo",
 		"build:api": "npm run download:api && npm run build:api-documentation && npm run build:redirects",
@@ -66,7 +67,7 @@
 		"prettier": "~2.8.8",
 		"prettier-plugin-go-template": "^0.0.13",
 		"rimraf": "^5.0.1",
-		"start-server-and-test": "^2.0.0"
+		"start-server-and-test": "^2.0.3"
 	},
 	"pnpm": {
 		"overrides": {

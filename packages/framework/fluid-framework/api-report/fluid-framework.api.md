@@ -6,16 +6,15 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IChannel } from '@fluidframework/datastore-definitions';
-import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import type { IErrorBase } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
 import { IEventProvider } from '@fluidframework/core-interfaces';
 import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
-import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
+import { ISharedObjectKind } from '@fluidframework/shared-object-base';
 
 // @public
 export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
@@ -88,11 +87,11 @@ export interface ContainerSchema {
 }
 
 // @public
-export type DataObjectClass<T extends IFluidLoadable> = {
+export type DataObjectClass<T extends IFluidLoadable = IFluidLoadable> = {
     readonly factory: {
         IFluidDataStoreFactory: DataObjectClass<T>["factory"];
     };
-} & LoadableObjectCtor<T>;
+} & (new (...args: any[]) => T);
 
 // @public
 export const disposeSymbol: unique symbol;
@@ -278,13 +277,10 @@ export interface IValueChanged {
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
 // @public
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = SharedObjectClass<T> | DataObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> = ISharedObjectKind<T> | DataObjectClass<T>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass>;
-
-// @public
-export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) => T;
 
 // @public
 export interface MakeNominal {
@@ -350,7 +346,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     namedMap_internal<Name extends TName | string, const T extends ImplicitAllowedTypes, const ImplicitlyConstructable extends boolean>(name: Name, allowedTypes: T, customizable: boolean, implicitlyConstructable: ImplicitlyConstructable): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>>, Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>, ImplicitlyConstructable, T>;
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null>;
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number>;
-    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     optional<const T extends ImplicitAllowedTypes>(t: T): FieldSchema<FieldKind.Optional, T>;
     // (undocumented)
     readonly scope: TScope;
@@ -366,23 +362,13 @@ export interface SchemaIncompatible {
 export type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
 // @public @deprecated
-export const SharedMap: {
-    getFactory(): IChannelFactory<ISharedMap>;
-    create(runtime: IFluidDataStoreRuntime, id?: string): ISharedMap;
-};
+export const SharedMap: ISharedObjectKind<ISharedMap>;
 
 // @public @deprecated
 export type SharedMap = ISharedMap;
 
 // @public
-export interface SharedObjectClass<T extends IFluidLoadable> {
-    readonly getFactory: () => IChannelFactory<T>;
-}
-
-// @public
-export const SharedTree: {
-    getFactory(): IChannelFactory<ITree>;
-};
+export const SharedTree: ISharedObjectKind<ITree>;
 
 // @public
 export const Tree: TreeApi;
@@ -491,6 +477,9 @@ export interface TreeNodeSchemaNonClass<out Name extends string = string, out Ki
     // (undocumented)
     create(data: TInsertable): TNode;
 }
+
+// @public
+export type TreeObjectNode<T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName>;
 
 // @public
 export enum TreeStatus {

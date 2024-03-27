@@ -49,13 +49,13 @@ import { TreeConfiguration } from "./tree.js";
  * and the schema would come from the unhydrated node.
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
-export function cursorFromUnhydratedRoot(
+function cursorFromUnhydratedRoot(
 	schema: FlexTreeSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
 	return (
-		cursorFromNodeData(data.content, schema, schema.rootFieldSchema.allowedTypeSet) ??
+		cursorFromNodeData(data, schema, schema.rootFieldSchema.allowedTypeSet) ??
 		fail("failed to decode tree")
 	);
 }

@@ -51,7 +51,7 @@ import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilde
 export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 * It is once again safe to access the FlexTree, Forest and AnchorSet.
 	 *
 	 * @remarks
 	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
@@ -360,14 +360,21 @@ export class TreeCheckout implements ITreeCheckoutFork {
 							visitDelta(delta, visitor, this.removedRoots);
 						});
 					} else if (change.type === "schema") {
-						// We purge all removed content because the schema change may render that repair data invalid.
-						// This happens on all peers that receive the schema change.
-						// Note that while the originator of the schema change could theoretically validate/update the
-						// repair data that it has, so that is it guaranteed to be valid with the new schema, we cannot
-						// guarantee that the originator has a superset of the repair data that other clients have.
-						// This means the originator cannot guarantee that the repair data on all peers is valid for
-						// the new schema.
-						this.purgeRemovedRoots();
+						// Schema changes from a current to a new schema are expected to be backwards compatible.
+						// This guarantees that all data in the forest (which is valid before the schema change)
+						// is also valid under the new schema.
+						// Note however, that such schema changes may in some cases be rolled back:
+						// Case 1: A transaction with a schema change may be aborted.
+						// The transaction may have made some data changes that would render some trees invalid
+						// under the old schema, but these changes will also be rolled back, thereby putting the forest
+						// back in the state before the transaction, which is valid under the original (reinstated) schema.
+						// Case 2: A branch with a schema change may be rebased such that the schema change (because
+						// of a constraint) is no longer applied.
+						// Such a branch may contain data changes that would render some trees invalid under the
+						// original schema. These data changes may not necessarily be rolled back.
+						// They will however be rebased over the rollback of the schema change. This rebasing will
+						// ensure that these data changes are muted if they would render some trees invalid under the
+						// original (reinstated) schema.
 						storedSchema.apply(change.innerChange.schema.new);
 					} else {
 						fail("Unknown Shared Tree change type.");
@@ -399,19 +406,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		);
 		fn(combinedVisitor);
 		combinedVisitor.free();
-	}
-
-	private purgeRemovedRoots() {
-		// Revertibles are susceptible to use repair data so we purge them.
-		this.branch.purgeRevertibles();
-		this.withCombinedVisitor((visitor) => {
-			for (const { root } of this.removedRoots.entries()) {
-				const field = this.removedRoots.toFieldKey(root);
-				// TODO:AD5509 Handle arbitrary-length fields once the storage of removed roots is no longer atomized.
-				visitor.destroy(field, 1);
-			}
-		});
-		this.removedRoots.purge();
 	}
 
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
