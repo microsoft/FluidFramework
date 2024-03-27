@@ -76,14 +76,14 @@ describe("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	describe("list", () => {
-		it("Non-empty list", () => {
+	describe("array", () => {
+		it("Non-empty array", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
 				age: schemaFactory.number,
 			});
-			const schema = schemaFactory.array("list", [
+			const schema = schemaFactory.array("array", [
 				schemaFactory.number,
 				schemaFactory.handle,
 				childObjectSchema,
@@ -95,7 +95,7 @@ describe("toMapTree", () => {
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
-				type: brand("test.list"),
+				type: brand("test.array"),
 				fields: new Map<FieldKey, MapTree[]>([
 					[
 						EmptyKey,
@@ -143,16 +143,16 @@ describe("toMapTree", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Empty list", () => {
+		it("Empty array", () => {
 			const schemaFactory = new SchemaFactory("test");
-			const schema = schemaFactory.array("list", schemaFactory.number);
+			const schema = schemaFactory.array("array", schemaFactory.number);
 
 			const tree: number[] = [];
 
 			const actual = nodeDataToMapTree(tree, [schema]);
 
 			const expected: MapTree = {
-				type: brand("test.list"),
+				type: brand("test.array"),
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
@@ -314,7 +314,7 @@ describe("toMapTree", () => {
 		});
 		const schema = schemaFactory.object("complex-object", {
 			a: schemaFactory.string,
-			b: schemaFactory.array("list", [
+			b: schemaFactory.array("array", [
 				childObjectSchema,
 				schemaFactory.handle,
 				schemaFactory.null,
@@ -356,7 +356,7 @@ describe("toMapTree", () => {
 					brand("b"),
 					[
 						{
-							type: brand("test.list"),
+							type: brand("test.array"),
 							fields: new Map<FieldKey, MapTree[]>([
 								[
 									EmptyKey,
@@ -517,7 +517,7 @@ describe("toMapTree", () => {
 			const schemaFactory = new SchemaFactory("test");
 
 			// The current fallbacks we generate are `number` and `null`.
-			// This list will need to be expanded if that set changes and we wish to test the associated scenarios.
+			// This set will need to be expanded if that set changes and we wish to test the associated scenarios.
 			const schema = [schemaFactory.number, schemaFactory.null];
 
 			const result = nodeDataToMapTree(value, schema);
