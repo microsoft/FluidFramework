@@ -9,7 +9,7 @@
 
 import { expect } from "chai";
 import sinon from "sinon";
-import { Chronometer } from "../chronometer";
+import { Chronometer } from "../chronometer.js";
 
 describe("property-common.Chronometer", function () {
 	it("should exist", function () {

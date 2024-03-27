@@ -4269,6 +4269,7 @@ importers:
 
   experimental/PropertyDDS/packages/property-common:
     specifiers:
+      '@arethetypeswrong/cli': ^0.13.3
       '@biomejs/biome': ^1.6.2
       '@fluid-internal/mocha-test-setup': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -4283,11 +4284,13 @@ importers:
       '@types/node': ^18.19.0
       '@types/semver': ^7.5.0
       '@types/sinon': ^17.0.3
+      '@types/uuid': ^9.0.2
       ajv: ^8.12.0
       async: ^3.2.2
       base64-js: ^1.5.1
       c8: ^8.0.1
       chai: ^4.2.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.55.0
       events_pkg: npm:events@^3.1.0
@@ -4305,6 +4308,7 @@ importers:
       sinon: ^17.0.1
       traverse: 0.6.6
       typescript: ~5.1.6
+      uuid: ^9.0.0
     dependencies:
       '@types/events_pkg': /@types/events/3.0.3
       ajv: 8.12.0
@@ -4316,7 +4320,9 @@ importers:
       murmurhash3js: 3.0.1
       semver: 7.5.4
       traverse: 0.6.6
+      uuid: 9.0.1
     devDependencies:
+      '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.2
       '@fluid-internal/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/build-common': 2.0.3
@@ -4330,8 +4336,10 @@ importers:
       '@types/node': 18.19.1
       '@types/semver': 7.5.6
       '@types/sinon': 17.0.3
+      '@types/uuid': 9.0.7
       c8: 8.0.1
       chai: 4.3.10
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.55.0
       mocha: 10.2.0
@@ -4343,9 +4351,6 @@ importers:
       rimraf: 4.4.1
       sinon: 17.0.1
       typescript: 5.1.6
-
-  experimental/PropertyDDS/packages/property-common/platform-dependent:
-    specifiers: {}
 
   experimental/PropertyDDS/packages/property-dds:
     specifiers:

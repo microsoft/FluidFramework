@@ -10,7 +10,7 @@
  */
 
 import { expect } from "chai";
-import { OperationError } from "../../index";
+import { OperationError } from "../../index.js";
 
 describe("property-common.OperationError", function () {
 	const errorMsg = "a test error message";

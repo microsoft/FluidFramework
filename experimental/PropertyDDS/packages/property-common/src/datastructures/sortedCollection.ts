@@ -9,7 +9,7 @@
  */
 
 import _ from "lodash";
-import { Collection } from "./collection";
+import { Collection } from "./collection.js";
 
 /**
  * @internal

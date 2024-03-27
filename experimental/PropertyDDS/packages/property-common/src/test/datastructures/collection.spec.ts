@@ -6,10 +6,10 @@
 /**
  * @fileoverview In this file, we will test the functions exported by datastructres/collection.js
  */
-
+import lodash from "lodash";
+const { every, includes, keys } = lodash;
 import { expect } from "chai";
-import * as _ from "lodash";
-import { Collection } from "../../index";
+import { Collection } from "../../index.js";
 
 describe("collection", function () {
 	const createObject = () => ({
@@ -46,7 +46,7 @@ describe("collection", function () {
 
 		expect(collection.bulkAdd(objectToAdd)).to.equal(collection);
 
-		const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
+		const itemExists = every(objectToAdd, (item, key) => collection.has(key));
 
 		expect(itemExists).to.equal(true);
 
@@ -75,7 +75,7 @@ describe("collection", function () {
 		collection.bulkAdd(objectToAdd);
 		collection.bulkRemove(objectToAdd);
 
-		const itemExists = _.every(objectToAdd, (item, key) => collection.has(key));
+		const itemExists = every(objectToAdd, (item, key) => collection.has(key));
 
 		expect(itemExists).to.equal(false);
 
@@ -217,7 +217,7 @@ describe("collection", function () {
 
 		expect(array).to.be.an("array");
 
-		const exists = _.every(objectToAdd, (item) => _.includes(array, item));
+		const exists = every(objectToAdd, (item) => includes(array, item));
 
 		expect(exists).to.equal(true);
 
@@ -308,11 +308,11 @@ describe("collection", function () {
 		collection.bulkAdd(objectToAdd);
 
 		const result = {};
-		const keys = collection.getKeys();
-		let i = keys.length - 1;
+		const collectionKeys = collection.getKeys();
+		let i = collectionKeys.length - 1;
 		collection.iterateFromTail(function (key, item) {
 			result[key] = item;
-			expect(key).to.equal(keys[i]);
+			expect(key).to.equal(collectionKeys[i]);
 			i--;
 		});
 
@@ -348,7 +348,7 @@ describe("collection", function () {
 
 		collection.bulkAdd(objectToAdd);
 
-		expect(collection.getKeys()).to.deep.equal(_.keys(objectToAdd));
+		expect(collection.getKeys()).to.deep.equal(keys(objectToAdd));
 
 		done();
 	});
@@ -455,7 +455,7 @@ describe("collection", function () {
 		};
 
 		collection.bulkAdd(objectToAdd);
-		expect(callbackCounter).to.equal(_.keys(objectToAdd).length);
+		expect(callbackCounter).to.equal(keys(objectToAdd).length);
 
 		done();
 	});
@@ -494,7 +494,7 @@ describe("collection", function () {
 		collection.bulkAdd(objectToAdd);
 		collection.bulkRemove(objectToAdd);
 
-		expect(callbackCounter).to.equal(_.keys(objectToAdd).length);
+		expect(callbackCounter).to.equal(keys(objectToAdd).length);
 
 		done();
 	});

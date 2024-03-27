@@ -8,7 +8,7 @@
  */
 
 import { expect } from "chai";
-import { DeterministicRandomGenerator } from "../deterministicRandomGenerator";
+import { DeterministicRandomGenerator } from "../deterministicRandomGenerator.js";
 
 describe("property-common.DeterministicRandomGenerator", function () {
 	it("should exist", function () {
