@@ -23,6 +23,7 @@ export {
 	WorkspaceRanges,
 } from "./bumpTypes";
 export {
+	DEFAULT_PRERELEASE_IDENTIFIER,
 	changePreReleaseIdentifier,
 	getVersionRange,
 	fromInternalScheme,

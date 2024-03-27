@@ -28,10 +28,18 @@ const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
 export const DEFAULT_PRERELEASE_IDENTIFIER = "internal";
 
 /**
+ * Fluid RC releases use the "internal version scheme" with this prerelease identifier.
+ */
+export const RC_PRERELEASE_IDENTIFER = "rc";
+
+/**
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
  * value must always match one of these values.
  */
-export const ALLOWED_PRERELEASE_IDENTIFIERS = [DEFAULT_PRERELEASE_IDENTIFIER, "rc"] as const;
+export const ALLOWED_PRERELEASE_IDENTIFIERS = [
+	DEFAULT_PRERELEASE_IDENTIFIER,
+	RC_PRERELEASE_IDENTIFER,
+] as const;
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
