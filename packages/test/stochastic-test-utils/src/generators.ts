@@ -2,16 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
 	BaseFuzzTestState,
-	done,
 	Generator,
 	Weights,
-} from "./types";
+	done,
+} from "./types.js";
 
 /**
  * Returns a generator which produces a categorial distribution with the provided weights.

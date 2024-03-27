@@ -1,5 +1,17 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.2.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.2.0)
+
+The import/order rule is now disabled in all configs.
+
+## [5.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.1.0)
+
+Enables new API trimming rules.
+
+## [5.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.0.0)
+
+Adds eslint-plugin-fluid to eslint-config-fluid. This new dependency adds new Fluid-specific rules.
+
 ## [4.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v4.0.0)
 
 Deprecates this package's `minimal` configuration.

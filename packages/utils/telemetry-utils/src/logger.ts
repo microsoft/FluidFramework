@@ -3,36 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
-	TelemetryBaseEventPropertyType as TelemetryEventPropertyType,
+	ITelemetryBaseProperties,
 	LogLevel,
 	Tagged,
-	ITelemetryBaseProperties,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { IsomorphicPerformance, performance } from "@fluid-internal/client-utils";
 import {
 	CachedConfigProvider,
 	loggerIsMonitoringContext,
 	mixinMonitoringContext,
 } from "./config.js";
 import {
-	isILoggingError,
 	extractLogSafeErrorProperties,
 	generateStack,
+	isILoggingError,
 	isTaggedTelemetryPropertyValue,
 } from "./errorLogging.js";
 import {
+	type ITelemetryErrorEventExt,
 	ITelemetryEventExt,
 	ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-	TelemetryEventPropertyTypeExt,
-	TelemetryEventCategory,
 	ITelemetryPropertiesExt,
-	type ITelemetryErrorEventExt,
+	TelemetryEventCategory,
+	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
 
 export interface Memory {
@@ -871,14 +870,14 @@ function convertToBaseEvent({
  * Takes in value, and does one of 4 things.
  * if value is of primitive type - returns the original value.
  * If the value is a flat array or object - returns a stringified version of the array/object.
- * If the value is an object of type Tagged<TelemetryEventPropertyType> - returns the object
+ * If the value is an object of type Tagged<TelemetryBaseEventPropertyType> - returns the object
  * with its values recursively converted to base property Type.
  * If none of these cases are reached - returns an error string
  * @param x - value passed in to convert to a base property type
  */
 export function convertToBasePropertyType(
 	x: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>,
-): TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType> {
+): TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType> {
 	return isTaggedTelemetryPropertyValue(x)
 		? {
 				value: convertToBasePropertyTypeUntagged(x.value),
@@ -889,7 +888,7 @@ export function convertToBasePropertyType(
 
 function convertToBasePropertyTypeUntagged(
 	x: TelemetryEventPropertyTypeExt,
-): TelemetryEventPropertyType {
+): TelemetryBaseEventPropertyType {
 	switch (typeof x) {
 		case "string":
 		case "number":

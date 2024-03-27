@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { SinonFakeTimers, SinonSpy, useFakeTimers, spy } from "sinon";
-import { UnreferencedState, UnreferencedStateTracker } from "../../gc";
+import { SinonFakeTimers, SinonSpy, spy, useFakeTimers } from "sinon";
+import { UnreferencedState, UnreferencedStateTracker } from "../../gc/index.js";
 
 /** Schema for steps taken to test unreferenced state progression / tracking */
 type Steps = [

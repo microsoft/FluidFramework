@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { DocumentNode, DocumentationNode } from "../../documentation-domain";
-import { DocumentWriter } from "../DocumentWriter";
-import { type RenderConfiguration, defaultRenderers } from "./configuration";
-import { type RenderContext, getContextWithDefaults } from "./RenderContext";
+import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
+import { DocumentWriter } from "../DocumentWriter.js";
+import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
+import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
 
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.

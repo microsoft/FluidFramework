@@ -4,7 +4,7 @@
  */
 
 import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions";
-import { ITelemetryBaseLogger, FluidObject } from "@fluidframework/core-interfaces";
+import { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Contract that defines the necessary exports for the bundle provided at runtime

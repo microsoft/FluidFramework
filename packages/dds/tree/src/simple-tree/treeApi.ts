@@ -6,19 +6,19 @@
 import { assert } from "@fluidframework/core-utils";
 import { TreeValue } from "../core/index.js";
 import {
-	EditableTreeEvents,
+	FlexTreeNodeEvents,
 	LeafNodeSchema,
 	Multiplicity,
 	TreeStatus,
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { TreeNode } from "./types.js";
-import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
-import { getClassSchema, getOrCreateNodeProxy } from "./proxies.js";
+import { getOrCreateNodeProxy, getSimpleSchema } from "./proxies.js";
+import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { schemaFromValue } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeNodeSchema, TreeLeafValue } from "./schemaTypes.js";
+import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
+import { TreeNode } from "./types.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -29,7 +29,7 @@ import { getFlexSchema } from "./toFlexSchema.js";
  * https://github.com/microsoft/rushstack/issues/1958.
  * @public
  */
-export interface TreeApi {
+export interface TreeNodeApi {
 	/**
 	 * The schema information for this node.
 	 */
@@ -78,9 +78,8 @@ export interface TreeApi {
 
 /**
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
- * @public
  */
-export const nodeApi: TreeApi = {
+export const treeNodeApi: TreeNodeApi = {
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
@@ -104,10 +103,10 @@ export const nodeApi: TreeApi = {
 		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
 		return parentField.parent.key;
 	},
-	on: <K extends keyof EditableTreeEvents>(
+	on: <K extends keyof FlexTreeNodeEvents>(
 		node: TreeNode,
 		eventName: K,
-		listener: EditableTreeEvents[K],
+		listener: FlexTreeNodeEvents[K],
 	) => {
 		return getFlexNode(node).on(eventName, listener);
 	},
@@ -130,7 +129,7 @@ export const nodeApi: TreeApi = {
 		if (isTreeValue(node)) {
 			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
 		}
-		return getClassSchema(getFlexNode(node).schema) as TreeNodeSchema<
+		return getSimpleSchema(getFlexNode(node).schema) as TreeNodeSchema<
 			string,
 			NodeKind,
 			unknown,

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as semver from "semver";
 
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
@@ -50,8 +51,8 @@ export function bumpRange(
 				bumpType === "current"
 					? originalNoPrerelease
 					: scheme === "virtualPatch"
-					? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
-					: semver.inc(originalNoPrerelease, bumpType);
+						? bumpVersionScheme(originalNoPrerelease, bumpType, "virtualPatch")
+						: semver.inc(originalNoPrerelease, bumpType);
 			if (newVersion === null) {
 				throw new Error(`Failed to increment ${original}.`);
 			}
@@ -60,6 +61,9 @@ export function bumpRange(
 
 		case "internal": {
 			const constraintType = detectInternalVersionConstraintType(range);
+			if (constraintType === "exact") {
+				throw new Error(`Can't bump exact specification from ${range}`);
+			}
 			const original = semver.minVersion(range);
 			if (original === null) {
 				throw new Error(`Couldn't determine minVersion from ${range}.`);

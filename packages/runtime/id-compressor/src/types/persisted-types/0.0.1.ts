@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionId } from "../identifiers";
+import type { SessionId } from "../identifiers.js";
 
 /**
  * The serialized contents of an IdCompressor, suitable for persistence in a summary.

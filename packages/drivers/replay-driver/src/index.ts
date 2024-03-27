@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { ReadDocumentStorageServiceBase, ReplayController } from "./replayController";
-export { ReplayDocumentService } from "./replayDocumentService";
-export { ReplayDocumentServiceFactory } from "./replayDocumentServiceFactory";
+export { ReadDocumentStorageServiceBase, ReplayController } from "./replayController.js";
+export { ReplayDocumentService } from "./replayDocumentService.js";
+export { ReplayDocumentServiceFactory } from "./replayDocumentServiceFactory.js";
 export {
 	FileSnapshotReader,
 	IFileSnapshot,
 	SnapshotStorage,
 	StaticStorageDocumentServiceFactory,
-} from "./storageImplementations";
+} from "./storageImplementations.js";

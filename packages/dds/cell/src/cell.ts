@@ -4,31 +4,31 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
 	type IChannelFactory,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 	type Serializable,
 } from "@fluidframework/datastore-definitions";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	type AttributionKey,
 	type ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
-import { CellFactory } from "./cellFactory";
+import { CellFactory } from "./cellFactory.js";
 import {
-	type ISharedCell,
-	type ISharedCellEvents,
 	type ICellLocalOpMetadata,
 	type ICellOptions,
-} from "./interfaces";
+	type ISharedCell,
+	type ISharedCellEvents,
+} from "./interfaces.js";
 
 /**
  * Description of a cell delta operation
@@ -51,7 +51,6 @@ interface ICellValue {
 	value: unknown;
 	/**
 	 * The attribution key contained in the `Cell`.
-	 * @alpha
 	 */
 	attribution?: AttributionKey;
 }

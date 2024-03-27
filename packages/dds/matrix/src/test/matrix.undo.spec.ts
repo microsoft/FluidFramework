@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	MockFluidDataStoreRuntime,
-	MockEmptyDeltaConnection,
-	MockStorage,
-	MockContainerRuntimeFactory,
-} from "@fluidframework/test-runtime-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index";
-import { extract, expectSize } from "./utils";
-import { TestConsumer } from "./testconsumer";
-import { UndoRedoStackManager } from "./undoRedoStackManager";
+import {
+	MockContainerRuntimeFactory,
+	MockEmptyDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import { MatrixItem, SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { TestConsumer } from "./testconsumer.js";
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
+import { expectSize, extract } from "./utils.js";
 
 [false, true].forEach((isSetCellPolicyFWW: boolean) => {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {

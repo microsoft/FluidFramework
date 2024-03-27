@@ -1,17 +1,16 @@
 {
-	"extends": ["../../../../../../common/build/build-common/tsconfig.test.json"],
+	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"include": ["./**/*"],
 	"compilerOptions": {
-		"experimentalDecorators": true,
-		"allowJs": true,
-		"jsx": "react",
-		"types": ["jest", "node"],
 		"rootDir": "./",
 		"outDir": "../../dist/test",
+		"types": ["node"],
+		"allowJs": true,
+		"experimentalDecorators": true,
 	},
-	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.cjs.json",
 		},
 	],
 }

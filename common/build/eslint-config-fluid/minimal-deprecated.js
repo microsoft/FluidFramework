@@ -4,6 +4,19 @@
  */
 
 /**
+ * Shared list of permitted imports for configuring and override the `import/no-internal-modules` rule.
+ */
+const permittedImports = [
+	// Within Fluid Framework allow import of '/internal' from other FF packages.
+	"@fluidframework/*/internal",
+
+	// Allow imports from sibling and ancestral sibling directories,
+	// but not from cousin directories. Parent is allowed but only
+	// because there isn't a known way to deny it.
+	"*/index.js",
+];
+
+/**
  * "Minimal" eslint configuration.
  *
  * This configuration is primarily intended for use in packages during prototyping / initial setup.
@@ -62,6 +75,8 @@ module.exports = {
 		"unused-imports",
 		// Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
 		"unicorn",
+		// Custom ESLint rules
+		"@fluid-internal/eslint-plugin-fluid",
 	],
 	reportUnusedDisableDirectives: true,
 	ignorePatterns: [
@@ -69,6 +84,14 @@ module.exports = {
 		"**/packageVersion.ts",
 	],
 	rules: {
+		/**
+		 * Restricts including release tags inside the member class / interface.
+		 *
+		 * Refer to the rule by the unprefixed plugin name in the consumed package.
+		 * {@link https://eslint.org/docs/latest/extend/plugins#rules-in-plugins}
+		 */
+		"@fluid-internal/fluid/no-member-release-tags": "error",
+
 		/**
 		 * The @rushstack rules are documented in the package README:
 		 * {@link https://www.npmjs.com/package/@rushstack/eslint-plugin}
@@ -359,13 +382,8 @@ module.exports = {
 		/**
 		 * By default, libraries should not take dependencies on node libraries.
 		 * This rule can be disabled at the project level for libraries that are intended to be used only in node.
-		 *
-		 * @remarks
-		 *
-		 * Note: "events" has been allow-listed here due to the sheer number of uses across the codebase.
-		 * We may wish to address this in the future.
 		 */
-		"import/no-nodejs-modules": ["error", { allow: ["events"] }],
+		"import/no-nodejs-modules": ["error"],
 
 		/**
 		 * Allow Fluid Framework to import from its own internal packages.
@@ -374,16 +392,7 @@ module.exports = {
 		"import/no-internal-modules": [
 			"error",
 			{
-				allow: [
-					// Within Fluid Framework, allow import of '/internal' and '/beta' exports.
-					"@fluidframework/*/beta",
-					"@fluidframework/*/internal",
-
-					// Allow imports from sibling and ancestral sibling directories,
-					// but not from cousin directories. Parent is allowed but only
-					// because there isn't a known way to deny it.
-					"*/index.js",
-				],
+				allow: permittedImports,
 			},
 		],
 	},
@@ -430,6 +439,16 @@ module.exports = {
 				// Disabled for test files
 				"@typescript-eslint/consistent-type-exports": "off",
 				"@typescript-eslint/consistent-type-imports": "off",
+
+				// For test files only, additionally allow import of '/test*' and '/internal/test*' exports.
+				"import/no-internal-modules": [
+					"error",
+					{
+						allow: ["@fluid*/*/test*", "@fluid*/*/internal/test*"].concat(
+							permittedImports,
+						),
+					},
+				],
 			},
 		},
 	],

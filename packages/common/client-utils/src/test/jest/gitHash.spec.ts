@@ -12,7 +12,7 @@ import { AddressInfo } from "node:net";
 import path from "node:path";
 import rewire from "rewire";
 
-import * as HashNode from "../../hashFileNode";
+import * as HashNode from "../../hashFileNode.js";
 
 // Use rewire to access private functions
 const HashBrowser = rewire("../../hashFileBrowser.js");

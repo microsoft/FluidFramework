@@ -5,13 +5,13 @@
 
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
 	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SharedCell } from "./cell";
-import { type ISharedCell } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { SharedCell } from "./cell.js";
+import { type ISharedCell } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedCell}.

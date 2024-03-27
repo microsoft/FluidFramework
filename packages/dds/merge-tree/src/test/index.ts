@@ -10,8 +10,8 @@ export {
 	specToSegment,
 	TestClient,
 	TestClientRevertibleDriver,
-} from "./testClient";
-export { checkTextMatchRelative, TestServer } from "./testServer";
+} from "./testClient.js";
+export { checkTextMatchRelative, TestServer } from "./testServer.js";
 export {
 	countOperations,
 	insertMarker,
@@ -23,7 +23,7 @@ export {
 	nodeOrdinalsHaveIntegrity,
 	validatePartialLengths,
 	useStrictPartialLengthChecks,
-} from "./testUtils";
+} from "./testUtils.js";
 export {
 	annotateRange,
 	applyMessages,
@@ -38,10 +38,10 @@ export {
 	replayResultsPath,
 	runMergeTreeOperationRunner,
 	TestOperation,
-} from "./mergeTreeOperationRunner";
-export { LRUSegment, MergeTree } from "../mergeTree";
-export { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-export { SnapshotLegacy } from "../snapshotlegacy";
+} from "./mergeTreeOperationRunner.js";
+export { LRUSegment, MergeTree } from "../mergeTree.js";
+export { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+export { SnapshotLegacy } from "../snapshotlegacy.js";
 export {
 	addProperties,
 	appendToMergeTreeDeltaRevertibles,
@@ -127,4 +127,4 @@ export {
 	TrackingGroupCollection,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
-} from "../index";
+} from "../index.js";

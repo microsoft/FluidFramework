@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -13,11 +14,10 @@ import {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { waitContainerToCatchUp } from "../container";
-import { ConnectionState } from "../connectionState";
+import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ConnectionState } from "../connectionState.js";
+import { waitContainerToCatchUp } from "../container.js";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>

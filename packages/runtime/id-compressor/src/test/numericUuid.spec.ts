@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { StableId } from "../";
+import { StableId } from "..//index.js";
+import { readNumericUuid, writeNumericUuid } from "../persistanceUtilities.js";
 import {
 	addNumericUuids,
 	assertIsSessionId,
@@ -12,8 +13,7 @@ import {
 	offsetNumericUuid,
 	stableIdFromNumericUuid,
 	subtractNumericUuids,
-} from "../utilities";
-import { readNumericUuid, writeNumericUuid } from "../persistanceUtilities";
+} from "../utilities.js";
 
 describe("NumericUuid", () => {
 	it("can roundtrip a uuid string", () => {

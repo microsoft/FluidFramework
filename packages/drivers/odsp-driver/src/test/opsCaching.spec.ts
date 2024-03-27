@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
-import { MockLogger } from "@fluidframework/telemetry-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IStream } from "@fluidframework/driver-definitions";
 import { delay } from "@fluidframework/core-utils";
-import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService";
-import { OpsCache, ICache, IMessage, CacheEntry } from "../opsCaching";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { IStream } from "@fluidframework/driver-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
+import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { CacheEntry, ICache, IMessage, OpsCache } from "../opsCaching.js";
 
 export type MyDataInput = IMessage & { data: string };
 

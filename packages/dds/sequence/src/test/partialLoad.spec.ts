@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+import { IChannelServices } from "@fluidframework/datastore-definitions";
+import { ReferenceType } from "@fluidframework/merge-tree";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ReferenceType } from "@fluidframework/merge-tree";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedStringFactory, SharedString } from "../index";
+import { SharedString, SharedStringFactory } from "../index.js";
 
 function applyOperations(
 	sharedString: SharedString,

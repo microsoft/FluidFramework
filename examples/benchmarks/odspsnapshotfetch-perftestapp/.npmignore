@@ -3,4 +3,5 @@ nyc
 **/*.tsbuildinfo
 src/test
 dist/test
+webpack
 **/_api-extractor-temp/**

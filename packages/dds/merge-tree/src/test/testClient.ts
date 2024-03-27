@@ -4,36 +4,42 @@
  */
 
 import { strict as assert } from "assert";
+import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
 	ISequencedDocumentMessage,
 	ISummaryTree,
 	ITree,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { Trace } from "@fluid-internal/client-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { Client } from "../client";
-import { DoublyLinkedList } from "../collections";
-import { UnassignedSequenceNumber } from "../constants";
-import { IMergeBlock, ISegmentLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
-import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
-import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
-import { PropertySet } from "../properties";
-import { SnapshotLegacy } from "../snapshotlegacy";
-import { TextSegment } from "../textSegment";
-import { getSlideToSegoff, MergeTree } from "../mergeTree";
-import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
-import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
-import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
-import { MergeTreeRevertibleDriver } from "../revertibles";
-import { IMergeTreeOptions, ReferencePosition } from "..";
-import { TestSerializer } from "./testSerializer";
-import { nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { MockStorage } from "@fluidframework/test-runtime-utils";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
+import { Client } from "../client.js";
+import { DoublyLinkedList } from "../collections/index.js";
+import { UnassignedSequenceNumber } from "../constants.js";
+import { IMergeTreeOptions, ReferencePosition } from "../index.js";
+import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
+import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk.js";
+import { IMergeBlock, ISegment, ISegmentLeaf, Marker, MaxNodesInBlock } from "../mergeTreeNodes.js";
+import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder.js";
+import {
+	IJSONSegment,
+	IMarkerDef,
+	IMergeTreeOp,
+	MergeTreeDeltaType,
+	ReferenceType,
+} from "../ops.js";
+import { PropertySet } from "../properties.js";
+import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
+import { MergeTreeRevertibleDriver } from "../revertibles.js";
+import { SnapshotLegacy } from "../snapshotlegacy.js";
+import { TextSegment } from "../textSegment.js";
+import { TestSerializer } from "./testSerializer.js";
+import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
 export function specToSegment(spec: IJSONSegment): ISegment {
 	const maybeText = TextSegment.fromJSONObject(spec);
@@ -165,9 +171,6 @@ export class TestClient extends Client {
 		});
 	}
 
-	/**
-	 * @internal
-	 */
 	public obliterateRange({
 		start,
 		end,

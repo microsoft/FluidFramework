@@ -4,17 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { Random } from "best-random";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedMatrix, SharedMatrixFactory } from "../index";
-import { extract, expectSize } from "./utils";
-import { UndoRedoStackManager } from "./undoRedoStackManager";
+import { Random } from "best-random";
+import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+import { UndoRedoStackManager } from "./undoRedoStackManager.js";
+import { expectSize, extract } from "./utils.js";
 
 /**
  * 0 means use LWW.

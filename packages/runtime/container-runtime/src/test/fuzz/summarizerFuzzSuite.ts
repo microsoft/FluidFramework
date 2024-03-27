@@ -2,30 +2,31 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 /* eslint-disable import/no-nodejs-modules */
 
 import { strict as assert } from "assert";
 import { mkdirSync, readFileSync } from "fs";
 import path from "path";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	BaseFuzzTestState,
-	createFuzzDescribe,
-	defaultOptions,
 	AsyncGenerator,
+	AsyncReducer,
+	BaseFuzzTestState,
 	SaveInfo,
 	asyncGeneratorFromArray,
+	createFuzzDescribe,
+	defaultOptions,
 	makeRandom,
 	performFuzzActionsAsync,
-	AsyncReducer,
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
 	IMockContainerRuntimeForSummarizerOptions,
 	MockContainerRuntimeFactoryForSummarizer,
 	MockContainerRuntimeForSummarizer,
-} from "./summarizerFuzzMocks";
-import type { SummarizerOperation } from "./fuzzUtils";
+} from "./summarizerFuzzMocks.js";
 
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;
@@ -144,7 +145,6 @@ export function createSummarizerFuzzSuite(
 	const options: SummarizerFuzzSuiteOptions = {
 		...defaultSummarizerFuzzSuiteOptions,
 		...providedOptions,
-		saveFailures: false,
 	};
 
 	const only = new Set(options.only);
@@ -224,7 +224,13 @@ async function runTestForSeed(
 		saveInfo,
 	);
 
-	// TODO AB#6954: Validate we can summarize
+	const oldRuntime = finalState.containerRuntime;
+	oldRuntime.disposeFn();
+	const newRuntime = containerRuntimeFactory.createContainerRuntime(
+		new MockFluidDataStoreRuntime(),
+	);
+	await newRuntime.initializeWithStashedOps(oldRuntime);
+	await newRuntime.summarize();
 
 	options.emitter.emit("testEnd", finalState);
 

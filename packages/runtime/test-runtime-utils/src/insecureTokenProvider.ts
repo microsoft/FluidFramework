@@ -5,8 +5,8 @@
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
-import { generateToken } from "./generateToken";
-import { IInsecureUser } from "./insecureUsers";
+import { generateToken } from "./generateToken.js";
+import { IInsecureUser } from "./insecureUsers.js";
 
 /**
  * Provides an in memory implementation of {@link @fluidframework/routerlicious-driver#ITokenProvider} that can be

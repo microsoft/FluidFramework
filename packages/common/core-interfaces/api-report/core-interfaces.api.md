@@ -230,27 +230,6 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: string, listener: (...args: any[]) => void): any;
 } ? TransformedEvent<TThis, E0, A0> : TransformedEvent<TThis, string, any[]>;
 
-// @alpha @deprecated
-export interface IFluidCodeDetails {
-    readonly config?: IFluidCodeDetailsConfig;
-    readonly package: string | Readonly<IFluidPackage>;
-}
-
-// @internal @deprecated (undocumented)
-export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
-
-// @internal @deprecated
-export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
-    compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
-    satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
-}
-
-// @alpha @deprecated
-export interface IFluidCodeDetailsConfig {
-    // (undocumented)
-    readonly [key: string]: string;
-}
-
 // @public (undocumented)
 export const IFluidHandle: keyof IProvideFluidHandle;
 
@@ -288,23 +267,6 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
     handle: IFluidHandle;
 }
 
-// @alpha @deprecated
-export interface IFluidPackage {
-    [key: string]: unknown;
-    fluid: {
-        [environment: string]: undefined | IFluidPackageEnvironment;
-    };
-    name: string;
-}
-
-// @alpha @deprecated
-export interface IFluidPackageEnvironment {
-    [target: string]: undefined | {
-        files: string[];
-        [key: string]: unknown;
-    };
-}
-
 // @internal (undocumented)
 export const IFluidRunnable: keyof IProvideFluidRunnable;
 
@@ -326,12 +288,6 @@ export interface IGenericError extends IErrorBase {
 // @internal
 export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
-}
-
-// @internal @deprecated (undocumented)
-export interface IProvideFluidCodeDetailsComparer {
-    // (undocumented)
-    readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
 // @public (undocumented)
@@ -388,12 +344,6 @@ export interface IResponse {
     value: any;
 }
 
-// @internal @deprecated (undocumented)
-export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
-
-// @internal @deprecated
-export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
-
 // @internal (undocumented)
 export interface ISignalEnvelope {
     address?: string;
@@ -402,14 +352,6 @@ export interface ISignalEnvelope {
         type: string;
         content: any;
     };
-}
-
-// @internal @deprecated (undocumented)
-export interface ITaggedTelemetryPropertyType {
-    // (undocumented)
-    tag: string;
-    // (undocumented)
-    value: TelemetryEventPropertyType;
 }
 
 // @public
@@ -429,12 +371,8 @@ export interface ITelemetryBaseLogger {
 }
 
 // @public
-export type ITelemetryBaseProperties = ITelemetryProperties;
-
-// @public @deprecated
-export interface ITelemetryProperties {
-    // (undocumented)
-    [index: string]: TelemetryEventPropertyType | Tagged<TelemetryEventPropertyType>;
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
 
 // @alpha
@@ -472,14 +410,8 @@ export interface Tagged<V, T extends string = string> {
     value: V;
 }
 
-// @alpha
-export type TelemetryBaseEventPropertyType = TelemetryEventPropertyType;
-
-// @public @deprecated
-export type TelemetryEventCategory = "generic" | "error" | "performance";
-
-// @public @deprecated
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+// @public
+export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;

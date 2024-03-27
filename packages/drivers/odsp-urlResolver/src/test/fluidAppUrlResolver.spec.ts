@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { FluidAppOdspUrlResolver } from "../urlResolver";
+import { FluidAppOdspUrlResolver } from "../urlResolver.js";
 
 describe("Fluid App Url Resolver", () => {
 	it("Should resolve the Fluid app urls correctly", async () => {

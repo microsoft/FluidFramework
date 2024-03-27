@@ -9,7 +9,7 @@ import {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions";
-import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	ReleaseVersion,
 	VersionBumpType,
@@ -87,13 +88,13 @@ export const getRanges = (version: ReleaseVersion, scheme?: VersionScheme): Rele
 				minor: getVersionRange(version, "minor"),
 				tilde: getVersionRange(version, "~"),
 				caret: getVersionRange(version, "^"),
-		  }
+			}
 		: {
 				patch: `~${version}`,
 				minor: `^${version}`,
 				tilde: `~${version}`,
 				caret: `^${version}`,
-		  };
+			};
 };
 
 interface PackageCaretRange {

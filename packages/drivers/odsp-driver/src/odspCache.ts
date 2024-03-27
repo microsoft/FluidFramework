@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { PromiseCache } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
-	IOdspResolvedUrl,
-	IFileEntry,
-	IEntry,
-	IPersistedCache,
 	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IOdspResolvedUrl,
+	IPersistedCache,
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file

@@ -5,12 +5,12 @@
 
 import {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { ConsensusQueue } from "./consensusQueue";
-import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces";
-import { pkgVersion } from "./packageVersion";
+import { ConsensusQueue } from "./consensusQueue.js";
+import { IConsensusOrderedCollection, IConsensusOrderedCollectionFactory } from "./interfaces.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * The factory that defines the consensus queue

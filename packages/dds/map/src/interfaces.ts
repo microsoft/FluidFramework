@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import {
 	IDisposable,
 	IEvent,
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
+import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
  * Type of "valueChanged" event parameter.

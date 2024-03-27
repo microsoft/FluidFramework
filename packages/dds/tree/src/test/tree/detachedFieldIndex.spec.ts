@@ -7,22 +7,22 @@ import { strict as assert } from "assert";
 import { IIdCompressor, createIdCompressor } from "@fluidframework/id-compressor";
 import { DetachedFieldIndex, ForestRootId, RevisionTagCodec } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
+import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
+// eslint-disable-next-line import/no-internal-modules
+import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
+// eslint-disable-next-line import/no-internal-modules
 import { DetachedFieldSummaryData } from "../../core/tree/detachedFieldIndexTypes.js";
+import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	IdAllocator,
 	JsonCompatibleReadOnly,
 	brand,
 	idAllocatorFromMaxId,
 } from "../../util/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { Format } from "../../core/tree/detachedFieldIndexFormat.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../snapshots/testTrees.js";
+import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 const mintedTag = testIdCompressor.generateCompressedId();
 const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);

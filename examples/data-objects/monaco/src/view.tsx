@@ -5,9 +5,9 @@
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
 import {
+	MergeTreeDeltaType,
 	SequenceDeltaEvent,
 	SharedString,
-	MergeTreeDeltaType,
 	TextSegment,
 } from "@fluidframework/sequence";
 import * as monaco from "monaco-editor";

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 // Get the test port from the global map and set it in env for this test
 const testTools = require("@fluidframework/test-tools");
 const { name } = require("./package.json");

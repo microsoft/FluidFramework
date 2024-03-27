@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
-import { assert } from "@fluidframework/core-utils";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
+import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -16,8 +13,19 @@ import {
 	IResponse,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IAudience, ILoader, AttachState } from "@fluidframework/container-definitions";
+import { assert } from "@fluidframework/core-utils";
+import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import {
+	IChannel,
+	IChannelServices,
+	IChannelStorageService,
+	IDeltaConnection,
+	IDeltaHandler,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import {
 	IQuorumClients,
 	ISequencedClient,
@@ -28,25 +36,16 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
-	IChannel,
-	IFluidDataStoreRuntime,
-	IDeltaConnection,
-	IDeltaHandler,
-	IChannelStorageService,
-	IChannelServices,
-} from "@fluidframework/datastore-definitions";
-import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
-import {
 	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
-import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
-import { MockDeltaManager } from "./mockDeltas";
-import { MockHandle } from "./mockHandle";
+import { MockDeltaManager } from "./mockDeltas.js";
+import { MockHandle } from "./mockHandle.js";
 
 /**
  * Mock implementation of IDeltaConnection for testing
@@ -107,9 +106,9 @@ export interface IMockContainerRuntimePendingMessage {
 	localOpMetadata: unknown;
 }
 
-interface IMockContainerRuntimeSequencedIdAllocationMessage {
+type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessage & {
 	contents: IMockContainerRuntimeIdAllocationMessage;
-}
+};
 
 interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
@@ -152,7 +151,7 @@ const makeContainerRuntimeOptions = (
 
 interface IInternalMockRuntimeMessage {
 	content: any;
-	localOpMetadata: unknown;
+	localOpMetadata?: unknown;
 }
 
 /**
@@ -163,7 +162,6 @@ interface IInternalMockRuntimeMessage {
  */
 export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	public clientId: string;
-	protected clientSequenceNumber: number = 0;
 	public readonly deltaManager: MockDeltaManager;
 	/**
 	 * @deprecated use the associated datastore to create the delta connection
@@ -184,7 +182,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		super();
-		this.deltaManager = new MockDeltaManager();
+		this.deltaManager = new MockDeltaManager(() => this.clientId);
+		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
+			this.factory.pushMessage(message);
+		});
+
 		const msn = overrides?.minimumSequenceNumber;
 		if (msn !== undefined) {
 			this.deltaManager.lastSequenceNumber = msn;
@@ -222,19 +224,22 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
-	public submit(messageContent: any, localOpMetadata: unknown): number {
-		const clientSequenceNumber = this.clientSequenceNumber;
-		const message = {
+	public submit(messageContent: any, localOpMetadata?: unknown): number {
+		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
+		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
 		};
 
-		this.clientSequenceNumber++;
+		const isAllocationMessage = this.isAllocationMessage(message.content);
+
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				const idAllocationOp = this.generateIdAllocationOp();
-				if (idAllocationOp !== undefined) {
-					this.submitInternal(idAllocationOp, clientSequenceNumber);
+				if (!isAllocationMessage) {
+					const idAllocationOp = this.generateIdAllocationOp();
+					if (idAllocationOp !== undefined) {
+						this.submitInternal(idAllocationOp, clientSequenceNumber);
+					}
 				}
 				this.submitInternal(message, clientSequenceNumber);
 				break;
@@ -242,7 +247,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 			case FlushMode.TurnBased: {
 				// Id allocation messages are directly submitted during the resubmit path
-				if (this.isAllocationMessage(message.content)) {
+				if (isAllocationMessage) {
 					this.idAllocationOutbox.push(message);
 				} else {
 					this.outbox.push(message);
@@ -257,12 +262,16 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return clientSequenceNumber;
 	}
 
-	private isAllocationMessage(
-		message: any,
+	private isSequencedAllocationMessage(
+		message: ISequencedDocumentMessage,
 	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
+		return this.isAllocationMessage(message.contents);
+	}
+
+	private isAllocationMessage(message: any): message is IMockContainerRuntimeIdAllocationMessage {
 		return (
-			(message as IMockContainerRuntimeSequencedIdAllocationMessage).contents?.type ===
-			"idAllocation"
+			message !== undefined &&
+			(message as IMockContainerRuntimeIdAllocationMessage).type === "idAllocation"
 		);
 	}
 
@@ -303,7 +312,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 				// read the fake client sequence numbers.
 				this.runtimeOptions.enableGroupedBatching
 					? fakeClientSequenceNumber++
-					: this.clientSequenceNumber,
+					: this.deltaManager.clientSequenceNumber,
 			);
 		});
 	}
@@ -333,7 +342,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	protected reSubmitMessages(
-		messagesToResubmit: { content: any; localOpMetadata: unknown }[],
+		messagesToResubmit: { content: any; localOpMetadata?: unknown }[],
 	): void {
 		// Sort the messages so that idAllocation messages are submitted first
 		// When resubmitting non-idAllocation messages, they may generate new IDs.
@@ -366,30 +375,29 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
-				localOpMetadata: undefined,
 			};
 		}
 		return undefined;
 	}
 
 	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
-		this.factory.pushMessage({
-			clientId: this.clientId,
-			clientSequenceNumber,
-			contents: message.content,
-			referenceSequenceNumber: this.referenceSequenceNumber,
-			type: MessageType.Operation,
-		});
+		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
+		this.deltaManager.outbound.push([
+			{
+				clientSequenceNumber,
+				contents: message.content,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				type: MessageType.Operation,
+			},
+		]);
 		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
-		this.deltaManager.lastSequenceNumber = message.sequenceNumber;
-		this.deltaManager.lastMessage = message;
-		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
+		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
-		if (this.isAllocationMessage(message)) {
+		if (this.isSequencedAllocationMessage(message)) {
 			this.finalizeIdRange(message.contents.contents);
 		} else {
 			this.dataStoreRuntime.process(message, local, localOpMetadata);
@@ -422,13 +430,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
 		return [local, localOpMetadata];
-	}
-
-	/**
-	 * The current reference sequence number observed by this runtime instance.
-	 */
-	protected get referenceSequenceNumber() {
-		return this.deltaManager.lastSequenceNumber;
 	}
 }
 
@@ -618,10 +619,10 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 		throw new Error("Method not implemented.");
 	}
 
-	addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	addListener(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	on(event: string | symbol, listener: (...args: any[]) => void): this {
+	on(event: string | number, listener: (...args: any[]) => void): this {
 		switch (event) {
 			case "afterOn":
 				this.eventEmitter.on(event, listener);
@@ -636,24 +637,24 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 				throw new Error("Method not implemented.");
 		}
 	}
-	once(event: string | symbol, listener: (...args: any[]) => void): this {
+	once(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	prependListener(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	prependOnceListener(event: string | number, listener: (...args: any[]) => void): this {
 		throw new Error("Method not implemented.");
 	}
-	removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+	removeListener(event: string | number, listener: (...args: any[]) => void): this {
 		this.eventEmitter.removeListener(event, listener);
 		return this;
 	}
-	off(event: string | symbol, listener: (...args: any[]) => void): this {
+	off(event: string | number, listener: (...args: any[]) => void): this {
 		this.eventEmitter.off(event, listener);
 		return this;
 	}
-	removeAllListeners(event?: string | symbol | undefined): this {
+	removeAllListeners(event?: string | number | undefined): this {
 		throw new Error("Method not implemented.");
 	}
 	setMaxListeners(n: number): this {
@@ -662,21 +663,19 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 	getMaxListeners(): number {
 		throw new Error("Method not implemented.");
 	}
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	listeners(event: string | symbol): Function[] {
+	listeners(event: string | number): ReturnType<EventEmitter["listeners"]> {
 		throw new Error("Method not implemented.");
 	}
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	rawListeners(event: string | symbol): Function[] {
+	rawListeners(event: string | number): ReturnType<EventEmitter["rawListeners"]> {
 		throw new Error("Method not implemented.");
 	}
-	emit(event: string | symbol, ...args: any[]): boolean {
+	emit(event: string | number, ...args: any[]): boolean {
 		throw new Error("Method not implemented.");
 	}
-	eventNames(): (string | symbol)[] {
+	eventNames(): (string | number)[] {
 		throw new Error("Method not implemented.");
 	}
-	listenerCount(type: string | symbol): number {
+	listenerCount(type: string | number): number {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -793,6 +792,8 @@ export class MockFluidDataStoreRuntime
 	public createChannel(id: string, type: string): IChannel {
 		return null as any as IChannel;
 	}
+
+	public addChannel(channel: IChannel): void {}
 
 	public get isAttached(): boolean {
 		return this.attachState !== AttachState.Detached;

@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties, IDisposable } from "@fluidframework/core-interfaces";
 import { performance } from "@fluid-internal/client-utils";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	ITelemetryLoggerExt,
 	type ITelemetryGenericEventExt,
+	ITelemetryLoggerExt,
 	type ITelemetryPerformanceEventExt,
 } from "./telemetryTypes.js";
 
@@ -76,7 +76,7 @@ export class SampledTelemetryHelper implements IDisposable {
 	 * properties which should be added to the telemetry event for that bucket. If a bucket being measured does not
 	 * have an entry in this map, no additional properties will be added to its telemetry events. The following keys are
 	 * reserved for use by this class: "duration", "count", "totalDuration", "minDuration", "maxDuration". If any of
-	 * them is specified as a key in one of the ITelemetryProperties objects in this map, that key-value pair will be
+	 * them is specified as a key in one of the ITelemetryBaseProperties objects in this map, that key-value pair will be
 	 * ignored.
 	 */
 	public constructor(
@@ -84,7 +84,7 @@ export class SampledTelemetryHelper implements IDisposable {
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
-		private readonly perBucketProperties = new Map<string, ITelemetryProperties>(),
+		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
 	) {}
 
 	/**

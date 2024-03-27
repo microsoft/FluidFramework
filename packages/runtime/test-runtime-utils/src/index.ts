@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { IInsecureUser } from "./insecureUsers";
-export { InsecureTokenProvider } from "./insecureTokenProvider";
-export { MockFluidDataStoreContext } from "./mocksDataStoreContext";
-export { MockDeltaManager, MockDeltaQueue } from "./mockDeltas";
-export { MockHandle } from "./mockHandle";
+export { IInsecureUser } from "./insecureUsers.js";
+export { InsecureTokenProvider } from "./insecureTokenProvider.js";
+export { MockFluidDataStoreContext } from "./mocksDataStoreContext.js";
+export { MockDeltaManager, MockDeltaQueue } from "./mockDeltas.js";
+export { MockHandle } from "./mockHandle.js";
 export {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
@@ -19,10 +19,10 @@ export {
 	MockObjectStorageService,
 	MockQuorumClients,
 	MockSharedObjectServices,
-} from "./mocks";
+} from "./mocks.js";
 export {
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
-} from "./mocksForReconnection";
-export { MockStorage } from "./mockStorage";
-export { validateAssertionError } from "./validateAssertionError";
+} from "./mocksForReconnection.js";
+export { MockStorage } from "./mockStorage.js";
+export { validateAssertionError } from "./validateAssertionError.js";

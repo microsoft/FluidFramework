@@ -4,11 +4,11 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
-import { schemaFormat, RevisionTagSchema, ChangesetLocalId } from "../../core/index.js";
+import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
-	brandedNumberType,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,
+	brandedNumberType,
 } from "../../util/index.js";
 import { EncodedFieldBatch } from "../chunked-forest/index.js";
 
@@ -22,6 +22,7 @@ export const EncodedChangeAtomId = Type.Union([
 	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
 	ChangesetLocalIdSchema,
 ]);
+export type EncodedChangeAtomId = Static<typeof EncodedChangeAtomId>;
 
 const EncodedValueChange = Type.Object(
 	{

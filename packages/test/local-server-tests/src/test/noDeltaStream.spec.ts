@@ -5,31 +5,31 @@
 
 import { strict as assert } from "assert";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 import {
-	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
+	createLocalResolverCreateNewRequest,
 } from "@fluidframework/local-driver";
 import { SharedString } from "@fluidframework/sequence";
 import {
-	LocalDeltaConnectionServer,
 	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainer,
-	createLoader,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	createAndAttachContainer,
+	createLoader,
 } from "@fluidframework/test-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";
-	const documentLoadUrl = `fluid-test://localhost/${documentId}`;
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const stringId = "stringKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "localServerTestPackage",

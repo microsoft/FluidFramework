@@ -3,28 +3,28 @@
  * Licensed under the MIT License.
  */
 
+import { PathHelper } from "@fluid-experimental/property-changeset";
 import {
-	PropertyFactory,
+	ArrayProperty,
 	BaseProperty,
 	ContainerProperty,
-	ValueProperty,
-	SetProperty,
 	MapProperty,
-	ArrayProperty,
+	PropertyFactory,
+	SetProperty,
+	ValueProperty,
 } from "@fluid-experimental/property-properties";
-import { PathHelper } from "@fluid-experimental/property-changeset";
 
-import { arrayProxyHandler } from "./arrayProxyHandler";
-import { proxyHandler } from "./proxyHandler";
+import { arrayProxyHandler } from "./arrayProxyHandler.js";
+import { proxyHandler } from "./proxyHandler.js";
 
-import { ComponentArray } from "./componentArray";
-import { ComponentMap } from "./componentMap";
-import { ComponentSet } from "./componentSet";
-import { PropertyProxyErrors } from "./errors";
+import { ComponentArray } from "./componentArray.js";
+import { ComponentMap } from "./componentMap.js";
+import { ComponentSet } from "./componentSet.js";
+import { PropertyProxyErrors } from "./errors.js";
 
-import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty";
-import { forceType } from "./utilities";
-import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
+import { IParentAndPathOfReferencedProperty } from "./IParentAndPathOfReferencedProperty.js";
+import { PropertyTypes, ProxyType, ReferenceType } from "./interfaces.js";
+import { forceType } from "./utilities.js";
 
 /**
  * This symbol is available on properties proxied via {@link PropertyProxy.proxify}.

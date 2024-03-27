@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { SharedOT } from "./ot";
+export { SharedOT } from "./ot.js";

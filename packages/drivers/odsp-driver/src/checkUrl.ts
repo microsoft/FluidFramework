@@ -4,7 +4,7 @@
  */
 
 import { DriverPreCheckInfo } from "@fluidframework/driver-definitions";
-import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
+import { getLocatorFromOdspUrl } from "./odspFluidFileLink.js";
 
 /**
  * A check that returns DriverPreCheckInfo if the URL format is likely supported by this driver.

@@ -3,29 +3,24 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable unicorn/numeric-separators-style */
-
-// False positive: this is an import from the `events` package, not from Node.
-// eslint-disable-next-line unicorn/prefer-node-protocol
-import { EventEmitter } from "events";
-
+import { EventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelStorageService,
 	type IChannelFactory,
+	type IChannelStorageService,
+	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { type ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
-	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
-import { PactMapFactory } from "./pactMapFactory";
-import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces";
+import { type IAcceptedPact, type IPactMap, type IPactMapEvents } from "./interfaces.js";
+import { PactMapFactory } from "./pactMapFactory.js";
 
 /**
  * The accepted pact information, if any.

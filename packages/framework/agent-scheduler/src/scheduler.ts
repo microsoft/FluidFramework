@@ -4,30 +4,30 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	ISharedObjectRegistry,
 } from "@fluidframework/datastore";
-import { AttachState } from "@fluidframework/container-definitions";
+import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions";
-import { v4 as uuid } from "uuid";
 import {
+	type ITelemetryLoggerExt,
+	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
-	UsageError,
-	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
+import { v4 as uuid } from "uuid";
+import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;

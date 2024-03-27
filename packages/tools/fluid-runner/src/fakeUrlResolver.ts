@@ -12,7 +12,7 @@ import {
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 
 const fakeId = "FakeUrlResolver";
-const fakeUrl = "/FakeUrlResolver/";
+const fakeUrl = "https://examplehost.com/FakeUrlResolver/";
 
 /**
  * Fake URL resolver that returns hard coded values on every request

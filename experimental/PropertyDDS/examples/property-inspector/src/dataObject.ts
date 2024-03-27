@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import { EventEmitter } from "@fluid-example/example-utils";
+import { PropertyTreeFactory, SharedPropertyTree } from "@fluid-experimental/property-dds";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDirectory, IValueChanged } from "@fluidframework/map";
-import { SharedPropertyTree, PropertyTreeFactory } from "@fluid-experimental/property-dds";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 export interface IPropertyTree extends EventEmitter {

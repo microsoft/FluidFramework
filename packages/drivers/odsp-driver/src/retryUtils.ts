@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
-import { Odsp409Error } from "./epochTracker";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { Odsp409Error } from "./epochTracker.js";
 
 /**
  * This method retries only for retriable coherency and service read only errors.

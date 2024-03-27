@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
-import { ChangeConnectionState, DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
+import type { ChangeConnectionState, DDSFuzzModel } from "../../ddsFuzzHarness.js";
+import { createDDSFuzzSuite } from "../../ddsFuzzHarness.js";
+import type { Operation, SharedNothingFactory } from "../sharedNothing.js";
+import { baseModel } from "../sharedNothing.js";
+import { _dirname } from "./dirname.cjs";
 
 const model: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState> = {
 	...baseModel,
@@ -18,6 +21,6 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionStat
 
 createDDSFuzzSuite(model, {
 	defaultTestCount: 2,
-	// Note: this should place files in dist/test-dds-utils/ddsSuiteCases/failing-configuration
-	saveFailures: { directory: __dirname },
+	// Note: this should place files in (dist|lib)/test-dds-utils/ddsSuiteCases/failing-configuration
+	saveFailures: { directory: _dirname },
 });

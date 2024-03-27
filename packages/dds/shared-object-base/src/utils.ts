@@ -6,7 +6,7 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { IFluidSerializer } from "./serializer";
+import { IFluidSerializer } from "./serializer.js";
 
 /**
  * Given a mostly-plain object that may have handle objects embedded within, return a string representation of an object

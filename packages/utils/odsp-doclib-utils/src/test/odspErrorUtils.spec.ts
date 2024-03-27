@@ -9,8 +9,8 @@ import {
 	IGenericNetworkError,
 	IThrottlingWarning,
 } from "@fluidframework/driver-definitions";
-import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
-import { OdspErrorTypes, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
+import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils";
+import { IOdspError, OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils.js";
 import { pkgVersion } from "../packageVersion.js";

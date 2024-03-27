@@ -9,30 +9,30 @@
 
 import {
 	AllowedTypesToFlexInsertableTree,
-	InsertableFlexNode,
 	InsertableFlexField,
+	InsertableFlexNode,
 	TypedFields,
 	UnbrandedName,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware.js";
 
 import { TreeNodeSchemaIdentifier } from "../../../core/index.js";
-import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
+import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
-	valueSymbol,
-	FieldKinds,
-	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
-	FlexTreeNodeSchema,
-	FlexFieldSchema,
+	FieldKinds,
 	FlexAllowedTypes,
+	FlexFieldSchema,
+	FlexTreeNodeSchema,
+	typeNameSymbol,
+	valueSymbol,
 } from "../../../feature-libraries/index.js";
-import { leaf, SchemaBuilder } from "../../../domains/index.js";
 import {
 	FlexList,
 	FlexListToNonLazyArray,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/flexList.js";
+import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util/index.js";
 
 // Test UnbrandedName
 {

@@ -23,7 +23,6 @@ import {
 	getLumberjackBasePropertiesFromRepoManagerParams,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
-	getSoftDeletedMarkerPath,
 	GitWholeSummaryManager,
 	IExternalWriterConfig,
 	IFileSystemManager,
@@ -233,43 +232,15 @@ async function deleteSummary(
 		[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 		[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 	};
-	// In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
-	const summaryFolderPath = repoManager.path;
-	lumberjackProperties.summaryFolderPath = summaryFolderPath;
-	Lumberjack.info(`Deleting summary`, lumberjackProperties);
 
-	try {
-		if (softDelete) {
-			const softDeletedMarkerPath = getSoftDeletedMarkerPath(summaryFolderPath);
-			await fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
-			Lumberjack.info(
-				`Successfully marked summary data as soft-deleted.`,
-				lumberjackProperties,
-			);
-			return;
-		}
+	const wholeSummaryManager = new GitWholeSummaryManager(
+		repoManagerParams.storageRoutingId.documentId,
+		repoManager,
+		lumberjackProperties,
+		externalWriterConfig?.enabled ?? false,
+	);
 
-		// Hard delete
-		await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
-		Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
-	} catch (error: any) {
-		if (
-			error?.code === "ENOENT" ||
-			(error instanceof NetworkError &&
-				error?.code === 400 &&
-				error?.message.startsWith("Repo does not exist"))
-		) {
-			// File does not exist.
-			Lumberjack.warning(
-				"Tried to delete summary, but it does not exist",
-				lumberjackProperties,
-				error,
-			);
-			return;
-		}
-		Lumberjack.error("Failed to delete summary", lumberjackProperties, error);
-		throw error;
-	}
+	return wholeSummaryManager.deleteSummary(fileSystemManager, softDelete);
 }
 
 export function create(

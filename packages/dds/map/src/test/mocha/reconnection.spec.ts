@@ -5,14 +5,14 @@
 
 import { strict as assert } from "node:assert";
 import {
-	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
-import { MapFactory, SharedMap } from "../../map";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+import { DirectoryFactory, SharedDirectory } from "../../directory.js";
+import { MapFactory, SharedMap } from "../../map.js";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {

@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { FileDeltaStorageService } from "./fileDeltaStorageService";
+import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 
 /**
  * The DocumentService manages the different endpoints for connecting to

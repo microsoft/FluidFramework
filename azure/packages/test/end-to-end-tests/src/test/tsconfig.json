@@ -1,9 +1,0 @@
-{
-	"extends": ["../../../../../../common/build/build-common/tsconfig.test.json"],
-	"include": ["./**/*", "../*"],
-	"compilerOptions": {
-		"rootDir": "../",
-		"outDir": "../../dist",
-		"types": ["mocha"],
-	},
-}

@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
@@ -15,13 +16,12 @@ import {
 } from "@fluidframework/driver-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LocalDocumentStorageService } from "./localDocumentStorageService";
-import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
-import { LocalDeltaStorageService } from "./localDeltaStorageService";
+import { LocalDeltaStorageService } from "./localDeltaStorageService.js";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+import { LocalDocumentStorageService } from "./localDocumentStorageService.js";
 
 /**
  * Basic implementation of a document service for local use.

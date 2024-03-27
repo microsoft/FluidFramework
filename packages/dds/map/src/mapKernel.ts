@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { IFluidSerializer, ValueType, bindHandles } from "@fluidframework/shared-object-base";
 // eslint-disable-next-line import/no-deprecated
-import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
+import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces.js";
 import {
-	IMapSetOperation,
-	IMapDeleteOperation,
-	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
-	IMapKeyAddLocalOpMetadata,
 	IMapClearLocalOpMetadata,
-} from "./internalInterfaces";
-import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapKeyAddLocalOpMetadata,
+	IMapKeyEditLocalOpMetadata,
+	IMapSetOperation,
+} from "./internalInterfaces.js";
+import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.

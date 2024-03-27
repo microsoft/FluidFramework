@@ -157,7 +157,7 @@ function getTokenFromRequest(request: Request): string {
 	}
 	const tokenRegex = /Basic (.+)/;
 	const tokenMatch = tokenRegex.exec(authorizationHeader);
-	if (!tokenMatch || !tokenMatch[1]) {
+	if (!tokenMatch?.[1]) {
 		throw new NetworkError(403, "Missing access token.");
 	}
 	return tokenMatch[1];
@@ -278,6 +278,7 @@ export function verifyStorageToken(
 		);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, res, next) => {
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
@@ -307,6 +308,7 @@ export function verifyStorageToken(
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();
+			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
 				async () => next(),
@@ -330,6 +332,7 @@ export function verifyStorageToken(
  * @internal
  */
 export function validateTokenScopeClaims(expectedScopes: string): RequestHandler {
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		let token: string = "";
 		try {

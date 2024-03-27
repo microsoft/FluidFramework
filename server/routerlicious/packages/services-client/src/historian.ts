@@ -91,7 +91,7 @@ export class Historian implements IHistorian {
 	public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
 		return this.restWrapper
 			.get<git.ICommitDetails[]>(`/commits`, this.getQueryString({ count, sha }))
-			.catch((error) =>
+			.catch(async (error) =>
 				error === 400 || error === 404
 					? ([] as git.ICommitDetails[])
 					: Promise.reject<git.ICommitDetails[]>(error),

@@ -4,14 +4,14 @@
  */
 
 import { LazyPromise } from "@fluidframework/core-utils";
+import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 import {
 	AsyncFluidObjectProvider,
-	FluidObjectSymbolProvider,
-	FluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
-} from "./types";
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer";
+	FluidObjectProvider,
+	FluidObjectSymbolProvider,
+} from "./types.js";
 
 /**
  * DependencyContainer is similar to a IoC Container. It takes providers and will

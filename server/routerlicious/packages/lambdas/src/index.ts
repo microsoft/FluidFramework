@@ -46,5 +46,6 @@ export {
 	IRuntimeSignalEnvelope,
 	logCommonSessionEndMetrics,
 	NoOpLambda,
+	NoOpLambdaCheckpointConfiguration,
 	DocumentCheckpointManager,
 } from "./utils";

@@ -6,27 +6,27 @@
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import {
 	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
+	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import {
 	IOdspSummaryPayload,
-	IWriteSummaryResponse,
 	IOdspSummaryTree,
 	IOdspSummaryTreeBaseEntry,
+	IWriteSummaryResponse,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
-} from "./contracts";
-import { EpochTracker } from "./epochTracker";
-import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh } from "./odspUtils";
+} from "./contracts.js";
+import { EpochTracker } from "./epochTracker.js";
+import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into

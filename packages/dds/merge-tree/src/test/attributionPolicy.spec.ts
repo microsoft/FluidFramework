@@ -9,8 +9,8 @@ import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 	createPropertyTrackingAttributionPolicyFactory,
-} from "../attributionPolicy";
-import { TestClient } from "./testClient";
+} from "../attributionPolicy.js";
+import { TestClient } from "./testClient.js";
 
 const local: AttributionKey = { type: "local" };
 

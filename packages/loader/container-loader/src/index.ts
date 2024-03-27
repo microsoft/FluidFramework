@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export { ConnectionState } from "./connectionState";
-export { IContainerExperimental, waitContainerToCatchUp } from "./container";
+export { ConnectionState } from "./connectionState.js";
+export { IContainerExperimental, waitContainerToCatchUp } from "./container.js";
 export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
@@ -13,10 +13,10 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
-} from "./loader";
+} from "./loader.js";
 export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
-} from "./location-redirection-utilities";
-export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
-export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils";
+} from "./location-redirection-utilities/index.js";
+export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
+export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils.js";

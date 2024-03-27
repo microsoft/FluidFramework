@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { MergeTreeDeltaType } from "../ops";
-import { TestClient } from "./testClient";
-import { insertText } from "./testUtils";
+import { MergeTreeDeltaType } from "../ops.js";
+import { TestClient } from "./testClient.js";
+import { insertText } from "./testUtils.js";
 
 describe("obliterate", () => {
 	let client: TestClient;

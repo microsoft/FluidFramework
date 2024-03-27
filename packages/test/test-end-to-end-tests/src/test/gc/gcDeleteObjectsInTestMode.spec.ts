@@ -6,6 +6,11 @@
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	ITestDataObject,
+	TestDataObjectType,
+	describeCompat,
+} from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -18,11 +23,6 @@ import {
 	getDataStoreEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	describeCompat,
-	ITestDataObject,
-	TestDataObjectType,
-} from "@fluid-private/test-version-utils";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
@@ -39,13 +39,13 @@ import { getGCStateFromSummary } from "./gcTestSummaryUtils.js";
  */
 async function validateNodeStateInGCSummaryTree(
 	provider: ITestObjectProvider,
-	containerRuntime: ContainerRuntime,
+	summarizerContainerRuntime: ContainerRuntime,
 	nodeId: string,
 	referenced: boolean,
 	deletedFromGCState = false,
 ) {
 	await provider.ensureSynchronized();
-	const { summary } = await containerRuntime.summarize({
+	const { summary } = await summarizerContainerRuntime.summarize({
 		runGC: true,
 		fullTree: true,
 		trackState: false,
@@ -117,12 +117,12 @@ function validateChildReferenceStates(summary: ISummaryTree, referenced: boolean
  * - Otherwise, the load should pass because the data store exists.
  */
 async function validateDataStoreLoad(
-	containerRuntime: ContainerRuntime,
+	summarizerContainerRuntime: ContainerRuntime,
 	deleteContent: boolean,
 	dataStoreId: string,
 	referenced: boolean,
 ) {
-	const response = await containerRuntime.resolveHandle({
+	const response = await summarizerContainerRuntime.resolveHandle({
 		url: `/${dataStoreId}`,
 		headers: { wait: false },
 	});
@@ -140,7 +140,7 @@ async function validateDataStoreLoad(
  */
 async function validateDataStoreReferenceState(
 	provider: ITestObjectProvider,
-	containerRuntime: ContainerRuntime,
+	summarizerContainerRuntime: ContainerRuntime,
 	deleteContent: boolean,
 	dataStoreId: string,
 	referenced: boolean,
@@ -148,12 +148,12 @@ async function validateDataStoreReferenceState(
 ) {
 	const summary = await validateNodeStateInGCSummaryTree(
 		provider,
-		containerRuntime,
+		summarizerContainerRuntime,
 		dataStoreId,
 		referenced,
 		deletedFromGCState,
 	);
-	await validateDataStoreLoad(containerRuntime, deleteContent, dataStoreId, referenced);
+	await validateDataStoreLoad(summarizerContainerRuntime, deleteContent, dataStoreId, referenced);
 
 	let dataStoreTree: ISummaryTree | undefined;
 	const channelsTree = (summary.tree[channelsTreeName] as ISummaryTree).tree;
@@ -198,7 +198,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 	// deleted after each GC run.
 	const tests = (deleteContent: boolean = false) => {
 		let provider: ITestObjectProvider;
-		let containerRuntime: ContainerRuntime;
+		let summarizerContainerRuntime: ContainerRuntime;
 		let mainDataStore: ITestDataObject;
 
 		beforeEach("setup", async function () {
@@ -211,25 +211,29 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 				runtimeOptions: {
 					...defaultGCConfig.runtimeOptions,
 					gcOptions: {
-						gcAllowed: true,
 						runGCInTestMode: deleteContent,
 					},
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
 			mainDataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
-			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 
 			// Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without
 			// any op, GC will not run.
 			mainDataStore._root.set("key", "value");
 			await waitForContainerConnection(container);
+
+			const summarizerContainer = await provider.loadTestContainer(testContainerConfig);
+			const summarizerMainDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(summarizerContainer);
+			summarizerContainerRuntime = summarizerMainDataStore._context
+				.containerRuntime as ContainerRuntime;
 		});
 
 		it("marks default data store as referenced", async () => {
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				mainDataStore._context.id,
 				true /* referenced */,
@@ -244,7 +248,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			mainDataStore._root.set("nonRootDS", dataObject.handle);
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				dataObject._context.id,
 				true /* referenced */,
@@ -254,7 +258,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			mainDataStore._root.delete("nonRootDS");
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				dataObject._context.id,
 				false /* referenced */,
@@ -266,7 +270,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			mainDataStore._root.set("nonRootDS", dataObject.handle);
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				dataObject._context.id,
 				deleteContent ? false : true /* referenced */,
@@ -283,7 +287,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			mainDataStore._root.set("nonRootDS1", dataObject1.handle);
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				dataObject1._context.id,
 				true /* referenced */,
@@ -297,7 +301,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			dataObject1._root.set("nonRootDS2", dataObject2.handle);
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				dataObject2._context.id,
 				true /* referenced */,
@@ -308,7 +312,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
 			mainDataStore._root.delete("nonRootDS1");
 			await validateDataStoreReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				dataObject2._context.id,
 				false /* referenced */,
@@ -331,7 +335,7 @@ describeCompat("GC delete objects in test mode", "FullCompat", (getTestObjectPro
  */
 async function validateBlobsReferenceState(
 	provider: ITestObjectProvider,
-	containerRuntime: ContainerRuntime,
+	summarizerContainerRuntime: ContainerRuntime,
 	deleteContent: boolean,
 	blobHandle: IFluidHandle<ArrayBufferLike>,
 	referenced: boolean,
@@ -340,7 +344,7 @@ async function validateBlobsReferenceState(
 	const blobId = blobHandle.absolutePath.split("/")[2];
 	const summary = await validateNodeStateInGCSummaryTree(
 		provider,
-		containerRuntime,
+		summarizerContainerRuntime,
 		blobId,
 		referenced,
 		deletedFromGCState,
@@ -382,7 +386,7 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 	// deleted after each GC run.
 	const tests = (deleteContent: boolean = false) => {
 		let provider: ITestObjectProvider;
-		let containerRuntime: ContainerRuntime;
+		let summarizerContainerRuntime: ContainerRuntime;
 		let mainDataStore: ITestDataObject;
 
 		beforeEach("setup", async function () {
@@ -402,7 +406,8 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
 			mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
-			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+			summarizerContainerRuntime = mainDataStore._context
+				.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(container);
 		});
 
@@ -420,14 +425,14 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 			mainDataStore._root.set("blob2", blob2Handle);
 			await validateBlobsReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				blob1Handle,
 				true /* referenced */,
 			);
 			await validateBlobsReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				blob2Handle,
 				true /* referenced */,
@@ -437,7 +442,7 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 			mainDataStore._root.delete("blob1");
 			await validateBlobsReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				blob1Handle,
 				false /* referenced */,
@@ -449,7 +454,7 @@ describeCompat("GC delete attachment blobs in test mode", "NoCompat", (getTestOb
 			mainDataStore._root.set("blob1", blob1Handle);
 			await validateBlobsReferenceState(
 				provider,
-				containerRuntime,
+				summarizerContainerRuntime,
 				deleteContent,
 				blob1Handle,
 				deleteContent ? false : true /* referenced */,

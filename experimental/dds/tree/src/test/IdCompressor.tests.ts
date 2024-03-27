@@ -4,52 +4,52 @@
  */
 
 import { strict as assert } from 'assert';
+import { take } from '@fluid-private/stochastic-test-utils';
+import { MockLogger } from '@fluidframework/telemetry-utils';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
 import { v4, v5 } from 'uuid';
-import { MockLogger } from '@fluidframework/telemetry-utils';
-import { take } from '@fluid-private/stochastic-test-utils';
-import { validateAssertionError } from '@fluidframework/test-runtime-utils';
+import { assertNotUndefined, fail } from '../Common.js';
 import {
-	IdCompressor,
-	isFinalId,
-	isLocalId,
-	hasOngoingSession,
-	legacySharedTreeInitialTreeId,
-} from '../id-compressor/IdCompressor.js';
-import {
-	LocalCompressedId,
 	FinalCompressedId,
-	SessionSpaceCompressedId,
+	LocalCompressedId,
 	OpSpaceCompressedId,
 	SessionId,
+	SessionSpaceCompressedId,
 	StableId,
 } from '../Identifiers.js';
-import { assertNotUndefined, fail } from '../Common.js';
+import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
+import {
+	IdCompressor,
+	hasOngoingSession,
+	isFinalId,
+	isLocalId,
+	legacySharedTreeInitialTreeId,
+} from '../id-compressor/IdCompressor.js';
+import { getIds } from '../id-compressor/IdRange.js';
 import {
 	createSessionId,
 	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 } from '../id-compressor/NumericUuid.js';
-import { getIds } from '../id-compressor/IdRange.js';
 import type { IdCreationRange, UnackedLocalId } from '../id-compressor/index.js';
-import { assertIsStableId, generateStableId, isStableId } from '../UuidUtilities.js';
 import {
-	createCompressor,
-	performFuzzActions,
-	sessionIds,
-	IdCompressorTestNetwork,
 	Client,
 	DestinationClient,
+	IdCompressorTestNetwork,
 	MetaClient,
-	expectSerializes,
-	roundtrip,
-	sessionNumericUuids,
-	makeOpGenerator,
 	attributionIds,
+	createCompressor,
+	expectSerializes,
 	generateCompressedIds,
+	makeOpGenerator,
+	performFuzzActions,
+	roundtrip,
+	sessionIds,
+	sessionNumericUuids,
 } from './utilities/IdCompressorTestUtilities.js';
-import { expectDefined, expectAssert } from './utilities/TestCommon.js';
+import { expectAssert, expectDefined } from './utilities/TestCommon.js';
 
 describe('IdCompressor', () => {
 	it('detects invalid cluster sizes', () => {
@@ -1659,7 +1659,6 @@ describe('IdCompressor', () => {
 			network.deliverOperations(DestinationClient.All);
 			const id = network.getSequencedIdLog(Client.Client2)[0].id;
 			expect(isFinalId(id)).to.be.true;
-			// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 			const emptyId = (id + 1) as FinalCompressedId;
 			assert.throws(
 				() => network.getCompressor(Client.Client2).decompress(emptyId),

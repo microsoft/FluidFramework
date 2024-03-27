@@ -10,5 +10,5 @@
  * @packageDocumentation
  */
 
-export { SharedCounter } from "./counter";
-export type { ISharedCounter, ISharedCounterEvents } from "./interfaces";
+export { SharedCounter } from "./counter.js";
+export type { ISharedCounter, ISharedCounterEvents } from "./interfaces.js";

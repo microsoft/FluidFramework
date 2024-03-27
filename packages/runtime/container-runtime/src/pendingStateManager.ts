@@ -5,15 +5,15 @@
 
 import Deque from "double-ended-queue";
 
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
-import { InboundSequencedContainerRuntimeMessage } from "./messageTypes";
-import { pkgVersion } from "./packageVersion";
-import { IBatchMetadata } from "./metadata";
+import { InboundSequencedContainerRuntimeMessage } from "./messageTypes.js";
+import { IBatchMetadata } from "./metadata.js";
+import { pkgVersion } from "./packageVersion.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -48,6 +48,7 @@ export interface IRuntimeStateHandler {
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
 	isActiveConnection: () => boolean;
+	isAttached: () => boolean;
 }
 
 /** Union of keys of T */
@@ -182,28 +183,33 @@ export class PendingStateManager implements IDisposable {
 	public async applyStashedOpsAt(seqNum?: number) {
 		// apply stashed ops at sequence number
 		while (!this.initialMessages.isEmpty()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const nextMessage = this.initialMessages.peekFront()!;
 			if (seqNum !== undefined) {
-				if (nextMessage.referenceSequenceNumber > seqNum) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const peekMessage = this.initialMessages.peekFront()!;
+				if (peekMessage.referenceSequenceNumber > seqNum) {
 					break; // nothing left to do at this sequence number
 				}
-				if (nextMessage.referenceSequenceNumber < seqNum) {
+				if (peekMessage.referenceSequenceNumber < seqNum) {
 					throw new Error("loaded from snapshot too recent to apply stashed ops");
 				}
 			}
-
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const nextMessage = this.initialMessages.shift()!;
 			try {
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-				nextMessage.localOpMetadata = localOpMetadata;
+				if (!this.stateHandler.isAttached()) {
+					if (localOpMetadata !== undefined) {
+						throw new Error("Local Op Metadata must be undefined when not attached");
+					}
+				} else {
+					nextMessage.localOpMetadata = localOpMetadata;
+					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
+					this.pendingMessages.push(nextMessage);
+				}
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}
-
-			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.pendingMessages.push(this.initialMessages.shift()!);
 		}
 	}
 
