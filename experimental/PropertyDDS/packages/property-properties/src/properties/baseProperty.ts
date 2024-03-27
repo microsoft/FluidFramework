@@ -13,7 +13,7 @@ import {
 } from "@fluid-experimental/property-changeset";
 import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import _ from "lodash";
-import { LazyLoadedProperties as Property } from "./lazyLoadedProperties";
+import { LazyLoadedProperties as Property } from "./lazyLoadedProperties.js";
 
 const { MSG, PROPERTY_PATH_DELIMITER } = constants;
 const BREAK_TRAVERSAL = "BREAK";
