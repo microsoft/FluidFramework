@@ -10,6 +10,7 @@ import type {
 	IEvent,
 	IEventProvider,
 	IFluidHandle,
+	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	IRequest,
 	IResponse,
@@ -486,7 +487,10 @@ export interface IFluidParentContext
 
 	deleteChildSummarizerNode(id: string): void;
 
-	uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+	uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 
 	/**
 	 * @deprecated There is no replacement for this, its functionality is no longer needed at this layer.

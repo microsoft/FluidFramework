@@ -4,7 +4,11 @@
  */
 
 import { AttachState, IAudience, IDeltaManager } from "@fluidframework/container-definitions";
-import { FluidObject, IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -129,7 +133,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 		throw new Error("Method not implemented.");
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>> {
 		throw new Error("Method not implemented.");
 	}
 

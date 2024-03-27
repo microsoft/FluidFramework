@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import {
 	FluidObject,
-	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IFluidLoadable,
 	IProvideFluidHandle,
 	IProvideFluidLoadable,
@@ -443,7 +443,7 @@ describe("someObjectlicious", () => {
 			});
 
 			it(`Parent Resolved from Child`, async () => {
-				const parentDc = new DependencyContainer<FluidObject<IFluidHandle>>();
+				const parentDc = new DependencyContainer<FluidObject<IFluidHandleInternal>>();
 				const loadableToHandle: FluidObjectProvider<IProvideFluidHandle> = async (
 					fds: IFluidDependencySynthesizer,
 				) => {
@@ -458,7 +458,7 @@ describe("someObjectlicious", () => {
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
 
-				const deps = dc.synthesize<IFluidHandle>(
+				const deps = dc.synthesize<IFluidHandleInternal>(
 					{ IFluidHandle: "IFluidHandle" },
 					undefined,
 				);

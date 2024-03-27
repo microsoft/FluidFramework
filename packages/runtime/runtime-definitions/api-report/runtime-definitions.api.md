@@ -15,6 +15,7 @@ import type { IDocumentStorageService } from '@fluidframework/driver-definitions
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -284,7 +285,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal(type: string, content: any, targetClientId?: string): void;
     // (undocumented)
-    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
 // @public
