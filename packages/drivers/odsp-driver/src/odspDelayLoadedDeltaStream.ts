@@ -133,7 +133,10 @@ export class OdspDelayLoadedDeltaStream {
 	 *
 	 * @returns returns the document delta stream service for onedrive/sharepoint driver.
 	 */
-	public async connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection> {
+	public async connectToDeltaStream(
+		client: IClient,
+		status: { steps: string[] },
+	): Promise<IDocumentDeltaConnection> {
 		assert(
 			this.currentConnection === undefined,
 			0x4ad /* Should not be called when connection is already present! */,
