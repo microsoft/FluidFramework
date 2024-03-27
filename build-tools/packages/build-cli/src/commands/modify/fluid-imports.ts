@@ -292,17 +292,19 @@ async function updateImports(
 }
 
 /**
- * Parses an import declaration into its module specifier and subpath.
+ * Parses an import declaration into its base module specifier and import level
+ * assuming use of FF API export structuring.
  *
  * @param importDeclaration - the import declaration to check.
- * @returns a tuple of `[module specifier, subpath]`
+ * @returns a tuple of `[base module specifier, level]`
  */
 function parseImport(importDeclaration: ImportDeclaration): [string, string] {
 	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
 	const modulePieces = moduleSpecifier.split("/");
-	const moduleName = modulePieces.slice(0, 2).join("/");
-	const subpath = modulePieces.length === 3 ? modulePieces[2] : "public";
-	return [moduleName, subpath];
+	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
+	const moduleName = modulePieces.slice(0, levelIndex).join("/");
+	const level = modulePieces.length > levelIndex ? modulePieces[levelIndex] : "public";
+	return [moduleName, level];
 }
 
 function isFluidImport(importDeclaration: ImportDeclaration): boolean {
