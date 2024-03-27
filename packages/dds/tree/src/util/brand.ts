@@ -68,9 +68,8 @@ export abstract class ErasedType<out Name = unknown> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This method will not exist at runtime and accessing it is invalid.
-	 * See {@link Brand} for details.
-	 *
 	 * @privateRemarks
+	 * See {@link Brand} for details.
 	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
 	 * The method takes in never to help emphasize that its not callable.
 	 */

@@ -181,6 +181,17 @@
 			},
 			"ClassDeclaration_SharedMap": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedDirectory": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISharedMap": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedDirectory": {
+				"forwardCompat": false
 			}
 		}
 	}

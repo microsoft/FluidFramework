@@ -112,7 +112,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
-    readonly handle: IFluidHandle;
+    readonly handle: IFluidHandleInternal;
     protected handleDecoded(decodedHandle: IFluidHandle): void;
     // (undocumented)
     id: string;

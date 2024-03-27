@@ -332,7 +332,7 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryBaseProperties;
 }
 
-// @public (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly [IFluidHandle]: IFluidHandleInternal;
@@ -385,6 +385,9 @@ export interface IResponse {
     // (undocumented)
     value: any;
 }
+
+// @internal
+export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 // @internal (undocumented)
 export interface ISignalEnvelope {

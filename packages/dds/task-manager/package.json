@@ -158,6 +158,11 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_TaskManager": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITaskManager": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		}

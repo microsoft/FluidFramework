@@ -154,7 +154,6 @@ declare function get_current_ClassDeclaration_SharedObject():
 declare function use_old_ClassDeclaration_SharedObject(
     use: TypeOnly<old.SharedObject>): void;
 use_old_ClassDeclaration_SharedObject(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedObject());
 
 /*
@@ -180,7 +179,6 @@ declare function get_current_ClassDeclaration_SharedObjectCore():
 declare function use_old_ClassDeclaration_SharedObjectCore(
     use: TypeOnly<old.SharedObjectCore>): void;
 use_old_ClassDeclaration_SharedObjectCore(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedObjectCore());
 
 /*

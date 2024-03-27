@@ -31,6 +31,7 @@ declare function get_old_InterfaceDeclaration_ITaskManager():
 declare function use_current_InterfaceDeclaration_ITaskManager(
     use: TypeOnly<current.ITaskManager>): void;
 use_current_InterfaceDeclaration_ITaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITaskManager());
 
 /*
@@ -43,6 +44,7 @@ declare function get_current_InterfaceDeclaration_ITaskManager():
 declare function use_old_InterfaceDeclaration_ITaskManager(
     use: TypeOnly<old.ITaskManager>): void;
 use_old_InterfaceDeclaration_ITaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITaskManager());
 
 /*
@@ -103,6 +105,7 @@ declare function get_old_ClassDeclaration_TaskManager():
 declare function use_current_ClassDeclaration_TaskManager(
     use: TypeOnly<current.TaskManager>): void;
 use_current_ClassDeclaration_TaskManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TaskManager());
 
 /*

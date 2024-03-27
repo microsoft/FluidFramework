@@ -561,6 +561,7 @@ declare function get_old_InterfaceDeclaration_IFluidLoadable():
 declare function use_current_InterfaceDeclaration_IFluidLoadable(
     use: TypeOnly<current.IFluidLoadable>): void;
 use_current_InterfaceDeclaration_IFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidLoadable());
 
 /*
@@ -573,6 +574,7 @@ declare function get_current_InterfaceDeclaration_IFluidLoadable():
 declare function use_old_InterfaceDeclaration_IFluidLoadable(
     use: TypeOnly<old.IFluidLoadable>): void;
 use_old_InterfaceDeclaration_IFluidLoadable(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidLoadable());
 
 /*

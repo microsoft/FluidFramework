@@ -197,6 +197,10 @@
 			"InterfaceDeclaration_IProvideFluidLoadable": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IFluidLoadable": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

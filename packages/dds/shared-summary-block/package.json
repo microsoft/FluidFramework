@@ -163,6 +163,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedSummaryBlock": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedSummaryBlock": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

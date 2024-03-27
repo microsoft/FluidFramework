@@ -161,6 +161,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ISharedCounter": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"ClassDeclaration_SharedCounter": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

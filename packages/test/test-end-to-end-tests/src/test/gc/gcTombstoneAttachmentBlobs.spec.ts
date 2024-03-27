@@ -9,6 +9,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
+import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils";
 import {
 	ITestContainerConfig,
@@ -379,7 +380,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime2.resolveHandle({
-					url: blobHandle.absolutePath,
+					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 200, `Expecting a 200 response`);
 				assert(container2.closed !== true, "Container should not have closed");
@@ -539,7 +540,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime2.resolveHandle({
-					url: blobHandle.absolutePath,
+					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert(
@@ -591,8 +592,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle2.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle2).absolutePath,
 					"The two local ids should be different",
 				);
 
@@ -633,7 +634,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -646,7 +647,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -718,8 +719,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle3.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle3).absolutePath,
 					"local handles should be different",
 				);
 				mainDataStore._root.set("local3", localHandle3);
@@ -755,7 +756,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -768,7 +769,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -781,7 +782,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse3 = await containerRuntime2.resolveHandle({
-					url: localHandle3.absolutePath,
+					url: toFluidHandleInternal(localHandle3).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse3?.status,
@@ -883,7 +884,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response = await containerRuntime2.resolveHandle({
-					url: blobHandle.absolutePath,
+					url: toFluidHandleInternal(blobHandle).absolutePath,
 				});
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert(
@@ -934,8 +935,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle2.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle2).absolutePath,
 					"local handles should be different",
 				);
 
@@ -966,7 +967,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -979,7 +980,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -1045,8 +1046,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 					stringToBuffer(blobContents, "utf-8"),
 				);
 				assert.notStrictEqual(
-					localHandle1.absolutePath,
-					localHandle3.absolutePath,
+					toFluidHandleInternal(localHandle1).absolutePath,
+					toFluidHandleInternal(localHandle3).absolutePath,
 					"local handles should be different",
 				);
 
@@ -1078,7 +1079,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const localResponse1 = await containerRuntime2.resolveHandle({
-					url: localHandle1.absolutePath,
+					url: toFluidHandleInternal(localHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse1?.status,
@@ -1091,7 +1092,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse2 = await containerRuntime2.resolveHandle({
-					url: localHandle2.absolutePath,
+					url: toFluidHandleInternal(localHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse2?.status,
@@ -1104,7 +1105,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const localResponse3 = await containerRuntime2.resolveHandle({
-					url: localHandle3.absolutePath,
+					url: toFluidHandleInternal(localHandle3).absolutePath,
 				});
 				assert.strictEqual(
 					localResponse3?.status,
