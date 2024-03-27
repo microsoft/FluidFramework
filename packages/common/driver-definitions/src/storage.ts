@@ -381,7 +381,8 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
 	/**
 	 * Subscribes to the document delta stream
 	 */
-	connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	connectToDeltaStream(client: IClient, status?: {}): Promise<IDocumentDeltaConnection>;
 
 	/**
 	 * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
