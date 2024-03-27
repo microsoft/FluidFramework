@@ -13,7 +13,7 @@
 	"type": "commonjs",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
+			"types": "./dist/fluid-runner-public.d.ts",
 			"default": "./dist/index.js"
 		},
 		"./alpha": {
@@ -27,14 +27,10 @@
 		"./internal": {
 			"types": "./dist/index.d.ts",
 			"default": "./dist/index.js"
-		},
-		"./public": {
-			"types": "./dist/fluid-runner-public.d.ts",
-			"default": "./dist/index.js"
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "dist/fluid-runner-public.d.ts",
 	"bin": {
 		"fluid-runner": "bin/fluid-runner"
 	},
