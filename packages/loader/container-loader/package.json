@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/container-loader-public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/container-loader-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -73,16 +73,6 @@
 				"default": "./dist/utils.js"
 			}
 		},
-		"./public": {
-			"import": {
-				"types": "./lib/container-loader-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/container-loader-public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./alpha": {
 			"import": {
 				"types": "./lib/container-loader-alpha.d.ts",
@@ -105,7 +95,7 @@
 		}
 	},
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "dist/container-loader-public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --config ./api-extractor-cjs.json",
