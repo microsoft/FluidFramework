@@ -15,11 +15,9 @@ import {
 } from "../core/index.js";
 import {
 	type CursorWithNode,
-	type LazyItem,
 	cursorForMapTreeField,
 	cursorForMapTreeNode,
 	isFluidHandle,
-	isLazy,
 	isTreeValue,
 	typeNameSymbol,
 	valueSchemaAllows,
@@ -28,7 +26,6 @@ import { brand, fail, isReadonlyArray } from "../util/index.js";
 import { nullSchema } from "./leafNodeSchema.js";
 import { InsertableContent } from "./proxies.js";
 import {
-	type AllowedTypes,
 	FieldKind,
 	FieldSchema,
 	type ImplicitAllowedTypes,
@@ -78,8 +75,8 @@ export function cursorFromFieldData(
 	schema: FieldSchema,
 ): CursorWithNode<MapTree> {
 	const mappedContent = Array.isArray(data)
-		? arrayToMapTreeFields(data, schema.normalizedAllowedTypes)
-		: [nodeDataToMapTree(data, schema.normalizedAllowedTypes)];
+		? arrayToMapTreeFields(data, schema.allowedTypeSet)
+		: [nodeDataToMapTree(data, schema.allowedTypeSet)];
 	return cursorForMapTreeField(mappedContent);
 }
 
@@ -100,7 +97,10 @@ export function cursorFromFieldData(
  * @param globalSchema - Schema for the whole tree for interperting `Any`.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
  */
-export function nodeDataToMapTree(data: InsertableContent, allowedTypes: AllowedTypes): MapTree {
+export function nodeDataToMapTree(
+	data: InsertableContent,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): MapTree {
 	assert(data !== undefined, 0x846 /* Cannot map undefined tree. */);
 
 	if (data === null) {
@@ -126,7 +126,7 @@ export function nodeDataToMapTree(data: InsertableContent, allowedTypes: Allowed
 	}
 }
 
-function valueToMapTree(value: TreeValue, allowedTypes: AllowedTypes): MapTree {
+function valueToMapTree(value: TreeValue, allowedTypes: ReadonlySet<TreeNodeSchema>): MapTree {
 	const mappedValue = mapValueWithFallbacks(value, allowedTypes);
 
 	const schema = getType(mappedValue, allowedTypes);
@@ -148,7 +148,10 @@ function valueToMapTree(value: TreeValue, allowedTypes: AllowedTypes): MapTree {
  * For unsupported values without a schema-compatible replacement, throw.
  * For supported values, return the input.
  */
-function mapValueWithFallbacks(value: TreeValue, allowedTypes: AllowedTypes): TreeValue {
+function mapValueWithFallbacks(
+	value: TreeValue,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): TreeValue {
 	switch (typeof value) {
 		case "number": {
 			if (Object.is(value, -0)) {
@@ -159,7 +162,7 @@ function mapValueWithFallbacks(value: TreeValue, allowedTypes: AllowedTypes): Tr
 				// Our serialized data format does not support NaN nor +/-∞.
 				// If the schema supports `null`, fall back to that. Otherwise, throw.
 				// This is intended to match JSON's behavior for such values.
-				if (allowedTypes.includes(nullSchema)) {
+				if (allowedTypes.has(nullSchema)) {
 					return null;
 				} else {
 					throw new TypeError(`Received unsupported numeric value: ${value}.`);
@@ -173,14 +176,17 @@ function mapValueWithFallbacks(value: TreeValue, allowedTypes: AllowedTypes): Tr
 	}
 }
 
-function arrayToMapTreeFields(data: InsertableContent[], allowedTypes: AllowedTypes): MapTree[] {
+function arrayToMapTreeFields(
+	data: InsertableContent[],
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): MapTree[] {
 	const mappedData: MapTree[] = [];
 	for (const child of data) {
 		// We do not support undefined sequence entries.
 		// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
 		let childWithFallback = child;
 		if (child === undefined) {
-			if (allowedTypes.includes(nullSchema)) {
+			if (allowedTypes.has(nullSchema)) {
 				childWithFallback = null;
 			} else {
 				throw new TypeError(`Received unsupported array entry value: ${child}.`);
@@ -193,7 +199,10 @@ function arrayToMapTreeFields(data: InsertableContent[], allowedTypes: AllowedTy
 	return mappedData;
 }
 
-function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): MapTree {
+function arrayToMapTree(
+	data: InsertableContent[],
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): MapTree {
 	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Array) {
 		throw new UsageError(
@@ -216,7 +225,10 @@ function arrayToMapTree(data: InsertableContent[], allowedTypes: AllowedTypes): 
 	};
 }
 
-function mapToMapTree(data: Map<string, InsertableContent>, allowedTypes: AllowedTypes): MapTree {
+function mapToMapTree(
+	data: Map<string, InsertableContent>,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): MapTree {
 	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Map) {
 		throw new UsageError(
@@ -244,7 +256,7 @@ function mapToMapTree(data: Map<string, InsertableContent>, allowedTypes: Allowe
 
 function objectToMapTree(
 	data: Record<string | number | symbol, InsertableContent>,
-	allowedTypes: AllowedTypes,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
 ): MapTree {
 	const schema = getType(data, allowedTypes);
 	if (schema.kind !== NodeKind.Object) {
@@ -264,10 +276,7 @@ function objectToMapTree(
 		// Omit undefined record entries - an entry with an undefined key is equivalent to no entry
 		if (fieldValue !== undefined) {
 			const fieldSchema = getObjectFieldSchema(schema, key);
-			const mappedChildTree = nodeDataToMapTree(
-				fieldValue,
-				fieldSchema.normalizedAllowedTypes,
-			);
+			const mappedChildTree = nodeDataToMapTree(fieldValue, fieldSchema.allowedTypeSet);
 			fields.set(brand(key), [mappedChildTree]);
 		}
 	}
@@ -288,12 +297,15 @@ function getObjectFieldSchema(schema: TreeNodeSchema, key: FieldKey): FieldSchem
 	}
 }
 
-function getType(data: InsertableContent, allowedTypes: AllowedTypes): TreeNodeSchema {
+function getType(
+	data: InsertableContent,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): TreeNodeSchema {
 	const possibleTypes = getPossibleTypes(allowedTypes, data as ContextuallyTypedNodeData);
 	if (possibleTypes.length === 0) {
 		throw new UsageError(
 			`The provided data is incompatible with all of the types allowed by the schema. The set of allowed types is: ${JSON.stringify(
-				[...allowedTypes.map((schema) => evaluateLazySchema(schema).identifier)],
+				[...allowedTypes].map((schema) => schema.identifier),
 			)}.`,
 		);
 	}
@@ -328,20 +340,15 @@ function checkInput(condition: boolean, message: string | (() => string)): asser
 	}
 }
 
-function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
-	if (isLazy(value)) {
-		return (value as () => TreeNodeSchema)();
-	}
-	return value;
-}
-
 /**
  * @returns all types for which the data is schema-compatible.
  */
-export function getPossibleTypes(typeSet: AllowedTypes, data: ContextuallyTypedNodeData) {
+export function getPossibleTypes(
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+	data: ContextuallyTypedNodeData,
+) {
 	const possibleTypes: TreeNodeSchema[] = [];
-	for (const typeSetEntry of typeSet) {
-		const schema = evaluateLazySchema(typeSetEntry);
+	for (const schema of allowedTypes) {
 		if (shallowCompatibilityTest(schema, data)) {
 			possibleTypes.push(schema);
 		}

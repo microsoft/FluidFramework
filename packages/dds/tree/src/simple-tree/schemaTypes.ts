@@ -4,7 +4,8 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FlexListToUnion, LazyItem } from "../feature-libraries/index.js";
+import { Lazy } from "@fluidframework/core-utils";
+import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js";
 import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
 import { TreeNode, Unhydrated } from "./types.js";
 
@@ -223,10 +224,15 @@ export class FieldSchema<
 	 */
 	protected _typeCheck?: MakeNominal;
 
+	private readonly lazyTypes: Lazy<ReadonlySet<TreeNodeSchema>>;
+
 	/**
 	 * What types of tree nodes are allowed in this field.
+	 * @remarks Counterpart to {@link FieldSchema.allowedTypes}, with any lazy definitions evaluated.
 	 */
-	public readonly normalizedAllowedTypes: AllowedTypes;
+	public get allowedTypeSet(): ReadonlySet<TreeNodeSchema> {
+		return this.lazyTypes.value;
+	}
 
 	public constructor(
 		/**
@@ -239,7 +245,7 @@ export class FieldSchema<
 		 */
 		public readonly allowedTypes: Types,
 	) {
-		this.normalizedAllowedTypes = normalizeAllowedTypes(this.allowedTypes);
+		this.lazyTypes = new Lazy(() => normalizeAllowedTypes(this.allowedTypes));
 	}
 }
 
@@ -252,8 +258,23 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
 /**
  * Normalizes a {@link ImplicitAllowedTypes} to a {@link AllowedTypes}.
  */
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): AllowedTypes {
-	return isReadonlyArray(types) ? types : [types];
+export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
+	const normalized = new Set<TreeNodeSchema>();
+	if (isReadonlyArray(types)) {
+		for (const lazyType of types) {
+			normalized.add(evaluateLazySchema(lazyType));
+		}
+	} else {
+		normalized.add(evaluateLazySchema(types));
+	}
+	return normalized;
+}
+
+function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
+	if (isLazy(value)) {
+		return value();
+	}
+	return value;
 }
 
 /**

@@ -185,7 +185,7 @@ export interface FieldSchemaUnsafe<
 	 */
 	readonly allowedTypes: Types;
 	/**
-	 * {@inheritDoc FieldSchema.normalizedAllowedTypes}
+	 * {@inheritDoc FieldSchema.allowedTypeSet}
 	 */
-	readonly normalizedAllowedTypes: AllowedTypes;
+	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 }

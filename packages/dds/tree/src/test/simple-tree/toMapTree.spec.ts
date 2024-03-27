@@ -9,13 +9,24 @@ import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 
+import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { leaf } from "../../domains/index.js";
 import { SchemaFactory } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
-import { nodeDataToMapTree } from "../../simple-tree/toMapTree.js";
+import { normalizeAllowedTypes } from "../../simple-tree/schemaTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import { nodeDataToMapTree as nodeDataToMapTreeBase } from "../../simple-tree/toMapTree.js";
 import { brand } from "../../util/index.js";
+
+/**
+ * Wrapper around {@link nodeDataToMapTreeBase} which handles the normalization of {@link ImplicitAllowedTypes} as a
+ * convenience.
+ */
+function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowedTypes): MapTree {
+	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
+}
 
 describe("toMapTree", () => {
 	it("string", () => {
