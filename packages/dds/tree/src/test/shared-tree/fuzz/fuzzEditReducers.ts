@@ -26,12 +26,12 @@ import {
 	getAllowableNodeTypes,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
-import { createTreeStoredSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
+import { createTreeViewSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import {
 	FieldEdit,
 	FuzzFieldChange,
 	FuzzRemove,
-	FuzzSchemaChange,
+	SchemaChange,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
@@ -86,12 +86,14 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 		}
 	}
 }
+
+// TODO: Update this function to be done in a more ergonomic way using libraries
 function generateLeafNodeSchemas(nodeTypes: string[]) {
 	const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.leaf" });
 	const leafNodeSchemas = [];
 	for (const nodeType of nodeTypes) {
 		if (
-			nodeType !== "tree2fuzz.node" &&
+			nodeType !== "treefuzz.node" &&
 			nodeType !== "com.fluidframework.leaf.number" &&
 			nodeType !== "com.fluidframework.leaf.string"
 		) {
@@ -103,12 +105,12 @@ function generateLeafNodeSchemas(nodeTypes: string[]) {
 	const library = builder.intoLibrary();
 	return { leafNodeSchemas, library };
 }
-export function applySchemaOp(state: FuzzTestState, operation: FuzzSchemaChange) {
+export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const tree = state.client.channel as SharedTree;
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(brand(operation.contents.type));
 	const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
-	const newSchema = createTreeStoredSchema(leafNodeSchemas, library);
+	const newSchema = createTreeViewSchema(leafNodeSchemas, library);
 	tree.checkout.updateSchema(intoStoredSchema(newSchema));
 }
 

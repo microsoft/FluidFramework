@@ -45,13 +45,12 @@ import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzU
 import {
 	FieldEditTypes,
 	FuzzInsert,
-	FuzzSchemaChange,
-	FuzzSchemaOp,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
 	RedoOp,
+	SchemaChange,
 	Synchronize,
 	TransactionAbortOp,
 	TransactionBoundary,
@@ -117,30 +116,26 @@ export function viewFromState(
 	const view =
 		state.transactionViews?.get(client.channel) ??
 		getOrCreate(state.view, client.channel as SharedTree, (tree) => {
-			const treeSchema = treeSchemaFromStoredSchema(
-				(client.channel as SharedTree).storedSchema,
-			);
+			const treeSchema = treeSchemaFromStoredSchema(tree.storedSchema);
 			const flexView: FlexTreeView<typeof fuzzSchema.rootFieldSchema> = schematizeFlexTree(
 				tree,
 				{
 					initialTree,
-					schema: isEmptyStoredSchema(client.channel as SharedTree)
-						? initialFuzzSchema
-						: treeSchema,
+					schema: isEmptyStoredSchema(tree) ? initialFuzzSchema : treeSchema,
 					allowedSchemaModifications: AllowedUpdateType.Initialize,
 				},
 				() => {
-					if (state.view?.get(client.channel as SharedTree) !== undefined) {
-						state.view.delete(client.channel as SharedTree);
+					if (state.view?.get(tree) !== undefined) {
+						state.view.delete(tree);
 					}
 				},
 			) as unknown as FuzzView;
 
 			const fuzzView = flexView as FuzzView;
 			assert.equal(fuzzView.currentSchema, undefined);
-			const nodeSchema = treeSchema.nodeSchema.get(brand("tree2fuzz.node")) as FuzzNodeSchema;
+			const nodeSchema = treeSchema.nodeSchema.get(brand("treefuzz.node")) as FuzzNodeSchema;
 			fuzzView.currentSchema =
-				nodeSchema ?? initialFuzzSchema.nodeSchema.get(brand("tree2fuzz.node"));
+				nodeSchema ?? initialFuzzSchema.nodeSchema.get(brand("treefuzz.node"));
 			return fuzzView;
 		});
 	return view;
@@ -148,7 +143,6 @@ export function viewFromState(
 
 function isEmptyStoredSchema(tree: SharedTree): boolean {
 	const rootFieldSchemaData = (tree.storedSchema as unknown as any).rootFieldSchemaData;
-	// TODO: simply using rootFieldSchemaData === storedEmptyFieldSchema does not work. But a better way to make this check should be done.
 	return rootFieldSchemaData.types.size === 0;
 }
 /**
@@ -271,9 +265,9 @@ export const makeEditGenerator = (
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
-			case "tree2fuzz.node":
+			case "treefuzz.node":
 				return {
-					type: brand("tree2fuzz.node"),
+					type: brand("treefuzz.node"),
 					fields: {
 						requiredChild: [
 							{
@@ -520,29 +514,18 @@ export const makeTransactionEditGenerator = (
 	};
 };
 
-export const makeSchemaEdit = (
-	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<FuzzSchemaChange, FuzzTestState> => {
-	const passedOpWeights = {
-		...defaultEditGeneratorOpWeights,
-		...opWeights,
-	};
+export const makeSchemaEdit = (): Generator<SchemaChange, FuzzTestState> => {
 	const makeSchemaOp = (state: FuzzTestState) => {
 		return { type: "schema", contents: { type: state.random.uuid4() } };
 	};
-	const schemaType = createWeightedGenerator<FuzzSchemaOp, FuzzTestState>([
-		[makeSchemaOp, passedOpWeights.schema],
-	]);
 
 	return (state) => {
-		const contents = schemaType(state);
+		const contents = makeSchemaOp(state);
 
-		return contents === done
-			? done
-			: {
-					type: "schema",
-					contents,
-			  };
+		return {
+			type: "schema",
+			contents,
+		};
 	};
 };
 
@@ -596,7 +579,7 @@ export function makeOpGenerator(
 					}),
 					weights.synchronizeTrees,
 				],
-				[() => makeSchemaEdit(weights), weights.schema],
+				[() => makeSchemaEdit(), weights.schema],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)

@@ -36,9 +36,18 @@ import { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths } from "../../utils.js";
 
-const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "treefuzz", libraries: [leaf.library] });
 
-// We write any here, but for purpose of fuzz test it's fuzz node or primitive
+/**
+ * We use any here to give compile-time flexibility, but during a fuzz test's runtime,
+ * different trees will have different views over the currently allowed schema.
+ * This extremely permissive schema is a valid superset over all possible schema and is a reasonable type to use at compile time,
+ * but generators/reducers working with trees over the course of a fuzz test need to be careful
+ * to appropriately narrow their edits to be valid for the tree's current schema at runtime.
+ *
+ * During the fuzz test, {@link SchemaChange} can be generated which extends the allowed node types (with the node type being a generated uuid)
+ * for each of our fields in our tree's current schema.
+ */
 export const fuzzNode = builder.object("node", {
 	optionalChild: FlexFieldSchema.create(FieldKinds.optional, [Any]),
 	requiredChild: Any,
@@ -49,7 +58,7 @@ export type FuzzNodeSchema = typeof fuzzNode;
 
 export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
 
-export const initialFuzzSchema = createTreeStoredSchema([], leaf.library);
+export const initialFuzzSchema = createTreeViewSchema([], leaf.library);
 
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 
@@ -80,15 +89,15 @@ export function createFuzzNode(
 	return node as unknown as typeof fuzzNode;
 }
 
-export function createTreeStoredSchema(
-	nodeTypes: LeafNodeSchema[],
+export function createTreeViewSchema(
+	allowedTypes: LeafNodeSchema[],
 	schemaLibrary?: SchemaLibrary,
 ): typeof fuzzSchema {
 	const schemaBuilder = new SchemaBuilder({
-		scope: "tree2fuzz",
+		scope: "treefuzz",
 		libraries: schemaLibrary === undefined ? [leaf.library] : [leaf.library, schemaLibrary],
 	});
-	const node = createFuzzNode(nodeTypes, schemaBuilder);
+	const node = createFuzzNode(allowedTypes, schemaBuilder);
 	return schemaBuilder.intoSchema(
 		node.objectNodeFieldsObject.optionalChild,
 	) as unknown as typeof fuzzSchema;

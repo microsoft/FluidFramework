@@ -75,8 +75,6 @@ describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
-		// AB#7265: schema weight is currently set to 0, as there is a known issue where test fails because purging repair data upon application
-		// of schema changes makes it impossible to roll back the changes that were before that schema change on the branch being rebased.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
 			remove: 2,
@@ -87,7 +85,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
-			schema: 0,
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -154,6 +152,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -213,9 +212,6 @@ describe("Fuzz - anchor stability", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			// TODO: AB#6664 tracks investigating and resolving.
-			// These seeds encounter issues in delta application (specifically 0x7ce and 0x7cf)
-			skip: [0, 19, 38, 44, 47],
 		});
 	});
 });
