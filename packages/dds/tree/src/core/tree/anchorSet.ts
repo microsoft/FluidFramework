@@ -130,6 +130,29 @@ export interface AnchorEvents {
 	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
 
 	/**
+	 * Emitted when exiting the subtree rooted at `anchor` during a delta visit, which means that all effects of that
+	 * visit in that subtree are now visible. HOWEVER, as of 2024-03-27, applying changes to a tree requires two visits
+	 * (the detach and the attach passes) so this event fires twice.
+	 *
+	 * @remarks
+	 * Note that this event naturally bubbles up the tree but in a pattern resembling breadth-first traversal, not
+	 * depth-first traversal, like other events might do.
+	 * For example, if node A is the parent of nodes B and C and a batch of changes affects both B and C, this event will
+	 * fire on B and C first in some order, and only then will it fire on A.
+	 * Additionally, it will fire on A *only once*, not once after it fires on B and again after it fires on C.
+	 *
+	 * @privateremarks
+	 * This currently fires twice during a delta visit to an AnchorSet, once during the detach pass and once during the
+	 * attach pass, which means that consumers see it twice, and depending on the kind of change that's happening, it
+	 * may or may not have happened yet the first time it fires. E.g. replacing a node with a new one only produces a
+	 * visible change during the attach pass, so when this event fires during the detach pass, if the listener looks for
+	 * a change in the tree, it will not find one.
+	 *
+	 * TODO: make it so this event only fires once, at the right time.
+	 */
+	subtreeChanged(anchor: AnchorNode): void;
+
+	/**
 	 * Value on this node is changing.
 	 */
 	valueChanging(anchor: AnchorNode, value: Value): void;
@@ -965,6 +988,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
 				this.maybeWithNode((p) => {
+					p.events.emit("subtreeChanged", p);
 					// Remove subtree path visitors added at this node if there are any
 					this.pathVisitors.delete(p);
 				});

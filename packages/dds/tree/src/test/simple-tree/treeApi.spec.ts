@@ -120,6 +120,7 @@ describe("treeApi", () => {
 			function check(
 				eventName: keyof TreeChangeEvents,
 				mutate: (root: NodeFromSchema<typeof treeSchema>) => void,
+				expectedFirings: number = 1,
 			) {
 				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
 					const root = hydrate(treeSchema, {
@@ -135,21 +136,12 @@ describe("treeApi", () => {
 
 					mutate(root);
 
-					assert.equal(
-						log.length,
-						1,
-						`Must receive change notifications after subscribing to event '${eventName}'.`,
-					);
+					assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
 
 					unsubscribe();
-
 					mutate(root);
 
-					assert.equal(
-						log.length,
-						1,
-						`Mutation after unsubscribe must not emit event '${eventName}'.`,
-					);
+					assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
 				});
 			}
 
@@ -160,7 +152,8 @@ describe("treeApi", () => {
 						myNumber: 2,
 					})),
 			);
-			check("afterDeepChange", (root) => root.rootObject.myNumber++);
+			// afterDeepChange fires during both the detach and attach visitor passes
+			check("afterDeepChange", (root) => root.rootObject.myNumber++, 2);
 
 			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
 				const root = hydrate(treeSchema, {
@@ -171,28 +164,15 @@ describe("treeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "afterShallowChange", (...args: any[]) => {
-					shallowChanges++;
-				});
-				Tree.on(root, "afterDeepChange", (...args: any[]) => {
-					deepChanges++;
-				});
+				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
+				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
 
 				root.rootObject = new myObject({
 					myNumber: 2,
 				});
 
-				assert.equal(
-					shallowChanges,
-					1,
-					`Must trigger afterShallowChange when direct fields change.`,
-				);
-
-				assert.equal(
-					deepChanges,
-					1,
-					`Must trigger afterDeepChange when direct fields change.`,
-				);
+				assert.equal(shallowChanges, 1, `afterShallowChange should fire.`);
+				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
 			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
@@ -204,26 +184,13 @@ describe("treeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "afterShallowChange", (...args: any[]) => {
-					shallowChanges++;
-				});
-				Tree.on(root, "afterDeepChange", (...args: any[]) => {
-					deepChanges++;
-				});
+				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
+				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
 
 				root.rootObject.myNumber++;
 
-				assert.equal(
-					shallowChanges,
-					0,
-					`Must NOT trigger afterShallowChange when descendant fields change.`,
-				);
-
-				assert.equal(
-					deepChanges,
-					1,
-					`Must trigger afterDeepChange when descendant fields change.`,
-				);
+				assert.equal(shallowChanges, 0, `afterShallowChange should NOT fire.`);
+				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
 			});
 		});
 
@@ -237,6 +204,7 @@ describe("treeApi", () => {
 			function check(
 				eventName: keyof TreeChangeEvents,
 				mutate: (root: NodeFromSchema<typeof treeSchema>) => void,
+				expectedFirings: number = 1,
 			) {
 				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
 					const root = hydrate(treeSchema, [
@@ -252,26 +220,18 @@ describe("treeApi", () => {
 
 					mutate(root);
 
-					assert.equal(
-						log.length,
-						1,
-						`Must receive change notifications after subscribing to event '${eventName}'.`,
-					);
+					assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
 
 					unsubscribe();
-
 					mutate(root);
 
-					assert.equal(
-						log.length,
-						1,
-						`Mutation after unsubscribe must not emit event '${eventName}'.`,
-					);
+					assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
 				});
 			}
 
 			check("afterShallowChange", (root) => root.insertAtEnd({ myNumber: 2 }));
-			check("afterDeepChange", (root) => root[0].myNumber++);
+			// afterDeepChange fires during both the detach and attach visitor passes
+			check("afterDeepChange", (root) => root[0].myNumber++, 2);
 
 			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
 				const root = hydrate(treeSchema, [
@@ -282,26 +242,13 @@ describe("treeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "afterShallowChange", (...args: any[]) => {
-					shallowChanges++;
-				});
-				Tree.on(root, "afterDeepChange", (...args: any[]) => {
-					deepChanges++;
-				});
+				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
+				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
 
 				root.insertAtEnd({ myNumber: 2 });
 
-				assert.equal(
-					shallowChanges,
-					1,
-					`Must trigger afterShallowChange when direct fields change.`,
-				);
-
-				assert.equal(
-					deepChanges,
-					1,
-					`Must trigger afterDeepChange when direct fields change.`,
-				);
+				assert.equal(shallowChanges, 1, `afterShallowChange should NOT fire.`);
+				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
 			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
@@ -313,26 +260,42 @@ describe("treeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "afterShallowChange", (...args: any[]) => {
-					shallowChanges++;
-				});
-				Tree.on(root, "afterDeepChange", (...args: any[]) => {
-					deepChanges++;
-				});
+				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
+				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
 
 				root[0].myNumber++;
 
-				assert.equal(
-					shallowChanges,
-					0,
-					`Must NOT trigger afterShallowChange when descendant fields change.`,
-				);
+				assert.equal(shallowChanges, 0, `afterShallowChange should NOT fire.`);
+				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
+			});
 
-				assert.equal(
-					deepChanges,
-					1,
-					`Must trigger afterDeepChange when descendant fields change.`,
-				);
+			it(`move between array nodes triggers both 'afterShallowChange' and 'afterDeepChange' the correct number of times on source and target nodes`, () => {
+				const testSchema = sb.object("root", {
+					array1: sb.array(sb.number),
+					array2: sb.array(sb.number),
+				});
+				const root = hydrate(testSchema, {
+					array1: [1],
+					array2: [2],
+				});
+
+				let a1ShallowChanges = 0;
+				let a1DeepChanges = 0;
+				let a2ShallowChanges = 0;
+				let a2DeepChanges = 0;
+				Tree.on(root.array1, "afterShallowChange", (...args: any[]) => a1ShallowChanges++);
+				Tree.on(root.array1, "afterDeepChange", (...args: any[]) => a1DeepChanges++);
+				Tree.on(root.array2, "afterShallowChange", (...args: any[]) => a2ShallowChanges++);
+				Tree.on(root.array2, "afterDeepChange", (...args: any[]) => a2DeepChanges++);
+
+				root.array2.moveToEnd(0, root.array1);
+
+				assert.deepEqual(root.array1, []);
+				assert.deepEqual(root.array2, [2, 1]);
+				assert.equal(a1ShallowChanges, 1, `afterShallowChange should fire once.`);
+				assert.equal(a1DeepChanges, 2, `afterDeepChange should fire twice.`); // Fires during both the detach and attach visitor passes
+				assert.equal(a2ShallowChanges, 1, `afterShallowChange should fire once.`);
+				assert.equal(a2DeepChanges, 2, `afterDeepChange should fire twice.`); // Fires during both the detach and attach visitor passes
 			});
 		});
 
@@ -346,6 +309,7 @@ describe("treeApi", () => {
 			function check(
 				eventName: keyof TreeChangeEvents,
 				mutate: (root: NodeFromSchema<typeof treeSchema>) => void,
+				expectedFirings: number = 1,
 			) {
 				it(`.on('${eventName}') subscribes and unsubscribes correctly`, () => {
 					const root = hydrate(
@@ -367,32 +331,27 @@ describe("treeApi", () => {
 
 					mutate(root);
 
-					assert.equal(
-						log.length,
-						1,
-						`Must receive change notifications after subscribing to event '${eventName}'.`,
-					);
+					assert.equal(log.length, expectedFirings, `'${eventName}' should fire.`);
 
 					unsubscribe();
-
 					mutate(root);
 
-					assert.equal(
-						log.length,
-						1,
-						`Mutation after unsubscribe must not emit event '${eventName}'.`,
-					);
+					assert.equal(log.length, expectedFirings, `'${eventName}' should NOT fire.`);
 				});
 			}
 
 			check("afterShallowChange", (root) => root.set("a", { myNumber: 2 }));
-			check("afterDeepChange", (root) => {
-				const mapEntry = root.get("a");
-				if (mapEntry === undefined) {
-					throw new Error("Map entry for key 'a' not found");
-				}
-				mapEntry.myNumber++;
-			});
+			check(
+				"afterDeepChange",
+				(root) => {
+					const mapEntry = root.get("a");
+					if (mapEntry === undefined) {
+						throw new Error("Map entry for key 'a' not found");
+					}
+					mapEntry.myNumber++;
+				},
+				2,
+			);
 
 			it(`change to direct fields triggers both 'afterShallowChange' and 'afterDeepChange'`, () => {
 				const root = hydrate(
@@ -409,26 +368,13 @@ describe("treeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "afterShallowChange", (...args: any[]) => {
-					shallowChanges++;
-				});
-				Tree.on(root, "afterDeepChange", (...args: any[]) => {
-					deepChanges++;
-				});
+				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
+				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
 
 				root.set("a", { myNumber: 2 });
 
-				assert.equal(
-					shallowChanges,
-					1,
-					`Must trigger afterShallowChange when direct fields change.`,
-				);
-
-				assert.equal(
-					deepChanges,
-					1,
-					`Must trigger afterDeepChange when direct fields change.`,
-				);
+				assert.equal(shallowChanges, 1, `afterShallowChange should fire.`);
+				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // Fires during both the detach and attach visitor passes
 			});
 
 			it(`change to descendant fields only triggers 'afterDeepChange'`, () => {
@@ -446,12 +392,8 @@ describe("treeApi", () => {
 
 				let shallowChanges = 0;
 				let deepChanges = 0;
-				Tree.on(root, "afterShallowChange", (...args: any[]) => {
-					shallowChanges++;
-				});
-				Tree.on(root, "afterDeepChange", (...args: any[]) => {
-					deepChanges++;
-				});
+				Tree.on(root, "afterShallowChange", (...args: any[]) => shallowChanges++);
+				Tree.on(root, "afterDeepChange", (...args: any[]) => deepChanges++);
 
 				const mapEntry = root.get("a");
 				if (mapEntry === undefined) {
@@ -459,21 +401,114 @@ describe("treeApi", () => {
 				}
 				mapEntry.myNumber++;
 
-				assert.equal(
-					shallowChanges,
-					0,
-					`Must NOT trigger afterShallowChange when descendant fields change.`,
-				);
-
-				assert.equal(
-					deepChanges,
-					1,
-					`Must trigger afterDeepChange when descendant fields change.`,
-				);
+				assert.equal(shallowChanges, 0, `afterShallowChange should NOT fire.`);
+				assert.equal(deepChanges, 2, `afterDeepChange should fire.`); // afterDeepChange fires during both the detach and attach visitor passes
 			});
 		});
 
 		// Change events don't apply to leaf nodes since they don't have fields that change, they are themselves replaced
 		// by other leaf nodes.
+
+		it(`all kinds of changes trigger 'afterShallowChange' and 'afterDeepChange' the correct number of times`, () => {
+			// This test validates that any kind of change fires the events as expected.
+			// Like noted in other tests, 'afterDeepChange' fires during both the detach and attach visitor passes so it
+			// normally fires twice for any change. 'afterShallowChange' usually fires once, except during moves between
+			// sequences, where it fires when detaching the node from its source, and again while attaching it to the target.
+
+			const sb = new SchemaFactory("object-node-in-root");
+			const innerObject = sb.object("inner-object", { innerProp: sb.number });
+			class map extends sb.map("map", sb.number) {}
+			class list extends sb.array("list", sb.number) {}
+			const outerObject = sb.object("outer-object", {
+				objectProp: sb.optional(innerObject),
+				mapProp: sb.optional(map),
+				arrayProp: sb.optional(list),
+				valueProp: sb.optional(sb.number),
+			});
+			const treeSchema = sb.object("root", {
+				rootObject: outerObject,
+			});
+
+			const root = hydrate(treeSchema, {
+				rootObject: {
+					objectProp: undefined,
+					mapProp: undefined,
+					arrayProp: undefined,
+					valueProp: undefined,
+				},
+			});
+
+			let shallowChanges = 0;
+			let deepChanges = 0;
+			// Deep changes subscription on the root
+			Tree.on(root, "afterDeepChange", (...args: any[]) => {
+				deepChanges++;
+			});
+			// Shallow changes subscription on the object property of the root
+			Tree.on(root.rootObject, "afterShallowChange", (...args: any[]) => {
+				shallowChanges++;
+			});
+
+			let deepActionsSoFar = 0;
+			let shallowActionsSoFar = 0;
+
+			function actAndVerify(
+				action: () => void,
+				deepActionsIncrement: number,
+				shallowActionsIncrement: number,
+			) {
+				action();
+				deepActionsSoFar += deepActionsIncrement;
+				shallowActionsSoFar += shallowActionsIncrement;
+				assert.equal(shallowChanges, shallowActionsSoFar);
+				assert.equal(deepChanges, deepActionsSoFar);
+			}
+
+			// Attach value node
+			actAndVerify(() => (root.rootObject.valueProp = 1), 2, 1);
+			// Replace value node
+			actAndVerify(() => (root.rootObject.valueProp = 2), 2, 1);
+			// Detach value node
+			actAndVerify(() => (root.rootObject.valueProp = undefined), 2, 1);
+
+			// Attach object node
+			actAndVerify(
+				() => (root.rootObject.objectProp = new innerObject({ innerProp: 1 })),
+				2,
+				1,
+			);
+			// Replace object node
+			actAndVerify(
+				() => (root.rootObject.objectProp = new innerObject({ innerProp: 2 })),
+				2,
+				1,
+			);
+			// Detach object node
+			actAndVerify(() => (root.rootObject.objectProp = undefined), 2, 1);
+
+			// Attach map node
+			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["a", 1]]))), 2, 1);
+			// Replace map node
+			actAndVerify(() => (root.rootObject.mapProp = new map(new Map([["b", 2]]))), 2, 1);
+			// Set key on map node (we set it above, we know it's good even if it's optional)
+			actAndVerify(() => root.rootObject.mapProp?.set("c", 3), 2, 0); // The node at mapProp isn't changing so no shallow change on rootObject
+			// Delete key on map node (we set it above, we know it's good even if it's optional)
+			actAndVerify(() => root.rootObject.mapProp?.delete("c"), 2, 0); // The node at mapProp isn't changing so no shallow change on rootObject
+			// Detach map node
+			actAndVerify(() => (root.rootObject.mapProp = undefined), 2, 1);
+
+			// Attach array node
+			actAndVerify(() => (root.rootObject.arrayProp = new list([1])), 2, 1);
+			// Replace array node
+			actAndVerify(() => (root.rootObject.arrayProp = new list([2])), 2, 1);
+			// Insert into array node (we set it above, we know it's good even if it's optional)
+			actAndVerify(() => root.rootObject.arrayProp?.insertAtEnd(3), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
+			// Move within array node (we set it above, we know it's good even if it's optional)
+			actAndVerify(() => root.rootObject.arrayProp?.moveToEnd(0), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
+			// Remove from array node (we set it above, we know it's good even if it's optional)
+			actAndVerify(() => root.rootObject.arrayProp?.removeAt(0), 2, 0); // The node at arrayProp isn't changing so no shallow change on rootObject
+			// Detach array node
+			actAndVerify(() => (root.rootObject.arrayProp = undefined), 2, 1);
+		});
 	});
 });
