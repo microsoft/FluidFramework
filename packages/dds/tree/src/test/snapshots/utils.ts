@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+
 import { takeJsonSnapshot } from "./snapshotTools.js";
 
 function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {

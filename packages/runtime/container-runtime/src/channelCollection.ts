@@ -60,6 +60,7 @@ import {
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+
 import { RuntimeHeaderData, defaultRuntimeHeaderData } from "./containerRuntime.js";
 import {
 	IDataStoreAliasMessage,

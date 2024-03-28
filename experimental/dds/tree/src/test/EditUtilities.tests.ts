@@ -8,6 +8,7 @@ import { assert } from '@fluidframework/core-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+
 import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
 import { noop } from '../Common.js';
 import {
@@ -24,6 +25,7 @@ import { Definition, NodeId } from '../Identifiers.js';
 import { comparePayloads } from '../PayloadUtilities.js';
 import { getChangeNodeFromView } from '../SerializationUtilities.js';
 import { BuildNodeInternal, ChangeNode, Payload, Side, TreeNode } from '../persisted-types/index.js';
+
 import { refreshTestTree } from './utilities/TestUtilities.js';
 
 describe('EditUtilities', () => {

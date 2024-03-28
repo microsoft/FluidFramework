@@ -17,6 +17,7 @@ import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import { type IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { create404Response } from "@fluidframework/runtime-utils";
 import { type AsyncFluidObjectProvider } from "@fluidframework/synthesize";
+
 import { type DataObjectTypes, type IDataObjectProps } from "./types.js";
 
 /**

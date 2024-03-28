@@ -4,7 +4,9 @@
  */
 
 import * as fs from "fs";
+
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { CSVFileLogger } from "./csvFileLogger";
 import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
 import { JSONFileLogger } from "./jsonFileLogger";

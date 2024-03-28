@@ -26,6 +26,7 @@ import {
 	flexTreeMarker,
 } from "../feature-libraries/index.js";
 import { fail } from "../util/index.js";
+
 import { InsertableContent } from "./proxies.js";
 
 /** Stores the content of the raw node, i.e. the data that was passed to the factory */

@@ -4,7 +4,9 @@
  */
 
 import { strict as assert, fail } from "assert";
+
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 // Allow importing from these specific files which are being tested:
 import {
 	GraphCommit,

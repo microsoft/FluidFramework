@@ -12,7 +12,6 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/brand.js";
-
 import {
 	areSafelyAssignable,
 	isAssignableTo,
