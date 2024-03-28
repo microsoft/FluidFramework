@@ -13,6 +13,7 @@ const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { Utils } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
 const _ = require("lodash");
+
 const { PropertyFactory } = require("..");
 const { BaseProperty } = require("..");
 const { NodeProperty } = require("../properties/nodeProperty");

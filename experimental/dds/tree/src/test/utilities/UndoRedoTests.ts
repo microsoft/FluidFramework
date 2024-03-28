@@ -5,6 +5,7 @@
 
 import { MockContainerRuntimeFactory } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+
 import { Change, StablePlace, StableRange } from '../../ChangeTypes.js';
 import { noop } from '../../Common.js';
 import { deepCompareNodes } from '../../EditUtilities.js';
@@ -12,6 +13,7 @@ import { DetachedSequenceId, EditId, NodeId } from '../../Identifiers.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeNodeHandle } from '../../TreeNodeHandle.js';
 import { NodeData } from '../../persisted-types/index.js';
+
 import { expectDefined } from './TestCommon.js';
 import { TestTree, buildLeaf } from './TestNode.js';
 import { setUpTestSharedTree, setUpTestTree, translateId } from './TestUtilities.js';

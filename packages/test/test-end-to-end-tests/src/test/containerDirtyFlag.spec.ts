@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { IContainerExperimental } from "@fluidframework/container-loader";

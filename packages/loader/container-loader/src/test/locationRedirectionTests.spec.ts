@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+
 import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities/index.js";
 
 describe("Location Redirection Handling Tests", () => {

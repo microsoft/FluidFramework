@@ -4,7 +4,9 @@
  */
 
 import * as fs from "fs";
+
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { IExportFileResponse, createContainerAndExecute } from "./exportFile";
 /* eslint-disable import/no-internal-modules */

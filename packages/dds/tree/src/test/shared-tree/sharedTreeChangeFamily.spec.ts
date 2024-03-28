@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ICodecOptions } from "../../codec/index.js";
 import {
 	TreeStoredSchema,
@@ -69,7 +70,12 @@ const emptySchema: TreeStoredSchema = {
 	},
 };
 const stSchemaChange: SharedTreeChange = {
-	changes: [{ type: "schema", innerChange: { schema: { new: emptySchema, old: emptySchema } } }],
+	changes: [
+		{
+			type: "schema",
+			innerChange: { schema: { new: emptySchema, old: emptySchema }, isInverse: false },
+		},
+	],
 };
 const stEmptyChange: SharedTreeChange = {
 	changes: [],

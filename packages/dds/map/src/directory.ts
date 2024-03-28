@@ -23,6 +23,7 @@ import {
 } from "@fluidframework/shared-object-base";
 import { ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
 import path from "path-browserify";
+
 import {
 	IDirectory,
 	IDirectoryEvents,

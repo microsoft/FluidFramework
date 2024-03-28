@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	describeCompat,
 	type getContainerRuntimeApi,
@@ -25,6 +26,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+
 import { getGCFeatureFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 interface LayerApis {

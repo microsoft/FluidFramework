@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor } from "@fluidframework/id-compressor";
+
 import { noopValidator } from "../codec/index.js";
 import {
 	Anchor,
@@ -40,7 +41,8 @@ import {
 } from "../feature-libraries/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core/index.js";
 import { TransactionResult, fail } from "../util/index.js";
-import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+
+import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
@@ -390,7 +392,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			}
 		});
 		branch.on("commitApplied", (data, getRevertible) => {
-			this.events.emit("commitApplied", data, getRevertible);
+			this.events.emit(
+				"commitApplied",
+				data,
+				// Commits that contain schema changes are not revertible.
+				// Allowing a schema change to be reverted could render some of the forest content out-of-schema.
+				hasSchemaChange(branch.getHead().change) ? undefined : getRevertible,
+			);
 		});
 		branch.on("revertibleDisposed", (revertible, revision) => {
 			// We do not expose the revision in this API

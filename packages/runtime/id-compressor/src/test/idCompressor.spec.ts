@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -16,6 +18,7 @@ import {
 } from "..//index.js";
 import { IdCompressor, createIdCompressor, deserializeIdCompressor } from "../idCompressor.js";
 import { createSessionId } from "../utilities.js";
+
 import {
 	Client,
 	CompressorFactory,
