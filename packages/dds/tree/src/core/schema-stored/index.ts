@@ -16,11 +16,11 @@ export {
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	BrandedTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	ErasedTreeNodeSchemaDataFormat,
+	toTreeNodeSchemaDataFormat,
 } from "./schema.js";
 export {
 	TreeStoredSchemaSubscription,

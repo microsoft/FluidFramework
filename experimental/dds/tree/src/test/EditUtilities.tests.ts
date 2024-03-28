@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from '@fluidframework/core-interfaces';
-import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
+import { IFluidHandle, fluidHandleSymbol } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+import type { IFluidHandleInternal } from '@fluidframework/core-interfaces';
 import { BuildNode, BuildTreeNode } from '../ChangeTypes.js';
 import { noop } from '../Common.js';
 import {
@@ -613,8 +613,13 @@ describe('EditUtilities', () => {
 			// This is used instead of MockHandle so equal handles compare deeply equal.
 			function makeMockHandle(data: string): IFluidHandle {
 				// `/` prefix is needed to prevent serializing from modifying handle.
-				const handleObject = { absolutePath: `/${data}`, IFluidHandle: undefined as unknown };
+				const handleObject = {
+					absolutePath: `/${data}`,
+					IFluidHandle: undefined as unknown,
+					[fluidHandleSymbol]: undefined as any,
+				};
 				handleObject.IFluidHandle = handleObject;
+				handleObject[fluidHandleSymbol] = handleObject;
 				return handleObject as IFluidHandleInternal;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic

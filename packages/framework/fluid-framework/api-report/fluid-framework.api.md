@@ -121,15 +121,6 @@ export const DriverErrorTypes: {
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 // @public
-export type Erased<Name> = ErasedType<Name>;
-
-// @public @sealed
-export abstract class ErasedType<out Name = unknown> {
-    static [Symbol.hasInstance](value: never): value is never;
-    protected abstract brand(dummy: never): Name;
-}
-
-// @public
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
