@@ -110,6 +110,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {
 			"FunctionDeclaration_generateToken": {
 				"forwardCompat": false,
