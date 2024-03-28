@@ -4,6 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
+
 import { Mutable, fail } from './Common.js';
 import { isDetachedSequenceId } from './Identifiers.js';
 import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers.js';

@@ -19,6 +19,7 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager, ReadOnlyInfo } from "./deltas.js";
 import type { ContainerWarning, ICriticalContainerError } from "./error.js";

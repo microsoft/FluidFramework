@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils";
 import {
@@ -14,6 +15,7 @@ import {
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs } from "../contracts.js";
 import { pkgVersion } from "../packageVersion.js";

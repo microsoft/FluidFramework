@@ -12,12 +12,14 @@
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";
+
 import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
+
 import {
 	IFluidErrorAnnotations,
 	LoggingError,

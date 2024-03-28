@@ -30,6 +30,7 @@ import {
 	createChildLogger,
 	createSampledLogger,
 } from '@fluidframework/telemetry-utils';
+
 import { BuildNode, BuildTreeNode, Change, ChangeType } from './ChangeTypes.js';
 import { RestOrArray, copyPropertyIfDefined, fail, unwrapRestOrArray } from './Common.js';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog.js';

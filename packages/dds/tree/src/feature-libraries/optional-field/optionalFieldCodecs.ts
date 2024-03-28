@@ -7,6 +7,7 @@ import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../code
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";
 import type { NodeChangeset } from "../modular-schema/index.js";
+
 import type { OptionalChangeset } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodec as makeV0Codec } from "./optionalFieldCodecV0.js";
 import { makeOptionalFieldCodec as makeV1Codec } from "./optionalFieldCodecV1.js";

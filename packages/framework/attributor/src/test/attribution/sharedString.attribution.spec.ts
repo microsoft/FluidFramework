@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+
 import {
 	type AcceptanceCondition,
 	type BaseFuzzTestState,
@@ -36,6 +37,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { type IAttributor, OpStreamAttributor } from "../../attributor.js";
 import {
 	AttributorSerializer,
@@ -44,6 +46,7 @@ import {
 	deltaEncoder,
 } from "../../encoders.js";
 import { makeLZ4Encoder } from "../../lz4Encoder.js";
+
 import { _dirname } from "./dirname.cjs";
 
 function makeMockAudience(clientIds: string[]): IAudience {

@@ -9,6 +9,7 @@ import {
 	DetachedAttributionKey,
 	OpAttributionKey,
 } from "@fluidframework/runtime-definitions";
+
 import { ISegment } from "./mergeTreeNodes.js";
 
 /**

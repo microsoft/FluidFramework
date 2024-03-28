@@ -9,7 +9,6 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-
 import {
 	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBags,

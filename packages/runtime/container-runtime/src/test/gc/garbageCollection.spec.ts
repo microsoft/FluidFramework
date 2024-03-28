@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ContainerErrorTypes,
 	ICriticalContainerError,
@@ -29,6 +30,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
+
 import {
 	GCNodeType,
 	GCSummaryStateTracker,
@@ -63,6 +65,7 @@ import {
 	dataStoreAttributesBlobName,
 	metadataBlobName,
 } from "../../summary/index.js";
+
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type WithPrivates<T, TPrivates> = Omit<T, keyof TPrivates> & TPrivates;

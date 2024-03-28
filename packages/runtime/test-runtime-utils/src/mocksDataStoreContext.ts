@@ -9,10 +9,9 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -28,6 +27,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 
 /**

@@ -12,6 +12,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+
 import { ICodecOptions, noopValidator } from "../../codec/index.js";
 import {
 	DeltaDetachedNodeBuild,
@@ -36,6 +37,7 @@ import { idAllocatorFromMaxId } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+
 import { ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import { Format } from "./format.js";
 /**

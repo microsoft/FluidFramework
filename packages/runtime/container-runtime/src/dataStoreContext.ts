@@ -62,6 +62,7 @@ import {
 	generateStack,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+
 import { detectOutboundRoutesViaDDSKey, sendGCUnexpectedUsageEvent } from "./gc/index.js";
 import {
 	ReadFluidDataStoreAttributes,

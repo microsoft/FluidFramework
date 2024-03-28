@@ -4,7 +4,6 @@
  */
 
 import React from "react";
-
 import {
 	DataVisualization,
 	type FluidObjectTreeNode,
@@ -19,6 +18,7 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+
 import { MessageRelayContext } from "../../MessageRelayContext.js";
 import { FluidTreeView, UnknownDataView, UnknownFluidObjectView } from "../../components/index.js";
 import { MockMessageRelay } from "../utils/index.js";

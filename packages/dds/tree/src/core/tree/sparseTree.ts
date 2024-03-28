@@ -4,7 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { FieldKey } from "../schema-stored/index.js";
+
 import { UpPath, topDownPath } from "./pathTree.js";
 
 /**

@@ -39,6 +39,7 @@ import type {
 import { IClient } from "@fluidframework/protocol-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import {
 	OdspClientProps,
 	OdspConnectionConfig,

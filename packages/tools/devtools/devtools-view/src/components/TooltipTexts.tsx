@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import { Link } from "@fluentui/react-components";
+import React from "react";
 
 /**
  * Description of "Client ID" for use in tooltips.

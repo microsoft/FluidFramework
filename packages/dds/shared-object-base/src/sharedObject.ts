@@ -38,6 +38,7 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, IFluidSerializer } from "./serializer.js";
 import { SummarySerializer } from "./summarySerializer.js";

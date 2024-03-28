@@ -18,6 +18,7 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,
 	ISequencedDocumentMessage,
@@ -44,7 +45,6 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 
-import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import { IBlobMetadata } from "./metadata.js";
 
 /**

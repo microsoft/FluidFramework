@@ -4,15 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TextSegment } from "@fluidframework/merge-tree";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { IIntervalCollection } from "../intervalCollection.js";
 import { SequenceInterval } from "../intervals/index.js";
 import { SharedString } from "../sharedString.js";
+
 import { assertEquivalentSharedStrings } from "./intervalTestUtils.js";
 
 describe("IntervalCollection detached", () => {

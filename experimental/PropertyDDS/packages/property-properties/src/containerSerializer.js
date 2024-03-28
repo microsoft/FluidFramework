@@ -8,10 +8,11 @@
  */
 
 const { PathHelper } = require("@fluid-experimental/property-changeset");
-const { LazyLoadedProperties: Property } = require("./properties/lazyLoadedProperties");
+
 const {
 	AbstractStaticCollectionProperty,
 } = require("./properties/abstractStaticCollectionProperty");
+const { LazyLoadedProperties: Property } = require("./properties/lazyLoadedProperties");
 
 var MSG = {
 	NOTHING_TO_DESERIALIZE: "Repository deserialize(), no input given",

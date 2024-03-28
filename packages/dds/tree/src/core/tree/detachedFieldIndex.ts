@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec/index.js";
 import {
 	Brand,
@@ -19,6 +20,7 @@ import {
 } from "../../util/index.js";
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+
 import * as Delta from "./delta.js";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec.js";
 import { Format } from "./detachedFieldIndexFormat.js";

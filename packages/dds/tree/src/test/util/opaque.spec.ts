@@ -4,15 +4,6 @@
  */
 
 import {
-	ExtractFromOpaque,
-	Opaque,
-	brandOpaque,
-	extractFromOpaque,
-	// Allow importing from this specific file which is being tested:
-	/* eslint-disable-next-line import/no-internal-modules */
-} from "../../util/opaque.js";
-
-import {
 	Brand,
 	BrandedType,
 	areSafelyAssignable,
@@ -21,6 +12,14 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../util/index.js";
+import {
+	ExtractFromOpaque,
+	Opaque,
+	brandOpaque,
+	extractFromOpaque,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
+} from "../../util/opaque.js";
 
 // These tests currently just cover the type checking, so its all compile time.
 

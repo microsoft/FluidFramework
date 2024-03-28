@@ -4,6 +4,7 @@
  */
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
+
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
 
 export interface IBatchManagerOptions {

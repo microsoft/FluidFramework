@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	Anchor,
 	AnchorSet,
@@ -29,6 +30,7 @@ import {
 } from "../../core/index.js";
 import { createEmitter } from "../../events/index.js";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+
 import { BasicChunk, BasicChunkCursor, SiblingsOrKey } from "./basicChunk.js";
 import { ChunkedCursor, TreeChunk } from "./chunk.js";
 import { IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
