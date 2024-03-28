@@ -565,7 +565,6 @@ export type FlexTreeObjectNodeFieldsInner<TFields extends FlexObjectNodeFields> 
  * @internal
  */
 export const reservedObjectNodeFieldPropertyNames = [
-	"anchor",
 	"anchorNode",
 	"constructor",
 	"context",

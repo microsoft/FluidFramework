@@ -56,6 +56,7 @@ import {
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
+	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
@@ -160,7 +161,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 
 	public get parent(): FlexTreeNode | undefined {
-		if (this.anchor.parent === undefined) {
+		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
 		}
 
@@ -174,12 +175,12 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	protected override [tryMoveCursorToAnchorSymbol](
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToField(this.anchor, cursor);
+		return this.context.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
 	}
 
 	protected override [forgetAnchorSymbol](): void {
-		if (this.anchor.parent === undefined) return;
-		this.context.forest.anchors.forget(this.anchor.parent);
+		if (this[anchorSymbol].parent === undefined) return;
+		this.context.forest.anchors.forget(this[anchorSymbol].parent);
 	}
 
 	public get length(): number {
@@ -231,7 +232,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		if (this[isFreedSymbol]()) {
 			return TreeStatus.Deleted;
 		}
-		const fieldAnchor = this.anchor;
+		const fieldAnchor = this[anchorSymbol];
 		const parentAnchor = fieldAnchor.parent;
 		// If the parentAnchor is undefined it is a detached field.
 		if (parentAnchor === undefined) {
