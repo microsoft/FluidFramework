@@ -24,6 +24,7 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
+
 import { ReplayController } from "./replayController.js";
 
 const ReplayDocumentId = "documentId";

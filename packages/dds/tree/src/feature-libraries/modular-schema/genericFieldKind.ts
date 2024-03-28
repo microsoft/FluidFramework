@@ -13,6 +13,7 @@ import {
 } from "../../core/index.js";
 import { IdAllocator, fail } from "../../util/index.js";
 import { Multiplicity } from "../multiplicity.js";
+
 import { CrossFieldManager } from "./crossFieldQueries.js";
 import {
 	FieldChangeHandler,

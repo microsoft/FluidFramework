@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
@@ -35,6 +36,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
+
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

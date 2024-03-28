@@ -5,6 +5,7 @@
 
 import { FlexTreeNode, Unenforced, isFlexTreeNode } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
+
 import { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
 import {
 	FieldKind,

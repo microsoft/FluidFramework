@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
@@ -11,12 +12,14 @@ import type { IClient } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { type SinonStub, stub } from "sinon";
 import { Socket } from "socket.io-client";
+
 import { createOdspUrl } from "../createOdspUrl.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getJoinSessionCacheKey } from "../odspUtils.js";
 import * as socketModule from "../socketModule.js";
 import * as joinSession from "../vroom.js";
+
 // eslint-disable-next-line import/no-internal-modules
 import { ClientSocketMock } from "./socketTests/socketMock.js";
 

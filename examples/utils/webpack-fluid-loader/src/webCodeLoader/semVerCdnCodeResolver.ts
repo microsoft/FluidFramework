@@ -10,6 +10,7 @@ import {
 	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
 import fetch from "isomorphic-fetch";
+
 import { extractPackageIdentifierDetails, resolveFluidPackageEnvironment } from "./utils.js";
 
 class FluidPackage {

@@ -4,8 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import { makeSchemaCodec } from "../schema-index/index.js";
+
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import { SchemaChange } from "./schemaChangeTypes.js";
 

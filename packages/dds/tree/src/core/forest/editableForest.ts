@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { RevisionTagCodec } from "../rebase/index.js";
 import { FieldKey } from "../schema-stored/index.js";
 import {
@@ -16,6 +17,7 @@ import {
 	deltaForRootInitialization,
 	makeDetachedFieldIndex,
 } from "../tree/index.js";
+
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest.js";
 
 /**

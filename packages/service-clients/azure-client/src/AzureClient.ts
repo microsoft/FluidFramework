@@ -9,6 +9,8 @@ import {
 	type IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
+import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	type IDocumentServiceFactory,
 	type IUrlResolver,
@@ -24,10 +26,8 @@ import {
 } from "@fluidframework/fluid-static";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-
-import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
+
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import {

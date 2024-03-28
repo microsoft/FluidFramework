@@ -5,6 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+
 import { StablePlace } from './ChangeTypes.js';
 import { fail } from './Common.js';
 import { RangeValidationResultKind, validateStableRange } from './EditUtilities.js';

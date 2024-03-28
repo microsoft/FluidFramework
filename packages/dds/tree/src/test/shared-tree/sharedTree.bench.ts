@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	BenchmarkTimer,
 	BenchmarkType,
 	benchmark,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
+
 import { rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules

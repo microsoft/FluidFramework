@@ -42,6 +42,7 @@ import {
 	createChildLogger,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
+
 import { IOdspSnapshot } from "./contracts.js";
 import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated

@@ -9,6 +9,7 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 // eslint-disable-next-line import/no-internal-modules
 import { createSnapshotCompressor } from "../../snapshots/testTrees.js";
 import { TestChange } from "../../testChange.js";
+
 import { generatePopulatedMarks } from "./populatedMarks.js";
 
 export function testSnapshots() {
