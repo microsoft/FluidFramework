@@ -161,17 +161,17 @@ flowchart TD
     SchemaCodec
     FieldBatchCodec
     ForestCodec-->FieldBatchCodec
-    MessageCodec-->ChangeFamilyCodec
-    EditManagerCodec-->ChangeFamilyCodec
-    ChangeFamilyCodec-->FieldBatchCodec
-    ChangeFamilyCodec-->ModularChangeFamilyCodec
-    ChangeFamilyCodec-->SchemaChangeCodec
+    MessageCodec-->SharedTreeChangeFamilyCodec
+    EditManagerCodec-->SharedTreeChangeFamilyCodec
+    SharedTreeChangeFamilyCodec-->FieldBatchCodec
+    SharedTreeChangeFamilyCodec-->ModularChangeFamilyCodec
+    SharedTreeChangeFamilyCodec-->SchemaChangeCodec
     SchemaChangeCodec-->SchemaCodec
     ModularChangeFamilyCodec-->OptionalFieldCodec
     ModularChangeFamilyCodec-->SequenceFieldCodec
     ModularChangeFamilyCodec-->NodeKeyFieldCodec
     ModularChangeFamilyCodec-->ForbiddenFieldCodec
-    ChangeFamilyCodec-->RevisionTagCodec
+    SharedTreeChangeFamilyCodec-->RevisionTagCodec
     DetachedNodeToFieldCodec-->RevisionTagCodec
     OptionalFieldCodec-->RevisionTagCodec
     SequenceFieldCodec-->RevisionTagCodec
@@ -198,7 +198,7 @@ Orange codecs provide explicit versions to the data they encode.
 Because all data is versioned at the top level, we can conceptually extend that version to include all other non-explicitly versioned containing data, even if that data isn't explicitly written by the same codec.
 For example, a format change in `SchemaChangeCodec` could be implemented by adding support for a new version on each of its nearest explicitly versioned consumers, i.e. `MessageCodec` and `EditManagerCodec`.
 This new version would use the same code for all bits of `MessageCodec`, `EditManagerCodec`, and `ChangeFamilyCodec`, but pass enough context down to `SchemaChangeCodec` to resolve to the newer format.
-In this mannger, the mapping between explicitly versioned data and implicitly versioned data for composed codecs is managed in code.
+In this manner, the mapping between explicitly versioned data and implicitly versioned data for composed codecs is managed in code.
 
 ## Current code guidelines
 
