@@ -4,11 +4,13 @@
  */
 
 import { expect } from 'chai';
+
 import { Change, StablePlace, StableRange } from '../ChangeTypes.js';
 import { SharedTree } from '../SharedTree.js';
 import { Transaction, TransactionEvent } from '../Transaction.js';
 import { TreeView } from '../TreeView.js';
 import { EditStatus, WriteFormat } from '../persisted-types/index.js';
+
 import { expectDefined } from './utilities/TestCommon.js';
 import { TestTree } from './utilities/TestNode.js';
 import { setUpTestSharedTree, setUpTestTree } from './utilities/TestUtilities.js';

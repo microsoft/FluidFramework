@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+
 import {
 	ChangesetLocalId,
 	IEditableForest,

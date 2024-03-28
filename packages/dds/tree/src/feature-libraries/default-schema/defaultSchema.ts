@@ -4,6 +4,7 @@
  */
 
 import { FullSchemaPolicy } from "../modular-schema/index.js";
+
 import { fieldKinds } from "./defaultFieldKinds.js";
 
 /**

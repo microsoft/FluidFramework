@@ -10,6 +10,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { strict as assert } from "node:assert";
+
 import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -18,7 +19,9 @@ import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
+
 import { TinyliciousClient } from "../index.js";
+
 import { TestDataObject } from "./TestDataObject.js";
 
 const corruptedAliasOp = async (

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import * as path from "node:path";
+
 import {
 	AsyncGenerator,
 	Generator,
@@ -15,7 +16,9 @@ import {
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+
 import { ISharedMap, MapFactory } from "../../index.js";
+
 import { _dirname } from "./dirname.cjs";
 
 interface Clear {

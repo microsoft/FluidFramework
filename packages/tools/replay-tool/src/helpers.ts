@@ -5,6 +5,7 @@
 
 import { strict } from "assert";
 import fs from "fs";
+
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -19,6 +20,7 @@ import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-de
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { ISnapshotNormalizerConfig, getNormalizedSnapshot } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
+
 import {
 	ReplayDataStoreFactory,
 	ReplayRuntimeFactory,

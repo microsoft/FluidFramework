@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -16,6 +17,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";
 

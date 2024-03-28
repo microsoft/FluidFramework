@@ -5,8 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+
 import { IJsonCodec } from "../../codec/index.js";
 import { ChangeEncodingContext } from "../change-family/index.js";
+
 import { EncodedRevisionTag, RevisionTag } from "./types.js";
 
 export class RevisionTagCodec
