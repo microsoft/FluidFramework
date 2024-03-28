@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 
 import { Revertible, ValueSchema } from "../../../core/index.js";
 import {
@@ -205,13 +206,13 @@ function applyOptionalFieldEdit(
 
 export function applyTransactionBoundary(
 	state: FuzzTestState,
-	contents: TransactionBoundary["boundary"],
+	boundary: TransactionBoundary["boundary"],
 ): void {
 	state.transactionViews ??= new Map();
 	let view = state.transactionViews.get(state.client.channel);
 	if (view === undefined) {
 		assert(
-			contents.type === "transactionStart",
+			boundary === "start",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
 		const treeView = viewFromState(state);
@@ -221,21 +222,21 @@ export function applyTransactionBoundary(
 	}
 
 	const { checkout } = view;
-	switch (contents.type) {
-		case "transactionStart": {
+	switch (boundary) {
+		case "start": {
 			checkout.transaction.start();
 			break;
 		}
-		case "transactionCommit": {
+		case "commit": {
 			checkout.transaction.commit();
 			break;
 		}
-		case "transactionAbort": {
+		case "abort": {
 			checkout.transaction.abort();
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			unreachableCase(boundary);
 	}
 
 	if (!checkout.transaction.inProgress()) {
@@ -249,9 +250,9 @@ export function applyTransactionBoundary(
 export function applyUndoRedoEdit(
 	undoStack: Revertible[],
 	redoStack: Revertible[],
-	contents: UndoRedo["operation"],
+	operation: UndoRedo["operation"],
 ): void {
-	switch (contents.type) {
+	switch (operation) {
 		case "undo": {
 			undoStack.pop()?.revert();
 			break;
@@ -261,7 +262,7 @@ export function applyUndoRedoEdit(
 			break;
 		}
 		default:
-			fail("Invalid edit.");
+			unreachableCase(operation);
 	}
 }
 

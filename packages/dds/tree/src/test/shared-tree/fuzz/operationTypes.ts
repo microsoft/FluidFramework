@@ -17,12 +17,12 @@ export interface TreeEdit {
 
 export interface TransactionBoundary {
 	type: "transactionBoundary";
-	boundary: TransactionStart | TransactionAbort | TransactionCommit;
+	boundary: "start" | "abort" | "commit";
 }
 
 export interface UndoRedo {
 	type: "undoRedo";
-	operation: UndoOp | RedoOp;
+	operation: "undo" | "redo";
 }
 
 export interface SchemaChange {
@@ -93,26 +93,6 @@ export interface Move {
 
 export interface IntraFieldMove extends Move {
 	type: "intraFieldMove";
-}
-
-export interface TransactionStart {
-	type: "transactionStart";
-}
-
-export interface TransactionCommit {
-	type: "transactionCommit";
-}
-
-export interface TransactionAbort {
-	type: "transactionAbort";
-}
-
-export interface UndoOp {
-	type: "undo";
-}
-
-export interface RedoOp {
-	type: "redo";
 }
 
 export interface SchemaOp {

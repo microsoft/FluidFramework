@@ -430,14 +430,14 @@ export const makeTransactionEditGenerator = (
 		[
 			{
 				type: "transactionBoundary",
-				boundary: { type: "transactionStart" },
+				boundary: "start",
 			},
 			opWeights.start,
 		],
 		[
 			{
 				type: "transactionBoundary",
-				boundary: { type: "transactionCommit" },
+				boundary: "commit",
 			},
 			opWeights.commit,
 			(state) => viewFromState(state).checkout.transaction.inProgress(),
@@ -445,7 +445,7 @@ export const makeTransactionEditGenerator = (
 		[
 			{
 				type: "transactionBoundary",
-				boundary: { type: "transactionAbort" },
+				boundary: "abort",
 			},
 			opWeights.abort,
 			(state) => viewFromState(state).checkout.transaction.inProgress(),
@@ -467,8 +467,8 @@ export const makeUndoRedoEditGenerator = (
 	};
 
 	return createWeightedGenerator<UndoRedo, FuzzTestState>([
-		[{ type: "undoRedo", operation: { type: "undo" } }, opWeights.undo],
-		[{ type: "undoRedo", operation: { type: "redo" } }, opWeights.redo],
+		[{ type: "undoRedo", operation: "undo" }, opWeights.undo],
+		[{ type: "undoRedo", operation: "redo" }, opWeights.redo],
 	]);
 };
 
