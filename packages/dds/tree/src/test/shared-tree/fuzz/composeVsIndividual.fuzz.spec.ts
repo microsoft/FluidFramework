@@ -46,7 +46,7 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
-	edit: async (state, operation) => {
+	treeEdit: async (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
@@ -60,13 +60,13 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		}
 		return state;
 	},
-	transaction: async (state, operation) => {
+	transactionBoundary: async (state, operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
 	undoRedo: async (state, operation) => {
-		const { contents } = operation;
+		const { operation: contents } = operation;
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
 		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
@@ -76,7 +76,7 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		applySynchronizationOp(state);
 		return state;
 	},
-	schema: async (state, operation) => {
+	schemaChange: async (state, operation) => {
 		applySchemaOp(state, operation);
 	},
 });

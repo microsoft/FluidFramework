@@ -36,19 +36,19 @@ import { createTreeViewSchema, isRevertibleSharedTreeView } from "./fuzzUtils.js
 import {
 	FieldDownPath,
 	FieldEdit,
-	FuzzClear,
-	FuzzInsert,
+	ClearField,
+	Insert,
 	FuzzRemove,
-	FuzzSet,
-	FuzzTransactionType,
-	FuzzUndoRedoType,
+	SetField,
 	IntraFieldMove,
 	Operation,
 	SchemaChange,
+	TransactionBoundary,
+	UndoRedo,
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
-	edit: (state, operation) => {
+	treeEdit: (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
@@ -59,18 +59,18 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 				break;
 		}
 	},
-	transaction: (state, operation) => {
-		applyTransactionEdit(state, operation.contents);
+	transactionBoundary: (state, operation) => {
+		applyTransactionBoundary(state, operation.boundary);
 	},
 	undoRedo: (state, operation) => {
 		const view = viewFromState(state).checkout;
 		assert(isRevertibleSharedTreeView(view));
-		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
+		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.operation);
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 	},
-	schema: (state, operation) => {
+	schemaChange: (state, operation) => {
 		applySchemaOp(state, operation);
 	},
 });
@@ -117,7 +117,7 @@ function generateLeafNodeSchemas(nodeTypes: string[]) {
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const tree = state.client.channel as SharedTree;
 	const nodeTypes = getAllowableNodeTypes(state);
-	nodeTypes.push(brand(operation.contents.type));
+	nodeTypes.push(brand(operation.operation.type));
 	const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
 	const newSchema = createTreeViewSchema(leafNodeSchemas, library);
 	tree.checkout.updateSchema(intoStoredSchema(newSchema));
@@ -150,7 +150,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 function applySequenceFieldEdit(
 	tree: FuzzView,
 	field: FlexTreeSequenceField<any>,
-	change: FuzzInsert | FuzzRemove | IntraFieldMove,
+	change: Insert | FuzzRemove | IntraFieldMove,
 ): void {
 	switch (change.type) {
 		case "insert": {
@@ -161,7 +161,7 @@ function applySequenceFieldEdit(
 			field.removeRange(change.range.first, change.range.last + 1);
 			break;
 		}
-		case "intra-field move": {
+		case "intraFieldMove": {
 			field.moveRangeToIndex(change.dstIndex, change.range.first, change.range.last + 1);
 			break;
 		}
@@ -173,7 +173,7 @@ function applySequenceFieldEdit(
 function applyRequiredFieldEdit(
 	tree: FuzzView,
 	field: FlexTreeRequiredField<any>,
-	change: FuzzSet,
+	change: SetField,
 ): void {
 	switch (change.type) {
 		case "set": {
@@ -188,7 +188,7 @@ function applyRequiredFieldEdit(
 function applyOptionalFieldEdit(
 	tree: FuzzView,
 	field: FlexTreeOptionalField<any>,
-	change: FuzzSet | FuzzClear,
+	change: SetField | ClearField,
 ): void {
 	switch (change.type) {
 		case "set": {
@@ -204,12 +204,15 @@ function applyOptionalFieldEdit(
 	}
 }
 
-export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransactionType): void {
+export function applyTransactionBoundary(
+	state: FuzzTestState,
+	contents: TransactionBoundary["boundary"],
+): void {
 	state.transactionViews ??= new Map();
 	let view = state.transactionViews.get(state.client.channel);
 	if (view === undefined) {
 		assert(
-			contents.fuzzType === "transactionStart",
+			contents.type === "transactionStart",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
 		const treeView = viewFromState(state);
@@ -219,7 +222,7 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 	}
 
 	const { checkout } = view;
-	switch (contents.fuzzType) {
+	switch (contents.type) {
 		case "transactionStart": {
 			checkout.transaction.start();
 			break;
@@ -247,7 +250,7 @@ export function applyTransactionEdit(state: FuzzTestState, contents: FuzzTransac
 export function applyUndoRedoEdit(
 	undoStack: Revertible[],
 	redoStack: Revertible[],
-	contents: FuzzUndoRedoType,
+	contents: UndoRedo["operation"],
 ): void {
 	switch (contents.type) {
 		case "undo": {

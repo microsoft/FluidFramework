@@ -46,12 +46,9 @@ import { schematizeFlexTree } from "../../utils.js";
 
 import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
-	FieldEditTypes,
-	FuzzInsert,
+	Insert,
 	FuzzRemove,
-	FuzzSet,
-	FuzzTransactionType,
-	FuzzUndoRedoType,
+	SetField,
 	IntraFieldMove,
 	Operation,
 	OptionalFieldEdit,
@@ -60,13 +57,14 @@ import {
 	SchemaChange,
 	SequenceFieldEdit,
 	Synchronize,
-	TransactionAbortOp,
+	TransactionAbort,
 	TransactionBoundary,
-	TransactionCommitOp,
-	TransactionStartOp,
+	TransactionCommit,
+	TransactionStart,
 	TreeEdit,
 	UndoOp,
 	UndoRedo,
+	FieldEdit,
 } from "./operationTypes.js";
 
 export type FuzzView = FlexTreeView<typeof fuzzSchema.rootFieldSchema> & {
@@ -311,7 +309,7 @@ export const makeTreeEditGenerator = (
 		FuzzTestStateForFieldEdit<SequenceFuzzField>
 	>([
 		[
-			(state): FuzzInsert => ({
+			(state): Insert => ({
 				type: "insert",
 				index: state.random.integer(0, state.fieldInfo.content.length),
 				content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
@@ -339,7 +337,7 @@ export const makeTreeEditGenerator = (
 				const first = random.integer(0, field.length - 1);
 				const last = random.integer(first, field.length - 1);
 				return {
-					type: "intra-field move",
+					type: "intraFieldMove",
 					range: { first, last },
 					dstIndex: random.integer(0, field.length),
 				};
@@ -354,7 +352,7 @@ export const makeTreeEditGenerator = (
 		FuzzTestStateForFieldEdit<OptionalFuzzField>
 	>([
 		[
-			(state): FuzzSet => ({
+			(state): SetField => ({
 				type: "set",
 				value: jsonableTree(state),
 			}),
@@ -371,7 +369,7 @@ export const makeTreeEditGenerator = (
 	});
 
 	const fieldEditGenerator = createWeightedGeneratorWithBailout<
-		FieldEditTypes,
+		FieldEdit["change"],
 		FuzzTestStateForFieldEdit
 	>([
 		[
@@ -430,7 +428,7 @@ export const makeTreeEditGenerator = (
 		return change === done
 			? done
 			: {
-					type: "edit",
+					type: "treeEdit",
 					contents: {
 						type: "fieldEdit",
 						change,
@@ -450,11 +448,14 @@ export const makeTransactionEditGenerator = (
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	const start: TransactionStartOp = { fuzzType: "transactionStart" };
-	const commit: TransactionCommitOp = { fuzzType: "transactionCommit" };
-	const abort: TransactionAbortOp = { fuzzType: "transactionAbort" };
+	const start: TransactionStart = { type: "transactionStart" };
+	const commit: TransactionCommit = { type: "transactionCommit" };
+	const abort: TransactionAbort = { type: "transactionAbort" };
 
-	const transactionBoundaryType = createWeightedGenerator<FuzzTransactionType, FuzzTestState>([
+	const transactionBoundaryType = createWeightedGenerator<
+		TransactionBoundary["boundary"],
+		FuzzTestState
+	>([
 		[start, passedOpWeights.start],
 		[
 			commit,
@@ -474,8 +475,8 @@ export const makeTransactionEditGenerator = (
 		return contents === done
 			? done
 			: {
-					type: "transaction",
-					contents,
+					type: "transactionBoundary",
+					boundary: contents,
 			  };
 	};
 };
@@ -489,8 +490,8 @@ export const makeSchemaEdit = (): Generator<SchemaChange, FuzzTestState> => {
 		const contents = makeSchemaOp(state);
 
 		return {
-			type: "schema",
-			contents,
+			type: "schemaChange",
+			operation: contents,
 		};
 	};
 };
@@ -505,7 +506,7 @@ export const makeUndoRedoEditGenerator = (
 	const undo: UndoOp = { type: "undo" };
 	const redo: RedoOp = { type: "redo" };
 
-	const undoRedoType = createWeightedGenerator<FuzzUndoRedoType, FuzzTestState>([
+	const undoRedoType = createWeightedGenerator<UndoRedo["operation"], FuzzTestState>([
 		[undo, passedOpWeights.undo],
 		[redo, passedOpWeights.redo],
 	]);
@@ -516,7 +517,7 @@ export const makeUndoRedoEditGenerator = (
 			? done
 			: {
 					type: "undoRedo",
-					contents,
+					operation: contents,
 			  };
 	};
 };
