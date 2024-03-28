@@ -193,53 +193,55 @@ export const treeNodeApi: TreeNodeApi = {
  */
 export interface TreeChangeEvents {
 	/**
-	 * Raised on a node when changes are applied to one or more of its properties.
+	 * Raised on a node when one or more of its child nodes are replaced, i.e. when the properties of the node are
+	 * assigned to (this includes assigning `undefined` to a property to remove the child node there).
 	 *
 	 * @remarks
-	 * Particularly, this event is not raised when:
-	 * - Changes are applied to properties of any child nodes.
-	 * - The node itself is moved to a different location in the tree or removed from the tree.
+	 * In particular, this event is not raised when:
+	 * - Properties of a child node change. Notably, updates to an array node or a map node (like adding or removing
+	 * elements/entries) will raise this event on the array/map node itself, but not on the node that contains the
+	 * array/map node as one of its properties.
+	 * - The node is moved to a different location in the tree or removed from the tree.
 	 * In this case the event is raised on the _parent_ node, not the node itself.
 	 *
-	 * Also note that value nodes do not have properties, so this event is never raised for them.
+	 * Also note that value nodes do not have properties (child nodes), so this event is never raised for them.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
-	 * While a batch of edits will get events for each change, and will as a whole update the tree to the appropriate end
-	 * state, no guarantees are made about the intermediate states other than the tree being in-schema.
+	 * While a batch of edits will as a whole update the tree to the appropriate end state, no guarantees are made about
+	 * how many times this event will be raised during any intermediate states.
+	 * When it is raised, the tree is guaranteed to be in-schema.
 	 *
 	 * @privateRemarks
 	 * In terms of the internal implementation of tree, this fires when:
 	 * - The content of one or more of the node's fields changes (i.e., the field now contains a new node, or nothing if it
 	 * previously contained a node)
 	 * - For an array node, when the array is modified (i.e., an element is added, removed, or moved)
-	 **
-	 * These events occur whenever the apparent contents of the node instance change, regardless of what caused the change.
-	 * For example, these events will fire when the local client reassigns a child, when part of a remote edit is applied
-	 * to the node, or when the node has to be updated due to resolution of a merge conflict
-	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
+	 * - For a map node, when a key is added, updated, or removed.
 	 *
-	 * Triggered by {@link AnchorEvents.subtreeChanged} if {@link AnchorEvents.childrenChanged} also fired for the node.
+	 * This event occurs whenever the apparent contents of the node instance change, regardless of what caused the change.
+	 * For example, it will fire when the local client reassigns a child, when part of a remote edit is applied to the
+	 * node, or when the node has to be updated due to resolution of a merge conflict
+	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 */
 	afterShallowChange(): void;
 
 	/**
-	 * Raised on a node when changes are applied to its properties or the properties of any node in the subtree rooted
-	 * at this node.
+	 * Raised on a node when changes happen anywhere in the subtree (including itself) rooted at it.
 	 *
 	 * @remarks
-	 * This event may fire at a time when the change is not yet visible if the listener inspects the tree.
-	 * In that case, it is guaranteed to fire again after the change _is_ visible to the listener.
+	 * This event is not raised when the node itself is moved to a different location in the tree or removed from the tree.
 	 *
-	 * Also note that value nodes do not have properties nor child nodes, so this event is never raised for them.
+	 * It may fire at a time when the change(s) that triggered it are not yet visible if the listener inspects the tree.
+	 * In that case, it is guaranteed to fire again after the change(s) _are_ visible to the listener.
+	 *
+	 * Also note that value nodes do not have properties (child nodes), so this event is never raised for them.
 	 *
 	 * For remote edits, this event is not guaranteed to occur in the same order or quantity that it did in
 	 * the client that made the original edit.
-	 * While a batch of edits will get events for each change, and will as a whole update the tree to the appropriate end
-	 * state, no guarantees are made about the intermediate states other than the tree being in-schema.
-	 *
-	 * @privateRemarks
-	 * Triggered by {@link AnchorEvents.subtreeChanged}
+	 * While a batch of edits will as a whole update the tree to the appropriate end state, no guarantees are made about
+	 * how many times this event will be raised during any intermediate states.
+	 * When it is raised, the tree is guaranteed to be in-schema.
 	 */
 	afterDeepChange(): void;
 }
