@@ -4,10 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { DeltaStreamConnectionForbiddenError } from "@fluidframework/driver-utils";
 import {
 	LocalDocumentServiceFactory,
@@ -27,6 +24,8 @@ import {
 	createAndAttachContainer,
 	createLoader,
 } from "@fluidframework/test-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 describe("No Delta Stream", () => {
 	const documentId = "localServerTest";

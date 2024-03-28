@@ -4,11 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
 import { getDocumentAttributes, runSingle } from "../utils.js";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 describe("container-loader utils", () => {
 	describe("runSingle", () => {

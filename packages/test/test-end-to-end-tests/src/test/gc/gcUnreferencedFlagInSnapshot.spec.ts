@@ -10,9 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import {
@@ -23,6 +21,8 @@ import {
 } from "@fluidframework/test-utils";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Validates that the 'unreferenced' property in the summary tree of unreferenced data stores is present

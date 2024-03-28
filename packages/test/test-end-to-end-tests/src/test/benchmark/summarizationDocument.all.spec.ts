@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { delay } from "@fluidframework/core-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 
@@ -17,6 +16,8 @@ import {
 	benchmarkAll,
 	createDocument,
 } from "./DocumentCreator.js";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentWrapper: IDocumentLoaderAndSummarizer;

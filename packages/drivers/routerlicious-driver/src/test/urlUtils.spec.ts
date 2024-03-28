@@ -4,11 +4,10 @@
  */
 
 import assert from "assert";
-
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { ISession } from "@fluidframework/server-services-client";
 
 import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "../urlUtils.js";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 describe("UrlUtils", () => {
 	const exampleFluidUrl1 =

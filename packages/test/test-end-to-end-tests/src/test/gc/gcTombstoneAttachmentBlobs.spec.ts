@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay } from "@fluidframework/core-utils";
 import {
@@ -26,6 +25,7 @@ import {
 } from "../mockDetachedBlobStorage.js";
 
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added

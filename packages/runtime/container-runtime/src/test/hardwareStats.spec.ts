@@ -4,13 +4,12 @@
  */
 
 import assert from "assert";
-
-import { IContainerContext } from "@fluidframework/container-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 
 function setNavigator(
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import type { IBatchMessage } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
@@ -20,6 +19,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 describe("RemoteMessageProcessor", () => {
 	function getMessageProcessor(): RemoteMessageProcessor {

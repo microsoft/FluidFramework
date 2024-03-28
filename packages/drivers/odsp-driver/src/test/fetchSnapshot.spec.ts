@@ -8,7 +8,6 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -32,6 +31,7 @@ import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
 
 import { createResponse } from "./mockFetch.js";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

@@ -6,13 +6,13 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 
 describeCompat("ContainerRuntime Document Schema", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;

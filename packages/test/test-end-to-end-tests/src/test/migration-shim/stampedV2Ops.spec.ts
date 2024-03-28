@@ -19,7 +19,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { type IChannel } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -29,14 +28,8 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import {
-	type ITree,
-	SchemaFactory,
-	SharedTree,
-	TreeConfiguration,
-	type TreeView,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { type ITree, SchemaFactory, SharedTree, TreeConfiguration, type TreeView, disposeSymbol } from "@fluidframework/tree";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

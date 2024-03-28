@@ -6,21 +6,16 @@
 import assert from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IRuntime } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces";
-import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	type IDocumentStorageService,
-	type IResolvedUrl,
-	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, SummaryType } from "@fluidframework/protocol-definitions";
 import { isFluidError } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
 
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
+import { IRuntime } from "@fluidframework/container-definitions/internal";
+import { IDocumentService, IDocumentServiceFactory, type IDocumentStorageService, type IResolvedUrl, type IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {

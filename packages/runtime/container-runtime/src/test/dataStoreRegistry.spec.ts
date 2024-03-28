@@ -4,11 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-
-import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 
 describe("Data Store Registry Creation Tests", () => {
 	// Define two entries with the same name

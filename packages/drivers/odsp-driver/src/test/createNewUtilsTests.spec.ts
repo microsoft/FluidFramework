@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
@@ -26,6 +25,7 @@ import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { IExistingFileInfo, INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
 
 import { mockFetchOk } from "./mockFetch.js";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 

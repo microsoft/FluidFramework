@@ -4,8 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
-import type { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import type { IClient } from "@fluidframework/protocol-definitions";
@@ -22,6 +20,7 @@ import * as joinSession from "../vroom.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { ClientSocketMock } from "./socketTests/socketMock.js";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 describe("expose joinSessionInfo Tests", () => {
 	const siteUrl = "https://www.localhost.xxx";

@@ -6,7 +6,6 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	DefaultSummaryConfiguration,
 	IAckedSummary,
@@ -20,6 +19,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const {

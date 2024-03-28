@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -14,7 +13,6 @@ import {
 } from "@fluidframework/container-runtime";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred, delay } from "@fluidframework/core-utils";
-import type { ISnapshot } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -23,6 +21,8 @@ import {
 	createTestConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 const interceptResult = <T>(
 	parent: any,

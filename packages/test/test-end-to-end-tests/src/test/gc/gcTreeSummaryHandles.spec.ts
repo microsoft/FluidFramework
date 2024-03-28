@@ -6,8 +6,6 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
-import { ILoaderProps } from "@fluidframework/container-loader";
 import {
 	ContainerRuntime,
 	IAckedSummary,
@@ -18,11 +16,6 @@ import {
 	SummaryCollection,
 	neverCancelledSummaryToken,
 } from "@fluidframework/container-runtime";
-import {
-	DriverHeader,
-	IDocumentServiceFactory,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -35,6 +28,9 @@ import {
 } from "@fluidframework/test-utils";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
+import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
+import { DriverHeader, IDocumentServiceFactory, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.

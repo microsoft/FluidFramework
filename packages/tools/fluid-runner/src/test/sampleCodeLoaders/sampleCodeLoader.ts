@@ -4,14 +4,10 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-import {
-	ICodeDetailsLoader,
-	IContainer,
-	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import { IFluidFileConverter } from "../../codeLoaderBundle";
+import { ICodeDetailsLoader, IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
 
 // If the test collateral includes code proposals, the code loader must implement IFluidCodeDetailsComparer, or else
 // the container will immediately be closed.  This implementation is a naive approach that claims all code details are

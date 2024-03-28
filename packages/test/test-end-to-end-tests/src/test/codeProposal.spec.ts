@@ -6,13 +6,6 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IFluidPackage,
-	isFluidPackage,
-} from "@fluidframework/container-definitions";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestFluidObject,
@@ -23,6 +16,7 @@ import {
 	createDocumentId,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+import { IContainer, IFluidCodeDetails, IFluidCodeDetailsComparer, IFluidPackage, isFluidPackage } from "@fluidframework/container-definitions/internal";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
 	version: number;

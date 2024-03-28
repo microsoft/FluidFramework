@@ -4,18 +4,22 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import { strict as assert } from "node:assert";
 
-import { AttachState, ContainerErrorTypes } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
@@ -23,6 +27,8 @@ import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-dr
 import { TinyliciousClient } from "../index.js";
 
 import { TestDataObject } from "./TestDataObject.js";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { SharedDirectory } from "@fluidframework/map/internal";
 
 const corruptedAliasOp = async (
 	runtime: IContainerRuntime,

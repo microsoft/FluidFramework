@@ -5,8 +5,6 @@
 
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
 import {
 	ChannelCollection,
 	ChannelCollectionFactory,
@@ -26,6 +24,8 @@ import {
 	createSummarizerCore,
 	summarizeNow,
 } from "@fluidframework/test-utils";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 
 /**
  * ADO:7302 This needs to be revisited after settling on a set of

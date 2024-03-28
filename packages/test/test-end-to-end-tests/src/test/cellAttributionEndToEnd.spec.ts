@@ -12,7 +12,6 @@ import {
 } from "@fluid-experimental/attributor";
 import { describeCompat, itSkipsFailureOnSpecificDrivers } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
 import {
@@ -23,6 +22,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 
 function assertAttributionMatches(
 	sharedCell: SharedCell,

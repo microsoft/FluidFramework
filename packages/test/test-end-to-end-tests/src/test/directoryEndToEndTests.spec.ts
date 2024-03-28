@@ -6,16 +6,9 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase, IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	IDirectory,
-	IDirectoryValueChanged,
-	ISharedDirectory,
-	ISharedMap,
-	SharedDirectory,
-} from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -24,6 +17,8 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IDirectory, IDirectoryValueChanged, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;

@@ -13,19 +13,7 @@ import {
 	getDataStoreFactory,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import {
-	ContainerErrorTypes,
-	IContainer,
-	IFluidCodeDetails,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
-import {
-	ConnectionState,
-	IContainerExperimental,
-	ILoaderProps,
-	Loader,
-	waitContainerToCatchUp,
-} from "@fluidframework/container-loader";
+import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
@@ -35,12 +23,7 @@ import {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import {
-	DriverErrorTypes,
-	FiveDaysMs,
-	IAnyDriverError,
-	IDocumentServiceFactory,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
@@ -61,6 +44,9 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { wrapObjectAndOverride } from "../mocking.js";
+import { ContainerErrorTypes, IContainer, IFluidCodeDetails, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader, waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
+import { FiveDaysMs, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 const id = "https://localhost/containerTest";
 const testRequest: IRequest = { url: id };

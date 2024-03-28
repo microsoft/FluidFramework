@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentService } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils";
@@ -19,6 +18,7 @@ import { getHashedDocumentId } from "../odspPublicUtils.js";
 import { getOdspResolvedUrl } from "../odspUtils.js";
 
 import { mockFetchMultiple, mockFetchOk, okResponse } from "./mockFetch.js";
+import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 
 describe("Odsp Create Container Test", () => {
 	const siteUrl = "https://www.localhost.xxx";

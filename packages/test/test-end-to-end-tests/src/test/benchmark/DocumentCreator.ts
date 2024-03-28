@@ -17,7 +17,6 @@ import {
 	benchmark,
 	benchmarkMemory,
 } from "@fluid-tools/benchmark";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
@@ -26,6 +25,8 @@ import { DocumentMap } from "./DocumentMap.js";
 import { DocumentMatrix } from "./DocumentMatrix.js";
 import { DocumentMatrixPlain } from "./DocumentMatrixPlain.js";
 import { DocumentMultipleDds } from "./DocumentMultipleDataStores.js";
+import { IContainer } from "@fluidframework/container-definitions/internal";
+
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;

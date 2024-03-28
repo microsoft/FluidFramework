@@ -6,9 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
 import type { SharedString } from "@fluidframework/sequence";
@@ -23,6 +21,8 @@ import {
 
 import { wrapObjectAndOverride } from "../mocking.js";
 import { pkgVersion } from "../packageVersion.js";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 // REVIEW: enable compat testing?
 describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {

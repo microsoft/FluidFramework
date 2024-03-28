@@ -5,10 +5,7 @@
 
 import assert from "assert";
 
-import {
-	ContainerErrorTypes,
-	ICriticalContainerError,
-} from "@fluidframework/container-definitions";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
@@ -19,6 +16,7 @@ import type {
 } from "../messageTypes.js";
 import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
 import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessage>;

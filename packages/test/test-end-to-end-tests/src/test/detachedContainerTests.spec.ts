@@ -8,18 +8,12 @@ import { strict as assert } from "assert";
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import {
-	AttachState,
-	IContainer,
-	IRuntime,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
-import { ConnectionState, Loader } from "@fluidframework/container-loader";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
+import type { ISharedMap } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -43,6 +37,10 @@ import {
 } from "@fluidframework/test-utils";
 
 import { wrapObjectAndOverride } from "../mocking.js";
+import { IContainer, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { SharedDirectory } from "@fluidframework/map/internal";
 
 const detachedContainerRefSeqNumber = 0;
 

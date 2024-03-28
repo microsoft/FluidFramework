@@ -6,9 +6,8 @@
 import { strict as assert } from "assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-
 import { LocalResolver } from "../localResolver.js";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 
 describe("Local Driver Resolver", () => {
 	const documentId = "localResolverTest";

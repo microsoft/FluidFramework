@@ -7,11 +7,7 @@ import { strict as assert } from "assert";
 
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils";
-import {
-	DriverErrorTypes,
-	IAnyDriverError,
-	IDocumentService,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -19,6 +15,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ConnectionManager } from "../connectionManager.js";
 import { IConnectionManagerFactoryArgs } from "../contracts.js";
 import { pkgVersion } from "../packageVersion.js";
+import { IDocumentService } from "@fluidframework/driver-definitions/internal";
 
 describe("connectionManager", () => {
 	let nextClientId = 0;

@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AzureClient,
-	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
-	ITelemetryBaseLogger,
-} from "@fluidframework/azure-client";
+import { AzureClient, AzureLocalConnectionConfig, AzureRemoteConnectionConfig, ITelemetryBaseLogger } from "@fluidframework/azure-client";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { MockLogger, createMultiSinkLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";

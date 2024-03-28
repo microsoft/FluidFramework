@@ -10,7 +10,6 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 // eslint-disable-next-line import/no-internal-modules
 import { IGarbageCollectionState } from "@fluidframework/container-runtime/test/gc";
@@ -24,6 +23,7 @@ import {
 } from "@fluidframework/test-utils";
 
 import { defaultGCConfig } from "./gcTestConfigs.js";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called
