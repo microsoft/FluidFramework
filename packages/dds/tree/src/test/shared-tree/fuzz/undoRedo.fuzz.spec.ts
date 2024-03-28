@@ -54,6 +54,8 @@ describe("Fuzz - undo/redo", () => {
 	const runsPerBatch = 20;
 
 	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		set: 1,
+		clear: 1,
 		insert: 1,
 		remove: 1,
 	};
@@ -230,6 +232,8 @@ describe("Fuzz - undo/redo", () => {
 	});
 
 	const unSequencedUndoRedoWeights: Partial<EditGeneratorOpWeights> = {
+		set: 1,
+		clear: 1,
 		insert: 1,
 		remove: 1,
 		undo: 1,

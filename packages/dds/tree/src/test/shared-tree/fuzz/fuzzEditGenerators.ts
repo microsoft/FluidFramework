@@ -220,7 +220,7 @@ export interface EditGeneratorOpWeights {
 	schema: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
-	set: 1,
+	set: 0,
 	clear: 0,
 	insert: 0,
 	remove: 0,

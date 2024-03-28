@@ -96,6 +96,8 @@ describe("Fuzz - composed vs individual changes", () => {
 	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
 	// assert 0x675, "Expected branch to be tracked"
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
+		set: 1,
+		clear: 1,
 		insert: 1,
 		remove: 2,
 		move: 2,
