@@ -31,7 +31,6 @@ export class ContainerEventTelemetryProducer {
 		eventName: ContainerSystemEventName,
 		payload?: any,
 	): IContainerTelemetry | undefined {
-		let telemetry: IContainerTelemetry | undefined = undefined;
 		switch (eventName) {
 			case ContainerSystemEventNames.CONNECTED:
 				return this.produceConnectedTelemetry(payload);
@@ -48,7 +47,6 @@ export class ContainerEventTelemetryProducer {
 			default:
 				break;
 		}
-		return telemetry;
 	}
 
 	private produceBasicContainerTelemetry = (
