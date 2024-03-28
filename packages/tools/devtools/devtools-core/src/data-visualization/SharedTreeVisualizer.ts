@@ -2,10 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { assert } from "@fluidframework/core-utils";
 import type {
-	FieldKey,
 	FieldMapObject,
 	JsonableTree,
 	SharedTreeContentSnapshot,
@@ -33,7 +31,6 @@ export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNod
 		};
 		return result;
 	} else {
-		// Handling SharedTreeNode
 		const children: Record<string, VisualChildNode> = {};
 
 		for (const [key, value] of Object.entries(tree.fields)) {
@@ -54,7 +51,6 @@ export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNod
  */
 function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	let result = "";
-	const resultObject: Record<string | number, string> = {};
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		/**
@@ -62,19 +58,16 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 		 */
 		const fieldTypes = treeFieldStoredSchema.types;
 
-		let fieldAllowedType = `${fieldKey} : `;
-		let resultObjectValue = "";
+		let fieldAllowedType = fieldKey === "" ? "" : `${fieldKey} : `;
 
 		/**
 		 * If not specified, types are unconstrained.
 		 */
 		if (fieldTypes === undefined) {
 			fieldAllowedType += "any";
-			resultObject[fieldKey] = "any";
 		} else {
 			for (const type of fieldTypes) {
 				fieldAllowedType += `${type} | `;
-				resultObjectValue += `${type} | `;
 			}
 		}
 
@@ -84,7 +77,6 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 		fieldAllowedType = `${fieldAllowedType.slice(0, -3)}, `;
 
 		result += fieldAllowedType;
-		resultObject[fieldKey] = resultObjectValue;
 	}
 
 	/**
@@ -92,7 +84,6 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	 */
 	result = result.slice(0, -2);
 
-	console.log(resultObject);
 	return `{ ${result} }`;
 }
 
@@ -103,37 +94,44 @@ function getMapAllowedTypes(
 	fields: FieldMapObject<JsonableTree> | undefined,
 	schema: MapNodeStoredSchema,
 ): string {
-	let allowedTypes = "";
+	let fieldAllowedTypes = "";
 
 	const mapFieldAllowedTypes = schema.mapFields.types;
 
 	if (mapFieldAllowedTypes === undefined) {
-		allowedTypes = "any";
+		fieldAllowedTypes = "any";
 	} else {
 		for (const type of mapFieldAllowedTypes) {
-			allowedTypes += `${type} | `;
+			fieldAllowedTypes += `${type} | `;
 		}
 	}
+
+	/**
+	 * Slice the trailing ` | ` from the `fieldAllowedType`.
+	 */
+	fieldAllowedTypes = fieldAllowedTypes.slice(0, -3);
 
 	assert(fields !== undefined, "MapNodeStoredSchema fields undefined.");
 
 	let result = "";
 	for (const [fieldKey] of Object.entries(fields)) {
-		result += `${fieldKey} : ${allowedTypes}, `;
+		result += `${fieldKey} : ${fieldAllowedTypes}, `;
 	}
 
-	return result;
+	/**
+	 * Slice the trailing `, ` from the `result`.
+	 */
+	result = result.slice(0, -2);
+
+	return `{ ${result} }`;
 }
 
 /**
  * Returns the allowed fields & types for the leaf fields.
  */
-function getLeafAllowedTypes(leafKey: FieldKey, schema: TreeFieldStoredSchema): string {
+function getLeafAllowedTypes(schema: TreeFieldStoredSchema): string {
 	let result = "";
-
 	const leafTypes = schema.types;
-
-	result = `${leafKey} : `;
 
 	if (leafTypes === undefined) {
 		result = "any";
@@ -143,7 +141,11 @@ function getLeafAllowedTypes(leafKey: FieldKey, schema: TreeFieldStoredSchema): 
 		}
 	}
 
+	/**
+	 * Slice the trailing ` | ` from the `result`.
+	 */
 	result = `${result.slice(0, -3)}`;
+
 	return result;
 }
 
@@ -152,7 +154,6 @@ function getLeafAllowedTypes(leafKey: FieldKey, schema: TreeFieldStoredSchema): 
  */
 function visualizeLeafNodeStoredSchema(
 	tree: JsonableTree,
-	schema: LeafNodeStoredSchema,
 	allowedTypes: string | undefined,
 ): SharedTreeLeafNode {
 	return {
@@ -160,12 +161,12 @@ function visualizeLeafNodeStoredSchema(
 			schemaType: "LeafNodeStoredSchema",
 			allowedTypes,
 		},
-		value: JSON.stringify(tree.value), // TODO: this needs to be `await visualizeChildData(tree.value), otherwise we won't handle Fluid Handles correctly
+		value: JSON.stringify(tree.value),
 	};
 }
 
 /**
- * TODO
+ * Returns the schema & fields of the node with type {@link ObjectNodeStoredSchema}.
  */
 function visualizeObjectNodeStoredSchema(
 	tree: JsonableTree,
@@ -186,7 +187,11 @@ function visualizeObjectNodeStoredSchema(
 	}
 
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
-	let leafAllowedTypes = "";
+
+	/**
+	 * If the child node is a leaf node, get the allowed types from the parent schema before entering {@link visualizeSharedTreeNodeBySchema}.
+	 */
+	let leafAllowedTypes;
 
 	/**
 	 * {@link EmptyKey} indicates an array field (e.g., `schemabuilder.array()`).
@@ -197,34 +202,27 @@ function visualizeObjectNodeStoredSchema(
 		Object.prototype.hasOwnProperty.call(treeFields, EmptyKey)
 	) {
 		const children = treeFields[EmptyKey];
-		let result = "";
-		for (let i = 0; i < children.length; i++) {
-			const arraySchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
 
-			// TODO: Verify logic. DEDUPE
-			if (arraySchema instanceof LeafNodeStoredSchema) {
+		for (let i = 0; i < children.length; i++) {
+			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
+
+			/**
+			 * If the node within the array is a leaf node, get the allowed types from the parent schema.
+			 */
+			if (childSchema instanceof LeafNodeStoredSchema) {
 				const parentSchema = schema.objectNodeFields;
 
-				for (const [, leafField] of parentSchema) {
-					const allowedTypes = leafField.types;
-
-					if (allowedTypes === undefined) {
-						result = "any";
-					} else {
-						for (const type of allowedTypes) {
-							result += `${type} | `;
-						}
-					}
+				for (const [, leafSchema] of parentSchema) {
+					leafAllowedTypes = getLeafAllowedTypes(leafSchema);
 				}
-				result = `${result.slice(0, -3)}`;
 			}
 
 			fields[i] = visualizeSharedTreeNodeBySchema(
 				children[i],
-				arraySchema,
+				childSchema,
 				contentSnapshot,
-				result,
-			); // TODO: Pass parent here?
+				leafAllowedTypes as string,
+			);
 		}
 	} else {
 		for (const [fieldKey, childField] of Object.entries(treeFields)) {
@@ -232,24 +230,26 @@ function visualizeObjectNodeStoredSchema(
 				childField.length === 1,
 				"Non-array node should not have more than one child field.",
 			);
-			const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
+			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
 
-			// TODO: Verify logic. DEDUPE
-			if (fieldSchema instanceof LeafNodeStoredSchema) {
+			/**
+			 * If the child field is a leaf node, get the allowed types from the parent schema.
+			 */
+			if (childSchema instanceof LeafNodeStoredSchema) {
 				const parentSchema = schema.objectNodeFields;
 
-				for (const [leafKey, leafField] of parentSchema) {
+				for (const [leafKey, leafSchema] of parentSchema) {
 					if (leafKey === fieldKey) {
-						leafAllowedTypes = getLeafAllowedTypes(leafKey, leafField);
+						leafAllowedTypes = getLeafAllowedTypes(leafSchema);
 					}
 				}
 			}
 
 			fields[fieldKey] = visualizeSharedTreeNodeBySchema(
 				childField[0],
-				fieldSchema,
+				childSchema,
 				contentSnapshot,
-				leafAllowedTypes,
+				leafAllowedTypes as string,
 			);
 		}
 	}
@@ -265,7 +265,7 @@ function visualizeObjectNodeStoredSchema(
 }
 
 /**
- * TODO
+ * Returns the schema & fields of the node with type {@link MapNodeStoredSchema}.
  */
 function visualizeMapNodeStoredSchema(
 	tree: JsonableTree,
@@ -292,12 +292,12 @@ function visualizeMapNodeStoredSchema(
 			childField.length === 1,
 			"Non-array node should not have more than one child field.",
 		);
-		let result = "";
+
 		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
+		let result = "";
 
 		if (fieldSchema instanceof LeafNodeStoredSchema) {
 			const mapAllowedTypes = schema.mapFields.types;
-			result += `${fieldKey} : `;
 
 			if (mapAllowedTypes === undefined) {
 				result = "any";
@@ -322,7 +322,7 @@ function visualizeMapNodeStoredSchema(
 			name: tree.type,
 			schemaType: "MapNodeStoredSchema",
 			allowedTypes: getMapAllowedTypes(treeFields, schema),
-		}, // TODO: dedupe
+		},
 		fields,
 	};
 }
@@ -333,12 +333,12 @@ function visualizeMapNodeStoredSchema(
  */
 export function visualizeSharedTreeNodeBySchema(
 	tree: JsonableTree,
-	schema: TreeNodeStoredSchema | undefined, // TODO: TreeNodeStoredSchema can be undefined?
+	schema: TreeNodeStoredSchema | undefined,
 	contentSnapshot: SharedTreeContentSnapshot,
 	leafAllowedTypes?: string,
 ): VisualSharedTreeNode {
 	if (schema instanceof LeafNodeStoredSchema) {
-		return visualizeLeafNodeStoredSchema(tree, schema, leafAllowedTypes);
+		return visualizeLeafNodeStoredSchema(tree, leafAllowedTypes);
 	} else if (schema instanceof ObjectNodeStoredSchema) {
 		return visualizeObjectNodeStoredSchema(tree, schema, contentSnapshot);
 	} else if (schema instanceof MapNodeStoredSchema) {

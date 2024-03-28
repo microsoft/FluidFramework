@@ -11,13 +11,16 @@ interface SharedTreeNodeBase {
 	schema: SharedTreeSchemaNode;
 }
 
+/**
+ * List of possible SharedTree schemaType for {@link SharedTreeSchemaNode}.
+ */
 type SharedTreeSchemaType =
 	| "MapNodeStoredSchema"
 	| "ObjectNodeStoredSchema"
 	| "LeafNodeStoredSchema";
 
 /**
- * TODO
+ * Base schema interface.
  */
 interface SharedTreeSchemaNode {
 	/**
@@ -38,21 +41,22 @@ interface SharedTreeSchemaNode {
 	 */
 	allowedTypes: string | undefined;
 }
+
 /**
- * TODO
+ * Visual interface for SharedTree node with child field(s).
  */
 interface SharedTreeNode extends SharedTreeNodeBase {
-	// TODO: Fix types.
 	fields: Record<string | number, VisualSharedTreeNode>;
 }
+
 /**
- * TODO
+ * Visual interface for SharedTree leaf node.
  */
 export interface SharedTreeLeafNode extends SharedTreeNodeBase {
 	value: Primitive;
 }
 
 /**
- * TODO
+ * VisualSharedTreeNode type encompassing leaf / parent SharedTree node.
  */
 export type VisualSharedTreeNode = SharedTreeNode | SharedTreeLeafNode;

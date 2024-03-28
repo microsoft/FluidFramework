@@ -390,7 +390,7 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	it.only("SharedTree", async () => {
+	it("SharedTree", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
@@ -440,7 +440,6 @@ describe("DefaultVisualizers unit tests", () => {
 			]),
 		}) {}
 
-		// TODO: Make Map Schema.
 		sharedTree.schematize(
 			new TreeConfiguration(
 				RootNodeSchema,

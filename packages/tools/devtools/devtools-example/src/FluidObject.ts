@@ -209,6 +209,7 @@ export class AppData extends DataObject {
 						avengers: builder.boolean,
 					}),
 				),
+				espresso: builder.array([builder.number, builder.string]),
 			}),
 			baz: [builder.number, builder.string, builder.boolean],
 			foobar: builder.map([
@@ -258,6 +259,7 @@ export class AppData extends DataObject {
 									avengers: true,
 								},
 							],
+							espresso: [256, "FiveHundredTwelve"],
 						},
 						baz: 128,
 						foobar: new Map([
