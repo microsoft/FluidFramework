@@ -15,8 +15,7 @@ import {
 import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { ISharedMap } from "../../interfaces.js";
-import { MapFactory } from "../../map.js";
+import { ISharedMap, MapFactory } from "../../index.js";
 import { _dirname } from "./dirname.cjs";
 
 interface Clear {

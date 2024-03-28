@@ -49,6 +49,10 @@ function generateTestChangesets(
 			name: "with reserved detach",
 			change: Change.reserve("self", { revision, localId }),
 		},
+		{
+			name: "pin",
+			change: Change.pin({ revision, localId }),
+		},
 	];
 }
 

@@ -74,7 +74,9 @@ export function makeOptionalFieldCodec<TChildChange = NodeChangeset>(
 					]);
 				}
 
-				if (change.valueReplace.isEmpty) {
+				// When the source of the replace is "self", the destination is a reserved ID that will only be used if
+				// the tree in the field is concurrently replaced.
+				if (change.valueReplace.isEmpty || change.valueReplace.src === "self") {
 					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context);
 				} else {
 					encoded.m.push([
