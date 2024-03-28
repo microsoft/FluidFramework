@@ -121,6 +121,10 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 	public readonly key: FieldKey;
 
+	/**
+	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
+	 * if/when the Anchor is destroyed.
+	 */
 	private readonly offAfterDestroy?: () => void;
 
 	public constructor(
