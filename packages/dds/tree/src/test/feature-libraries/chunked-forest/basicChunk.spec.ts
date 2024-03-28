@@ -12,7 +12,6 @@ import {
 	JsonableTree,
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../../../domains/index.js";
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -26,7 +25,9 @@ import {
 	chunkField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
+// eslint-disable-next-line import/no-internal-modules
 import { uniformChunk } from "../../../feature-libraries/chunked-forest/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeChunk,
@@ -42,7 +43,6 @@ import {
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
 
-// eslint-disable-next-line import/no-internal-modules
 
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";

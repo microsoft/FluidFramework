@@ -22,6 +22,7 @@ import {
 } from "../../core/index.js";
 import { leaf } from "../../domains/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
+// eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	DefaultEditBuilder,
@@ -31,7 +32,6 @@ import {
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 
-// eslint-disable-next-line import/no-internal-modules
 import {
 	ModularChangeFamily,
 	intoDelta,
