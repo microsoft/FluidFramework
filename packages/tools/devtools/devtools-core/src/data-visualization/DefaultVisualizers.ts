@@ -16,7 +16,6 @@ import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
- main
 import { EditType } from "../CommonInterfaces.js";
 
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
