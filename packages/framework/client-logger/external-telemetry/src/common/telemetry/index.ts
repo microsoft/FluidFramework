@@ -11,6 +11,12 @@ import type { ContainerTelemetryEventName } from "../../container/index.js";
  * @beta
  */
 export interface IExternalTelemetry {
+	/**
+	 * The name of the telemetry event. This will include the scope of the event as well
+	 *
+	 * @example
+	 * "container.connected"
+	 */
 	eventName: ExternalTelemetryEventName;
 }
 

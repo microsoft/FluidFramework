@@ -7799,6 +7799,7 @@ importers:
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/chai': ^4.0.0
       '@types/mocha': ^9.1.1
+      '@types/uuid': ^9.0.2
       chai: ^4.2.0
       eslint: ~8.55.0
       mocha: ^10.2.0
@@ -7821,6 +7822,7 @@ importers:
       '@microsoft/api-extractor': 7.42.3
       '@types/chai': 4.3.11
       '@types/mocha': 9.1.1
+      '@types/uuid': 9.0.7
       chai: 4.3.10
       eslint: 8.55.0
       mocha: 10.2.0

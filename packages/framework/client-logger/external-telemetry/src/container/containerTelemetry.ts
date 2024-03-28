@@ -60,9 +60,22 @@ export type ContainerTelemetryEventName =
  * @beta
  */
 export interface IContainerTelemetry extends IExternalTelemetry {
+	/**
+	 * @inheritdoc IExternalTelemetry.eventName
+	 */
 	eventName: ContainerTelemetryEventName;
+	/**
+	 * The client side generated unique id of the container this telemetry came from.
+	 */
 	containerId: string;
+	/**
+	 * { @inheritdoc @fluidframework/container-definitions#IContainer."clientId" }
+	 */
 	clientId?: string;
+	/**
+	 * The id of the container this resolved url is for.
+	 * Will be undefined only when the container is not attached.
+	 */
 	documentId?: string;
 }
 
