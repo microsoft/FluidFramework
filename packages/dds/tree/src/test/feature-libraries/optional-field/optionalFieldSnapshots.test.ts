@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import path from "path";
 import { IIdCompressor } from "@fluidframework/id-compressor";
 import { ChangesetLocalId, RevisionTagCodec } from "../../../core/index.js";
 import {
@@ -48,12 +49,15 @@ function generateTestChangesets(
 			name: "with reserved detach",
 			change: Change.reserve("self", { revision, localId }),
 		},
+		{
+			name: "pin",
+			change: Change.pin({ revision, localId }),
+		},
 	];
 }
 
 export function testSnapshots() {
 	describe("Snapshots", () => {
-		useSnapshotDirectory("optional-field");
 		const snapshotCompressor = createSnapshotCompressor();
 		const changesets = generateTestChangesets(snapshotCompressor);
 		const family = makeOptionalFieldCodecFamily(
@@ -63,6 +67,8 @@ export function testSnapshots() {
 
 		for (const version of family.getSupportedFormats()) {
 			describe(`version ${version}`, () => {
+				const dir = path.join("optional-field", `V${version}`);
+				useSnapshotDirectory(dir);
 				const codec = family.resolve(version);
 				for (const { name, change } of changesets) {
 					it(name, () => {

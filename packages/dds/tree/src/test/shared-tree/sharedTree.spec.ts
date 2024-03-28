@@ -1639,7 +1639,9 @@ describe("SharedTree", () => {
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 
-		it("can be undone at the tip", async () => {
+		// Undoing schema changes is not supported because it may render some of the forest contents invalid.
+		// This may be revisited in the future.
+		it.skip("can be undone at the tip", async () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];
