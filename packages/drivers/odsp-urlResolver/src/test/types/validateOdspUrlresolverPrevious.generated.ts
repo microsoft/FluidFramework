@@ -24,6 +24,30 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_FluidAppOdspUrlResolver": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_FluidAppOdspUrlResolver():
+    TypeOnly<old.FluidAppOdspUrlResolver>;
+declare function use_current_ClassDeclaration_FluidAppOdspUrlResolver(
+    use: TypeOnly<current.FluidAppOdspUrlResolver>): void;
+use_current_ClassDeclaration_FluidAppOdspUrlResolver(
+    get_old_ClassDeclaration_FluidAppOdspUrlResolver());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_FluidAppOdspUrlResolver": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_FluidAppOdspUrlResolver():
+    TypeOnly<current.FluidAppOdspUrlResolver>;
+declare function use_old_ClassDeclaration_FluidAppOdspUrlResolver(
+    use: TypeOnly<old.FluidAppOdspUrlResolver>): void;
+use_old_ClassDeclaration_FluidAppOdspUrlResolver(
+    get_current_ClassDeclaration_FluidAppOdspUrlResolver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspUrlResolver():

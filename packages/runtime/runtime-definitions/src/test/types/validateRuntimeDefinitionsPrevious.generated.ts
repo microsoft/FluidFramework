@@ -295,7 +295,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeBase():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeBase(
     use: TypeOnly<current.IContainerRuntimeBase>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeBase(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeBase());
 
 /*
@@ -416,7 +415,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -429,7 +427,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<old.IFluidDataStoreChannel>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -442,7 +439,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<current.IFluidDataStoreContext>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -455,7 +451,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContext():
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContext(
     use: TypeOnly<old.IFluidDataStoreContext>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContext());
 
 /*
@@ -468,7 +463,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreContextDetached():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<current.IFluidDataStoreContextDetached>): void;
 use_current_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -481,7 +475,6 @@ declare function get_current_InterfaceDeclaration_IFluidDataStoreContextDetached
 declare function use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
     use: TypeOnly<old.IFluidDataStoreContextDetached>): void;
 use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IFluidDataStoreContextDetached());
 
 /*
@@ -489,12 +482,24 @@ use_old_InterfaceDeclaration_IFluidDataStoreContextDetached(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IFluidDataStoreContextEvents": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IFluidDataStoreContextEvents():
+    TypeOnly<old.IFluidDataStoreContextEvents>;
+declare function use_current_RemovedInterfaceDeclaration_IFluidDataStoreContextEvents(
+    use: TypeOnly<current.IFluidDataStoreContextEvents>): void;
+use_current_RemovedInterfaceDeclaration_IFluidDataStoreContextEvents(
+    get_old_InterfaceDeclaration_IFluidDataStoreContextEvents());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_IFluidDataStoreContextEvents": {"backCompat": false}
 */
+declare function get_current_RemovedInterfaceDeclaration_IFluidDataStoreContextEvents():
+    TypeOnly<current.IFluidDataStoreContextEvents>;
+declare function use_old_InterfaceDeclaration_IFluidDataStoreContextEvents(
+    use: TypeOnly<old.IFluidDataStoreContextEvents>): void;
+use_old_InterfaceDeclaration_IFluidDataStoreContextEvents(
+    get_current_RemovedInterfaceDeclaration_IFluidDataStoreContextEvents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -595,6 +600,30 @@ use_old_InterfaceDeclaration_IFluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidParentContext": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IFluidParentContext():
+    TypeOnly<old.IFluidParentContext>;
+declare function use_current_InterfaceDeclaration_IFluidParentContext(
+    use: TypeOnly<current.IFluidParentContext>): void;
+use_current_InterfaceDeclaration_IFluidParentContext(
+    get_old_InterfaceDeclaration_IFluidParentContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IFluidParentContext": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IFluidParentContext():
+    TypeOnly<current.IFluidParentContext>;
+declare function use_old_InterfaceDeclaration_IFluidParentContext(
+    use: TypeOnly<old.IFluidParentContext>): void;
+use_old_InterfaceDeclaration_IFluidParentContext(
+    get_current_InterfaceDeclaration_IFluidParentContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGarbageCollectionData": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGarbageCollectionData():
@@ -639,30 +668,6 @@ declare function use_old_InterfaceDeclaration_IGarbageCollectionDetailsBase(
     use: TypeOnly<old.IGarbageCollectionDetailsBase>): void;
 use_old_InterfaceDeclaration_IGarbageCollectionDetailsBase(
     get_current_InterfaceDeclaration_IGarbageCollectionDetailsBase());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressor": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressor": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressorCore": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IIdCompressorCore": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -979,18 +984,6 @@ use_old_InterfaceDeclaration_ITelemetryContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IdCreationRange": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IdCreationRange": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_InboundAttachMessage": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_InboundAttachMessage():
@@ -1107,90 +1100,6 @@ declare function use_old_InterfaceDeclaration_OpAttributionKey(
     use: TypeOnly<old.OpAttributionKey>): void;
 use_old_InterfaceDeclaration_OpAttributionKey(
     get_current_InterfaceDeclaration_OpAttributionKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_OpSpaceCompressedId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_OpSpaceCompressedId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedIdCompressor": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedIdCompressor": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedIdCompressorWithNoSession": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SessionId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SessionId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SessionSpaceCompressedId": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_StableId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_StableId": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1335,6 +1244,30 @@ declare function use_old_VariableDeclaration_gcBlobPrefix(
     use: TypeOnly<typeof old.gcBlobPrefix>): void;
 use_old_VariableDeclaration_gcBlobPrefix(
     get_current_VariableDeclaration_gcBlobPrefix());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcDataBlobKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcDataBlobKey():
+    TypeOnly<typeof old.gcDataBlobKey>;
+declare function use_current_VariableDeclaration_gcDataBlobKey(
+    use: TypeOnly<typeof current.gcDataBlobKey>): void;
+use_current_VariableDeclaration_gcDataBlobKey(
+    get_old_VariableDeclaration_gcDataBlobKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcDataBlobKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcDataBlobKey():
+    TypeOnly<typeof current.gcDataBlobKey>;
+declare function use_old_VariableDeclaration_gcDataBlobKey(
+    use: TypeOnly<typeof old.gcDataBlobKey>): void;
+use_old_VariableDeclaration_gcDataBlobKey(
+    get_current_VariableDeclaration_gcDataBlobKey());
 
 /*
 * Validate forward compat by using old type in place of current type

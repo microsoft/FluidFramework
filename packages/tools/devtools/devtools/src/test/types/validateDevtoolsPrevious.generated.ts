@@ -48,6 +48,30 @@ use_old_InterfaceDeclaration_ContainerDevtoolsProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerKey": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ContainerKey():
+    TypeOnly<old.ContainerKey>;
+declare function use_current_TypeAliasDeclaration_ContainerKey(
+    use: TypeOnly<current.ContainerKey>): void;
+use_current_TypeAliasDeclaration_ContainerKey(
+    get_old_TypeAliasDeclaration_ContainerKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerKey": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ContainerKey():
+    TypeOnly<current.ContainerKey>;
+declare function use_old_TypeAliasDeclaration_ContainerKey(
+    use: TypeOnly<old.ContainerKey>): void;
+use_old_TypeAliasDeclaration_ContainerKey(
+    get_current_TypeAliasDeclaration_ContainerKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_DevtoolsProps": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_DevtoolsProps():
@@ -72,6 +96,30 @@ use_old_InterfaceDeclaration_DevtoolsProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_HasContainerKey": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_HasContainerKey():
+    TypeOnly<old.HasContainerKey>;
+declare function use_current_InterfaceDeclaration_HasContainerKey(
+    use: TypeOnly<current.HasContainerKey>): void;
+use_current_InterfaceDeclaration_HasContainerKey(
+    get_old_InterfaceDeclaration_HasContainerKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_HasContainerKey": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_HasContainerKey():
+    TypeOnly<current.HasContainerKey>;
+declare function use_old_InterfaceDeclaration_HasContainerKey(
+    use: TypeOnly<old.HasContainerKey>): void;
+use_old_InterfaceDeclaration_HasContainerKey(
+    get_current_InterfaceDeclaration_HasContainerKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDevtools": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDevtools():
@@ -92,6 +140,54 @@ declare function use_old_InterfaceDeclaration_IDevtools(
     use: TypeOnly<old.IDevtools>): void;
 use_old_InterfaceDeclaration_IDevtools(
     get_current_InterfaceDeclaration_IDevtools());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDevtoolsLogger": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDevtoolsLogger():
+    TypeOnly<old.IDevtoolsLogger>;
+declare function use_current_InterfaceDeclaration_IDevtoolsLogger(
+    use: TypeOnly<current.IDevtoolsLogger>): void;
+use_current_InterfaceDeclaration_IDevtoolsLogger(
+    get_old_InterfaceDeclaration_IDevtoolsLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDevtoolsLogger": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDevtoolsLogger():
+    TypeOnly<current.IDevtoolsLogger>;
+declare function use_old_InterfaceDeclaration_IDevtoolsLogger(
+    use: TypeOnly<old.IDevtoolsLogger>): void;
+use_old_InterfaceDeclaration_IDevtoolsLogger(
+    get_current_InterfaceDeclaration_IDevtoolsLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDevtoolsLogger": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createDevtoolsLogger():
+    TypeOnly<typeof old.createDevtoolsLogger>;
+declare function use_current_FunctionDeclaration_createDevtoolsLogger(
+    use: TypeOnly<typeof current.createDevtoolsLogger>): void;
+use_current_FunctionDeclaration_createDevtoolsLogger(
+    get_old_FunctionDeclaration_createDevtoolsLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDevtoolsLogger": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createDevtoolsLogger():
+    TypeOnly<typeof current.createDevtoolsLogger>;
+declare function use_old_FunctionDeclaration_createDevtoolsLogger(
+    use: TypeOnly<typeof old.createDevtoolsLogger>): void;
+use_old_FunctionDeclaration_createDevtoolsLogger(
+    get_current_FunctionDeclaration_createDevtoolsLogger());
 
 /*
 * Validate forward compat by using old type in place of current type

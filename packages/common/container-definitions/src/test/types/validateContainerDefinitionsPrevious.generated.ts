@@ -168,18 +168,6 @@ use_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_ContainerErrorType": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_ContainerErrorType": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_ContainerErrorTypes": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_ContainerErrorTypes():
@@ -319,7 +307,6 @@ declare function get_current_InterfaceDeclaration_IBatchMessage():
 declare function use_old_InterfaceDeclaration_IBatchMessage(
     use: TypeOnly<old.IBatchMessage>): void;
 use_old_InterfaceDeclaration_IBatchMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBatchMessage());
 
 /*
@@ -380,7 +367,6 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>): void;
 use_current_InterfaceDeclaration_IContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -417,7 +403,6 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>): void;
 use_old_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*

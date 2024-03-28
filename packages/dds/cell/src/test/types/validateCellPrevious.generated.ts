@@ -24,6 +24,30 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_CellFactory": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_CellFactory():
+    TypeOnly<old.CellFactory>;
+declare function use_current_ClassDeclaration_CellFactory(
+    use: TypeOnly<current.CellFactory>): void;
+use_current_ClassDeclaration_CellFactory(
+    get_old_ClassDeclaration_CellFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_CellFactory": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_CellFactory():
+    TypeOnly<current.CellFactory>;
+declare function use_old_ClassDeclaration_CellFactory(
+    use: TypeOnly<old.CellFactory>): void;
+use_old_ClassDeclaration_CellFactory(
+    get_current_ClassDeclaration_CellFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICellAttributionOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICellAttributionOptions():

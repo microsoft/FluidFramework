@@ -168,6 +168,30 @@ use_old_InterfaceDeclaration_IProvideTestFluidObject(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITestConfigProvider": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITestConfigProvider():
+    TypeOnly<old.ITestConfigProvider>;
+declare function use_current_InterfaceDeclaration_ITestConfigProvider(
+    use: TypeOnly<current.ITestConfigProvider>): void;
+use_current_InterfaceDeclaration_ITestConfigProvider(
+    get_old_InterfaceDeclaration_ITestConfigProvider());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITestConfigProvider": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITestConfigProvider():
+    TypeOnly<current.ITestConfigProvider>;
+declare function use_old_InterfaceDeclaration_ITestConfigProvider(
+    use: TypeOnly<old.ITestConfigProvider>): void;
+use_old_InterfaceDeclaration_ITestConfigProvider(
+    get_current_InterfaceDeclaration_ITestConfigProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITestContainerConfig": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITestContainerConfig():
@@ -175,7 +199,6 @@ declare function get_old_InterfaceDeclaration_ITestContainerConfig():
 declare function use_current_InterfaceDeclaration_ITestContainerConfig(
     use: TypeOnly<current.ITestContainerConfig>): void;
 use_current_InterfaceDeclaration_ITestContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestContainerConfig());
 
 /*
@@ -188,7 +211,6 @@ declare function get_current_InterfaceDeclaration_ITestContainerConfig():
 declare function use_old_InterfaceDeclaration_ITestContainerConfig(
     use: TypeOnly<old.ITestContainerConfig>): void;
 use_old_InterfaceDeclaration_ITestContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestContainerConfig());
 
 /*
@@ -225,7 +247,6 @@ declare function get_old_InterfaceDeclaration_ITestObjectProvider():
 declare function use_current_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<current.ITestObjectProvider>): void;
 use_current_InterfaceDeclaration_ITestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -287,6 +308,30 @@ declare function use_old_ClassDeclaration_LocalCodeLoader(
     use: TypeOnly<old.LocalCodeLoader>): void;
 use_old_ClassDeclaration_LocalCodeLoader(
     get_current_ClassDeclaration_LocalCodeLoader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SummaryInfo": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SummaryInfo():
+    TypeOnly<old.SummaryInfo>;
+declare function use_current_InterfaceDeclaration_SummaryInfo(
+    use: TypeOnly<current.SummaryInfo>): void;
+use_current_InterfaceDeclaration_SummaryInfo(
+    get_old_InterfaceDeclaration_SummaryInfo());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SummaryInfo": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SummaryInfo():
+    TypeOnly<current.SummaryInfo>;
+declare function use_old_InterfaceDeclaration_SummaryInfo(
+    use: TypeOnly<old.SummaryInfo>): void;
+use_old_InterfaceDeclaration_SummaryInfo(
+    get_current_InterfaceDeclaration_SummaryInfo());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -394,7 +439,6 @@ declare function get_old_ClassDeclaration_TestObjectProvider():
 declare function use_current_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<current.TestObjectProvider>): void;
 use_current_ClassDeclaration_TestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestObjectProvider());
 
 /*
@@ -419,7 +463,6 @@ declare function get_old_ClassDeclaration_TestObjectProviderWithVersionedLoad():
 declare function use_current_ClassDeclaration_TestObjectProviderWithVersionedLoad(
     use: TypeOnly<current.TestObjectProviderWithVersionedLoad>): void;
 use_current_ClassDeclaration_TestObjectProviderWithVersionedLoad(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestObjectProviderWithVersionedLoad());
 
 /*
@@ -605,6 +648,30 @@ use_old_FunctionDeclaration_createSummarizer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizerCore": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createSummarizerCore():
+    TypeOnly<typeof old.createSummarizerCore>;
+declare function use_current_FunctionDeclaration_createSummarizerCore(
+    use: TypeOnly<typeof current.createSummarizerCore>): void;
+use_current_FunctionDeclaration_createSummarizerCore(
+    get_old_FunctionDeclaration_createSummarizerCore());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createSummarizerCore": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createSummarizerCore():
+    TypeOnly<typeof current.createSummarizerCore>;
+declare function use_old_FunctionDeclaration_createSummarizerCore(
+    use: TypeOnly<typeof old.createSummarizerCore>): void;
+use_old_FunctionDeclaration_createSummarizerCore(
+    get_current_FunctionDeclaration_createSummarizerCore());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSummarizerFromFactory": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createSummarizerFromFactory():
@@ -625,6 +692,30 @@ declare function use_old_FunctionDeclaration_createSummarizerFromFactory(
     use: TypeOnly<typeof old.createSummarizerFromFactory>): void;
 use_old_FunctionDeclaration_createSummarizerFromFactory(
     get_current_FunctionDeclaration_createSummarizerFromFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_createTestConfigProvider": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_createTestConfigProvider():
+    TypeOnly<typeof old.createTestConfigProvider>;
+declare function use_current_VariableDeclaration_createTestConfigProvider(
+    use: TypeOnly<typeof current.createTestConfigProvider>): void;
+use_current_VariableDeclaration_createTestConfigProvider(
+    get_old_VariableDeclaration_createTestConfigProvider());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_createTestConfigProvider": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_createTestConfigProvider():
+    TypeOnly<typeof current.createTestConfigProvider>;
+declare function use_old_VariableDeclaration_createTestConfigProvider(
+    use: TypeOnly<typeof old.createTestConfigProvider>): void;
+use_old_VariableDeclaration_createTestConfigProvider(
+    get_current_VariableDeclaration_createTestConfigProvider());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -769,18 +860,6 @@ declare function use_old_FunctionDeclaration_getUnexpectedLogErrorException(
     use: TypeOnly<typeof old.getUnexpectedLogErrorException>): void;
 use_old_FunctionDeclaration_getUnexpectedLogErrorException(
     get_current_FunctionDeclaration_getUnexpectedLogErrorException());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_mockConfigProvider": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_mockConfigProvider": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

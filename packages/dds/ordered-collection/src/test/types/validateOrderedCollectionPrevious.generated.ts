@@ -96,6 +96,30 @@ use_old_ClassDeclaration_ConsensusQueue(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_ConsensusQueueFactory": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_ConsensusQueueFactory():
+    TypeOnly<old.ConsensusQueueFactory>;
+declare function use_current_ClassDeclaration_ConsensusQueueFactory(
+    use: TypeOnly<current.ConsensusQueueFactory>): void;
+use_current_ClassDeclaration_ConsensusQueueFactory(
+    get_old_ClassDeclaration_ConsensusQueueFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_ConsensusQueueFactory": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_ConsensusQueueFactory():
+    TypeOnly<current.ConsensusQueueFactory>;
+declare function use_old_ClassDeclaration_ConsensusQueueFactory(
+    use: TypeOnly<old.ConsensusQueueFactory>): void;
+use_old_ClassDeclaration_ConsensusQueueFactory(
+    get_current_ClassDeclaration_ConsensusQueueFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ConsensusResult": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ConsensusResult():

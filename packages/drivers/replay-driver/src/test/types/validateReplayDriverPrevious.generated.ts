@@ -43,7 +43,6 @@ declare function get_current_ClassDeclaration_FileSnapshotReader():
 declare function use_old_ClassDeclaration_FileSnapshotReader(
     use: TypeOnly<old.FileSnapshotReader>): void;
 use_old_ClassDeclaration_FileSnapshotReader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_FileSnapshotReader());
 
 /*
@@ -73,18 +72,6 @@ use_old_InterfaceDeclaration_IFileSnapshot(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_OpStorage": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_OpStorage": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ReadDocumentStorageServiceBase": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ReadDocumentStorageServiceBase():
@@ -104,7 +91,6 @@ declare function get_current_ClassDeclaration_ReadDocumentStorageServiceBase():
 declare function use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
     use: TypeOnly<old.ReadDocumentStorageServiceBase>): void;
 use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ReadDocumentStorageServiceBase());
 
 /*
@@ -129,7 +115,6 @@ declare function get_current_ClassDeclaration_ReplayController():
 declare function use_old_ClassDeclaration_ReplayController(
     use: TypeOnly<old.ReplayController>): void;
 use_old_ClassDeclaration_ReplayController(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ReplayController());
 
 /*
@@ -142,7 +127,6 @@ declare function get_old_ClassDeclaration_ReplayDocumentService():
 declare function use_current_ClassDeclaration_ReplayDocumentService(
     use: TypeOnly<current.ReplayDocumentService>): void;
 use_current_ClassDeclaration_ReplayDocumentService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ReplayDocumentService());
 
 /*
@@ -203,7 +187,6 @@ declare function get_current_ClassDeclaration_SnapshotStorage():
 declare function use_old_ClassDeclaration_SnapshotStorage(
     use: TypeOnly<old.SnapshotStorage>): void;
 use_old_ClassDeclaration_SnapshotStorage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SnapshotStorage());
 
 /*

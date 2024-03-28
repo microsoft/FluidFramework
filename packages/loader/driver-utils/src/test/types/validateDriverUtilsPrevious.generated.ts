@@ -151,7 +151,6 @@ declare function get_old_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_current_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<current.DocumentStorageServiceProxy>): void;
 use_current_ClassDeclaration_DocumentStorageServiceProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -164,7 +163,6 @@ declare function get_current_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_old_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<old.DocumentStorageServiceProxy>): void;
 use_old_ClassDeclaration_DocumentStorageServiceProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -465,7 +463,6 @@ declare function get_old_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_current_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<current.PrefetchDocumentStorageService>): void;
 use_current_ClassDeclaration_PrefetchDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*
@@ -478,7 +475,6 @@ declare function get_current_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_old_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<old.PrefetchDocumentStorageService>): void;
 use_old_ClassDeclaration_PrefetchDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*
@@ -1008,6 +1004,30 @@ declare function use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
     use: TypeOnly<typeof old.isCombinedAppAndProtocolSummary>): void;
 use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
     get_current_FunctionDeclaration_isCombinedAppAndProtocolSummary());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isInstanceOfISnapshot": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isInstanceOfISnapshot():
+    TypeOnly<typeof old.isInstanceOfISnapshot>;
+declare function use_current_FunctionDeclaration_isInstanceOfISnapshot(
+    use: TypeOnly<typeof current.isInstanceOfISnapshot>): void;
+use_current_FunctionDeclaration_isInstanceOfISnapshot(
+    get_old_FunctionDeclaration_isInstanceOfISnapshot());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isInstanceOfISnapshot": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isInstanceOfISnapshot():
+    TypeOnly<typeof current.isInstanceOfISnapshot>;
+declare function use_old_FunctionDeclaration_isInstanceOfISnapshot(
+    use: TypeOnly<typeof old.isInstanceOfISnapshot>): void;
+use_old_FunctionDeclaration_isInstanceOfISnapshot(
+    get_current_FunctionDeclaration_isInstanceOfISnapshot());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -48,18 +48,6 @@ use_old_TypeAliasDeclaration_DriverError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_DriverErrorType": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_DriverErrorType": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_DriverErrorTypes": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_DriverErrorTypes():
@@ -403,7 +391,6 @@ declare function get_old_InterfaceDeclaration_IDocumentService():
 declare function use_current_InterfaceDeclaration_IDocumentService(
     use: TypeOnly<current.IDocumentService>): void;
 use_current_InterfaceDeclaration_IDocumentService(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDocumentService());
 
 /*
@@ -417,6 +404,30 @@ declare function use_old_InterfaceDeclaration_IDocumentService(
     use: TypeOnly<old.IDocumentService>): void;
 use_old_InterfaceDeclaration_IDocumentService(
     get_current_InterfaceDeclaration_IDocumentService());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDocumentServiceEvents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDocumentServiceEvents():
+    TypeOnly<old.IDocumentServiceEvents>;
+declare function use_current_InterfaceDeclaration_IDocumentServiceEvents(
+    use: TypeOnly<current.IDocumentServiceEvents>): void;
+use_current_InterfaceDeclaration_IDocumentServiceEvents(
+    get_old_InterfaceDeclaration_IDocumentServiceEvents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDocumentServiceEvents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDocumentServiceEvents():
+    TypeOnly<current.IDocumentServiceEvents>;
+declare function use_old_InterfaceDeclaration_IDocumentServiceEvents(
+    use: TypeOnly<old.IDocumentServiceEvents>): void;
+use_old_InterfaceDeclaration_IDocumentServiceEvents(
+    get_current_InterfaceDeclaration_IDocumentServiceEvents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -488,7 +499,6 @@ declare function get_current_InterfaceDeclaration_IDocumentStorageService():
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
     use: TypeOnly<old.IDocumentStorageService>): void;
 use_old_InterfaceDeclaration_IDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentStorageService());
 
 /*
@@ -658,6 +668,54 @@ declare function use_old_InterfaceDeclaration_IResolvedUrl(
     use: TypeOnly<old.IResolvedUrl>): void;
 use_old_InterfaceDeclaration_IResolvedUrl(
     get_current_InterfaceDeclaration_IResolvedUrl());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshot": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISnapshot():
+    TypeOnly<old.ISnapshot>;
+declare function use_current_InterfaceDeclaration_ISnapshot(
+    use: TypeOnly<current.ISnapshot>): void;
+use_current_InterfaceDeclaration_ISnapshot(
+    get_old_InterfaceDeclaration_ISnapshot());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshot": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISnapshot():
+    TypeOnly<current.ISnapshot>;
+declare function use_old_InterfaceDeclaration_ISnapshot(
+    use: TypeOnly<old.ISnapshot>): void;
+use_old_InterfaceDeclaration_ISnapshot(
+    get_current_InterfaceDeclaration_ISnapshot());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotFetchOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISnapshotFetchOptions():
+    TypeOnly<old.ISnapshotFetchOptions>;
+declare function use_current_InterfaceDeclaration_ISnapshotFetchOptions(
+    use: TypeOnly<current.ISnapshotFetchOptions>): void;
+use_current_InterfaceDeclaration_ISnapshotFetchOptions(
+    get_old_InterfaceDeclaration_ISnapshotFetchOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotFetchOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISnapshotFetchOptions():
+    TypeOnly<current.ISnapshotFetchOptions>;
+declare function use_old_InterfaceDeclaration_ISnapshotFetchOptions(
+    use: TypeOnly<old.ISnapshotFetchOptions>): void;
+use_old_InterfaceDeclaration_ISnapshotFetchOptions(
+    get_current_InterfaceDeclaration_ISnapshotFetchOptions());
 
 /*
 * Validate forward compat by using old type in place of current type

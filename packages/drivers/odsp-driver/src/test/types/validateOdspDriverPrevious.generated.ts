@@ -271,7 +271,6 @@ declare function get_old_InterfaceDeclaration_IPrefetchSnapshotContents():
 declare function use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
     use: TypeOnly<current.IPrefetchSnapshotContents>): void;
 use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IPrefetchSnapshotContents());
 
 /*
@@ -284,7 +283,6 @@ declare function get_current_InterfaceDeclaration_IPrefetchSnapshotContents():
 declare function use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
     use: TypeOnly<old.IPrefetchSnapshotContents>): void;
 use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPrefetchSnapshotContents());
 
 /*
@@ -345,7 +343,6 @@ declare function get_old_InterfaceDeclaration_ISnapshotContentsWithProps():
 declare function use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
     use: TypeOnly<current.ISnapshotContentsWithProps>): void;
 use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISnapshotContentsWithProps());
 
 /*
@@ -358,7 +355,6 @@ declare function get_current_InterfaceDeclaration_ISnapshotContentsWithProps():
 declare function use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
     use: TypeOnly<old.ISnapshotContentsWithProps>): void;
 use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISnapshotContentsWithProps());
 
 /*
@@ -515,7 +511,6 @@ declare function get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink():
 declare function use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
     use: TypeOnly<current.OdspDriverUrlResolverForShareLink>): void;
 use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink());
 
 /*

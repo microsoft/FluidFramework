@@ -24,6 +24,30 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerAttachProps": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ContainerAttachProps():
+    TypeOnly<old.ContainerAttachProps>;
+declare function use_current_TypeAliasDeclaration_ContainerAttachProps(
+    use: TypeOnly<current.ContainerAttachProps>): void;
+use_current_TypeAliasDeclaration_ContainerAttachProps(
+    get_old_TypeAliasDeclaration_ContainerAttachProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ContainerAttachProps": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ContainerAttachProps():
+    TypeOnly<current.ContainerAttachProps>;
+declare function use_old_TypeAliasDeclaration_ContainerAttachProps(
+    use: TypeOnly<old.ContainerAttachProps>): void;
+use_old_TypeAliasDeclaration_ContainerAttachProps(
+    get_current_TypeAliasDeclaration_ContainerAttachProps());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ContainerSchema": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ContainerSchema():
@@ -43,7 +67,6 @@ declare function get_current_InterfaceDeclaration_ContainerSchema():
 declare function use_old_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<old.ContainerSchema>): void;
 use_old_InterfaceDeclaration_ContainerSchema(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ContainerSchema());
 
 /*
@@ -292,7 +315,7 @@ use_old_TypeAliasDeclaration_InitialObjects(
 * "TypeAliasDeclaration_LoadableObjectClass": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
-    TypeOnly<old.LoadableObjectClass<any>>;
+    TypeOnly<old.LoadableObjectClass>;
 declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
     use: TypeOnly<current.LoadableObjectClass>): void;
 use_current_TypeAliasDeclaration_LoadableObjectClass(
@@ -306,7 +329,7 @@ use_current_TypeAliasDeclaration_LoadableObjectClass(
 declare function get_current_TypeAliasDeclaration_LoadableObjectClass():
     TypeOnly<current.LoadableObjectClass>;
 declare function use_old_TypeAliasDeclaration_LoadableObjectClass(
-    use: TypeOnly<old.LoadableObjectClass<any>>): void;
+    use: TypeOnly<old.LoadableObjectClass>): void;
 use_old_TypeAliasDeclaration_LoadableObjectClass(
     get_current_TypeAliasDeclaration_LoadableObjectClass());
 
@@ -339,12 +362,24 @@ use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_LoadableObjectCtor": {"forwardCompat": false}
 */
+declare function get_old_TypeAliasDeclaration_LoadableObjectCtor():
+    TypeOnly<old.LoadableObjectCtor<any>>;
+declare function use_current_RemovedTypeAliasDeclaration_LoadableObjectCtor(
+    use: TypeOnly<current.LoadableObjectCtor<any>>): void;
+use_current_RemovedTypeAliasDeclaration_LoadableObjectCtor(
+    get_old_TypeAliasDeclaration_LoadableObjectCtor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_LoadableObjectCtor": {"backCompat": false}
 */
+declare function get_current_RemovedTypeAliasDeclaration_LoadableObjectCtor():
+    TypeOnly<current.LoadableObjectCtor<any>>;
+declare function use_old_TypeAliasDeclaration_LoadableObjectCtor(
+    use: TypeOnly<old.LoadableObjectCtor<any>>): void;
+use_old_TypeAliasDeclaration_LoadableObjectCtor(
+    get_current_RemovedTypeAliasDeclaration_LoadableObjectCtor());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -421,14 +456,26 @@ use_old_TypeAliasDeclaration_Myself(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SharedObjectClass": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_SharedObjectClass():
+    TypeOnly<old.SharedObjectClass<any>>;
+declare function use_current_RemovedInterfaceDeclaration_SharedObjectClass(
+    use: TypeOnly<current.SharedObjectClass<any>>): void;
+use_current_RemovedInterfaceDeclaration_SharedObjectClass(
+    get_old_InterfaceDeclaration_SharedObjectClass());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_SharedObjectClass": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SharedObjectClass": {"backCompat": false}
 */
+declare function get_current_RemovedInterfaceDeclaration_SharedObjectClass():
+    TypeOnly<current.SharedObjectClass<any>>;
+declare function use_old_InterfaceDeclaration_SharedObjectClass(
+    use: TypeOnly<old.SharedObjectClass<any>>): void;
+use_old_InterfaceDeclaration_SharedObjectClass(
+    get_current_RemovedInterfaceDeclaration_SharedObjectClass());
 
 /*
 * Validate forward compat by using old type in place of current type

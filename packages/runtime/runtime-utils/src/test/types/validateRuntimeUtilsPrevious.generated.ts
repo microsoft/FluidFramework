@@ -72,6 +72,30 @@ use_old_ClassDeclaration_GCDataBuilder(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISerializedHandle():
+    TypeOnly<old.ISerializedHandle>;
+declare function use_current_InterfaceDeclaration_ISerializedHandle(
+    use: TypeOnly<current.ISerializedHandle>): void;
+use_current_InterfaceDeclaration_ISerializedHandle(
+    get_old_InterfaceDeclaration_ISerializedHandle());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedHandle": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISerializedHandle():
+    TypeOnly<current.ISerializedHandle>;
+declare function use_old_InterfaceDeclaration_ISerializedHandle(
+    use: TypeOnly<old.ISerializedHandle>): void;
+use_old_InterfaceDeclaration_ISerializedHandle(
+    get_current_InterfaceDeclaration_ISerializedHandle());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ObjectStoragePartition": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ObjectStoragePartition():
@@ -260,18 +284,6 @@ declare function use_old_FunctionDeclaration_addSummarizeResultToSummary(
     use: TypeOnly<typeof old.addSummarizeResultToSummary>): void;
 use_old_FunctionDeclaration_addSummarizeResultToSummary(
     get_current_FunctionDeclaration_addSummarizeResultToSummary());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_addTreeToSummary": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_addTreeToSummary": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -468,6 +480,30 @@ use_old_FunctionDeclaration_createResponseError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_encodeCompactIdToString": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_encodeCompactIdToString():
+    TypeOnly<typeof old.encodeCompactIdToString>;
+declare function use_current_FunctionDeclaration_encodeCompactIdToString(
+    use: TypeOnly<typeof current.encodeCompactIdToString>): void;
+use_current_FunctionDeclaration_encodeCompactIdToString(
+    get_old_FunctionDeclaration_encodeCompactIdToString());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_encodeCompactIdToString": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_encodeCompactIdToString():
+    TypeOnly<typeof current.encodeCompactIdToString>;
+declare function use_old_FunctionDeclaration_encodeCompactIdToString(
+    use: TypeOnly<typeof old.encodeCompactIdToString>): void;
+use_old_FunctionDeclaration_encodeCompactIdToString(
+    get_current_FunctionDeclaration_encodeCompactIdToString());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_exceptionToResponse": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_exceptionToResponse():
@@ -564,6 +600,30 @@ use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isSerializedHandle": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_isSerializedHandle():
+    TypeOnly<typeof old.isSerializedHandle>;
+declare function use_current_VariableDeclaration_isSerializedHandle(
+    use: TypeOnly<typeof current.isSerializedHandle>): void;
+use_current_VariableDeclaration_isSerializedHandle(
+    get_old_VariableDeclaration_isSerializedHandle());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isSerializedHandle": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_isSerializedHandle():
+    TypeOnly<typeof current.isSerializedHandle>;
+declare function use_old_VariableDeclaration_isSerializedHandle(
+    use: TypeOnly<typeof old.isSerializedHandle>): void;
+use_old_VariableDeclaration_isSerializedHandle(
+    get_current_VariableDeclaration_isSerializedHandle());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_listBlobsAtTreePath": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_listBlobsAtTreePath():
@@ -608,6 +668,30 @@ declare function use_old_FunctionDeclaration_mergeStats(
     use: TypeOnly<typeof old.mergeStats>): void;
 use_old_FunctionDeclaration_mergeStats(
     get_current_FunctionDeclaration_mergeStats());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_processAttachMessageGCData": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_processAttachMessageGCData():
+    TypeOnly<typeof old.processAttachMessageGCData>;
+declare function use_current_FunctionDeclaration_processAttachMessageGCData(
+    use: TypeOnly<typeof current.processAttachMessageGCData>): void;
+use_current_FunctionDeclaration_processAttachMessageGCData(
+    get_old_FunctionDeclaration_processAttachMessageGCData());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_processAttachMessageGCData": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_processAttachMessageGCData():
+    TypeOnly<typeof current.processAttachMessageGCData>;
+declare function use_old_FunctionDeclaration_processAttachMessageGCData(
+    use: TypeOnly<typeof old.processAttachMessageGCData>): void;
+use_old_FunctionDeclaration_processAttachMessageGCData(
+    get_current_FunctionDeclaration_processAttachMessageGCData());
 
 /*
 * Validate forward compat by using old type in place of current type

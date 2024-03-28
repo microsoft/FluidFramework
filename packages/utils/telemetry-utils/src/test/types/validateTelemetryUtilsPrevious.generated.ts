@@ -24,18 +24,6 @@ type TypeOnly<T> = T extends number
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_ConfigTypes": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_ConfigTypes": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DataCorruptionError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DataCorruptionError():
@@ -152,18 +140,6 @@ declare function use_old_InterfaceDeclaration_IConfigProvider(
     use: TypeOnly<old.IConfigProvider>): void;
 use_old_InterfaceDeclaration_IConfigProvider(
     get_current_InterfaceDeclaration_IConfigProvider());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IConfigProviderBase": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IConfigProviderBase": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -792,18 +768,6 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryNullLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_TelemetryNullLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ThresholdCounter": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ThresholdCounter():
@@ -1308,18 +1272,6 @@ use_old_FunctionDeclaration_isValidLegacyError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_logIfFalse": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_logIfFalse": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_loggerToMonitoringContext": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_loggerToMonitoringContext():
@@ -1580,6 +1532,30 @@ declare function use_old_FunctionDeclaration_validatePrecondition(
     use: TypeOnly<typeof old.validatePrecondition>): void;
 use_old_FunctionDeclaration_validatePrecondition(
     get_current_FunctionDeclaration_validatePrecondition());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_wrapConfigProviderWithDefaults": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_wrapConfigProviderWithDefaults():
+    TypeOnly<typeof old.wrapConfigProviderWithDefaults>;
+declare function use_current_VariableDeclaration_wrapConfigProviderWithDefaults(
+    use: TypeOnly<typeof current.wrapConfigProviderWithDefaults>): void;
+use_current_VariableDeclaration_wrapConfigProviderWithDefaults(
+    get_old_VariableDeclaration_wrapConfigProviderWithDefaults());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_wrapConfigProviderWithDefaults": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_wrapConfigProviderWithDefaults():
+    TypeOnly<typeof current.wrapConfigProviderWithDefaults>;
+declare function use_old_VariableDeclaration_wrapConfigProviderWithDefaults(
+    use: TypeOnly<typeof old.wrapConfigProviderWithDefaults>): void;
+use_old_VariableDeclaration_wrapConfigProviderWithDefaults(
+    get_current_VariableDeclaration_wrapConfigProviderWithDefaults());
 
 /*
 * Validate forward compat by using old type in place of current type

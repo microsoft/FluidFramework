@@ -511,7 +511,6 @@ declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps():
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsProps(
     use: TypeOnly<current.ContainerDevtoolsProps>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ContainerDevtoolsProps());
 
 /*
@@ -1273,18 +1272,6 @@ use_old_FunctionDeclaration_DevtoolsFeatures_createMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DevtoolsLogger": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_DevtoolsLogger": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_DisconnectContainer.Message": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_DisconnectContainer_Message():
@@ -1508,7 +1495,6 @@ declare function get_old_InterfaceDeclaration_FluidDevtoolsProps():
 declare function use_current_InterfaceDeclaration_FluidDevtoolsProps(
     use: TypeOnly<current.FluidDevtoolsProps>): void;
 use_current_InterfaceDeclaration_FluidDevtoolsProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_FluidDevtoolsProps());
 
 /*
@@ -2438,6 +2424,30 @@ use_old_InterfaceDeclaration_HasFluidObjectId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDevtoolsLogger": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDevtoolsLogger():
+    TypeOnly<old.IDevtoolsLogger>;
+declare function use_current_InterfaceDeclaration_IDevtoolsLogger(
+    use: TypeOnly<current.IDevtoolsLogger>): void;
+use_current_InterfaceDeclaration_IDevtoolsLogger(
+    get_old_InterfaceDeclaration_IDevtoolsLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDevtoolsLogger": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDevtoolsLogger():
+    TypeOnly<current.IDevtoolsLogger>;
+declare function use_old_InterfaceDeclaration_IDevtoolsLogger(
+    use: TypeOnly<old.IDevtoolsLogger>): void;
+use_old_InterfaceDeclaration_IDevtoolsLogger(
+    get_current_InterfaceDeclaration_IDevtoolsLogger());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDevtoolsMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDevtoolsMessage():
@@ -3274,6 +3284,30 @@ declare function use_old_InterfaceDeclaration_VisualValueNode(
     use: TypeOnly<old.VisualValueNode>): void;
 use_old_InterfaceDeclaration_VisualValueNode(
     get_current_InterfaceDeclaration_VisualValueNode());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDevtoolsLogger": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createDevtoolsLogger():
+    TypeOnly<typeof old.createDevtoolsLogger>;
+declare function use_current_FunctionDeclaration_createDevtoolsLogger(
+    use: TypeOnly<typeof current.createDevtoolsLogger>): void;
+use_current_FunctionDeclaration_createDevtoolsLogger(
+    get_old_FunctionDeclaration_createDevtoolsLogger());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDevtoolsLogger": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createDevtoolsLogger():
+    TypeOnly<typeof current.createDevtoolsLogger>;
+declare function use_old_FunctionDeclaration_createDevtoolsLogger(
+    use: TypeOnly<typeof old.createDevtoolsLogger>): void;
+use_old_FunctionDeclaration_createDevtoolsLogger(
+    get_current_FunctionDeclaration_createDevtoolsLogger());
 
 /*
 * Validate forward compat by using old type in place of current type

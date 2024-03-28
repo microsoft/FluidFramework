@@ -528,18 +528,6 @@ use_old_TypeAliasDeclaration_OdspError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_OdspErrorType": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_OdspErrorType": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_OdspErrorTypes": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_OdspErrorTypes():
@@ -632,18 +620,6 @@ declare function use_old_InterfaceDeclaration_ShareLinkInfoType(
     use: TypeOnly<old.ShareLinkInfoType>): void;
 use_old_InterfaceDeclaration_ShareLinkInfoType(
     get_current_InterfaceDeclaration_ShareLinkInfoType());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_ShareLinkTypes": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_ShareLinkTypes": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -812,6 +788,30 @@ declare function use_old_VariableDeclaration_isTokenFromCache(
     use: TypeOnly<typeof old.isTokenFromCache>): void;
 use_old_VariableDeclaration_isTokenFromCache(
     get_current_VariableDeclaration_isTokenFromCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_maximumCacheDurationMs": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_maximumCacheDurationMs():
+    TypeOnly<typeof old.maximumCacheDurationMs>;
+declare function use_current_VariableDeclaration_maximumCacheDurationMs(
+    use: TypeOnly<typeof current.maximumCacheDurationMs>): void;
+use_current_VariableDeclaration_maximumCacheDurationMs(
+    get_old_VariableDeclaration_maximumCacheDurationMs());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_maximumCacheDurationMs": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_maximumCacheDurationMs():
+    TypeOnly<typeof current.maximumCacheDurationMs>;
+declare function use_old_VariableDeclaration_maximumCacheDurationMs(
+    use: TypeOnly<typeof old.maximumCacheDurationMs>): void;
+use_old_VariableDeclaration_maximumCacheDurationMs(
+    get_current_VariableDeclaration_maximumCacheDurationMs());
 
 /*
 * Validate forward compat by using old type in place of current type

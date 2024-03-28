@@ -48,6 +48,30 @@ use_old_InterfaceDeclaration_IRevertible(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISharedMatrix": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISharedMatrix():
+    TypeOnly<old.ISharedMatrix>;
+declare function use_current_InterfaceDeclaration_ISharedMatrix(
+    use: TypeOnly<current.ISharedMatrix>): void;
+use_current_InterfaceDeclaration_ISharedMatrix(
+    get_old_InterfaceDeclaration_ISharedMatrix());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISharedMatrix": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISharedMatrix():
+    TypeOnly<current.ISharedMatrix>;
+declare function use_old_InterfaceDeclaration_ISharedMatrix(
+    use: TypeOnly<old.ISharedMatrix>): void;
+use_old_InterfaceDeclaration_ISharedMatrix(
+    get_current_InterfaceDeclaration_ISharedMatrix());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedMatrixEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedMatrixEvents():

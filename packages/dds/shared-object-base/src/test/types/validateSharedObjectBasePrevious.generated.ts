@@ -72,18 +72,6 @@ use_old_InterfaceDeclaration_IFluidSerializer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISerializedHandle": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISerializedHandle": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedObject():
@@ -228,6 +216,30 @@ use_old_EnumDeclaration_ValueType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_bindHandles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_bindHandles():
+    TypeOnly<typeof old.bindHandles>;
+declare function use_current_FunctionDeclaration_bindHandles(
+    use: TypeOnly<typeof current.bindHandles>): void;
+use_current_FunctionDeclaration_bindHandles(
+    get_old_FunctionDeclaration_bindHandles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_bindHandles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_bindHandles():
+    TypeOnly<typeof current.bindHandles>;
+declare function use_old_FunctionDeclaration_bindHandles(
+    use: TypeOnly<typeof old.bindHandles>): void;
+use_old_FunctionDeclaration_bindHandles(
+    get_current_FunctionDeclaration_bindHandles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createSingleBlobSummary": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createSingleBlobSummary():
@@ -248,18 +260,6 @@ declare function use_old_FunctionDeclaration_createSingleBlobSummary(
     use: TypeOnly<typeof old.createSingleBlobSummary>): void;
 use_old_FunctionDeclaration_createSingleBlobSummary(
     get_current_FunctionDeclaration_createSingleBlobSummary());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_isSerializedHandle": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_isSerializedHandle": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

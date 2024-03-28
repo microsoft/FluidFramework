@@ -91,8 +91,31 @@ declare function get_current_InterfaceDeclaration_IRouterliciousDriverPolicies()
 declare function use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
     use: TypeOnly<old.IRouterliciousDriverPolicies>): void;
 use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRouterliciousDriverPolicies());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRouterliciousResolvedUrl": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRouterliciousResolvedUrl():
+    TypeOnly<old.IRouterliciousResolvedUrl>;
+declare function use_current_InterfaceDeclaration_IRouterliciousResolvedUrl(
+    use: TypeOnly<current.IRouterliciousResolvedUrl>): void;
+use_current_InterfaceDeclaration_IRouterliciousResolvedUrl(
+    get_old_InterfaceDeclaration_IRouterliciousResolvedUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRouterliciousResolvedUrl": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRouterliciousResolvedUrl():
+    TypeOnly<current.IRouterliciousResolvedUrl>;
+declare function use_old_InterfaceDeclaration_IRouterliciousResolvedUrl(
+    use: TypeOnly<old.IRouterliciousResolvedUrl>): void;
+use_old_InterfaceDeclaration_IRouterliciousResolvedUrl(
+    get_current_InterfaceDeclaration_IRouterliciousResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -189,18 +212,6 @@ declare function use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
     use: TypeOnly<old.RouterliciousDocumentServiceFactory>): void;
 use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
     get_current_ClassDeclaration_RouterliciousDocumentServiceFactory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_RouterliciousErrorType": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_RouterliciousErrorType": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

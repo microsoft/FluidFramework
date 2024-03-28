@@ -72,6 +72,30 @@ use_old_VariableDeclaration_AllowTombstoneRequestHeaderKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_ChannelCollectionFactory": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_ChannelCollectionFactory():
+    TypeOnly<old.ChannelCollectionFactory>;
+declare function use_current_ClassDeclaration_ChannelCollectionFactory(
+    use: TypeOnly<current.ChannelCollectionFactory>): void;
+use_current_ClassDeclaration_ChannelCollectionFactory(
+    get_old_ClassDeclaration_ChannelCollectionFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_ChannelCollectionFactory": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_ChannelCollectionFactory():
+    TypeOnly<current.ChannelCollectionFactory>;
+declare function use_old_ClassDeclaration_ChannelCollectionFactory(
+    use: TypeOnly<old.ChannelCollectionFactory>): void;
+use_old_ClassDeclaration_ChannelCollectionFactory(
+    get_current_ClassDeclaration_ChannelCollectionFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CompatModeBehavior": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CompatModeBehavior():
@@ -151,7 +175,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>): void;
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -164,7 +187,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>): void;
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -549,7 +571,6 @@ declare function get_current_InterfaceDeclaration_IChunkedOp():
 declare function use_old_InterfaceDeclaration_IChunkedOp(
     use: TypeOnly<old.IChunkedOp>): void;
 use_old_InterfaceDeclaration_IChunkedOp(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IChunkedOp());
 
 /*
@@ -670,7 +691,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeMetadata():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
     use: TypeOnly<old.IContainerRuntimeMetadata>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeMetadata());
 
 /*
@@ -683,7 +703,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_current_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<current.IContainerRuntimeOptions>): void;
 use_current_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -696,7 +715,6 @@ declare function get_current_InterfaceDeclaration_IContainerRuntimeOptions():
 declare function use_old_InterfaceDeclaration_IContainerRuntimeOptions(
     use: TypeOnly<old.IContainerRuntimeOptions>): void;
 use_old_InterfaceDeclaration_IContainerRuntimeOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntimeOptions());
 
 /*
@@ -1045,7 +1063,6 @@ declare function get_old_InterfaceDeclaration_ISubmitSummaryOptions():
 declare function use_current_InterfaceDeclaration_ISubmitSummaryOptions(
     use: TypeOnly<current.ISubmitSummaryOptions>): void;
 use_current_InterfaceDeclaration_ISubmitSummaryOptions(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISubmitSummaryOptions());
 
 /*
@@ -1615,6 +1632,30 @@ use_old_InterfaceDeclaration_IUploadSummaryResult(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IdCompressorMode": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IdCompressorMode():
+    TypeOnly<old.IdCompressorMode>;
+declare function use_current_TypeAliasDeclaration_IdCompressorMode(
+    use: TypeOnly<current.IdCompressorMode>): void;
+use_current_TypeAliasDeclaration_IdCompressorMode(
+    get_old_TypeAliasDeclaration_IdCompressorMode());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IdCompressorMode": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IdCompressorMode():
+    TypeOnly<current.IdCompressorMode>;
+declare function use_old_TypeAliasDeclaration_IdCompressorMode(
+    use: TypeOnly<old.IdCompressorMode>): void;
+use_old_TypeAliasDeclaration_IdCompressorMode(
+    get_current_TypeAliasDeclaration_IdCompressorMode());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_InactiveResponseHeaderKey": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_InactiveResponseHeaderKey():
@@ -1737,12 +1778,24 @@ use_old_EnumDeclaration_RuntimeHeaders(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedEnumDeclaration_RuntimeMessage": {"forwardCompat": false}
 */
+declare function get_old_EnumDeclaration_RuntimeMessage():
+    TypeOnly<old.RuntimeMessage>;
+declare function use_current_RemovedEnumDeclaration_RuntimeMessage(
+    use: TypeOnly<current.RuntimeMessage>): void;
+use_current_RemovedEnumDeclaration_RuntimeMessage(
+    get_old_EnumDeclaration_RuntimeMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedEnumDeclaration_RuntimeMessage": {"backCompat": false}
 */
+declare function get_current_RemovedEnumDeclaration_RuntimeMessage():
+    TypeOnly<current.RuntimeMessage>;
+declare function use_old_EnumDeclaration_RuntimeMessage(
+    use: TypeOnly<old.RuntimeMessage>): void;
+use_old_EnumDeclaration_RuntimeMessage(
+    get_current_RemovedEnumDeclaration_RuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1939,6 +1992,30 @@ use_old_VariableDeclaration_TombstoneResponseHeaderKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_UnknownContainerRuntimeMessage": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_UnknownContainerRuntimeMessage():
+    TypeOnly<old.UnknownContainerRuntimeMessage>;
+declare function use_current_InterfaceDeclaration_UnknownContainerRuntimeMessage(
+    use: TypeOnly<current.UnknownContainerRuntimeMessage>): void;
+use_current_InterfaceDeclaration_UnknownContainerRuntimeMessage(
+    get_old_InterfaceDeclaration_UnknownContainerRuntimeMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_UnknownContainerRuntimeMessage": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_UnknownContainerRuntimeMessage():
+    TypeOnly<current.UnknownContainerRuntimeMessage>;
+declare function use_old_InterfaceDeclaration_UnknownContainerRuntimeMessage(
+    use: TypeOnly<old.UnknownContainerRuntimeMessage>): void;
+use_old_InterfaceDeclaration_UnknownContainerRuntimeMessage(
+    get_current_InterfaceDeclaration_UnknownContainerRuntimeMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_agentSchedulerId": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_agentSchedulerId():
@@ -1963,26 +2040,26 @@ use_old_VariableDeclaration_agentSchedulerId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_assertIsStableId": {"forwardCompat": false}
+* "FunctionDeclaration_detectOutboundReferences": {"forwardCompat": false}
 */
+declare function get_old_FunctionDeclaration_detectOutboundReferences():
+    TypeOnly<typeof old.detectOutboundReferences>;
+declare function use_current_FunctionDeclaration_detectOutboundReferences(
+    use: TypeOnly<typeof current.detectOutboundReferences>): void;
+use_current_FunctionDeclaration_detectOutboundReferences(
+    get_old_FunctionDeclaration_detectOutboundReferences());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_assertIsStableId": {"backCompat": false}
+* "FunctionDeclaration_detectOutboundReferences": {"backCompat": false}
 */
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_generateStableId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_generateStableId": {"backCompat": false}
-*/
+declare function get_current_FunctionDeclaration_detectOutboundReferences():
+    TypeOnly<typeof current.detectOutboundReferences>;
+declare function use_old_FunctionDeclaration_detectOutboundReferences(
+    use: TypeOnly<typeof old.detectOutboundReferences>): void;
+use_old_FunctionDeclaration_detectOutboundReferences(
+    get_current_FunctionDeclaration_detectOutboundReferences());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2007,18 +2084,6 @@ declare function use_old_FunctionDeclaration_isRuntimeMessage(
     use: TypeOnly<typeof old.isRuntimeMessage>): void;
 use_old_FunctionDeclaration_isRuntimeMessage(
     get_current_FunctionDeclaration_isRuntimeMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isStableId": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_isStableId": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

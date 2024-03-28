@@ -48,6 +48,30 @@ use_old_ClassDeclaration_BaseContainerRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_BaseContainerRuntimeFactoryProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps():
+    TypeOnly<old.BaseContainerRuntimeFactoryProps>;
+declare function use_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
+    use: TypeOnly<current.BaseContainerRuntimeFactoryProps>): void;
+use_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
+    get_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_BaseContainerRuntimeFactoryProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps():
+    TypeOnly<current.BaseContainerRuntimeFactoryProps>;
+declare function use_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
+    use: TypeOnly<old.BaseContainerRuntimeFactoryProps>): void;
+use_old_InterfaceDeclaration_BaseContainerRuntimeFactoryProps(
+    get_current_InterfaceDeclaration_BaseContainerRuntimeFactoryProps());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore():
@@ -68,6 +92,30 @@ declare function use_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultData
     use: TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStore>): void;
 use_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
     get_current_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps():
+    TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>;
+declare function use_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
+    use: TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>): void;
+use_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
+    get_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps():
+    TypeOnly<current.ContainerRuntimeFactoryWithDefaultDataStoreProps>;
+declare function use_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
+    use: TypeOnly<old.ContainerRuntimeFactoryWithDefaultDataStoreProps>): void;
+use_old_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps(
+    get_current_InterfaceDeclaration_ContainerRuntimeFactoryWithDefaultDataStoreProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -103,7 +151,6 @@ declare function get_old_ClassDeclaration_DataObjectFactory():
 declare function use_current_ClassDeclaration_DataObjectFactory(
     use: TypeOnly<current.DataObjectFactory<any>>): void;
 use_current_ClassDeclaration_DataObjectFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DataObjectFactory());
 
 /*
@@ -152,7 +199,6 @@ declare function get_old_InterfaceDeclaration_IDataObjectProps():
 declare function use_current_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<current.IDataObjectProps>): void;
 use_current_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDataObjectProps());
 
 /*
@@ -165,7 +211,6 @@ declare function get_current_InterfaceDeclaration_IDataObjectProps():
 declare function use_old_InterfaceDeclaration_IDataObjectProps(
     use: TypeOnly<old.IDataObjectProps>): void;
 use_old_InterfaceDeclaration_IDataObjectProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDataObjectProps());
 
 /*
@@ -202,7 +247,6 @@ declare function get_old_ClassDeclaration_PureDataObjectFactory():
 declare function use_current_ClassDeclaration_PureDataObjectFactory(
     use: TypeOnly<current.PureDataObjectFactory<any>>): void;
 use_current_ClassDeclaration_PureDataObjectFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_PureDataObjectFactory());
 
 /*
