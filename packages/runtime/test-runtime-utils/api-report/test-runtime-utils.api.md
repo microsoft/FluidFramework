@@ -131,6 +131,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     rebase(): void;
     protected get referenceSequenceNumber(): number;
     // (undocumented)
+    resolveHandle(handle: IFluidHandle): Promise<IResponse>;
+    // (undocumented)
     protected reSubmitMessages(messagesToResubmit: {
         content: any;
         localOpMetadata: unknown;

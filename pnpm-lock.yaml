@@ -6690,6 +6690,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
+      uuid: ^9.0.1
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
       '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
@@ -6702,6 +6703,7 @@ importers:
       '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
+      uuid: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli': 0.13.3
       '@biomejs/biome': 1.6.1

@@ -437,6 +437,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	protected get referenceSequenceNumber() {
 		return this.deltaManager.lastSequenceNumber;
 	}
+
+	public async resolveHandle(handle: IFluidHandle) {
+		return this.dataStoreRuntime.resolveHandle({ url: handle.absolutePath });
+	
+	}
 }
 
 /**
@@ -901,6 +906,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
+		if (request.url !== undefined) {
+			return request.url as any as IResponse;
+		}
 		return this.request(request);
 	}
 

@@ -30,7 +30,6 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type {
@@ -44,8 +43,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { v4 as uuid } from "uuid";
-import type { FluidObject , IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type Client,
 	type ClientLoadData,
@@ -53,6 +51,7 @@ import {
 	createLoadData,
 	hasStashData,
 } from "./clientLoading.js";
+import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import type { MinimizationTransform } from "./minification.js";
 import { FuzzTestMinimizer } from "./minification.js";
 
@@ -114,8 +113,8 @@ export interface StashClient {
  * @internal
  */
 export interface HandleCreated {
-	type: "handle";
-	handles: DDSFuzzHandle<IChannelFactory>[];
+	type: "handleCreated";
+	handles: IFluidHandle[];
 }
 
 /**
@@ -193,34 +192,6 @@ function getSaveInfo(
 	}
 	const filepath = path.join(directory, `${seed}.json`);
 	return { saveOnFailure: true, filepath };
-}
-
-export class DDSFuzzHandle<T = IFluidLoadable & FluidObject> implements IFluidHandle {
-	readonly absolutePath: string;
-
-	public get IFluidHandle(): DDSFuzzHandle<T> {
-		return this;
-	}
-
-	public get isAttached(): boolean {
-		throw new Error("Method not implemented.");
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public async get(): Promise<any> { // i know this isn't right
-		return this;
-	}
-
-	constructor() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-		this.absolutePath = uuid() as string;
-	}
-	attachGraph(): void {
-		throw new Error("Method not implemented.");
-	}
-	bind(handle: IFluidHandle): void {
-		throw new Error("Method not implemented.");		
-	}
 }
 
 /**
@@ -1188,7 +1159,7 @@ export function mixinHandle<
 			if (state.random.bool(0.5)) {
 				const handle1 = new DDSFuzzHandle();
 				return {
-					type: "handle",
+					type: "handleCreated",
 					handles: [handle1],
 				};
 			}
