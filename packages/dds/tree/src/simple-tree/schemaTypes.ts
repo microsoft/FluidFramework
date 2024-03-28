@@ -261,7 +261,7 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s, by eagerly evaluating any
  * lazy schema declarations.
  *
- * @remarks Note: this must only be called after all required schemas have been loaded, otherwise evaluation of
+ * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  */
 export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
