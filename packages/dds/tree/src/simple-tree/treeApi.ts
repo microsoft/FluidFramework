@@ -119,6 +119,9 @@ export const treeNodeApi: TreeNodeApi = {
 
 		switch (eventName) {
 			case "afterShallowChange": {
+				// The funky pattern subscribing to two events from the anchors is so we can fire afterShallowChange once,
+				// batching changes to several fields of the node. 'childrenChanged' on the anchor fires on every change to
+				// a field so doesn't allow us to batch.
 				let shouldFireShallowChange = false;
 				const unsubscribeFromChildrenChanged = anchor.on(
 					"childrenChanged",
