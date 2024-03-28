@@ -16,8 +16,8 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
