@@ -21,6 +21,7 @@ import {
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import type { IClient } from "@fluidframework/protocol-definitions";
 import {
 	IChannel,
 	IChannelServices,
