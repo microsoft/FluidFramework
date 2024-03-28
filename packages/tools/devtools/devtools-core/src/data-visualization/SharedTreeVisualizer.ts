@@ -103,8 +103,25 @@ function getMapAllowedTypes(
 	fields: FieldMapObject<JsonableTree> | undefined,
 	schema: MapNodeStoredSchema,
 ): string {
-	// TODO: Write this function.
-	const result = "";
+	let allowedTypes = "";
+
+	const mapFieldAllowedTypes = schema.mapFields.types;
+
+	if (mapFieldAllowedTypes === undefined) {
+		allowedTypes = "any";
+	} else {
+		for (const type of mapFieldAllowedTypes) {
+			allowedTypes += `${type} | `;
+		}
+	}
+
+	assert(fields !== undefined, "MapNodeStoredSchema fields undefined.");
+
+	let result = "";
+	for (const [fieldKey] of Object.entries(fields)) {
+		result += `${fieldKey} : ${allowedTypes}, `;
+	}
+
 	return result;
 }
 
