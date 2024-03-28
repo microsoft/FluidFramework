@@ -7,6 +7,7 @@
  * @fileoverview Serialized representation of the changes in a repository
  */
 
+import { constants, ConsoleUtils, joinPaths } from "@fluid-experimental/property-common";
 import { copy as cloneDeep } from "fastest-json-copy";
 import each from "lodash/each.js";
 import extend from "lodash/extend.js";
@@ -15,17 +16,15 @@ import isObject from "lodash/isObject.js";
 import isString from "lodash/isString.js";
 
 // @ts-ignore
-import { constants, ConsoleUtils, joinPaths } from "@fluid-experimental/property-common";
 
 import { ChangeSetArrayFunctions } from "./changeset_operations/array.js";
-import { TypeIdHelper } from "./helpers/typeidHelper.js";
-
 import { ArrayChangeSetIterator } from "./changeset_operations/arrayChangesetIterator.js";
 import { ConflictType } from "./changeset_operations/changesetConflictTypes.js";
 // Add the indexed collection functions into the prototype of the ChangeSet
 import { ChangeSetIndexedCollectionFunctions } from "./changeset_operations/indexedCollection.js";
 import { isEmptyChangeSet } from "./changeset_operations/isEmptyChangeset.js";
 import { ArrayIteratorOperationTypes } from "./changeset_operations/operationTypes.js";
+import { TypeIdHelper } from "./helpers/typeidHelper.js";
 import { isReservedKeyword } from "./isReservedKeyword.js";
 import { TemplateValidator } from "./templateValidator.js";
 import { Utils } from "./utils.js";

@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+
 import {
 	CursorLocationType,
 	FieldKey,
@@ -16,6 +17,7 @@ import {
 } from "../../../core/index.js";
 import { fail, getOrCreate } from "../../../util/index.js";
 import { type FlexFieldKind } from "../../modular-schema/index.js";
+
 import { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	BufferFormat as BufferFormatGeneric,

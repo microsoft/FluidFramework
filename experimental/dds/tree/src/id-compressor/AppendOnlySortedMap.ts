@@ -6,6 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import { assert } from '@fluidframework/core-utils';
+
 import { fail } from '../Common.js';
 
 /**
