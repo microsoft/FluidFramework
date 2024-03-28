@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
@@ -44,8 +44,15 @@ describe("Pong", () => {
 			loaderContainerTracker.reset();
 		});
 
-		async function createConnectedContainer(): Promise<IContainer> {
+		it("Delta manager receives pong event", async () => {
 			const container = await provider.makeTestContainer();
+
+			// Pong can arrive while we are waiting for "connected" event.
+			// If we miss it, we will wait another minute for a ping/pong, and test will time out!
+			const promise = timeoutPromise((resolve) =>
+				container.deltaManager.once("pong", () => resolve()),
+			);
+
 			await waitForContainerConnection(container, true, {
 				errorMsg: "Container initial connection timeout",
 			});
@@ -55,19 +62,7 @@ describe("Pong", () => {
 				"Container should be connected after creation",
 			);
 
-			return container;
-		}
-
-		it("Delta manager receives pong event", async () => {
-			const container = await createConnectedContainer();
-
-			let run = 0;
-			container.deltaManager.on("pong", () => {
-				run++;
-			});
-
-			await timeoutPromise((resolve) => container.deltaManager.once("pong", () => resolve()));
-			assert.strictEqual(run, 1);
+			await promise;
 		});
 	});
 });
