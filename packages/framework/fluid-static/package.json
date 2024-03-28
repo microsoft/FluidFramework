@@ -154,6 +154,19 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedTypeAliasDeclaration_LoadableObjectCtor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_SharedObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SharedObjectClass": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

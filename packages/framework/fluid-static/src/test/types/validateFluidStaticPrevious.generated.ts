@@ -362,24 +362,12 @@ use_old_TypeAliasDeclaration_LoadableObjectClassRecord(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_LoadableObjectCtor": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_LoadableObjectCtor():
-    TypeOnly<old.LoadableObjectCtor<any>>;
-declare function use_current_RemovedTypeAliasDeclaration_LoadableObjectCtor(
-    use: TypeOnly<current.LoadableObjectCtor<any>>): void;
-use_current_RemovedTypeAliasDeclaration_LoadableObjectCtor(
-    get_old_TypeAliasDeclaration_LoadableObjectCtor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedTypeAliasDeclaration_LoadableObjectCtor": {"backCompat": false}
 */
-declare function get_current_RemovedTypeAliasDeclaration_LoadableObjectCtor():
-    TypeOnly<current.LoadableObjectCtor<any>>;
-declare function use_old_TypeAliasDeclaration_LoadableObjectCtor(
-    use: TypeOnly<old.LoadableObjectCtor<any>>): void;
-use_old_TypeAliasDeclaration_LoadableObjectCtor(
-    get_current_RemovedTypeAliasDeclaration_LoadableObjectCtor());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -458,24 +446,12 @@ use_old_TypeAliasDeclaration_Myself(
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_SharedObjectClass": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SharedObjectClass():
-    TypeOnly<old.SharedObjectClass<any>>;
-declare function use_current_RemovedInterfaceDeclaration_SharedObjectClass(
-    use: TypeOnly<current.SharedObjectClass<any>>): void;
-use_current_RemovedInterfaceDeclaration_SharedObjectClass(
-    get_old_InterfaceDeclaration_SharedObjectClass());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
 * "RemovedInterfaceDeclaration_SharedObjectClass": {"backCompat": false}
 */
-declare function get_current_RemovedInterfaceDeclaration_SharedObjectClass():
-    TypeOnly<current.SharedObjectClass<any>>;
-declare function use_old_InterfaceDeclaration_SharedObjectClass(
-    use: TypeOnly<old.SharedObjectClass<any>>): void;
-use_old_InterfaceDeclaration_SharedObjectClass(
-    get_current_RemovedInterfaceDeclaration_SharedObjectClass());
 
 /*
 * Validate forward compat by using old type in place of current type
