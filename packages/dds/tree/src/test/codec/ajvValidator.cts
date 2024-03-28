@@ -10,6 +10,7 @@ import { MockHandle } from "@fluidframework/test-runtime-utils";
 import type { Static, TSchema } from "@sinclair/typebox";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
+
 import type { JsonValidator } from "@fluidframework/tree";
 
 // See: https://github.com/sinclairzx81/typebox#ajv

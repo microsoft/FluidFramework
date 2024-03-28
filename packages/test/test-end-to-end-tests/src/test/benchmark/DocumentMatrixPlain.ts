@@ -15,6 +15,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -41,7 +42,6 @@ import {
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 // Tests usually make use of the default data object provided by the test object provider.
 // However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.

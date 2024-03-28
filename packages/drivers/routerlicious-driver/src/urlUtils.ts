@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISession } from "@fluidframework/server-services-client";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { ISession } from "@fluidframework/server-services-client";
 
 /**
  * Assume documentId is at end of url path.

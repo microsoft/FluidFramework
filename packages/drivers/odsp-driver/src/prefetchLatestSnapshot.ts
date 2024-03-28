@@ -6,6 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -32,7 +33,6 @@ import {
 	getOdspResolvedUrl,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded

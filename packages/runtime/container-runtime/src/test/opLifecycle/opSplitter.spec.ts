@@ -7,6 +7,8 @@
 
 import { strict as assert } from "assert";
 import * as crypto from "crypto";
+
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
@@ -19,7 +21,6 @@ import {
 	isChunkedMessage,
 	splitOp,
 } from "../../opLifecycle/index.js";
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);

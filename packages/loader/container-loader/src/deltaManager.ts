@@ -18,6 +18,10 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
+import {
+	IDocumentDeltaStorageService,
+	IDocumentService,
+} from "@fluidframework/driver-definitions/internal";
 import { MessageType2, NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -48,10 +52,6 @@ import {
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { ThrottlingWarning } from "./error.js";
-import {
-	IDocumentDeltaStorageService,
-	IDocumentService,
-} from "@fluidframework/driver-definitions/internal";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;

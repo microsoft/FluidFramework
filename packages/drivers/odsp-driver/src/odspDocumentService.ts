@@ -6,6 +6,15 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	HostStoragePolicy,
 	IEntry,
 	IOdspResolvedUrl,
@@ -29,15 +38,6 @@ import { isOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
-import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentServiceEvents,
-	IDocumentServicePolicies,
-	IDocumentStorageService,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions/internal";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

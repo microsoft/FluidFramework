@@ -13,6 +13,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -38,7 +39,6 @@ import {
 	IDocumentProps,
 	ISummarizeResult,
 } from "./DocumentCreator.js";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],

@@ -9,7 +9,14 @@ import {
 	ICriticalContainerError,
 	IDeltaManager,
 } from "@fluidframework/container-definitions";
+import {
+	IBatchMessage,
+	IContainerContext,
+	ILoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { type FluidObject, type ISignalEnvelope } from "@fluidframework/core-interfaces";
+import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -21,13 +28,6 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import {
-	IBatchMessage,
-	IContainerContext,
-	ILoader,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions/internal";
-import { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}

@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedMatrix } from "@fluidframework/matrix";
@@ -20,7 +21,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Validates this scenario: When all references to a data store are deleted, the data store is marked as unreferenced

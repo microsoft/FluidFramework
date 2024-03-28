@@ -7,6 +7,11 @@ import { performance } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import {
+	IDocumentDeltaConnection,
+	IDocumentServicePolicies,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
@@ -42,11 +47,6 @@ import {
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { fetchJoinSession } from "./vroom.js";
-import {
-	IDocumentDeltaConnection,
-	IDocumentServicePolicies,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions/internal";
 
 /**
  * This OdspDelayLoadedDeltaStream is used by OdspDocumentService.ts to delay load the delta connection

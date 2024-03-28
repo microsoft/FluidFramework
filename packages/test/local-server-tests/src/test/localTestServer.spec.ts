@@ -4,6 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
+import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -18,13 +26,6 @@ import {
 	createAndAttachContainer,
 	createLoader,
 } from "@fluidframework/test-utils";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-	ILoaderOptions,
-} from "@fluidframework/container-definitions/internal";
-import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Creates a loader with the given package entries and a delta connection server.

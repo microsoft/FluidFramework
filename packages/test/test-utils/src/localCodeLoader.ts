@@ -6,12 +6,6 @@
 import assert from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IProvideFluidDataStoreFactory,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions";
-import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
@@ -20,6 +14,12 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	IProvideFluidDataStoreFactory,
+	IProvideFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions";
+import { createDataStoreFactory } from "@fluidframework/runtime-utils";
 
 /**
  * @internal

@@ -4,6 +4,7 @@
  */
 
 import { PromiseCache } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	ICacheEntry,
 	IEntry,
@@ -13,7 +14,6 @@ import {
 	ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Similar to IPersistedCache, but exposes cache interface for single file

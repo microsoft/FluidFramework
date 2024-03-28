@@ -15,6 +15,7 @@ import type {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IClientDetails,
@@ -38,7 +39,6 @@ import type {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary.js";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Runtime flush mode handling

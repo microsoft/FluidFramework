@@ -6,6 +6,7 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	DriverErrorTelemetryProps,
 	NonRetryableError,
@@ -58,7 +59,6 @@ import {
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Enum to support different types of snapshot formats.

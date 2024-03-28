@@ -11,9 +11,13 @@
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
+import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
+import { SharedTree, encodeTreeSchema } from "@fluidframework/tree";
+import type { ISharedTree } from "@fluidframework/tree";
+
 import { EditType } from "../CommonInterfaces.js";
 
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
@@ -26,9 +30,6 @@ import {
 	VisualNodeKind,
 	type VisualTreeNode,
 } from "./VisualTree.js";
-import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
-import { SharedTree, encodeTreeSchema } from "@fluidframework/tree";
-import type { ISharedTree } from "@fluidframework/tree";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.

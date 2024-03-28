@@ -4,7 +4,12 @@
  */
 
 import { IDeltaQueue } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import {
+	IContainerCreateProps,
+	IContainerLoadProps,
+} from "@fluidframework/container-loader/internal";
 import { assert } from "@fluidframework/core-utils";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
@@ -17,11 +22,6 @@ import { waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
-import {
-	IContainerCreateProps,
-	IContainerLoadProps,
-} from "@fluidframework/container-loader/internal";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");

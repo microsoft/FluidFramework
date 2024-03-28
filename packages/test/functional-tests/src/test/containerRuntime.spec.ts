@@ -12,9 +12,14 @@ import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private
 // eslint-disable-next-line import/no-internal-modules
 // eslint-disable-next-line import/no-internal-modules
 // eslint-disable-next-line import/no-internal-modules
-import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
+import {
+	ConnectionManager,
+	IConnectionManagerFactoryArgs,
+	DeltaManager,
+} from "@fluidframework/container-loader";
+import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
 import {
 	IClient,
@@ -23,11 +28,6 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	ConnectionManager,
-	IConnectionManagerFactoryArgs,
-	DeltaManager,
-} from "@fluidframework/container-loader";
 
 describe("Container Runtime", () => {
 	/**

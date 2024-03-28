@@ -12,6 +12,7 @@ import {
 } from "@fluid-private/test-version-utils";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
@@ -22,7 +23,6 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 const versionWithChunking = "0.56.0";
 

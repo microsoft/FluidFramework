@@ -7,6 +7,10 @@ import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import {
+	ContainerErrorTypes,
+	IContainerContext,
+} from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	ConfigTypes,
@@ -15,6 +19,11 @@ import {
 	IErrorBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
+import {
+	IDocumentStorageService,
+	ISnapshot,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	ISequencedDocumentMessage,
 	type ISnapshotTree,
@@ -67,15 +76,6 @@ import {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import { ISummaryCancellationToken, neverCancelledSummaryToken } from "../summary/index.js";
-import {
-	ContainerErrorTypes,
-	IContainerContext,
-} from "@fluidframework/container-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshot,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,

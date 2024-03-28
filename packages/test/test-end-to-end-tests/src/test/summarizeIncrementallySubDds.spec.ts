@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	IChannelAttributes,
@@ -38,7 +39,6 @@ import {
 } from "@fluidframework/test-utils";
 
 import { pkgVersion } from "../packageVersion.js";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 // Test DDS factory for the blob dds
 class TestBlobDDSFactory implements IChannelFactory {

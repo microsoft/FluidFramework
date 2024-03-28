@@ -5,10 +5,10 @@
 
 import { Signaler } from "@fluid-experimental/data-objects";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 import { IMember } from "fluid-framework";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: () => void): void;

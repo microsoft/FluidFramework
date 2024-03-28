@@ -8,6 +8,7 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -17,7 +18,6 @@ import React from "react";
 
 import { SmdeDataObject, SmdeFactory } from "./smde.js";
 import { SmdeReactView } from "./smdeView.js";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
 
 const defaultComponentId = "default";
 

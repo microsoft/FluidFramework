@@ -10,6 +10,7 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map";
 import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import {
@@ -18,7 +19,6 @@ import {
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;

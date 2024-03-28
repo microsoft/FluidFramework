@@ -8,6 +8,12 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct";
 import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
+import { ILoaderProps } from "@fluidframework/container-loader/internal";
+import {
 	ContainerRuntime,
 	IAckedSummary,
 	IContainerRuntimeOptions,
@@ -18,6 +24,11 @@ import {
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore";
+import {
+	DriverHeader,
+	type IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import {
 	ISequencedDocumentMessage,
@@ -35,17 +46,6 @@ import {
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-import {
-	IContainer,
-	IRuntimeFactory,
-	LoaderHeader,
-} from "@fluidframework/container-definitions/internal";
-import { ILoaderProps } from "@fluidframework/container-loader/internal";
-import {
-	DriverHeader,
-	type IDocumentServiceFactory,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;

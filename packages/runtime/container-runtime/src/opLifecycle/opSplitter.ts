@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -16,7 +17,6 @@ import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messa
 
 import { estimateSocketSize } from "./batchManager.js";
 import { BatchMessage, IBatch, IChunkedOp } from "./definitions.js";
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 	return isChunkedContents(message.contents);

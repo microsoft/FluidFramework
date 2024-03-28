@@ -10,11 +10,13 @@ import {
 	SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { SharedCell } from "@fluidframework/cell";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -31,8 +33,6 @@ import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 
 import { ReplayToolContainerEntryPoint } from "./helpers";
 import { UnknownChannelFactory } from "./unknownChannel";
-import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { SharedDirectory } from "@fluidframework/map/internal";
 
 /** Simple runtime factory that creates a container runtime */
 export class ReplayRuntimeFactory extends RuntimeFactoryHelper {

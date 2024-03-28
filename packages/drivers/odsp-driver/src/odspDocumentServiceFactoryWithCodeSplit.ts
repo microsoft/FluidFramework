@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	HostStoragePolicy,
 	IPersistedCache,
@@ -11,7 +12,6 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @deprecated This is deprecated in favour of OdspDocumentServiceFactory as the socket io is now loaded inside the

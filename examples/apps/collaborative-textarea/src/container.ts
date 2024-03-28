@@ -4,10 +4,10 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import { CollaborativeText } from "./fluid-object/index.js";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 export interface ICollaborativeTextAppModel {
 	readonly collaborativeText: CollaborativeText;

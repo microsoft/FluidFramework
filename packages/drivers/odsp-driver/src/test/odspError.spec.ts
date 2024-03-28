@@ -6,6 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { IThrottlingWarning } from "@fluidframework/core-interfaces";
+import {
+	IAuthorizationError,
+	IGenericNetworkError,
+} from "@fluidframework/driver-definitions/internal";
 import { type AuthorizationError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	createOdspNetworkError,
@@ -20,10 +24,6 @@ import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspU
 import { pkgVersion } from "../packageVersion.js";
 
 import { mockFetchError } from "./mockFetch.js";
-import {
-	IAuthorizationError,
-	IGenericNetworkError,
-} from "@fluidframework/driver-definitions/internal";
 
 describe("Odsp Error", () => {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

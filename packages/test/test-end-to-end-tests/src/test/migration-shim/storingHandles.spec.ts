@@ -20,6 +20,7 @@ import {
 import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
@@ -39,7 +40,6 @@ import {
 	type TreeView,
 	disposeSymbol,
 } from "@fluidframework/tree";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 

@@ -7,6 +7,12 @@ import { performance } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
+import {
+	FetchSource,
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils";
 import {
 	IOdspResolvedUrl,
@@ -56,12 +62,6 @@ import {
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import {
-	FetchSource,
-	ISnapshot,
-	ISnapshotFetchOptions,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 

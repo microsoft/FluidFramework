@@ -28,6 +28,7 @@ import {
 	summarizeChannelAsync,
 } from "./channelContext.js";
 import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 

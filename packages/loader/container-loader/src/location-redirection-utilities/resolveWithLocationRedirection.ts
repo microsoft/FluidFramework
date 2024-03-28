@@ -5,11 +5,11 @@
 
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
-import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ILocationRedirectionError,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 
 /**
  * Checks if the error is location redirection error.

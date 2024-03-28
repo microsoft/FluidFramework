@@ -11,13 +11,13 @@ import {
 	loadContainer,
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils";
 import { FileStorageDocumentName } from "@fluidframework/file-driver";
 import { ISequencedDocumentMessage, TreeEntry } from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, StaticStorageDocumentServiceFactory } from "@fluidframework/replay-driver";
 
 import { SnapshotStorageService } from "./snapshotStorageService.js";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 const metadataBlobName = ".metadata";
 

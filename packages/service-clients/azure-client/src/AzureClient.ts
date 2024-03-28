@@ -4,8 +4,17 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
+import {
+	type IContainer,
+	type IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
 import {
 	type ContainerSchema,
@@ -29,15 +38,6 @@ import {
 	type AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
-import {
-	type IContainer,
-	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.

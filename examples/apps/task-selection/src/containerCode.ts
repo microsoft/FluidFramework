@@ -4,12 +4,12 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import { IDiceRoller } from "./interface.js";
 import { OldestClientDiceRollerInstantiationFactory } from "./oldestClientDiceRoller.js";
 import { TaskManagerDiceRollerInstantiationFactory } from "./taskManagerDiceRoller.js";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * The data model for our application.

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IProtocolHandler as IBaseProtocolHandler,
@@ -17,7 +18,6 @@ import {
 	ISignalMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {

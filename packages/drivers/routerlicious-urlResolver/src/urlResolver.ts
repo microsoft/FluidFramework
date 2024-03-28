@@ -5,10 +5,10 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import { IUser } from "@fluidframework/protocol-definitions";
 
 import { Provider } from "./nconf.cjs";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 const r11sServers = [
 	"www.wu2-ppe.prague.office-int.com",

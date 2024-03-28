@@ -9,8 +9,19 @@ import {
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
 } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	IFluidPackage,
+	LoaderHeader,
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
@@ -31,17 +42,6 @@ import {
 	extractPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
 } from "./webCodeLoader/index.js";
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidModule,
-	IFluidModuleWithDetails,
-	IFluidPackage,
-	LoaderHeader,
-	isFluidBrowserPackage,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 export interface IDevServerUser extends IUser {
 	name: string;

@@ -10,6 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay } from "@fluidframework/core-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -28,7 +29,6 @@ import {
 	getGCStateFromSummary,
 	getGCTombstoneStateFromSummary,
 } from "./gcTestSummaryUtils.js";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Validates that an unreferenced datastore goes through all the GC phases without overlapping.

@@ -5,6 +5,7 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";
@@ -27,7 +28,6 @@ import {
 import { EpochTracker } from "./epochTracker.js";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
-import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 /**
  * This class manages a summary upload. When it receives a call to upload summary, it converts the summary tree into

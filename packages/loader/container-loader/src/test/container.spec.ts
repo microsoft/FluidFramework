@@ -13,12 +13,12 @@ import {
 	IDeltaManagerEvents,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { ConnectionState } from "../connectionState.js";
 import { waitContainerToCatchUp } from "../container.js";
-import { IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 class MockDeltaManager
 	extends TypedEventEmitter<IDeltaManagerEvents>

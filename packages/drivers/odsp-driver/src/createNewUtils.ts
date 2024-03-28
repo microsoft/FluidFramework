@@ -5,6 +5,7 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -31,7 +32,6 @@ import { EpochTracker, FetchType } from "./epochTracker.js";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Converts a summary(ISummaryTree) taken in detached container to snapshot tree and blobs

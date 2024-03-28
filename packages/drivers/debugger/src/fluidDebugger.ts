@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframework/replay-driver";
-
-import { DebugReplayController } from "./fluidDebuggerController.js";
-import { DebuggerUI } from "./fluidDebuggerUi.js";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
 } from "@fluidframework/driver-definitions/internal";
+import { ReplayDocumentService, ReplayDocumentServiceFactory } from "@fluidframework/replay-driver";
+
+import { DebugReplayController } from "./fluidDebuggerController.js";
+import { DebuggerUI } from "./fluidDebuggerUi.js";
 
 /**
  * @alpha

@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
@@ -23,7 +24,6 @@ import { wrapContextForInnerChannel } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 describe("Data Store Creation Tests", () => {
 	describe("Store creation via local context creation and realize", () => {

@@ -4,6 +4,7 @@
  */
 
 import { type IAudience } from "@fluidframework/container-definitions";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
@@ -45,7 +46,6 @@ import {
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
-import { type IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.

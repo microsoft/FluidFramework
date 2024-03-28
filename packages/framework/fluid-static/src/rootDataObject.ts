@@ -8,6 +8,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import { type ContainerRuntime } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
@@ -16,6 +17,7 @@ import {
 	type IRequest,
 	type IResponse,
 } from "@fluidframework/core-interfaces";
+import { type IDirectory } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
@@ -33,8 +35,6 @@ import {
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
-import { type IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import { type IDirectory } from "@fluidframework/map/internal";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.

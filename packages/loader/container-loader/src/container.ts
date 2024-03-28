@@ -14,6 +14,21 @@ import {
 	isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
 import {
+	ContainerWarning,
+	IBatchMessage,
+	ICodeDetailsLoader,
+	IContainer,
+	IContainerEvents,
+	IFluidCodeDetails,
+	IFluidCodeDetailsComparer,
+	IFluidModuleWithDetails,
+	IGetPendingLocalStateProps,
+	IHostLoader,
+	IProvideFluidCodeDetailsComparer,
+	IProvideRuntimeFactory,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
+import {
 	FluidObject,
 	IEvent,
 	IRequest,
@@ -22,6 +37,15 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+	IResolvedUrl,
+	ISnapshot,
+	IThrottlingWarning,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	MessageType2,
 	OnlineStatus,
@@ -111,30 +135,6 @@ import {
 	getSnapshotTreeAndBlobsFromSerializedContainer,
 	runSingle,
 } from "./utils.js";
-import {
-	ContainerWarning,
-	IBatchMessage,
-	ICodeDetailsLoader,
-	IContainer,
-	IContainerEvents,
-	IFluidCodeDetails,
-	IFluidCodeDetailsComparer,
-	IFluidModuleWithDetails,
-	IGetPendingLocalStateProps,
-	IHostLoader,
-	IProvideFluidCodeDetailsComparer,
-	IProvideRuntimeFactory,
-	IRuntime,
-} from "@fluidframework/container-definitions/internal";
-import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISnapshot,
-	IThrottlingWarning,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
 
 const detachedContainerRefSeqNumber = 0;
 

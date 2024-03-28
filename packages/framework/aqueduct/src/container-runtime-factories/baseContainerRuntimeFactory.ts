@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	FluidDataStoreRegistry,
@@ -26,7 +27,6 @@ import {
 	type IFluidDependencySynthesizer,
 	type IProvideFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
-import { type IContainerContext } from "@fluidframework/container-definitions/internal";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.

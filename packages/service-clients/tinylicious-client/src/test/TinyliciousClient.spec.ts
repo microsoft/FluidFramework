@@ -16,10 +16,12 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { type ConnectionMode, ScopeType } from "@fluidframework/protocol-definitions";
 import { timeoutPromise } from "@fluidframework/test-utils";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
@@ -27,8 +29,6 @@ import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-dr
 import { TinyliciousClient } from "../index.js";
 
 import { TestDataObject } from "./TestDataObject.js";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { SharedDirectory } from "@fluidframework/map/internal";
 
 const corruptedAliasOp = async (
 	runtime: IContainerRuntime,

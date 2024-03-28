@@ -11,6 +11,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
 	ContainerRuntime,
@@ -48,7 +49,6 @@ import {
 	getGCTombstoneStateFromSummary,
 	manufactureHandle,
 } from "./gcTestSummaryUtils.js";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 /**
  * Validates that the given data store state is correct in the summary based on expectDelete and expectGCStateHandle.

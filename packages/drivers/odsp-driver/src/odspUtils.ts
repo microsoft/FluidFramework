@@ -6,6 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
 	NetworkErrorBasic,
@@ -47,7 +48,6 @@ import { fetch } from "./fetch.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { IResolvedUrl, ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 

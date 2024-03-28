@@ -14,6 +14,19 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
+	FetchSource,
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServiceFactory,
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	IResolvedUrl,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
+import {
 	IClient,
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -33,19 +46,6 @@ import {
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy.js";
 
 import { snapshotTree, summaryTemplate } from "./summaryCompressionData.js";
-import {
-	FetchSource,
-	IDocumentDeltaConnection,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentServiceEvents,
-	IDocumentServiceFactory,
-	IDocumentServicePolicies,
-	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
-	IResolvedUrl,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions/internal";
 
 /**
  * This function clones the imported summary and returns a new summary with the same content.

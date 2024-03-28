@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IGarbageCollectionState,
 	concatGarbageCollectionStates,
@@ -18,7 +20,6 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.

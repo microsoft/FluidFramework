@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,
@@ -39,7 +40,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { IBlobMetadata } from "./metadata.js";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 /**
  * This class represents blob (long string)

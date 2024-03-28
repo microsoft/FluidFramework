@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
@@ -12,6 +11,7 @@ import {
 	IFluidModuleWithDetails,
 	IProvideRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**

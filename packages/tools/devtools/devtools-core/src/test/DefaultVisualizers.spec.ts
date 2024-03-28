@@ -12,6 +12,7 @@ import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
@@ -36,7 +37,6 @@ import {
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 } from "../data-visualization/index.js";
-import { SharedDirectory } from "@fluidframework/map/internal";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests

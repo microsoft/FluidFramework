@@ -6,6 +6,7 @@
 import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
@@ -15,7 +16,6 @@ import {
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 describeCompat("Generate Summary Stats", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	HostStoragePolicy,
 	IPersistedCache,
@@ -13,7 +14,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory.js";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

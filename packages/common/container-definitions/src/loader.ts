@@ -9,6 +9,7 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type {
 	IClient,
 	IClientDetails,
@@ -29,7 +30,6 @@ import type {
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage.js";
 import type { AttachState } from "./runtime.js";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Encapsulates a module entry point with corresponding code details.

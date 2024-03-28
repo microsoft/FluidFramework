@@ -5,6 +5,12 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+import {
+	DriverHeader,
+	IContainerPackageInfo,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 
@@ -14,12 +20,6 @@ import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
-import {
-	DriverHeader,
-	IContainerPackageInfo,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
 
 function getUrlBase(
 	siteUrl: string,

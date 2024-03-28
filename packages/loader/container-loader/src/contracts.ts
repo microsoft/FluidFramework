@@ -9,7 +9,9 @@ import {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions";
+import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -19,8 +21,6 @@ import {
 	ISignalClient,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
-import { IFluidCodeDetails, isFluidPackage } from "@fluidframework/container-definitions/internal";
-import { IContainerPackageInfo } from "@fluidframework/driver-definitions/internal";
 
 export enum ReconnectMode {
 	Never = "Never",

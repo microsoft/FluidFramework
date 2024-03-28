@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
+import { IHostLoader } from "@fluidframework/container-definitions/internal";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -19,7 +20,6 @@ import {
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { IHostLoader } from "@fluidframework/container-definitions/internal";
 
 const stringId = "sharedStringKey";
 const collectionId = "collectionKey";

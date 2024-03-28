@@ -20,6 +20,7 @@ import {
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IClientDetails,
 	ISequencedDocumentMessage,
@@ -34,7 +35,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage

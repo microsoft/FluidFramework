@@ -8,14 +8,6 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
-	IClient,
-	IDocumentMessage,
-	INack,
-	ISummaryTree,
-	NackErrorType,
-} from "@fluidframework/protocol-definitions";
-import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils";
-import {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -26,6 +18,14 @@ import {
 	IResolvedUrl,
 	ISnapshotFetchOptions,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	IClient,
+	IDocumentMessage,
+	INack,
+	ISummaryTree,
+	NackErrorType,
+} from "@fluidframework/protocol-definitions";
+import { LoggingError, UsageError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();

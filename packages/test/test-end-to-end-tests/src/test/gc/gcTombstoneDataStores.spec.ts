@@ -14,6 +14,7 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowTombstoneRequestHeaderKey,
 	ContainerRuntime,
@@ -48,7 +49,6 @@ import {
 } from "@fluidframework/test-utils";
 
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 type ExpectedTombstoneError = Error & {
 	code: number;

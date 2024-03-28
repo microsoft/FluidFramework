@@ -11,6 +11,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -21,14 +22,13 @@ import { assert, delay } from "@fluidframework/core-utils";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IDirectory, ISharedDirectory } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { ILoadTestConfig } from "./testConfigFile.js";
-import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
-import { IDirectory, ISharedDirectory } from "@fluidframework/map/internal";
 
 export interface IRunConfig {
 	runId: number;

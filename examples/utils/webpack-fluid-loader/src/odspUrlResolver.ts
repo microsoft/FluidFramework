@@ -4,6 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	IOdspAuthRequestInfo,
 	getDriveItemByRootFileName,
@@ -13,7 +14,6 @@ import {
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 } from "@fluidframework/odsp-driver";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 export class OdspUrlResolver implements IUrlResolver {
 	private readonly driverUrlResolver = new OdspDriverUrlResolver();

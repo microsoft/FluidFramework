@@ -4,6 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -11,7 +12,6 @@ import {
 import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalSessionStorageDbFactory,
@@ -16,7 +17,6 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 
 import { IDevServerUser, IRouterliciousRouteOptions, RouteOptions } from "./loader.js";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 export const deltaConnectionServer = LocalDeltaConnectionServer.create(
 	new LocalSessionStorageDbFactory(),

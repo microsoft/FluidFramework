@@ -7,7 +7,13 @@ import { resolve } from 'path';
 
 import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { AttachState } from '@fluidframework/container-definitions';
+import {
+	type IContainer,
+	type IFluidCodeDetails,
+	type IHostLoader,
+} from '@fluidframework/container-definitions/internal';
 import { IContainerExperimental } from '@fluidframework/container-loader';
+import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -71,12 +77,6 @@ import {
 } from '../../persisted-types/index.js';
 
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
-import {
-	type IContainer,
-	type IFluidCodeDetails,
-	type IHostLoader,
-} from '@fluidframework/container-definitions/internal';
-import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

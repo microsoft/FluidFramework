@@ -4,6 +4,7 @@
  */
 
 import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
 	GenericNetworkError,
@@ -11,8 +12,8 @@ import {
 	createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { DriverError } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Routerlicious Error types

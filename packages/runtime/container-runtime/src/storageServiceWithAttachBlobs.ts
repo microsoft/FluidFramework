@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
+import { DocumentStorageServiceProxy } from "@fluidframework/driver-utils";
 
 /**
  * IDocumentStorageService proxy which intercepts requests if they can be satisfied by the blobs received in the
