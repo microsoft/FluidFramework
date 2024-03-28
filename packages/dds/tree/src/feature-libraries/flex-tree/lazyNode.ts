@@ -65,6 +65,7 @@ import {
 } from "./flexTreeTypes.js";
 import {
 	LazyEntity,
+	anchorSymbol,
 	cursorSymbol,
 	forgetAnchorSymbol,
 	isFreedSymbol,
@@ -127,7 +128,7 @@ function buildSubclass(
  * Lazy implementation of {@link FlexTreeNode}.
  */
 export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTreeNodeSchema>
-	extends LazyEntity<TSchema, AnchorNode>
+	extends LazyEntity<TSchema, Anchor>
 	implements FlexTreeNode
 {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
@@ -141,8 +142,6 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
 
-	readonly #anchorRef: Anchor;
-
 	public constructor(
 		context: Context,
 		schema: TSchema,
@@ -150,10 +149,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
-		super(context, schema, cursor, anchorNode);
-		// By extending LazyEntity we have this.anchor, but given the generic types used, that is an AnchorNode and not an
-		// Anchor, so we need to keep this reference separately for a few things.
-		this.#anchorRef = anchor;
+		super(context, schema, cursor, anchor);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
@@ -179,7 +175,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 	protected override [tryMoveCursorToAnchorSymbol](
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToNode(this.#anchorRef, cursor);
+		return this.context.forest.tryMoveCursorToNode(this[anchorSymbol], cursor);
 	}
 
 	protected override [forgetAnchorSymbol](): void {
@@ -188,7 +184,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slots.delete(flexTreeSlot);
 		this.#removeDeleteCallback();
-		this.context.forest.anchors.forget(this.#anchorRef);
+		this.context.forest.anchors.forget(this[anchorSymbol]);
 	}
 
 	public get value(): Value {
