@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import assert from "node:assert";
 import { TreeValue } from "../../core/index.js";
-import { SchemaFactory, TreeNode } from "../../simple-tree/index.js";
+import { SchemaFactory, SchemaFactoryRecursive, TreeNode } from "../../simple-tree/index.js";
 import {
 	InsertableTreeFieldFromImplicitField,
 	InsertableTypedNode,
@@ -13,6 +14,7 @@ import {
 	TreeFieldFromImplicitField,
 	TreeLeafValue,
 	TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
@@ -149,5 +151,36 @@ describe("schemaTypes", () => {
 
 	it("TreeLeafValue", () => {
 		type _check = requireTrue<areSafelyAssignable<TreeLeafValue, TreeValue>>;
+	});
+
+	describe.only("normalizeAllowedTypes", () => {
+		it("Normalizes single type", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const result = normalizeAllowedTypes(schemaFactory.number);
+			assert.equal(result.size, 1);
+			assert(result.has(schemaFactory.number));
+		});
+
+		it("Normalizes multiple types", () => {
+			const schemaFactory = new SchemaFactory("test");
+			const result = normalizeAllowedTypes([schemaFactory.number, schemaFactory.boolean]);
+			assert.equal(result.size, 2);
+			assert(result.has(schemaFactory.boolean));
+			assert(result.has(schemaFactory.number));
+		});
+
+		it("Normalization of recursive schema", () => {
+			const schemaFactory = new SchemaFactoryRecursive("test");
+			class Foo extends schemaFactory.objectRecursive("Foo", {
+				x: () => Bar,
+			}) {}
+			class Bar extends schemaFactory.objectRecursive("Foo", {
+				y: () => Foo,
+			}) {}
+			const result = normalizeAllowedTypes([Foo, Bar]);
+			assert.equal(result.size, 2);
+			assert(result.has(Foo));
+			assert(result.has(Bar));
+		});
 	});
 });
