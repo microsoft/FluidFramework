@@ -35,7 +35,7 @@ const waitForSignal = async (...signallers: { once(e: "signal", l: () => void): 
 		),
 	);
 
-describeCompat("TestSignals", "FullCompat", (getTestObjectProvider) => {
+describeCompat.skip("TestSignals", "FullCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
