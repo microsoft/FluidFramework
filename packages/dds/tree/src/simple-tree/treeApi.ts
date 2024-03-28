@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { TreeValue } from "../core/index.js";
+import { TreeValue, rootFieldKey } from "../core/index.js";
 import {
 	FlexTreeNodeEvents,
 	LeafNodeSchema,
@@ -13,12 +13,21 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { getOrCreateNodeProxy, getSimpleSchema } from "./proxies.js";
+import { getOrCreateNodeProxy, getProxyForField, getSimpleSchema } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { schemaFromValue } from "./schemaFactory.js";
-import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
+import {
+	NodeFromSchema,
+	NodeKind,
+	TreeLeafValue,
+	TreeNodeSchema,
+	type StoredKey,
+	type ImplicitFieldSchema,
+	FieldSchema,
+} from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
+import { brand } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -49,6 +58,17 @@ export interface TreeNodeApi {
 		value: unknown,
 		schema: TSchema,
 	): value is NodeFromSchema<TSchema>;
+
+	/**
+	 * Gets the child node based on its `stableName`.
+	 * @remarks This method is intended to be used when the developer-facing key for a particular child
+	 * is not known, and only the `stableName` is known.
+	 * @param node - TODO
+	 * @param storedKey - TODO
+	 * @returns TODO
+	 */
+	child(node: TreeNode, storedKey: StoredKey): TreeNode | TreeValue | undefined;
+
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
@@ -60,6 +80,14 @@ export interface TreeNodeApi {
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key(node: TreeNode): string | number;
+
+	/**
+	 * TODO
+	 * @param node - TODO
+	 * @returns TODO
+	 */
+	storedKey(node: TreeNode): StoredKey | number;
+
 	/**
 	 * Register an event listener on the given node.
 	 * @returns A callback function which will deregister the event.
@@ -80,6 +108,12 @@ export interface TreeNodeApi {
  * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
  */
 export const treeNodeApi: TreeNodeApi = {
+	child: (node: TreeNode, storedKey: StoredKey) => {
+		const editNode = getFlexNode(node);
+		const flexField = editNode.tryGetField(brand(storedKey));
+
+		return flexField === undefined ? undefined : getProxyForField(flexField);
+	},
 	parent: (node: TreeNode): TreeNode | undefined => {
 		const editNode = getFlexNode(node).parentField.parent.parent;
 		if (editNode === undefined) {
@@ -94,6 +128,23 @@ export const treeNodeApi: TreeNodeApi = {
 		return output;
 	},
 	key: (node: TreeNode) => {
+		// If the parent is undefined, then this node is under the root field,
+		// so we know its key is the special root one.
+		const parent = treeNodeApi.parent(node);
+		if (parent === undefined) {
+			return rootFieldKey;
+		}
+
+		// The flex-domain strictly operates in terms of "stored keys".
+		// To find the associated developer-facing "view key", we need to look up the field associated with
+		// the stored key from the flex-domain, and get view key its simple-domain counterpart was created with.
+		const storedKey = treeNodeApi.storedKey(node);
+		const viewKey = tryGetViewKeyFromStoredKey(parent, storedKey);
+		assert(viewKey !== undefined, "Existing stableName should always map to a devKey");
+		return viewKey;
+	},
+	storedKey: (node: TreeNode): StoredKey | number => {
+		// Note: the flex domain strictly works with `stableName`s, and knows nothing of developer keys.
 		const parentField = getFlexNode(node).parentField;
 		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
 			// The parent of `node` is an array node
@@ -137,6 +188,36 @@ export const treeNodeApi: TreeNodeApi = {
 		>;
 	},
 };
+
+/**
+ * TODO
+ */
+function tryGetViewKeyFromStoredKey(
+	tree: TreeNode,
+	storedKey: StoredKey | number,
+): string | number | undefined {
+	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "view key".
+	// For any other kind of node, the stored key and the view key are the same.
+	const schema = treeNodeApi.schema(tree);
+	if (schema.kind !== NodeKind.Object) {
+		return storedKey;
+	}
+
+	const fields = schema.info as Record<string, ImplicitFieldSchema>;
+
+	// Invariants:
+	// - The set of all view keys under an object must be unique.
+	// - The set of all stored keys (including those implicitly created from view keys) must be unique.
+	// To find the view key associated with the provided stored key, first check for any stored key matches (which are optionally populated).
+	// If we don't find any, then search for a matching view key.
+	for (const [viewKey, fieldSchema] of Object.entries(fields)) {
+		if (fieldSchema instanceof FieldSchema && fieldSchema.props?.key === storedKey) {
+			return viewKey;
+		}
+	}
+
+	return fields[storedKey] === undefined ? undefined : storedKey;
+}
 
 /**
  * A collection of events that can be raised by a {@link TreeNode}.
