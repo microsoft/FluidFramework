@@ -429,7 +429,7 @@ export const makeTreeEditGenerator = (
 			? done
 			: {
 					type: "treeEdit",
-					contents: {
+					edit: {
 						type: "fieldEdit",
 						change,
 						field: {
@@ -470,13 +470,13 @@ export const makeTransactionEditGenerator = (
 	]);
 
 	return (state) => {
-		const contents = transactionBoundaryType(state);
+		const boundary = transactionBoundaryType(state);
 
-		return contents === done
+		return boundary === done
 			? done
 			: {
 					type: "transactionBoundary",
-					boundary: contents,
+					boundary,
 			  };
 	};
 };
@@ -487,11 +487,9 @@ export const makeSchemaEdit = (): Generator<SchemaChange, FuzzTestState> => {
 	};
 
 	return (state) => {
-		const contents = makeSchemaOp(state);
-
 		return {
 			type: "schemaChange",
-			operation: contents,
+			operation: makeSchemaOp(state),
 		};
 	};
 };
@@ -512,12 +510,12 @@ export const makeUndoRedoEditGenerator = (
 	]);
 
 	return (state) => {
-		const contents = undoRedoType(state);
-		return contents === done
+		const operation = undoRedoType(state);
+		return operation === done
 			? done
 			: {
 					type: "undoRedo",
-					operation: contents,
+					operation,
 			  };
 	};
 };

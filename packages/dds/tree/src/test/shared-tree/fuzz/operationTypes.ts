@@ -12,7 +12,7 @@ export type TreeOperation = TreeEdit | TransactionBoundary | UndoRedo | SchemaCh
 
 export interface TreeEdit {
 	type: "treeEdit";
-	contents: FieldEdit;
+	edit: FieldEdit;
 }
 
 export interface TransactionBoundary {

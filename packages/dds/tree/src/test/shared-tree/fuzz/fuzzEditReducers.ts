@@ -48,24 +48,23 @@ import {
 } from "./operationTypes.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
-	treeEdit: (state, operation) => {
-		const { contents } = operation;
-		switch (contents.type) {
+	treeEdit: (state, { edit }) => {
+		switch (edit.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state), contents);
+				applyFieldEdit(viewFromState(state), edit);
 				break;
 			}
 			default:
 				break;
 		}
 	},
-	transactionBoundary: (state, operation) => {
-		applyTransactionBoundary(state, operation.boundary);
+	transactionBoundary: (state, { boundary }) => {
+		applyTransactionBoundary(state, boundary);
 	},
-	undoRedo: (state, operation) => {
+	undoRedo: (state, { operation }) => {
 		const view = viewFromState(state).checkout;
 		assert(isRevertibleSharedTreeView(view));
-		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.operation);
+		applyUndoRedoEdit(view.undoStack, view.redoStack, operation);
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);

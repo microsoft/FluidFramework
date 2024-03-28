@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -46,17 +46,16 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
-	treeEdit: async (state, operation) => {
-		const { contents } = operation;
-		switch (contents.type) {
+	treeEdit: async (state, { edit }) => {
+		switch (edit.type) {
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, contents);
+				applyFieldEdit(tree, edit);
 				break;
 			}
 			default:
-				break;
+				fail("Unknown tree edit type");
 		}
 		return state;
 	},
@@ -65,11 +64,10 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: async (state, operation) => {
-		const { operation: contents } = operation;
+	undoRedo: async (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
+		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
