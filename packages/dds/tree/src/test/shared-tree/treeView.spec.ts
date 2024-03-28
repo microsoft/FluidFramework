@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { emptyStringSequenceConfig, flexTreeViewWithContent } from "../utils.js";
 
 describe("sharedTreeView", () => {

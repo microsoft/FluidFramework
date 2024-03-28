@@ -4,12 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	createInsertOnlyAttributionPolicy,
 	createPropertyTrackingAttributionPolicyFactory,
 } from "../attributionPolicy.js";
 import { IMergeTreeOptions } from "../mergeTree.js";
 import { SnapshotV1 } from "../snapshotV1.js";
+
 import { TestString, loadSnapshot } from "./snapshot.utils.js";
 
 function makeSnapshotSuite(options?: IMergeTreeOptions): void {

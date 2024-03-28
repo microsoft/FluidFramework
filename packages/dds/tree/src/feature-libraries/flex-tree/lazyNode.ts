@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+
 import {
 	Anchor,
 	AnchorNode,
@@ -37,6 +38,7 @@ import {
 	schemaIsMap,
 	schemaIsObjectNode,
 } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,

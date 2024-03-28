@@ -4,7 +4,9 @@
  */
 
 import { SequenceEvent } from "@fluidframework/sequence";
+
 import { emptyObject } from "../util/index.js";
+
 import { Layout } from "./layout.js";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";

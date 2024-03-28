@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+
 import { TreeValue } from "../core/index.js";
 import {
 	LeafNodeSchema,
@@ -12,6 +13,7 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+
 import { getOrCreateNodeProxy, getSimpleSchema } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { schemaFromValue } from "./schemaFactory.js";

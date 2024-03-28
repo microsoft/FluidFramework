@@ -4,6 +4,7 @@
  */
 
 import fs from "fs";
+
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";

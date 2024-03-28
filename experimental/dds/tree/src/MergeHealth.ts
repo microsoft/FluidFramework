@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+
 import { assertNotUndefined, fail } from './Common.js';
 import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
 import { SharedTreeEvent } from './EventTypes.js';

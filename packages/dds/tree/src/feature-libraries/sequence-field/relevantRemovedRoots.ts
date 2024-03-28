@@ -4,8 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { DeltaDetachedNodeId, TaggedChange, offsetDetachId } from "../../core/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
+
 import { Changeset, Mark } from "./types.js";
 import { isAttachAndDetachEffect, isDetachOfRemovedNodes, isInsert } from "./utils.js";
 

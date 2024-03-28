@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeFn,
@@ -14,6 +15,7 @@ import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
+
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 import { RemoteChannelContext } from "../remoteChannelContext.js";
 

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	IBatchMessage,
 	IContainerContext,
@@ -16,6 +17,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import {
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,

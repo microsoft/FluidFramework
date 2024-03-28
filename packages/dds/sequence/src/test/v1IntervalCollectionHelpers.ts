@@ -10,6 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { Client } from "@fluidframework/merge-tree";
+
 import {
 	ISerializedIntervalCollectionV2,
 	IntervalCollection,

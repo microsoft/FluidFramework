@@ -14,6 +14,7 @@ import {
 	TreeConfiguration,
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
+
 import { hydrate } from "./utils.js";
 
 const schema = new SchemaFactory("com.example");

@@ -10,7 +10,9 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.js";
+
 import { ICompressionStorageConfig } from "./compressionTypes.js";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter.js";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
