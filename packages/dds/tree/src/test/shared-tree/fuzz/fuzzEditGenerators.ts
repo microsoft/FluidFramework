@@ -431,11 +431,11 @@ export const makeTreeEditGenerator = (
 					type: "treeEdit",
 					edit: {
 						type: "fieldEdit",
-						change,
 						field: {
 							parent: maybeDownPathFromNode(fieldInfo.content.parent),
 							key: fieldInfo.content.key,
 						},
+						change,
 					},
 			  };
 	};
