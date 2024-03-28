@@ -19,8 +19,7 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DirectoryFactory } from "../../directory.js";
-import { IDirectory } from "../../interfaces.js";
+import { DirectoryFactory, IDirectory } from "../../index.js";
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 

@@ -51,17 +51,13 @@ export interface CompatConfig {
 	 * Cross Version Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to create the container with.
 	 * (Same version will be used across all layers).
+	 * This is same as compatVersion, but it's easier to use createVersion in the code as compatVersion type is number | string.
 	 */
-	createWith?: CompatVersion;
+	createVersion?: string;
 	/**
 	 * Cross Version Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to load the container with.
 	 * (Same version will be used across all layers).
-	 */
-	loadWith?: CompatVersion;
-	/**
-	 * Cross Version Compat Only
-	 * Resolved version from loadWith used to calculate min compat version to test against.
 	 */
 	loadVersion?: string;
 }
@@ -265,9 +261,9 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 
 /**
  * Generates the cross version compat config permutations.
- * This will resolve to one permutation where `CompatConfig.createWith` is set to the current version and
- * `CompatConfig.loadWith` is set to the delta (N-1) version. Then, a second permutation where `CompatConfig.createWith`
- * is set to the delta (N-1) version and `CompatConfig.loadWith` is set to the current version.
+ * This will resolve to one permutation where `CompatConfig.createVersion` is set to the current version and
+ * `CompatConfig.loadVersion` is set to the delta (N-1) version. Then, a second permutation where `CompatConfig.createVersion`
+ * is set to the delta (N-1) version and `CompatConfig.loadVersion` is set to the current version.
  *
  * Note: `adjustMajorPublic` will be set to true when requesting versions. This will ensure that we test against
  * the latest **public** major release when using the N-1 version (instead of the most recent internal major release).
@@ -301,15 +297,14 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 						// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
 						// installed, since we switch the create/load versions in the test permutations.
 						compatVersion: resolvedCreateVersion,
-						createWith: createVersion,
-						loadWith: loadVersion,
+						createVersion: resolvedCreateVersion,
 						loadVersion: resolvedLoadVersion,
 					};
 				}),
 			)
 			.reduce((a, b) => a.concat(b))
 			// Filter to ensure we don't create/load with the same version.
-			.filter((config) => config.createWith !== config.loadWith)
+			.filter((config) => config.compatVersion !== config.loadVersion)
 	);
 };
 
