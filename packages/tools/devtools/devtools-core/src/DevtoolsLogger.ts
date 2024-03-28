@@ -157,7 +157,7 @@ class DevtoolsLogger implements IDevtoolsLogger {
 /**
  * Creates a new {@link IDevtoolsLogger} by wrapping the provided (optional) base logger.
  *
- * @alpha
+ * @beta
  */
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger {
 	return new DevtoolsLogger(baseLogger);

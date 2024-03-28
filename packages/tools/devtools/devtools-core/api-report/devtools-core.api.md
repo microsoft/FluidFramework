@@ -152,7 +152,7 @@ export interface ContainerStateMetadata extends HasContainerKey {
     userId?: string;
 }
 
-// @alpha
+// @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
 // @internal
