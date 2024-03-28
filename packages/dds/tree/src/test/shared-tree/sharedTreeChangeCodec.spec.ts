@@ -26,11 +26,11 @@ import {
 	defaultSchemaPolicy,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
+import { makeModularChangeCodecFamily } from "../../feature-libraries/modular-schema/modularChangeCodecs.js";
+// eslint-disable-next-line import/no-internal-modules
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeModularChangeCodecFamily } from "../../feature-libraries/modular-schema/modularChangeCodecs.js";
 import { ajvValidator } from "../codec/index.js";
 import { testRevisionTagCodec } from "../utils.js";
 

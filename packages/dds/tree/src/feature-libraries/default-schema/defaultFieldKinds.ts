@@ -184,6 +184,16 @@ const fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration> = new
 			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
 		]),
 	],
+	[
+		1,
+		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
+			[nodeKey.identifier, { kind: nodeKey, formatVersion: 0 }],
+			[required.identifier, { kind: required, formatVersion: 1 }],
+			[optional.identifier, { kind: optional, formatVersion: 1 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 0 }],
+			[forbidden.identifier, { kind: forbidden, formatVersion: 0 }],
+		]),
+	],
 ]);
 
 /**

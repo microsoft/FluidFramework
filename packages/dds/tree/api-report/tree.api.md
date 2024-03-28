@@ -1680,11 +1680,25 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 }
 
 // @internal (undocumented)
-export interface SharedTreeOptions extends Partial<ICodecOptions> {
-    forest?: ForestType;
+export interface SharedTreeFormatOptions {
     // (undocumented)
-    treeEncodeType?: TreeCompressionStrategy;
+    formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+    // (undocumented)
+    treeEncodeType: TreeCompressionStrategy;
 }
+
+// @internal (undocumented)
+export const SharedTreeFormatVersion: {
+    readonly v1: 1;
+};
+
+// @internal (undocumented)
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+// @internal (undocumented)
+export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & {
+    forest?: ForestType;
+};
 
 // @internal
 export function singletonSchema<TScope extends string, TName extends string | number>(factory: SchemaFactory<TScope, TName>, name: TName): TreeNodeSchemaClass<ScopedSchemaName<TScope, TName>, NodeKind.Object, object & TreeNode & ObjectFromSchemaRecord<EmptyObject> & {

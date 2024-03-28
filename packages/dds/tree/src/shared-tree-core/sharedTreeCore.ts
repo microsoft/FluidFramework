@@ -26,7 +26,7 @@ import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { SeqNumber } from "./editManagerFormat.js";
-import { EditManagerSummarizer } from "./editManagerSummarizer.js";
+import { type EditManagerFormatOptions, EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 
@@ -92,7 +92,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public constructor(
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
-		options: ICodecOptions,
+		options: ICodecOptions & EditManagerFormatOptions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,

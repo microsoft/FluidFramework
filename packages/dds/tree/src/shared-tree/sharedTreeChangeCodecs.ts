@@ -14,12 +14,30 @@ import {
 import { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
 	ModularChangeset,
+	type SchemaChange,
 	defaultSchemaPolicy,
-	makeSchemaChangeCodec,
+	makeSchemaChangeCodecs,
 } from "../feature-libraries/index.js";
-import { Mutable, type JsonCompatibleReadOnly } from "../util/index.js";
+import { type JsonCompatibleReadOnly, Mutable } from "../util/index.js";
 import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
 import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+
+export function makeSharedTreeChangeCodecFamily(
+	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	options: ICodecOptions,
+): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
+	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
+	return makeCodecFamily([
+		[
+			0,
+			makeSharedTreeChangeCodec(
+				modularChangeCodecFamily.resolve(0).json,
+				schemaChangeCodecs.resolve(0).json,
+				options,
+			),
+		],
+	]);
+}
 
 function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<
@@ -28,6 +46,7 @@ function makeSharedTreeChangeCodec(
 		JsonCompatibleReadOnly,
 		ChangeEncodingContext
 	>,
+	schemaChangeCodec: IJsonCodec<SchemaChange>,
 	codecOptions: ICodecOptions,
 ): IJsonCodec<
 	SharedTreeChange,
@@ -35,8 +54,6 @@ function makeSharedTreeChangeCodec(
 	EncodedSharedTreeChange,
 	ChangeEncodingContext
 > {
-	const schemaChangeCodec = makeSchemaChangeCodec(codecOptions);
-
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		EncodedSharedTreeInnerChange,
 		[context: ChangeEncodingContext],
@@ -99,13 +116,4 @@ function makeSharedTreeChangeCodec(
 		},
 		codecOptions.jsonValidator,
 	);
-}
-
-export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
-	options: ICodecOptions,
-): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
-	return makeCodecFamily([
-		[0, makeSharedTreeChangeCodec(modularChangeCodecFamily.resolve(0).json, options)],
-	]);
 }

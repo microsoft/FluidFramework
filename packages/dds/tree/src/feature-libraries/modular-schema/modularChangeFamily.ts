@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
+import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,
 	ChangeEncodingContext,

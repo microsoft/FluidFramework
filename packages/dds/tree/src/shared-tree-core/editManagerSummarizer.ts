@@ -28,7 +28,9 @@ import { Summarizable, SummaryElementParser, SummaryElementStringifier } from ".
 
 const stringKey = "String";
 
-const formatVersion = 0;
+export interface EditManagerFormatOptions {
+	writeVersion: number;
+}
 
 /**
  * Provides methods for summarizing and loading an `EditManager`
@@ -36,11 +38,6 @@ const formatVersion = 0;
 export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public readonly key = "EditManager";
 
-	// Note: since there is only one format, this can just be cached on the class.
-	// With more write formats active, it may make sense to keep around the "usual" format codec
-	// (the one for the current persisted configuration) and resolve codecs for different versions
-	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
-	// and an op needs to be interpreted which isn't written with the current configuration).
 	private readonly codec: IJsonCodec<
 		SummaryData<TChangeset>,
 		JsonCompatibleReadOnly,
@@ -59,11 +56,14 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			EncodedRevisionTag,
 			ChangeEncodingContext
 		>,
-		options: ICodecOptions,
+		options: ICodecOptions & EditManagerFormatOptions,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {
-		const changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
-		this.codec = makeEditManagerCodec(changesetCodec, revisionTagCodec, options);
+		this.codec = makeEditManagerCodec(
+			this.editManager.changeFamily.codecs,
+			revisionTagCodec,
+			options,
+		);
 	}
 
 	public getAttachSummary(

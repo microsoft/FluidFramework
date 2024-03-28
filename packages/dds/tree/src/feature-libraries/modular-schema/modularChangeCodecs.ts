@@ -6,13 +6,13 @@
 import { assert } from "@fluidframework/core-utils";
 import { TAnySchema } from "@sinclair/typebox";
 import {
+	type ICodecFamily,
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
 	SchemaValidationFunction,
-	withSchemaValidation,
-	type ICodecFamily,
 	makeCodecFamily,
+	withSchemaValidation,
 } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,

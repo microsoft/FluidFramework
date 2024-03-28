@@ -256,6 +256,8 @@ export {
 	buildTreeConfiguration,
 	ISharedTreeEditor,
 	ISchemaEditor,
+	SharedTreeFormatOptions,
+	SharedTreeFormatVersion,
 	Tree,
 	TreeApi,
 } from "./shared-tree/index.js";

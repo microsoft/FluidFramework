@@ -4,7 +4,7 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnlySchema } from "../util/utils.js";
+import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 export const EncodedSharedTreeInnerChange = Type.Object({
 	schema: Type.Optional(JsonCompatibleReadOnlySchema),

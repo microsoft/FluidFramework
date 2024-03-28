@@ -38,7 +38,9 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		schema: TreeStoredSchemaSubscription = new TreeStoredSchemaRepository(),
 		chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Uncompressed,
 	) {
-		const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
+		const codecOptions: ICodecOptions = {
+			jsonValidator: typeboxValidator,
+		};
 		super(
 			summarizables,
 			new DefaultChangeFamily(
@@ -47,7 +49,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 				codecOptions,
 				chunkCompressionStrategy,
 			),
-			codecOptions,
+			{ ...codecOptions, writeVersion: 0 },
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

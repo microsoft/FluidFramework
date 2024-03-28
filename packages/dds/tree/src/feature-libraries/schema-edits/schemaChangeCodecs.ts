@@ -3,12 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import {
+	type ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	makeCodecFamily,
+} from "../../codec/index.js";
 import { makeSchemaCodec } from "../schema-index/index.js";
 import { EncodedSchemaChange } from "./schemaChangeFormat.js";
 import { SchemaChange } from "./schemaChangeTypes.js";
 
-export function makeSchemaChangeCodec({
+export function makeSchemaChangeCodecs(options: ICodecOptions): ICodecFamily<SchemaChange> {
+	return makeCodecFamily([[0, makeSchemaChangeCodec(options)]]);
+}
+
+function makeSchemaChangeCodec({
 	jsonValidator: validator,
 }: ICodecOptions): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });

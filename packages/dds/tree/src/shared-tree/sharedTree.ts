@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -110,6 +111,24 @@ export interface ISharedTree extends ISharedObject, ITree {
 	): FlexTreeView<TRoot> | undefined;
 }
 
+interface TopLevelCodecVersions {
+	forest: number;
+	schema: number;
+	detachedFieldIndex: number;
+	editManager: number;
+	message: number;
+}
+
+const formatVersionToTopLevelCodecVersions = new Map<number, TopLevelCodecVersions>([
+	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1 }],
+]);
+
+function getCodecVersions(formatVersion: number): TopLevelCodecVersions {
+	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
+	assert(versions !== undefined, "Unknown format version");
+	return versions;
+}
+
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
@@ -139,6 +158,7 @@ export class SharedTree
 		}
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
+		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
 		const forest =
 			options.forest === ForestType.Optimized
@@ -197,7 +217,7 @@ export class SharedTree
 		super(
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
-			options,
+			{ ...options, writeVersion: codecVersions.editManager },
 			id,
 			runtime,
 			attributes,
@@ -275,12 +295,35 @@ export class SharedTree
 /**
  * @internal
  */
-export interface SharedTreeOptions extends Partial<ICodecOptions> {
+export const SharedTreeFormatVersion = {
+	v1: 1,
+} as const;
+
+/**
+ * @internal
+ */
+export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
+
+/**
+ * @internal
+ */
+export type SharedTreeOptions = Partial<ICodecOptions> &
+	Partial<SharedTreeFormatOptions> & {
+		/**
+		 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+		 */
+		forest?: ForestType;
+	};
+
+/**
+ * @internal
+ */
+export interface SharedTreeFormatOptions {
+	treeEncodeType: TreeCompressionStrategy;
 	/**
-	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
+	 *
 	 */
-	forest?: ForestType;
-	treeEncodeType?: TreeCompressionStrategy;
+	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }
 
 /**
@@ -302,6 +345,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
+	formatVersion: SharedTreeFormatVersion.v1,
 };
 
 /**
