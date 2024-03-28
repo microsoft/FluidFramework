@@ -1120,20 +1120,22 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	private attachListeners(): void {
-		this.once("attaching", () => {
-			assert(
-				this.attachState === AttachState.Detached,
-				0x14d /* "Should move from detached to attaching" */,
-			);
-			this._attachState = AttachState.Attaching;
-		});
-		this.once("attached", () => {
-			assert(
-				this.attachState === AttachState.Attaching,
-				0x14e /* "Should move from attaching to attached" */,
-			);
-			this._attachState = AttachState.Attached;
-		});
+		if (this.attachState !== AttachState.Attached) {
+			this.once("attaching", () => {
+				assert(
+					this.attachState === AttachState.Detached,
+					0x14d /* "Should move from detached to attaching" */,
+				);
+				this._attachState = AttachState.Attaching;
+			});
+			this.once("attached", () => {
+				assert(
+					this.attachState === AttachState.Attaching,
+					0x14e /* "Should move from attaching to attached" */,
+				);
+				this._attachState = AttachState.Attached;
+			});
+		}
 	}
 
 	/**
