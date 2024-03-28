@@ -5,13 +5,13 @@
 
 import { strict as assert } from "assert";
 
-import { MockHandle } from "@fluidframework/test-runtime-utils";
+import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import { EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 
 import type { ImplicitAllowedTypes } from "../../../dist/index.js";
 import { leaf } from "../../domains/index.js";
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, SchemaFactoryRecursive } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { InsertableContent } from "../../simple-tree/proxies.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -28,7 +28,7 @@ function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowe
 	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
 }
 
-describe("toMapTree", () => {
+describe.only("toMapTree", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
@@ -74,6 +74,88 @@ describe("toMapTree", () => {
 		};
 
 		assert.deepEqual(actual, expected);
+	});
+
+	it("recursive", () => {
+		const schemaFactory = new SchemaFactoryRecursive("test");
+		class Foo extends schemaFactory.objectRecursive("Foo", {
+			x: schemaFactory.optionalRecursive(() => Bar),
+		}) {}
+		class Bar extends schemaFactory.objectRecursive("Bar", {
+			y: schemaFactory.optionalRecursive(() => Foo),
+		}) {}
+
+		const actual = nodeDataToMapTree(
+			{
+				x: {
+					y: {
+						x: undefined,
+					},
+				},
+			},
+			Foo,
+		);
+
+		const expected: MapTree = {
+			type: brand(Foo.identifier),
+			fields: new Map<FieldKey, MapTree[]>([
+				[
+					brand("x"),
+					[
+						{
+							type: brand(Bar.identifier),
+							fields: new Map<FieldKey, MapTree[]>([
+								[
+									brand("y"),
+									[
+										{
+											type: brand(Foo.identifier),
+											fields: new Map(),
+										},
+									],
+								],
+							]),
+						},
+					],
+				],
+			]),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("Fails when referenced schema has not yet been instantiated", () => {
+		const schemaFactory = new SchemaFactoryRecursive("test");
+
+		let Bar: any;
+		class Foo extends schemaFactory.objectRecursive("Foo", {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			x: schemaFactory.optionalRecursive(() => Bar),
+		}) {}
+
+		const tree = {
+			x: {
+				y: "Hello world!",
+			},
+		};
+
+		assert.throws(
+			() => nodeDataToMapTree(tree, Foo),
+			(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+		);
+	});
+
+	it("Fails when data is incompatible with schema", () => {
+		const schemaFactory = new SchemaFactory("test");
+
+		assert.throws(
+			() => nodeDataToMapTree("Hello world", [schemaFactory.number]),
+			(error: Error) =>
+				validateAssertionError(
+					error,
+					/The provided data is incompatible with all of the types allowed by the schema/,
+				),
+		);
 	});
 
 	describe("array", () => {
