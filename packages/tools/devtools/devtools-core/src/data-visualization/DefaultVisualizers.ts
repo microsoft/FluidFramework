@@ -15,8 +15,8 @@ import { type IDirectory, SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
-import { SharedTree, encodeTreeSchema } from "@fluidframework/tree";
-import type { ISharedTree } from "@fluidframework/tree";
+import type { ISharedTree } from "@fluidframework/tree/internal";
+import { SharedTree, encodeTreeSchema } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
