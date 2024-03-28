@@ -74,6 +74,11 @@ export interface VisualNodeBase {
 	 * Inside of the porperty is an array of possible EditTypes to inform devtools-view to only show the corresponding edit options for the types allowed
 	 */
 	editProps?: { editTypes?: EditType[] };
+
+	/**
+	 * Schema data of the SharedTree
+	 */
+	sharedTreeSchemaData?: string | Record<string | number, string>;
 }
 
 /**

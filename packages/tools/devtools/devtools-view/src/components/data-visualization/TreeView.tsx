@@ -31,7 +31,12 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	));
 
 	const header = (
-		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} metadata={metadata} />
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			metadata={metadata}
+			sharedTreeSchemaData={node.sharedTreeSchemaData}
+		/>
 	);
 
 	return <TreeItem header={header}>{childNodes}</TreeItem>;

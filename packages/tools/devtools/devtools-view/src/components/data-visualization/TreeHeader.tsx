@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { tokens } from "@fluentui/react-components";
+import { Tooltip, tokens } from "@fluentui/react-components";
+import { DocumentEdit20Regular } from "@fluentui/react-icons";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
@@ -18,22 +19,28 @@ export interface TreeHeaderProps extends HasLabel {
 	 */
 	nodeTypeMetadata?: string | undefined;
 
+	// TODO: metadata
+	metadata?: string | undefined;
+
 	/**
 	 * Inline value to display alongside the metadata.
 	 */
 	inlineValue?: React.ReactElement | string;
 
-	// TODO: metadata
-	metadata?: string | undefined;
+	/**
+	 * TODO
+	 */
+	sharedTreeSchemaData?: string | Record<string | number, string>;
 }
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue, metadata } = props;
-
+	const { label, nodeTypeMetadata, inlineValue, metadata, sharedTreeSchemaData } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
+
+	console.log("sharedTreeSchemaData", sharedTreeSchemaData);
 
 	return (
 		<div style={{ width: "auto" }}>
@@ -61,6 +68,26 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			>
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
+
+			{sharedTreeSchemaData === undefined ? (
+				""
+			) : (
+				<Tooltip content={JSON.stringify(sharedTreeSchemaData)} relationship="description">
+					<span
+						style={{
+							color:
+								themeInfo.name === ThemeOption.HighContrast
+									? ""
+									: tokens.colorPalettePlatinumBorderActive,
+							fontStyle: "oblique",
+							fontSize: "10px",
+						}}
+					>
+						<DocumentEdit20Regular />
+					</span>
+				</Tooltip>
+			)}
+
 			{inlineValue === undefined ? "" : ": "}
 			{inlineValue}
 		</div>

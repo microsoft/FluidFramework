@@ -11,10 +11,10 @@ import type {
 	TreeNodeStoredSchema,
 } from "@fluidframework/tree/internal";
 import {
+	EmptyKey,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	EmptyKey,
 } from "@fluidframework/tree/internal";
 import type { SharedTreeLeafNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
 import { type VisualChildNode, VisualNodeKind, type VisualValueNode } from "./VisualTree.js";
@@ -27,7 +27,7 @@ export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNod
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			metadata: { allowedTypes: tree.schema.allowedTypes },
+			sharedTreeSchemaData: tree.schema.allowedTypes,
 		};
 		return result;
 	} else {
@@ -35,14 +35,14 @@ export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNod
 		const children: Record<string, VisualChildNode> = {};
 
 		for (const [key, value] of Object.entries(tree.fields)) {
-			const child = visualRepresentationMapper(value);
+			const child = mapToVisualChildNode(value);
 			children[key] = child;
 		}
 
 		return {
 			children,
 			nodeKind: VisualNodeKind.TreeNode,
-			metadata: { allowedTypes: tree.schema.allowedTypes },
+			sharedTreeSchemaData: tree.schema.allowedTypes,
 		};
 	}
 }
@@ -52,6 +52,7 @@ export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNod
  */
 function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	let result = "";
+	const resultObject: Record<string | number, string> = {};
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
 		/**
@@ -60,15 +61,18 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 		const fieldTypes = treeFieldStoredSchema.types;
 
 		let fieldAllowedType = `${fieldKey} : `;
+		let resultObjectValue = "";
 
 		/**
 		 * If not specified, types are unconstrained.
 		 */
 		if (fieldTypes === undefined) {
 			fieldAllowedType += "any";
+			resultObject[fieldKey] = "any";
 		} else {
 			for (const type of fieldTypes) {
 				fieldAllowedType += `${type} | `;
+				resultObjectValue += `${type} | `;
 			}
 		}
 
@@ -78,6 +82,7 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 		fieldAllowedType = `${fieldAllowedType.slice(0, -3)}, `;
 
 		result += fieldAllowedType;
+		resultObject[fieldKey] = resultObjectValue;
 	}
 
 	/**
@@ -85,6 +90,7 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	 */
 	result = result.slice(0, -2);
 
+	console.log(resultObject);
 	return `{ ${result} }`;
 }
 
