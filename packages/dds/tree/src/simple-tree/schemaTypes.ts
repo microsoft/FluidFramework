@@ -258,7 +258,7 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
 	return schema instanceof FieldSchema ? schema : new FieldSchema(FieldKind.Required, schema);
 }
 /**
- * Normalizes a {@link ImplicitAllowedTypes} to a {@link AllowedTypes}.
+ * Normalizes a {@link ImplicitAllowedTypes} to a set of {@link TreeNodeSchema}s.
  */
 export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema> {
 	const normalized = new Set<TreeNodeSchema>();
