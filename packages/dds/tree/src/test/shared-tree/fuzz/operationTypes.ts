@@ -51,14 +51,14 @@ export interface SetField {
 	type: "set";
 	/**
 	 * @privateRemarks - Optional fields use {@link ClearField} to mean "remove the field's contents" rather than
-	 * a `FuzzSet` with undefined value, hence why this property is required.
+	 * a `SetField` with undefined value, hence why this property is required.
 	 */
 	value: JsonableTree;
 }
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: Insert | FuzzRemove | IntraFieldMove;
+	edit: Insert | Remove | IntraFieldMove;
 }
 
 export interface RequiredFieldEdit {
@@ -71,7 +71,7 @@ export interface OptionalFieldEdit {
 	edit: SetField | ClearField;
 }
 
-export interface FuzzRemove {
+export interface Remove {
 	type: "remove";
 	range: NodeRange;
 }

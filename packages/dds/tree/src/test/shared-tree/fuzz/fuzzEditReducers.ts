@@ -38,7 +38,7 @@ import {
 	FieldEdit,
 	ClearField,
 	Insert,
-	FuzzRemove,
+	Remove,
 	SetField,
 	IntraFieldMove,
 	Operation,
@@ -149,7 +149,7 @@ export function applyFieldEdit(tree: FuzzView, fieldEdit: FieldEdit): void {
 function applySequenceFieldEdit(
 	tree: FuzzView,
 	field: FlexTreeSequenceField<any>,
-	change: Insert | FuzzRemove | IntraFieldMove,
+	change: Insert | Remove | IntraFieldMove,
 ): void {
 	switch (change.type) {
 		case "insert": {

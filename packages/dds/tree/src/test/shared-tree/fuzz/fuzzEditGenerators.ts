@@ -47,22 +47,17 @@ import { schematizeFlexTree } from "../../utils.js";
 import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzUtils.js";
 import {
 	Insert,
-	FuzzRemove,
+	Remove,
 	SetField,
 	IntraFieldMove,
 	Operation,
 	OptionalFieldEdit,
-	RedoOp,
 	RequiredFieldEdit,
 	SchemaChange,
 	SequenceFieldEdit,
 	Synchronize,
-	TransactionAbort,
 	TransactionBoundary,
-	TransactionCommit,
-	TransactionStart,
 	TreeEdit,
-	UndoOp,
 	UndoRedo,
 	FieldEdit,
 } from "./operationTypes.js";
@@ -317,7 +312,7 @@ export const makeTreeEditGenerator = (
 			weights.insert,
 		],
 		[
-			({ fieldInfo, random }): FuzzRemove => {
+			({ fieldInfo, random }): Remove => {
 				const field = fieldInfo.content;
 				const first = random.integer(0, field.length - 1);
 				// By avoiding large deletions we're more likely to generate more interesting outcomes.
@@ -368,47 +363,39 @@ export const makeTreeEditGenerator = (
 		value: jsonableTree(state),
 	});
 
-	const fieldEditGenerator = createWeightedGeneratorWithBailout<
-		FieldEdit["change"],
-		FuzzTestStateForFieldEdit
-	>([
-		[
-			(state): SequenceFieldEdit => ({
-				type: "sequence",
-				edit: assertNotDone(
-					sequenceFieldEditGenerator(
-						state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
+	function fieldEditChangeGenerator(state: FuzzTestStateForFieldEdit): FieldEdit["change"] {
+		switch (state.fieldInfo.type) {
+			case "sequence":
+				return {
+					type: "sequence",
+					edit: assertNotDone(
+						sequenceFieldEditGenerator(
+							state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
+						),
 					),
-				),
-			}),
-			weights.fieldSelection.sequence,
-			(state) => state.fieldInfo.type === "sequence",
-		],
-		[
-			(state): OptionalFieldEdit => ({
-				type: "optional",
-				edit: assertNotDone(
-					optionalFieldEditGenerator(
-						state as FuzzTestStateForFieldEdit<OptionalFuzzField>,
+				};
+			case "optional":
+				return {
+					type: "optional",
+					edit: assertNotDone(
+						optionalFieldEditGenerator(
+							state as FuzzTestStateForFieldEdit<OptionalFuzzField>,
+						),
 					),
-				),
-			}),
-			weights.fieldSelection.optional,
-			(state) => state.fieldInfo.type === "optional",
-		],
-		[
-			(state): RequiredFieldEdit => ({
-				type: "required",
-				edit: assertNotDone(
-					requiredFieldEditGenerator(
-						state as FuzzTestStateForFieldEdit<RequiredFuzzField>,
+				};
+			case "required":
+				return {
+					type: "required",
+					edit: assertNotDone(
+						requiredFieldEditGenerator(
+							state as FuzzTestStateForFieldEdit<RequiredFuzzField>,
+						),
 					),
-				),
-			}),
-			weights.fieldSelection.required,
-			(state) => state.fieldInfo.type === "required",
-		],
-	]);
+				};
+			default:
+				fail("Unknown field type");
+		}
+	}
 
 	return (state) => {
 		const fieldInfo = selectTreeField(
@@ -416,108 +403,73 @@ export const makeTreeEditGenerator = (
 			state.random,
 			weights.fieldSelection,
 		);
-		const change = fieldEditGenerator({ ...state, fieldInfo });
-		// This assert is typically hit when restricting the features a fuzz test executes such that it can reach a state
-		// where no edit is valid to generate. E.g. a fuzz test which can only create edits from within transactions but
-		// can never start a transaction, or a fuzz test which can only edit sequence fields but the tree is empty (and
-		// the root schema is an optional field).
-		assert(
-			change !== "no-valid-selections",
-			"Unable to generate a valid field edit. This typically indicates a problematic fuzz test generator setup.",
-		);
-		return change === done
-			? done
-			: {
-					type: "treeEdit",
-					edit: {
-						type: "fieldEdit",
-						field: {
-							parent: maybeDownPathFromNode(fieldInfo.content.parent),
-							key: fieldInfo.content.key,
-						},
-						change,
-					},
-			  };
-	};
-};
-
-export const makeTransactionEditGenerator = (
-	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<TransactionBoundary, FuzzTestState> => {
-	const passedOpWeights = {
-		...defaultEditGeneratorOpWeights,
-		...opWeights,
-	};
-	const start: TransactionStart = { type: "transactionStart" };
-	const commit: TransactionCommit = { type: "transactionCommit" };
-	const abort: TransactionAbort = { type: "transactionAbort" };
-
-	const transactionBoundaryType = createWeightedGenerator<
-		TransactionBoundary["boundary"],
-		FuzzTestState
-	>([
-		[start, passedOpWeights.start],
-		[
-			commit,
-			passedOpWeights.commit,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
-		],
-		[
-			abort,
-			passedOpWeights.abort,
-			(state) => viewFromState(state).checkout.transaction.inProgress(),
-		],
-	]);
-
-	return (state) => {
-		const boundary = transactionBoundaryType(state);
-
-		return boundary === done
-			? done
-			: {
-					type: "transactionBoundary",
-					boundary,
-			  };
-	};
-};
-
-export const makeSchemaEdit = (): Generator<SchemaChange, FuzzTestState> => {
-	const makeSchemaOp = (state: FuzzTestState) => {
-		return { type: "schema", contents: { type: state.random.uuid4() } };
-	};
-
-	return (state) => {
+		const change = fieldEditChangeGenerator({ ...state, fieldInfo });
 		return {
-			type: "schemaChange",
-			operation: makeSchemaOp(state),
+			type: "treeEdit",
+			edit: {
+				type: "fieldEdit",
+				field: {
+					parent: maybeDownPathFromNode(fieldInfo.content.parent),
+					key: fieldInfo.content.key,
+				},
+				change,
+			},
 		};
 	};
 };
 
-export const makeUndoRedoEditGenerator = (
-	opWeights: Partial<EditGeneratorOpWeights>,
-): Generator<UndoRedo, FuzzTestState> => {
-	const passedOpWeights = {
+export const makeTransactionEditGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<TransactionBoundary, FuzzTestState> => {
+	const opWeights = {
 		...defaultEditGeneratorOpWeights,
-		...opWeights,
+		...opWeightsArg,
 	};
-	const undo: UndoOp = { type: "undo" };
-	const redo: RedoOp = { type: "redo" };
 
-	const undoRedoType = createWeightedGenerator<UndoRedo["operation"], FuzzTestState>([
-		[undo, passedOpWeights.undo],
-		[redo, passedOpWeights.redo],
+	return createWeightedGenerator<TransactionBoundary, FuzzTestState>([
+		[
+			{
+				type: "transactionBoundary",
+				boundary: { type: "transactionStart" },
+			},
+			opWeights.start,
+		],
+		[
+			{
+				type: "transactionBoundary",
+				boundary: { type: "transactionCommit" },
+			},
+			opWeights.commit,
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
+		],
+		[
+			{
+				type: "transactionBoundary",
+				boundary: { type: "transactionAbort" },
+			},
+			opWeights.abort,
+			(state) => viewFromState(state).checkout.transaction.inProgress(),
+		],
 	]);
+};
 
-	return (state) => {
-		const operation = undoRedoType(state);
-		return operation === done
-			? done
-			: {
-					type: "undoRedo",
-					operation,
-			  };
+export const schemaEditGenerator: Generator<SchemaChange, FuzzTestState> = (state) => ({
+	type: "schemaChange",
+	operation: { type: "schema", contents: { type: state.random.uuid4() } },
+});
+
+export const makeUndoRedoEditGenerator = (
+	opWeightsArg: Partial<EditGeneratorOpWeights>,
+): Generator<UndoRedo, FuzzTestState> => {
+	const opWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeightsArg,
 	};
+
+	return createWeightedGenerator<UndoRedo, FuzzTestState>([
+		[{ type: "undoRedo", operation: { type: "undo" } }, opWeights.undo],
+		[{ type: "undoRedo", operation: { type: "redo" } }, opWeights.redo],
+	]);
 };
 
 export function makeOpGenerator(
@@ -544,7 +496,7 @@ export function makeOpGenerator(
 					}),
 					weights.synchronizeTrees,
 				],
-				[() => makeSchemaEdit(), weights.schema],
+				[() => schemaEditGenerator, weights.schema],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
