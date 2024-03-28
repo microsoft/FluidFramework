@@ -66,4 +66,3 @@ export {
 	intoDelta,
 	relevantRemovedRoots,
 } from "./modularChangeFamily.js";
-export { makeV0Codec } from "./modularChangeCodecs.js";

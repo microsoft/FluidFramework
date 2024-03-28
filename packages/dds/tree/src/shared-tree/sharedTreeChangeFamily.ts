@@ -57,7 +57,7 @@ export class SharedTreeChangeFamily
 			chunkCompressionStrategy,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
-			this.modularChangeFamily.latestCodec,
+			this.modularChangeFamily.codecs,
 			codecOptions,
 		);
 	}

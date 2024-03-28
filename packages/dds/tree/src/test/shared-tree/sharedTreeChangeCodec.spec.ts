@@ -22,12 +22,13 @@ import {
 	SequenceField,
 	defaultSchemaPolicy,
 	fieldKinds,
-	makeV0Codec,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeSharedTreeChangeCodec } from "../../shared-tree/sharedTreeChangeCodecs.js";
+import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { brand } from "../../util/brand.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeModularChangeCodecFamily } from "../../feature-libraries/modular-schema/modularChangeCodecs.js";
 import { ajvValidator } from "../codec/index.js";
 import { testRevisionTagCodec } from "../utils.js";
 
@@ -45,15 +46,15 @@ describe("sharedTreeChangeCodec", () => {
 				return decode(data).map((chunk) => chunk.cursor());
 			},
 		};
-		const modularChangeCodec = makeV0Codec(
+		const modularChangeCodecs = makeModularChangeCodecFamily(
 			fieldKinds,
 			testRevisionTagCodec,
 			dummyFieldBatchCodec,
 			codecOptions,
 		);
-		const sharedTreeChangeCodec = makeSharedTreeChangeCodec(modularChangeCodec, {
+		const sharedTreeChangeCodec = makeSharedTreeChangeCodecFamily(modularChangeCodecs, {
 			jsonValidator: noopValidator,
-		});
+		}).resolve(0).json;
 
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {

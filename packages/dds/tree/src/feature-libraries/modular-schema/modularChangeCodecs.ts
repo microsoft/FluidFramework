@@ -10,6 +10,9 @@ import {
 	IJsonCodec,
 	IMultiFormatCodec,
 	SchemaValidationFunction,
+	withSchemaValidation,
+	type ICodecFamily,
+	makeCodecFamily,
 } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,
@@ -48,7 +51,33 @@ import {
 	NodeChangeset,
 } from "./modularChangeTypes.js";
 
-export function makeV0Codec(
+export function makeModularChangeCodecFamily(
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
+	revisionTagCodec: IJsonCodec<
+		RevisionTag,
+		EncodedRevisionTag,
+		EncodedRevisionTag,
+		ChangeEncodingContext
+	>,
+	fieldsCodec: FieldBatchCodec,
+	{ jsonValidator: validator }: ICodecOptions,
+	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
+	return makeCodecFamily([
+		[
+			0,
+			makeV0Codec(
+				fieldKinds,
+				revisionTagCodec,
+				fieldsCodec,
+				{ jsonValidator: validator },
+				chunkCompressionStrategy,
+			),
+		],
+	]);
+}
+
+function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
@@ -306,41 +335,45 @@ export function makeV0Codec(
 		return decodedRevisions;
 	}
 
-	// TODO: use withSchemaValidation here to validate data against format.
-	return {
-		encode: (change, context) => {
-			// Destroys only exist in rollback changesets, which are never sent.
-			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
-			return {
-				maxId: change.maxId,
-				revisions:
-					change.revisions === undefined
-						? change.revisions
-						: encodeRevisionInfos(change.revisions, context),
-				changes: encodeFieldChangesForJson(change.fieldChanges, context),
-				builds: encodeDetachedNodes(change.builds, context),
-				refreshers: encodeDetachedNodes(change.refreshers, context),
-			};
+	return withSchemaValidation(
+		EncodedModularChangeset,
+		{
+			encode: (change, context) => {
+				// Destroys only exist in rollback changesets, which are never sent.
+				assert(
+					change.destroys === undefined,
+					0x899 /* Unexpected changeset with destroys */,
+				);
+				return {
+					maxId: change.maxId,
+					revisions:
+						change.revisions === undefined
+							? change.revisions
+							: encodeRevisionInfos(change.revisions, context),
+					changes: encodeFieldChangesForJson(change.fieldChanges, context),
+					builds: encodeDetachedNodes(change.builds, context),
+					refreshers: encodeDetachedNodes(change.refreshers, context),
+				};
+			},
+			decode: (encodedChange: EncodedModularChangeset, context) => {
+				const decoded: Mutable<ModularChangeset> = {
+					fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
+				};
+				if (encodedChange.builds !== undefined) {
+					decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
+				}
+				if (encodedChange.refreshers !== undefined) {
+					decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
+				}
+				if (encodedChange.revisions !== undefined) {
+					decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
+				}
+				if (encodedChange.maxId !== undefined) {
+					decoded.maxId = encodedChange.maxId;
+				}
+				return decoded;
+			},
 		},
-		decode: (change, context) => {
-			const encodedChange = change as unknown as EncodedModularChangeset;
-			const decoded: Mutable<ModularChangeset> = {
-				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
-			};
-			if (encodedChange.builds !== undefined) {
-				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
-			}
-			if (encodedChange.refreshers !== undefined) {
-				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
-			}
-			if (encodedChange.revisions !== undefined) {
-				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
-			}
-			if (encodedChange.maxId !== undefined) {
-				decoded.maxId = encodedChange.maxId;
-			}
-			return decoded;
-		},
-		encodedSchema: EncodedModularChangeset,
-	};
+		validator,
+	);
 }

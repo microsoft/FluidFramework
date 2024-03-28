@@ -9,23 +9,23 @@ import {
 	ICodecOptions,
 	IJsonCodec,
 	makeCodecFamily,
+	withSchemaValidation,
 } from "../codec/index.js";
 import { ChangeEncodingContext, TreeStoredSchema } from "../core/index.js";
 import {
-	EncodedModularChangeset,
 	ModularChangeset,
 	defaultSchemaPolicy,
 	makeSchemaChangeCodec,
 } from "../feature-libraries/index.js";
-import { Mutable } from "../util/index.js";
+import { Mutable, type JsonCompatibleReadOnly } from "../util/index.js";
 import { EncodedSharedTreeChange, EncodedSharedTreeInnerChange } from "./sharedTreeChangeFormat.js";
 import { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
-export function makeSharedTreeChangeCodec(
+function makeSharedTreeChangeCodec(
 	modularChangeCodec: IJsonCodec<
 		ModularChangeset,
-		EncodedModularChangeset,
-		EncodedModularChangeset,
+		JsonCompatibleReadOnly,
+		JsonCompatibleReadOnly,
 		ChangeEncodingContext
 	>,
 	codecOptions: ICodecOptions,
@@ -56,56 +56,56 @@ export function makeSharedTreeChangeCodec(
 		},
 	});
 
-	return {
-		encode: (change, context) => {
-			const changes: EncodedSharedTreeInnerChange[] = [];
-			let updatedSchema: TreeStoredSchema | undefined;
-			for (const decodedChange of change.changes) {
-				if (decodedChange.type === "data") {
-					const schemaAndPolicy =
-						updatedSchema !== undefined
-							? {
-									policy:
-										context.schema !== undefined
-											? context.schema.policy
-											: defaultSchemaPolicy,
-									schema: updatedSchema,
-							  }
-							: context.schema;
-					changes.push({
-						data: modularChangeCodec.encode(decodedChange.innerChange, {
-							originatorId: context.originatorId,
-							schema: schemaAndPolicy,
-						}),
-					});
-				} else if (decodedChange.type === "schema") {
-					changes.push({
-						schema: schemaChangeCodec.encode(decodedChange.innerChange),
-					});
-					updatedSchema = decodedChange.innerChange.schema.new;
+	return withSchemaValidation(
+		EncodedSharedTreeChange,
+		{
+			encode: (change, context) => {
+				const changes: EncodedSharedTreeInnerChange[] = [];
+				let updatedSchema: TreeStoredSchema | undefined;
+				for (const decodedChange of change.changes) {
+					if (decodedChange.type === "data") {
+						const schemaAndPolicy =
+							updatedSchema !== undefined
+								? {
+										policy:
+											context.schema !== undefined
+												? context.schema.policy
+												: defaultSchemaPolicy,
+										schema: updatedSchema,
+								  }
+								: context.schema;
+						changes.push({
+							data: modularChangeCodec.encode(decodedChange.innerChange, {
+								originatorId: context.originatorId,
+								schema: schemaAndPolicy,
+							}),
+						});
+					} else if (decodedChange.type === "schema") {
+						changes.push({
+							schema: schemaChangeCodec.encode(decodedChange.innerChange),
+						});
+						updatedSchema = decodedChange.innerChange.schema.new;
+					}
 				}
-			}
-			return changes;
+				return changes;
+			},
+			decode: (encodedChange, context) => {
+				const changes: Mutable<SharedTreeChange["changes"]> = [];
+				for (const subChange of encodedChange) {
+					changes.push(decoderLibrary.dispatch(subChange, context));
+				}
+				return { changes };
+			},
 		},
-		decode: (encodedChange, context) => {
-			const changes: Mutable<SharedTreeChange["changes"]> = [];
-			for (const subChange of encodedChange) {
-				changes.push(decoderLibrary.dispatch(subChange, context));
-			}
-			return { changes };
-		},
-		encodedSchema: EncodedSharedTreeChange,
-	};
+		codecOptions.jsonValidator,
+	);
 }
 
 export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodec: IJsonCodec<
-		ModularChangeset,
-		EncodedModularChangeset,
-		EncodedModularChangeset,
-		ChangeEncodingContext
-	>,
+	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	options: ICodecOptions,
 ): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
-	return makeCodecFamily([[0, makeSharedTreeChangeCodec(modularChangeCodec, options)]]);
+	return makeCodecFamily([
+		[0, makeSharedTreeChangeCodec(modularChangeCodecFamily.resolve(0).json, options)],
+	]);
 }

@@ -79,7 +79,7 @@ import { FlexFieldKind } from "./fieldKind.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
-import { makeV0Codec } from "./modularChangeCodecs.js";
+import { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -97,8 +97,6 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly latestCodec: ReturnType<typeof makeV0Codec>;
-
 	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
 
 	public constructor(
@@ -108,14 +106,13 @@ export class ModularChangeFamily
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
-		this.latestCodec = makeV0Codec(
+		this.codecs = makeModularChangeCodecFamily(
 			fieldKinds,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
 			chunkCompressionStrategy,
 		);
-		this.codecs = makeCodecFamily([[0, this.latestCodec]]);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {

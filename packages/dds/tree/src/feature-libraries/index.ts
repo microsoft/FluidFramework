@@ -120,7 +120,6 @@ export {
 	NodeExistenceState,
 	FieldKindWithEditor,
 	ModularChangeFamily,
-	makeV0Codec,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
 } from "./modular-schema/index.js";
