@@ -27,7 +27,7 @@ import {
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
-import { brand } from "../util/index.js";
+import { brand, fail } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -139,12 +139,12 @@ export const treeNodeApi: TreeNodeApi = {
 		// To find the associated developer-facing "view key", we need to look up the field associated with
 		// the stored key from the flex-domain, and get view key its simple-domain counterpart was created with.
 		const storedKey = treeNodeApi.storedKey(node);
-		const viewKey = tryGetViewKeyFromStoredKey(parent, storedKey);
-		assert(viewKey !== undefined, "Existing stableName should always map to a devKey");
+		const viewKey = getViewKeyFromStoredKey(parent, storedKey);
 		return viewKey;
 	},
 	storedKey: (node: TreeNode): StoredKey | number => {
-		// Note: the flex domain strictly works with `stableName`s, and knows nothing of developer keys.
+		// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
+		// "view keys".
 		const parentField = getFlexNode(node).parentField;
 		if (parentField.parent.schema.kind.multiplicity === Multiplicity.Sequence) {
 			// The parent of `node` is an array node
@@ -192,10 +192,7 @@ export const treeNodeApi: TreeNodeApi = {
 /**
  * TODO
  */
-function tryGetViewKeyFromStoredKey(
-	tree: TreeNode,
-	storedKey: StoredKey | number,
-): string | number | undefined {
+function getViewKeyFromStoredKey(tree: TreeNode, storedKey: StoredKey | number): string | number {
 	// Only object nodes have the concept of a "stored key", differentiated from the developer-facing "view key".
 	// For any other kind of node, the stored key and the view key are the same.
 	const schema = treeNodeApi.schema(tree);
@@ -216,7 +213,11 @@ function tryGetViewKeyFromStoredKey(
 		}
 	}
 
-	return fields[storedKey] === undefined ? undefined : storedKey;
+	if (fields[storedKey] === undefined) {
+		fail("Existing stored key should always map to a view key");
+	}
+
+	return storedKey;
 }
 
 /**
