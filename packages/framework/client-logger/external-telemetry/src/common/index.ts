@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { AppInsightsTelemetryConsumer, ITelemetryConsumer } from "./consumers";
-export { IExternalTelemetry, ExternalTelemetryEventName } from "./telemetry";
+export { AppInsightsTelemetryConsumer, ITelemetryConsumer } from "./consumers/index.js";
+export { IExternalTelemetry, ExternalTelemetryEventName } from "./telemetry/index.js";

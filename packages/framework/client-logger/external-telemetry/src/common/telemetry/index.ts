@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ContainerTelemetryEventName } from "../../container";
+import type { ContainerTelemetryEventName } from "../../container/index.js";
 
 /**
  * The base interface extended by all external telemetry
@@ -17,7 +17,7 @@ export interface IExternalTelemetry {
 /**
  * Aggregate type for all the different types of external telemetry event names.
  *
- * @remarks This only looks odd right now because {@link ContainerTelemetryEventName} is the only aggregation at the moment.
+ * @privateremarks This only looks odd right now because {@link ContainerTelemetryEventName} is the only aggregation at the moment.
  *
  * @beta
  */

@@ -4,10 +4,10 @@
  */
 
 import type { IContainer } from "@fluidframework/container-definitions";
-import { ContainerTelemetryManager } from "../container";
-import { ContainerEventTelemetryProducer } from "../container/telemetryProducer";
+import { ContainerTelemetryManager } from "../container/index.js";
+import { ContainerEventTelemetryProducer } from "../container/telemetryProducer.js";
 import type { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { AppInsightsTelemetryConsumer } from "../common";
+import { AppInsightsTelemetryConsumer } from "../common/index.js";
 
 /**
  * Namespace for grouping things related to {@link (TelemetryManagerConfig:interface)}

@@ -12,13 +12,10 @@ import {
 	ContainerConnectedTelemetry,
 	ContainerTelemetryEventNames,
 	IContainerTelemetry,
-	ContainerDisconnectedTelemetry,
 	ContainerClosedTelemetry,
-	ContainerAttachingTelemetry,
-	ContainerAttachedTelemetry,
 	type ContainerTelemetryEventName,
-} from "./containerTelemetry";
-import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents";
+} from "./containerTelemetry.js";
+import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents.js";
 
 /**
  * This class produces {@link IContainerTelemetry} from raw container system events {@link IContainerEvents}.
@@ -40,21 +37,21 @@ export class ContainerEventTelemetryProducer {
 				telemetry = this.produceConnectedTelemetry(payload);
 				return telemetry;
 			case ContainerSystemEventNames.DISCONNECTED:
-				telemetry = <ContainerDisconnectedTelemetry>(
-					this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.DISCONNECTED)
+				telemetry = this.produceBasicContainerTelemetry(
+					ContainerTelemetryEventNames.DISCONNECTED,
 				);
 				break;
 			case ContainerSystemEventNames.CLOSED:
 				telemetry = this.produceClosedTelemetry(payload);
 				break;
 			case ContainerSystemEventNames.ATTACHED:
-				telemetry = <ContainerAttachedTelemetry>(
-					this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHED)
+				telemetry = this.produceBasicContainerTelemetry(
+					ContainerTelemetryEventNames.ATTACHED,
 				);
 				break;
 			case ContainerSystemEventNames.ATTACHING:
-				telemetry = <ContainerAttachingTelemetry>(
-					this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHING)
+				telemetry = this.produceBasicContainerTelemetry(
+					ContainerTelemetryEventNames.ATTACHING,
 				);
 				break;
 			default:
@@ -63,14 +60,14 @@ export class ContainerEventTelemetryProducer {
 		return telemetry;
 	}
 
-	private produceBasicContainerTelemetry = <T extends IContainerTelemetry>(
+	private produceBasicContainerTelemetry = <IContainerTelemetry>(
 		eventName: ContainerTelemetryEventName,
-	): T => {
+	): IContainerTelemetry => {
 		return {
 			eventName,
 			containerId: this.getContainerId(),
 			documentId: this.getDocumentId(),
-		} as T;
+		} as IContainerTelemetry;
 	};
 
 	private produceConnectedTelemetry = (payload?: {

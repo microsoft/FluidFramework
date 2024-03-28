@@ -12,8 +12,8 @@ export {
 	ContainerDisconnectedTelemetry,
 	ContainerAttachingTelemetry,
 	ContainerAttachedTelemetry,
-} from "./containerTelemetry";
+} from "./containerTelemetry.js";
 
-export { ContainerTelemetryManager } from "./telemetryManager";
+export { ContainerTelemetryManager } from "./telemetryManager.js";
 
-export { ContainerEventTelemetryProducer } from "./telemetryProducer";
+export { ContainerEventTelemetryProducer } from "./telemetryProducer.js";

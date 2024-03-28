@@ -4,8 +4,8 @@
  */
 
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import type { ITelemetryConsumer } from "./";
-import type { IExternalTelemetry } from "../telemetry";
+import type { ITelemetryConsumer } from "./index.js";
+import type { IExternalTelemetry } from "../telemetry/index.js";
 
 /**
  * A simple implementation of {@link ITelemetryConsumer} for sending {@link IExternalTelemetry}
