@@ -11,5 +11,15 @@
 	},
 	"apiReport": {
 		"enabled": true
+	},
+	// For more details, see <https://api-extractor.com/pages/configs/api-extractor_json/#tsdoc-metadata-section>.
+	// API-Extractor uses the presence of this file to determine whether or not API members from other packages
+	// should be considered when making decisions about reports and rollups. This includes determining whether or
+	// not release tags on external members should be respected when making trimming decisions.
+	// We need to ensure this is enabled so that re-exports of API members across package boundaries are correctly
+	// trimmed based on their release tags.
+	"tsdocMetadata": {
+		"enabled": true,
+		"tsdocMetadataFilePath": "<projectFolder>/dist/tsdoc-metadata.json"
 	}
 }
