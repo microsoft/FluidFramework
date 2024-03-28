@@ -103,17 +103,6 @@ export function makeField(
 		cursor,
 		fieldAnchor,
 	);
-
-	// Fields currently live as long as their parent does.
-	// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
-	if (fieldAnchor.parent !== undefined) {
-		const anchorNode =
-			context.forest.anchors.locate(fieldAnchor.parent) ??
-			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDestroy", () => {
-			field[disposeSymbol]();
-		});
-	}
 	return field;
 }
 
@@ -130,6 +119,8 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 	public readonly key: FieldKey;
 
+	private readonly offAfterDestroy?: () => void;
+
 	public constructor(
 		context: Context,
 		schema: FlexFieldSchema<TKind, TTypes>,
@@ -139,6 +130,16 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		super(context, schema, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
+		// Fields currently live as long as their parent does.
+		// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
+		if (fieldAnchor.parent !== undefined) {
+			const anchorNode =
+				context.forest.anchors.locate(fieldAnchor.parent) ??
+				fail("parent anchor node should always exist since field is under a node");
+			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
+				this[disposeSymbol]();
+			});
+		}
 	}
 
 	public is<TSchema extends FlexFieldSchema>(
@@ -180,6 +181,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 
 	protected override [forgetAnchorSymbol](anchor: FieldAnchor): void {
+		this.offAfterDestroy?.();
 		if (anchor.parent === undefined) return;
 		this.context.forest.anchors.forget(anchor.parent);
 	}
