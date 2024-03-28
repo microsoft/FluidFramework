@@ -12,6 +12,7 @@ import {
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, ISubmitSummaryOptions } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map";
 import {
 	ITestContainerConfig,
@@ -59,7 +60,7 @@ describeCompat("Summarization edge cases", "NoCompat", (getTestObjectProvider, a
 		const containerRuntime1 = defaultDataStore1._context.containerRuntime;
 		const nonDefaultDataStore1 = await containerRuntime1.createDataStore(TestDataObjectType);
 		const dataObject1 = await (
-			nonDefaultDataStore1.entryPoint as IFluidHandle<ITestDataObject>
+			nonDefaultDataStore1.entryPoint as IFluidHandleInternal<ITestDataObject>
 		).get();
 		// create a dds
 		const dds1 = SharedMap.create(dataObject1._runtime);

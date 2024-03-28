@@ -112,7 +112,7 @@ export class FluidDataStoreRuntime
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get connected(): boolean {
 		return this.dataStoreContext.connected;

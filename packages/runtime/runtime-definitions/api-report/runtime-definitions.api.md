@@ -160,7 +160,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 
 // @alpha
 export interface IDataStore {
-    readonly entryPoint: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandleInternal<FluidObject>;
     trySetAlias(alias: string): Promise<AliasResult>;
 }
 
@@ -181,7 +181,7 @@ export interface IExperimentalIncrementalSummaryContext {
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
-    readonly entryPoint: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandleInternal<FluidObject>;
     getAttachGCData?(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;

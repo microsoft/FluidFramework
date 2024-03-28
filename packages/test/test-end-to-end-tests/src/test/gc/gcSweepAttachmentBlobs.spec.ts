@@ -22,6 +22,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/test/summary";
+import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
@@ -221,8 +222,8 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Reference and then unreference the blob so that it's unreferenced in the next summary.
@@ -295,13 +296,13 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
-				const blobHandle1 = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle1 = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Upload another blob with the same content so that it is de-duped.
-				const blobHandle2 = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle2 = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Reference and then unreference the blob via one of the handles so that it's unreferenced in next summary.
@@ -1102,8 +1103,8 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 				// Upload an attachment blob.
 				const blob1Contents = "Blob contents 1";
-				const blob1Handle = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blob1Contents, "utf-8"),
+				const blob1Handle = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blob1Contents, "utf-8")),
 				);
 				const blob1NodePath = blob1Handle.absolutePath;
 
@@ -1252,8 +1253,10 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 
 					// Upload an attachment blob.
 					const blob1Contents = "Blob contents 1";
-					const blob1Handle = await mainDataStore._runtime.uploadBlob(
-						stringToBuffer(blob1Contents, "utf-8"),
+					const blob1Handle = toFluidHandleInternal(
+						await mainDataStore._runtime.uploadBlob(
+							stringToBuffer(blob1Contents, "utf-8"),
+						),
 					);
 					const blob1NodePath = blob1Handle.absolutePath;
 

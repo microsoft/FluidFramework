@@ -12,6 +12,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { toFluidHandleInternal } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -66,8 +67,8 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const gcStatePreAlias = getGCStateFromSummary(summaryWithStats.summary);
 		assert(gcStatePreAlias !== undefined, "Should get gc pre state from summary!");
 		assert(
-			gcStatePreAlias.gcNodes[dataObject2.handle.absolutePath].unreferencedTimestampMs !==
-				undefined,
+			gcStatePreAlias.gcNodes[toFluidHandleInternal(dataObject2.handle).absolutePath]
+				.unreferencedTimestampMs !== undefined,
 			"dataStore2 should be unreferenced as it is not aliased and not root!",
 		);
 
@@ -88,8 +89,8 @@ describeCompat("GC Data Store Aliased Full Compat", "FullCompat", (getTestObject
 		const gcStatePostAlias = getGCStateFromSummary(summaryWithStats.summary);
 		assert(gcStatePostAlias !== undefined, "Should get gc post state from summary!");
 		assert(
-			gcStatePostAlias.gcNodes[dataObject2.handle.absolutePath].unreferencedTimestampMs ===
-				undefined,
+			gcStatePostAlias.gcNodes[toFluidHandleInternal(dataObject2.handle).absolutePath]
+				.unreferencedTimestampMs === undefined,
 			"dataStore2 should be referenced as it is aliased and thus a root datastore!",
 		);
 	});

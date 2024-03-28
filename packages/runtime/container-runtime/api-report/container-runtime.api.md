@@ -111,7 +111,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     get disposed(): boolean;
     // (undocumented)
-    readonly entryPoint: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandleInternal<FluidObject>;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
     getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<IFluidDataStoreContextInternal>;

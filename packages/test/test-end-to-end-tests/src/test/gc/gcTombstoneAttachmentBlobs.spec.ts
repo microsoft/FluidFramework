@@ -118,8 +118,8 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 
 				// Upload an attachment blob.
 				const blobContents = "Blob contents";
-				const blobHandle = await mainDataStore._runtime.uploadBlob(
-					stringToBuffer(blobContents, "utf-8"),
+				const blobHandle = toFluidHandleInternal(
+					await mainDataStore._runtime.uploadBlob(stringToBuffer(blobContents, "utf-8")),
 				);
 
 				// Reference and then unreference the blob so that it's unreferenced in the next summary.
@@ -227,7 +227,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response1 = await containerRuntime2.resolveHandle({
-					url: blobHandle1.absolutePath,
+					url: toFluidHandleInternal(blobHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					response1?.status,
@@ -240,7 +240,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				);
 
 				const response2 = await containerRuntime2.resolveHandle({
-					url: blobHandle2.absolutePath,
+					url: toFluidHandleInternal(blobHandle2).absolutePath,
 				});
 				assert.strictEqual(
 					response2?.status,
@@ -297,7 +297,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint2 = (await container2.getEntryPoint()) as ITestDataObject;
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				const response1 = await containerRuntime2.resolveHandle({
-					url: blobHandle1.absolutePath,
+					url: toFluidHandleInternal(blobHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					response1?.status,
@@ -324,7 +324,7 @@ describeCompat("GC attachment blob tombstone tests", "NoCompat", (getTestObjectP
 				const entryPoint3 = (await container3.getEntryPoint()) as ITestDataObject;
 				const containerRuntime3 = entryPoint3._context.containerRuntime as ContainerRuntime;
 				const response2 = await containerRuntime3.resolveHandle({
-					url: blobHandle1.absolutePath,
+					url: toFluidHandleInternal(blobHandle1).absolutePath,
 				});
 				assert.strictEqual(
 					response2?.status,

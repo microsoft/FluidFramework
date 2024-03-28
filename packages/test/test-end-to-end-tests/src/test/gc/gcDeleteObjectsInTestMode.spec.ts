@@ -12,7 +12,7 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
@@ -337,7 +337,7 @@ async function validateBlobsReferenceState(
 	provider: ITestObjectProvider,
 	summarizerContainerRuntime: ContainerRuntime,
 	deleteContent: boolean,
-	blobHandle: IFluidHandle<ArrayBufferLike>,
+	blobHandle: IFluidHandleInternal<ArrayBufferLike>,
 	referenced: boolean,
 	deletedFromGCState = false,
 ) {

@@ -185,8 +185,7 @@
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IDataStore": {
-				"forwardCompat": false,
-				"backCompat": false
+				"forwardCompat": false
 			}
 		}
 	}

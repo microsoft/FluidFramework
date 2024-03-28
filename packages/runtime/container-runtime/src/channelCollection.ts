@@ -7,7 +7,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	FluidObject,
 	IDisposable,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 	ITelemetryBaseLogger,
@@ -247,7 +246,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public readonly containerLoadStats: {
 		// number of dataStores during loadContainer

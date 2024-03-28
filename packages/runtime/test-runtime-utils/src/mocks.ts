@@ -9,9 +9,11 @@ import {
 	FluidObject,
 	IFluidHandle,
 	IFluidHandleContext,
+	type IFluidHandleInternal,
 	IRequest,
 	IResponse,
 	type ITelemetryBaseLogger,
+	toFluidHandleInternal,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
@@ -704,8 +706,9 @@ export class MockFluidDataStoreRuntime
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
-		this.entryPoint =
-			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", "");
+		this.entryPoint = toFluidHandleInternal(
+			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
+		);
 		this.id = overrides?.id ?? uuid();
 		this.logger = createChildLogger({
 			logger: overrides?.logger,
@@ -715,7 +718,7 @@ export class MockFluidDataStoreRuntime
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 	}
 
-	public readonly entryPoint: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

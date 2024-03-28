@@ -456,7 +456,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
-    readonly entryPoint: IFluidHandle<FluidObject>;
+    readonly entryPoint: IFluidHandleInternal<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)

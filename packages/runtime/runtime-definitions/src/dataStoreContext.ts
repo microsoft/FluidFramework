@@ -159,7 +159,7 @@ export interface IDataStore {
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
 	 * with it.
 	 */
-	readonly entryPoint: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandleInternal<FluidObject>;
 }
 
 /**
@@ -362,7 +362,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Exposes a handle to the root object / entryPoint of the component. Use this as the primary way of interacting
 	 * with the component.
 	 */
-	readonly entryPoint: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	request(request: IRequest): Promise<IResponse>;
 
