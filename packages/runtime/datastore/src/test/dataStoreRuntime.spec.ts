@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -17,6 +18,7 @@ import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
+
 import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
 
 describe("FluidDataStoreRuntime Tests", () => {

@@ -6,7 +6,20 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
+
+import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import {
+	CompressionAlgorithms,
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -21,18 +34,6 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-import { assertDocumentTypeInfo, isDocumentMapInfo } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
-import {
-	CompressionAlgorithms,
-	ContainerRuntime,
-	IContainerRuntimeOptions,
-	ISummarizer,
-} from "@fluidframework/container-runtime";
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

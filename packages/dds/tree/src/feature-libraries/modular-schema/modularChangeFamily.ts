@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecFamily, ICodecOptions, makeCodecFamily } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,
@@ -63,6 +64,7 @@ import {
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
 import {
 	CrossFieldManager,
 	CrossFieldMap,

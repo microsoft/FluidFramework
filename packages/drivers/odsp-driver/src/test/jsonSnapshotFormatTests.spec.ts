@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line unicorn/prefer-node-protocol
 import { strict as assert } from "assert";
+
 import { IOdspSnapshot } from "../contracts.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 

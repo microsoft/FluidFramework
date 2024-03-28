@@ -4,12 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
 } from "../../core/index.js";
 import { IDisposable, disposeSymbol } from "../../util/index.js";
+
 import { Context } from "./context.js";
 import { FlexTreeEntity, FlexTreeEntityKind, TreeStatus, flexTreeMarker } from "./flexTreeTypes.js";
 

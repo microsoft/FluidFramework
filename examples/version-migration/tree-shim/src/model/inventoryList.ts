@@ -17,6 +17,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ITree, SharedTree } from "@fluidframework/tree";
 
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces.js";
+
 import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController.js";
 import { NewTreeInventoryListController } from "./newTreeInventoryListController.js";
 

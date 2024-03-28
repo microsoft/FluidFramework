@@ -21,6 +21,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import * as Validator from "jsonschema";
+
 import {
 	attachContentsSchema,
 	chunkedOpContentsSchema,

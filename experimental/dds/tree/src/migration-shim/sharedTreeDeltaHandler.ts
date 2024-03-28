@@ -6,6 +6,7 @@
 import { assert } from '@fluidframework/core-utils';
 import { type IChannelAttributes, type IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
+
 import { type IOpContents, type IShimDeltaHandler } from './types.js';
 import { attributesMatch, isStampedOp } from './utils.js';
 

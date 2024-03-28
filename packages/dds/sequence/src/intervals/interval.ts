@@ -14,7 +14,9 @@ import {
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { SequencePlace, reservedIntervalIdKey } from "../intervalCollection.js";
+
 import { IIntervalHelpers, ISerializableInterval, ISerializedInterval } from "./intervalUtils.js";
 
 /**

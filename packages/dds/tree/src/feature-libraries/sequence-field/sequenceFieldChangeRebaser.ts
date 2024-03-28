@@ -4,6 +4,7 @@
  */
 
 import { FieldChangeRebaser } from "../modular-schema/index.js";
+
 import { compose } from "./compose.js";
 import { invert } from "./invert.js";
 import { prune } from "./prune.js";

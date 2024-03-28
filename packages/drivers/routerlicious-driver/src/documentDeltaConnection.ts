@@ -8,6 +8,7 @@ import { IAnyDriverError, IDocumentDeltaConnection } from "@fluidframework/drive
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";
+
 import { IR11sSocketError, errorObjectFromSocketError } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 

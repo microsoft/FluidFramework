@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { FieldKey, ValueSchema } from "../../core/index.js";
 import {
 	FlexTreeContext,
@@ -12,6 +13,7 @@ import {
 	FlexTreeObjectNode,
 } from "../flex-tree/index.js";
 import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
+
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
 
 /**
