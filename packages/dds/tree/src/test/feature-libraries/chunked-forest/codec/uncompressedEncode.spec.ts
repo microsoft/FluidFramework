@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	makeFieldBatchCodec,
 	// eslint-disable-next-line import/no-internal-modules

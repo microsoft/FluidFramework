@@ -6,6 +6,7 @@
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { type FluidObject, type IRequest } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FluidDataStoreRuntime,
 	type ISharedObjectRegistry,
@@ -33,7 +34,6 @@ import {
 	type IFluidDependencySynthesizer,
 } from "@fluidframework/synthesize";
 
-import { assert } from "@fluidframework/core-utils";
 import {
 	type DataObjectTypes,
 	type IDataObjectProps,

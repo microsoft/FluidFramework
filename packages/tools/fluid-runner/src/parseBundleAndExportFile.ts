@@ -4,6 +4,7 @@
  */
 
 import * as fs from "fs";
+
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import { IExportFileResponse, createContainerAndExecute } from "./exportFile.js";

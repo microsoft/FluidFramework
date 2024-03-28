@@ -13,9 +13,9 @@ import {
 	IProvideFluidHandle,
 	IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
+import { LazyPromise } from "@fluidframework/core-utils";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 
-import { LazyPromise } from "@fluidframework/core-utils";
 import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
 import { DependencyContainer } from "../index.js";
 import {

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ValueSchema } from "../../core/index.js";
 import {
 	FieldKinds,

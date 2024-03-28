@@ -21,7 +21,6 @@ import {
 import { create404Response } from "@fluidframework/runtime-utils";
 import { ReferenceType, SharedString, reservedRangeLabelsKey } from "@fluidframework/sequence";
 import { EditorView } from "prosemirror-view";
-
 import React, { useEffect, useRef } from "react";
 
 import { nodeTypeKey } from "./fluidBridge.js";

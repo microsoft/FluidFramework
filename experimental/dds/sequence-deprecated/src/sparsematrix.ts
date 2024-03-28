@@ -15,6 +15,7 @@ import {
 import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
 import { SharedSegmentSequence } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+
 import { pkgVersion } from "./packageVersion.js";
 import { SubSequence } from "./sharedSequence.js";
 

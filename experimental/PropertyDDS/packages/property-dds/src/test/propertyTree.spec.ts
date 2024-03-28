@@ -43,6 +43,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { expect } from "chai";
+
 import { SharedPropertyTree } from "../propertyTree.js";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
 import { PropertyTreeFactory } from "../propertyTreeFactory.js";

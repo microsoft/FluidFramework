@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	describeCompat,
 	describeInstallVersions,
@@ -20,6 +21,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
+
 import { pkgVersion } from "../packageVersion.js";
 
 describe("entryPoint compat", () => {

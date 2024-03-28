@@ -5,6 +5,7 @@
 
 import type { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer, serializeHandles } from '@fluidframework/shared-object-base';
+
 import { fail } from './Common.js';
 import type { EditHandle } from './EditLog.js';
 import type { MutableStringInterner } from './StringInterner.js';

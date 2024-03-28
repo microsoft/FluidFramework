@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	EmptyKey,
 	FieldKey,
@@ -19,6 +20,7 @@ import {
 } from "../../feature-libraries/index.js";
 import { JsonCompatible } from "../../util/index.js";
 import { leaf } from "../leafDomain.js";
+
 import { jsonArray, jsonObject } from "./jsonDomainSchema.js";
 
 const adapter: CursorAdapter<JsonCompatible> = {

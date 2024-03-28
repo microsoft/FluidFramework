@@ -8,6 +8,7 @@ import type { IEvent } from '@fluidframework/core-interfaces';
 import { assert, compareArrays } from '@fluidframework/core-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+
 import type { ChangeCompressor } from './ChangeCompression.js';
 import { fail } from './Common.js';
 import type { EditId } from './Identifiers.js';
