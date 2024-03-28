@@ -65,7 +65,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	public [disposeSymbol](): void {
 		this.#lazyCursor.free();
 		this.context.withCursors.delete(this);
-		this[forgetAnchorSymbol]();
+		this[forgetAnchorSymbol](this[anchorSymbol]);
 		this.context.withAnchors.delete(this);
 	}
 
@@ -88,7 +88,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 				this[anchorSymbol] !== undefined,
 				0x779 /* FlexTree should have an anchor if it does not have a cursor */,
 			);
-			const result = this[tryMoveCursorToAnchorSymbol](this.#lazyCursor);
+			const result = this[tryMoveCursorToAnchorSymbol](this[anchorSymbol], this.#lazyCursor);
 			assert(
 				result === TreeNavigationResult.Ok,
 				0x77a /* It is invalid to access a FlexTree node which no longer exists */,
@@ -99,13 +99,14 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 	}
 
 	protected abstract [tryMoveCursorToAnchorSymbol](
+		anchor: TAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
 
 	/**
 	 * Called when disposing of this target, iff it has an anchor.
 	 */
-	protected abstract [forgetAnchorSymbol](): void;
+	protected abstract [forgetAnchorSymbol](anchor: TAnchor): void;
 }
 
 /**

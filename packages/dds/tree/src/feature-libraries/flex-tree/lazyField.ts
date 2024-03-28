@@ -175,14 +175,15 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
+		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.forest.tryMoveCursorToField(anchor, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](): void {
-		if (this[anchorSymbol].parent === undefined) return;
-		this.context.forest.anchors.forget(this[anchorSymbol].parent);
+	protected override [forgetAnchorSymbol](anchor: FieldAnchor): void {
+		if (anchor.parent === undefined) return;
+		this.context.forest.anchors.forget(anchor.parent);
 	}
 
 	public get length(): number {
