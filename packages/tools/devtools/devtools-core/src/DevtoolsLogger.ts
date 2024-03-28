@@ -31,7 +31,7 @@ import {
  * initializing the Devtools.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IDevtoolsLogger extends ITelemetryBaseLogger {}
