@@ -154,9 +154,10 @@ describe("treeApi", () => {
 				r.content = 43;
 				return "rollback";
 			});
-			// One firing of events during the initial change, another during rollback
+			// One firing of events during the initial change and another during rollback, plus 'afterDeepChange' fires twice
+			// each time (detach and attach passes).
 			assert.equal(shallowEventCount, 2);
-			assert.equal(deepEventCount, 2);
+			assert.equal(deepEventCount, 4);
 		});
 
 		it("undoes and redoes entire transaction", () => {
