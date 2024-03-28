@@ -4,13 +4,16 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeStress } from "@fluid-private/stochastic-test-utils";
 import { SessionId } from "@fluidframework/id-compressor";
+
 import { ChangeFamily, ChangeFamilyEditor, GraphCommit } from "../../../core/index.js";
 import { Commit, EditManager } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { createTestUndoRedoStacks, mintRevisionTag } from "../../utils.js";
+
 import { buildScenario, runUnitTestScenario } from "./editManagerScenario.js";
 import { checkChangeList, testChangeEditManagerFactory } from "./editManagerTestUtils.js";
 

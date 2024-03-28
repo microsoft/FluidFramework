@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
 import { unreachableCase } from "@fluidframework/core-utils";
+
+import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	SchemaBuilder,
 	jsonArray,
@@ -13,8 +16,6 @@ import {
 	jsonSchema,
 	leaf,
 } from "../../../domains/index.js";
-
-import { EmptyKey, FieldKey } from "../../../core/index.js";
 import {
 	FlexTreeField,
 	FlexTreeMapNode,

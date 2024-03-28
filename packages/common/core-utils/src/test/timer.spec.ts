@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import process from "node:process";
+
 import type { SinonFakeTimers, SinonSandbox, SinonSpy } from "sinon";
 import { createSandbox, useFakeTimers } from "sinon";
 

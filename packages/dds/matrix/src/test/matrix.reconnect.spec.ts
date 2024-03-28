@@ -4,12 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { SharedMatrix } from "../matrix.js";
+
 import { extract } from "./utils.js";
 
 describe("SharedMatrix reconnect", () => {

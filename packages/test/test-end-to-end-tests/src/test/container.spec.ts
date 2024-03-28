@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
 	ITestDataObject,
@@ -58,6 +59,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const id = "https://localhost/containerTest";

@@ -5,6 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+
 import { compareBtrees, compareFiniteNumbers, copyPropertyIfDefined, fail } from './Common.js';
 import { NodeId, TraitLabel } from './Identifiers.js';
 import { comparePayloads } from './PayloadUtilities.js';

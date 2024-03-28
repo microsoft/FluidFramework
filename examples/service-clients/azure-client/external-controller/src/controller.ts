@@ -4,7 +4,6 @@
  */
 
 import events_pkg from "events_pkg";
-
 import { IValueChanged } from "fluid-framework";
 
 /**

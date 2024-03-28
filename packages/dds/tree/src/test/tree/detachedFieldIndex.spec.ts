@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IIdCompressor, createIdCompressor } from "@fluidframework/id-compressor";
+
 import { DetachedFieldIndex, ForestRootId, RevisionTagCodec } from "../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeDetachedNodeToFieldCodec } from "../../core/tree/detachedFieldIndexCodec.js";
