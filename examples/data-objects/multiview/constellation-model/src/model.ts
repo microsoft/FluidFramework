@@ -9,7 +9,6 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IValueChanged } from "@fluidframework/map";
 
-
 const starListKey = "stars";
 const constellationName = "@fluid-example/constellation";
 

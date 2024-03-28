@@ -19,7 +19,6 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 
-
 const counterId = "counterKey";
 
 describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {

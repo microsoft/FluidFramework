@@ -6,7 +6,6 @@
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import React from "react";
 
-
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 

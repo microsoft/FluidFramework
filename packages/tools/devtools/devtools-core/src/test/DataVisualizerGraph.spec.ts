@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";

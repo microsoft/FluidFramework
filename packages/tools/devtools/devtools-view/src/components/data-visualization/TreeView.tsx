@@ -6,7 +6,6 @@
 import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core";
 import React from "react";
 
-
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
 import { TreeHeader } from "./TreeHeader.js";

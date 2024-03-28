@@ -8,7 +8,6 @@ import { Resizable } from "re-resizable";
 import React from "react";
 import ReactDOM from "react-dom";
 
-
 import { App } from "./App.js";
 
 console.log("Rendering app...");

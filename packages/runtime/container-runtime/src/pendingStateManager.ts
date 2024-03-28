@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils";

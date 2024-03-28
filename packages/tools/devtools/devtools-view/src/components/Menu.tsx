@@ -6,7 +6,6 @@
 import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 import React from "react";
 
-
 /**
  * Props for {@link MenuSection}
  */

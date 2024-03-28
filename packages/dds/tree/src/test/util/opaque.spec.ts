@@ -22,7 +22,6 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../util/opaque.js";
 
-
 // These tests currently just cover the type checking, so its all compile time.
 
 export type T1 = Brand<number, "1">;

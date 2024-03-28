@@ -19,7 +19,6 @@ import {
 import { ISharedTree } from "../../../shared-tree/index.js";
 import { TestTreeProvider } from "../../utils.js";
 
-
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.
  * @remarks TODO: Figure out a better way to get an IIDCompressor

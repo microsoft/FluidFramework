@@ -15,7 +15,6 @@ import {
 } from "../../feature-libraries/schemaBuilderBase.js";
 import { areSafelyAssignable, brand, requireTrue } from "../../util/index.js";
 
-
 describe("SchemaBuilderBase", () => {
 	describe("typedTreeSchema", () => {
 		it("recursive", () => {

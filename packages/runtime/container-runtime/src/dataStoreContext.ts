@@ -12,7 +12,8 @@ import {
 	IRequest,
 	IResponse,
 	ITelemetryBaseProperties,
- IEvent } from "@fluidframework/core-interfaces";
+	IEvent,
+} from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";

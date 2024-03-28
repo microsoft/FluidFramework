@@ -31,7 +31,6 @@ const {
 const async = require("async");
 const semver = require("semver");
 
-
 // Include the property classes
 const {
 	AbstractStaticCollectionProperty,

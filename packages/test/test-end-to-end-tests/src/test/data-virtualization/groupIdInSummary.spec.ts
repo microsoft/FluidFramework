@@ -22,7 +22,6 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-
 const interceptResult = <T>(
 	parent: any,
 	fn: (...args: any[]) => Promise<T>,

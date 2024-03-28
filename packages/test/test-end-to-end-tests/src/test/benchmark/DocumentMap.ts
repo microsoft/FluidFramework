@@ -34,7 +34,6 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

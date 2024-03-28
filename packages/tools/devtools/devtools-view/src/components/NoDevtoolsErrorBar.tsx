@@ -7,7 +7,6 @@ import { MessageBar, MessageBarType, initializeIcons } from "@fluentui/react";
 import { Button, Link, Tooltip, makeStyles } from "@fluentui/react-components";
 import React from "react";
 
-
 // The `MessageBar` component was removed in FluentUI React v9 with no replacement offered.
 // In the future, we will want to re-write this component to use something else, but for now this import is required.
 // When these imports are removed, the `@fluentui/react` dependency should be removed from this package.

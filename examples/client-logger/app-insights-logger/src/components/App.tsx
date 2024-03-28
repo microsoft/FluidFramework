@@ -11,7 +11,6 @@ import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import React from "react";
 
-
 import {
 	ContainerInfo,
 	createFluidContainer,

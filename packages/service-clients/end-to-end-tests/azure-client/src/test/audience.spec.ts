@@ -13,7 +13,6 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-
 import { createAzureClient } from "./AzureClientFactory.js";
 import { waitForMember } from "./utils.js";
 

@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/devtools-core";
 import React from "react";
 
-
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
 import { type HasLabel } from "./CommonInterfaces.js";

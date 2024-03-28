@@ -13,7 +13,6 @@ import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-
 import { IOdspLoginCredentials, createOdspClient } from "./OdspClientFactory.js";
 import { waitForMember } from "./utils.js";
 

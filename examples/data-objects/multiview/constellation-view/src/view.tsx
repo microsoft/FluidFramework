@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
 import React from "react";

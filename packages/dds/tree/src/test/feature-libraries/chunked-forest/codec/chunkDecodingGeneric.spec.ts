@@ -7,7 +7,6 @@ import { strict as assert, fail } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
 
-
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedCursor } from "../../../../feature-libraries/chunked-forest/chunk.js";

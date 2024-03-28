@@ -9,7 +9,6 @@ import type {
 } from "@fluidframework/test-driver-definitions";
 import nconf from "nconf";
 
-
 /**
  * Different kind of compat version config
  */

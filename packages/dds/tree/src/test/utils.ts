@@ -36,7 +36,6 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,

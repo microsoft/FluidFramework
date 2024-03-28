@@ -39,7 +39,6 @@ import {
 } from "../../shared-tree/schematizeTree.js";
 import { checkoutWithContent, jsonSequenceRootSchema, validateViewConsistency } from "../utils.js";
 
-
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
 const schema = builder.intoSchema(SchemaBuilder.optional(root));

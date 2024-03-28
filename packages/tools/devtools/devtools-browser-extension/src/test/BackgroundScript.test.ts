@@ -13,7 +13,6 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-
 import { type Globals } from "../Globals.js";
 import { type DevToolsInitMessage, extensionViewMessageSource } from "../messaging/index.js";
 

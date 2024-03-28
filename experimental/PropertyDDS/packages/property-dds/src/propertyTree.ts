@@ -8,9 +8,6 @@ import lodash from "lodash";
 // eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
 const { isEmpty, findIndex, find, isEqual, range } = lodash;
 
-
-
-
 import {
 	ChangeSet,
 	Utils as ChangeSetUtils,

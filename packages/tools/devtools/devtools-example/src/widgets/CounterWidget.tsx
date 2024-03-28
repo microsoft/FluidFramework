@@ -8,7 +8,6 @@ import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-ico
 import { type SharedCounter } from "@fluidframework/counter";
 import React from "react";
 
-
 // TODOs:
 // - This seems like it might be worth sharing somewhere more general?
 //   Common, simple widget for interacting with SharedCounter_s.

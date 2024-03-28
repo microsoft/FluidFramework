@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-
 import { Spinner } from "@fluentui/react-components";
 import { type SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";

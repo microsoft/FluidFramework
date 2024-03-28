@@ -10,8 +10,6 @@ import { IInspectorTableProps } from "./InspectorTableTypes.js";
 import { SvgIcon } from "./SVGIcon.js";
 import { icon24, iconBaseColor, iconHoverColor } from "./constants.js";
 
-
-
 const useStyles = makeStyles(
 	(theme) => ({
 		footer: {

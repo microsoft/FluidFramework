@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
 
-
 import { unionOptions } from "../../../../codec/index.js";
 import {
 	Counter,

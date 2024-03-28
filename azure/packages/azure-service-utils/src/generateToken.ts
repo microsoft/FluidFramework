@@ -7,7 +7,6 @@ import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-de
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
-
 /**
  * IMPORTANT: This function is duplicated in ./packages/runtime/test-runtime-utils/src/generateToken.ts. There is no
  * need for different implementations, so they should be kept in sync if changes are needed.

@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
-
 import { ICodecOptions } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";

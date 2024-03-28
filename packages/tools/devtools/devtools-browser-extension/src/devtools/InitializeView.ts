@@ -7,7 +7,6 @@ import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 import React from "react";
 import ReactDOM from "react-dom";
 
-
 import { BackgroundConnection } from "../BackgroundConnection.js";
 import { browser } from "../Globals.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
