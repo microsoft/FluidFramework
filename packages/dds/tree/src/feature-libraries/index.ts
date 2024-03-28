@@ -122,6 +122,8 @@ export {
 	ModularChangeFamily,
 	RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
+	FieldKindConfiguration,
+	FieldKindConfigurationEntry,
 } from "./modular-schema/index.js";
 
 export { Multiplicity } from "./multiplicity.js";
@@ -221,6 +223,7 @@ export {
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
 	fieldKinds,
+	fieldKindConfiguration,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./default-schema/index.js";

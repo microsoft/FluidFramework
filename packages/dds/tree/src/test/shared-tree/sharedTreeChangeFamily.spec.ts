@@ -19,7 +19,7 @@ import {
 	ModularChangeFamily,
 	ModularChangeset,
 	cursorForJsonableTreeNode,
-	fieldKinds,
+	fieldKindConfiguration,
 } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
@@ -36,7 +36,7 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(
-	fieldKinds,
+	fieldKindConfiguration,
 	testRevisionTagCodec,
 	fieldBatchCodec,
 	codecOptions,
