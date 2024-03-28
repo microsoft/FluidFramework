@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { IExternalTelemetry, ExternalTelemetryEventName } from "./common/index.js";
+export {
+	IExternalTelemetry,
+	ExternalTelemetryEventName,
+	ITelemetryConsumer,
+} from "./common/index.js";
 export {
 	IContainerTelemetry,
 	ContainerTelemetryEventName,
@@ -14,4 +18,8 @@ export {
 	ContainerAttachingTelemetry,
 	ContainerAttachedTelemetry,
 } from "./container/index.js";
-export { createTelemetryManagers, TelemetryManagerConfig } from "./factory/index.js";
+export {
+	startTelemetryManagers,
+	createAppInsightsTelemetryConsumer,
+	TelemetryManagerConfig,
+} from "./factory/index.js";

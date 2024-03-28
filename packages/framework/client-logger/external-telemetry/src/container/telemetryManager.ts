@@ -8,7 +8,7 @@ import { IContainerTelemetry } from "./containerTelemetry.js";
 import { ContainerEventTelemetryProducer } from "./telemetryProducer.js";
 import { ITelemetryConsumer } from "../common/index.js";
 import { ContainerSystemEventName, ContainerSystemEventNames } from "./containerSystemEvents.js";
-
+import { v4 as uuid } from "uuid";
 /**
  * This class manages container telemetry intended for customers to consume.
  * It manages subcribing to the proper raw container system events, sending them to the {@link ContainerEventTelemetryProducer}
@@ -17,12 +17,15 @@ import { ContainerSystemEventName, ContainerSystemEventNames } from "./container
  * @internal
  */
 export class ContainerTelemetryManager {
+	private readonly containerId: string;
+
 	constructor(
 		private readonly container: IContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
 		private readonly telemetryConsumers: ITelemetryConsumer[],
 	) {
 		this.setupEventHandlers();
+		this.containerId = uuid();
 	}
 
 	/**
@@ -53,6 +56,7 @@ export class ContainerTelemetryManager {
 	private handleContainerSystemEvent(eventName: ContainerSystemEventName, payload?: unknown) {
 		const telemetry: IContainerTelemetry | undefined = this.telemetryProducer.produceTelemetry(
 			eventName,
+			this.containerId,
 			payload,
 		);
 

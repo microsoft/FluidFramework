@@ -61,7 +61,8 @@ export type ContainerTelemetryEventName =
  */
 export interface IContainerTelemetry extends IExternalTelemetry {
 	eventName: ContainerTelemetryEventName;
-	containerId?: string;
+	containerId: string;
+	clientId?: string;
 	documentId?: string;
 }
 

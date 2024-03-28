@@ -29,21 +29,29 @@ export class ContainerEventTelemetryProducer {
 
 	public produceTelemetry(
 		eventName: ContainerSystemEventName,
+		containerId: string,
 		payload?: any,
 	): IContainerTelemetry | undefined {
 		switch (eventName) {
 			case ContainerSystemEventNames.CONNECTED:
-				return this.produceConnectedTelemetry(payload);
+				return this.produceConnectedTelemetry(containerId, payload);
 			case ContainerSystemEventNames.DISCONNECTED:
 				return this.produceBasicContainerTelemetry(
 					ContainerTelemetryEventNames.DISCONNECTED,
+					containerId,
 				);
 			case ContainerSystemEventNames.CLOSED:
-				return this.produceClosedTelemetry(payload);
+				return this.produceClosedTelemetry(containerId, payload);
 			case ContainerSystemEventNames.ATTACHED:
-				return this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHED);
+				return this.produceBasicContainerTelemetry(
+					ContainerTelemetryEventNames.ATTACHED,
+					containerId,
+				);
 			case ContainerSystemEventNames.ATTACHING:
-				return this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHING);
+				return this.produceBasicContainerTelemetry(
+					ContainerTelemetryEventNames.ATTACHING,
+					containerId,
+				);
 			default:
 				break;
 		}
@@ -51,30 +59,40 @@ export class ContainerEventTelemetryProducer {
 
 	private produceBasicContainerTelemetry = (
 		eventName: ContainerTelemetryEventName,
+		containerId: string,
 	): IContainerTelemetry => {
 		return {
 			eventName,
-			containerId: this.getClientId(),
+			containerId,
+			clientId: this.getClientId(),
 			documentId: this.getDocumentId(),
 		} as IContainerTelemetry;
 	};
 
-	private produceConnectedTelemetry = (payload?: {
-		clientId: string;
-	}): ContainerConnectedTelemetry => {
+	private produceConnectedTelemetry = (
+		containerId: string,
+		payload?: {
+			clientId: string;
+		},
+	): ContainerConnectedTelemetry => {
 		return {
 			eventName: ContainerTelemetryEventNames.CONNECTED,
-			containerId: payload?.clientId ?? this.getClientId(),
+			containerId,
+			clientId: payload?.clientId ?? this.getClientId(),
 			documentId: this.getDocumentId(),
 		};
 	};
 
-	private produceClosedTelemetry = (payload?: {
-		error?: ICriticalContainerError;
-	}): ContainerClosedTelemetry => {
+	private produceClosedTelemetry = (
+		containerId: string,
+		payload?: {
+			error?: ICriticalContainerError;
+		},
+	): ContainerClosedTelemetry => {
 		const telemetry: ContainerClosedTelemetry = {
 			eventName: ContainerTelemetryEventNames.CLOSED,
-			containerId: this.getClientId(),
+			containerId,
+			clientId: this.getClientId(),
 			documentId: this.getDocumentId(),
 		};
 		if (payload?.error !== undefined) {

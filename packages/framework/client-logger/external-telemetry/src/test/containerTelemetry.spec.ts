@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import type Sinon from "sinon";
-import { assert as sinonAssert, spy } from "sinon";
+import { spy, type Sinon } from "sinon";
+import { expect } from "chai";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IContainer,
 	IContainerEvents,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { startTelemetryManagers, TelemetryManagerConfig } from "../factory/index.js";
+import {
+	createAppInsightsTelemetryConsumer,
+	startTelemetryManagers,
+	TelemetryManagerConfig,
+} from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ContainerSystemEventNames } from "../container/containerSystemEvents.js";
 import {
@@ -94,12 +98,8 @@ describe("External container telemetry", () => {
 		mockContainer = createMockContainer();
 
 		telemetryManagerConfig = {
-			containerTelemetry: {
-				container: mockContainer,
-			},
-			consumers: {
-				appInsights: appInsightsClient,
-			},
+			container: mockContainer,
+			consumers: [createAppInsightsTelemetryConsumer(appInsightsClient)],
 		};
 	});
 
@@ -108,18 +108,23 @@ describe("External container telemetry", () => {
 
 		mockContainer.connect();
 
-		const expectedAppInsightsTelemetryProperties: ContainerConnectedTelemetry = {
-			eventName: ContainerTelemetryEventNames.CONNECTED,
-			documentId: mockContainer.resolvedUrl?.id,
-			containerId: mockContainer.clientId,
-		};
+		expect(trackEventSpy.callCount).to.equal(1);
 
-		const expectedAppInsightsTelemetry = {
+		// Obtain the events from the method that the spy was called with
+		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const expectedEvent = {
 			name: ContainerTelemetryEventNames.CONNECTED,
-			properties: expectedAppInsightsTelemetryProperties,
+			properties: {
+				eventName: ContainerTelemetryEventNames.CONNECTED,
+				documentId: mockContainer.resolvedUrl?.id,
+				clientId: mockContainer.clientId,
+				containerId: actualTelemetryEvent.properties.containerId,
+			} as ContainerConnectedTelemetry,
 		};
 
-		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
@@ -127,18 +132,23 @@ describe("External container telemetry", () => {
 
 		mockContainer.disconnect();
 
-		const expectedAppInsightsTelemetryProperties: ContainerDisconnectedTelemetry = {
-			eventName: ContainerTelemetryEventNames.DISCONNECTED,
-			documentId: mockContainer.resolvedUrl?.id,
-			containerId: mockContainer.clientId,
-		};
+		expect(trackEventSpy.callCount).to.equal(1);
 
-		const expectedAppInsightsTelemetry = {
+		// Obtain the events from the method that the spy was called with
+		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const expectedEvent = {
 			name: ContainerTelemetryEventNames.DISCONNECTED,
-			properties: expectedAppInsightsTelemetryProperties,
+			properties: {
+				eventName: ContainerTelemetryEventNames.DISCONNECTED,
+				documentId: mockContainer.resolvedUrl?.id,
+				clientId: mockContainer.clientId,
+				containerId: actualTelemetryEvent.properties.containerId,
+			} as ContainerDisconnectedTelemetry,
 		};
 
-		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'closed' system event produces expected ContainerClosedTelemetry", () => {
@@ -146,18 +156,21 @@ describe("External container telemetry", () => {
 
 		mockContainer.close();
 
-		const expectedAppInsightsTelemetryProperties: ContainerClosedTelemetry = {
-			eventName: ContainerTelemetryEventNames.CLOSED,
-			documentId: mockContainer.resolvedUrl?.id,
-			containerId: mockContainer.clientId,
-		};
-
-		const expectedAppInsightsTelemetry = {
+		// Obtain the events from the method that the spy was called with
+		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const expectedEvent = {
 			name: ContainerTelemetryEventNames.CLOSED,
-			properties: expectedAppInsightsTelemetryProperties,
+			properties: {
+				eventName: ContainerTelemetryEventNames.CLOSED,
+				documentId: mockContainer.resolvedUrl?.id,
+				clientId: mockContainer.clientId,
+				containerId: actualTelemetryEvent.properties.containerId,
+			} as ContainerClosedTelemetry,
 		};
 
-		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'closed' system event with an error produces expected ContainerClosedTelemetry", () => {
@@ -171,19 +184,21 @@ describe("External container telemetry", () => {
 
 		mockContainer.close(containerError);
 
-		const expectedAppInsightsTelemetryProperties: ContainerClosedTelemetry = {
-			eventName: ContainerTelemetryEventNames.CLOSED,
-			documentId: mockContainer.resolvedUrl?.id,
-			containerId: mockContainer.clientId,
-			error: containerError,
-		};
-
-		const expectedAppInsightsTelemetry = {
+		// Obtain the events from the method that the spy was called with
+		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const expectedEvent = {
 			name: ContainerTelemetryEventNames.CLOSED,
-			properties: expectedAppInsightsTelemetryProperties,
+			properties: {
+				eventName: ContainerTelemetryEventNames.CLOSED,
+				documentId: mockContainer.resolvedUrl?.id,
+				clientId: mockContainer.clientId,
+				containerId: actualTelemetryEvent.properties.containerId,
+				error: containerError,
+			} as ContainerClosedTelemetry,
 		};
-
-		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'attaching' system event produces expected ContainerAttachingTelemetry", () => {
@@ -191,18 +206,21 @@ describe("External container telemetry", () => {
 
 		mockContainer.attach({ url: "mockUrl" });
 
-		const expectedAppInsightsTelemetryProperties: ContainerAttachingTelemetry = {
-			eventName: ContainerTelemetryEventNames.ATTACHING,
-			documentId: mockContainer.resolvedUrl?.id,
-			containerId: mockContainer.clientId,
-		};
-
-		const expectedAppInsightsTelemetry = {
+		// Obtain the events from the method that the spy was called with
+		const actualTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const expectedEvent = {
 			name: ContainerTelemetryEventNames.ATTACHING,
-			properties: expectedAppInsightsTelemetryProperties,
+			properties: {
+				eventName: ContainerTelemetryEventNames.ATTACHING,
+				documentId: mockContainer.resolvedUrl?.id,
+				clientId: mockContainer.clientId,
+				containerId: actualTelemetryEvent.properties.containerId,
+			} as ContainerAttachingTelemetry,
 		};
 
-		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
 	});
 
 	it("Emitting 'attached' system event produces expected ContainerAttachedTelemetry", () => {
@@ -210,17 +228,44 @@ describe("External container telemetry", () => {
 
 		mockContainer.attach({ url: "mockUrl" });
 
-		const expectedAppInsightsTelemetryProperties: ContainerAttachedTelemetry = {
-			eventName: ContainerTelemetryEventNames.ATTACHED,
-			documentId: mockContainer.resolvedUrl?.id,
-			containerId: mockContainer.clientId,
-		};
-
-		const expectedAppInsightsTelemetry = {
+		// Obtain the events from the method that the spy was called with
+		// Note that due to how our mockContainer is setup, the attached call should be the second call.
+		const actualTelemetryEvent = trackEventSpy.getCall(1).args[0];
+		const expectedEvent = {
 			name: ContainerTelemetryEventNames.ATTACHED,
-			properties: expectedAppInsightsTelemetryProperties,
+			properties: {
+				eventName: ContainerTelemetryEventNames.ATTACHED,
+				documentId: mockContainer.resolvedUrl?.id,
+				clientId: mockContainer.clientId,
+				containerId: actualTelemetryEvent.properties.containerId,
+			} as ContainerAttachedTelemetry,
 		};
 
-		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsTelemetry);
+		expect(expectedEvent).to.deep.equal(actualTelemetryEvent);
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualTelemetryEvent.properties.containerId).to.be.a("string").with.length.above(0);
+	});
+
+	it("Emitting multiple events from the same container persists the same containerId in telemetry", () => {
+		startTelemetryManagers(telemetryManagerConfig);
+
+		mockContainer.connect();
+		mockContainer.disconnect();
+
+		expect(trackEventSpy.callCount).to.equal(2);
+
+		// Obtain the events from the method that the spy was called with
+		// Note that due to how our mockContainer is setup, the attached call should be the second call.
+		const actualConnectedTelemetryEvent = trackEventSpy.getCall(0).args[0];
+		const actualDisconnectedTelemetryEvent = trackEventSpy.getCall(1).args[0];
+
+		// We won't know what the container UUID will be but we can still check that it is defined.
+		expect(actualConnectedTelemetryEvent.properties.containerId)
+			.to.be.a("string")
+			.with.length.above(0);
+		// Confirm both events have the same container id.
+		expect(actualConnectedTelemetryEvent.properties.containerId).to.equal(
+			actualDisconnectedTelemetryEvent.properties.containerId,
+		);
 	});
 });

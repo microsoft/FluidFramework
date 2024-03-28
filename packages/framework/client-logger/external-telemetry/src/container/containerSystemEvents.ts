@@ -8,7 +8,7 @@
  * It's important to note that each actual system events is a function signature such as `(event: "readonly", listener: (readonly: boolean) => void): void;`
  * but this enum only caputres the event name in each function.
  *
- * @remarks This should probably exist within IContainer itself instead of being defined here.
+ * @privateremarks This should probably exist within IContainer itself instead of being defined here.
  */
 export const ContainerSystemEventNames = {
 	CONNECTED: "connected",

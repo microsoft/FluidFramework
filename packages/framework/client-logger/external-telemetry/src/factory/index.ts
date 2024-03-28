@@ -16,45 +16,37 @@ import { AppInsightsTelemetryConsumer, type ITelemetryConsumer } from "../common
  */
 export interface TelemetryManagerConfig {
 	/**
-	 * Configuration for creating an external telemetry manager for container related telemetry.
+	 * By providing this attribute, container related external telemetry will be send to any provided ITelemetryConsumer(s)
 	 */
-	containerTelemetry?: {
-		container: IContainer;
-	};
+	container: IContainer;
 	/**
 	 * Consumers for produced external telemetry.
 	 */
-	consumers: {
-		/**
-		 * An instance of an Azure Application Insights client {@link @microsoft/applicationinsights-web#ApplicationInsights}
-		 * The App Insights instance must be initialed before being provided which can be done via {@link @microsoft/applicationinsights-web#ApplicationInsights.loadAppInsights}
-		 * `applicationInsightsClient.loadAppInsights(); `
-		 *
-		 * By providing this optional attribute, external telemetry will be sent to your Azure App Insights instnance in a controlled manner.
-		 */
-		appInsights?: ApplicationInsights;
-	};
+	consumers: ITelemetryConsumer[];
 }
+
+/**
+ * Creates an external telemetry consumer that will send telemetry to Azure Application Insights
+ *
+ * @param client - An instance of an Azure Application Insights client {@link @microsoft/applicationinsights-web#ApplicationInsights}
+ * The App Insights instance must be initialed before being provided which can be done via {@link @microsoft/applicationinsights-web#ApplicationInsights.loadAppInsights}
+ * `applicationInsightsClient.loadAppInsights(); `
+ *
+ * @beta
+ */
+export const createAppInsightsTelemetryConsumer = (
+	client: ApplicationInsights,
+): ITelemetryConsumer => {
+	return new AppInsightsTelemetryConsumer(client);
+};
 
 /**
  * Starts external telemetry managers for one or more areas of the Fluid Framework.
  * @beta
  */
 export const startTelemetryManagers = (config: TelemetryManagerConfig): void => {
-	const consumers: ITelemetryConsumer[] = [];
-	if (config.consumers.appInsights) {
-		const telemetryConsumer = new AppInsightsTelemetryConsumer(config.consumers.appInsights);
-		consumers.push(telemetryConsumer);
-	}
-
-	if (config.containerTelemetry) {
-		const telemetryProducer = new ContainerEventTelemetryProducer(
-			config.containerTelemetry.container,
-		);
-		new ContainerTelemetryManager(
-			config.containerTelemetry.container,
-			telemetryProducer,
-			consumers,
-		);
+	if (config.container) {
+		const telemetryProducer = new ContainerEventTelemetryProducer(config.container);
+		new ContainerTelemetryManager(config.container, telemetryProducer, config.consumers);
 	}
 };

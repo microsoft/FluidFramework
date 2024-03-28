@@ -24,7 +24,7 @@ The core functionality of this package is exposed by the `createTelemetryManager
 ```ts
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { FluidContainer } from "@fluidframework/fluid-static";
-import { TelemetryManagerConfig, createTelemetryManagers } from "@fluidframework/external-telemetry"
+import { TelemetryManagerConfig, startTelemetryManagers, createAppInsightsTelemetryConsumer } from "@fluidframework/external-telemetry"
 
 const myAppContainer: FluidContainer = {...your code to create a Fluid Continer}
 
@@ -38,24 +38,16 @@ const appInsightsClient = new ApplicationInsights({
 });
 
 // Initializes the App Insights client. Without this, logs will not be sent to Azure.
-applicationInsightsClient.loadAppInsights();
+appInsightsClient.loadAppInsights();
 
 // Create the telemetry manager config object(s)
-const consumerConfig: TelemetryManagerConfig.AppInsightsConsumerConfig = {
-	type: TelemetryManagerConfig.ConsumerConfigTypes.APP_INSIGHTS,
-	appInsightsClient: appInsightsClient,
-};
 const telemetryManagerConfig: TelemetryManagerConfig = {
-    // Here we are specifying that we want to be tracking Fluid container related events.
-	containerTelemetry: {
-		container: myAppContainer,
-		consumerConfig: consumerConfig,
-	},
-};
-
+			container: myAppContainer,
+			consumers: [createAppInsightsTelemetryConsumer(appInsightsClient)],
+		};
 
 // Setup telemetry manager(s)
-createTelemetryManagers(telemetryManagerConfig);
+startTelemetryManagers(telemetryManagerConfig);
 
 // Done!
 ```
@@ -76,7 +68,7 @@ Telemetry events relating directly to Fluid Containers.
 
 # Internal Design
 
-This section is relevant for people looking to create their own custom logic for production and consumption of telemetry for their Fluid Framework application. It details information about the internal package setup to help people get a better understanding of how to get started customizing themselves.
+This section is relevant for people looking to create their own custom logic for production and consumption of telemetry for their Fluid Framework application. It details information about the internal package setup to help people get a better understanding of how to get started customizing themselves. At this time internal types and classes are not exported for users.
 
 The telemetry is produced from internal Fluid system events, such as [`IContainerEvents`](../../../common/container-definitions/src/loader.ts).
 These events are subscribed to and when they if/when they fire, additional information is added and a strongly typed telemetry event is produced.

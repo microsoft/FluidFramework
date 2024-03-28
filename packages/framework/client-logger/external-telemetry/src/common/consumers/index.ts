@@ -6,7 +6,7 @@
 /**
  * Base interface for all telemetry consumers.
  *
- * @internal
+ * @beta
  */
 export interface ITelemetryConsumer {
 	consume(event: Record<string, any>);

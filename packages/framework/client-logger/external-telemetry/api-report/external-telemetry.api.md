@@ -53,7 +53,7 @@ export const ContainerTelemetryEventNames: {
 };
 
 // @beta
-export const createTelemetryManagers: (config: TelemetryManagerConfig) => void;
+export const createAppInsightsTelemetryConsumer: (client: ApplicationInsights) => ITelemetryConsumer;
 
 // @beta
 export type ExternalTelemetryEventName = ContainerTelemetryEventName;
@@ -61,7 +61,9 @@ export type ExternalTelemetryEventName = ContainerTelemetryEventName;
 // @beta
 export interface IContainerTelemetry extends IExternalTelemetry {
     // (undocumented)
-    containerId?: string;
+    clientId?: string;
+    // (undocumented)
+    containerId: string;
     // (undocumented)
     documentId?: string;
     // (undocumented)
@@ -75,13 +77,18 @@ export interface IExternalTelemetry {
 }
 
 // @beta
+export interface ITelemetryConsumer {
+    // (undocumented)
+    consume(event: Record<string, any>): any;
+}
+
+// @beta
+export const startTelemetryManagers: (config: TelemetryManagerConfig) => void;
+
+// @beta
 export interface TelemetryManagerConfig {
-    consumers: {
-        appInsights?: ApplicationInsights;
-    };
-    containerTelemetry?: {
-        container: IContainer;
-    };
+    consumers: ITelemetryConsumer[];
+    container: IContainer;
 }
 
 // (No @packageDocumentation comment for this package)
