@@ -60,15 +60,15 @@ This section details the currently available telemetry event and their typescrip
 
 Telemetry events relating directly to Fluid Containers.
 
-1. `ContainerConnectedTelemetry` - Description coming soon
-1. `ContainerDisconnectedTelemetry` - Description coming soon
-1. `ContainerClosedTelemetry` - Description coming soon
-1. `ContainerAttachingTelemetry` - Description coming soon
-1. `ContainerAttachedTelemetry` - Description coming soon
+1. `ContainerConnectedTelemetry`
+1. `ContainerDisconnectedTelemetry`
+1. `ContainerClosedTelemetry`
+1. `ContainerAttachingTelemetry`
+1. `ContainerAttachedTelemetry`
 
 # Internal Design
 
-This section is relevant for people looking to create their own custom logic for production and consumption of telemetry for their Fluid Framework application. It details information about the internal package setup to help people get a better understanding of how to get started customizing themselves. At this time internal types and classes are not exported for users.
+This section is relevant for people looking to create their own custom logic for production and consumption of telemetry for their Fluid Framework application. It details information about the internal package setup to help people get a better understanding of how to get started customizing themselves. **At this time internal types and classes are not exported for users.**
 
 The telemetry is produced from internal Fluid system events, such as [`IContainerEvents`](../../../common/container-definitions/src/loader.ts).
 These events are subscribed to and when they if/when they fire, additional information is added and a strongly typed telemetry event is produced.
