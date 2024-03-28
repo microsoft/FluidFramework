@@ -79,7 +79,7 @@ describe("Fuzz - anchor stability", () => {
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-			set: 1,
+			set: 2,
 			clear: 1,
 			insert: 1,
 			remove: 2,
@@ -146,7 +146,7 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are stable", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
-			clear: 2,
+			clear: 1,
 			insert: 2,
 			remove: 2,
 			move: 2,
