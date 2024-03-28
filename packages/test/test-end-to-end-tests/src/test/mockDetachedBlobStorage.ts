@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IContainer } from "@fluidframework/container-definitions";
 import { IDetachedBlobStorage } from "@fluidframework/container-loader";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";

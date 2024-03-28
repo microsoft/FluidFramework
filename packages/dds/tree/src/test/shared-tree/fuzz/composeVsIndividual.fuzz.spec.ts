@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator,
@@ -16,7 +17,9 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,

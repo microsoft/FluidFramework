@@ -4,6 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
+
 import { Result, assertWithMessage, copyPropertyIfDefined, fail } from './Common.js';
 import {
 	BadPlaceValidationResult,

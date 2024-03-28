@@ -16,7 +16,6 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
-
 import * as React from "react";
 
 const codeMirrorFactory = new SmdeFactory();

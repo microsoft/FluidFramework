@@ -26,6 +26,7 @@ import { type ConnectionStateChangeLogEntry } from "@fluidframework/devtools-cor
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+
 import { LabelCellLayout } from "./utility-components/index.js";
 
 /**

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import path from "node:path";
+
 import { createSnapshotSuite } from "@fluid-private/test-dds-utils";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -12,7 +13,9 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { type ISharedDirectory, SharedDirectory } from "../../index.js";
+
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
 

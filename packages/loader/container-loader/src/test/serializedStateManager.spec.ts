@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import {
@@ -21,6 +22,7 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<

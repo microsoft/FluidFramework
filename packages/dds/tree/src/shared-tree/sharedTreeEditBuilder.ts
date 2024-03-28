@@ -9,6 +9,7 @@ import {
 	IDefaultEditBuilder,
 	ModularChangeFamily,
 } from "../feature-libraries/index.js";
+
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 /**

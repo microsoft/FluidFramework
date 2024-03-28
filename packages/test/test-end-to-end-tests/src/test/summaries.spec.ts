@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	ITestDataObject,

@@ -4,6 +4,7 @@
  */
 
 import assert from "node:assert";
+
 import * as fetchModule from "node-fetch";
 import { stub } from "sinon";
 

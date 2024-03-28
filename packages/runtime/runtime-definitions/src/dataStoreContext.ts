@@ -24,6 +24,7 @@ import type {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+
 import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {

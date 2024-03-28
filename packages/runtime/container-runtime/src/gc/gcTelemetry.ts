@@ -11,8 +11,10 @@ import {
 	generateStack,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
+
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ICreateContainerMetadata } from "../summary/index.js";
+
 import {
 	GCFeatureMatrix,
 	GCNodeType,
