@@ -18,7 +18,7 @@ import type { ISharedTree } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 import { EditType } from "../CommonInterfaces.js";
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
-import { sharedTreeVisualizer, visualRepresentationMapper } from "./SharedTreeHelpers.js";
+import { visualizeSharedTreeNodeBySchema, mapToVisualChildNode } from "./SharedTreeVisualizer.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -259,16 +259,16 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	/**
 	 * Traverses the SharedTree and generates a visual representation of the tree (mainly composed of `schema` and `fields` field).
 	 */
-	const visualTreeRepresentation = sharedTreeVisualizer(treeView, treeSchema, contentSnapshot);
-
-	console.log("visualTreeRepresentation", visualTreeRepresentation);
+	const visualTreeRepresentation = visualizeSharedTreeNodeBySchema(
+		treeView,
+		treeSchema,
+		contentSnapshot,
+	);
 
 	/**
 	 * Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	 */
-	const visualTree = visualRepresentationMapper(visualTreeRepresentation);
-
-	console.log(visualTree);
+	const visualTree = mapToVisualChildNode(visualTreeRepresentation);
 
 	return {
 		fluidObjectId: sharedTree.id,
