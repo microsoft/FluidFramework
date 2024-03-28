@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { expect } from "chai";
 
 import { EditType } from "../CommonInterfaces.js";
 import {

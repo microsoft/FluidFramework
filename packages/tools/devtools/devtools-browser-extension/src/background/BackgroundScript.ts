@@ -20,6 +20,7 @@ import {
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging/index.js";
+
 import {
 	backgroundScriptMessageLoggingOptions,
 	formatBackgroundScriptMessageForLogging,

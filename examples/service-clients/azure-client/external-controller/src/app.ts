@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidContainer, ISharedMap, IValueChanged, SharedMap } from "fluid-framework";
 
 import {
 	AzureClient,
@@ -14,7 +13,7 @@ import {
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
-
+import { IFluidContainer, ISharedMap, IValueChanged, SharedMap } from "fluid-framework";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";

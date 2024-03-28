@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import React from "react";
 
-import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";

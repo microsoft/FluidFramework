@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
 
 import type { ISameContainerMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
 import { ModelLoader, SameContainerMigrator } from "@fluid-example/example-utils";
@@ -14,6 +12,8 @@ import {
 	InsecureTinyliciousUrlResolver,
 	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "..//index.js";
 import { IdCompressor } from "../idCompressor.js";
 import {

@@ -15,6 +15,7 @@ import {
 	createGenericNetworkError,
 } from "@fluidframework/driver-utils";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**

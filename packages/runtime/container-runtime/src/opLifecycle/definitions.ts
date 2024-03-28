@@ -4,6 +4,7 @@
  */
 
 import { IBatchMessage } from "@fluidframework/container-definitions";
+
 import { CompressionAlgorithms } from "../containerRuntime.js";
 
 /**

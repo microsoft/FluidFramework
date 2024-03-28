@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 import React from "react";
 
-import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 
 /**
  * Props for {@link MenuSection}

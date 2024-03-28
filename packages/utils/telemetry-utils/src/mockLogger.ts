@@ -9,6 +9,7 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
+
 import { createChildLogger } from "./logger.js";
 import { ITelemetryLoggerExt, ITelemetryPropertiesExt } from "./telemetryTypes.js";
 

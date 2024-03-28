@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import axios from "axios";
 
 import { AzureMember } from "@fluidframework/azure-client";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
+import axios from "axios";
 
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for

@@ -4,7 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+
 import { UsageError } from "@fluidframework/telemetry-utils";
+
+
+import { leaf } from "../../domains/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
 	FieldKinds,
 	FlexFieldSchema,
@@ -13,10 +19,6 @@ import {
 	intoStoredSchema,
 	nodeKeyFieldKey,
 } from "../../feature-libraries/index.js";
-
-import { leaf } from "../../domains/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { required } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UpdateType } from "../../shared-tree/schematizeTree.js";
 import {

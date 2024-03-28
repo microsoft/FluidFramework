@@ -10,7 +10,9 @@ import {
 	StableId,
 	assertIsStableId,
 } from "@fluidframework/id-compressor";
+
 import { brand, extractFromOpaque } from "../../util/index.js";
+
 import { LocalNodeKey, StableNodeKey } from "./nodeKey.js";
 
 /**

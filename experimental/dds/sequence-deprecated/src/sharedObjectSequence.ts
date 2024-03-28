@@ -8,6 +8,7 @@ import {
 	IFluidDataStoreRuntime,
 	Serializable,
 } from "@fluidframework/datastore-definitions";
+
 import { SharedObjectSequenceFactory } from "./sequenceFactory.js";
 import { SharedSequence } from "./sharedSequence.js";
 

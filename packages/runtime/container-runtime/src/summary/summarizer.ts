@@ -14,7 +14,9 @@ import {
 	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
+
 import { ISummaryConfiguration } from "../containerRuntime.js";
+
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";

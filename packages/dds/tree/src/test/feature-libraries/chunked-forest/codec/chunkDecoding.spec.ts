@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { compareArrays } from "@fluidframework/core-utils";
+
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {

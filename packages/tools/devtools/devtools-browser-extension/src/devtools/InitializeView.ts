@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DevtoolsPanel } from "@fluid-internal/devtools-view";
 
 import { BackgroundConnection } from "../BackgroundConnection.js";
 import { browser } from "../Globals.js";
 import { extensionViewMessageSource } from "../messaging/index.js";
+
 import { formatDevtoolsScriptMessageForLogging } from "./Logging.js";
 import { OneDSLogger } from "./TelemetryLogging.js";
 

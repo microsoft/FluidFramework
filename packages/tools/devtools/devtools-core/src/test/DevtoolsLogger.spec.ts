@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
 
 import { type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+import { expect } from "chai";
 
 import { type IDevtoolsLogger, createDevtoolsLogger } from "../DevtoolsLogger.js";
 

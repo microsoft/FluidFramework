@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as appinsights from "applicationinsights";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import * as appinsights from "applicationinsights";
 
 /**
  * @internal

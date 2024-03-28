@@ -6,12 +6,7 @@
 import { strict as assert, fail } from "assert";
 
 import { Static, Type } from "@sinclair/typebox";
-import {
-	DecoderContext,
-	decode,
-	readStreamIdentifier,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -23,6 +18,12 @@ import {
 	readStreamNumber,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
+import {
+	DecoderContext,
+	decode,
+	readStreamIdentifier,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import/no-internal-modules

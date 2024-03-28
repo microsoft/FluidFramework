@@ -8,9 +8,20 @@ import lodash from "lodash";
 // eslint-disable-next-line @typescript-eslint/unbound-method -- 'lodash' import workaround.
 const { isEmpty, findIndex, find, isEqual, range } = lodash;
 
-import { copy as cloneDeep } from "fastest-json-copy";
-import { Packr } from "msgpackr";
 
+
+
+import {
+	ChangeSet,
+	Utils as ChangeSetUtils,
+	rebaseToRemoteChanges,
+} from "@fluid-experimental/property-changeset";
+import {
+	BaseProperty,
+	NodeProperty,
+	PropertyFactory,
+} from "@fluid-experimental/property-properties";
+import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,
@@ -19,26 +30,14 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
-
-import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
-
-import {
-	ChangeSet,
-	Utils as ChangeSetUtils,
-	rebaseToRemoteChanges,
-} from "@fluid-experimental/property-changeset";
-
-import {
-	BaseProperty,
-	NodeProperty,
-	PropertyFactory,
-} from "@fluid-experimental/property-properties";
-
 import axios from "axios";
+import { copy as cloneDeep } from "fastest-json-copy";
+import { Packr } from "msgpackr";
 import { v4 as uuidv4 } from "uuid";
+
 import { PropertyTreeFactory } from "./propertyTreeFactory.js";
 
 /**

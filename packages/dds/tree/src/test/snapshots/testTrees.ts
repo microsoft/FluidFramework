@@ -4,10 +4,10 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 // eslint-disable-next-line import/no-internal-modules -- test import
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test/idCompressorTestUtilities";
 import {
 	AllowedUpdateType,
 	FieldKey,

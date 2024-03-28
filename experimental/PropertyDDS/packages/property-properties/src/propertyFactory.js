@@ -8,8 +8,8 @@
  * Responsible for creating property sets and registering property templates
  */
 
-const _ = require("lodash");
 const fastestJSONCopy = require("fastest-json-copy");
+const _ = require("lodash");
 const deepCopy = fastestJSONCopy.copy;
 
 const {
@@ -28,24 +28,29 @@ const {
 	PathHelper,
 	ChangeSet,
 } = require("@fluid-experimental/property-changeset");
-
-const semver = require("semver");
 const async = require("async");
-const { PropertyTemplate } = require("./propertyTemplate");
-const { PropertyTemplateWrapper } = require("./propertyTemplateWrapper");
+const semver = require("semver");
+
 
 // Include the property classes
+const {
+	AbstractStaticCollectionProperty,
+} = require("./properties/abstractStaticCollectionProperty");
+const { ArrayProperty } = require("./properties/arrayProperty");
 const { BaseProperty } = require("./properties/baseProperty");
+const { BoolProperty } = require("./properties/boolProperty");
+const { ContainerProperty } = require("./properties/containerProperty");
+const { EnumArrayProperty } = require("./properties/enumArrayProperty");
+const { EnumProperty } = require("./properties/enumProperty");
+const { Float32Property, Float64Property } = require("./properties/floatProperties");
+const { NamedNodeProperty } = require("./properties/namedNodeProperty");
 const { NamedProperty } = require("./properties/namedProperty");
 const { NodeProperty } = require("./properties/nodeProperty");
-const { NamedNodeProperty } = require("./properties/namedNodeProperty");
-const { ContainerProperty } = require("./properties/containerProperty");
+const { Uint8Property, Uint16Property, Uint32Property } = require("./properties/uintProperties");
+const { ValueMapProperty } = require("./properties/valueMapProperty");
 const { ValueProperty } = require("./properties/valueProperty");
 
 // Include all primitive properties –- will register at the end.
-const { Uint8Property, Uint16Property, Uint32Property } = require("./properties/uintProperties");
-
-const { Float32Property, Float64Property } = require("./properties/floatProperties");
 
 const {
 	Int8Property,
@@ -54,22 +59,13 @@ const {
 	Int64Property,
 	Uint64Property,
 } = require("./properties/intProperties");
-
 const { StringProperty } = require("./properties/stringProperty");
-const { BoolProperty } = require("./properties/boolProperty");
 const { ReferenceProperty } = require("./properties/referenceProperty");
-const { EnumProperty } = require("./properties/enumProperty");
 
 // Include collection properties
-const { ArrayProperty } = require("./properties/arrayProperty");
 const { SetProperty } = require("./properties/setProperty");
 const { MapProperty } = require("./properties/mapProperty");
-const { ValueMapProperty } = require("./properties/valueMapProperty");
 const { IndexedCollectionBaseProperty } = require("./properties/indexedCollectionBaseProperty");
-const {
-	AbstractStaticCollectionProperty,
-} = require("./properties/abstractStaticCollectionProperty");
-
 const {
 	Float32ArrayProperty,
 	Float64ArrayProperty,
@@ -84,11 +80,8 @@ const {
 	StringArrayProperty,
 	BoolArrayProperty,
 } = require("./properties/valueArrayProperty");
-
 const { ReferenceMapProperty } = require("./properties/referenceMapProperty");
 const { ReferenceArrayProperty } = require("./properties/referenceArrayProperty");
-const { EnumArrayProperty } = require("./properties/enumArrayProperty");
-
 const {
 	Float64MapProperty,
 	Float32MapProperty,
@@ -103,8 +96,9 @@ const {
 	StringMapProperty,
 	BoolMapProperty,
 } = require("./properties/valueMapProperty");
-
 const { LazyLoadedProperties } = require("./properties/lazyLoadedProperties");
+const { PropertyTemplate } = require("./propertyTemplate");
+const { PropertyTemplateWrapper } = require("./propertyTemplateWrapper");
 
 /**
  * Creates an instance of the TemplateValidator
@@ -900,15 +894,15 @@ class PropertyFactory {
 	 *
 	 * ```
 	 * <pre>
-	 *   {
-	 *     'isValid': true or false,
-	 *     'typeid': 'The typeid of the object being parsed',
-	 *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
-	 *       'in the document', 'but not resolved from the local cache' ],
-	 *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
-	 *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
-	 *     ...
-	 *   }
+	 * {
+	 * 'isValid': true or false,
+	 * 'typeid': 'The typeid of the object being parsed',
+	 * 'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+	 * 'in the document', 'but not resolved from the local cache' ],
+	 * 'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+	 * 'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+	 * ...
+	 * }
 	 * </pre>
 	 * ```
 	 */
@@ -2290,16 +2284,16 @@ class PropertyFactory {
 	 *
 	 * ```json
 	 * {
-	 *  errors: {
-	 *    typeid1: errors,
-	 *    ...
-	 *    typeidn: errors
-	 *  },
-	 *  templates: {
-	 *    typeid1: [], array of templates
-	 *    ...
-	 *    typeidn: []  array of templates
-	 *   }
+	 * errors: {
+	 * typeid1: errors,
+	 * ...
+	 * typeidn: errors
+	 * },
+	 * templates: {
+	 * typeid1: [], array of templates
+	 * ...
+	 * typeidn: []  array of templates
+	 * }
 	 * }
 	 * ```
 	 */

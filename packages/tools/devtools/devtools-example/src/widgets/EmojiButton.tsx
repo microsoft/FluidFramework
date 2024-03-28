@@ -4,9 +4,9 @@
  */
 
 import { Button, Tooltip } from "@fluentui/react-components";
+import { type SharedCell } from "@fluidframework/cell";
 import React from "react";
 
-import { type SharedCell } from "@fluidframework/cell";
 
 /**
  * {@link EmojiButton} input props.
