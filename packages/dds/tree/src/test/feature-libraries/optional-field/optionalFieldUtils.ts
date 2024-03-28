@@ -108,6 +108,18 @@ export const Change = {
 		};
 	},
 	/**
+	 * @param dst - The register that the contents of the field should be moved to should it become populated
+	 * with a different node that the current one (which will take its place).
+	 * @returns A changeset that pins the current node to the field.
+	 */
+	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset<never> => {
+		return {
+			moves: [],
+			childChanges: [],
+			valueReplace: { isEmpty: false, dst: asChangeAtomId(dst), src: "self" },
+		};
+	},
+	/**
 	 * @param location - The register that contains the child node to be changed.
 	 * That register must be full in the input context of the changeset.
 	 * @param change - A change to apply to a child node.
