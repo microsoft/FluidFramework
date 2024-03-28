@@ -16,8 +16,8 @@ import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test
 import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
 import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
-import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
-import type { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor';
+import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor/internal';
+import type { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor/internal';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
