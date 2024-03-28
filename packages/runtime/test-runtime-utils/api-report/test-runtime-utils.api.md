@@ -64,6 +64,14 @@ export interface IInsecureUser extends IUser {
     name: string;
 }
 
+// @alpha (undocumented)
+export interface IInternalMockRuntimeMessage {
+    // (undocumented)
+    content: any;
+    // (undocumented)
+    localOpMetadata?: unknown;
+}
+
 // @alpha
 export interface IMockContainerRuntimeOptions {
     readonly enableGroupedBatching?: boolean;
@@ -118,6 +126,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     flush(): void;
     // (undocumented)
     get isDirty(): boolean;
+    // (undocumented)
+    protected readonly outbox: IInternalMockRuntimeMessage[];
     // (undocumented)
     protected readonly overrides?: {
         minimumSequenceNumber?: number | undefined;

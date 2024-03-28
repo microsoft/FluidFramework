@@ -59,6 +59,14 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			// On disconnection, clear any outstanding messages for this client because it will be resent.
 			this.factory.clearOutstandingClientMessages(this.clientId);
 			this.factory.quorum.removeMember(this.clientId);
+			for (const message of this.outbox) {
+				this.addPendingMessage(
+					message.content,
+					message.localOpMetadata,
+					++this.deltaManager.clientSequenceNumber,
+				);
+			}
+			this.outbox.length = 0;
 		}
 
 		// Let the DDSes know that the connection state changed.
