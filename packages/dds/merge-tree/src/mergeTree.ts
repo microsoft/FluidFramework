@@ -8,6 +8,7 @@
 
 import { assert, Heap, IComparer } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
+
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
 // eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";

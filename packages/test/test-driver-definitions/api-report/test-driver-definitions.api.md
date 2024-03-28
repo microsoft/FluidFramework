@@ -4,11 +4,11 @@
 
 ```ts
 
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
-import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
-import { IUrlResolver } from '@fluidframework/driver-definitions';
+import type { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
+import type { IRequest } from '@fluidframework/core-interfaces';
+import type { IResolvedUrl } from '@fluidframework/driver-definitions';
+import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import type { IUrlResolver } from '@fluidframework/driver-definitions';
 
 // @internal
 export type DriverEndpoint = RouterliciousEndpoint | OdspEndpoint;

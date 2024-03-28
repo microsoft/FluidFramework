@@ -22,6 +22,7 @@ import {
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
+
 import { CellFactory } from "./cellFactory.js";
 import {
 	type ICellLocalOpMetadata,

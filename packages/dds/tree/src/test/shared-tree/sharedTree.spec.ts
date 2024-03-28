@@ -4,8 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IContainerExperimental } from "@fluidframework/container-loader";
-import { createIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -13,6 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
+
 import {
 	AllowedUpdateType,
 	CommitKind,
@@ -52,7 +54,6 @@ import {
 	ObjectForest,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
-import { EditManager } from "../../shared-tree-core/index.js";
 import {
 	CheckoutFlexTreeView,
 	FlexTreeView,
@@ -65,6 +66,7 @@ import {
 } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { requireSchema } from "../../shared-tree/schematizingTreeView.js";
+import { EditManager } from "../../shared-tree-core/index.js";
 import { SchemaFactory, TreeConfiguration } from "../../simple-tree/index.js";
 import { brand, disposeSymbol, fail } from "../../util/index.js";
 import {
@@ -1439,7 +1441,7 @@ describe("SharedTree", () => {
 	// TODO:
 	// These tests should either be tests of SharedTreeView, EditManager, or the relevant field kind's rebase function.
 	// Keeping a couple integration tests for rebase at this level might be ok (for example schema vs other edits), but that should be minimal,
-	// and those tests should setup proper schema, and use the high levels editing APIs (editable tree) if they are serving as integration tests of SharedTree,
+	// and those tests should setup proper schema, and use the high levels editing APIs (Flex tree) if they are serving as integration tests of SharedTree,
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
@@ -1639,7 +1641,9 @@ describe("SharedTree", () => {
 			validateTreeConsistency(provider.trees[0], provider.trees[1]);
 		});
 
-		it("can be undone at the tip", async () => {
+		// Undoing schema changes is not supported because it may render some of the forest contents invalid.
+		// This may be revisited in the future.
+		it.skip("can be undone at the tip", async () => {
 			const provider = await TestTreeProvider.create(2, SummarizeType.disabled);
 
 			const tree = provider.trees[0];

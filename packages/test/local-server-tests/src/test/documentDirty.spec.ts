@@ -4,23 +4,24 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
-import { SharedMap, type ISharedMap } from "@fluidframework/map";
+import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	createAndAttachContainer,
-	waitForContainerConnection,
 	ITestFluidObject,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestFluidObjectFactory,
+	createAndAttachContainer,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 
 describe("Document Dirty", () => {

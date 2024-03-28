@@ -4,8 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../codec/index.js";
 import { EncodedRevisionTag, RevisionTagCodec } from "../rebase/index.js";
+
 import { ForestRootId } from "./detachedFieldIndex.js";
 import {
 	EncodedRootsForRevision,

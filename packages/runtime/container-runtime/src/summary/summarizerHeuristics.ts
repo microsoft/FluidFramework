@@ -5,7 +5,9 @@
 
 import { Timer } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
+
 import {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,

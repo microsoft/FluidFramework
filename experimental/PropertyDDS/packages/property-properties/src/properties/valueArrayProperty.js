@@ -16,10 +16,12 @@ const {
 	Uint64,
 	Int64,
 } = require("@fluid-experimental/property-common");
+
 const { Int64Property, Uint64Property } = require("../properties/intProperties");
-const { _castFunctors } = require("./primitiveTypeCasts");
+
 const { ArrayProperty } = require("./arrayProperty");
 const { BaseProperty } = require("./baseProperty");
+const { _castFunctors } = require("./primitiveTypeCasts");
 
 /**
  * An array property which stores primitive values

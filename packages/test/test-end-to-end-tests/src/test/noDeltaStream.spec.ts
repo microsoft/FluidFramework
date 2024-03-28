@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainerLoadMode, LoaderHeader } from "@fluidframework/container-definitions";
-
-import { SummaryCollection, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { DefaultSummaryConfiguration, SummaryCollection } from "@fluidframework/container-runtime";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -16,14 +16,14 @@ import {
 } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
-	createLoader,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	timeoutPromise,
+	createLoader,
 	getContainerEntryPointBackCompat,
+	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({

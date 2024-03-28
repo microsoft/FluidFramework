@@ -9,7 +9,6 @@
 // API-Extractor issue: https://github.com/microsoft/rushstack/issues/4507
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 import { ValueSchema } from "../../core/index.js";
-
 import {
 	FieldKinds,
 	FlexAllowedTypes,

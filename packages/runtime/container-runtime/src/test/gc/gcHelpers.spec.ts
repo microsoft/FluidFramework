@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 // eslint-disable-next-line import/no-internal-modules
 import { shouldAllowGcSweep } from "../../gc/gcHelpers.js";
 import { GCFeatureMatrix } from "../../gc/index.js";

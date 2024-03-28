@@ -427,6 +427,7 @@ export function configureWebSocketServices(
 			const isSummarizer = messageClient.details?.type === summarizerClientType;
 			messageClient.user = claims.user;
 			messageClient.scopes = claims.scopes;
+			messageClient.mode = isWriter(claims.scopes, message.mode) ? "write" : "read";
 
 			// 1. Do not give SummaryWrite scope to clients that are not summarizers.
 			// 2. Store connection timestamp for all clients but the summarizer.
@@ -760,6 +761,13 @@ export function configureWebSocketServices(
 							// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
 							// for the same clientId if retrying when connectDocument completes after disconnectDocument.
 							clientIdClientsDisconnected.add(clientId);
+						})
+						.catch((error) => {
+							Lumberjack.error(
+								`Failed to remove client ${clientId} from client manager`,
+								getLumberBaseProperties(room.documentId, room.tenantId),
+								error,
+							);
 						}),
 				);
 				socket
@@ -1038,10 +1046,18 @@ export function configureWebSocketServices(
 			},
 		);
 
-		// Message sent when a new signal is submitted to the router
+		// Message sent when a new signal is submitted to the router.
 		socket.on(
 			"submitSignal",
-			(clientId: string, contentBatches: (IDocumentMessage | IDocumentMessage[])[]) => {
+			/**
+			 * @param contentBatches - typed as `unknown` array as it comes from wire and has not been validated.
+			 * It is expected to be an array of strings (Json.stringified `ISignalEnvelope`s from
+			 * [Container.submitSignal](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294)
+			 * and sent via
+			 * [DocumentDeltaConnection.emitMessages](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4)),
+			 * but actual content is passed-thru and not decoded.
+			 */
+			(clientId: string, contentBatches: unknown[]) => {
 				// Verify the user has subscription to the room.
 				const room = roomMap.get(clientId);
 				if (!room) {

@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ObjectOptions } from "@sinclair/typebox";
+
 import { _InlineTrick, fail, objectToMap } from "../util/index.js";
 
 /**

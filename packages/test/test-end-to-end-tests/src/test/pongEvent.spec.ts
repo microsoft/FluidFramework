@@ -4,18 +4,18 @@
  */
 
 import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
-
 import {
-	LocalCodeLoader,
-	LoaderContainerTracker,
 	ITestObjectProvider,
+	LoaderContainerTracker,
+	LocalCodeLoader,
 	TestFluidObjectFactory,
-	waitForContainerConnection,
 	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat } from "@fluid-private/test-version-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 

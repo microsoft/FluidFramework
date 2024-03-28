@@ -54,7 +54,7 @@ export interface IIdCompressor {
 
 // @alpha
 export interface IIdCompressorCore {
-    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): any;
+    beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
     finalizeCreationRange(range: IdCreationRange): void;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;

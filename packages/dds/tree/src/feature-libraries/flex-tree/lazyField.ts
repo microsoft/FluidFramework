@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/id-compressor";
+
 import {
 	CursorLocationType,
 	FieldAnchor,
@@ -37,6 +38,7 @@ import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
@@ -155,7 +157,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	public isSameAs(other: FlexTreeField): boolean {
 		assert(
 			other.context === this.context,
-			0x77d /* Content from different editable trees should not be used together */,
+			0x77d /* Content from different flex trees should not be used together */,
 		);
 		return this.key === other.key && this.parent === other.parent;
 	}
