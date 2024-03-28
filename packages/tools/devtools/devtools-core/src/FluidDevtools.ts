@@ -155,7 +155,7 @@ export class FluidDevtools implements IFluidDevtools {
 		},
 		[SetUnsampledTelemetry.MessageType]: async (message) => {
 			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
-			sessionStorage.setItem(unsampledTelemetryKey, String(newValue));
+			globalThis.sessionStorage?.setItem(unsampledTelemetryKey, String(newValue));
 			this.postSupportedFeatures();
 			window.location.reload();
 			return true;
@@ -189,7 +189,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly postSupportedFeatures = (): void => {
 		const supportedFeatures = this.getSupportedFeatures();
-		const unsampledTelemetry = sessionStorage.getItem(unsampledTelemetryKey) === "true";
+		const unsampledTelemetry =
+			globalThis.sessionStorage?.getItem(unsampledTelemetryKey) === "true";
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({

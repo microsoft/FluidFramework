@@ -18,7 +18,7 @@ import { createMockContainer } from "./Utilities.js";
 // TODOs:
 // - Test window messaging
 
-describe.skip("FluidDevtools unit tests", () => {
+describe("FluidDevtools unit tests", () => {
 	afterEach(() => {
 		FluidDevtools.tryGet()?.dispose();
 	});
