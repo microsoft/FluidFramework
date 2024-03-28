@@ -23,7 +23,8 @@ import {
 	IDeltaHandler,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { IIdCompressor, IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore, IdCreationRange } from "@fluidframework/id-compressor/internal";
 import {
 	IQuorumClients,
 	ISequencedClient,

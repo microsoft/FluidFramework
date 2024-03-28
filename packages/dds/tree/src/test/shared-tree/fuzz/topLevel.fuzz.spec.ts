@@ -91,7 +91,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skipMinimization: true,
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -126,7 +125,6 @@ describe("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-			skipMinimization: true,
 		};
 
 		createDDSFuzzSuite(model, options);
