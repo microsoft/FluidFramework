@@ -13,8 +13,8 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { leaf } from "../../../domains/index.js";
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 // eslint-disable-next-line import/no-internal-modules
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	ChunkedCursor,
 	// eslint-disable-next-line import/no-internal-modules
@@ -42,7 +42,6 @@ import {
 	testGeneralPurposeTreeCursor,
 	testSpecializedFieldCursor,
 } from "../../cursorTestSuite.js";
-
 
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
