@@ -11,11 +11,6 @@ import {
 	describeCompat,
 	itExpects,
 } from "@fluid-private/test-version-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -108,19 +103,22 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-class TestDataObject1 extends DataObject {
-	protected async initializingFromExisting(): Promise<void> {
-		// This test data object will verify full initialization does not happen for summarizer client.
-		if (this.context.clientDetails.capabilities.interactive === false) {
-			throw Error(
-				"Non interactive/summarizer client's data object should not be initialized",
-			);
-		}
-	}
-}
-
 describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+
+	class TestDataObject1 extends DataObject {
+		protected async initializingFromExisting(): Promise<void> {
+			// This test data object will verify full initialization does not happen for summarizer client.
+			if (this.context.clientDetails.capabilities.interactive === false) {
+				throw Error(
+					"Non interactive/summarizer client's data object should not be initialized",
+				);
+			}
+		}
+	}
+
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
@@ -581,7 +579,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		};
 	});
 
-	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+	it("Non single commit summary/Match last summary ackHandle with current summary parent", async function () {
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
@@ -697,7 +695,7 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		},
 	);
 
-	it("Single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+	it("Single commit summary/Match last summary ackHandle with current summary parent", async function () {
 		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
@@ -781,14 +779,14 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 			configForSingleCommitSummary,
 		);
 
-		let summary2AckHandle: string | undefined;
+		let summary2Handle: string | undefined;
 		// Second summary should be discarded
 		const containerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
 		let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 		const func = async (summary: ISummaryTree, context: ISummaryContext) => {
 			uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
 			const response = await uploadSummaryUploaderFunc(summary, context);
-			summary2AckHandle = response;
+			summary2Handle = response;
 			// Close summarizer so that it does not submit SummaryOp
 			summarizer2.close();
 			return response;
@@ -822,8 +820,8 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 		assert(broadcastResult3.success, "summary op3 should be broadcast");
 		const summary3ParentHandle = broadcastResult3.data.summarizeOp.contents.head;
 		assert(
-			summary3ParentHandle === summary2AckHandle,
-			"Summary Parent should match ack handle of summary2",
+			summary3ParentHandle === summary2Handle,
+			"Summary Parent should match handle of summary2",
 		);
 	});
 });

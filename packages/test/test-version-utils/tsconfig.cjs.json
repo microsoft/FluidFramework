@@ -1,0 +1,10 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	// Only the compatOptions module is required from a CJS build
+	// for use in mocha configuration.
+	"include": ["src/compatOptions.ts"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./dist",
+	},
+}
