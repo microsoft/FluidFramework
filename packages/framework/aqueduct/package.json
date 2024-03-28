@@ -166,6 +166,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IDataObjectProps": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
