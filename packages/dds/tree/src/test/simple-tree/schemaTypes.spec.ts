@@ -175,7 +175,7 @@ describe("schemaTypes", () => {
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				x: () => Bar,
 			}) {}
-			class Bar extends schemaFactory.objectRecursive("Foo", {
+			class Bar extends schemaFactory.objectRecursive("Bar", {
 				y: () => Foo,
 			}) {}
 			const result = normalizeAllowedTypes([Foo, Bar]);
