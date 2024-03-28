@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -12,6 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+
 import { IFluidSerializer } from "../serializer.js";
 import { SharedObject, SharedObjectCore } from "../sharedObject.js";
 

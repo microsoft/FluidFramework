@@ -15,7 +15,9 @@ import express, { type Response } from "express";
 import webpack from "webpack";
 import webpackDevMiddleware from "webpack-dev-middleware";
 import webpackHotMiddleware from "webpack-hot-middleware";
+
 import config from "../webpack.config.cjs";
+
 import { _dirname } from "./dirname.cjs";
 
 const getThisOrigin = (port: number): string => `http://localhost:${port}`;

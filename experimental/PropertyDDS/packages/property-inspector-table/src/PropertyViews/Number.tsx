@@ -6,6 +6,7 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import TextField, { TextFieldProps } from "@material-ui/core/TextField";
 import * as React from "react";
+
 import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes.js";
 import { getPropertyValue } from "../propertyInspectorUtils.js";
 

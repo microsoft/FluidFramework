@@ -5,6 +5,7 @@
 
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+
 import type { IImportExportModel, IVersionedModel } from "./migratableModel.js";
 import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool.js";
 

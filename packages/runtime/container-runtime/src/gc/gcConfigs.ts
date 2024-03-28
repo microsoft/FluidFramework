@@ -8,7 +8,9 @@ import {
 	UsageError,
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils";
+
 import { IContainerRuntimeMetadata } from "../summary/index.js";
+
 import {
 	GCFeatureMatrix,
 	GCVersion,

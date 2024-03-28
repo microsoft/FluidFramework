@@ -5,13 +5,15 @@
 
 import { strict as assert } from "assert";
 import { join as pathJoin } from "path";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	SerializedIdCompressorWithNoSession,
 	SessionId,
 	createIdCompressor,
 	deserializeIdCompressor,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
+
 import {
 	Anchor,
 	Revertible,

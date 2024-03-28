@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { areStringsEquivalent } from "../util/index.js";
 
 function test(left: string | undefined | null, right: string | undefined | null) {

@@ -4,6 +4,7 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
+
 import {
 	IConnectableRuntime,
 	ISummaryCancellationToken,

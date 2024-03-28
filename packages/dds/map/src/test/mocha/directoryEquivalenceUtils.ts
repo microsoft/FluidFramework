@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { IDirectory } from "../../interfaces.js";
 
 export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {

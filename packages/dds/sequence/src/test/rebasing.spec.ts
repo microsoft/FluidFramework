@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -13,6 +14,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
 

@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SparseArray2D } from "../sparsearray2d.js";
+
 import { check, extract, fill } from "./utils.js";
 
 function expectEqual<T>(

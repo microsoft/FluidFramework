@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -14,6 +15,7 @@ import {
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import { Multiplicity } from "../multiplicity.js";
+
 import { FullSchemaPolicy } from "./fieldKind.js";
 
 /**

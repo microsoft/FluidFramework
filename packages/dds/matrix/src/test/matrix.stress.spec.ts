@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
 	MockContainerRuntimeFactoryForReconnection,
@@ -12,7 +13,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { Random } from "best-random";
+
 import { SharedMatrix, SharedMatrixFactory } from "../index.js";
+
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";
 import { expectSize, extract } from "./utils.js";
 

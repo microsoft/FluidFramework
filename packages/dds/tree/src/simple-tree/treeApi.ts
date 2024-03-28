@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { TreeValue, rootFieldKey } from "../core/index.js";
 import {
 	FlexTreeNodeEvents,
@@ -13,6 +14,8 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
+import { brand, fail } from "../util/index.js";
+
 import { getOrCreateNodeProxy, getProxyForField, getSimpleSchema } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { schemaFromValue } from "./schemaFactory.js";
@@ -27,7 +30,6 @@ import {
 } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";
 import { TreeNode } from "./types.js";
-import { brand, fail } from "../util/index.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
