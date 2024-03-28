@@ -18,7 +18,6 @@
  * @packageDocumentation
  */
 
-import { type IContainer } from "@fluidframework/container-definitions";
 import { type IDisposable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
@@ -28,6 +27,7 @@ import {
 	initializeDevtools as initializeDevtoolsBase,
 } from "@fluidframework/devtools-core";
 import { type IFluidContainer } from "@fluidframework/fluid-static";
+import { type IContainer } from "@fluidframework/container-definitions/internal";
 
 /**
  * Properties for configuring {@link IDevtools}.

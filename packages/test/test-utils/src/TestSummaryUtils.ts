@@ -4,7 +4,6 @@
  */
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	IOnDemandSummarizeOptions,
 	ISummarizer,
@@ -17,7 +16,6 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreFactory,
@@ -29,6 +27,8 @@ import { waitForContainerConnection } from "./containerUtils.js";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 
 const summarizerClientType = "summarizer";
 

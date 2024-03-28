@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IDirectory } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
+import { IDirectory } from "@fluidframework/map/internal";
 
 /**
  * - Create a new object from the passed subDirectory.

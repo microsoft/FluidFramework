@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	blobHeadersBlobName as blobNameForBlobHeaders,
 	readAndParse,
@@ -23,6 +22,7 @@ import {
 import { IGCMetadata } from "../gc/index.js";
 
 import { IDocumentSchema } from "./documentSchema.js";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {

@@ -4,11 +4,7 @@
  */
 
 import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type {
-	IDocumentServiceFactory,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+import type { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Types of test drivers.

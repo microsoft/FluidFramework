@@ -4,8 +4,6 @@
  */
 
 import { strict as assert } from 'assert';
-
-import { LoaderHeader } from '@fluidframework/container-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime, validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
@@ -33,6 +31,7 @@ import {
 	testTrait,
 	waitForSummary,
 } from './TestUtilities.js';
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
 	const versions: WriteFormat[] = [];

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
@@ -12,6 +11,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { defaultHash } from "@fluidframework/server-services-client";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 export async function createDocument(
 	localDeltaConnectionServer,

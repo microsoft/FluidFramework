@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeDetailsLoader } from "@fluidframework/container-definitions";
-import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -14,6 +12,8 @@ import {
 
 import { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { ModelLoader } from "./modelLoader.js";
+import { ICodeDetailsLoader } from "@fluidframework/container-definitions/internal";
+import type { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 class TinyliciousService {
 	public readonly documentServiceFactory: IDocumentServiceFactory;

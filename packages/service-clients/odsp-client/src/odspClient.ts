@@ -3,28 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AttachState,
-	IContainer,
-	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type FluidObject,
 	type IConfigProviderBase,
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import {
-	ContainerAttachProps,
-	type ContainerSchema,
-	IFluidContainer,
-	IRootDataObject,
-	createDOProviderContainerRuntimeFactory,
-	createFluidContainer,
-	createServiceAudience,
-} from "@fluidframework/fluid-static";
+import { ContainerAttachProps, type ContainerSchema, IFluidContainer, IRootDataObject, createDOProviderContainerRuntimeFactory, createFluidContainer, createServiceAudience } from "@fluidframework/fluid-static";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
@@ -48,6 +34,9 @@ import {
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
+import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,

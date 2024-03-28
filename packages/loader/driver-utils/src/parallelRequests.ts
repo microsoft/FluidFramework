@@ -6,7 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
-import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 
@@ -15,6 +15,7 @@ import { logNetworkFailure } from "./networkUtils.js";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { calculateMaxWaitTime } from "./runWithRetry.js";
+import { IStream, IStreamResult } from "@fluidframework/driver-definitions/internal";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const MissingFetchDelayInMs = 50;

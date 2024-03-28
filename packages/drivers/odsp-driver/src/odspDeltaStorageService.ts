@@ -6,11 +6,7 @@
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { validateMessages } from "@fluidframework/driver-base";
-import {
-	IDeltasFetchResult,
-	IDocumentDeltaStorageService,
-	type IStream,
-} from "@fluidframework/driver-definitions";
+import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -21,6 +17,7 @@ import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.
 import { EpochTracker } from "./epochTracker.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
+import { IDocumentDeltaStorageService, type IStream } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.

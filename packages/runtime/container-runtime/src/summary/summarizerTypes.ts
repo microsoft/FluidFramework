@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IEvent, IEventProvider, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
@@ -17,6 +17,7 @@ import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection.js";
 import { SummarizeReason } from "./summaryGenerator.js";
+import { ContainerWarning } from "@fluidframework/container-definitions/internal";
 
 /**
  * Similar to AbortSignal, but using promise instead of events

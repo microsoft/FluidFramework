@@ -7,12 +7,6 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils";
 import {
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-} from "@fluidframework/driver-definitions";
-import {
 	ConnectionMode,
 	IClientConfiguration,
 	IConnected,
@@ -26,6 +20,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 import { ReplayController } from "./replayController.js";
+import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents, IDocumentDeltaStorageService, IDocumentService } from "@fluidframework/driver-definitions/internal";
 
 const ReplayDocumentId = "documentId";
 

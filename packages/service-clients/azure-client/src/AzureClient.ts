@@ -3,27 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AttachState,
-	type IContainer,
-	type IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { AttachState } from "@fluidframework/container-definitions";
 import { type FluidObject, type IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import {
-	type IDocumentServiceFactory,
-	type IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import { applyStorageCompression } from "@fluidframework/driver-utils";
-import {
-	type ContainerSchema,
-	type IFluidContainer,
-	type IRootDataObject,
-	createDOProviderContainerRuntimeFactory,
-	createFluidContainer,
-	createServiceAudience,
-} from "@fluidframework/fluid-static";
+import { type ContainerSchema, type IFluidContainer, type IRootDataObject, createDOProviderContainerRuntimeFactory, createFluidContainer, createServiceAudience } from "@fluidframework/fluid-static";
 import { type IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
@@ -38,6 +22,9 @@ import {
 	type AzureGetVersionsOptions,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
+import { type IContainer, type IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { type IDocumentServiceFactory, type IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.

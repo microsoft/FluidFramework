@@ -5,7 +5,7 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils";
-import { DriverErrorTypes, IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
@@ -26,6 +26,7 @@ import type {
 	IPendingDetachedContainerState,
 	SnapshotWithBlobs,
 } from "./serializedStateManager.js";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.

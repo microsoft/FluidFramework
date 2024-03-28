@@ -17,7 +17,6 @@ import { CellFactory } from "@fluidframework/cell";
 import { detectOutboundReferences } from "@fluidframework/container-runtime";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map";
 import { SharedMatrixFactory } from "@fluidframework/matrix";
 import { ConsensusQueueFactory } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollectionFactory } from "@fluidframework/register-collection";
@@ -29,6 +28,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ITree, SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { DirectoryFactory, type ISharedDirectory, MapFactory } from "@fluidframework/map/internal";
 
 /**
  * The purpose of these tests is to demonstrate that DDSes do not do opaque encoding of handles

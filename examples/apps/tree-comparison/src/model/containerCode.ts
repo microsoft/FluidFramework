@@ -4,7 +4,6 @@
  */
 
 import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
@@ -12,6 +11,7 @@ import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.
 import { InventoryListAppModel } from "./appModel.js";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList.js";
 import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
 export const newTreeInventoryListId = "new-tree-inventory-list";

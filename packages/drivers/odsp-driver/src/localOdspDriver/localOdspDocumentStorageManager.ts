@@ -4,11 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import {
-	ISnapshot,
-	ISnapshotFetchOptions,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
@@ -17,6 +12,7 @@ import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
 import { IOdspSnapshot } from "../contracts.js";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
+import { ISnapshot, ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.

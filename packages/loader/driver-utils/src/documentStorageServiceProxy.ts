@@ -4,14 +4,6 @@
  */
 
 import {
-	FetchSource,
-	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
-	ISnapshot,
-	ISnapshotFetchOptions,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
 	ISummaryHandle,
@@ -19,6 +11,7 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils";
+import { FetchSource, IDocumentStorageService, IDocumentStorageServicePolicies, ISnapshot, ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

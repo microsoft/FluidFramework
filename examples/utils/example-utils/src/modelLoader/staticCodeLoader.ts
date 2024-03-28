@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ICodeDetailsLoader,
-	IFluidCodeDetails,
-	IFluidModuleWithDetails,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions";
+import { ICodeDetailsLoader, IFluidCodeDetails, IFluidModuleWithDetails, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 
 /**
  * The StaticCodeLoader isn't directly a core piece of model loading, but since most of our examples don't require

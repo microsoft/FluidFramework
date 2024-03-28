@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type IContainer,
-	type IHostLoader,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IRequest } from "@fluidframework/core-interfaces";
 
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
+import { type IContainer, type IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 
 // This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
 // request format with the model object.  Here we export a helper function for those container authors to align to

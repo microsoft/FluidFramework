@@ -25,6 +25,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @alpha

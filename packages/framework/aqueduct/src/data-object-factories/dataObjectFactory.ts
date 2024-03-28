@@ -5,7 +5,7 @@
 
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 
@@ -16,6 +16,7 @@ import {
 } from "../data-objects/index.js";
 
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
+import { DirectoryFactory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
 
 /**
  * DataObjectFactory is the IFluidDataStoreFactory for use with DataObjects.

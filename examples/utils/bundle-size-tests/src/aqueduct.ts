@@ -9,8 +9,8 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { DirectoryFactory } from "@fluidframework/map";
 import { SharedStringFactory } from "@fluidframework/sequence";
+import { DirectoryFactory } from "@fluidframework/map/internal";
 
 export function apisToBundle() {
 	class BundleTestDo extends DataObject {}

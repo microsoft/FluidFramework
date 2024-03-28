@@ -4,12 +4,10 @@
  */
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { ConnectionState, IContainerExperimental, Loader } from "@fluidframework/container-loader";
+import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
@@ -37,6 +35,9 @@ import {
 	globalConfigurations,
 	safeExit,
 } from "./utils.js";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {

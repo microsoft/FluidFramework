@@ -4,17 +4,11 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	IDocumentDeltaConnection,
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 import { FileDeltaStorageService } from "./fileDeltaStorageService.js";
 import { FileDocumentService } from "./fileDocumentService.js";
+import { IDocumentDeltaConnection, IDocumentService, IDocumentServiceFactory, IDocumentStorageService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Factory for creating the file document service. Use this if you want to

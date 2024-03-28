@@ -4,14 +4,8 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { IDocumentService, IDocumentServiceFactory, IDocumentStorageService, IResolvedUrl, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @deprecated - unused

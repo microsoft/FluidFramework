@@ -7,7 +7,6 @@ import assert from "assert";
 import os from "os";
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
 	IClientConfig,
 	getDriveId,
@@ -27,6 +26,7 @@ import {
 import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 const passwordTokenConfig = (username, password): OdspTokenConfig => ({
 	type: "password",

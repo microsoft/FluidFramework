@@ -10,14 +10,6 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import {
-	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
-	IResolvedUrl,
-	type ISnapshot,
-	type ISnapshotFetchOptions,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
 import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
@@ -34,6 +26,7 @@ import {
 } from "@fluidframework/server-services-client";
 
 import { createDocument } from "./localCreateDocument.js";
+import { IDocumentStorageService, IDocumentStorageServicePolicies, IResolvedUrl, type ISnapshot, type ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
 /**

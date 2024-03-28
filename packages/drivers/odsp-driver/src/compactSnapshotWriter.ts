@@ -5,7 +5,6 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
 import {
 	IBlob,
 	ISequencedDocumentMessage,
@@ -21,6 +20,7 @@ import {
 	addNumberProperty,
 	addStringProperty,
 } from "./zipItDataRepresentationUtils.js";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Writes header section of the snapshot.

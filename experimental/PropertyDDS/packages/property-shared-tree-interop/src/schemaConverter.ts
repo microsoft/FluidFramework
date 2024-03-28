@@ -6,17 +6,7 @@
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { assert } from "@fluidframework/core-utils";
-import {
-	Any,
-	FlexFieldKind as FieldKind,
-	FieldKinds,
-	FlexFieldSchema,
-	LazyTreeNodeSchema,
-	SchemaBuilderBase,
-	FlexTreeNodeSchema as TreeNodeSchema,
-	fail,
-	leaf,
-} from "@fluidframework/tree/internal";
+import { Any, FlexFieldKind as FieldKind, FieldKinds, FlexFieldSchema, LazyTreeNodeSchema, SchemaBuilderBase, FlexTreeNodeSchema as TreeNodeSchema, fail, leaf } from "@fluidframework/tree";
 
 const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";

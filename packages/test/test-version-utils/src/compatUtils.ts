@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -45,6 +44,7 @@ import {
 	CompatApis,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
+import { ISharedDirectory } from "@fluidframework/map/internal";
 
 /**
  * @internal

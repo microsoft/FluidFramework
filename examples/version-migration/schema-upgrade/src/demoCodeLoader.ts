@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ICodeDetailsLoader,
-	IFluidCodeDetails,
-	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions";
-
 /*
  * For this demo, the two "packages" are imported from the local directory.  In a more realistic scenario, these are
  * probably either:
@@ -19,6 +13,7 @@ import type {
  */
 import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1 } from "./modelVersion1/index.js";
 import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2 } from "./modelVersion2/index.js";
+import type { ICodeDetailsLoader, IFluidCodeDetails, IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
 
 // This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate code for unknown versions.

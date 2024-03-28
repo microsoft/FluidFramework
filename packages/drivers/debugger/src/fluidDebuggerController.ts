@@ -4,11 +4,6 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
-import {
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentStorageService,
-} from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	IDocumentAttributes,
@@ -26,6 +21,7 @@ import {
 
 import { IDebuggerController, IDebuggerUI } from "./fluidDebuggerUi.js";
 import { Sanitizer } from "./sanitizer.js";
+import { IDocumentDeltaStorageService, IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

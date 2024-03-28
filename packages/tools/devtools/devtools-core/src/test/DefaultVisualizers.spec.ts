@@ -4,13 +4,14 @@
  */
 
 // Required for testing support of null values
+
 /* eslint-disable unicorn/no-null */
 
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
@@ -35,6 +36,7 @@ import {
 	visualizeSharedTree,
 	visualizeUnknownSharedObject,
 } from "../data-visualization/index.js";
+import { SharedDirectory } from "@fluidframework/map/internal";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests

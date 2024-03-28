@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, ILoader } from "@fluidframework/container-definitions";
+import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import {
 	FluidObject,
@@ -47,6 +47,7 @@ import { v4 as uuid } from "uuid";
 
 import { MockDeltaManager } from "./mockDeltas.js";
 import { MockHandle } from "./mockHandle.js";
+import { ILoader } from "@fluidframework/container-definitions/internal";
 
 /**
  * Mock implementation of IDeltaConnection for testing

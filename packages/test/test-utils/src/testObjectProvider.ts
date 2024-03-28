@@ -3,28 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IContainer,
-	IFluidCodeDetails,
-	IHostLoader,
-	ILoader,
-} from "@fluidframework/container-definitions";
-import {
-	ILoaderProps,
-	Loader,
-	waitContainerToCatchUp as waitContainerToCatchUp_original,
-} from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	IDocumentServiceFactory,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import {
 	type ITelemetryGenericEventExt,
 	createChildLogger,
@@ -37,6 +21,9 @@ import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
+import { IContainer, IFluidCodeDetails, IHostLoader, ILoader } from "@fluidframework/container-definitions/internal";
+import { ILoaderProps, Loader, waitContainerToCatchUp as waitContainerToCatchUp_original } from "@fluidframework/container-loader/internal";
+import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 const defaultCodeDetails: IFluidCodeDetails = {
 	package: "defaultTestPackage",

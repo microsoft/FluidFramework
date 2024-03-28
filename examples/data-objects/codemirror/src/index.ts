@@ -8,7 +8,6 @@ import {
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -18,6 +17,7 @@ import React from "react";
 
 import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 import { CodeMirrorReactView } from "./codeMirrorView.js";
+import { IContainerContext } from "@fluidframework/container-definitions/internal";
 
 export { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 export { CodeMirrorReactView } from "./codeMirrorView.js";

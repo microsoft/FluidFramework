@@ -6,19 +6,7 @@
 import { DataObject } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import {
-	ITree,
-	type ImplicitFieldSchema,
-	SchemaIncompatible,
-	TreeConfiguration,
-	TreeFieldFromImplicitField,
-	TreeView,
-} from "@fluidframework/tree";
-import {
-	configuredSharedTree,
-	typeboxValidator,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/tree/internal";
+import { ITree, type ImplicitFieldSchema, SchemaIncompatible, TreeConfiguration, TreeFieldFromImplicitField, TreeView, configuredSharedTree, typeboxValidator } from "@fluidframework/tree";
 import * as React from "react";
 
 /**

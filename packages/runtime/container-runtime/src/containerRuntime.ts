@@ -4,18 +4,7 @@
  */
 
 import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	IAudience,
-	IBatchMessage,
-	IContainerContext,
-	ICriticalContainerError,
-	IDeltaManager,
-	IGetPendingLocalStateProps,
-	ILoader,
-	IRuntime,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
+import { AttachState, IAudience, ICriticalContainerError, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -31,12 +20,6 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred, LazyPromise, PromiseCache, delay } from "@fluidframework/core-utils";
-import {
-	DriverHeader,
-	FetchSource,
-	IDocumentStorageService,
-	type ISnapshot,
-} from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
@@ -203,6 +186,8 @@ import {
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
+import { IBatchMessage, IContainerContext, IGetPendingLocalStateProps, ILoader, IRuntime, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { DriverHeader, FetchSource, IDocumentStorageService, type ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Utility to implement compat behaviors given an unknown message type

@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DriverError,
-	DriverErrorTypes,
-	IDriverErrorBase,
-} from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
 import {
 	AuthorizationError,
 	GenericNetworkError,
@@ -16,6 +12,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { DriverError } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Routerlicious Error types

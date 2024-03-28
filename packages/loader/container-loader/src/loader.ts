@@ -4,27 +4,11 @@
  */
 
 import {
-	IContainer,
-	IFluidCodeDetails,
-	IFluidModule,
-	IHostLoader,
-	ILoader,
-	ILoaderOptions as ILoaderOptions1,
-	IProvideFluidCodeDetailsComparer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
-import {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import {
-	IDocumentServiceFactory,
-	IDocumentStorageService,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryLoggerExt,
@@ -43,6 +27,8 @@ import { pkgVersion } from "./packageVersion.js";
 import { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import { tryParseCompatibleResolvedUrl } from "./utils.js";
+import { IContainer, IFluidCodeDetails, IFluidModule, IHostLoader, ILoader, ILoaderOptions as ILoaderOptions1, IProvideFluidCodeDetailsComparer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { IDocumentServiceFactory, IDocumentStorageService, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,

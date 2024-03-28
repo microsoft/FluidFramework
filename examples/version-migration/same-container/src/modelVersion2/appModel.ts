@@ -5,7 +5,6 @@
 
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
@@ -16,6 +15,7 @@ import type {
 	IInventoryListAppModel,
 	IInventoryListAppModelEvents,
 } from "../modelInterfaces.js";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListAppModelExportFormat2 = string;

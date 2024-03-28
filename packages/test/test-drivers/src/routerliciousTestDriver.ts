@@ -6,7 +6,6 @@
 import assert from "assert";
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { IRouterliciousDriverPolicies } from "@fluidframework/routerlicious-driver";
 import { ITestDriver, RouterliciousEndpoint } from "@fluidframework/test-driver-definitions";
@@ -14,6 +13,7 @@ import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 import { v4 as uuid } from "uuid";
 
 import { RouterliciousDriverApi, RouterliciousDriverApiType } from "./routerliciousDriverApi.js";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 interface IServiceEndpoint {
 	deltaStreamUrl: string;

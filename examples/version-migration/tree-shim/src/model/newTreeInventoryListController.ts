@@ -4,14 +4,7 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import {
-	ITree,
-	NodeFromSchema,
-	SchemaFactory,
-	Tree,
-	TreeConfiguration,
-	disposeSymbol,
-} from "@fluidframework/tree";
+import { ITree, NodeFromSchema, SchemaFactory, Tree, TreeConfiguration, disposeSymbol } from "@fluidframework/tree";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 

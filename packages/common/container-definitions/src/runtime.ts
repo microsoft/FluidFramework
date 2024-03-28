@@ -8,7 +8,6 @@ import type {
 	IDisposable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions";
 import type {
 	IClientDetails,
 	IDocumentMessage,
@@ -25,6 +24,7 @@ import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
 import type { ILoader } from "./loader.js";
+import type { IDocumentStorageService, ISnapshot } from "@fluidframework/driver-definitions/internal";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the

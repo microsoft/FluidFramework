@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions";
-
 import { CompressionAlgorithms } from "../containerRuntime.js";
+import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 
 /**
  * Batch message type used internally by the runtime

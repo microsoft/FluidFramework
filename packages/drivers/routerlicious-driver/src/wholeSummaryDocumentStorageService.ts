@@ -7,11 +7,6 @@ import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal
 import { assert } from "@fluidframework/core-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {
-	IDocumentStorageService,
-	IDocumentStorageServicePolicies,
-	ISummaryContext,
-} from "@fluidframework/driver-definitions";
-import {
 	ICreateBlobResponse,
 	ISnapshotTree,
 	ISummaryHandle,
@@ -38,6 +33,7 @@ import {
 	validateBlobsAndTrees,
 } from "./treeUtils.js";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
+import { IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext } from "@fluidframework/driver-definitions/internal";
 
 const latestSnapshotId: string = "latest";
 
