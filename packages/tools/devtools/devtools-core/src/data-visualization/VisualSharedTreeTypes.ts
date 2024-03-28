@@ -10,6 +10,12 @@ import { type Primitive } from "./VisualTree.js";
 interface SharedTreeNodeBase {
 	schema: SharedTreeSchemaNode;
 }
+
+type SharedTreeSchemaType =
+	| "MapNodeStoredSchema"
+	| "ObjectNodeStoredSchema"
+	| "LeafNodeStoredSchema";
+
 /**
  * TODO
  */
@@ -20,9 +26,17 @@ interface SharedTreeSchemaNode {
 	name?: string;
 
 	/**
+	 * A type of schema. Should be one of the following:
+	 * - MapNodeStoredSchema
+	 * - ObjectNodeStoredSchema
+	 * - LeafNodeStoredSchema
+	 */
+	schemaType: SharedTreeSchemaType;
+
+	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
 	 */
-	allowedTypes: string;
+	allowedTypes: string | undefined;
 }
 /**
  * TODO

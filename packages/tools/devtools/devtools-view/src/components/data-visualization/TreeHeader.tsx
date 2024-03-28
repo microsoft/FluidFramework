@@ -40,7 +40,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const { label, nodeTypeMetadata, inlineValue, metadata, sharedTreeSchemaData } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
-	console.log("sharedTreeSchemaData", sharedTreeSchemaData);
+	console.log("ValueView", sharedTreeSchemaData);
 
 	return (
 		<div style={{ width: "auto" }}>

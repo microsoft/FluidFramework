@@ -391,7 +391,7 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	it("SharedTree", async () => {
+	it.only("SharedTree", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
@@ -430,6 +430,7 @@ describe("DefaultVisualizers unit tests", () => {
 						avengers: builder.boolean,
 					}),
 				),
+				espresso: builder.array([builder.number, builder.string]),
 			}),
 			baz: [builder.number, builder.string, builder.boolean],
 			foobar: builder.map([
@@ -480,6 +481,7 @@ describe("DefaultVisualizers unit tests", () => {
 									avengers: true,
 								},
 							],
+							espresso: [256, "FiveHundredTwelve"],
 						},
 						baz: 128,
 						foobar: new Map([
