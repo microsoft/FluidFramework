@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "../mocks.js";
 
 describe("MockContainerRuntime", () => {

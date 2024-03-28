@@ -10,6 +10,7 @@ import { NetworkErrorBasic, RateLimiter, canRetryOnError } from "@fluidframework
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import io from "socket.io-client";
+
 import { ICache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 import { ISnapshotTreeVersion } from "./definitions.js";

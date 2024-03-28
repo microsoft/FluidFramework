@@ -24,6 +24,7 @@ import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+
 import { ICache, InMemoryCache } from "./cache.js";
 import { INormalizedWholeSnapshot, IWholeFlatSnapshot } from "./contracts.js";
 import { GitManager } from "./gitManager.js";

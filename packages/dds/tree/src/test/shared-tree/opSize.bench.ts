@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
+
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -13,6 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import Table from "easy-table";
+
 import {
 	AllowedUpdateType,
 	FieldKey,

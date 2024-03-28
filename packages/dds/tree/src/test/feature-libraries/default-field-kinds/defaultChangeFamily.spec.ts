@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { noopValidator } from "../../../codec/index.js";
 import {
 	DeltaRoot,

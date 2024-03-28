@@ -4,6 +4,7 @@
  */
 
 import { ObjectOptions, Static, TSchema, Type } from "@sinclair/typebox";
+
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";

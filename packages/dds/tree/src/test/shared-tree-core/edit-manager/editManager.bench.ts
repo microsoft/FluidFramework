@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { BenchmarkTimer, BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+
 import { noopValidator } from "../../../codec/index.js";
 import { ChangeFamily, rootFieldKey } from "../../../core/index.js";
 import { singleJsonCursor } from "../../../domains/index.js";
@@ -14,6 +16,7 @@ import { brand } from "../../../util/index.js";
 import { Editor, makeEditMinter } from "../../editMinter.js";
 import { NoOpChangeRebaser, TestChange, testChangeFamilyFactory } from "../../testChange.js";
 import { failCodec, mintRevisionTag, testRevisionTagCodec } from "../../utils.js";
+
 import {
 	editManagerFactory,
 	rebaseAdvancingPeerEditsOverTrunkEdits,

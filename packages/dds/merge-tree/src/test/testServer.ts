@@ -5,10 +5,12 @@
 
 import { Heap, IComparer } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { RedBlackTree } from "../collections/index.js";
 import { compareNumbers } from "../mergeTreeNodes.js";
 import { PropertySet } from "../properties.js";
+
 import { TestClient } from "./testClient.js";
 
 interface ClientSeq {

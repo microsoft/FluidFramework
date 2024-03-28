@@ -24,10 +24,12 @@ import {
 } from '@fluidframework/runtime-definitions';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { type ITree } from '@fluidframework/tree';
+
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
+
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';

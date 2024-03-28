@@ -4,6 +4,7 @@
  */
 
 import { DataObjectFactory } from "@fluidframework/aqueduct";
+
 import { TreeDataObject, factory } from "./reactSharedTreeView.js";
 import { type Inventory, treeConfiguration } from "./schema.js";
 

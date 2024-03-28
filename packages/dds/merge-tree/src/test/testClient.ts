@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
@@ -16,6 +17,7 @@ import {
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
+
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { DoublyLinkedList } from "../collections/index.js";
@@ -38,6 +40,7 @@ import { DetachedReferencePosition, refHasTileLabel } from "../referencePosition
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
+
 import { TestSerializer } from "./testSerializer.js";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 

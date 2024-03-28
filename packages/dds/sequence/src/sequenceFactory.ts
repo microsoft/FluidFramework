@@ -10,6 +10,7 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
+
 import { pkgVersion } from "./packageVersion.js";
 import { SharedString, SharedStringSegment } from "./sharedString.js";
 

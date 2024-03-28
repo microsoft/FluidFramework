@@ -5,8 +5,10 @@
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
 import { SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+
 import {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,

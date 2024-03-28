@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -34,7 +36,6 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,

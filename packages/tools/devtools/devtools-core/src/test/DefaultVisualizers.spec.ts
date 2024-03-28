@@ -6,8 +6,6 @@
 // Required for testing support of null values
 /* eslint-disable unicorn/no-null */
 
-import { expect } from "chai";
-
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
@@ -18,6 +16,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
 import {

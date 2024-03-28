@@ -11,6 +11,7 @@ import {
 	parseHandles,
 	serializeHandles,
 } from "@fluidframework/shared-object-base";
+
 // eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue } from "./internalInterfaces.js";
 

@@ -20,6 +20,7 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
+
 import { runWithRetry } from "./retryUtils.js";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {

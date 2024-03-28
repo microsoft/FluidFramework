@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
 import {
 	ITree,
 	SchemaFactory,

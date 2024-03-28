@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime, MockHandle } from "@fluidframework/test-runtime-utils";
+
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { treeNodeApi as Tree, TreeConfiguration, TreeView } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -26,6 +27,7 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+
 import { hydrate } from "./utils.js";
 
 {

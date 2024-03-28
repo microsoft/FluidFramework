@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { TreeValue } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";

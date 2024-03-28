@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
@@ -33,6 +34,7 @@ import {
 	createDocumentId,
 } from "@fluidframework/test-utils";
 import * as semver from "semver";
+
 // eslint-disable-next-line import/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 

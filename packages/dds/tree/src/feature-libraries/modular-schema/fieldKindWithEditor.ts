@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	FieldKindIdentifier,
 	TreeFieldStoredSchema,
@@ -11,6 +12,7 @@ import {
 	TreeTypeSet,
 } from "../../core/index.js";
 import { Multiplicity } from "../multiplicity.js";
+
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
 import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";
 import { isNeverField } from "./isNeverTree.js";

@@ -14,7 +14,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
-
 import React from "react";
 
 import { SmdeDataObject, SmdeFactory } from "./smde.js";
