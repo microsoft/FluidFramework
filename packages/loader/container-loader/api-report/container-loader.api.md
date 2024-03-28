@@ -26,6 +26,38 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 
+// @beta
+export interface ConnectionDiagnostics {
+    catchingUp?: {
+        time: number;
+        checkpointSequenceNumber: number;
+        initialProcessedSequenceNumber: number;
+        currentProcessedSequenceNumber: number;
+    };
+    clientId?: string;
+    connected?: {
+        time: number;
+        opsSent: number;
+        opsReceived: number;
+    };
+    disconnected: {
+        time: number;
+        autoReconnect: boolean;
+    };
+    disconnectReason?: string;
+    establishingConnection?: {
+        time: number;
+        steps: {
+            name: string;
+            type: "auth" | "socket.io" | "orderingService";
+            time: number;
+            retryableError?: Error;
+        }[];
+    };
+    lastDisconnectReason?: string;
+    state: keyof Pick<ConnectionDiagnostics, "disconnected" | "establishingConnection" | "catchingUp" | "connected">;
+}
+
 // @public
 export enum ConnectionState {
     CatchingUp = 1,
@@ -39,8 +71,14 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
+// @beta
+export interface IContainerBeta extends IContainer {
+    // (undocumented)
+    connectionDiagnosticsLog?: ConnectionDiagnostics[];
+}
+
 // @internal
-export interface IContainerExperimental extends IContainer {
+export interface IContainerExperimental extends IContainerBeta {
     closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
     getPendingLocalState?(): Promise<string>;
 }

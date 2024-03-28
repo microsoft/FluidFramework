@@ -350,7 +350,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, IContainerExperimental
+	implements IContainer, IContainerBeta, IContainerExperimental
 {
 	/**
 	 * Load an existing container.
@@ -2437,10 +2437,78 @@ export class Container
 }
 
 /**
+ * Diagnostics information about a given connection instance (single attempt/clientId),
+ * traversing the four connection states (disconnected, establishingConnection, catchingUp, connected).
+ *
+ * Includes what the current connection state is, and what is happening within that state
+ *
+ * @beta
+ */
+export interface ConnectionDiagnostics {
+	/**
+	 * The client id assigned for this connection by the ordering service
+	 * Only set when currentState is "catchingUp" or "connected"
+	 */
+	clientId?: string;
+
+	/** The reason the previous connection was disconnected */
+	lastDisconnectReason?: string;
+
+	/** The reason this connection was disconnected (unset while it's active) */
+	disconnectReason?: string;
+
+	//* TODO: Do we need additional modeling for the case when a connection attempt is cancelled?
+
+	/** The current (while active) or final (after disconnect) state of this connection */
+	state: keyof Pick<
+		ConnectionDiagnostics,
+		"disconnected" | "establishingConnection" | "catchingUp" | "connected"
+	>;
+
+	/** Details about the connection while disconnected */
+	disconnected: {
+		time: number;
+		autoReconnect: boolean;
+	};
+	/** Details about the connection while establishingConnection */
+	establishingConnection?: {
+		time: number;
+		steps: {
+			// 0 is current step
+			name: string; // Free-form, for telemetry only
+			type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
+			time: number;
+			retryableError?: Error; // with errorType (maybe AnyDriverError)
+		}[];
+	};
+	/** Details about the connection while catchingUp */
+	catchingUp?: {
+		time: number;
+		checkpointSequenceNumber: number;
+		initialProcessedSequenceNumber: number;
+		currentProcessedSequenceNumber: number;
+	};
+	/** Details about the connection while connected */
+	connected?: {
+		time: number;
+		opsSent: number;
+		opsReceived: number;
+	};
+}
+
+/**
+ * IContainer interface that includes beta features that are subject to change.
+ * @beta
+ */
+export interface IContainerBeta extends IContainer {
+	connectionDiagnosticsLog?: ConnectionDiagnostics[];
+}
+
+/**
  * IContainer interface that includes experimental features still under development.
  * @internal
  */
-export interface IContainerExperimental extends IContainer {
+export interface IContainerExperimental extends IContainerBeta {
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
