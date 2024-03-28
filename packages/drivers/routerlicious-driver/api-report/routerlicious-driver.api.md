@@ -80,10 +80,7 @@ export const RouterliciousErrorTypes: {
     readonly genericNetworkError: "genericNetworkError";
     readonly authorizationError: "authorizationError";
     readonly fileNotFoundOrAccessDeniedError: "fileNotFoundOrAccessDeniedError";
-    readonly offlineError: "offlineError"; /**
-    * Interface for error responses for the WebSocket connection
-    * Intended to be compatible with output from `NetworkError.toJSON`.
-    */
+    readonly offlineError: "offlineError";
     readonly unsupportedClientProtocolVersion: "unsupportedClientProtocolVersion";
     readonly writeError: "writeError";
     readonly fetchFailure: "fetchFailure";
