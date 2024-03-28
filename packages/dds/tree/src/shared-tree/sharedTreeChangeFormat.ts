@@ -4,6 +4,7 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
+
 import { EncodedModularChangeset, EncodedSchemaChange } from "../feature-libraries/index.js";
 
 export const EncodedSharedTreeInnerChange = Type.Object({

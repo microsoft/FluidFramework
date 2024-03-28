@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
@@ -26,6 +27,7 @@ import {
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import sinon from "sinon";
+
 import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IGeneratedSummaryStats,

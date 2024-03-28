@@ -13,6 +13,7 @@ import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel.js";
 

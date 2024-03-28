@@ -17,6 +17,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
+
 import { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import { MutableTreeStoredSchema, TreeStoredSchema, schemaDataIsEmpty } from "../../core/index.js";
 import {
@@ -26,6 +27,7 @@ import {
 } from "../../shared-tree-core/index.js";
 import { JsonCompatible } from "../../util/index.js";
 import { CollabWindow } from "../incrementalSummarizationUtils.js";
+
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
 import { Format } from "./format.js";
 

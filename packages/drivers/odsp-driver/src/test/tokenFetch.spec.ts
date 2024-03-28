@@ -4,6 +4,7 @@
  */
 
 import assert from "node:assert";
+
 import { isTokenFromCache, tokenFromResponse } from "@fluidframework/odsp-driver-definitions";
 
 describe("tokenFromResponse", () => {

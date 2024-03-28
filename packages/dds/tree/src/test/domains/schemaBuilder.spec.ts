@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SchemaBuilder, leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder.js";

@@ -92,6 +92,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
+
 import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";

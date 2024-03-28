@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -11,6 +12,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { SharedObjectSequenceFactory } from "../sequenceFactory.js";
 import { SharedObjectSequence } from "../sharedObjectSequence.js";
 

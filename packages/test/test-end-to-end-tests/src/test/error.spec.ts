@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
@@ -17,6 +18,7 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?

@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+
 import { loggerToMonitoringContext } from "./config.js";
 import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes.js";
 

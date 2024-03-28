@@ -11,6 +11,7 @@ import type {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
+
 import type { ISharedMap } from "./interfaces.js";
 import { SharedMap as SharedMapInternal } from "./map.js";
 import { pkgVersion } from "./packageVersion.js";

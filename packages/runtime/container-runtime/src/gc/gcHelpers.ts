@@ -13,6 +13,7 @@ import {
 	gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils";
+
 import {
 	GCFeatureMatrix,
 	GCVersion,

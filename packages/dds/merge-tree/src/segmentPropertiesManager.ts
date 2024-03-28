@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import { IMergeTreeAnnotateMsg } from "./ops.js";
 // eslint-disable-next-line import/no-deprecated

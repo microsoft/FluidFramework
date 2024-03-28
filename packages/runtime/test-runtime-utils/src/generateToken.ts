@@ -6,6 +6,7 @@
 import type { ITokenClaims, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
+
 import { IInsecureUser } from "./insecureUsers.js";
 
 /**
