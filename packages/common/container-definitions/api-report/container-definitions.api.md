@@ -72,22 +72,22 @@ export interface ContainerWarning extends IErrorBase {
 
 // @public
 export interface IAudience extends IEventProvider<IAudienceEvents> {
+    readonly currentClientId: string | undefined;
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    readonly self: string | undefined;
 }
 
 // @public (undocumented)
 export interface IAudienceEvents extends IEvent {
     // (undocumented)
-    (event: "addMember" | "removeMember" | "selfChanged", listener: (clientId: string, client: IClient) => void): void;
+    (event: "addMember" | "removeMember" | "clientIdChanged", listener: (clientId: string, client: IClient) => void): void;
 }
 
 // @alpha
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
-    setSelf(clientId: string | undefined): void;
+    setCurrentClientId(clientId: string | undefined): void;
 }
 
 // @alpha

@@ -692,7 +692,7 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  */
 export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly audienceMembers: Map<string, IClient>;
-	private _self: string | undefined;
+	private _currentClientId: string | undefined;
 
 	public constructor() {
 		super();
@@ -717,14 +717,14 @@ export class MockAudience extends TypedEventEmitter<IAudienceEvents> implements 
 		return this.audienceMembers.get(clientId);
 	}
 
-	public get self(): string | undefined {
-		return this._self;
+	public get currentClientId(): string | undefined {
+		return this._currentClientId;
 	}
 
-	public setSelf(clientId: string | undefined): void {
-		if (this._self !== clientId) {
-			this._self = clientId;
-			this.emit("selfChanged");
+	public setCurrentClientId(clientId: string | undefined): void {
+		if (this._currentClientId !== clientId) {
+			this._currentClientId = clientId;
+			this.emit("clientIdChanged");
 		}
 	}
 }

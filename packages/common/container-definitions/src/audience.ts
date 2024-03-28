@@ -22,10 +22,10 @@ export interface IAudienceOwner extends IAudience {
 	removeMember(clientId: string): boolean;
 
 	/**
-	 * Notifies Audience that "self" has changed.
-	 * See IAudience.self and IAudienceEvents' "selfChanged" event for more details
+	 * Notifies Audience that current clientId has changed.
+	 * See IAudience.currentClientId and IAudienceEvents' "clientIdChanged" event for more details
 	 */
-	setSelf(clientId: string | undefined): void;
+	setCurrentClientId(clientId: string | undefined): void;
 }
 
 /**
@@ -34,7 +34,7 @@ export interface IAudienceOwner extends IAudience {
 export interface IAudienceEvents extends IEvent {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(
-		event: "addMember" | "removeMember" | "selfChanged",
+		event: "addMember" | "removeMember" | "clientIdChanged",
 		listener: (clientId: string, client: IClient) => void,
 	): void;
 }
@@ -76,14 +76,14 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 
 	/**
 	 * Returns this client's clientId, if it exists. undefined if this client never connected to ordering service.
-	 * Whenever this property changes, "selfChanged" event is fired on this object.
+	 * Whenever this property changes, "clientIdChanged" event is fired on this object.
 	 * Wheneever clients loses connection and reconnects, it will raise "connected" event at various API surfaces.
-	 * It's guranteed that such events and change of self clientId happens at the same time (syncronously, one after another).
+	 * It's guranteed that such events and change of current clientId happens at the same time (syncronously, one after another).
 	 *
 	 * That said, at the moment this is experimental API. It depends on some experimental settings that might change in the future.
-	 * While it's marked experimental, you break in above described promise, where you could experience "self" being changed
-	 * (and "selfChanged" event fired) while you can't find such clientId in the list of audience clients.
+	 * While it's marked experimental, you break in above described promise, where you could experience current clientId being changed
+	 * (and "clientIdChanged" event fired) while you can't find such clientId in the list of audience clients.
 	 * @experimental
 	 */
-	readonly self: string | undefined;
+	readonly currentClientId: string | undefined;
 }

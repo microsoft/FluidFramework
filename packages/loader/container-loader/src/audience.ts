@@ -13,7 +13,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
  */
 export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAudienceOwner {
 	private readonly members = new Map<string, IClient>();
-	private _self: string | undefined;
+	private _currentClientId: string | undefined;
 
 	constructor() {
 		super();
@@ -21,14 +21,14 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 		super.setMaxListeners(0);
 	}
 
-	public get self() {
-		return this._self;
+	public get currentClientId() {
+		return this._currentClientId;
 	}
 
-	public setSelf(clientId: string | undefined): void {
-		if (this._self !== clientId) {
-			this._self = clientId;
-			this.emit("selfChanged");
+	public setCurrentClientId(clientId: string | undefined): void {
+		if (this._currentClientId !== clientId) {
+			this._currentClientId = clientId;
+			this.emit("clientIdChanged");
 		}
 	}
 
