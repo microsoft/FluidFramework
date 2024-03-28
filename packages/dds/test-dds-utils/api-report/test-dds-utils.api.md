@@ -16,7 +16,8 @@ import { MockContainerRuntimeFactoryForReconnection } from '@fluidframework/test
 import type { MockContainerRuntimeForReconnection } from '@fluidframework/test-runtime-utils';
 import type { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import type { SaveInfo } from '@fluid-private/stochastic-test-utils';
-import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor/internal';
+import type { SerializedIdCompressorWithNoSession } from '@fluidframework/id-compressor';
+import type { SerializedIdCompressorWithOngoingSession } from '@fluidframework/id-compressor';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal (undocumented)
@@ -104,7 +105,7 @@ export interface DDSFuzzSuiteOptions {
         attachingBeforeRehydrateDisable?: true;
     };
     emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
-    idCompressorFactory?: (summary?: SerializedIdCompressorWithNoSession) => IIdCompressor & IIdCompressorCore;
+    idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor & IIdCompressorCore;
     numberOfClients: number;
     only: Iterable<number>;
     // (undocumented)
@@ -145,6 +146,15 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory> exten
 
 // @internal (undocumented)
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions;
+
+// @internal (undocumented)
+export type FuzzSerializedIdCompressor = {
+    withSession: false;
+    serializedCompressor: SerializedIdCompressorWithNoSession;
+} | {
+    withSession: true;
+    serializedCompressor: SerializedIdCompressorWithOngoingSession;
+};
 
 // @internal
 export interface IGCTestProvider {

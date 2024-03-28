@@ -122,7 +122,6 @@ describe("Fuzz - Top-Level", () => {
 			// AB#7162: see comment above.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				rehydrateDisabled: true,
 			},
 			saveFailures: {
 				directory: failureDirectory,
