@@ -20,9 +20,6 @@ export const isFreedSymbol = Symbol("isFreed");
 export const tryMoveCursorToAnchorSymbol = Symbol("tryMoveCursorToAnchor");
 export const forgetAnchorSymbol = Symbol("forgetAnchor");
 export const cursorSymbol = Symbol("cursor");
-/**
- * Symbol used to access the (generic) anchor of a {@link LazyEntity }.
- */
 export const anchorSymbol = Symbol("anchor");
 
 /**
