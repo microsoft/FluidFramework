@@ -7,10 +7,11 @@ import { IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { create404Response } from "@fluidframework/runtime-utils";
 import { FluidSerializer } from "@fluidframework/shared-object-base";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import type { JsonValidator } from "@fluidframework/tree/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
+
+import type { JsonValidator } from "@fluidframework/tree/internal";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = addFormats(new Ajv({ strict: false, allErrors: true }), [

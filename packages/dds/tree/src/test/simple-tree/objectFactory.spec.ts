@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	InsertableTreeFieldFromImplicitField,
 	type NodeFromSchema,
@@ -15,6 +16,7 @@ import { extractFactoryContent } from "../../simple-tree/proxies.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { getFlexNode } from "../../simple-tree/proxyBinding.js";
+
 import { hydrate } from "./utils.js";
 
 describe("SharedTreeObject factories", () => {

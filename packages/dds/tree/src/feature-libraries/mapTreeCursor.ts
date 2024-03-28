@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	CursorLocationType,
 	DetachedField,
@@ -15,6 +16,7 @@ import {
 	mapCursorField,
 	rootField,
 } from "../core/index.js";
+
 import {
 	CursorAdapter,
 	CursorWithNode,

@@ -5,6 +5,7 @@
 
 import { compareArrays } from '@fluidframework/core-utils';
 import { v4 as uuidv4 } from 'uuid';
+
 import { BuildNode, BuildTreeNode, Change, HasVariadicTraits, StablePlace, StableRange } from './ChangeTypes.js';
 import { Mutable, copyPropertyIfDefined, fail } from './Common.js';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers.js';

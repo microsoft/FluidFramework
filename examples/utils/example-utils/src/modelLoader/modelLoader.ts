@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IRequest } from "@fluidframework/core-interfaces";
+
 import type { IDetachedModel, IModelLoader } from "./interfaces.js";
 import { IModelContainerRuntimeEntryPoint } from "./modelContainerRuntimeFactory.js";
 

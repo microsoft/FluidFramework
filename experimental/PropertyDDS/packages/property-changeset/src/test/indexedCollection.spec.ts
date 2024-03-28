@@ -5,6 +5,7 @@
 
 import { expect } from "chai";
 import cloneDeep from "lodash/cloneDeep.js";
+
 import { ChangeSet } from "../changeset.js";
 
 describe("Indexed Collection Operations", function () {

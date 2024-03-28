@@ -57,6 +57,7 @@ import {
 	forestWithContent,
 	testRevisionTagCodec,
 } from "../../utils.js";
+
 import { contextWithContentReadonly } from "./utils.js";
 
 function collectPropertyNames(obj: object): Set<string> {

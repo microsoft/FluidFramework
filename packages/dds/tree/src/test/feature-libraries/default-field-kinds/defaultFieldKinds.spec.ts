@@ -4,6 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
+
 import { makeAnonChange, tagChange } from "../../../core/index.js";
 import {
 	ValueFieldEditor,

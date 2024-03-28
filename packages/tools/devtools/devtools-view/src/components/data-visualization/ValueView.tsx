@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-
 import type { ValueNodeBase } from "@fluidframework/devtools-core";
+import React from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";

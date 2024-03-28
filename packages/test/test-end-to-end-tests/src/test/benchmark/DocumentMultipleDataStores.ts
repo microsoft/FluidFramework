@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
@@ -29,6 +30,7 @@ import { type ISharedMap, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

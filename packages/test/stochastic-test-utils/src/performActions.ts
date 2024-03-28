@@ -5,6 +5,7 @@
 
 import { promises as fs, mkdirSync, writeFileSync } from "fs";
 import path from "path";
+
 import { combineReducers, combineReducersAsync } from "./combineReducers.js";
 import {
 	AsyncGenerator,

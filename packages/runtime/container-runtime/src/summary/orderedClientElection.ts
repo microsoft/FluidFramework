@@ -15,6 +15,7 @@ import {
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils";
+
 import { summarizerClientType } from "./summarizerClientElection.js";
 
 // helper types for recursive readonly.

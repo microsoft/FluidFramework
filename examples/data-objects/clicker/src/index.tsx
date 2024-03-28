@@ -9,6 +9,7 @@ import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { TaskManager } from "@fluidframework/task-manager";
 import React from "react";
+
 import { ClickerAgent } from "./agent.js";
 
 export const ClickerName = "Clicker";

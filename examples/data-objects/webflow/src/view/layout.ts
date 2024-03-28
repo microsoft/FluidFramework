@@ -5,6 +5,7 @@
 
 // eslint-disable-next-line import/no-nodejs-modules
 import assert from "assert";
+
 import { EventEmitter } from "@fluid-example/example-utils";
 import { MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
 import {
@@ -13,6 +14,7 @@ import {
 	ReferencePosition,
 	SequenceEvent,
 } from "@fluidframework/sequence";
+
 import { FlowDocument } from "../document/index.js";
 import {
 	Dom,
@@ -25,6 +27,7 @@ import {
 	isTextNode,
 } from "../util/index.js";
 import { extractRef, updateRef } from "../util/localref.js";
+
 import { debug } from "./debug.js";
 import { BootstrapFormatter, Formatter, IFormatterState, RootFormatter } from "./formatter.js";
 

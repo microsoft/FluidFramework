@@ -13,6 +13,7 @@ import {
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import {
 	fetchHelper,

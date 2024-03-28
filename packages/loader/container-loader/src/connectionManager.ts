@@ -51,6 +51,7 @@ import {
 	isFluidError,
 	normalizeError,
 } from "@fluidframework/telemetry-utils";
+
 import {
 	IConnectionDetailsInternal,
 	IConnectionManager,
