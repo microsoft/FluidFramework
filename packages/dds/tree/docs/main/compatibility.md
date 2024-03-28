@@ -156,6 +156,7 @@ As a downside, it makes maintaining backwards compatibility with the format some
 The following diagram shows _runtime dependencies_ of the codec hierarchy for SharedTree's original persisted format.
 
 ```mermaid
+flowchart TD
     RevisionTagCodec
     SchemaCodec
     FieldBatchCodec
