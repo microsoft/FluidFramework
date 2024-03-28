@@ -50,7 +50,7 @@ export function makeEditManagerCodec<TChangeset>(
 > {
 	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
 	const writeCodec = family.resolve(options.writeVersion).json;
-	const supportedVersions = new Set([0]);
+	const supportedVersions = new Set([1]);
 	return makeVersionedCodec(supportedVersions, options, {
 		encode(data, context): Versioned {
 			return writeCodec.encode(data, context) as Versioned;
@@ -72,10 +72,10 @@ function makeEditManagerCodecs<TChangeset>(
 	>,
 	options: ICodecOptions,
 ): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([[0, makeV0Codec(changeCodecs.resolve(0), revisionTagCodec, options)]]);
+	return makeCodecFamily([[1, makeV1Codec(changeCodecs.resolve(0), revisionTagCodec, options)]]);
 }
 
-function makeV0Codec<TChangeset>(
+function makeV1Codec<TChangeset>(
 	changeCodec: IMultiFormatCodec<
 		TChangeset,
 		JsonCompatibleReadOnly,

@@ -167,7 +167,7 @@ export function testCodec() {
 			testRevisionTagCodec,
 			{
 				jsonValidator: typeboxValidator,
-				writeVersion: 0,
+				writeVersion: 1,
 			},
 		);
 

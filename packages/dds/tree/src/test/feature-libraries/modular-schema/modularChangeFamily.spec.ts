@@ -114,6 +114,7 @@ const codecOptions: ICodecOptions = {
 };
 const family = new ModularChangeFamily(
 	fieldKindConfiguration,
+	new Map([[0, fieldKindConfiguration]]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,

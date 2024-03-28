@@ -14,7 +14,7 @@ import { uncompressedEncode } from "../../feature-libraries/chunked-forest/codec
 // eslint-disable-next-line import/no-internal-modules
 import { EncodedFieldBatch } from "../../feature-libraries/chunked-forest/index.js";
 import {
-	fieldKindConfiguration,
+	fieldKindConfigurations,
 	sequence,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -49,7 +49,7 @@ describe("sharedTreeChangeCodec", () => {
 			},
 		};
 		const modularChangeCodecs = makeModularChangeCodecFamily(
-			fieldKindConfiguration,
+			fieldKindConfigurations,
 			testRevisionTagCodec,
 			dummyFieldBatchCodec,
 			codecOptions,

@@ -52,7 +52,7 @@ import {
 } from "./modularChangeTypes.js";
 
 export function makeModularChangeCodecFamily(
-	fieldKinds: FieldKindConfiguration,
+	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
@@ -63,21 +63,31 @@ export function makeModularChangeCodecFamily(
 	{ jsonValidator: validator }: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 ): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
-	return makeCodecFamily([
-		[
-			0,
-			makeV0Codec(
+	// TODO: Rather than take in fieldKindConfigurations, it might make more sense to take in
+	// "knowledge of how to resolve implicit modular change family codec version -> subversions for field kinds."
+	// The current model is sufficient to make backward compatible changes to the codec in this file, but a little weird:
+	// to make such a change, you'd:
+	// - add an entry to the fieldKindConfigurations passed to this function which changed no children versions
+	// - Either pass the version as a parameter to `makeModularChangeCodec` if the format
+	// change is small, OR call some other codec creation function when `version` is above some value (if the format
+	// change is large/it doesn't make sense to do much code sharing with `makeModularChangeCodec`)
+	//
+	// The weirdness here comes from the fact that ModularChangeFamily has its field kinds dependency-injected
+	return makeCodecFamily(
+		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => [
+			version,
+			makeModularChangeCodec(
 				fieldKinds,
 				revisionTagCodec,
 				fieldsCodec,
 				{ jsonValidator: validator },
 				chunkCompressionStrategy,
 			),
-		],
-	]);
+		]),
+	);
 }
 
-function makeV0Codec(
+function makeModularChangeCodec(
 	fieldKinds: FieldKindConfiguration,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,

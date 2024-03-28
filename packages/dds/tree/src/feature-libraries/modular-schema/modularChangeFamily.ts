@@ -99,15 +99,28 @@ export class ModularChangeFamily
 
 	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
 
+	/**
+	 * The configured set of field kinds that should be used in this SharedTree.
+	 * @privateRemarks
+	 * Before making a SharedTree format change which impacts which set of field kinds are allowed,
+	 * code which uses this field needs to be audited for compatibility considerations.
+	 *
+	 * Notably, codecs are currently only factored to support addition of formats for any existing field kind
+	 * or for modular change family itself.
+	 */
+	public readonly fieldKinds: FieldKindConfiguration;
+
 	public constructor(
-		public readonly fieldKinds: FieldKindConfiguration,
+		fieldKinds: FieldKindConfiguration,
+		fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
+		this.fieldKinds = fieldKinds;
 		this.codecs = makeModularChangeCodecFamily(
-			fieldKinds,
+			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,

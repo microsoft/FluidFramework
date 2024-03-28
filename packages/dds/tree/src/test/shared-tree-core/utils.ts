@@ -49,7 +49,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 				codecOptions,
 				chunkCompressionStrategy,
 			),
-			{ ...codecOptions, writeVersion: 0 },
+			{ ...codecOptions, writeVersion: 1 },
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

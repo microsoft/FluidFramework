@@ -55,9 +55,15 @@ const fieldKinds: FieldKindConfiguration = new Map([
 	[sequence.identifier, { kind: sequence, formatVersion: 0 }],
 ]);
 
-const family = new ModularChangeFamily(fieldKinds, testRevisionTagCodec, failCodec, {
-	jsonValidator: typeboxValidator,
-});
+const family = new ModularChangeFamily(
+	fieldKinds,
+	new Map([[0, fieldKinds]]),
+	testRevisionTagCodec,
+	failCodec,
+	{
+		jsonValidator: typeboxValidator,
+	},
+);
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");

@@ -38,6 +38,7 @@ import { OptionalChangeset } from "../optional-field/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	fieldKindConfiguration,
+	fieldKindConfigurations,
 	optional,
 	sequence,
 	required as valueFieldKind,
@@ -61,6 +62,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	) {
 		this.modularFamily = new ModularChangeFamily(
 			fieldKindConfiguration,
+			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,

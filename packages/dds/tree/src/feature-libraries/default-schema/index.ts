@@ -12,6 +12,7 @@ export {
 	Forbidden,
 	fieldKinds,
 	fieldKindConfiguration,
+	fieldKindConfigurations,
 } from "./defaultFieldKinds.js";
 
 export {

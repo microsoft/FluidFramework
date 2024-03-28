@@ -224,6 +224,7 @@ export {
 	defaultSchemaPolicy,
 	fieldKinds,
 	fieldKindConfiguration,
+	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
 } from "./default-schema/index.js";
