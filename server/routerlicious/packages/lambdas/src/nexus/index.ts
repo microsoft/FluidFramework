@@ -63,6 +63,20 @@ function getClientRoomId(clientId: string) {
 	return `client#${clientId}`;
 }
 
+function isSentSignalMessage(obj: any): obj is ISentSignalMessage {
+	return (
+		typeof obj === "object" &&
+		obj !== null &&
+		"content" in obj &&
+		(typeof obj.type === "string" || obj.type === undefined) &&
+		(typeof obj.clientConnectionNumber === "number" ||
+			obj.clientConnectionNumber === undefined) &&
+		(typeof obj.referenceSequenceNumber === "number" ||
+			obj.referenceSequenceNumber === undefined) &&
+		(typeof obj.targetClientId === "string" || obj.targetClientId === undefined)
+	);
+}
+
 const getMessageMetadata = (documentId: string, tenantId: string) => ({
 	documentId,
 	tenantId,
@@ -1120,19 +1134,20 @@ export function configureWebSocketServices(
 					}
 
 					if (supportedFeaturesMap.get(clientId)?.[feature_submit_signals_v2]) {
-						for (const signal of contentBatches as ISentSignalMessage[]) {
-							const signalMessage: ISignalMessage = {
-								clientId,
-								content: signal.content,
-								targetClientId: signal.targetClientId,
-							};
+						for (const signal of contentBatches) {
+							if (isSentSignalMessage(signal)) {
+								const signalMessage: ISignalMessage = {
+									clientId,
+									...signal,
+								};
 
-							const roomId: string =
-								signal.targetClientId !== undefined
-									? getClientRoomId(signal.targetClientId)
-									: getRoomId(room);
+								const roomId: string =
+									signal.targetClientId !== undefined
+										? getClientRoomId(signal.targetClientId)
+										: getRoomId(room);
 
-							socket.emitToRoom(roomId, "signal", signalMessage);
+								socket.emitToRoom(roomId, "signal", signalMessage);
+							}
 						}
 					} else {
 						contentBatches.forEach((contentBatch) => {
