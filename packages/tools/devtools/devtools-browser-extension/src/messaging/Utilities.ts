@@ -8,7 +8,7 @@ import {
 	type MessageLoggingOptions,
 } from "@fluidframework/devtools-core";
 
-import { type TypedPortConnection } from "./TypedPortConnection";
+import { type TypedPortConnection } from "./TypedPortConnection.js";
 
 function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOptions): string {
 	const loggingPreamble =
