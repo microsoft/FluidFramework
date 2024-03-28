@@ -93,14 +93,12 @@ describe("External container telemetry", () => {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 		mockContainer = createMockContainer();
 
-		const consumerConfig: TelemetryManagerConfig.AppInsightsConsumerConfig = {
-			type: TelemetryManagerConfig.ConsumerConfigTypes.APP_INSIGHTS,
-			appInsightsClient,
-		};
 		telemetryManagerConfig = {
 			containerTelemetry: {
 				container: mockContainer,
-				consumerConfig: consumerConfig,
+			},
+			consumers: {
+				appInsights: appInsightsClient,
 			},
 		};
 	});

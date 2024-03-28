@@ -20,7 +20,7 @@ export class ContainerTelemetryManager {
 	constructor(
 		private readonly container: IContainer,
 		private readonly telemetryProducer: ContainerEventTelemetryProducer,
-		private readonly telemetryConsumer: ITelemetryConsumer,
+		private readonly telemetryConsumers: ITelemetryConsumer[],
 	) {
 		this.setupEventHandlers();
 	}
@@ -57,7 +57,7 @@ export class ContainerTelemetryManager {
 		);
 
 		if (telemetry !== undefined) {
-			this.telemetryConsumer.consume(telemetry);
+			this.telemetryConsumers.forEach((consumer) => consumer.consume(telemetry));
 		}
 	}
 }

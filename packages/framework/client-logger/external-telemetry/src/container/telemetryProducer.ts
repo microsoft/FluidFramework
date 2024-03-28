@@ -60,7 +60,7 @@ export class ContainerEventTelemetryProducer {
 		return telemetry;
 	}
 
-	private produceBasicContainerTelemetry = <IContainerTelemetry>(
+	private produceBasicContainerTelemetry = (
 		eventName: ContainerTelemetryEventName,
 	): IContainerTelemetry => {
 		return {

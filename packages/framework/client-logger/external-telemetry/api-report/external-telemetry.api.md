@@ -75,26 +75,12 @@ export interface IExternalTelemetry {
 }
 
 // @beta
-export namespace TelemetryManagerConfig {
-    export interface AppInsightsConsumerConfig extends IConsumerConfig {
-        appInsightsClient: ApplicationInsights;
-        // (undocumented)
-        type: "APP_INSIGHTS";
-    }
-    const ConsumerConfigTypes: {
-        readonly APP_INSIGHTS: "APP_INSIGHTS";
-    };
-    export type ConsumerConfigType = (typeof ConsumerConfigTypes)[keyof typeof ConsumerConfigTypes];
-    export interface IConsumerConfig {
-        type: ConsumerConfigType;
-    }
-}
-
-// @beta
 export interface TelemetryManagerConfig {
+    consumers: {
+        appInsights?: ApplicationInsights;
+    };
     containerTelemetry?: {
         container: IContainer;
-        consumerConfig: TelemetryManagerConfig.IConsumerConfig;
     };
 }
 
