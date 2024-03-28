@@ -19,6 +19,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
+
 import { ISharedMap, ISharedMapEvents } from "./interfaces.js";
 import { AttributableMapKernel, IMapDataObjectSerializable, IMapOperation } from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from 'assert';
+
 import {
 	BaseFuzzTestState,
 	Generator,
@@ -18,6 +19,7 @@ import {
 import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
 import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { expect } from 'chai';
+
 import { fail } from '../Common.js';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers.js';
 import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer.js';

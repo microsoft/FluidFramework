@@ -36,6 +36,7 @@ import {
 	sessionStorageConfigProvider,
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";

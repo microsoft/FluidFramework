@@ -16,6 +16,7 @@ import {
 	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils";
+
 import { DeltaScheduler } from "./deltaScheduler.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";

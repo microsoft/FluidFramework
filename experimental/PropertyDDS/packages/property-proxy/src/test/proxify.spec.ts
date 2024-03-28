@@ -8,6 +8,7 @@
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 
 import { PropertyProxy, proxySymbol } from "../index.js";
+
 import { bookDataTemplate } from "./testSchemas.js";
 
 describe("proxify ", () => {

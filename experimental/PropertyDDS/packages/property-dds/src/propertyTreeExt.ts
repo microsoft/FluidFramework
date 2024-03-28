@@ -4,6 +4,7 @@
  */
 
 import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+
 import { SharedPropertyTree } from "./propertyTree.js";
 import { DeflatedPropertyTreeFactory, LZ4PropertyTreeFactory } from "./propertyTreeExtFactories.js";
 

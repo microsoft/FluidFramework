@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -55,6 +56,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+
 import { ChannelCollection } from "../channelCollection.js";
 import {
 	CompressionAlgorithms,

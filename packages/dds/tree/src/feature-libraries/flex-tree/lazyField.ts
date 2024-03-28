@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/id-compressor";
+
 import {
 	CursorLocationType,
 	FieldAnchor,
@@ -37,6 +38,7 @@ import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import { FlexFieldKind } from "../modular-schema/index.js";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
