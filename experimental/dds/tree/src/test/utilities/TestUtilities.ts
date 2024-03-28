@@ -12,8 +12,7 @@ import {
 	type IFluidCodeDetails,
 	type IHostLoader,
 } from '@fluidframework/container-definitions/internal';
-import { IContainerExperimental } from '@fluidframework/container-loader';
-import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
+import { IContainerExperimental, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 import { DefaultSummaryConfiguration, SummaryCollection } from '@fluidframework/container-runtime';
 import type { ConfigTypes, IConfigProviderBase, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';

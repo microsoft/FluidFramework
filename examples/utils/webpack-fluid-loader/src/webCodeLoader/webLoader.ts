@@ -6,8 +6,6 @@
 import {
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
-} from "@fluidframework/container-definitions";
-import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IFluidModule,

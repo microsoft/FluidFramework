@@ -36,9 +36,6 @@ import {
 } from "@fluidframework/test-utils";
 import { expect } from "chai";
 
-import { SharedPropertyTree } from "../propertyTree.js";
-import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
-import { PropertyTreeFactory } from "../propertyTreeFactory.js";
 import {
 	IContainer,
 	IFluidCodeDetails,
@@ -47,6 +44,9 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { SharedPropertyTree } from "../propertyTree.js";
+import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
+import { PropertyTreeFactory } from "../propertyTreeFactory.js";
 
 interface Result {
 	container: IContainer;

@@ -17,7 +17,8 @@ import {
 	IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,

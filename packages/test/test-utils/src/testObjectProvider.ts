@@ -924,7 +924,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	) {
 		return loader.resolve({
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			url: await driver.createContainerUrl(this.documentId),
+			url: await driver!.createContainerUrl(this.documentId),
 			headers,
 		});
 	}

@@ -7,7 +7,7 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import { Signaler } from "@fluid-experimental/data-objects";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { createServiceAudience } from "@fluidframework/fluid-static";
+import { createServiceAudience } from "@fluidframework/fluid-static/internal";
 
 import { createMockServiceMember } from "./Audience.js";
 import { FocusTracker } from "./FocusTracker.js";

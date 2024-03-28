@@ -13,9 +13,12 @@ import {
 	TreeConfiguration,
 	TreeFieldFromImplicitField,
 	TreeView,
+} from "@fluidframework/tree";
+import {
 	configuredSharedTree,
 	typeboxValidator,
-} from "@fluidframework/tree";
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/tree/internal";
 import * as React from "react";
 
 /**

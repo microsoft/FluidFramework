@@ -20,11 +20,13 @@ import {
 	ContainerAttachProps,
 	type ContainerSchema,
 	IFluidContainer,
+} from "@fluidframework/fluid-static";
+import {
 	IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-} from "@fluidframework/fluid-static";
+} from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,

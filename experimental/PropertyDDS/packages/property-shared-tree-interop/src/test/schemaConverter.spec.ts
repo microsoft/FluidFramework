@@ -8,13 +8,6 @@ import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	convertPropertyToSharedTreeSchema as convertSchema,
-	nodePropertyField,
-	nodePropertySchema,
-} from "../schemaConverter.js";
-
-import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
-import {
 	Any,
 	FieldKey,
 	FieldKinds,
@@ -29,7 +22,14 @@ import {
 	leaf,
 	schemaIsFieldNode,
 	schemaIsLeaf,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
+import {
+	convertPropertyToSharedTreeSchema as convertSchema,
+	nodePropertyField,
+	nodePropertySchema,
+} from "../schemaConverter.js";
+
+import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {

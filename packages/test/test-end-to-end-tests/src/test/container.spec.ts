@@ -19,8 +19,9 @@ import {
 	IFluidCodeDetails,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+import { ConnectionState } from "@fluidframework/container-loader";
 import {
+	IContainerExperimental,
 	ILoaderProps,
 	Loader,
 	waitContainerToCatchUp,

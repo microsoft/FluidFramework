@@ -9,17 +9,15 @@ import events_pkg from "events_pkg";
 const { EventEmitter } = events_pkg;
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";
 // eslint-disable-next-line import/no-internal-modules
+import { ConnectionManager } from "@fluidframework/container-loader/test/connectionManager";
 // eslint-disable-next-line import/no-internal-modules
+import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/test/contracts";
 // eslint-disable-next-line import/no-internal-modules
+import { DeltaManager } from "@fluidframework/container-loader/test/deltaManager";
 // eslint-disable-next-line import/no-internal-modules
+import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
-import {
-	ConnectionManager,
-	IConnectionManagerFactoryArgs,
-	DeltaManager,
-} from "@fluidframework/container-loader";
-import { DeltaScheduler } from "@fluidframework/container-runtime/test/deltaScheduler";
 import { ScheduleManager } from "@fluidframework/container-runtime/test/scheduleManager";
 import {
 	IClient,

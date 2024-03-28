@@ -9,7 +9,8 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
 	IContainerLoadProps,
-} from "@fluidframework/container-loader/internal";
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-loader/test/container";
 import { assert } from "@fluidframework/core-utils";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {

@@ -16,7 +16,7 @@ import {
 	FlexTreeNodeSchema as TreeNodeSchema,
 	fail,
 	leaf,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
 
 const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";

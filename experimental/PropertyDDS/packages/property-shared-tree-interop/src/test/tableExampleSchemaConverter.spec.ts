@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter.js";
 import {
 	FieldKinds,
 	FlexFieldNodeSchema,
@@ -17,7 +16,8 @@ import {
 	brand,
 	leaf,
 	schemaIsFieldNode,
-} from "@fluidframework/tree";
+} from "@fluidframework/tree/internal";
+import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter.js";
 
 const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");
 

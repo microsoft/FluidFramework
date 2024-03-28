@@ -6,13 +6,14 @@
 import child_process from "child_process";
 
 import {
-	AzureClient, // eslint-disable-next-line import/no-deprecated
-	AzureFunctionTokenProvider,
+	AzureClient,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITokenProvider,
 	IUser,
 } from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-deprecated
+import { AzureFunctionTokenProvider } from "@fluidframework/azure-client/internal";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";

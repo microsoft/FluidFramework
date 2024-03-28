@@ -11,7 +11,7 @@ import type { Static, TSchema } from "@sinclair/typebox";
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 
-import type { JsonValidator } from "@fluidframework/tree";
+import type { JsonValidator } from "@fluidframework/tree/internal";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = addFormats(new Ajv({ strict: false, allErrors: true }), [

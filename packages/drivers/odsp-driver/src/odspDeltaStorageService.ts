@@ -6,8 +6,8 @@
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { validateMessages } from "@fluidframework/driver-base";
-import { IDeltasFetchResult } from "@fluidframework/driver-definitions";
 import {
+	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
 	type IStream,
 } from "@fluidframework/driver-definitions/internal";

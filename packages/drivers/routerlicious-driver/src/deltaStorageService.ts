@@ -5,8 +5,12 @@
 
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base";
-import { IDeltaStorageService, IDeltasFetchResult } from "@fluidframework/driver-definitions";
-import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions/internal";
+import {
+	IDeltaStorageService,
+	IDeltasFetchResult,
+	IDocumentDeltaStorageService,
+	IStream,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	emptyMessageStream,
 	readAndParse,
