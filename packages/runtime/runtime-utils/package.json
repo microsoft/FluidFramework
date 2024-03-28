@@ -129,7 +129,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-internal.8.0.0",
+		"@fluidframework/runtime-utils-previous": "npm:@fluidframework/runtime-utils@2.0.0-rc.2.0.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^18.19.0",
@@ -161,11 +161,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedFunctionDeclaration_addTreeToSummary": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

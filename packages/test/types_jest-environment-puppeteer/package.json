@@ -14,6 +14,10 @@
   "main": "",
   "types": "index.d.ts",
   "devDependencies": {
+    "@types/jest-environment-puppeteer-previous": "npm:@types/jest-environment-puppeteer@2.0.0-rc.2.0.0",
     "jest-environment-puppeteer": "^9.0.2"
+  },
+  "typeValidation": {
+    "broken": {}
   }
 }

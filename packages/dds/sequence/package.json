@@ -164,7 +164,7 @@
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.8.0.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-rc.2.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/diff": "^3.5.1",
@@ -204,13 +204,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IIntervalCollection": {
-				"backCompat": false
-			},
-			"ClassDeclaration_SharedString": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

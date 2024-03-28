@@ -149,7 +149,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
-		"disabled": true
+		"disabled": true,
+		"broken": {}
 	}
 }

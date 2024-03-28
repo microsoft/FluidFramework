@@ -126,7 +126,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
-		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-internal.8.0.0",
+		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.0.0-rc.2.0.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^9.1.1",
@@ -159,23 +159,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedInterfaceDeclaration_IConfigProviderBase": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_ConfigTypes": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedFunctionDeclaration_logIfFalse": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_TelemetryNullLogger": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

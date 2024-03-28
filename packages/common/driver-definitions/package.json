@@ -93,7 +93,7 @@
 		"@fluid-tools/build-cli": "^0.34.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.34.0",
-		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-internal.8.0.0",
+		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.0.0-rc.2.0.0",
 		"@fluidframework/eslint-config-fluid": "^5.1.0",
 		"@microsoft/api-extractor": "^7.42.3",
 		"copyfiles": "^2.4.1",
@@ -119,17 +119,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedEnumDeclaration_DriverErrorType": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IDocumentService": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IDocumentStorageService": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
