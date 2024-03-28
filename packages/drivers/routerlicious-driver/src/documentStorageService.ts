@@ -17,7 +17,11 @@ import { GitManager } from "./gitManager.js";
 import { IRouterliciousDriverPolicies } from "./policies.js";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
-import { IDocumentStorageService, IDocumentStorageServicePolicies, LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	LoaderCachingPolicy,
+} from "@fluidframework/driver-definitions/internal";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;

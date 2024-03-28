@@ -27,7 +27,11 @@ import {
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { IContainer, IFluidCodeDetails, IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { SharedDirectory } from "@fluidframework/map/internal";
 

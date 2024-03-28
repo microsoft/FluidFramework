@@ -5,7 +5,15 @@
 
 /* eslint-disable @typescript-eslint/no-empty-interface */
 
-import { FieldKinds, FlexFieldSchema, FlexTreeTypedField, FlexTreeTypedNode, InsertableFlexNode, SchemaBuilderBase, leaf } from "@fluidframework/tree";
+import {
+	FieldKinds,
+	FlexFieldSchema,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
+	InsertableFlexNode,
+	SchemaBuilderBase,
+	leaf,
+} from "@fluidframework/tree";
 
 const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "bubble-bench" });
 

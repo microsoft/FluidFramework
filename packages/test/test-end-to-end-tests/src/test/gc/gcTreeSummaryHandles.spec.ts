@@ -28,9 +28,17 @@ import {
 } from "@fluidframework/test-utils";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
-import { DriverHeader, IDocumentServiceFactory, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverHeader,
+	IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.

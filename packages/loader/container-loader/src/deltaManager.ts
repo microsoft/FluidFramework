@@ -4,7 +4,12 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ICriticalContainerError, IDeltaManager, IDeltaManagerEvents, IDeltaQueue } from "@fluidframework/container-definitions";
+import {
+	ICriticalContainerError,
+	IDeltaManager,
+	IDeltaManagerEvents,
+	IDeltaQueue,
+} from "@fluidframework/container-definitions";
 import {
 	IEventProvider,
 	type ITelemetryBaseEvent,
@@ -43,7 +48,10 @@ import {
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { ThrottlingWarning } from "./error.js";
-import { IDocumentDeltaStorageService, IDocumentService } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	IDocumentService,
+} from "@fluidframework/driver-definitions/internal";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;

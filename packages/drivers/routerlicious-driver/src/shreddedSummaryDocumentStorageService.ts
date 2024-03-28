@@ -26,7 +26,11 @@ import { IRouterliciousDriverPolicies } from "./policies.js";
 import { RetriableGitManager } from "./retriableGitManager.js";
 import { ISummaryUploadManager } from "./storageContracts.js";
 import { SummaryTreeUploadManager } from "./summaryTreeUploadManager.js";
-import { IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 const isNode = typeof window === "undefined";
 

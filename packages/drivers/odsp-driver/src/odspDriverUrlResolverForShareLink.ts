@@ -23,7 +23,11 @@ import {
 	storeLocatorInOdspUrl,
 } from "./odspFluidFileLink.js";
 import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils.js";
-import { IContainerPackageInfo, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IContainerPackageInfo,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.

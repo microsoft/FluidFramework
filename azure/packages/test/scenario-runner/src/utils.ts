@@ -5,8 +5,14 @@
 
 import child_process from "child_process";
 
-import { AzureClient, // eslint-disable-next-line import/no-deprecated
-    	AzureFunctionTokenProvider, AzureLocalConnectionConfig, AzureRemoteConnectionConfig, ITokenProvider, IUser } from "@fluidframework/azure-client";
+import {
+	AzureClient, // eslint-disable-next-line import/no-deprecated
+	AzureFunctionTokenProvider,
+	AzureLocalConnectionConfig,
+	AzureRemoteConnectionConfig,
+	ITokenProvider,
+	IUser,
+} from "@fluidframework/azure-client";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";

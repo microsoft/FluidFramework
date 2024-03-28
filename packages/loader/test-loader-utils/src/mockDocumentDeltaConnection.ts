@@ -16,7 +16,10 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
+} from "@fluidframework/driver-definitions/internal";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {

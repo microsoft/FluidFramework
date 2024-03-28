@@ -29,7 +29,13 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ITree, SchemaFactory, SharedTree, TreeConfiguration, disposeSymbol } from "@fluidframework/tree";
+import {
+	ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	disposeSymbol,
+} from "@fluidframework/tree";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

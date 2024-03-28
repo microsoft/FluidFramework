@@ -10,7 +10,15 @@ import {
 	type IRequest,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { ContainerAttachProps, type ContainerSchema, IFluidContainer, IRootDataObject, createDOProviderContainerRuntimeFactory, createFluidContainer, createServiceAudience } from "@fluidframework/fluid-static";
+import {
+	ContainerAttachProps,
+	type ContainerSchema,
+	IFluidContainer,
+	IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
+} from "@fluidframework/fluid-static";
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
@@ -34,7 +42,10 @@ import {
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import { type IOdspTokenProvider } from "./token.js";
-import { IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 

@@ -14,7 +14,22 @@ import {
 } from "../schemaConverter.js";
 
 import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas.js";
-import { Any, FieldKey, FieldKinds, FlexFieldNodeSchema, FlexFieldSchema, FlexMapNodeSchema, FlexObjectNodeSchema, LeafNodeSchema, TreeNodeSchemaIdentifier, brand, fail, leaf, schemaIsFieldNode, schemaIsLeaf } from "@fluidframework/tree";
+import {
+	Any,
+	FieldKey,
+	FieldKinds,
+	FlexFieldNodeSchema,
+	FlexFieldSchema,
+	FlexMapNodeSchema,
+	FlexObjectNodeSchema,
+	LeafNodeSchema,
+	TreeNodeSchemaIdentifier,
+	brand,
+	fail,
+	leaf,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+} from "@fluidframework/tree";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {

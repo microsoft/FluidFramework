@@ -8,7 +8,11 @@ import type { IAudience } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { IErrorBase, IRequest } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/protocol-definitions";
-import type { IAudienceOwner, IContainer, IContainerEvents } from "@fluidframework/container-definitions/internal";
+import type {
+	IAudienceOwner,
+	IContainer,
+	IContainerEvents,
+} from "@fluidframework/container-definitions/internal";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

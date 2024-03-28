@@ -31,7 +31,7 @@ import {
 	testTrait,
 	waitForSummary,
 } from './TestUtilities.js';
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import { LoaderHeader } from '@fluidframework/container-definitions/internal';
 
 function spyOnVersionChanges(tree: SharedTree): WriteFormat[] {
 	const versions: WriteFormat[] = [];

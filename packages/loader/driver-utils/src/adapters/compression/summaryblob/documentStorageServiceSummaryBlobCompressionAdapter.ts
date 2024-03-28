@@ -18,7 +18,10 @@ import { compress, decompress } from "lz4js";
 
 import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "..//index.js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy.js";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

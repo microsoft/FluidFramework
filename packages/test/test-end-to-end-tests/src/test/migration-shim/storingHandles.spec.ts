@@ -31,7 +31,14 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { type ITree, SchemaFactory, SharedTree, TreeConfiguration, type TreeView, disposeSymbol } from "@fluidframework/tree";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+	disposeSymbol,
+} from "@fluidframework/tree";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;

@@ -29,7 +29,15 @@ import { isOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter.js";
-import { IDocumentDeltaConnection, IDocumentDeltaStorageService, IDocumentService, IDocumentServiceEvents, IDocumentServicePolicies, IDocumentStorageService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

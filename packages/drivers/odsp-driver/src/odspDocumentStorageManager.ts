@@ -56,7 +56,12 @@ import {
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { FetchSource, ISnapshot, ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 

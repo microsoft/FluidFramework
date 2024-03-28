@@ -15,7 +15,11 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { v4 as uuid } from "uuid";
-import { IContainer, IFluidCodeDetails, ILoader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	ILoader,
+} from "@fluidframework/container-definitions/internal";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 

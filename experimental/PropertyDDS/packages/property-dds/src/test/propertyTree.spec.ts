@@ -39,7 +39,12 @@ import { expect } from "chai";
 import { SharedPropertyTree } from "../propertyTree.js";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt.js";
 import { PropertyTreeFactory } from "../propertyTreeFactory.js";
-import { IContainer, IFluidCodeDetails, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 

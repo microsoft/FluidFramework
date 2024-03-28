@@ -37,7 +37,12 @@ import { v5 as uuidv5 } from "uuid";
 const { range, sortedIndex, isFunction } = lodash;
 
 import { SharedPropertyTree } from "../propertyTree.js";
-import { IContainer, IFluidCodeDetails, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 // a "namespace" uuid to generate uuidv5 in fuzz tests

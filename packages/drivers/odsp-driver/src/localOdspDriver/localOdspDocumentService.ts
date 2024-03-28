@@ -11,7 +11,13 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
 import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";
-import { IDocumentDeltaStorageService, IDocumentService, IDocumentServiceEvents, IDocumentStorageService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * IDocumentService implementation that provides explicit snapshot to the document storage service.

@@ -21,9 +21,22 @@ import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
-import { IContainer, IFluidCodeDetails, IHostLoader, ILoader } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader, waitContainerToCatchUp as waitContainerToCatchUp_original } from "@fluidframework/container-loader/internal";
-import { IDocumentServiceFactory, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoader,
+} from "@fluidframework/container-definitions/internal";
+import {
+	ILoaderProps,
+	Loader,
+	waitContainerToCatchUp as waitContainerToCatchUp_original,
+} from "@fluidframework/container-loader/internal";
+import {
+	IDocumentServiceFactory,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 const defaultCodeDetails: IFluidCodeDetails = {
 	package: "defaultTestPackage",

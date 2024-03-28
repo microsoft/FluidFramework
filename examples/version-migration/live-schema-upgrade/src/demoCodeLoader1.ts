@@ -5,7 +5,12 @@
 
 import { getLatestVersion } from "./app.js";
 import { DiceRollerContainerRuntimeFactory } from "./modelVersion1/index.js";
-import type { ICodeDetailsLoader, IFluidCodeDetails, IFluidCodeDetailsComparer, IFluidModuleWithDetails } from "@fluidframework/container-definitions/internal";
+import type {
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidCodeDetailsComparer,
+	IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions/internal";
 
 const v1ModuleWithDetails: IFluidModuleWithDetails = {
 	module: { fluidExport: new DiceRollerContainerRuntimeFactory() },

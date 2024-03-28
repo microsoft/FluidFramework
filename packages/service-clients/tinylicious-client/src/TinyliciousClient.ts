@@ -6,7 +6,14 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import { type ConfigTypes, type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
-import { type ContainerSchema, type IFluidContainer, type IRootDataObject, createDOProviderContainerRuntimeFactory, createFluidContainer, createServiceAudience } from "@fluidframework/fluid-static";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	type IRootDataObject,
+	createDOProviderContainerRuntimeFactory,
+	createFluidContainer,
+	createServiceAudience,
+} from "@fluidframework/fluid-static";
 import { type IClient } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils";
@@ -18,9 +25,16 @@ import {
 
 import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
 import { type TinyliciousClientProps, type TinyliciousContainerServices } from "./interfaces.js";
-import { type IContainer, type IFluidModuleWithDetails, type IHostLoader } from "@fluidframework/container-definitions/internal";
+import {
+	type IContainer,
+	type IFluidModuleWithDetails,
+	type IHostLoader,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import { type IDocumentServiceFactory, type IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	type IDocumentServiceFactory,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

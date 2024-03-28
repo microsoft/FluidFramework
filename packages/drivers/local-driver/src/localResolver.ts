@@ -8,7 +8,11 @@ import { assert } from "@fluidframework/core-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 
 import { generateToken } from "./auth.js";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * @alpha

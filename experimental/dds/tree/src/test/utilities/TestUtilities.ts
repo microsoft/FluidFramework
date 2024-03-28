@@ -71,8 +71,12 @@ import {
 } from '../../persisted-types/index.js';
 
 import { RefreshingTestTree, SimpleTestTree, TestTree, buildLeaf } from './TestNode.js';
-import { type IContainer, type IFluidCodeDetails, type IHostLoader } from "@fluidframework/container-definitions/internal";
-import { Loader, waitContainerToCatchUp } from "@fluidframework/container-loader/internal";
+import {
+	type IContainer,
+	type IFluidCodeDetails,
+	type IHostLoader,
+} from '@fluidframework/container-definitions/internal';
+import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader/internal';
 
 /** Objects returned by setUpTestSharedTree */
 export interface SharedTreeTestingComponents {

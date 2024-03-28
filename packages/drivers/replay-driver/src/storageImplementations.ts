@@ -17,7 +17,15 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReadDocumentStorageServiceBase } from "./replayController.js";
-import { IDocumentDeltaConnection, IDocumentDeltaStorageService, IDocumentService, IDocumentServiceEvents, IDocumentServiceFactory, IDocumentStorageService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Structure of snapshot on disk, when we store snapshot as single file

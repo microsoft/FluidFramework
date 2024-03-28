@@ -18,7 +18,10 @@ import { debug } from "./debug.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
-import { IContainerCreateProps, IContainerLoadProps } from "@fluidframework/container-loader/internal";
+import {
+	IContainerCreateProps,
+	IContainerLoadProps,
+} from "@fluidframework/container-loader/internal";
 
 const debugOp = debug.extend("ops");
 const debugWait = debug.extend("wait");

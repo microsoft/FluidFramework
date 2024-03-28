@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IConnectionDetails, ICriticalContainerError, IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions";
+import {
+	IConnectionDetails,
+	ICriticalContainerError,
+	IDeltaQueue,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,

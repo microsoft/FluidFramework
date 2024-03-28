@@ -12,7 +12,11 @@ import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
 import { IOdspSnapshot } from "../contracts.js";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
-import { ISnapshot, ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.

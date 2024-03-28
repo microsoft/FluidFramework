@@ -4,7 +4,11 @@
  */
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
-import { ICriticalContainerError, IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions";
+import {
+	ICriticalContainerError,
+	IDeltaQueue,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
 import { IDisposable, ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { DriverErrorTypes, IAnyDriverError } from "@fluidframework/driver-definitions";
@@ -52,7 +56,11 @@ import {
 import { DeltaQueue } from "./deltaQueue.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents, IDocumentService } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
+	IDocumentService,
+} from "@fluidframework/driver-definitions/internal";
 
 // We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 const InitialReconnectDelayInMs = 500;

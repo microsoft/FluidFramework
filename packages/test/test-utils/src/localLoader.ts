@@ -5,7 +5,13 @@
 
 import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
-import { ICodeDetailsLoader, IContainer, IFluidCodeDetails, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 

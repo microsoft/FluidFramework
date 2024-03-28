@@ -20,7 +20,10 @@ import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspU
 import { pkgVersion } from "../packageVersion.js";
 
 import { mockFetchError } from "./mockFetch.js";
-import { IAuthorizationError, IGenericNetworkError } from "@fluidframework/driver-definitions/internal";
+import {
+	IAuthorizationError,
+	IGenericNetworkError,
+} from "@fluidframework/driver-definitions/internal";
 
 describe("Odsp Error", () => {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

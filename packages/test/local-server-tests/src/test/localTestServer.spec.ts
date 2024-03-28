@@ -18,7 +18,12 @@ import {
 	createAndAttachContainer,
 	createLoader,
 } from "@fluidframework/test-utils";
-import { IContainer, IFluidCodeDetails, IHostLoader, ILoaderOptions } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IHostLoader,
+	ILoaderOptions,
+} from "@fluidframework/container-definitions/internal";
 import { IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**

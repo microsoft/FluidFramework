@@ -17,7 +17,10 @@ import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.
 import { EpochTracker } from "./epochTracker.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
-import { IDocumentDeltaStorageService, type IStream } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaStorageService,
+	type IStream,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.

@@ -33,7 +33,11 @@ import {
 	validateBlobsAndTrees,
 } from "./treeUtils.js";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager.js";
-import { IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 const latestSnapshotId: string = "latest";
 

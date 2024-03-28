@@ -6,7 +6,13 @@
 import assert from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IAudience, IDeltaManager, IDeltaManagerEvents, ReadOnlyInfo } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IAudience,
+	IDeltaManager,
+	IDeltaManagerEvents,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 import { ConnectionState } from "../connectionState.js";

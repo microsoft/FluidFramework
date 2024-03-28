@@ -6,7 +6,11 @@
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import Axios from "axios";
-import { DriverHeader, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverHeader,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier

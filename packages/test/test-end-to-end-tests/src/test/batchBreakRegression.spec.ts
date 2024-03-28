@@ -20,7 +20,10 @@ import { isFluidError, isILoggingError } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-import { IDocumentDeltaConnectionEvents, IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnectionEvents,
+	IDocumentServiceFactory,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * In all cases we end up with a permanently corrupt file.

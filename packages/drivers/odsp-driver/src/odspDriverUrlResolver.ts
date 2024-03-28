@@ -14,7 +14,12 @@ import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
-import { DriverHeader, IContainerPackageInfo, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverHeader,
+	IContainerPackageInfo,
+	IResolvedUrl,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 function getUrlBase(
 	siteUrl: string,

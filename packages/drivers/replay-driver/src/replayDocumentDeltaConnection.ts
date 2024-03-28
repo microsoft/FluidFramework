@@ -20,7 +20,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 import { ReplayController } from "./replayController.js";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents, IDocumentDeltaStorageService, IDocumentService } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+} from "@fluidframework/driver-definitions/internal";
 
 const ReplayDocumentId = "documentId";
 

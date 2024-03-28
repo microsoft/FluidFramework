@@ -5,7 +5,11 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * This abstract class implements IDocumentServiceFactory interface. It uses delegation pattern.

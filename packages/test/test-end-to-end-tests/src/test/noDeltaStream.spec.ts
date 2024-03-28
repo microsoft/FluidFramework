@@ -21,7 +21,11 @@ import {
 
 import { wrapObjectAndOverride } from "../mocking.js";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],

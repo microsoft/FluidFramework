@@ -14,7 +14,15 @@ import { TestHistorian } from "@fluidframework/server-test-utils";
 import { LocalDeltaStorageService } from "./localDeltaStorageService.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { LocalDocumentStorageService } from "./localDocumentStorageService.js";
-import { IDocumentDeltaConnection, IDocumentDeltaStorageService, IDocumentService, IDocumentServiceEvents, IDocumentServicePolicies, IDocumentStorageService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Basic implementation of a document service for local use.

@@ -32,7 +32,10 @@ import type { Socket } from "socket.io-client";
 
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { IDocumentDeltaConnection, IDocumentDeltaConnectionEvents } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Represents a connection to a stream of delta updates.

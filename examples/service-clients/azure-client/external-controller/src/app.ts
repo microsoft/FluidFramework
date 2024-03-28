@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, AzureContainerServices, AzureLocalConnectionConfig, AzureRemoteConnectionConfig } from "@fluidframework/azure-client";
+import {
+	AzureClient,
+	AzureContainerServices,
+	AzureLocalConnectionConfig,
+	AzureRemoteConnectionConfig,
+} from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";

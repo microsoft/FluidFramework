@@ -15,7 +15,13 @@ import { v4 as uuid } from "uuid";
 import { IDetachedBlobStorage, Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 import { IRuntime } from "@fluidframework/container-definitions/internal";
-import { IDocumentService, IDocumentServiceFactory, type IDocumentStorageService, type IResolvedUrl, type IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type IUrlResolver,
+} from "@fluidframework/driver-definitions/internal";
 
 const failProxy = <T extends object>() => {
 	const proxy = new Proxy<T>({} as any as T, {

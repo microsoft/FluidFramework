@@ -14,7 +14,14 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { GenericError, ITelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils";
-import { FetchSource, IDocumentStorageService, IDocumentStorageServicePolicies, ISnapshot, ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
 	private _disposed = false;

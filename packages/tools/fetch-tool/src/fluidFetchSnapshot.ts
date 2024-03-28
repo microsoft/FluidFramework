@@ -19,7 +19,10 @@ import {
 	paramSnapshotVersionIndex,
 } from "./fluidFetchArgs.js";
 import { latestVersionsId } from "./fluidFetchInit.js";
-import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentService,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 
 interface ISnapshotInfo {
 	blobCountNew: number;

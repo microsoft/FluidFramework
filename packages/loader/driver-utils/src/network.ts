@@ -6,7 +6,12 @@
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes, IDriverErrorBase } from "@fluidframework/driver-definitions";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
-import { IAuthorizationError, ILocationRedirectionError, IResolvedUrl, IThrottlingWarning } from "@fluidframework/driver-definitions/internal";
+import {
+	IAuthorizationError,
+	ILocationRedirectionError,
+	IResolvedUrl,
+	IThrottlingWarning,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

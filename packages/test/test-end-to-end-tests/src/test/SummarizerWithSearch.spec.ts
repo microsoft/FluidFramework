@@ -35,9 +35,17 @@ import {
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IRuntimeFactory,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { ILoaderProps } from "@fluidframework/container-loader/internal";
-import { DriverHeader, type IDocumentServiceFactory, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverHeader,
+	type IDocumentServiceFactory,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 interface ProvideSearchContent {
 	SearchContent: SearchContent;

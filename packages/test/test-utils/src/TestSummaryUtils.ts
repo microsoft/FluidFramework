@@ -27,7 +27,11 @@ import { waitForContainerConnection } from "./containerUtils.js";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 
 const summarizerClientType = "summarizer";

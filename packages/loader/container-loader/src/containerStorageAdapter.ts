@@ -20,7 +20,15 @@ import { IDetachedBlobStorage } from "./loader.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService.js";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { FetchSource, IDocumentService, IDocumentStorageService, IDocumentStorageServicePolicies, ISnapshot, ISnapshotFetchOptions, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	FetchSource,
+	IDocumentService,
+	IDocumentStorageService,
+	IDocumentStorageServicePolicies,
+	ISnapshot,
+	ISnapshotFetchOptions,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * Stringified blobs from a summary/snapshot tree.

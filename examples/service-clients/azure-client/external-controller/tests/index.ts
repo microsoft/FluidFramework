@@ -16,10 +16,17 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 
-import { IFluidContainer, createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static";
+import {
+	IFluidContainer,
+	createDOProviderContainerRuntimeFactory,
+} from "@fluidframework/fluid-static";
 import { DiceRollerController } from "../src/controller.js";
 import { makeAppView } from "../src/view.js";
-import { IContainer, IFluidModuleWithDetails, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidModuleWithDetails,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 
 // Since this is a single page Fluid application we are generating a new document id

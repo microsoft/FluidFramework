@@ -4,7 +4,11 @@
  */
 
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IContainerContext, IRuntime, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	IContainerContext,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 
 /**
  * @alpha

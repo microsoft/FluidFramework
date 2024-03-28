@@ -10,7 +10,11 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ReplayController } from "./replayController.js";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection.js";
 import { ReplayDocumentService } from "./replayDocumentService.js";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * @internal

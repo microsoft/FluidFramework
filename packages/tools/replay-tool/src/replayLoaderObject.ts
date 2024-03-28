@@ -4,7 +4,14 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ICodeDetailsLoader, IFluidCodeDetails, IFluidCodeDetailsComparer, IFluidModule, IFluidModuleWithDetails, IProvideRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidCodeDetailsComparer,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	IProvideRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
 /**

@@ -3,11 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeResolver, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
+import {
+	IFluidCodeResolver,
+	IResolvedFluidCodeDetails,
+} from "@fluidframework/container-definitions";
 
 import { AllowList } from "./allowList.js";
 import { ScriptManager } from "./scriptManager.js";
-import { ICodeDetailsLoader, IFluidCodeDetails, IFluidModule, IFluidModuleWithDetails, isFluidBrowserPackage } from "@fluidframework/container-definitions/internal";
+import {
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
 
 export class WebCodeLoader implements ICodeDetailsLoader {
 	private readonly loadedModules = new Map<

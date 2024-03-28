@@ -48,7 +48,11 @@ import {
 } from "@fluidframework/test-utils";
 
 import { wrapObjectAndOverride } from "../mocking.js";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
 

@@ -23,7 +23,11 @@ import {
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ConnectionManager, IConnectionManagerFactoryArgs, DeltaManager } from "@fluidframework/container-loader";
+import {
+	ConnectionManager,
+	IConnectionManagerFactoryArgs,
+	DeltaManager,
+} from "@fluidframework/container-loader";
 
 describe("Container Runtime", () => {
 	/**

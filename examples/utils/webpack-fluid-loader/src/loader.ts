@@ -4,7 +4,11 @@
  */
 
 import { IFluidMountableView } from "@fluid-example/example-utils";
-import { AttachState, IFluidCodeResolver, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	IFluidCodeResolver,
+	IResolvedFluidCodeDetails,
+} from "@fluidframework/container-definitions";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
@@ -27,7 +31,15 @@ import {
 	extractPackageIdentifierDetails,
 	resolveFluidPackageEnvironment,
 } from "./webCodeLoader/index.js";
-import { IContainer, IFluidCodeDetails, IFluidModule, IFluidModuleWithDetails, IFluidPackage, LoaderHeader, isFluidBrowserPackage } from "@fluidframework/container-definitions/internal";
+import {
+	IContainer,
+	IFluidCodeDetails,
+	IFluidModule,
+	IFluidModuleWithDetails,
+	IFluidPackage,
+	LoaderHeader,
+	isFluidBrowserPackage,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 

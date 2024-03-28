@@ -11,7 +11,11 @@ import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy.j
 import { ICompressionStorageConfig } from "./compressionTypes.js";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter.js";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob/index.js";
-import { IDocumentService, IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentService,
+	IDocumentServiceFactory,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFactoryProxy {
 	constructor(

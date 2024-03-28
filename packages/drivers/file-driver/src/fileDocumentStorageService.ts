@@ -10,7 +10,10 @@ import { assert } from "@fluidframework/core-utils";
 import { buildSnapshotTree, convertSummaryTreeToSnapshotITree } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IFileSnapshot, ReadDocumentStorageServiceBase } from "@fluidframework/replay-driver";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 // This ID is used by replay tool as Document Id.
 // We leverage it to figure out when container is asking for root document tree.

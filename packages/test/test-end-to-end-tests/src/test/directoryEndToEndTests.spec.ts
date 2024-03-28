@@ -18,7 +18,12 @@ import {
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IDirectory, IDirectoryValueChanged, ISharedDirectory, SharedDirectory } from "@fluidframework/map/internal";
+import type {
+	IDirectory,
+	IDirectoryValueChanged,
+	ISharedDirectory,
+	SharedDirectory,
+} from "@fluidframework/map/internal";
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;

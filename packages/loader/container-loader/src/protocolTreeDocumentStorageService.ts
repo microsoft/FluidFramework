@@ -5,7 +5,10 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentStorageService,
+	ISummaryContext,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * A storage service wrapper whose sole job is to intercept calls to uploadSummaryWithContext and ensure they include

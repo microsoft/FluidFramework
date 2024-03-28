@@ -14,7 +14,11 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ICodeDetailsLoader, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
+import {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 
 describe("Audience correctness", () => {

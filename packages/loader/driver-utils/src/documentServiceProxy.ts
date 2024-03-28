@@ -5,7 +5,14 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IDocumentDeltaConnection, IDocumentDeltaStorageService, IDocumentService, IDocumentServiceEvents, IDocumentStorageService, IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentStorageService,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
 
 /**
  * This abstract class implements IDocumentService interface. It uses delegation pattern.

@@ -15,7 +15,13 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { type ITree, SchemaFactory, SharedTree, TreeConfiguration, type TreeView } from "@fluidframework/tree";
+import {
+	type ITree,
+	SchemaFactory,
+	SharedTree,
+	TreeConfiguration,
+	type TreeView,
+} from "@fluidframework/tree";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 
 const treeKey = "treeKey";
