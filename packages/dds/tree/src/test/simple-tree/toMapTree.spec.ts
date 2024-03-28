@@ -28,7 +28,7 @@ function nodeDataToMapTree(tree: InsertableContent, allowedTypes: ImplicitAllowe
 	return nodeDataToMapTreeBase(tree, normalizeAllowedTypes(allowedTypes));
 }
 
-describe.only("toMapTree", () => {
+describe("toMapTree", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const tree = "Hello world";
