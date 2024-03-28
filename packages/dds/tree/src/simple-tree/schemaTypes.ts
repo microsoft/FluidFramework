@@ -10,6 +10,7 @@ import { FlexListToUnion, LazyItem, isLazy } from "../feature-libraries/index.js
 import { MakeNominal, RestrictiveReadonlyRecord, isReadonlyArray } from "../util/index.js";
 
 import { TreeNode, Unhydrated } from "./types.js";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
 /**
  * Helper used to produce types for object nodes.
@@ -277,10 +278,13 @@ export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<
 }
 
 function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
-	if (isLazy(value)) {
-		return value();
+	const evaluatedSchema = isLazy(value) ? value() : value;
+	if (evaluatedSchema === undefined) {
+		throw new UsageError(
+			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated.`,
+		);
 	}
-	return value;
+	return evaluatedSchema;
 }
 
 /**

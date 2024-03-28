@@ -19,6 +19,7 @@ import {
 } from "../../simple-tree/schemaTypes.js";
 import { TreeFactory } from "../../treeFactory.js";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../util/index.js";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 const schema = new SchemaFactory("com.example");
 
@@ -153,7 +154,7 @@ describe("schemaTypes", () => {
 		type _check = requireTrue<areSafelyAssignable<TreeLeafValue, TreeValue>>;
 	});
 
-	describe.only("normalizeAllowedTypes", () => {
+	describe("normalizeAllowedTypes", () => {
 		it("Normalizes single type", () => {
 			const schemaFactory = new SchemaFactory("test");
 			const result = normalizeAllowedTypes(schemaFactory.number);
@@ -169,7 +170,7 @@ describe("schemaTypes", () => {
 			assert(result.has(schemaFactory.number));
 		});
 
-		it("Normalization of recursive schema", () => {
+		it("Normalizes recursive schemas", () => {
 			const schemaFactory = new SchemaFactoryRecursive("test");
 			class Foo extends schemaFactory.objectRecursive("Foo", {
 				x: () => Bar,
@@ -181,6 +182,21 @@ describe("schemaTypes", () => {
 			assert.equal(result.size, 2);
 			assert(result.has(Foo));
 			assert(result.has(Bar));
+		});
+
+		it("Normalization fails when a referenced schema has not yet been instantiated", () => {
+			const schemaFactory = new SchemaFactoryRecursive("test");
+
+			let Bar: any;
+			class Foo extends schemaFactory.objectRecursive("Foo", {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				x: () => Bar,
+			}) {}
+
+			assert.throws(
+				() => normalizeAllowedTypes([Foo, Bar]),
+				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+			);
 		});
 	});
 });
