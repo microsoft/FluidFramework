@@ -455,7 +455,12 @@ describe('EditUtilities', () => {
 			new MockFluidDataStoreRuntime().IFluidHandleContext,
 			() => {}
 		);
-		const binder: IFluidHandle = { bind: noop } as unknown as IFluidHandle;
+		const binder: IFluidHandle = {
+			bind: noop,
+			get [fluidHandleSymbol]() {
+				return binder;
+			},
+		} as unknown as IFluidHandle;
 
 		enum Equality {
 			Equal,
@@ -622,7 +627,7 @@ describe('EditUtilities', () => {
 				};
 				handleObject.IFluidHandle = handleObject;
 				handleObject[fluidHandleSymbol] = handleObject;
-				return handleObject as IFluidHandleInternal;
+				return handleObject as unknown as IFluidHandleInternal;
 			}
 			// Theoretically handles serialize as objects with 2 fields and thus serialization is allowed to be non-deterministic
 			// so use allEqualUnstable not allEqual.
