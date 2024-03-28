@@ -43,6 +43,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 /**
  * @internal
@@ -104,7 +105,10 @@ function filterRuntimeOptionsForVersion(
 			compressionOptions: undefined,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled
+			// Enable chunking.
+			// We need to ensure that 1.x documents (that use chunking) can still be opened by 2.x.
+			// This options does nothing for 2.x builds as chunking is only enabled if compression is enabled.
+			chunkSizeInBytes,
 			...options,
 		};
 	} else if (version.startsWith("2.0.0-rc.1.")) {
@@ -259,10 +263,12 @@ export async function getVersionedTestObjectProvider(
 ): Promise<TestObjectProvider> {
 	return getVersionedTestObjectProviderFromApis(
 		{
-			loader: getLoaderApi(baseVersion, loaderVersion),
-			containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
-			dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
-			driver: getDriverApi(baseVersion, driverConfig?.version),
+			loader: getLoaderApi(getRequestedVersion(baseVersion, loaderVersion)),
+			containerRuntime: getContainerRuntimeApi(
+				getRequestedVersion(baseVersion, runtimeVersion),
+			),
+			dataRuntime: getDataRuntimeApi(getRequestedVersion(baseVersion, dataRuntimeVersion)),
+			driver: getDriverApi(getRequestedVersion(baseVersion, driverConfig?.version)),
 		},
 		driverConfig,
 	);

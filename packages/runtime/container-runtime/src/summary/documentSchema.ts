@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
 
@@ -460,7 +461,7 @@ export class DocumentsSchemaController {
 		checkRuntimeCompatibility(this.futureSchema);
 	}
 
-	public summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined {
+	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
 		// But writing current used config (and assuming most of the clients settle on same config over time) will help with transition
