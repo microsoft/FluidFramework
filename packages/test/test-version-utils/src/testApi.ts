@@ -382,13 +382,7 @@ function throwNotFound(layer: string, version: string): never {
  *
  * @internal
  */
-export function getLoaderApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof LoaderApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
-
+export function getLoaderApi(requestedStr: string): typeof LoaderApi {
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return LoaderApi;
@@ -410,12 +404,7 @@ export function getLoaderApi(
  *
  * @internal
  */
-export function getContainerRuntimeApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
+export function getContainerRuntimeApi(requestedStr: string): typeof ContainerRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -434,12 +423,7 @@ export function getContainerRuntimeApi(
  *
  * @internal
  */
-export function getDataRuntimeApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof DataRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
+export function getDataRuntimeApi(requestedStr: string): typeof DataRuntimeApi {
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -458,13 +442,7 @@ export function getDataRuntimeApi(
  *
  * @internal
  */
-export function getDriverApi(
-	baseVersion: string,
-	requested?: number | string,
-	adjustMajorPublic: boolean = false,
-): typeof DriverApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
-
+export function getDriverApi(requestedStr: string): typeof DriverApi {
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DriverApi;
