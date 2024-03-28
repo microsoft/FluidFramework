@@ -154,12 +154,8 @@ export class FluidDevtools implements IFluidDevtools {
 			return true;
 		},
 		[SetUnsampledTelemetry.MessageType]: async (message) => {
-			if (message === undefined) {
-				console.error("Invalid value received in SetUnsampledTelemetry message:", message);
-				return false;
-			}
 			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
-			sessionStorage.setItem("Fluid.Telemetry.DisableSampling", String(newValue));
+			sessionStorage.setItem(unsampledTelemetryKey, String(newValue));
 			this.postSupportedFeatures();
 			window.location.reload();
 			return true;
@@ -193,10 +189,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly postSupportedFeatures = (): void => {
 		const supportedFeatures = this.getSupportedFeatures();
-		let unsampledTelemetry = sessionStorage.getItem(unsampledTelemetryKey) === "true";
-		if (unsampledTelemetry === null) {
-			unsampledTelemetry = false;
-		}
+		const unsampledTelemetry = sessionStorage.getItem(unsampledTelemetryKey) === "true";
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({

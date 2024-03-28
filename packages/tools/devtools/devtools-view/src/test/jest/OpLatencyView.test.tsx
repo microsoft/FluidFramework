@@ -22,7 +22,7 @@ import { MockMessageRelay } from "../utils/index.js";
 }));
 
 describe("OpLatencyView component tests", () => {
-	it("Renders as expected when unsampled telemetry is enabled in sessionStorage", async (): Promise<void> => {
+	it("Renders as expected when unsampled telemetry is enabled", async (): Promise<void> => {
 		const mockMessageRelay = new MockMessageRelay(() => {
 			return {
 				type: DevtoolsFeatures.MessageType,
@@ -67,7 +67,7 @@ describe("OpLatencyView component tests", () => {
 		expect(aboutHeader).toBeDefined();
 	});
 
-	it("Renders as expected when unsampled telemetry is disabled in sessionStorage", async (): Promise<void> => {
+	it("Renders as expected when unsampled telemetry is disabled", async (): Promise<void> => {
 		const mockMessageRelay = new MockMessageRelay(() => {
 			return {
 				type: DevtoolsFeatures.MessageType,
