@@ -33,6 +33,8 @@ export interface SchemaChange {
 export interface FieldEdit {
 	type: "fieldEdit";
 	change: FieldEditTypes;
+	/** The field being edited */
+	field: FieldDownPath;
 }
 
 export interface FieldDownPath {
@@ -46,12 +48,21 @@ export interface FieldDownPath {
 	key: FieldKey;
 }
 
+export interface NodeRange {
+	/**
+	 * The index of the first node in the range
+	 * Must be less-than or equal to `last`.
+	 */
+	first: number;
+	/**
+	 * The index of the last node in the range.
+	 * Must be greater-than or equal to `first`.
+	 */
+	last: number;
+}
+
 export interface FuzzInsert {
 	type: "insert";
-	/**
-	 * The field in which to insert.
-	 */
-	field: FieldDownPath;
 	/**
 	 * Index to insert at within the field.
 	 */
@@ -61,10 +72,6 @@ export interface FuzzInsert {
 
 export interface FuzzSet {
 	type: "set";
-	/**
-	 * The field to set.
-	 */
-	field: FieldDownPath;
 	/**
 	 * @privateRemarks - Optional fields use {@link FuzzClear} to mean "remove the field's contents" rather than
 	 * a `FuzzSet` with undefined value, hence why this property is required.
@@ -91,22 +98,18 @@ export interface OptionalFieldEdit {
 
 export interface FuzzRemove {
 	type: "remove";
-	content: NodeRangePath;
+	range: NodeRange;
 }
 
 export interface FuzzClear {
 	type: "clear";
-	/**
-	 * The field to clear.
-	 */
-	field: FieldDownPath;
 }
 
 export interface FuzzMove {
 	/**
 	 * The nodes to move.
 	 */
-	content: NodeRangePath;
+	range: NodeRange;
 	/**
 	 * The index (pre-move) to move the content to.
 	 */

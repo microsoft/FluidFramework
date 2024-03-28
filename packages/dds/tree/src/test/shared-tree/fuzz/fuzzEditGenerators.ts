@@ -45,12 +45,17 @@ import { FuzzNode, FuzzNodeSchema, fuzzSchema, initialFuzzSchema } from "./fuzzU
 import {
 	FieldEditTypes,
 	FuzzInsert,
+	FuzzRemove,
 	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
+	IntraFieldMove,
 	Operation,
+	OptionalFieldEdit,
 	RedoOp,
+	RequiredFieldEdit,
 	SchemaChange,
+	SequenceFieldEdit,
 	Synchronize,
 	TransactionAbortOp,
 	TransactionBoundary,
@@ -195,14 +200,16 @@ const defaultFieldSelectionWeights: FieldSelectionWeights = {
 };
 
 export interface EditGeneratorOpWeights {
+	set: number;
+	clear: number;
 	insert: number;
 	remove: number;
+	move: number;
 	start: number;
 	commit: number;
 	abort: number;
 	undo: number;
 	redo: number;
-	move: number;
 	// This is explicitly all-or-nothing. If changing to be partially specifiable, the override logic to apply default values
 	// needs to be updated since this is a nested object.
 	fieldSelection: FieldSelectionWeights;
@@ -210,14 +217,16 @@ export interface EditGeneratorOpWeights {
 	schema: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
+	set: 1,
+	clear: 0,
 	insert: 0,
 	remove: 0,
+	move: 0,
 	start: 0,
 	commit: 0,
 	abort: 0,
 	undo: 0,
 	redo: 0,
-	move: 0,
 	fieldSelection: defaultFieldSelectionWeights,
 	synchronizeTrees: 0,
 	schema: 0,
@@ -240,7 +249,7 @@ export function getAllowableNodeTypes(state: FuzzTestState) {
 	return nodeTypes;
 }
 
-export const makeEditGenerator = (
+export const makeTreeEditGenerator = (
 	opWeightsArg: Partial<EditGeneratorOpWeights>,
 ): Generator<TreeEdit, FuzzTestState> => {
 	const weights = {
@@ -289,184 +298,124 @@ export const makeEditGenerator = (
 		}
 	};
 
-	const insert = (state: FuzzTestState): FieldEditTypes => {
-		const fieldInfo = selectTreeField(
-			viewFromState(state),
-			state.random,
-			weights.fieldSelection,
-			weights.fieldSelection.filter,
-		);
-		switch (fieldInfo.type) {
-			case "optional":
-			case "required": {
-				const { type: fieldType, content: field } = fieldInfo;
-				const contents: FuzzSet = {
-					type: "set",
-					field: {
-						parent: maybeDownPathFromNode(field.parent),
-						key: field.key,
-					},
-					value: jsonableTree(state),
-				};
-				return {
-					type: fieldType,
-					edit: contents,
-				};
-			}
-			case "sequence": {
-				const { content: field } = fieldInfo;
-				const contents: FuzzInsert = {
-					type: "insert",
-					field: {
-						parent: maybeDownPathFromNode(field.parent),
-						key: field.key,
-					},
-					index: state.random.integer(0, field.length),
-					content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
-				};
-				return {
-					type: "sequence",
-					edit: contents,
-				};
-			}
-			default:
-				fail(`Invalid field type: ${(fieldInfo as { type: unknown }).type}`);
-		}
-	};
+	interface FuzzTestStateForFieldEdit<TFuzzField extends FuzzField = FuzzField>
+		extends FuzzTestState {
+		fieldInfo: TFuzzField;
+	}
 
-	const deletableFieldFilter: FieldFilter = (fieldInfo) =>
-		isNonEmptyField(fieldInfo) &&
-		fieldInfo.type !== "required" &&
-		(weights.fieldSelection.filter?.(fieldInfo) ?? true);
-
-	const removeContent = (state: FuzzTestState): FieldEditTypes => {
-		const fieldInfo = selectTreeField(
-			viewFromState(state),
-			state.random,
-			weights.fieldSelection,
-			deletableFieldFilter,
-		);
-		switch (fieldInfo.type) {
-			case "optional": {
-				const { content: field } = fieldInfo;
-				const { content } = field;
-				// Note: if we ever decide to generate removals for currently empty optional fields, the logic
-				// in the reducer needs to be adjusted (it hard-codes `wasEmpty` to `false`).
-				assert(
-					content !== undefined,
-					"Optional field should have content for it to be selected for deletion",
-				);
-
-				return {
-					type: "optional",
-					edit: {
-						type: "clear",
-						field: {
-							parent: maybeDownPathFromNode(field.parent),
-							key: field.key,
-						},
-					},
-				};
-			}
-			case "sequence": {
-				const { content: field } = fieldInfo;
-
-				assert(
-					field.length > 0,
-					"Sequence field should have content for it to be selected for deletion",
-				);
-				const start = state.random.integer(0, field.length - 1);
-				// It'd be reasonable to move this to config. The idea is that by avoiding large deletions,
-				// we're more likely to generate more interesting outcomes.
-				const count = state.random.integer(1, Math.min(3, field.length - start));
-				const node = field.at(start);
-				// We computed 'start' in a way that guarantees it's in-bounds, so at() shouldn't have returned undefined.
-				assert(node !== undefined, "Tried to access a node that doesn't exist");
-				return {
-					type: "sequence",
-					edit: {
-						type: "remove",
-						content: {
-							firstNode: downPathFromNode(node),
-							count,
-						},
-					},
-				};
-			}
-			default:
-				fail(`Invalid field type for deletion of content: ${fieldInfo.type}`);
-		}
-	};
-
-	const move = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.client.channel; // TODO: remove if unused
-		const fieldInfo = selectTreeField(
-			viewFromState(state),
-			state.random,
-			weights.fieldSelection,
-			(f) => f.type === "sequence" && f.content.length > 0,
-		);
-		assert(fieldInfo.type === "sequence", "Move should only be performed on sequence fields");
-		const { content: field } = fieldInfo;
-		assert(field.length > 0, "Sequence must have at least one element to perform a move");
-
-		const start = state.random.integer(0, field.length - 1);
-		const count = state.random.integer(1, field.length - start);
-		const dstIndex = state.random.integer(0, field.length);
-		const node = field.at(start);
-		assert(node !== undefined, "Node should be defined at chosen index");
-
-		return {
-			type: "sequence",
-			edit: {
-				type: "intra-field move",
-				content: {
-					count,
-					firstNode: downPathFromNode(node),
-				},
-				dstIndex,
-			},
-		};
-	};
-
-	const fieldEdit = createWeightedGeneratorWithBailout<FieldEditTypes, FuzzTestState>([
+	const sequenceFieldEditGenerator = createWeightedGenerator<
+		SequenceFieldEdit["edit"],
+		FuzzTestStateForFieldEdit<SequenceFuzzField>
+	>([
 		[
-			insert,
+			(state): FuzzInsert => ({
+				type: "insert",
+				index: state.random.integer(0, state.fieldInfo.content.length),
+				content: makeArray(state.random.integer(1, 3), () => jsonableTree(state)),
+			}),
 			weights.insert,
-			(state) =>
-				trySelectTreeField(
-					viewFromState(state),
-					state.random,
-					weights.fieldSelection,
-					weights.fieldSelection.filter,
-				) !== "no-valid-fields",
 		],
 		[
-			removeContent,
+			({ fieldInfo, random }): FuzzRemove => {
+				const field = fieldInfo.content;
+				const first = random.integer(0, field.length - 1);
+				// By avoiding large deletions we're more likely to generate more interesting outcomes.
+				// It'd be reasonable to move this to config.
+				const last = random.integer(first, Math.min(first + 3, field.length - 1));
+				return {
+					type: "remove",
+					range: { first, last },
+				};
+			},
 			weights.remove,
-			(state) =>
-				trySelectTreeField(
-					viewFromState(state),
-					state.random,
-					weights.fieldSelection,
-					deletableFieldFilter,
-				) !== "no-valid-fields",
+			({ fieldInfo }) => fieldInfo.content.length > 0,
 		],
 		[
-			move,
+			({ fieldInfo, random }): IntraFieldMove => {
+				const field = fieldInfo.content;
+				const first = random.integer(0, field.length - 1);
+				const last = random.integer(first, field.length - 1);
+				return {
+					type: "intra-field move",
+					range: { first, last },
+					dstIndex: random.integer(0, field.length),
+				};
+			},
 			weights.move,
-			(state) =>
-				trySelectTreeField(
-					viewFromState(state),
-					state.random,
-					weights.fieldSelection,
-					(f) => f.type === "sequence" && f.content.length > 0,
-				) !== "no-valid-fields",
+			({ fieldInfo }) => fieldInfo.content.length > 0,
+		],
+	]);
+
+	const optionalFieldEditGenerator = createWeightedGenerator<
+		OptionalFieldEdit["edit"],
+		FuzzTestStateForFieldEdit<OptionalFuzzField>
+	>([
+		[
+			(state): FuzzSet => ({
+				type: "set",
+				value: jsonableTree(state),
+			}),
+			weights.set,
+		],
+		[{ type: "clear" }, weights.clear, (state) => state.fieldInfo.content !== undefined],
+	]);
+
+	const requiredFieldEditGenerator = (
+		state: FuzzTestStateForFieldEdit<RequiredFuzzField>,
+	): RequiredFieldEdit["edit"] => ({
+		type: "set",
+		value: jsonableTree(state),
+	});
+
+	const fieldEditGenerator = createWeightedGeneratorWithBailout<
+		FieldEditTypes,
+		FuzzTestStateForFieldEdit
+	>([
+		[
+			(state): SequenceFieldEdit => ({
+				type: "sequence",
+				edit: assertNotDone(
+					sequenceFieldEditGenerator(
+						state as FuzzTestStateForFieldEdit<SequenceFuzzField>,
+					),
+				),
+			}),
+			weights.fieldSelection.sequence,
+			(state) => state.fieldInfo.type === "sequence",
+		],
+		[
+			(state): OptionalFieldEdit => ({
+				type: "optional",
+				edit: assertNotDone(
+					optionalFieldEditGenerator(
+						state as FuzzTestStateForFieldEdit<OptionalFuzzField>,
+					),
+				),
+			}),
+			weights.fieldSelection.optional,
+			(state) => state.fieldInfo.type === "optional",
+		],
+		[
+			(state): RequiredFieldEdit => ({
+				type: "required",
+				edit: assertNotDone(
+					requiredFieldEditGenerator(
+						state as FuzzTestStateForFieldEdit<RequiredFuzzField>,
+					),
+				),
+			}),
+			weights.fieldSelection.required,
+			(state) => state.fieldInfo.type === "required",
 		],
 	]);
 
 	return (state) => {
-		const change = fieldEdit(state);
+		const fieldInfo = selectTreeField(
+			viewFromState(state),
+			state.random,
+			weights.fieldSelection,
+		);
+		const change = fieldEditGenerator({ ...state, fieldInfo });
 		// This assert is typically hit when restricting the features a fuzz test executes such that it can reach a state
 		// where no edit is valid to generate. E.g. a fuzz test which can only create edits from within transactions but
 		// can never start a transaction, or a fuzz test which can only edit sequence fields but the tree is empty (and
@@ -482,6 +431,10 @@ export const makeEditGenerator = (
 					contents: {
 						type: "fieldEdit",
 						change,
+						field: {
+							parent: maybeDownPathFromNode(fieldInfo.content.parent),
+							key: fieldInfo.content.key,
+						},
 					},
 			  };
 	};
@@ -580,7 +533,7 @@ export function makeOpGenerator(
 	const syncGenerator = createWeightedGenerator<Operation, FuzzTestState>(
 		(
 			[
-				[() => makeEditGenerator(weights), editWeight],
+				[() => makeTreeEditGenerator(weights), editWeight],
 				[() => makeTransactionEditGenerator(weights), transactionWeight],
 				[() => makeUndoRedoEditGenerator(weights), undoRedoWeight],
 				[
@@ -634,26 +587,24 @@ function maybeDownPathFromNode(node: FlexTreeNode | undefined): DownPath | undef
 	return node === undefined ? undefined : downPathFromNode(node);
 }
 
-type FuzzField =
-	| {
-			type: "optional";
-			content: FuzzNode["boxedOptionalChild"];
-	  }
-	| {
-			type: "sequence";
-			content: FuzzNode["boxedSequenceChildren"];
-	  }
-	| {
-			type: "required";
-			content: FuzzNode["boxedRequiredChild"];
-	  };
+interface OptionalFuzzField {
+	type: "optional";
+	content: FuzzNode["boxedOptionalChild"];
+}
+
+interface SequenceFuzzField {
+	type: "sequence";
+	content: FuzzNode["boxedSequenceChildren"];
+}
+
+interface RequiredFuzzField {
+	type: "required";
+	content: FuzzNode["boxedRequiredChild"];
+}
+
+type FuzzField = OptionalFuzzField | SequenceFuzzField | RequiredFuzzField;
 
 type FieldFilter = (field: FuzzField) => boolean;
-
-const isNonEmptyField: FieldFilter = (field) =>
-	field.content !== undefined &&
-	((field.type === "sequence" && field.content.length > 0) ||
-		(field.type !== "sequence" && field.content.content !== undefined));
 
 function selectField(
 	node: FuzzNode,
@@ -829,4 +780,9 @@ function createWeightedGeneratorWithBailout<T, TState extends BaseFuzzTestState>
 		selectedIndices.clear();
 		return result;
 	};
+}
+
+function assertNotDone<T>(input: T | typeof done): T {
+	assert(input !== done, "Unexpected done");
+	return input;
 }
