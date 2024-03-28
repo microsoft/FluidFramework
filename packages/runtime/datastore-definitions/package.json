@@ -109,6 +109,8 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IFluidDataStoreRuntime": {"forwardCompat": false}
+		}
 	}
 }
