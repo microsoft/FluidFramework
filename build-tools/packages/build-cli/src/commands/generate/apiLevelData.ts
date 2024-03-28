@@ -10,6 +10,7 @@
 import { Flags } from "@oclif/core";
 import { readJsonSync, writeJson } from "fs-extra";
 import globby from "globby";
+import sortJson from "sort-json";
 
 import { BaseCommand } from "../../base";
 import type { MemberDataRaw } from "../modify/fluid-imports";
@@ -63,5 +64,6 @@ export default class GenerateApiLevelData extends BaseCommand<typeof GenerateApi
 		}
 		const toWrite = Object.fromEntries(rawData.entries());
 		await writeJson(output, toWrite, { spaces: "\t" });
+		sortJson.overwrite(output);
 	}
 }
