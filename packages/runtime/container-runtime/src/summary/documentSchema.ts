@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
+import { pkgVersion } from "../packageVersion.js";
 
 /**
  * Descripe allowed type for properties in document schema.
@@ -13,7 +14,7 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils";
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @alpha
  */
-export type DocumentSchemaValueType = string | true | number | undefined;
+export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
 /**
  * ID Compressor mode.
@@ -93,6 +94,7 @@ export interface IDocumentSchemaFeatures {
 	compressionLz4: boolean;
 	idCompressorMode: IdCompressorMode;
 	opGroupingEnabled: boolean;
+	disallowedVersions: string[];
 }
 
 /**
@@ -182,6 +184,22 @@ class IdCompressorProperty extends MultiChoice {
 	}
 }
 
+class CheckVersions implements IProperty<string[] | undefined> {
+	public or(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
+		return arrayToProp([...set.values()]);
+	}
+
+	// Once version is there, it stays there forever.
+	public and(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+		return this.or(currentDocSchema, desiredDocSchema);
+	}
+
+	public validate(t: unknown) {
+		return t === undefined || (Array.isArray(t) && !t.includes(pkgVersion));
+	}
+}
+
 /**
  * Helper structure to valida if a schema is compatible with existing code.
  */
@@ -190,6 +208,7 @@ const documentSchemaSupportedConfigs = {
 	idCompressorMode: new IdCompressorProperty(["delayed", "on"]),
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
+	disallowedVersions: new CheckVersions(),
 };
 
 /**
@@ -209,7 +228,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 	if (documentSchema.version !== currentDocumentVersionSchema) {
 		throw DataProcessingError.create(
 			msg,
-			"checkRuntimeCompat",
+			"checkRuntimeCompat1",
 			undefined, // message
 			{
 				runtimeSchemaVersion: documentSchema.version,
@@ -239,7 +258,7 @@ function checkRuntimeCompatibility(documentSchema?: IDocumentSchema) {
 		const value = documentSchema[unknownProperty];
 		throw DataProcessingError.create(
 			msg,
-			"checkRuntimeCompat",
+			"checkRuntimeCompat2",
 			undefined, // message
 			{
 				codeVersion: currentDocumentVersionSchema,
@@ -313,6 +332,10 @@ function same(
 
 function boolToProp(b: boolean) {
 	return b ? true : undefined;
+}
+
+function arrayToProp(arr: string[]) {
+	return arr.length === 0 ? undefined : arr;
 }
 
 /* eslint-disable jsdoc/check-indentation */
@@ -393,12 +416,10 @@ export class DocumentsSchemaController {
 
 	/**
 	 * Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
-	 * @param explicitSchemaControl - Tells if schema changes are done implicitly (without ops - legacy behavior), or go through formal schema change ops process.
 	 * @param existing - Is the document existing document, or a new doc.
 	 * @param documentMetadataSchema - current document's schema, if present.
-	 * @param compressionAlgorithm - desired compression algorith to use
-	 * @param idCompressorModeArg - desired ID compressor mode to use
-	 * @param opGroupingEnabled - true if it's desired to use op grouping.
+	 * @param features - features of the document schema that current session wants to see enabled.
+	 * @param onSchemaChange - callback that is called whenever schema is changed (not called on creation / load, only when processing document schema change ops)
 	 */
 	constructor(
 		existing: boolean,
@@ -407,6 +428,12 @@ export class DocumentsSchemaController {
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
 		checkRuntimeCompatibility(documentMetadataSchema);
+
+		// For simplicity, let's only support new schema features for explicit schema control mode
+		assert(
+			features.disallowedVersions.length === 0 || features.explicitSchemaControl,
+			"not supported",
+		);
 
 		this.documentSchema =
 			(documentMetadataSchema as IDocumentSchemaCurrent) ??
@@ -435,6 +462,7 @@ export class DocumentsSchemaController {
 				compressionLz4: boolToProp(features.compressionLz4),
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
+				disallowedVersions: arrayToProp(features.disallowedVersions),
 			},
 		};
 

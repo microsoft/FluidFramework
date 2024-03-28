@@ -257,6 +257,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         compressionLz4?: true | undefined;
         idCompressorMode?: IdCompressorMode;
         opGroupingEnabled?: true | undefined;
+        disallowedVersions?: string[] | undefined;
     };
     // (undocumented)
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
@@ -406,7 +407,7 @@ export function detectOutboundReferences(address: string, contents: unknown, add
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
 // @alpha
-export type DocumentSchemaValueType = string | true | number | undefined;
+export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
 // @alpha
 export class DocumentsSchemaController {
@@ -768,6 +769,8 @@ export type IDocumentSchemaCurrent = {
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
+    // (undocumented)
+    disallowedVersions: string[];
     // (undocumented)
     explicitSchemaControl: boolean;
     // (undocumented)

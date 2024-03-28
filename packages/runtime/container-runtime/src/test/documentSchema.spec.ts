@@ -9,6 +9,7 @@ import {
 	type IDocumentSchemaCurrent,
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
+import { pkgVersion } from "../packageVersion.js";
 
 function boolToProp(b: boolean) {
 	return b ? true : undefined;
@@ -31,6 +32,7 @@ describe("Runtime", () => {
 		compressionLz4: true,
 		opGroupingEnabled: false,
 		idCompressorMode: "delayed",
+		disallowedVersions: [],
 	};
 
 	function createController(config: unknown) {
@@ -95,6 +97,102 @@ describe("Runtime", () => {
 
 	it("unknown runtime property", () => {
 		testWrongConfig({ ...validConfig, runtime: { ...validConfig.runtime, foo: 5 } });
+	});
+
+	it("disallowed versions", () => {
+		const controller = createController({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: [] },
+		});
+		assert(controller.sessionSchema.runtime.disallowedVersions === undefined);
+		controller.onMessageSent(() => {
+			assert(false, "no messages should be sent!");
+		});
+
+		createController({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: ["aaa"] },
+		});
+		testWrongConfig({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: [pkgVersion] },
+		});
+		testWrongConfig({
+			...validConfig,
+			runtime: { ...validConfig.runtime, disallowedVersions: ["aaa", pkgVersion, "bbb"] },
+		});
+	});
+
+	it("change disallowed versions", () => {
+		const controller = new DocumentsSchemaController(
+			true, // existing,
+			// old schema
+			{
+				...validConfig,
+				runtime: { ...validConfig.runtime, explicitSchemaControl: true },
+			},
+			// features requested
+			{
+				...features,
+				disallowedVersions: ["aaa", "bbb"],
+			},
+			// onSchemaChange
+			() => {},
+		);
+		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
+		let message: IDocumentSchemaCurrent | undefined;
+		controller.onMessageSent((msg) => {
+			message = msg as IDocumentSchemaCurrent;
+		});
+		assert(message !== undefined);
+		controller.processDocumentSchemaOp(message, true /* local */, 100 /* sequenceNumber */);
+		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
+
+		// Some runtime that drops one version, and adds another version to disallowed list
+		const controller2 = new DocumentsSchemaController(
+			true, // existing,
+			// old schema
+			controller.summarizeDocumentSchema(300),
+			// features requested
+			{
+				...features,
+				disallowedVersions: ["ccc", "aaa"],
+			},
+			// onSchemaChange
+			() => {},
+		);
+		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
+			"aaa",
+			"bbb",
+			"ccc",
+		]);
+		message = undefined;
+		controller2.onMessageSent((msg) => {
+			message = msg as IDocumentSchemaCurrent;
+		});
+		assert(message !== undefined);
+		controller2.processDocumentSchemaOp(message, true /* local */, 400 /* sequenceNumber */);
+		assert.deepEqual(controller2.sessionSchema.runtime.disallowedVersions, [
+			"aaa",
+			"bbb",
+			"ccc",
+		]);
+
+		// Some runtime that only processes document schema op
+		const controller3 = new DocumentsSchemaController(
+			true, // existing,
+			// old schema
+			controller.summarizeDocumentSchema(300),
+			features,
+			// onSchemaChange
+			() => {},
+		);
+		controller3.processDocumentSchemaOp(message, true /* local */, 400 /* sequenceNumber */);
+		assert.deepEqual(controller3.sessionSchema.runtime.disallowedVersions, [
+			"aaa",
+			"bbb",
+			"ccc",
+		]);
 	});
 
 	it("wrong values for known properties", () => {

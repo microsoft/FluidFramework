@@ -956,6 +956,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled,
+				disallowedVersions: [],
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
