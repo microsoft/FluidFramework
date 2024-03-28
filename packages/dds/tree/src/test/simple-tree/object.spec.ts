@@ -119,7 +119,8 @@ function testObjectLike(testCases: TestCase[]) {
 		}
 	});
 
-	function test1(fn: (subject: object) => unknown) {
+	/** Runs the provided function twice, once with a JS object and once with the equivalent object proxy, and checks that the same output is produced both times. */
+	function testProxyBehavior(fn: (proxyOrJsObject: object) => unknown) {
 		for (const { schema, initialTree } of testCases) {
 			const real = structuredClone(initialTree) as object;
 			const expected = fn(real);
@@ -134,18 +135,18 @@ function testObjectLike(testCases: TestCase[]) {
 
 	describe("keys", () => {
 		describe("Object.keys", () => {
-			test1((subject) => Object.keys(subject));
+			testProxyBehavior((proxyOrJsObject) => Object.keys(proxyOrJsObject));
 		});
 
 		describe("Reflect.ownKeys", () => {
-			test1((subject) => Reflect.ownKeys(subject));
+			testProxyBehavior((proxyOrJsObject) => Reflect.ownKeys(proxyOrJsObject));
 		});
 
 		describe("for-in", () => {
-			test1((subject) => {
+			testProxyBehavior((proxyOrJsObject) => {
 				const keys: string[] = [];
 				// eslint-disable-next-line guard-for-in, no-restricted-syntax
-				for (const key in subject) {
+				for (const key in proxyOrJsObject) {
 					keys.push(key);
 				}
 				return keys;
@@ -181,41 +182,43 @@ function testObjectLike(testCases: TestCase[]) {
 
 	describe("Object.values", () => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		test1((subject) => Object.values(subject));
+		testProxyBehavior((proxyOrJsObject) => Object.values(proxyOrJsObject));
 	});
 
 	describe("Object.entries", () => {
-		test1((subject) => Object.entries(subject));
+		testProxyBehavior((proxyOrJsObject) => Object.entries(proxyOrJsObject));
 	});
 
 	// The ECMAScript standard recommends using Object.prototype.toString to detect
 	// the class of an object.
 	describe("Object.prototype.toString", () => {
-		test1((subject) => Object.prototype.toString.call(subject));
+		testProxyBehavior((proxyOrJsObject) => Object.prototype.toString.call(proxyOrJsObject));
 	});
 
 	describe("Object.prototype.toLocaleString", () => {
-		test1((subject) => Object.prototype.toLocaleString.call(subject));
+		testProxyBehavior((proxyOrJsObject) =>
+			Object.prototype.toLocaleString.call(proxyOrJsObject),
+		);
 	});
 
 	// 'deepEqual' requires that objects have the same prototype to be considered equal.
 	describe("Object.getPrototypeOf", () => {
-		test1((subject) => Object.getPrototypeOf(subject) as unknown);
+		testProxyBehavior((proxyOrJsObject) => Object.getPrototypeOf(proxyOrJsObject) as unknown);
 	});
 
 	// 'deepEqual' enumerates and compares the own properties of objects.
 	describe("Object.getOwnPropertyDescriptors", () => {
-		test1((subject) => {
-			return Object.getOwnPropertyDescriptors(subject);
+		testProxyBehavior((proxyOrJsObject) => {
+			return Object.getOwnPropertyDescriptors(proxyOrJsObject);
 		});
 	});
 
 	// Enumerates keys configured as 'enumerable: true' (both own and inherited.)
 	describe("for...in", () => {
-		test1((subject) => {
+		testProxyBehavior((proxyOrJsObject) => {
 			const result: string[] = [];
 			// eslint-disable-next-line no-restricted-syntax, guard-for-in -- compatibility test
-			for (const key in subject) {
+			for (const key in proxyOrJsObject) {
 				// For compatibility, we intentionally do not guard against inherited properties.
 				result.push(key);
 			}
@@ -226,17 +229,17 @@ function testObjectLike(testCases: TestCase[]) {
 	// Validate that root.toString() === initialTree.toString()
 	describe(".toString()", () => {
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
-		test1((subject) => subject.toString());
+		testProxyBehavior((proxyOrJsObject) => proxyOrJsObject.toString());
 	});
 
 	// Validate that root.toLocaleString() === initialTree.toLocaleString()
 	describe(".toLocaleString()", () => {
-		test1((subject) => subject.toLocaleString());
+		testProxyBehavior((proxyOrJsObject) => proxyOrJsObject.toLocaleString());
 	});
 
 	// Validate that JSON.stringify(root) === JSON.stringify(initialTree)
 	describe("JSON.stringify()", () => {
-		test1((subject) => JSON.stringify(subject));
+		testProxyBehavior((proxyOrJsObject) => JSON.stringify(proxyOrJsObject));
 	});
 }
 

@@ -4,7 +4,7 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { EmptyKey, FieldKey, IForestSubscription, TreeValue, UpPath } from "../core/index.js";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
@@ -25,7 +25,7 @@ import {
 	isFluidHandle,
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
-import { Mutable, brand, fail, filterIterable, isReadonlyArray } from "../util/index.js";
+import { Mutable, brand, fail, isReadonlyArray } from "../util/index.js";
 import { anchorProxy, getFlexNode, tryGetFlexNode, tryGetProxy } from "./proxyBinding.js";
 import { extractRawNodeContent } from "./rawNode.js";
 import {
@@ -198,41 +198,50 @@ export function createObjectProxy<TSchema extends FlexObjectNodeSchema>(
 		has: (target, key: FieldKey) => {
 			const fieldSchema = schema.objectNodeFields.get(key);
 			if (fieldSchema !== undefined) {
-				if (fieldSchema.kind.multiplicity === Multiplicity.Optional) {
-					const field = getFlexNode(proxy).tryGetField(key);
-					if (field === undefined) {
-						return false; // Don't include the keys of optional undefined fields
+				switch (fieldSchema.kind.multiplicity) {
+					case Multiplicity.Forbidden:
+						break;
+					case Multiplicity.Single:
+						return true;
+					case Multiplicity.Optional: {
+						const field = getFlexNode(proxy).tryGetField(key);
+						if (field !== undefined) {
+							// Only include optional fields if they are currently set to something
+							return true;
+						}
+						break;
 					}
+					case Multiplicity.Sequence:
+						return true;
+					default:
+						unreachableCase(fieldSchema.kind.multiplicity);
 				}
-				return true;
 			}
 
-			return allowAdditionalProperties ? Reflect.has(target, key) : false;
+			return Reflect.has(target, key);
 		},
 		// The "ownKeys" trap is called by Reflect.ownKeys(), Object.keys() and for-in loops.
 		ownKeys: (target) => {
-			return [
-				...filterIterable(schema.objectNodeFields.keys(), (k) => k in proxy),
-				...(allowAdditionalProperties ? Reflect.ownKeys(target) : []),
-			];
+			const keys = new Set<string | symbol>(Reflect.ownKeys(target));
+			for (const key of schema.objectNodeFields.keys()) {
+				if (key in proxy) {
+					keys.add(key);
+				}
+			}
+			return [...keys.keys()];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
 			const field = getFlexNode(proxy).tryGetField(key as FieldKey);
-
-			if (field === undefined) {
-				return allowAdditionalProperties
-					? Reflect.getOwnPropertyDescriptor(target, key)
-					: undefined;
+			if (field !== undefined) {
+				return {
+					value: getProxyForField(field),
+					writable: true,
+					enumerable: true,
+					configurable: true, // Must be 'configurable' if property is absent from proxy target.
+				};
 			}
 
-			const p: PropertyDescriptor = {
-				value: getProxyForField(field),
-				writable: true,
-				enumerable: true,
-				configurable: true, // Must be 'configurable' if property is absent from proxy target.
-			};
-
-			return p;
+			return Reflect.getOwnPropertyDescriptor(target, key);
 		},
 	}) as TreeNode;
 	return proxy;

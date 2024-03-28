@@ -158,6 +158,37 @@ describe("SharedTreeObject", () => {
 		root.optional = undefined;
 		assert.equal(root.optional, undefined);
 	});
+
+	it("errors when setting additional properties", () => {
+		const root = hydrate(schema, initialTree());
+		assert.throws(() => ((root as any).notAField = 3));
+	});
+
+	// TODO: Override the `defineProperty` proxy trap to fix this behavior
+	it.skip("errors when defining additional properties", () => {
+		const root = hydrate(schema, initialTree());
+		assert.throws(() => Reflect.defineProperty(root, "notAField", { value: 3 }));
+	});
+
+	it("does not consider undefined fields to be object keys", () => {
+		const root = hydrate(sb.object("Object", { foo: sb.optional(sb.number) }), { foo: 3 });
+		assert.equal("foo" in root, true);
+		assert.equal(Reflect.has(root, "foo"), true);
+		assert.equal(Reflect.getOwnPropertyDescriptor(root, "foo")?.value, 3);
+		root.foo = undefined;
+		assert.equal("foo" in root, false);
+		assert.equal(Reflect.has(root, "foo"), false);
+		assert.equal(Reflect.getOwnPropertyDescriptor(root, "foo"), undefined);
+	});
+
+	it("allows reads of additional properties on the prototype", () => {
+		const root = hydrate(sb.object("Object", { foo: sb.number }), { foo: 3 });
+		const prototype = Reflect.getPrototypeOf(root);
+		assert(prototype !== null);
+		Reflect.set(prototype, "bar", 3);
+		assert.equal("bar" in root, true);
+		assert.equal(Reflect.get(root, "bar"), 3);
+	});
 });
 
 describe("ArrayNode Proxy", () => {
