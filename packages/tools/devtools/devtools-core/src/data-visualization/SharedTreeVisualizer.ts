@@ -275,11 +275,28 @@ function visualizeMapNodeStoredSchema(
 			childField.length === 1,
 			"Non-array node should not have more than one child field.",
 		);
+		let result = "";
 		const fieldSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
+
+		if (fieldSchema instanceof LeafNodeStoredSchema) {
+			const mapAllowedTypes = schema.mapFields.types;
+			result += `${fieldKey} : `;
+
+			if (mapAllowedTypes === undefined) {
+				result = "any";
+			} else {
+				for (const type of mapAllowedTypes) {
+					result += `${type} | `;
+				}
+				result = `${result.slice(0, -3)}`;
+			}
+		}
+
 		fields[fieldKey] = visualizeSharedTreeNodeBySchema(
 			childField[0],
 			fieldSchema,
 			contentSnapshot,
+			result,
 		);
 	}
 
