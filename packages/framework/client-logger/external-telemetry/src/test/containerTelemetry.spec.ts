@@ -11,7 +11,7 @@ import type {
 	IContainerEvents,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { createTelemetryManagers, TelemetryManagerConfig } from "../factory/index.js";
+import { startTelemetryManagers, TelemetryManagerConfig } from "../factory/index.js";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ContainerSystemEventNames } from "../container/containerSystemEvents.js";
 import {
@@ -104,7 +104,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'connected' container system event produces expected ContainerConnectedTelemetry", () => {
-		createTelemetryManagers(telemetryManagerConfig);
+		startTelemetryManagers(telemetryManagerConfig);
 
 		mockContainer.connect();
 
@@ -123,7 +123,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'disconnected' container system event produces expected ContainerDisconnectedTelemetry", () => {
-		createTelemetryManagers(telemetryManagerConfig);
+		startTelemetryManagers(telemetryManagerConfig);
 
 		mockContainer.disconnect();
 
@@ -142,7 +142,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'closed' system event produces expected ContainerClosedTelemetry", () => {
-		createTelemetryManagers(telemetryManagerConfig);
+		startTelemetryManagers(telemetryManagerConfig);
 
 		mockContainer.close();
 
@@ -161,7 +161,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'closed' system event with an error produces expected ContainerClosedTelemetry", () => {
-		createTelemetryManagers(telemetryManagerConfig);
+		startTelemetryManagers(telemetryManagerConfig);
 
 		const containerError: ICriticalContainerError = {
 			errorType: "unknown error",
@@ -187,7 +187,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'attaching' system event produces expected ContainerAttachingTelemetry", () => {
-		createTelemetryManagers(telemetryManagerConfig);
+		startTelemetryManagers(telemetryManagerConfig);
 
 		mockContainer.attach({ url: "mockUrl" });
 
@@ -206,7 +206,7 @@ describe("External container telemetry", () => {
 	});
 
 	it("Emitting 'attached' system event produces expected ContainerAttachedTelemetry", () => {
-		createTelemetryManagers(telemetryManagerConfig);
+		startTelemetryManagers(telemetryManagerConfig);
 
 		mockContainer.attach({ url: "mockUrl" });
 

@@ -37,10 +37,10 @@ export interface TelemetryManagerConfig {
 }
 
 /**
- * Creates external telemetry managers for one or more areas of the Fluid Framework.
+ * Starts external telemetry managers for one or more areas of the Fluid Framework.
  * @beta
  */
-export const createTelemetryManagers = (config: TelemetryManagerConfig): void => {
+export const startTelemetryManagers = (config: TelemetryManagerConfig): void => {
 	const consumers: ITelemetryConsumer[] = [];
 	if (config.consumers.appInsights) {
 		const telemetryConsumer = new AppInsightsTelemetryConsumer(config.consumers.appInsights);

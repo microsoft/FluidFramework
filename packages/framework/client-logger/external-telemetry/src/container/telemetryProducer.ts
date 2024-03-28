@@ -34,26 +34,17 @@ export class ContainerEventTelemetryProducer {
 		let telemetry: IContainerTelemetry | undefined = undefined;
 		switch (eventName) {
 			case ContainerSystemEventNames.CONNECTED:
-				telemetry = this.produceConnectedTelemetry(payload);
-				return telemetry;
+				return this.produceConnectedTelemetry(payload);
 			case ContainerSystemEventNames.DISCONNECTED:
-				telemetry = this.produceBasicContainerTelemetry(
+				return this.produceBasicContainerTelemetry(
 					ContainerTelemetryEventNames.DISCONNECTED,
 				);
-				break;
 			case ContainerSystemEventNames.CLOSED:
-				telemetry = this.produceClosedTelemetry(payload);
-				break;
+				return this.produceClosedTelemetry(payload);
 			case ContainerSystemEventNames.ATTACHED:
-				telemetry = this.produceBasicContainerTelemetry(
-					ContainerTelemetryEventNames.ATTACHED,
-				);
-				break;
+				return this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHED);
 			case ContainerSystemEventNames.ATTACHING:
-				telemetry = this.produceBasicContainerTelemetry(
-					ContainerTelemetryEventNames.ATTACHING,
-				);
-				break;
+				return this.produceBasicContainerTelemetry(ContainerTelemetryEventNames.ATTACHING);
 			default:
 				break;
 		}
@@ -65,7 +56,7 @@ export class ContainerEventTelemetryProducer {
 	): IContainerTelemetry => {
 		return {
 			eventName,
-			containerId: this.getContainerId(),
+			containerId: this.getClientId(),
 			documentId: this.getDocumentId(),
 		} as IContainerTelemetry;
 	};
@@ -75,7 +66,7 @@ export class ContainerEventTelemetryProducer {
 	}): ContainerConnectedTelemetry => {
 		return {
 			eventName: ContainerTelemetryEventNames.CONNECTED,
-			containerId: payload?.clientId ?? this.getContainerId(),
+			containerId: payload?.clientId ?? this.getClientId(),
 			documentId: this.getDocumentId(),
 		};
 	};
@@ -85,7 +76,7 @@ export class ContainerEventTelemetryProducer {
 	}): ContainerClosedTelemetry => {
 		const telemetry: ContainerClosedTelemetry = {
 			eventName: ContainerTelemetryEventNames.CLOSED,
-			containerId: this.getContainerId(),
+			containerId: this.getClientId(),
 			documentId: this.getDocumentId(),
 		};
 		if (payload?.error !== undefined) {
@@ -94,7 +85,7 @@ export class ContainerEventTelemetryProducer {
 		return telemetry;
 	};
 
-	private getContainerId(): string | undefined {
+	private getClientId(): string | undefined {
 		return this.container.clientId;
 	}
 
