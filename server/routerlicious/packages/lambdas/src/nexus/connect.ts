@@ -355,13 +355,13 @@ function createMessageClientAndJoinRoom(
 	room: IRoom,
 	clientId: string,
 	connectedTimestamp: number,
+    supportedFeatures: Record<string, unknown> | undefined,
 	{
 		connectionTimeMap,
 		scopeMap,
 		roomMap,
 		supportedFeaturesMap,
 	}: INexusLambdaConnectionStateTrackers,
-	supportedFeatures: Record<string, unknown> | undefined,
 ): Partial<IClient> {
 	// Todo should all the client details come from the claims???
 	// we are still trusting the users permissions and type here.
@@ -529,8 +529,8 @@ export async function connectDocument(
 			room,
 			clientId,
 			connectedTimestamp,
+            message.supportedFeatures,
 			lambdaConnectionStateTrackers,
-			message.supportedFeatures,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientCreated);
 
