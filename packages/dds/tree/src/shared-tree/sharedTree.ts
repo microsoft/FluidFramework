@@ -339,9 +339,14 @@ export type SharedTreeOptions = Partial<ICodecOptions> &
 	};
 
 /**
+ * Options for configuring the persisted format SharedTree uses.
  * @internal
  */
 export interface SharedTreeFormatOptions {
+	/**
+	 * See {@link TreeCompressionStrategy}.
+	 * default: TreeCompressionStrategy.Compressed
+	 */
 	treeEncodeType: TreeCompressionStrategy;
 	/**
 	 * The format version SharedTree should use to persist documents.

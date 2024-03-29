@@ -1682,10 +1682,9 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
     readonly type: string;
 }
 
-// @internal (undocumented)
+// @internal
 export interface SharedTreeFormatOptions {
     formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
-    // (undocumented)
     treeEncodeType: TreeCompressionStrategy;
 }
 
