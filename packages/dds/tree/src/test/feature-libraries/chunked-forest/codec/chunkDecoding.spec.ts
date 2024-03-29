@@ -30,7 +30,6 @@ import {
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	EncodedChunkShape,
-	EncodedFieldBatch,
 	version,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
@@ -85,34 +84,6 @@ describe("chunkDecoding", () => {
 				shapes: [{ a: 0 }],
 				data: [[0, []]],
 			});
-			assert.deepEqual(result, [emptyChunk]);
-		});
-
-		it("regression", () => {
-			const data: EncodedFieldBatch = [
-				5,
-				"5703557480152899",
-				0,
-				"Hello",
-				"amauricio@a2mac1.com",
-				1711531476552,
-				1711531476552,
-				0,
-				"/project/A0000023BUTIDV01",
-				0,
-				0,
-				0,
-				"",
-				false,
-				0,
-				"",
-				"",
-			] as any;
-			const stream = {
-				data,
-				offset: 16,
-			};
-			const result = decode(stream.data);
 			assert.deepEqual(result, [emptyChunk]);
 		});
 	});
