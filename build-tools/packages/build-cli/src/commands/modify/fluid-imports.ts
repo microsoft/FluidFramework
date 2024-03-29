@@ -96,7 +96,6 @@ interface FluidImportDataPending extends FluidImportDataBase {
 type FluidImportData = FluidImportDataPresent | FluidImportDataPending;
 
 class FluidImportManager {
-	private readonly imports: ImportDeclaration[];
 	private readonly fluidImports: FluidImportDataPresent[];
 	private readonly missingImports: FluidImportDataPending[] = [];
 
@@ -105,12 +104,7 @@ class FluidImportManager {
 		private readonly mappingData: MapData,
 		private readonly log: CommandLogger,
 	) {
-		this.imports = sourceFile.getImportDeclarations();
-		this.fluidImports = this.imports
-			.map(parseImport)
-			.filter(
-				(v) => v !== undefined,
-			) /* no undefined elements remain */ as FluidImportDataPresent[];
+		this.fluidImports = parseFluidImports(sourceFile, log);
 	}
 
 	public process(onlyInternal: boolean): boolean {
@@ -386,11 +380,13 @@ async function updateImports(
  *
  * @param importDeclaration - the import declaration to check.
  * @param index - the current index of import block array.
+ * @param log - logger.
  * @returns a {@link FluidImportDataPresent} metadata object
  */
 function parseImport(
 	importDeclaration: ImportDeclaration,
 	index: number,
+	log: CommandLogger,
 ): FluidImportDataPresent | undefined {
 	const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
 	const modulePieces = moduleSpecifier.split("/");
@@ -406,6 +402,11 @@ function parseImport(
 	}
 	// Check for Fluid import
 	if (!isFluidImport(packageName)) {
+		return undefined;
+	}
+	// Check namespace imports which are checked trivially for API level use.
+	if (importDeclaration.getNamespaceImport() !== undefined) {
+		log.verbose(`\tSkipping namespace import of ${moduleSpecifier}`);
 		return undefined;
 	}
 
@@ -425,6 +426,26 @@ function parseImport(
 	};
 }
 
+/**
+ * Parses a source file for basic static Fluid Framework imports.
+ * Non-FF and complex imports are excluded.
+ *
+ * @param sourceFile - the ${@link SourceFile} to parse.
+ * @param log - logger.
+ * @returns an array of {@link FluidImportDataPresent} metadata objects
+ */
+function parseFluidImports(
+	sourceFile: SourceFile,
+	log: CommandLogger,
+): FluidImportDataPresent[] {
+	return sourceFile
+		.getImportDeclarations()
+		.map((importDecl, index) => parseImport(importDecl, index, log))
+		.filter(
+			(v) => v !== undefined,
+		) /* no undefined elements remain */ as FluidImportDataPresent[];
+}
+
 function isFluidImport(packageName: string): boolean {
 	return (
 		packageName.startsWith("@fluid") ||
@@ -434,8 +455,9 @@ function isFluidImport(packageName: string): boolean {
 
 function isImportUnassigned(importDeclaration: ImportDeclaration): boolean {
 	return (
+		importDeclaration.getNamedImports().length === 0 &&
 		importDeclaration.getDefaultImport() === undefined &&
-		importDeclaration.getNamedImports().length === 0
+		importDeclaration.getNamespaceImport() === undefined
 	);
 }
 
