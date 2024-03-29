@@ -92,16 +92,18 @@ export interface ICollaborationSessionEvents extends IEvent {
 }
 
 export interface INexusLambdaSettings {
-	ordererManager: IOrdererManager;
-	tenantManager: ITenantManager;
-	clientManager: IClientManager;
-	logger: ILogger;
-
 	maxTokenLifetimeSec: number;
 	isTokenExpiryEnabled: boolean;
 	isClientConnectivityCountingEnabled: boolean;
 	maxNumberOfClientsPerDocument: number;
 	numberOfMessagesPerTrace: number;
+}
+
+export interface INexusLambdaDependencies {
+	ordererManager: IOrdererManager;
+	tenantManager: ITenantManager;
+	clientManager: IClientManager;
+	logger: ILogger;
 
 	throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager;
 	throttlers: {
@@ -118,7 +120,7 @@ export interface INexusLambdaSettings {
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>;
 }
 
-export interface INexusLambdaConnection {
+export interface INexusLambdaConnectionStateTrackers {
 	expirationTimer: ExpirationTimer;
 	connectionsMap: Map<string, IOrdererConnection>;
 	connectionTimeMap: Map<string, number>;

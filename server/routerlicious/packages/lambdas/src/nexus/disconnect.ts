@@ -6,7 +6,11 @@
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import type { IWebSocket } from "@fluidframework/server-services-core";
 import { createRoomLeaveMessage } from "../utils";
-import type { INexusLambdaConnection, INexusLambdaSettings } from "./interfaces";
+import type {
+	INexusLambdaConnectionStateTrackers,
+	INexusLambdaDependencies,
+	INexusLambdaSettings,
+} from "./interfaces";
 import { getMessageMetadata, getRoomId } from "./utils";
 import { storeClientConnectivityTime } from "./throttleAndUsage";
 
@@ -15,10 +19,10 @@ export async function disconnectDocument(
 	{
 		clientManager,
 		logger,
-		isClientConnectivityCountingEnabled,
 		throttleAndUsageStorageManager,
 		socketTracker,
-	}: INexusLambdaSettings,
+	}: INexusLambdaDependencies,
+	{ isClientConnectivityCountingEnabled }: INexusLambdaSettings,
 	{
 		expirationTimer,
 		connectionTimeMap,
@@ -26,7 +30,7 @@ export async function disconnectDocument(
 		roomMap,
 		disconnectedClients,
 		disconnectedOrdererConnections,
-	}: INexusLambdaConnection,
+	}: INexusLambdaConnectionStateTrackers,
 ) {
 	// Clear token expiration timer on disconnection
 	expirationTimer.clear();

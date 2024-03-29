@@ -43,7 +43,8 @@ import { ProtocolVersions, checkVersion } from "./protocol";
 import type {
 	IBroadcastSignalEventPayload,
 	IConnectedClient,
-	INexusLambdaConnection,
+	INexusLambdaConnectionStateTrackers,
+	INexusLambdaDependencies,
 	INexusLambdaSettings,
 	IRoom,
 } from "./interfaces";
@@ -99,8 +100,9 @@ function composeConnectedMessage(
 async function connectOrderer(
 	socket: IWebSocket,
 	lumberjackProperties: Record<string, any>,
+	lambdaDependencies: INexusLambdaDependencies,
 	lambdaSettings: INexusLambdaSettings,
-	lambdaConnection: INexusLambdaConnection,
+	lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers,
 	tenantId: string,
 	documentId: string,
 	messageClient: IClient,
@@ -110,8 +112,9 @@ async function connectOrderer(
 	version: string,
 	clients: ISignalClient[],
 ): Promise<IConnected> {
-	const { ordererManager, logger, numberOfMessagesPerTrace } = lambdaSettings;
-	const { expirationTimer, connectionsMap } = lambdaConnection;
+	const { ordererManager, logger } = lambdaDependencies;
+	const { numberOfMessagesPerTrace } = lambdaSettings;
+	const { expirationTimer, connectionsMap } = lambdaConnectionStateTrackers;
 	const connectDocumentOrdererConnectionMetric = Lumberjack.newLumberMetric(
 		LumberEventName.ConnectDocumentOrdererConnection,
 		lumberjackProperties,
@@ -188,7 +191,7 @@ function trackSocket(
 	tenantId: string,
 	documentId: string,
 	claims: ITokenClaims,
-	{ socketTracker }: INexusLambdaSettings,
+	{ socketTracker }: INexusLambdaDependencies,
 ) {
 	// Track socket and tokens for this connection
 	if (socketTracker && claims.jti) {
@@ -199,7 +202,7 @@ function trackSocket(
 	}
 }
 
-function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaSettings): void {
+function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaDependencies): void {
 	const throttleErrorPerCluster = checkThrottleAndUsage(
 		throttlers.connectionsPerCluster,
 		getSocketConnectThrottleId("connectDoc"),
@@ -226,7 +229,7 @@ async function checkToken(
 	token: string | null,
 	tenantId: string,
 	documentId: string,
-	{ tenantManager, revokedTokenChecker, logger }: INexusLambdaSettings,
+	{ tenantManager, revokedTokenChecker, logger }: INexusLambdaDependencies,
 ): Promise<ITokenClaims> {
 	if (!token) {
 		throw new NetworkError(403, "Must provide an authorization token");
@@ -274,7 +277,7 @@ async function joinRoomAndSubscribeToChannel(
 	socket: IWebSocket,
 	tenantId: string,
 	documentId: string,
-	{ logger }: INexusLambdaSettings,
+	{ logger }: INexusLambdaDependencies,
 ): Promise<[string, IRoom]> {
 	const clientId = generateClientId();
 
@@ -301,7 +304,8 @@ async function retrieveClients(
 	tenantId: string,
 	documentId: string,
 	metricProperties: Record<string, any>,
-	{ clientManager, logger, maxNumberOfClientsPerDocument }: INexusLambdaSettings,
+	{ clientManager, logger }: INexusLambdaDependencies,
+	{ maxNumberOfClientsPerDocument }: INexusLambdaSettings,
 ): Promise<ISignalClient[]> {
 	const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
 		LumberEventName.ConnectDocumentGetClients,
@@ -347,7 +351,7 @@ function createMessageClientAndJoinRoom(
 	room: IRoom,
 	clientId: string,
 	connectedTimestamp: number,
-	{ connectionTimeMap, scopeMap, roomMap }: INexusLambdaConnection,
+	{ connectionTimeMap, scopeMap, roomMap }: INexusLambdaConnectionStateTrackers,
 ): Partial<IClient> {
 	// Todo should all the client details come from the claims???
 	// we are still trusting the users permissions and type here.
@@ -384,7 +388,7 @@ async function addMessageClientToClientManager(
 	clientId: string,
 	messageClient: Partial<IClient>,
 	metricProperties: { clientId: string; tenantId: string; documentId: string },
-	{ clientManager, logger }: INexusLambdaSettings,
+	{ clientManager, logger }: INexusLambdaDependencies,
 ) {
 	const connectDocumentAddClientMetric = Lumberjack.newLumberMetric(
 		LumberEventName.ConnectDocumentAddClient,
@@ -405,7 +409,7 @@ function setUpSignalListenerForRoomBroadcasting(
 	room: IRoom,
 	documentId: string,
 	tenantId: string,
-	{ collaborationSessionEventEmitter, logger }: INexusLambdaSettings,
+	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
 ) {
 	collaborationSessionEventEmitter?.on(
 		"broadcastSignal",
@@ -450,13 +454,14 @@ function setUpSignalListenerForRoomBroadcasting(
 
 export async function connectDocument(
 	socket: IWebSocket,
+	lambdaDependencies: INexusLambdaDependencies,
 	lambdaSettings: INexusLambdaSettings,
-	lambdaConnection: INexusLambdaConnection,
+	lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers,
 	message: IConnect,
 	properties: Record<string, any>,
 ): Promise<IConnectedClient> {
 	const { isTokenExpiryEnabled, maxTokenLifetimeSec } = lambdaSettings;
-	const { expirationTimer } = lambdaConnection;
+	const { expirationTimer } = lambdaConnectionStateTrackers;
 
 	const connectionTrace = new StageTrace<ConnectDocumentStage>(
 		ConnectDocumentStage.ConnectDocumentStarted,
@@ -472,10 +477,10 @@ export async function connectDocument(
 		const [connectVersions, version] = checkVersion(message.versions);
 		connectionTrace.stampStage(ConnectDocumentStage.VersionsChecked);
 
-		checkThrottle(tenantId, lambdaSettings);
+		checkThrottle(tenantId, lambdaDependencies);
 		connectionTrace.stampStage(ConnectDocumentStage.ThrottleChecked);
 
-		const claims = await checkToken(message.token, tenantId, documentId, lambdaSettings);
+		const claims = await checkToken(message.token, tenantId, documentId, lambdaDependencies);
 		// check token validate tenantId/documentId for consistent, throw 403 if now.
 		// Following change tenantId/documentId from claims, just in case future code changes that we can remember to use the ones from claim.
 		tenantId = claims.tenantId;
@@ -486,7 +491,7 @@ export async function connectDocument(
 			socket,
 			tenantId,
 			documentId,
-			lambdaSettings,
+			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.RoomJoined);
 
@@ -498,6 +503,7 @@ export async function connectDocument(
 			tenantId,
 			documentId,
 			subMetricProperties,
+			lambdaDependencies,
 			lambdaSettings,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.ClientsRetrieved);
@@ -510,7 +516,7 @@ export async function connectDocument(
 			room,
 			clientId,
 			connectedTimestamp,
-			lambdaConnection,
+			lambdaConnectionStateTrackers,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientCreated);
 
@@ -520,7 +526,7 @@ export async function connectDocument(
 			clientId,
 			messageClient,
 			subMetricProperties,
-			lambdaSettings,
+			lambdaDependencies,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientAdded);
 
@@ -536,8 +542,9 @@ export async function connectDocument(
 			? await connectOrderer(
 					socket,
 					subMetricProperties,
+					lambdaDependencies,
 					lambdaSettings,
-					lambdaConnection,
+					lambdaConnectionStateTrackers,
 					tenantId,
 					documentId,
 					messageClient as IClient,
@@ -561,10 +568,16 @@ export async function connectDocument(
 		(connectedMessage as any).timestamp = connectedTimestamp;
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientConnected);
 
-		trackSocket(socket, tenantId, documentId, claims, lambdaSettings);
+		trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
 		connectionTrace.stampStage(ConnectDocumentStage.SocketTrackerAppended);
 
-		setUpSignalListenerForRoomBroadcasting(socket, room, documentId, tenantId, lambdaSettings);
+		setUpSignalListenerForRoomBroadcasting(
+			socket,
+			room,
+			documentId,
+			tenantId,
+			lambdaDependencies,
+		);
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
 
 		const result = {

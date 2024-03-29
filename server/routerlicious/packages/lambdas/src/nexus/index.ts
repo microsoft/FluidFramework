@@ -27,7 +27,8 @@ import {
 	ICollaborationSessionEvents,
 	IRoom,
 	type INexusLambdaSettings,
-	type INexusLambdaConnection,
+	type INexusLambdaConnectionStateTrackers,
+	type INexusLambdaDependencies,
 } from "./interfaces";
 import { ExpirationTimer, getRoomId, hasWriteAccess } from "./utils";
 import {
@@ -104,16 +105,11 @@ export function configureWebSocketServices(
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
 ) {
-	const lambdaSettings: INexusLambdaSettings = {
+	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
 		tenantManager,
 		clientManager,
 		logger,
-		maxTokenLifetimeSec,
-		isTokenExpiryEnabled,
-		isClientConnectivityCountingEnabled,
-		maxNumberOfClientsPerDocument,
-		numberOfMessagesPerTrace,
 		throttleAndUsageStorageManager,
 		throttlers: {
 			connectionsPerTenant: connectThrottlerPerTenant,
@@ -125,6 +121,13 @@ export function configureWebSocketServices(
 		revokedTokenChecker,
 		clusterDrainingChecker,
 		collaborationSessionEventEmitter,
+	};
+	const lambdaSettings: INexusLambdaSettings = {
+		maxTokenLifetimeSec,
+		isTokenExpiryEnabled,
+		isClientConnectivityCountingEnabled,
+		maxNumberOfClientsPerDocument,
+		numberOfMessagesPerTrace,
 	};
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Timer to check token expiry for this socket connection
@@ -142,7 +145,7 @@ export function configureWebSocketServices(
 		// Set of client Ids that have been disconnected from room and client manager.
 		const disconnectedClients = new Set<string>();
 
-		const lambdaConnection: INexusLambdaConnection = {
+		const lambdaConnectionStateTrackers: INexusLambdaConnectionStateTrackers = {
 			connectionsMap,
 			roomMap,
 			scopeMap,
@@ -182,8 +185,9 @@ export function configureWebSocketServices(
 				async () =>
 					connectDocument(
 						socket,
+						lambdaDependencies,
 						lambdaSettings,
-						lambdaConnection,
+						lambdaConnectionStateTrackers,
 						connectionMessage,
 						properties,
 					)
@@ -242,7 +246,12 @@ export function configureWebSocketServices(
 											),
 										});
 
-										disconnectDocument(socket, lambdaSettings, lambdaConnection)
+										disconnectDocument(
+											socket,
+											lambdaDependencies,
+											lambdaSettings,
+											lambdaConnectionStateTrackers,
+										)
 											.then(() => {
 												disconnectRetryMetric.success(
 													`Successfully retried disconnect.`,
@@ -494,7 +503,12 @@ export function configureWebSocketServices(
 			}
 
 			try {
-				disconnectDocumentP = disconnectDocument(socket, lambdaSettings, lambdaConnection);
+				disconnectDocumentP = disconnectDocument(
+					socket,
+					lambdaDependencies,
+					lambdaSettings,
+					lambdaConnectionStateTrackers,
+				);
 				await disconnectDocumentP;
 				disconnectMetric.success(`Successfully disconnected.`);
 			} catch (error) {
