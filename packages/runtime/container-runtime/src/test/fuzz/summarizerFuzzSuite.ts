@@ -8,6 +8,7 @@
 import { strict as assert } from "assert";
 import { mkdirSync, readFileSync } from "fs";
 import path from "path";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator,
@@ -21,6 +22,7 @@ import {
 	performFuzzActionsAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+
 import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
 	IMockContainerRuntimeForSummarizerOptions,

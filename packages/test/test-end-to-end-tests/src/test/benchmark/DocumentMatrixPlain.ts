@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
@@ -14,7 +15,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -35,6 +36,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
+
 import {
 	IDocumentLoaderAndSummarizer,
 	IDocumentProps,

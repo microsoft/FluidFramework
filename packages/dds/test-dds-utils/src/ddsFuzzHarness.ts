@@ -32,22 +32,22 @@ import {
 import { AttachState } from "@fluidframework/container-definitions";
 import { unreachableCase } from "@fluidframework/core-utils";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
-import type {
-	IIdCompressor,
-	IIdCompressorCore,
-	SerializedIdCompressorWithNoSession,
-} from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import type { IMockContainerRuntimeOptions } from "@fluidframework/test-runtime-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import {
 	type Client,
 	type ClientLoadData,
 	type ClientWithStashData,
+	type FuzzSerializedIdCompressor,
 	createLoadData,
+	createLoadDataFromStashData,
 	hasStashData,
 } from "./clientLoading.js";
 import type { MinimizationTransform } from "./minification.js";
@@ -495,7 +495,7 @@ export interface DDSFuzzSuiteOptions {
 	 * An optional IdCompressor that will be passed to the constructed MockDataStoreRuntime instance.
 	 */
 	idCompressorFactory?: (
-		summary?: SerializedIdCompressorWithNoSession,
+		summary?: FuzzSerializedIdCompressor,
 	) => IIdCompressor & IIdCompressorCore;
 }
 
@@ -770,7 +770,6 @@ export function mixinAttach<
 		} else if (isOperationType<Rehydrate>("rehydrate", operation)) {
 			const clientA = state.clients[0];
 			assert.equal(state.clients.length, 1);
-			finalizeAllocatedIds(clientA);
 
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
@@ -796,7 +795,7 @@ export function mixinAttach<
 			finalizeAllocatedIds(clientA);
 
 			if (operation.beforeRehydrate === true) {
-				clientA.stashData = createLoadData(clientA);
+				clientA.stashData = createLoadData(clientA, true);
 			}
 			clientA.dataStoreRuntime.setAttachState(AttachState.Attaching);
 			const services: IChannelServices = {
@@ -1089,7 +1088,7 @@ export function mixinStashedClient<
 			if (!hasStashData(client)) {
 				throw new ReducerPreconditionError("client not stashable");
 			}
-			const loadData = client.stashData;
+			const loadData = createLoadDataFromStashData(client, client.stashData);
 
 			// load a new client from the same state as the original client
 			const newClient = await loadClientFromSummaries(
@@ -1201,7 +1200,10 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing: boolean = false,
 ): Promise<ClientWithStashData<TChannelFactory>> {
-	const loadData: ClientLoadData = summarizerClient.stashData ?? createLoadData(summarizerClient);
+	const loadData: ClientLoadData =
+		summarizerClient.stashData === undefined
+			? createLoadData(summarizerClient, false)
+			: createLoadDataFromStashData(summarizerClient, summarizerClient.stashData);
 	return loadClientFromSummaries(
 		containerRuntimeFactory,
 		loadData,
@@ -1265,11 +1267,19 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 ): Promise<Client<TChannelFactory>> {
-	const { summaries } = summarizerClient.stashData ?? createLoadData(summarizerClient);
+	// as in production, emulate immediate finalizing of IDs when attaching
+	finalizeAllocatedIds(summarizerClient);
+
+	const { summaries } =
+		summarizerClient.stashData === undefined
+			? createLoadData(summarizerClient, true)
+			: createLoadDataFromStashData(summarizerClient, summarizerClient.stashData);
+
+	const idCompressor = options.idCompressorFactory?.(summaries.idCompressorSummary);
 
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		clientId,
-		idCompressor: options.idCompressorFactory?.(summaries.idCompressorSummary),
+		idCompressor,
 		attachState: AttachState.Detached,
 	});
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);

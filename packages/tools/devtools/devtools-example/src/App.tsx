@@ -13,8 +13,6 @@ import {
 	makeStyles,
 	shorthands,
 } from "@fluentui/react-components";
-import React from "react";
-
 import {
 	CollaborativeTextArea,
 	type SessionStorageModelLoader,
@@ -31,6 +29,8 @@ import {
 } from "@fluidframework/devtools-core";
 import { type SharedMatrix } from "@fluidframework/matrix";
 import { type SharedString } from "@fluidframework/sequence";
+import React from "react";
+
 import {
 	type ContainerInfo,
 	createContainer,

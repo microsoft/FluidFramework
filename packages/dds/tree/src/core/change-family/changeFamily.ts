@@ -4,6 +4,7 @@
  */
 
 import { SessionId } from "@fluidframework/id-compressor";
+
 import { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import { SchemaAndPolicy } from "../../feature-libraries/index.js";
 import { JsonCompatibleReadOnly } from "../../util/index.js";

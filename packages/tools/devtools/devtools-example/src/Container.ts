@@ -4,9 +4,10 @@
  */
 
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import { AppData } from "./FluidObject.js";
 
 /**

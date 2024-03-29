@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { TreeNodeSchemaIdentifier, TreeValue } from "../core/index.js";
 import {
 	FlexFieldNodeSchema,
@@ -18,6 +19,7 @@ import {
 	typeNameSymbol,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isReadonlyArray } from "../util/index.js";
+
 import {
 	booleanSchema,
 	handleSchema,
@@ -30,12 +32,12 @@ import {
 	createArrayNodeProxy,
 	createMapProxy,
 	createObjectProxy,
-	getSimpleSchema,
 	isTreeNode,
 	mapStaticDispatchMap,
 } from "./proxies.js";
 import { setFlexNode } from "./proxyBinding.js";
 import { createRawNode } from "./rawNode.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import {
 	AllowedTypes,
 	FieldKind,
@@ -45,10 +47,10 @@ import {
 	InsertableObjectFromSchemaRecord,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
-	ObjectFromSchemaRecord,
 	TreeMapNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	TreeObjectNode,
 	WithType,
 	type,
 } from "./schemaTypes.js";
@@ -258,7 +260,7 @@ export class SchemaFactory<
 				// Currently this just does validation. All other logic is in the subclass.
 				if (isFlexTreeNode(input)) {
 					assert(
-						getSimpleSchema(input.schema) === this.constructor,
+						tryGetSimpleNodeSchema(input.schema) === this.constructor,
 						0x83b /* building node with wrong schema */,
 					);
 				}
@@ -281,15 +283,16 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Define a {@link TreeNodeSchema} for an object node.
+	 * Define a {@link TreeNodeSchema} for a {@link TreeObjectNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 */
 	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T) {
-		class schema extends this.nodeSchema(name, NodeKind.Object, t, true) {
+	>(name: Name, fields: T) {
+		class schema extends this.nodeSchema(name, NodeKind.Object, fields, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
 
@@ -329,7 +332,7 @@ export class SchemaFactory<
 		return schema as TreeNodeSchemaClass<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Object,
-			TreeNode & ObjectFromSchemaRecord<T> & WithType<ScopedSchemaName<TScope, Name>>,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
 			object & InsertableObjectFromSchemaRecord<T>,
 			true,
 			T

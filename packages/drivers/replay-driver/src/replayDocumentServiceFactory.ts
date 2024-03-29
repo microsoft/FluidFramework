@@ -8,9 +8,10 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { ReplayController } from "./replayController.js";
 import { ReplayControllerStatic } from "./replayDocumentDeltaConnection.js";
 import { ReplayDocumentService } from "./replayDocumentService.js";

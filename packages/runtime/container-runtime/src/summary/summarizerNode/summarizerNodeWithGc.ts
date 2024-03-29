@@ -19,7 +19,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import { LoggingError, TelemetryDataTag, tagCodeArtifacts } from "@fluidframework/telemetry-utils";
+
 import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
+
 import { SummarizerNode } from "./summarizerNode.js";
 import {
 	EscapedPath,

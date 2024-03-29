@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	FieldKinds,

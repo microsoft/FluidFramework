@@ -4,20 +4,21 @@
  */
 
 // Required for testing support of null values
-/* eslint-disable unicorn/no-null */
 
-import { expect } from "chai";
+/* eslint-disable unicorn/no-null */
 
 import { SharedCell } from "@fluidframework/cell";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { createIdCompressor } from "@fluidframework/id-compressor";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaFactory, SharedTree, TreeConfiguration } from "@fluidframework/tree";
+import { expect } from "chai";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces.js";
 import {
@@ -120,11 +121,8 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedDirectory", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedDirectory = new SharedDirectory(
-			"test-directory",
-			runtime,
-			SharedDirectory.getFactory().attributes,
-		);
+		const sharedDirectory = SharedDirectory.getFactory().create(runtime, "test-directory");
+
 		sharedDirectory.set("foo", 37);
 		sharedDirectory.set("bar", false);
 		sharedDirectory.set("baz", {

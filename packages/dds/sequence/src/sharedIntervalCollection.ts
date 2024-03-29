@@ -18,6 +18,7 @@ import {
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base";
+
 import { IIntervalCollection, IntervalCollectionValueType } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import { IMapMessageLocalMetadata } from "./intervalCollectionMapInterfaces.js";

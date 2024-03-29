@@ -4,7 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { Mutable } from "../../util/index.js";
+
 import {
 	ChangeRebaser,
 	RevisionInfo,

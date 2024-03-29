@@ -6,9 +6,14 @@
 import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils";
-import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
+import {
+	IDeltasFetchResult,
+	IStream,
+	IStreamResult,
+} from "@fluidframework/driver-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
+
 import { canRetryOnError, createGenericNetworkError, getRetryDelayFromError } from "./network.js";
 import { logNetworkFailure } from "./networkUtils.js";
 // For now, this package is versioned and released in unison with the specific drivers

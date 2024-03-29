@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { LocalClientId } from "./constants.js";
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";

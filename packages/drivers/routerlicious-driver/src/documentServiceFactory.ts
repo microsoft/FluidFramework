@@ -13,7 +13,7 @@ import {
 	IDocumentStorageServicePolicies,
 	IResolvedUrl,
 	LoaderCachingPolicy,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import {
 	RateLimiter,
 	getDocAttributesFromProtocolSummary,
@@ -26,6 +26,7 @@ import {
 	convertSummaryTreeToWholeSummaryTree,
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils";
+
 import { ICache, InMemoryCache, NullCache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
 import { ISnapshotTreeVersion } from "./definitions.js";

@@ -3,22 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver";
+import { mixinAttributor } from "@fluid-experimental/attributor";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
+import {
+	IContainerRuntimeOptions,
+	DefaultSummaryConfiguration,
+	CompressionAlgorithms,
+	ICompressionRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import {
 	FluidObject,
 	IFluidHandleContext,
 	IFluidLoadable,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
+import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
-import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedDirectory } from "@fluidframework/map";
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
@@ -27,14 +34,8 @@ import {
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { mixinAttributor } from "@fluid-experimental/attributor";
-import {
-	IContainerRuntimeOptions,
-	DefaultSummaryConfiguration,
-	CompressionAlgorithms,
-	ICompressionRuntimeOptions,
-} from "@fluidframework/container-runtime";
+import * as semver from "semver";
+
 import { pkgVersion } from "./packageVersion.js";
 import {
 	getLoaderApi,
@@ -43,6 +44,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { getRequestedVersion } from "./versionUtils.js";
 
 /**
  * @internal
@@ -171,11 +173,15 @@ function createGetDataStoreFactoryFunction(api: ReturnType<typeof getDataRuntime
 	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
 		const oldRegistry: [string | undefined, IChannelFactory][] = [];
 		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+			if (factory.type === "https://graph.microsoft.com/types/tree") {
+				oldRegistry.push([key, factory]);
+			} else {
+				const oldFactory = registryMapping[factory.type];
+				if (oldFactory === undefined) {
+					throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
+				}
+				oldRegistry.push([key, oldFactory]);
 			}
-			oldRegistry.push([key, oldFactory]);
 		}
 
 		return oldRegistry;
@@ -262,10 +268,12 @@ export async function getVersionedTestObjectProvider(
 ): Promise<TestObjectProvider> {
 	return getVersionedTestObjectProviderFromApis(
 		{
-			loader: getLoaderApi(baseVersion, loaderVersion),
-			containerRuntime: getContainerRuntimeApi(baseVersion, runtimeVersion),
-			dataRuntime: getDataRuntimeApi(baseVersion, dataRuntimeVersion),
-			driver: getDriverApi(baseVersion, driverConfig?.version),
+			loader: getLoaderApi(getRequestedVersion(baseVersion, loaderVersion)),
+			containerRuntime: getContainerRuntimeApi(
+				getRequestedVersion(baseVersion, runtimeVersion),
+			),
+			dataRuntime: getDataRuntimeApi(getRequestedVersion(baseVersion, dataRuntimeVersion)),
+			driver: getDriverApi(getRequestedVersion(baseVersion, driverConfig?.version)),
 		},
 		driverConfig,
 	);

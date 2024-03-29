@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils";
 import {
 	IFileEntry,
@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
 import { IWriteSummaryResponse } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import {

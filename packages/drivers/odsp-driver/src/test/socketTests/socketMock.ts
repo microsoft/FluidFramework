@@ -9,6 +9,7 @@ import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { IConnect, IConnected, ScopeType } from "@fluidframework/protocol-definitions";
 import { v4 as uuid } from "uuid";
+
 import { IOdspSocketError } from "../../contracts.js";
 import { pkgVersion as driverVersion } from "../../packageVersion.js";
 

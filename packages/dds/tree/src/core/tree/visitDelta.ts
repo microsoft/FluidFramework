@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils";
 import { NestedMap } from "../../index.js";
 import { setInNestedMap, tryGetFromNestedMap } from "../../util/index.js";
 import { FieldKey } from "../schema-stored/index.js";
+
 import { ITreeCursorSynchronous } from "./cursor.js";
 import * as Delta from "./delta.js";
 import { ProtoNodes } from "./delta.js";
