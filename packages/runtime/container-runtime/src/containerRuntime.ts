@@ -15,6 +15,7 @@ import {
 	ILoader,
 	IRuntime,
 	LoaderHeader,
+	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -1699,8 +1700,24 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._audience = audience!;
+		this._audience = audience;
+		if (!Object.prototype.hasOwnProperty.call(audience, "currentClientId")) {
+			// back-compat, added in 2.0 RC3.
+			// Purpose: deal with cases when we run against old loader that does not have newly added capabilities
+			Object.defineProperty(audience, "currentClientId", {
+				get: this._getClientId,
+			});
+
+			this.on("connected", () => {
+				const clientId = this.clientId;
+				assert(clientId !== undefined, "can't be undefined");
+				(audience as any as TypedEventEmitter<IAudienceEvents>).emit(
+					"clientIdChanged",
+					clientId,
+					audience.getMember(clientId),
+				);
+			});
+		}
 
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
@@ -2381,12 +2398,9 @@ export class ContainerRuntime
 
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Validate we have consistent state
-		// back-compat: we can be dealing with old loader and no self property at all.
 		const currentClientId = this._audience.currentClientId;
-		if (currentClientId !== undefined) {
-			assert(clientId === currentClientId, "same clientId");
-			assert(this.clientId === currentClientId, "same clientId");
-		}
+		assert(clientId === currentClientId, "same clientId");
+		assert(this.clientId === currentClientId, "same clientId");
 
 		if (connected && this.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises

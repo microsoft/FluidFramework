@@ -160,7 +160,7 @@ export interface IContainerContext {
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly quorum: IQuorumClients;
-	readonly audience: IAudience | undefined;
+	readonly audience: IAudience;
 	readonly loader: ILoader;
 	// The logger implementation, which would support tagged events, should be provided by the loader.
 	readonly taggedLogger: ITelemetryBaseLogger;

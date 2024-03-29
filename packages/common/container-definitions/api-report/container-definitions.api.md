@@ -151,7 +151,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
-    readonly audience: IAudience | undefined;
+    readonly audience: IAudience;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)

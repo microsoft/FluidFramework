@@ -121,11 +121,12 @@ describe("Runtime", () => {
 		clock.restore();
 	});
 
+	const mockClientId = "mockClientId";
+
 	const getMockContext = (
 		settings: Record<string, ConfigTypes> = {},
 		logger = new MockLogger(),
 	): Partial<IContainerContext> => {
-		const mockClientId = "mockClientId";
 
 		// Mock the storage layer so "submitSummary" works.
 		const mockStorage: Partial<IDocumentStorageService> = {
@@ -253,13 +254,13 @@ describe("Runtime", () => {
 					},
 				} as ChannelCollection;
 
-				containerRuntime.setConnectionState(false);
+				containerRuntime.setConnectionState(false, mockClientId);
 
 				submitDataStoreOp(containerRuntime, "1", "test");
 				(containerRuntime as any).flush();
 
 				submitDataStoreOp(containerRuntime, "2", "test");
-				containerRuntime.setConnectionState(true);
+				containerRuntime.setConnectionState(true, mockClientId);
 				(containerRuntime as any).flush();
 
 				assert.strictEqual(submittedOps.length, 2);
@@ -274,6 +275,8 @@ describe("Runtime", () => {
 				FlushMode.Immediate,
 				FlushModeExperimental.Async as unknown as FlushMode,
 			].forEach((flushMode: FlushMode) => {
+				const fakeClientId = "fakeClientId";
+
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
@@ -312,7 +315,7 @@ describe("Runtime", () => {
 								return opFakeSequenceNumber++;
 							},
 							connected: true,
-							clientId: "fakeClientId",
+							clientId: fakeClientId,
 							getLoadedFromVersion: () => undefined,
 						};
 					};
@@ -498,7 +501,7 @@ describe("Runtime", () => {
 							},
 						} as ChannelCollection;
 
-						containerRuntime.setConnectionState(false);
+						containerRuntime.setConnectionState(false, fakeClientId);
 
 						containerRuntime.orderSequentially(() => {
 							submitDataStoreOp(containerRuntime, "1", "test");
@@ -520,7 +523,7 @@ describe("Runtime", () => {
 							"no messages should be sent",
 						);
 
-						containerRuntime.setConnectionState(true);
+						containerRuntime.setConnectionState(true, fakeClientId);
 
 						assert.strictEqual(
 							submittedOpsMetadata.length,
@@ -856,10 +859,11 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 			const mockLogger = new MockLogger();
 			const containerErrors: ICriticalContainerError[] = [];
+			const fakeClientId = "fakeClientId";
 			const getMockContextForPendingStateProgressTracking =
 				(): Partial<IContainerContext> => {
 					return {
-						clientId: "fakeClientId",
+						clientId: fakeClientId,
 						attachState: AttachState.Attached,
 						deltaManager: new MockDeltaManager(),
 						audience: new MockAudience(),
@@ -943,8 +947,8 @@ describe("Runtime", () => {
 			}
 
 			const toggleConnection = (runtime: ContainerRuntime) => {
-				runtime.setConnectionState(false);
-				runtime.setConnectionState(true);
+				runtime.setConnectionState(false, fakeClientId);
+				runtime.setConnectionState(true, fakeClientId);
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
@@ -1062,7 +1066,7 @@ describe("Runtime", () => {
 					addPendingMessage(pendingStateManager);
 
 					for (let i = 0; i < maxReconnects; i++) {
-						containerRuntime.setConnectionState(!containerRuntime.connected);
+						containerRuntime.setConnectionState(!containerRuntime.connected, fakeClientId);
 						containerRuntime.process(
 							{
 								type: "op",
@@ -1231,7 +1235,7 @@ describe("Runtime", () => {
 			it("Op with unrecognized type and 'Ignore' compat behavior is ignored by resubmit", async () => {
 				const patchedContainerRuntime = patchContainerRuntime();
 
-				patchedContainerRuntime.setConnectionState(false);
+				patchedContainerRuntime.setConnectionState(false, mockClientId);
 
 				submitDataStoreOp(patchedContainerRuntime, "1", "test");
 				submitDataStoreOp(patchedContainerRuntime, "2", "test");
@@ -1249,7 +1253,7 @@ describe("Runtime", () => {
 				);
 
 				// Connect, which will trigger resubmit
-				patchedContainerRuntime.setConnectionState(true);
+				patchedContainerRuntime.setConnectionState(true, mockClientId);
 
 				assert.strictEqual(
 					submittedOps.length,
@@ -1261,7 +1265,7 @@ describe("Runtime", () => {
 			it("Op with unrecognized type and no compat behavior causes resubmit to throw", async () => {
 				const patchedContainerRuntime = patchContainerRuntime();
 
-				patchedContainerRuntime.setConnectionState(false);
+				patchedContainerRuntime.setConnectionState(false, mockClientId);
 
 				patchedContainerRuntime.submit({
 					type: "FUTURE_TYPE" as any,
@@ -1280,7 +1284,7 @@ describe("Runtime", () => {
 				// of the new op type.
 				assert.throws(() => {
 					// Connect, which will trigger resubmit
-					patchedContainerRuntime.setConnectionState(true);
+					patchedContainerRuntime.setConnectionState(true, mockClientId);
 				}, "Expected resubmit to throw");
 			});
 

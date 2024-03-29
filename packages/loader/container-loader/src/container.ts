@@ -1897,7 +1897,7 @@ export class Container
 
 		// This is a bit debatable.
 		// On one hand, we notify about changes in connection and clientId in propagateConnectionState()
-		// If we established connection while loading container runtiem, we will delay notifying container runtime
+		// If we established connection while loading container runtime, we will delay notifying container runtime
 		// until it's fully loaded, and setLoaded() will trigger notification
 		// At the same time, current clientId is available through API surface (IContainer.clientId, ContainerRuntime.clientId, etc.)
 		// And it would be weird to have audience.currentClientId not match it at any point in time, including through loading process.
