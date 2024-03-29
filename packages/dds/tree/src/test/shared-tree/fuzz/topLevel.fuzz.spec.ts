@@ -43,6 +43,8 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		set: 3,
+		clear: 1,
 		insert: 5,
 		remove: 5,
 		move: 5,
