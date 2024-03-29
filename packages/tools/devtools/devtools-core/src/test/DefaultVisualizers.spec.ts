@@ -511,7 +511,7 @@ describe("DefaultVisualizers unit tests", () => {
 														avocado: {
 															value: "16",
 															nodeKind: "ValueNode",
-															sharedTreeSchemaData:
+															tooltipContents:
 																"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 														},
 														broccoli: {
@@ -521,27 +521,27 @@ describe("DefaultVisualizers unit tests", () => {
 																		alpaca: {
 																			value: '"Llama but cuter."',
 																			nodeKind: "ValueNode",
-																			sharedTreeSchemaData:
+																			tooltipContents:
 																				"com.fluidframework.leaf.string",
 																		},
 																	},
 																	nodeKind: "TreeNode",
-																	sharedTreeSchemaData:
+																	tooltipContents:
 																		"{ alpaca : com.fluidframework.leaf.string }",
 																},
 															},
 															nodeKind: "TreeNode",
-															sharedTreeSchemaData:
+															tooltipContents:
 																"{ DefaultVisualizer_SharedTree_Test.broccoli-object-schema }",
 														},
 													},
 													nodeKind: "TreeNode",
-													sharedTreeSchemaData:
+													tooltipContents:
 														'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.broccoli-object-schema"]> }',
 												},
 											},
 											nodeKind: "TreeNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"{ DefaultVisualizer_SharedTree_Test.apple-object-schema }",
 										},
 										banana: {
@@ -549,22 +549,22 @@ describe("DefaultVisualizers unit tests", () => {
 												miniBanana: {
 													value: "true",
 													nodeKind: "ValueNode",
-													sharedTreeSchemaData:
+													tooltipContents:
 														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
 												},
 											},
 											nodeKind: "TreeNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
 										},
 										cherry: {
 											value: "32",
 											nodeKind: "ValueNode",
-											sharedTreeSchemaData: "com.fluidframework.leaf.number",
+											tooltipContents: "com.fluidframework.leaf.number",
 										},
 									},
 									nodeKind: "TreeNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										'{ apple : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.apple-object-schema"]>, banana : DefaultVisualizer_SharedTree_Test.banana-object, cherry : com.fluidframework.leaf.number }',
 								},
 								"1": {
@@ -576,7 +576,7 @@ describe("DefaultVisualizers unit tests", () => {
 														avocado: {
 															value: '"Avacado Advocate."',
 															nodeKind: "ValueNode",
-															sharedTreeSchemaData:
+															tooltipContents:
 																"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 														},
 														broccoli: {
@@ -586,27 +586,27 @@ describe("DefaultVisualizers unit tests", () => {
 																		alpaca: {
 																			value: '"Llama but not LLM."',
 																			nodeKind: "ValueNode",
-																			sharedTreeSchemaData:
+																			tooltipContents:
 																				"com.fluidframework.leaf.string",
 																		},
 																	},
 																	nodeKind: "TreeNode",
-																	sharedTreeSchemaData:
+																	tooltipContents:
 																		"{ alpaca : com.fluidframework.leaf.string }",
 																},
 															},
 															nodeKind: "TreeNode",
-															sharedTreeSchemaData:
+															tooltipContents:
 																"{ DefaultVisualizer_SharedTree_Test.broccoli-object-schema }",
 														},
 													},
 													nodeKind: "TreeNode",
-													sharedTreeSchemaData:
+													tooltipContents:
 														'{ avocado : com.fluidframework.leaf.number | com.fluidframework.leaf.string, broccoli : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.broccoli-object-schema"]> }',
 												},
 											},
 											nodeKind: "TreeNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"{ DefaultVisualizer_SharedTree_Test.apple-object-schema }",
 										},
 										banana: {
@@ -614,46 +614,46 @@ describe("DefaultVisualizers unit tests", () => {
 												miniBanana: {
 													value: "false",
 													nodeKind: "ValueNode",
-													sharedTreeSchemaData:
+													tooltipContents:
 														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
 												},
 											},
 											nodeKind: "TreeNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"{ miniBanana : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number }",
 										},
 									},
 									nodeKind: "TreeNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										'{ apple : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.apple-object-schema"]>, banana : DefaultVisualizer_SharedTree_Test.banana-object, cherry : com.fluidframework.leaf.number }',
 								},
 							},
 							nodeKind: "TreeNode",
-							sharedTreeSchemaData: "{ DefaultVisualizer_SharedTree_Test.foo-item }",
+							tooltipContents: "{ DefaultVisualizer_SharedTree_Test.foo-item }",
 						},
 						bar: {
 							children: {
 								americano: {
 									value: "false",
 									nodeKind: "ValueNode",
-									sharedTreeSchemaData: "com.fluidframework.leaf.boolean",
+									tooltipContents: "com.fluidframework.leaf.boolean",
 								},
 								bubbleTea: {
 									value: '"Taro Bubble Tea"',
 									nodeKind: "ValueNode",
-									sharedTreeSchemaData: "com.fluidframework.leaf.string",
+									tooltipContents: "com.fluidframework.leaf.string",
 								},
 								chaiLatte: {
 									children: {
 										appleCider: {
 											value: "true",
 											nodeKind: "ValueNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle",
 										},
 									},
 									nodeKind: "TreeNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										"{ appleCider : com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle }",
 								},
 								dalgona: {
@@ -663,17 +663,17 @@ describe("DefaultVisualizers unit tests", () => {
 												avengers: {
 													value: "true",
 													nodeKind: "ValueNode",
-													sharedTreeSchemaData:
+													tooltipContents:
 														"com.fluidframework.leaf.boolean",
 												},
 											},
 											nodeKind: "TreeNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"{ avengers : com.fluidframework.leaf.boolean }",
 										},
 									},
 									nodeKind: "TreeNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										"{ DefaultVisualizer_SharedTree_Test.dalgona-object }",
 								},
 								espresso: {
@@ -681,29 +681,29 @@ describe("DefaultVisualizers unit tests", () => {
 										"0": {
 											value: "256",
 											nodeKind: "ValueNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 										},
 										"1": {
 											value: '"FiveHundredTwelve"',
 											nodeKind: "ValueNode",
-											sharedTreeSchemaData:
+											tooltipContents:
 												"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 										},
 									},
 									nodeKind: "TreeNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										"{ com.fluidframework.leaf.number | com.fluidframework.leaf.string }",
 								},
 							},
 							nodeKind: "TreeNode",
-							sharedTreeSchemaData:
+							tooltipContents:
 								'{ americano : com.fluidframework.leaf.boolean, bubbleTea : com.fluidframework.leaf.string, chaiLatte : DefaultVisualizer_SharedTree_Test.chai-latte-object, dalgona : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.dalgona-object"]>, espresso : DefaultVisualizer_SharedTree_Test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
 						},
 						baz: {
 							value: "128",
 							nodeKind: "ValueNode",
-							sharedTreeSchemaData:
+							tooltipContents:
 								"com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean",
 						},
 						foobar: {
@@ -711,29 +711,29 @@ describe("DefaultVisualizers unit tests", () => {
 								anthropology: {
 									value: "1",
 									nodeKind: "ValueNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object",
 								},
 								biology: {
 									value: "2",
 									nodeKind: "ValueNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object",
 								},
 								choreography: {
 									value: "3",
 									nodeKind: "ValueNode",
-									sharedTreeSchemaData:
+									tooltipContents:
 										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object",
 								},
 							},
 							nodeKind: "TreeNode",
-							sharedTreeSchemaData:
+							tooltipContents:
 								"{ anthropology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object, biology : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object, choreography : com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | DefaultVisualizer_SharedTree_Test.map-object }",
 						},
 					},
 					nodeKind: "TreeNode",
-					sharedTreeSchemaData:
+					tooltipContents:
 						'{ foo : DefaultVisualizer_SharedTree_Test.Array<["DefaultVisualizer_SharedTree_Test.foo-item"]>, bar : DefaultVisualizer_SharedTree_Test.bar-item, baz : com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean, foobar : DefaultVisualizer_SharedTree_Test.Map<["DefaultVisualizer_SharedTree_Test.map-object","com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]> }',
 				},
 			},

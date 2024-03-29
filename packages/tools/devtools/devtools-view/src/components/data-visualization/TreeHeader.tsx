@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Tooltip, tokens } from "@fluentui/react-components";
+import { tokens } from "@fluentui/react-components";
 import { DocumentEdit20Regular } from "@fluentui/react-icons";
 import React from "react";
 
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
 
+// eslint-disable-next-line import/no-internal-modules
+import { LabelCellLayout } from "../utility-components/LabelCellLayout.js";
 import type { HasLabel } from "./CommonInterfaces.js";
 
 /**
@@ -29,16 +31,21 @@ export interface TreeHeaderProps extends HasLabel {
 	inlineValue?: React.ReactElement | string;
 
 	/**
-	 * TODO
+	 * Visual Tree data rendered in the tooltip.
 	 */
-	sharedTreeSchemaData?: string | Record<string | number, string>;
+	tooltipContents?: string | Record<string | number, string>;
 }
+
+/**
+ * TODO.
+ */
+export const toolTipContentText = "Visual representation of the data structure of the object.";
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, inlineValue, metadata, sharedTreeSchemaData } = props;
+	const { label, nodeTypeMetadata, inlineValue, metadata, tooltipContents } = props;
 	const { themeInfo } = React.useContext(ThemeContext);
 
 	return (
@@ -68,23 +75,15 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 				{metadata === undefined ? "" : ` ${metadata}`}
 			</span>
 
-			{sharedTreeSchemaData === undefined ? (
+			{tooltipContents === undefined ? (
 				""
 			) : (
-				<Tooltip content={JSON.stringify(sharedTreeSchemaData)} relationship="description">
-					<span
-						style={{
-							color:
-								themeInfo.name === ThemeOption.HighContrast
-									? ""
-									: tokens.colorPalettePlatinumBorderActive,
-							fontStyle: "oblique",
-							fontSize: "10px",
-						}}
-					>
-						<DocumentEdit20Regular />
-					</span>
-				</Tooltip>
+				<LabelCellLayout
+					icon={<DocumentEdit20Regular />}
+					infoTooltipContent={toolTipContentText}
+				>
+					{tooltipContents}
+				</LabelCellLayout>
 			)}
 
 			{inlineValue === undefined ? "" : ": "}

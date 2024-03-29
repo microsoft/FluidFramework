@@ -28,7 +28,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
-			sharedTreeSchemaData: tree.schema.allowedTypes,
+			tooltipContents: tree.schema.allowedTypes,
 		};
 		return result;
 	} else {
@@ -42,7 +42,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 		return {
 			children,
 			nodeKind: VisualNodeKind.TreeNode,
-			sharedTreeSchemaData: tree.schema.allowedTypes,
+			tooltipContents: tree.schema.allowedTypes,
 		};
 	}
 }

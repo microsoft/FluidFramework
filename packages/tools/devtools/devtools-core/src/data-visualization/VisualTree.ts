@@ -76,9 +76,9 @@ export interface VisualNodeBase {
 	editProps?: { editTypes?: EditType[] };
 
 	/**
-	 * Schema data of the SharedTree
+	 * Visual Tree data rendered in the tooltip.
 	 */
-	sharedTreeSchemaData?: string | Record<string | number, string>;
+	tooltipContents?: string | Record<string | number, string>;
 }
 
 /**

@@ -518,7 +518,7 @@ export interface VisualNodeBase {
     };
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
-    sharedTreeSchemaData?: string | Record<string | number, string>;
+    tooltipContents?: string | Record<string | number, string>;
     typeMetadata?: string;
 }
 

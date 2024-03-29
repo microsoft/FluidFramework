@@ -27,7 +27,7 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			inlineValue={String(node.value)}
-			sharedTreeSchemaData={node.sharedTreeSchemaData}
+			tooltipContents={node.tooltipContents}
 			metadata={metadata}
 		/>
 	);

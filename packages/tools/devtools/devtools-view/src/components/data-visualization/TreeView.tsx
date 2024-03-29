@@ -34,7 +34,7 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			metadata={metadata}
-			sharedTreeSchemaData={node.sharedTreeSchemaData}
+			tooltipContents={node.tooltipContents}
 		/>
 	);
 
