@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { type SessionId, createSessionId } from "@fluidframework/id-compressor";
+import { type SessionId, createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import type { EncodedRevisionTag, GraphCommit } from "../../core/index.js";
 import { ChangeEncodingContext } from "../../core/index.js";

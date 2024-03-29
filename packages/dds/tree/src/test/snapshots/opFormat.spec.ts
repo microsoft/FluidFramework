@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { type SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { type SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	type MockContainerRuntime,
 	MockContainerRuntimeFactory,

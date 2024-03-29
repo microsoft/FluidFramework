@@ -348,7 +348,7 @@ function makeModularChangeCodec(
 		return decodedRevisions;
 	}
 
-	const codec: ModularChangeCodec = {
+	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
 			// Destroys only exist in rollback changesets, which are never sent.
 			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
@@ -383,5 +383,5 @@ function makeModularChangeCodec(
 		},
 	};
 
-	return withSchemaValidation(EncodedModularChangeset, codec, validator);
+	return withSchemaValidation(EncodedModularChangeset, modularChangeCodec, validator);
 }
