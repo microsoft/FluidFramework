@@ -89,7 +89,7 @@ export namespace ContainerDevtoolsFeatures {
     }
 }
 
-// @internal
+// @beta
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
@@ -244,7 +244,7 @@ export const EditType: {
 // @internal
 export type EditType = (typeof EditType)[keyof typeof EditType];
 
-// @internal
+// @beta
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -385,7 +385,7 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @internal
+// @beta
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
@@ -406,7 +406,7 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
-// @internal
+// @beta
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
