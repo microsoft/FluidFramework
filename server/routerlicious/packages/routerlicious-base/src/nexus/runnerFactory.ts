@@ -167,6 +167,14 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			expireAfterSeconds: redisConfig2.keyExpireAfterSeconds as number | undefined,
 		};
 
+		const retryDelays = {
+			retryDelayOnFailover: 100,
+			retryDelayOnClusterDown: 100,
+			retryDelayOnTryAgain: 100,
+			retryDelayOnMoved: redisConfig2.retryDelayOnMoved ?? 100,
+			maxRedirections: redisConfig2.maxRedirections ?? 16,
+		};
+
 		const redisClientConnectionManager = customizations?.redisClientConnectionManager
 			? customizations.redisClientConnectionManager
 			: new RedisClientConnectionManager(
@@ -174,7 +182,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					redisConfig2,
 					redisConfig2.enableClustering,
 					redisConfig2.slotsRefreshTimeout,
+					retryDelays,
 			  );
+
 		const clientManager = new services.ClientManager(
 			redisClientConnectionManager,
 			redisParams2,
@@ -270,6 +280,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfigForThrottling,
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
+						retryDelays,
 				  );
 
 		const redisThrottleAndUsageStorageManager =

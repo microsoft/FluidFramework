@@ -27,9 +27,11 @@ import {
 	TextSegment,
 	reservedTileLabelsKey,
 } from "@fluidframework/sequence";
+
 import { documentType } from "../package.js";
 import { IHTMLAttributes } from "../util/attr.js";
 import { TagName, TokenList, clamp } from "../util/index.js";
+
 import { debug } from "./debug.js";
 import { SegmentSpan } from "./segmentspan.js";
 

@@ -11,7 +11,9 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
 import React from "react";
+
 import { useMessageRelay } from "../MessageRelayContext.js";
+
 import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";
 
 const useStyles = makeStyles({
@@ -101,6 +103,11 @@ export function OpLatencyView(): React.ReactElement {
 				const eventContents = message.data.event.logContent;
 				// Op roundtrip time logs are the only ones with relevant information for this component
 				if (!eventContents.eventName.endsWith("OpRoundtripTime")) {
+					return false;
+				}
+				// If any of the required fields are missing, we can't use this data
+				// TODO: AB#7583 Investigates the ops being skipped and their source.
+				if (eventContents.durationNetwork === undefined) {
 					return false;
 				}
 

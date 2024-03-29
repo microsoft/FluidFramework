@@ -5,6 +5,7 @@
 
 import { FlowDocument } from "../document/index.js";
 import { TagName } from "../util/index.js";
+
 import { debug } from "./debug.js";
 
 const enum ClipboardFormat {

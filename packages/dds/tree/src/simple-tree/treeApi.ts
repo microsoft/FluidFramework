@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { TreeValue } from "../core/index.js";
 import {
 	FlexTreeNodeEvents,
@@ -13,8 +14,9 @@ import {
 	isTreeValue,
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
-import { getFlexNode, tryGetFlexNode } from "./flexNode.js";
+
 import { getOrCreateNodeProxy, getSimpleSchema } from "./proxies.js";
+import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import { NodeFromSchema, NodeKind, TreeLeafValue, TreeNodeSchema } from "./schemaTypes.js";
 import { getFlexSchema } from "./toFlexSchema.js";

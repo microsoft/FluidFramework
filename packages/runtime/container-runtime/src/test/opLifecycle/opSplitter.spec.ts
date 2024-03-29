@@ -7,10 +7,12 @@
 
 import { strict as assert } from "assert";
 import * as crypto from "crypto";
+
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { CompressionAlgorithms } from "../../containerRuntime.js";
 import {
 	BatchMessage,
@@ -19,6 +21,11 @@ import {
 	isChunkedMessage,
 	splitOp,
 } from "../../opLifecycle/index.js";
+
+function typeFromBatchedOp(op: IBatchMessage) {
+	assert(op.contents !== undefined);
+	return JSON.parse(op.contents).type as string;
+}
 
 describe("OpSplitter", () => {
 	const batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[] = [];
@@ -346,7 +353,7 @@ describe("OpSplitter", () => {
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch.messages[0] as BatchMessage).type,
+						typeFromBatchedOp(batch.messages[0]),
 						ContainerMessageType.ChunkedOp,
 					);
 					assert.equal(batch.referenceSequenceNumber, 0);
@@ -409,7 +416,7 @@ describe("OpSplitter", () => {
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch.messages[0] as BatchMessage).type,
+						typeFromBatchedOp(batch.messages[0]),
 						ContainerMessageType.ChunkedOp,
 					);
 					assert.equal(batch.referenceSequenceNumber, 0);
@@ -450,19 +457,24 @@ describe("OpSplitter", () => {
 			});
 		});
 	});
-
 	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
 		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));
-		assert.strictEqual(result.type, original.type);
+		// type = "component" is used to force 1.3 to crash on compressed & chunked ops, as it does not understand it.
+		// 2.x does not care about type, as it will get right type after decompressing the op.
+		// see code & comment in splitOp()
+		assert.strictEqual(result.type, "component");
 		assert.strictEqual(result.metadata, original.metadata);
 		assert.strictEqual(result.compression, original.compression);
 	};
 
 	const generateChunkableOp = (contentSizeInBytes: number): BatchMessage => {
-		const contents = { value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex") };
+		const contents = {
+			// There should be a type here, but there is no validation for that,
+			// and tests would need to be adjusted (sizing and assumptions) if we add it here.
+			// type: ContainerMessageType.FluidDataStoreOp,
+			value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex"),
+		};
 		return {
-			localOpMetadata: undefined,
-			type: ContainerMessageType.FluidDataStoreOp,
 			referenceSequenceNumber: Infinity,
 			metadata: { meta: "data" },
 			compression: CompressionAlgorithms.lz4,

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IErrorBase } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils";
@@ -18,6 +19,7 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+
 import {
 	GCNodeType,
 	GCSummaryStateTracker,
@@ -51,6 +53,7 @@ import {
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 import { IContainerRuntimeMetadata } from "../../summary/index.js";
+
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 
 type GcWithPrivates = IGarbageCollector & {

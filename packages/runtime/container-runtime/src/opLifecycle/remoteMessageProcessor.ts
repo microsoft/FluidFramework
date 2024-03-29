@@ -4,6 +4,7 @@
  */
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+
 import {
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
@@ -11,6 +12,7 @@ import {
 	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
+
 import { OpDecompressor } from "./opDecompressor.js";
 import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
 import { OpSplitter, isChunkedMessage } from "./opSplitter.js";

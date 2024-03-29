@@ -38,13 +38,13 @@ import {
 	type ISnapshot,
 } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
-	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/id-compressor";
+} from "@fluidframework/id-compressor/internal";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -109,6 +109,7 @@ import {
 	wrapError,
 } from "@fluidframework/telemetry-utils";
 import { v4 as uuid } from "uuid";
+
 import { BindBatchTracker } from "./batchTracker.js";
 import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager.js";
 import { ChannelCollection, getSummaryForDatastores, wrapContext } from "./channelCollection.js";
@@ -127,6 +128,7 @@ import {
 } from "./gc/index.js";
 import {
 	ContainerMessageType,
+	type ContainerRuntimeDocumentSchemaMessage,
 	ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -156,11 +158,14 @@ import {
 } from "./pendingStateManager.js";
 import { ScheduleManager } from "./scheduleManager.js";
 import {
+	DocumentsSchemaController,
 	EnqueueSummarizeResult,
 	IBaseSummarizeResult,
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IDocumentSchemaChangeMessage,
+	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
@@ -465,6 +470,15 @@ export interface IContainerRuntimeOptions {
 	 * @experimental Not ready for use.
 	 */
 	readonly enableGroupedBatching?: boolean;
+
+	/**
+	 * When this property is set to true, it requires runtime to control is document schema properly through ops
+	 * The benefit of this mode is that clients who do not understand schema will fail in predictable way, with predictable message,
+	 * and will not attempt to limp along, which could cause data corruptions and crashes in random places.
+	 * When this property is not set (or set to false), runtime operates in legacy mode, where new features (modifying document schema)
+	 * are engaged as they become available, without giving legacy clients any chance to fail predictably.
+	 */
+	readonly explicitSchemaControl?: boolean;
 }
 
 /**
@@ -504,6 +518,12 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
 }
+
+/** @alpha */
+export const disabledCompressionConfig: ICompressionRuntimeOptions = {
+	minimumBatchSizeInBytes: Infinity,
+	compressionAlgorithm: CompressionAlgorithms.lz4,
+};
 
 /**
  * @deprecated
@@ -572,25 +592,11 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated use ContainerRuntimeMessageType instead
- * @internal
- */
-export enum RuntimeMessage {
-	FluidDataStoreOp = "component",
-	Attach = "attach",
-	ChunkedOp = "chunkedOp",
-	BlobAttach = "blobAttach",
-	Rejoin = "rejoin",
-	Alias = "alias",
-	Operation = "op",
-}
-
-/**
  * @deprecated please use version in driver-utils
  * @internal
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
+	return (Object.values(ContainerMessageType) as string[]).includes(message.type);
 }
 
 /**
@@ -698,6 +704,18 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 }
 
 /**
+ * Extract last message from the snapshot metadata.
+ * Uses legacy property if not using explicit schema control, otherwise uses the new property.
+ * This allows new runtime to make documents not openable for old runtimes, one explicit document schema control is enabled.
+ * Please see addMetadataToSummary() as well
+ */
+function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
+	return metadata?.documentSchema?.runtime?.explicitSchemaControl
+		? metadata?.lastMessage
+		: metadata?.message;
+}
+
+/**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  * @alpha
@@ -743,7 +761,7 @@ export class ContainerRuntime
 			existing,
 			requestHandler,
 			provideEntryPoint,
-			runtimeOptions = {},
+			runtimeOptions = {} satisfies IContainerRuntimeOptions,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
 		} = params;
@@ -772,10 +790,11 @@ export class ContainerRuntime
 			flushMode = defaultFlushMode,
 			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			enableRuntimeIdCompressor = "off",
+			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 			enableGroupedBatching = false,
+			explicitSchemaControl = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -816,8 +835,10 @@ export class ContainerRuntime
 			},
 		);
 
+		const messageAtLastSummary = lastMessageFromMetadata(metadata);
+
 		// Verify summary runtime sequence number matches protocol sequence number.
-		const runtimeSequenceNumber = metadata?.message?.sequenceNumber;
+		const runtimeSequenceNumber = messageAtLastSummary?.sequenceNumber;
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
 			const protocolSequenceNumber = context.deltaManager.initialSequenceNumber;
@@ -826,6 +847,13 @@ export class ContainerRuntime
 				loadSequenceNumberVerification !== "bypass" &&
 				runtimeSequenceNumber !== protocolSequenceNumber
 			) {
+				// Message to OCEs:
+				// You can hit this error with runtimeSequenceNumber === -1 in < 2.0 RC3 builds.
+				// This would indicate that explicit schema control is enabled in current (2.0 RC3+) builds and it
+				// results in addMetadataToSummary() creating a poison pill for older runtimes in the form of a -1 sequence number.
+				// Older runtimes do not understand new schema, and thus could corrupt document if they proceed, thus we are using
+				// this poison pill to prevent them from proceeding.
+
 				// "Load from summary, runtime metadata sequenceNumber !== initialSequenceNumber"
 				const error = new DataCorruptionError(
 					// pre-0.58 error message: SummaryMetadataMismatch
@@ -842,7 +870,7 @@ export class ContainerRuntime
 		}
 
 		// Enabling the IdCompressor is a one-way operation and we only want to
-		// allow new containers to turn it on
+		// allow new containers to turn it on.
 		let idCompressorMode: IdCompressorMode;
 		if (existing) {
 			// This setting has to be sticky for correctness:
@@ -851,19 +879,19 @@ export class ContainerRuntime
 			// 2) if it's ON, then all sessions should load compressor right away
 			// 3) Same logic applies for "delayed" mode
 			// Maybe in the future we will need to enabled (and figure how to do it safely) "delayed" -> "on" change.
-			// We could do "off" -> "on" transtition too, if all clients start loading compressor (but not using it initially) and do so for a while -
-			// this will allow clients to eventually to disregard "off" setting (when it's safe so) and start using compressor in future sessions.
+			// We could do "off" -> "on" transition too, if all clients start loading compressor (but not using it initially) and
+			// do so for a while - this will allow clients to eventually to disregard "off" setting (when it's safe so) and start
+			// using compressor in future sessions.
 			// Everyting is possible, but it needs to be designed and executed carefully, when such need arises.
-			idCompressorMode = metadata?.idCompressorMode ?? "off";
+			idCompressorMode = metadata?.documentSchema?.runtime
+				?.idCompressorMode as IdCompressorMode;
 		} else {
-			// FG overwrite
-			const enabled = mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled");
-			switch (enabled) {
+			switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
 				case true:
 					idCompressorMode = "on";
 					break;
 				case false:
-					idCompressorMode = "off";
+					idCompressorMode = undefined;
 					break;
 				default:
 					idCompressorMode = enableRuntimeIdCompressor;
@@ -873,7 +901,7 @@ export class ContainerRuntime
 
 		const createIdCompressorFn = async () => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
-				"@fluidframework/id-compressor"
+				"@fluidframework/id-compressor/internal"
 			);
 
 			/**
@@ -908,6 +936,38 @@ export class ContainerRuntime
 			}
 		};
 
+		const disableGroupedBatching = mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableGroupedBatching",
+		);
+		const disableCompression = mc.config.getBoolean(
+			"Fluid.ContainerRuntime.CompressionDisabled",
+		);
+		const compressionLz4 =
+			disableCompression !== true &&
+			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
+			compressionOptions.compressionAlgorithm === "lz4";
+
+		const opGroupingEnabled = disableGroupedBatching !== true && enableGroupedBatching;
+
+		const documentSchemaController = new DocumentsSchemaController(
+			existing,
+			metadata?.documentSchema,
+			{
+				explicitSchemaControl,
+				compressionLz4,
+				idCompressorMode,
+				opGroupingEnabled,
+			},
+			(schema) => {
+				runtime.onSchemaChange(schema);
+			},
+		);
+
+		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {
+			disableGroupedBatching,
+			disableCompression,
+		};
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -923,9 +983,11 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
-				enableRuntimeIdCompressor,
+				// Requires<> drops undefined from IdCompressorType
+				enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 				enableOpReentryCheck,
 				enableGroupedBatching,
+				explicitSchemaControl,
 			},
 			containerScope,
 			logger,
@@ -933,7 +995,8 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			context.storage,
 			createIdCompressorFn,
-			idCompressorMode,
+			documentSchemaController,
+			featureGatesForTelemetry,
 			provideEntryPoint,
 			requestHandler,
 			undefined, // summaryConfiguration
@@ -1004,6 +1067,10 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
+	public get documentSchema() {
+		return this.documentsSchemaController.sessionSchema.runtime;
+	}
+
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1016,6 +1083,9 @@ export class ContainerRuntime
 	// In such case we have to process all ops, including those marked with saveOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
+	public get idCompressorMode() {
+		return this.documentSchema.idCompressorMode;
+	}
 	/**
 	 * See IContainerRuntimeBase.idCompressor() for details.
 	 */
@@ -1037,7 +1107,7 @@ export class ContainerRuntime
 	 * True if we have ID compressor loading in-flight (async operation). Useful only for
 	 * this.idCompressorMode === "delayed" mode
 	 */
-	protected compressorLoadInitiated = false;
+	protected _loadIdCompressor: Promise<void> | undefined;
 
 	/**
 	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
@@ -1259,7 +1329,8 @@ export class ContainerRuntime
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
-		private readonly idCompressorMode: IdCompressorMode,
+		private readonly documentsSchemaController: DocumentsSchemaController,
+		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 		private readonly requestHandler?: (
 			request: IRequest,
@@ -1292,6 +1363,22 @@ export class ContainerRuntime
 			pendingLocalState,
 			supportedFeatures,
 		} = context;
+
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "ContainerRuntime",
+		});
+
+		// If we support multiple algorithms in the future, then we would need to manage it here carefully.
+		// We can use runtimeOptions.compressionOptions.compressionAlgorithm, but only if it's in the schema list!
+		// If it's not in the list, then we will need to either use no compression, or fallback to some other (supported by format)
+		// compression.
+		const compressionOptions: ICompressionRuntimeOptions = {
+			minimumBatchSizeInBytes: this.documentSchema.compressionLz4
+				? runtimeOptions.compressionOptions.minimumBatchSizeInBytes
+				: Number.POSITIVE_INFINITY,
+			compressionAlgorithm: CompressionAlgorithms.lz4,
+		};
 
 		this.innerDeltaManager = deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(this.innerDeltaManager);
@@ -1330,11 +1417,6 @@ export class ContainerRuntime
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
-		this.mc = createChildMonitoringContext({
-			logger: this.logger,
-			namespace: "ContainerRuntime",
-		});
-
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
 		// get the values from the metadata blob.
@@ -1355,7 +1437,7 @@ export class ContainerRuntime
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
-		this.messageAtLastSummary = metadata?.message;
+		this.messageAtLastSummary = lastMessageFromMetadata(metadata);
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
@@ -1583,17 +1665,6 @@ export class ContainerRuntime
 			this.logger,
 		);
 
-		const disableCompression = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.CompressionDisabled",
-		);
-		const compressionOptions =
-			disableCompression === true
-				? {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-				  }
-				: runtimeOptions.compressionOptions;
-
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
@@ -1747,10 +1818,10 @@ export class ContainerRuntime
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
 			options: JSON.stringify(runtimeOptions),
-			idCompressorModeMetadata: metadata?.idCompressorMode,
+			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.idCompressorMode,
 			featureGates: JSON.stringify({
-				disableCompression,
+				...featureGatesForTelemetry,
 				disableOpReentryCheck,
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
@@ -1778,6 +1849,21 @@ export class ContainerRuntime
 		// If we loaded from pending state, then we need to skip any ops that are already accounted in such
 		// saved state, i.e. all the ops marked by Loader layer sa savedOp === true.
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
+	}
+
+	public onSchemaChange(schema: IDocumentSchemaCurrent) {
+		// Most of the settings will be picked up only by new sessions (i.e. after reload).
+		// We can make it better in the future (i.e. start to use op compression right away), but for simplicity
+		// this is not done.
+		// But ID compressor is special. It's possible, that in future, we will remove "stickiness" of ID compressor setting
+		// and will allow to start using it. If that were to happen, we want to ensure that we do not break eventual consistency
+		// promises. To do so, we need to initialize id compressor right away.
+		// As it's implemented right now (with async initialization), this will only work for "off" -> "delayed" transitions.
+		// Anything else is too risky, and requires ability to initialize ID compressor synchronously!
+		if (schema.runtime.idCompressorMode !== undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.loadIdCompressor();
+		}
 	}
 
 	public getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam) {
@@ -2062,20 +2148,38 @@ export class ContainerRuntime
 
 	/** Adds the container's metadata to the given summary tree. */
 	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
+		// The last message processed at the time of summary. If there are no new messages, use the message from the
+		// last summary.
+		const message =
+			extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
+			this.messageAtLastSummary;
+
+		const documentSchema = this.documentsSchemaController.summarizeDocumentSchema(
+			this.deltaManager.lastSequenceNumber,
+		);
+
+		// Is document schema explicit control on?
+		const explitiSchemaControl = documentSchema?.runtime.explicitSchemaControl;
+
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
 			// Increment the summary number for the next summary that will be generated.
 			summaryNumber: this.nextSummaryNumber++,
 			summaryFormatVersion: 1,
 			...this.garbageCollector.getMetadata(),
-			// The last message processed at the time of summary. If there are no new messages, use the message from the
-			// last summary.
-			message:
-				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
-				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorMode: this.idCompressorMode,
+			// If explicit document schema control is not on, use legacy way to supply last message (using 'message' property).
+			// Otherwise use new 'lastMessage' property, but also put content into the 'message' property that cases old
+			// runtimes (that preceed document schema control capabilities) to close container on load due to mismatch in
+			// last message's sequence number.
+			// See also lastMessageFromMetadata()
+			message: explitiSchemaControl
+				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
+				: message,
+			lastMessage: explitiSchemaControl ? message : undefined,
+			documentSchema,
 		};
+
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
 
@@ -2211,7 +2315,12 @@ export class ContainerRuntime
 			case ContainerMessageType.Alias:
 				return this.channelCollection.applyStashedOp(opContents);
 			case ContainerMessageType.IdAllocation:
-				assert(this.idCompressorMode !== "off", 0x8f1 /* ID compressor should be in use */);
+				assert(
+					this.idCompressorMode !== undefined,
+					0x8f1 /* ID compressor should be in use */,
+				);
+				return;
+			case ContainerMessageType.DocumentSchemaChange:
 				return;
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -2248,10 +2357,13 @@ export class ContainerRuntime
 		}
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
-		if (connected && this.idCompressorMode === "delayed" && !this.compressorLoadInitiated) {
-			this.compressorLoadInitiated = true;
-			this.createIdCompressor()
+	private async loadIdCompressor() {
+		if (
+			this._idCompressor === undefined &&
+			this.idCompressorMode !== undefined &&
+			this._loadIdCompressor === undefined
+		) {
+			this._loadIdCompressor = this.createIdCompressor()
 				.then((compressor) => {
 					this._idCompressor = compressor;
 					for (const range of this.pendingIdCompressorOps) {
@@ -2261,7 +2373,16 @@ export class ContainerRuntime
 				})
 				.catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+					throw error;
 				});
+		}
+		return this._loadIdCompressor;
+	}
+
+	public setConnectionState(connected: boolean, clientId?: string) {
+		if (connected && this.idCompressorMode === "delayed") {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.loadIdCompressor();
 		}
 		if (connected === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
@@ -2270,6 +2391,10 @@ export class ContainerRuntime
 			});
 			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
 			return;
+		}
+
+		if (!connected) {
+			this.documentsSchemaController.onDisconnect();
 		}
 
 		// If there are stashed blobs in the pending state, we need to delay
@@ -2503,6 +2628,13 @@ export class ContainerRuntime
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
 				assert(false, "should not even get here");
 			case ContainerMessageType.Rejoin:
+				break;
+			case ContainerMessageType.DocumentSchemaChange:
+				this.documentsSchemaController.processDocumentSchemaOp(
+					messageWithContext.message.contents,
+					messageWithContext.local,
+					messageWithContext.message.sequenceNumber,
+				);
 				break;
 			default: {
 				// If we didn't necessarily expect a runtime message type, then no worries - just return
@@ -2823,6 +2955,7 @@ export class ContainerRuntime
 				break;
 			}
 			case ContainerMessageType.IdAllocation:
+			case ContainerMessageType.DocumentSchemaChange:
 			case ContainerMessageType.GC: {
 				return false;
 			}
@@ -2939,6 +3072,9 @@ export class ContainerRuntime
 		// Wrap data store summaries in .channels subtree.
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
+
+		// Ensure that ID compressor had a chance to load, if we are using delayed mode.
+		await this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
 		return {
@@ -3673,9 +3809,6 @@ export class ContainerRuntime
 				const idAllocationBatchMessage: BatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					metadata: undefined,
-					localOpMetadata: undefined,
-					type: ContainerMessageType.IdAllocation,
 				};
 				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
@@ -3685,7 +3818,7 @@ export class ContainerRuntime
 	private submit(
 		containerRuntimeMessage: OutboundContainerRuntimeMessage,
 		localOpMetadata: unknown = undefined,
-		metadata: Record<string, unknown> | undefined = undefined,
+		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
 		this.verifyCanSubmitOps();
@@ -3694,6 +3827,12 @@ export class ContainerRuntime
 		assert(
 			this.attachState !== AttachState.Detached,
 			0x132 /* "sending ops in detached container" */,
+		);
+
+		assert(
+			metadata === undefined ||
+				containerRuntimeMessage.type === ContainerMessageType.BlobAttach,
+			"metadata",
 		);
 
 		const serializedContent = JSON.stringify(containerRuntimeMessage);
@@ -3710,7 +3849,6 @@ export class ContainerRuntime
 		const type = containerRuntimeMessage.type;
 		const message: BatchMessage = {
 			contents: serializedContent,
-			type,
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
@@ -3725,6 +3863,22 @@ export class ContainerRuntime
 				this.outbox.submitIdAllocation(message);
 			} else {
 				this.submitIdAllocationOpIfNeeded();
+
+				// Allow document schema controller to send a message if it needs to propose change in document schema.
+				// If it needs to send a message, it will call provided callback with payload of such message and rely
+				// on this callback to do actual sending.
+				this.documentsSchemaController.onMessageSent(
+					(contents: IDocumentSchemaChangeMessage) => {
+						const msg: ContainerRuntimeDocumentSchemaMessage = {
+							type: ContainerMessageType.DocumentSchemaChange,
+							contents,
+						};
+						this.outbox.submit({
+							contents: JSON.stringify(msg),
+							referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+						});
+					},
+				);
 
 				// If this is attach message for new data store, and we are in a batch, send this op out of order
 				// Is it safe:
@@ -3925,6 +4079,11 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.GC:
 				this.submit(message);
+				break;
+			case ContainerMessageType.DocumentSchemaChange:
+				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
+				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
+				// send any ops, as some other client already changed schema.
 				break;
 			default: {
 				// This case should be very rare - it would imply an op was stashed from a
@@ -4215,9 +4374,6 @@ export class ContainerRuntime
 	}
 
 	private get groupedBatchingEnabled(): boolean {
-		const killSwitch = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableGroupedBatching",
-		);
-		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
+		return this.documentSchema.opGroupingEnabled === true;
 	}
 }

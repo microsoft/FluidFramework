@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	BranchRebaseResult,
 	ChangeFamily,
@@ -25,6 +26,7 @@ import {
 	tagRollbackInverse,
 } from "../core/index.js";
 import { EventEmitter, ISubscribable } from "../events/index.js";
+
 import { TransactionStack } from "./transactionStack.js";
 
 /**

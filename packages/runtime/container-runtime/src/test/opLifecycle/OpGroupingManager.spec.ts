@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { ContainerMessageType } from "../../index.js";
 import {
 	BatchMessage,
@@ -32,7 +34,6 @@ describe("OpGroupingManager", () => {
 	});
 	const createMessage = (opHasMetadata: boolean) => ({
 		metadata: opHasMetadata ? { flag: true } : undefined,
-		localOpMetadata: undefined,
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents: "0",
 		referenceSequenceNumber: 0,
@@ -103,10 +104,8 @@ describe("OpGroupingManager", () => {
 				{
 					contents:
 						'{"type":"groupedBatch","contents":[{"contents":0},{"contents":0},{"contents":0},{"contents":0},{"contents":0}]}',
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: 0,
-					type: "groupedBatch",
 				},
 			]);
 		});

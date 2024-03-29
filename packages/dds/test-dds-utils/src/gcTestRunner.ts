@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import type { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**

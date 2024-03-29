@@ -4,6 +4,8 @@
  */
 
 import { strict as assert } from "assert";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -14,7 +16,8 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { SessionId, createIdCompressor } from "@fluidframework/id-compressor";
+import { SessionId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -33,8 +36,6 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/test";
 import { ICodecFamily, IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
 	AllowedUpdateType,
@@ -710,6 +711,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
+		forest?: IEditableForest;
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 		events?: ISubscribable<CheckoutEvents> &
@@ -717,7 +719,7 @@ export function flexTreeWithContent<TRoot extends FlexFieldSchema>(
 			HasListeners<CheckoutEvents>;
 	},
 ): FlexTreeTypedField<TRoot> {
-	const forest = forestWithContent(content);
+	const forest = args?.forest ?? forestWithContent(content);
 	const branch = createTreeCheckout(testIdCompressor, testRevisionTagCodec, {
 		...args,
 		forest,

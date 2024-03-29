@@ -15,7 +15,7 @@ trigger:
     - release/*
 
 extends:
-  template: /tools/pipelines/templates/1ES/build-npm-package.yml@self
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
     publish: false
     taskLint: false

@@ -33,6 +33,7 @@ import {
 	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
+
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -310,7 +311,9 @@ export class DocumentDeltaConnection
 		return this.details.initialClients;
 	}
 
-	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
+	protected emitMessages(type: "submitSignal", messages: string[][]): void;
+	protected emitMessages(type: string, messages: unknown): void {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
@@ -335,7 +338,7 @@ export class DocumentDeltaConnection
 	 * @param content - Content of the signal.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
 		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {

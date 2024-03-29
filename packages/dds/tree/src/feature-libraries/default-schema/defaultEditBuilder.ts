@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -36,6 +37,7 @@ import {
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
@@ -244,10 +246,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				edits.push(edit);
 
-				this.modularBuilder.submitChanges(
-					edits,
-					newContent === undefined ? detachId : fillId,
-				);
+				this.modularBuilder.submitChanges(edits);
 			},
 		};
 	}
@@ -310,23 +309,20 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			}
 			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, moveId);
 			const moveIn = sequence.changeHandler.editor.moveIn(destIndex, count, moveId);
-			this.modularBuilder.submitChanges(
-				[
-					{
-						type: "field",
-						field: sourceField,
-						fieldKind: sequence.identifier,
-						change: brand(moveOut),
-					},
-					{
-						type: "field",
-						field: adjustedAttachField,
-						fieldKind: sequence.identifier,
-						change: brand(moveIn),
-					},
-				],
-				moveId,
-			);
+			this.modularBuilder.submitChanges([
+				{
+					type: "field",
+					field: sourceField,
+					fieldKind: sequence.identifier,
+					change: brand(moveOut),
+				},
+				{
+					type: "field",
+					field: adjustedAttachField,
+					fieldKind: sequence.identifier,
+					change: brand(moveIn),
+				},
+			]);
 		}
 	}
 
@@ -352,7 +348,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.
-				this.modularBuilder.submitChanges([build, attach], brand(firstId + length - 1));
+				this.modularBuilder.submitChanges([build, attach]);
 			},
 			remove: (index: number, count: number): void => {
 				if (count === 0) {

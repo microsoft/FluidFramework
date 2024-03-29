@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator,
@@ -16,7 +17,9 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,
@@ -25,7 +28,12 @@ import {
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
-import { applyFieldEdit, applySynchronizationOp, applyUndoRedoEdit } from "./fuzzEditReducers.js";
+import {
+	applyFieldEdit,
+	applySchemaOp,
+	applySynchronizationOp,
+	applyUndoRedoEdit,
+} from "./fuzzEditReducers.js";
 import { deterministicIdCompressorFactory, isRevertibleSharedTreeView } from "./fuzzUtils.js";
 import { Operation } from "./operationTypes.js";
 
@@ -68,6 +76,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, Branched
 		applySynchronizationOp(state);
 		return state;
 	},
+	schema: async (state, operation) => {
+		applySchemaOp(state, operation);
+	},
 });
 
 /**
@@ -82,6 +93,8 @@ describe("Fuzz - composed vs individual changes", () => {
 	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
+	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
+	// assert 0x675, "Expected branch to be tracked"
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
 		remove: 2,
@@ -94,6 +107,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		},
 		start: 0,
 		commit: 0,
+		schema: 0,
 	};
 
 	describe("converges to the same tree", () => {

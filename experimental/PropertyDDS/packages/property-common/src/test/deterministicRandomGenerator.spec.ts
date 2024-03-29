@@ -8,6 +8,7 @@
  */
 
 import { expect } from "chai";
+
 import { DeterministicRandomGenerator } from "../deterministicRandomGenerator";
 
 describe("property-common.DeterministicRandomGenerator", function () {

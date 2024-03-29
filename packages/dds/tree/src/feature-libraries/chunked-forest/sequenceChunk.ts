@@ -4,6 +4,7 @@
  */
 
 import { ReferenceCountedBase } from "../../util/index.js";
+
 import { BasicChunkCursor } from "./basicChunk.js";
 import { ChunkedCursor, TreeChunk, dummyRoot } from "./chunk.js";
 
