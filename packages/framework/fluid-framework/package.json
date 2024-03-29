@@ -15,26 +15,6 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/fluid-framework-public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/fluid-framework-public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/fluid-framework-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/fluid-framework-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
-			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			},
