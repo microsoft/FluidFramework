@@ -72,7 +72,7 @@ import {
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
 import { LazyNodeKeyField, makeField } from "./lazyField.js";
-import { FlexTreeNodeEvents, TreeEvent } from "./treeEvents.js";
+import { FlexTreeNodeEvents } from "./treeEvents.js";
 import { unboxedField } from "./unboxed.js";
 import { treeStatusFromAnchorCache } from "./utilities.js";
 
@@ -283,7 +283,7 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+						listener(anchorNode),
 				);
 				return unsubscribeFromChildrenChange;
 			}
@@ -294,26 +294,9 @@ export abstract class LazyTreeNode<TSchema extends FlexTreeNodeSchema = FlexTree
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for afterChange.
-						listener(anchorNode as unknown as AnchorNode & TreeEvent),
+						listener(anchorNode),
 				);
 				return unsubscribeFromSubtreeChange;
-			}
-			case "afterChange": {
-				const unsubscribeFromChildrenAfterChange = this.anchorNode.on(
-					"afterChange",
-					(anchorNode: AnchorNode) => {
-						const treeNode = anchorNode.slots.get(flexTreeSlot);
-						assert(
-							treeNode !== undefined,
-							0x7d4 /* tree node not found in anchor node slots */,
-						);
-						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
-						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
-						// for changing and subtreeChanging match the one for afterChange.
-						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
-					},
-				);
-				return unsubscribeFromChildrenAfterChange;
 			}
 			default:
 				unreachableCase(eventName);

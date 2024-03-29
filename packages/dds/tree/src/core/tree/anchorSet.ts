@@ -113,14 +113,6 @@ export interface AnchorEvents {
 	childrenChanged(anchor: AnchorNode): void;
 
 	/**
-	 * After a change in this subtree happened.
-	 *
-	 * @remarks
-	 * Includes edits of child subtrees.
-	 */
-	afterChange(anchor: AnchorNode): void;
-
-	/**
 	 * Something in this tree is changing.
 	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
@@ -663,23 +655,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 			},
-			// Run `withNode` on every node from the current `this.parent` to the root.
-			// Should only be called when in a field.
-			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
-				assert(
-					this.parentField !== undefined,
-					0x7cd /* Must be in a field to call withNodeUpToRoot */,
-				);
-				// This function gets called when we attach a node to the root field, in which case there is no parent.
-				// It's expected this will do nothing in that case.
-				let currentParent: UpPath | undefined = this.parent;
-				while (currentParent !== undefined) {
-					if (currentParent instanceof PathNode) {
-						withNode(currentParent);
-					}
-					currentParent = currentParent.parent;
-				}
-			},
 			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
 			// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
 			// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
@@ -740,9 +715,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
-				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterAttach(sourcePath, destinationPath);
@@ -805,9 +777,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					start: 0,
 					end: count,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -888,9 +857,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: oldContent,
 					start: 0,
 					end: newContent.end - newContent.start,
-				});
-				this.withParentNodeUpToRoot((p) => {
-					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {

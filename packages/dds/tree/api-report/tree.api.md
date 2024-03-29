@@ -63,7 +63,6 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @internal
 export interface AnchorEvents {
-    afterChange(anchor: AnchorNode): void;
     afterDestroy(anchor: AnchorNode): void;
     childrenChanged(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
@@ -743,7 +742,6 @@ export interface FlexTreeNode extends FlexTreeEntity<FlexTreeNodeSchema> {
 
 // @internal
 export interface FlexTreeNodeEvents {
-    afterChange(event: TreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -1848,11 +1846,6 @@ export interface TreeContent<TRoot extends FlexFieldSchema = FlexFieldSchema> ex
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
     readonly schema: FlexTreeSchema;
-}
-
-// @internal
-export interface TreeEvent {
-    readonly target: FlexTreeNode;
 }
 
 // @public
