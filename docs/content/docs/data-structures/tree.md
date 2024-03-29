@@ -387,10 +387,10 @@ The `set()` method sets/changes the value of the item with the specified key. If
 -   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ```typescript
-delete(key: string): boolean
+delete(key: string): void
 ```
 
-The `delete()` method removes the item with the specified key. If the key is not present, the method returns `false`. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
+The `delete()` method removes the item with the specified key. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ##### Map node properties
 
