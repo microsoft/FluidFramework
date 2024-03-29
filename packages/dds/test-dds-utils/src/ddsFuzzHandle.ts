@@ -29,21 +29,21 @@ export class DDSFuzzHandle implements IFluidHandle {
 		// public get: () => Promise<any>,
 		private readonly onAttachGraph?: () => void,
 	) {
-		this.absolutePath = generateHandleContextPath(uuid() as string, this.routeContext);
+		this.absolutePath = generateHandleContextPath(uuid(), this.routeContext);
 	}
 
 	public async get(): Promise<any> {
 		return this.absolutePath;
 	}
 
-	public attachGraph() {
+	public attachGraph(): void {
 		if (!this.attached) {
 			this.attached = true;
 			this.onAttachGraph?.();
 		}
 	}
 
-	public bind(handle: IFluidHandle) {
+	public bind(handle: IFluidHandle): void {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
