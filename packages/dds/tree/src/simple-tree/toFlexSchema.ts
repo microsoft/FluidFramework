@@ -224,13 +224,23 @@ export function convertNodeSchema(
 			case NodeKind.Object: {
 				const info = schema.info as Record<string, ImplicitFieldSchema>;
 				const fields: Record<string, FlexFieldSchema> = Object.create(null);
-				for (const [key, value] of Object.entries(info)) {
+				for (const [viewKey, implicitFieldSchema] of Object.entries(info)) {
+					// If a `stableName` was provided, use it as the key in the flex schema.
+					// Otherwise, use the developer-facing key.
+					let flexKey: string = viewKey;
+					if (
+						implicitFieldSchema instanceof FieldSchema &&
+						implicitFieldSchema.props?.key !== undefined
+					) {
+						flexKey = implicitFieldSchema.props.key;
+					}
+
 					// This code has to be careful to avoid assigning to __proto__ or similar built-in fields.
-					Object.defineProperty(fields, key, {
+					Object.defineProperty(fields, flexKey, {
 						enumerable: true,
 						configurable: false,
 						writable: false,
-						value: convertField(schemaMap, value),
+						value: convertField(schemaMap, implicitFieldSchema),
 					});
 				}
 				const cached = cachedFlexSchemaFromClassSchema(schema);

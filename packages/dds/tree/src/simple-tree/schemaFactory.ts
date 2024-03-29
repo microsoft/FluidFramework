@@ -293,6 +293,7 @@ export class SchemaFactory<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(name: Name, fields: T) {
+		// TODO: key validation
 		class schema extends this.nodeSchema(name, NodeKind.Object, fields, true) {
 			public constructor(input: InsertableObjectFromSchemaRecord<T>) {
 				super(input);
@@ -324,7 +325,11 @@ export class SchemaFactory<
 					? input
 					: createRawNode(flexSchema, copyContent(flexSchema.name, input) as object);
 
-				const proxy: TreeNode = createObjectProxy(flexSchema, customizable, proxyTarget);
+				const proxy: TreeNode = createObjectProxy(
+					this.constructor as TreeNodeSchema,
+					customizable,
+					proxyTarget,
+				);
 				setFlexNode(proxy, flexNode);
 				return proxy as unknown as schema;
 			}
