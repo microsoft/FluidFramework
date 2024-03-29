@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISnapshot } from "@fluidframework/driver-definitions";
+import { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import {
 	IFileEntry,

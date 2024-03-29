@@ -5,7 +5,8 @@
 
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { type IChannelFactory } from "@fluidframework/datastore-definitions";
-import { DirectoryFactory, MapFactory, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMap } from "@fluidframework/map";
+import { DirectoryFactory, MapFactory, SharedDirectory } from "@fluidframework/map/internal";
 import { type NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
 import { type FluidObjectSymbolProvider } from "@fluidframework/synthesize";
 

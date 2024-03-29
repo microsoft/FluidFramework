@@ -11,7 +11,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ILoaderOptions } from "@fluidframework/container-definitions";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
@@ -21,7 +21,8 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { IDirectory, ISharedDirectory } from "@fluidframework/map/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";

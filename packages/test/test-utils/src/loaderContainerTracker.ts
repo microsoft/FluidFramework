@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IDeltaQueue, IHostLoader } from "@fluidframework/container-definitions";
+import { IDeltaQueue } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,

@@ -11,7 +11,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,

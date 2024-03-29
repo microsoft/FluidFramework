@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IResolvedUrl } from "@fluidframework/driver-definitions";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { IOdspResolvedUrl, ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions";
 import type { IClient } from "@fluidframework/protocol-definitions";

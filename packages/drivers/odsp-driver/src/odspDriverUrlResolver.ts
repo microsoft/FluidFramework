@@ -10,7 +10,7 @@ import {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
-} from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { IOdspResolvedUrl, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
 
