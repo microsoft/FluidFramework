@@ -53,6 +53,7 @@ import { TreeContent } from "../../../shared-tree/index.js";
 import { brand, capitalize } from "../../../util/index.js";
 import {
 	failCodec,
+	failCodecFamily,
 	flexTreeViewWithContent,
 	forestWithContent,
 	testRevisionTagCodec,
@@ -325,9 +326,7 @@ describe("LazyNode", () => {
 		});
 
 		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-				jsonValidator: noopValidator,
-			}),
+			new DefaultChangeFamily(failCodecFamily),
 			(change: DefaultChangeset) => {
 				editCallCount++;
 			},
@@ -425,9 +424,7 @@ describe("LazyNode", () => {
 		});
 
 		const editBuilder = new DefaultEditBuilder(
-			new DefaultChangeFamily(testRevisionTagCodec, failCodec, {
-				jsonValidator: noopValidator,
-			}),
+			new DefaultChangeFamily(failCodecFamily),
 			(change: DefaultChangeset) => {
 				editCallCount++;
 			},

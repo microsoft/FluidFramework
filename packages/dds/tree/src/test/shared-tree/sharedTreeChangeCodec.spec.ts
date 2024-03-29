@@ -24,9 +24,8 @@ import {
 	ModularChangeset,
 	SequenceField,
 	defaultSchemaPolicy,
+	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeModularChangeCodecFamily } from "../../feature-libraries/modular-schema/modularChangeCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
 // eslint-disable-next-line import/no-internal-modules

@@ -105,6 +105,7 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
+	makeModularChangeCodecFamily,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,

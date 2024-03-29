@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
+import { ICodecFamily } from "../../codec/index.js";
 import {
 	ChangeEncodingContext,
 	ChangeFamily,
@@ -16,14 +16,12 @@ import {
 	DeltaRoot,
 	FieldUpPath,
 	ITreeCursorSynchronous,
-	RevisionTagCodec,
 	TaggedChange,
 	UpPath,
 	compareFieldUpPaths,
 	topDownPath,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { FieldBatchCodec } from "../chunked-forest/index.js";
 import {
 	EditDescription,
 	FieldChangeset,
@@ -35,10 +33,8 @@ import {
 	relevantRemovedRoots as relevantModularRemovedRoots,
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	fieldKindConfiguration,
-	fieldKindConfigurations,
 	optional,
 	sequence,
 	required as valueFieldKind,
@@ -54,20 +50,8 @@ export type DefaultChangeset = ModularChangeset;
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, DefaultChangeset> {
 	private readonly modularFamily: ModularChangeFamily;
 
-	public constructor(
-		revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategy,
-	) {
-		this.modularFamily = new ModularChangeFamily(
-			fieldKindConfiguration,
-			fieldKindConfigurations,
-			revisionTagCodec,
-			fieldBatchCodec,
-			codecOptions,
-			chunkCompressionStrategy,
-		);
+	public constructor(codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>) {
+		this.modularFamily = new ModularChangeFamily(fieldKindConfiguration, codecs);
 	}
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {

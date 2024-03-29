@@ -42,6 +42,7 @@ import {
 	defaultChunkPolicy,
 	genericFieldKind,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 } from "../../../feature-libraries/index.js";
 import {
 	ModularChangeFamily,
@@ -112,13 +113,14 @@ export const fieldKindConfiguration: FieldKindConfiguration = new Map<
 const codecOptions: ICodecOptions = {
 	jsonValidator: ajvValidator,
 };
-const family = new ModularChangeFamily(
-	fieldKindConfiguration,
+
+const codec = makeModularChangeCodecFamily(
 	new Map([[0, fieldKindConfiguration]]),
 	testRevisionTagCodec,
 	makeFieldBatchCodec(codecOptions),
 	codecOptions,
 );
+const family = new ModularChangeFamily(fieldKindConfiguration, codec);
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();

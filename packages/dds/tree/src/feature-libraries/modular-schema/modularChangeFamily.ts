@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
+import { ICodecFamily } from "../../codec/index.js";
 import {
 	ChangeAtomIdMap,
 	ChangeEncodingContext,
@@ -62,7 +62,6 @@ import {
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
-import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 import {
 	CrossFieldManager,
 	CrossFieldMap,
@@ -79,7 +78,6 @@ import { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";
-import { makeModularChangeCodecFamily } from "./modularChangeCodecs.js";
 import {
 	FieldChange,
 	FieldChangeMap,
@@ -97,8 +95,6 @@ export class ModularChangeFamily
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
-	public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>;
-
 	/**
 	 * The configured set of field kinds that should be used in this SharedTree.
 	 * @privateRemarks
@@ -112,20 +108,9 @@ export class ModularChangeFamily
 
 	public constructor(
 		fieldKinds: FieldKindConfiguration,
-		fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
-		revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
-		codecOptions: ICodecOptions,
-		chunkCompressionStrategy?: TreeCompressionStrategy,
+		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
 	) {
 		this.fieldKinds = fieldKinds;
-		this.codecs = makeModularChangeCodecFamily(
-			fieldKindConfigurations,
-			revisionTagCodec,
-			fieldBatchCodec,
-			codecOptions,
-			chunkCompressionStrategy,
-		);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {

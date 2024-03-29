@@ -34,9 +34,11 @@ import {
 	buildChunkedForest,
 	createMockNodeKeyManager,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	getTreeContext,
 	intoStoredSchema,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries/index.js";
 import { ForestType } from "../../../shared-tree/index.js";
@@ -84,10 +86,14 @@ describe("End to end chunked encoding", () => {
 			const changeReceiver = (change: ModularChangeset) => {
 				changeLog.push(change);
 			};
+			const codec = makeModularChangeCodecFamily(
+				fieldKindConfigurations,
+				revisionTagCodec,
+				fieldBatchCodec,
+				{ jsonValidator: typeboxValidator },
+			);
 			const dummyEditor = new DefaultEditBuilder(
-				new DefaultChangeFamily(revisionTagCodec, fieldBatchCodec, {
-					jsonValidator: typeboxValidator,
-				}),
+				new DefaultChangeFamily(codec),
 				changeReceiver,
 			);
 			return getTreeContext(

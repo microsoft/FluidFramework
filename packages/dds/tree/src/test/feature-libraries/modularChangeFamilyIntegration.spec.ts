@@ -41,10 +41,9 @@ import { IdAllocator, Mutable, brand, idAllocatorFromMaxId } from "../../util/in
 import {
 	assertDeltaEqual,
 	defaultRevisionMetadataFromChanges,
-	failCodec,
+	failCodecFamily,
 	mintRevisionTag,
 	testChangeReceiver,
-	testRevisionTagCodec,
 } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits.js";
@@ -55,15 +54,7 @@ const fieldKinds: FieldKindConfiguration = new Map([
 	[sequence.identifier, { kind: sequence, formatVersion: 0 }],
 ]);
 
-const family = new ModularChangeFamily(
-	fieldKinds,
-	new Map([[0, fieldKinds]]),
-	testRevisionTagCodec,
-	failCodec,
-	{
-		jsonValidator: typeboxValidator,
-	},
-);
+const family = new ModularChangeFamily(fieldKinds, failCodecFamily);
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");

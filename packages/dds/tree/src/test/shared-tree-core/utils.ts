@@ -14,7 +14,9 @@ import {
 	DefaultEditBuilder,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
+	fieldKindConfigurations,
 	makeFieldBatchCodec,
+	makeModularChangeCodecFamily,
 } from "../../feature-libraries/index.js";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core/index.js";
 import { testRevisionTagCodec } from "../utils.js";
@@ -41,14 +43,16 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		const codecOptions: ICodecOptions = {
 			jsonValidator: typeboxValidator,
 		};
+		const codec = makeModularChangeCodecFamily(
+			fieldKindConfigurations,
+			testRevisionTagCodec,
+			makeFieldBatchCodec(codecOptions),
+			codecOptions,
+			chunkCompressionStrategy,
+		);
 		super(
 			summarizables,
-			new DefaultChangeFamily(
-				testRevisionTagCodec,
-				makeFieldBatchCodec(codecOptions),
-				codecOptions,
-				chunkCompressionStrategy,
-			),
+			new DefaultChangeFamily(codec),
 			{ ...codecOptions, writeVersion: 1 },
 			id,
 			runtime,

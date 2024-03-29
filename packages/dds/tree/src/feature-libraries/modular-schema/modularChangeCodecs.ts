@@ -68,7 +68,7 @@ export function makeModularChangeCodecFamily(
 	// The current model is sufficient to make backward compatible changes to the codec in this file, but a little weird:
 	// to make such a change, you'd:
 	// - add an entry to the fieldKindConfigurations passed to this function which changed no children versions
-	// - Either pass the version as a parameter to `makeModularChangeCodec` if the format
+	// - Either pass the version as a parameter to `makeModularChangeCodec` (probably renaming the function) if the format
 	// change is small, OR call some other codec creation function when `version` is above some value (if the format
 	// change is large/it doesn't make sense to do much code sharing with `makeModularChangeCodec`)
 	//

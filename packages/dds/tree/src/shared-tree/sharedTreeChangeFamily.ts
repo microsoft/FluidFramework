@@ -21,6 +21,7 @@ import {
 	TreeCompressionStrategy,
 	fieldKindConfiguration,
 	fieldKindConfigurations,
+	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
@@ -50,13 +51,16 @@ export class SharedTreeChangeFamily
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
 	) {
-		this.modularChangeFamily = new ModularChangeFamily(
-			fieldKindConfiguration,
+		const modularChangeCodec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			revisionTagCodec,
 			fieldBatchCodec,
 			codecOptions,
 			chunkCompressionStrategy,
+		);
+		this.modularChangeFamily = new ModularChangeFamily(
+			fieldKindConfiguration,
+			modularChangeCodec,
 		);
 		this.codecs = makeSharedTreeChangeCodecFamily(
 			this.modularChangeFamily.codecs,
