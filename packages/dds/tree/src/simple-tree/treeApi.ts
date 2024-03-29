@@ -16,8 +16,9 @@ import {
 } from "../feature-libraries/index.js";
 import { brand, fail } from "../util/index.js";
 
-import { getOrCreateNodeProxy, getProxyForField, getSimpleSchema } from "./proxies.js";
+import { getOrCreateNodeProxy, getProxyForField } from "./proxies.js";
 import { getFlexNode, tryGetFlexNode } from "./proxyBinding.js";
+import { tryGetSimpleNodeSchema } from "./schemaCaching.js";
 import { schemaFromValue } from "./schemaFactory.js";
 import {
 	NodeFromSchema,
@@ -182,7 +183,7 @@ export const treeNodeApi: TreeNodeApi = {
 		if (isTreeValue(node)) {
 			return schemaFromValue(node) as TreeNodeSchema<string, NodeKind, unknown, T>;
 		}
-		return getSimpleSchema(getFlexNode(node).schema) as TreeNodeSchema<
+		return tryGetSimpleNodeSchema(getFlexNode(node).schema) as TreeNodeSchema<
 			string,
 			NodeKind,
 			unknown,

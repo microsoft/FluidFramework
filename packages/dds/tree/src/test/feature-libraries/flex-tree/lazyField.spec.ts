@@ -283,7 +283,7 @@ describe("LazyField", () => {
 		context[disposeSymbol]();
 	});
 
-	it.skip("Disposes when context then parent is disposed", () => {
+	it("Disposes when context then parent is disposed", () => {
 		const builder = new SchemaBuilderBase(FieldKinds.required, {
 			scope: "LazyField",
 			libraries: [leafDomain.library],

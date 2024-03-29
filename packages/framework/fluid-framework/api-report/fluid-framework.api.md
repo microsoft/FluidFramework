@@ -147,6 +147,7 @@ export class FieldSchema<out Kind extends FieldKind = FieldKind, out Types exten
     allowedTypes: Types,
     props?: FieldProps | undefined);
     readonly allowedTypes: Types;
+    get allowedTypeSet(): ReadonlySet<TreeNodeSchema>;
     readonly kind: Kind;
     readonly props?: FieldProps | undefined;
     protected _typeCheck?: MakeNominal;
