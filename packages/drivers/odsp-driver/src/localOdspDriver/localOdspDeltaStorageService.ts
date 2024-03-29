@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { validateMessages } from "@fluidframework/driver-base";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { validateMessages } from "@fluidframework/driver-base";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 /**
  * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages

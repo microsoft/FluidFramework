@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	EmptyKey,
 	FieldKey,
@@ -19,11 +20,11 @@ import {
 import {
 	Any,
 	FieldKinds,
-	LeafNodeSchema,
+	FlexFieldSchema,
 	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
-	FlexFieldSchema,
 	FlexTreeNodeSchema,
+	LeafNodeSchema,
 	TreeNodeSchemaBase,
 } from "../../feature-libraries/index.js";
 import {

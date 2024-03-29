@@ -5,20 +5,27 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/id-compressor";
+
 import {
-	FieldKey,
-	TreeNavigationResult,
-	ITreeSubscriptionCursor,
 	CursorLocationType,
 	FieldAnchor,
-	inCursorNode,
+	FieldKey,
 	FieldUpPath,
-	keyAsDetachedField,
-	iterateCursorField,
-	isCursor,
 	ITreeCursorSynchronous,
+	ITreeSubscriptionCursor,
+	TreeNavigationResult,
+	inCursorNode,
+	isCursor,
+	iterateCursorField,
+	keyAsDetachedField,
 } from "../../core/index.js";
-import { FlexFieldKind } from "../modular-schema/index.js";
+import {
+	assertValidIndex,
+	assertValidRangeIndices,
+	brand,
+	disposeSymbol,
+	fail,
+} from "../../util/index.js";
 // TODO: stop depending on contextuallyTyped
 import { applyTypesFromContext, cursorFromContextualData } from "../contextuallyTyped.js";
 import {
@@ -27,34 +34,28 @@ import {
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
 } from "../default-schema/index.js";
-import {
-	assertValidIndex,
-	assertValidRangeIndices,
-	brand,
-	disposeSymbol,
-	fail,
-} from "../../util/index.js";
-import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
-import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
 import { cursorForMapTreeField } from "../mapTreeCursor.js";
+import { FlexFieldKind } from "../modular-schema/index.js";
+import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key/index.js";
+import { FlexAllowedTypes, FlexFieldSchema } from "../typed-schema/index.js";
+
 import { Context } from "./context.js";
 import {
-	FlexibleNodeContent,
+	FlexTreeEntityKind,
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeNodeKeyField,
 	FlexTreeOptionalField,
+	FlexTreeRequiredField,
 	FlexTreeSequenceField,
 	FlexTreeTypedField,
 	FlexTreeTypedNodeUnion,
 	FlexTreeUnboxNodeUnion,
-	FlexTreeField,
-	FlexTreeNode,
-	FlexTreeRequiredField,
-	TreeStatus,
-	FlexTreeNodeKeyField,
+	FlexibleNodeContent,
 	FlexibleNodeSubSequence,
-	FlexTreeEntityKind,
+	TreeStatus,
 	flexTreeMarker,
 } from "./flexTreeTypes.js";
-import { makeTree } from "./lazyNode.js";
 import {
 	LazyEntity,
 	anchorSymbol,
@@ -63,6 +64,7 @@ import {
 	isFreedSymbol,
 	tryMoveCursorToAnchorSymbol,
 } from "./lazyEntity.js";
+import { makeTree } from "./lazyNode.js";
 import { unboxedUnion } from "./unboxed.js";
 import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilities.js";
 
@@ -103,17 +105,6 @@ export function makeField(
 		cursor,
 		fieldAnchor,
 	);
-
-	// Fields currently live as long as their parent does.
-	// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
-	if (fieldAnchor.parent !== undefined) {
-		const anchorNode =
-			context.forest.anchors.locate(fieldAnchor.parent) ??
-			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDestroy", () => {
-			field[disposeSymbol]();
-		});
-	}
 	return field;
 }
 
@@ -130,6 +121,12 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 	public readonly key: FieldKey;
 
+	/**
+	 * If this field ends its lifetime before the Anchor does, this needs to be invoked to avoid a double free
+	 * if/when the Anchor is destroyed.
+	 */
+	private readonly offAfterDestroy?: () => void;
+
 	public constructor(
 		context: Context,
 		schema: FlexFieldSchema<TKind, TTypes>,
@@ -139,6 +136,16 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 		super(context, schema, cursor, fieldAnchor);
 		assert(cursor.mode === CursorLocationType.Fields, 0x77b /* must be in fields mode */);
 		this.key = cursor.getFieldKey();
+		// Fields currently live as long as their parent does.
+		// For root fields, this means forever, but other cases can be cleaned up when their parent anchor is deleted.
+		if (fieldAnchor.parent !== undefined) {
+			const anchorNode =
+				context.forest.anchors.locate(fieldAnchor.parent) ??
+				fail("parent anchor node should always exist since field is under a node");
+			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
+				this[disposeSymbol]();
+			});
+		}
 	}
 
 	public is<TSchema extends FlexFieldSchema>(
@@ -155,7 +162,7 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	public isSameAs(other: FlexTreeField): boolean {
 		assert(
 			other.context === this.context,
-			0x77d /* Content from different editable trees should not be used together */,
+			0x77d /* Content from different flex trees should not be used together */,
 		);
 		return this.key === other.key && this.parent === other.parent;
 	}
@@ -173,15 +180,15 @@ export abstract class LazyField<TKind extends FlexFieldKind, TTypes extends Flex
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
-		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.forest.tryMoveCursorToField(anchor, cursor);
+		return this.context.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
 	}
 
-	protected override [forgetAnchorSymbol](anchor: FieldAnchor): void {
-		if (anchor.parent === undefined) return;
-		this.context.forest.anchors.forget(anchor.parent);
+	protected override [forgetAnchorSymbol](): void {
+		this.offAfterDestroy?.();
+		if (this[anchorSymbol].parent === undefined) return;
+		this.context.forest.anchors.forget(this[anchorSymbol].parent);
 	}
 
 	public get length(): number {
@@ -579,7 +586,7 @@ const kindToClass: ReadonlyMap<FlexFieldKind, Builder> = new Map(builderList);
 function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields mode");
+	assert(cursor.mode === CursorLocationType.Fields, 0x8cb /* should be in fields mode */);
 	return cursor;
 }
 

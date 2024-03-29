@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap } from "@fluidframework/map";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 
 /**
@@ -23,10 +23,10 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * @internal
  */
 export function createSharedMapWithInterception(
-	sharedMap: SharedMap,
+	sharedMap: ISharedMap,
 	context: IFluidDataStoreContext,
 	setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void,
-): SharedMap {
+): ISharedMap {
 	const sharedMapWithInterception = Object.create(sharedMap);
 
 	// executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
@@ -54,5 +54,5 @@ export function createSharedMapWithInterception(
 		return map;
 	};
 
-	return sharedMapWithInterception as SharedMap;
+	return sharedMapWithInterception as ISharedMap;
 }

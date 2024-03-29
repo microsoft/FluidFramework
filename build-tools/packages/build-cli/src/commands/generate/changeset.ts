@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Package } from "@fluidframework/build-tools";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
@@ -44,8 +45,12 @@ interface Choice {
 	heading?: boolean;
 }
 
-export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
-	static readonly summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+export default class GenerateChangesetCommand extends BaseCommand<
+	typeof GenerateChangesetCommand
+> {
+	static readonly summary =
+		`Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+
 	static readonly aliases: string[] = [
 		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",
@@ -261,8 +266,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
 				choices: [...choices, { title: " ", heading: true, disabled: true }],
 				instructions: INSTRUCTIONS,
-				message:
-					"Choose which packages to include in the changeset. Type to filter the list.",
+				message: "Choose which packages to include in the changeset. Type to filter the list.",
 				optionsPerPage: 5,
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

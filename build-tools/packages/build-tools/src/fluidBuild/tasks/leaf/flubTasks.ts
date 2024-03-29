@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { existsSync } from "fs";
 import { LeafWithDoneFileTask } from "./leafTask";
 import path from "path";
@@ -57,7 +58,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 					packageJson: Array.from(this.node.buildContext.repoPackageMap.values()).map(
 						(pkg) => pkg.packageJson,
 					),
-			  })
+				})
 			: undefined;
 	}
 }

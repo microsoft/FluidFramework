@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
@@ -10,7 +11,12 @@ import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 
-import { difference, getPreReleaseDependencies, npmCheckUpdates, setVersion } from "../library";
+import {
+	difference,
+	getPreReleaseDependencies,
+	npmCheckUpdates,
+	setVersion,
+} from "../library";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
@@ -118,7 +124,7 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 			isReleaseGroup(releaseGroup)
 				? context.packagesInReleaseGroup(releaseGroup)
 				: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  [context.fullPackageMap.get(releaseGroup)!],
+					[context.fullPackageMap.get(releaseGroup)!],
 		);
 		// There were updates, which is considered a failure.
 		BaseStateHandler.signalFailure(machine, state);
@@ -153,9 +159,9 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 
 	const rgRepo = isReleaseGroup(releaseGroup)
 		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  context.repo.releaseGroups.get(releaseGroup)!
+			context.repo.releaseGroups.get(releaseGroup)!
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  context.fullPackageMap.get(releaseGroup)!;
+			context.fullPackageMap.get(releaseGroup)!;
 
 	const scheme = detectVersionScheme(releaseVersion);
 	const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);

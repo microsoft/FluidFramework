@@ -4,8 +4,10 @@
  */
 
 import { strict as assert } from "assert";
+
+import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
-import { Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
 	IContainer,
@@ -15,32 +17,32 @@ import {
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
-import { DataStoreMessageType } from "@fluidframework/datastore";
+import { Deferred } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import type { SharedMap, SharedDirectory } from "@fluidframework/map";
+import type { ISharedMap, SharedDirectory } from "@fluidframework/map";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import type { SharedString } from "@fluidframework/sequence";
-import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils";
 import {
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ITestObjectProvider,
 	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
+	ITestObjectProvider,
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
-	waitForContainerConnection,
-	timeoutPromise,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	timeoutPromise,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+
+import { wrapObjectAndOverride } from "../mocking.js";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -69,6 +71,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		ConsensusQueue,
 		SparseMatrix,
 	} = apis.dds;
+	const { DataStoreMessageType } = apis.dataRuntime.packages.datastore;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],
@@ -223,7 +226,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		// Load a second container and validate it can load the DDS.
 		const container2 = await loader.resolve({ url });
 		const dsClient2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
-		const mapClient2 = await dsClient2.root.get<IFluidHandle<SharedMap>>("map")?.get();
+		const mapClient2 = await dsClient2.root.get<IFluidHandle<ISharedMap>>("map")?.get();
 		assert(mapClient2 !== undefined, "Map is not available in the second client");
 
 		// Make a change in the first client's DDS and validate that the change is reflected in the second client.
@@ -358,7 +361,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		// Get the root dataStore from the detached container.
 		const dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
-		const testChannel1 = await dataStore.getSharedObject<SharedMap>(sharedMapId);
+		const testChannel1 = await dataStore.getSharedObject<ISharedMap>(sharedMapId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
@@ -475,6 +478,9 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {
+				return;
+			}
+			if (message.type === ContainerMessageType.IdAllocation) {
 				return;
 			}
 			try {
@@ -1033,12 +1039,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 											existing,
 										);
 
-									return new Proxy(runtime, {
-										get: (t, p: keyof IRuntime, r): any => {
-											if (p === "createSummary") {
-												assert.fail("runtime.createSummary failed!");
-											}
-											return Reflect.get(t, p, r);
+									return wrapObjectAndOverride<IRuntime>(runtime, {
+										createSummary: () => () => {
+											assert.fail("runtime.createSummary failed!");
 										},
 									});
 								},
@@ -1093,12 +1096,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 											existing,
 										);
 
-									return new Proxy(runtime, {
-										get: (t, p: keyof IRuntime, r): any => {
-											if (p === "setAttachState") {
-												assert.fail("runtime.setAttachState failed!");
-											}
-											return Reflect.get(t, p, r);
+									return wrapObjectAndOverride<IRuntime>(runtime, {
+										setAttachState: () => () => {
+											assert.fail("runtime.setAttachState failed!");
 										},
 									});
 								},

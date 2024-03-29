@@ -5,25 +5,28 @@
 
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
-	generateStack,
+	type ITelemetryGenericEventExt,
 	ITelemetryLoggerExt,
 	MonitoringContext,
+	generateStack,
 	tagCodeArtifacts,
-	type ITelemetryGenericEventExt,
 } from "@fluidframework/telemetry-utils";
-import { RuntimeHeaderData } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
+
+import { RuntimeHeaderData } from "../containerRuntime.js";
+import { ICreateContainerMetadata } from "../summary/index.js";
+
 import {
-	GCNodeType,
-	UnreferencedState,
-	IGarbageCollectorConfigs,
-	disableTombstoneKey,
-	throwOnTombstoneUsageKey,
-	throwOnTombstoneLoadOverrideKey,
-	runSweepKey,
 	GCFeatureMatrix,
-} from "./gcDefinitions";
-import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+	GCNodeType,
+	IGarbageCollectorConfigs,
+	UnreferencedState,
+	disableTombstoneKey,
+	runSweepKey,
+	throwOnTombstoneLoadOverrideKey,
+	throwOnTombstoneUsageKey,
+} from "./gcDefinitions.js";
+import { getGCVersionInEffect } from "./gcHelpers.js";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -429,6 +432,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
 	});
+	event.gcVersion = getGCVersionInEffect(mc.config);
 
 	mc.logger.sendTelemetryEvent(event, error);
 }

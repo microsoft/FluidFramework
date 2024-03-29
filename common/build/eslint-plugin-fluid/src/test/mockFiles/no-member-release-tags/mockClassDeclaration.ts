@@ -20,12 +20,12 @@ class MockClass {
 	/**
 	 * @beta
 	 */
-	inValidBeta(): void {}
+	invalidBeta(): void {}
 
 	/**
 	 * @public
 	 */
-	inValidPublic(): void {}
+	invalidPublic(): void {}
 
 	//@public
 	invalidLineComment(): void {}

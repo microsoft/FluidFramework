@@ -6,15 +6,19 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
-import { generateStrings, LocationBase } from "./generateSharedStrings";
+
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedString } from "../sharedString.js";
+
+import { _dirname } from "./dirname.cjs";
+import { LocationBase, generateStrings } from "./generateSharedStrings.js";
 
 function assertIntervalCollectionsAreEquivalent(
 	actual: SharedString,
@@ -70,7 +74,7 @@ describe("SharedString Snapshot Version", () => {
 		"and then run npm test:newsnapfiles to create new snapshot test files.";
 
 	before(() => {
-		fileBase = path.join(__dirname, `../../${LocationBase}`);
+		fileBase = path.join(_dirname, `../../${LocationBase}`);
 	});
 
 	async function loadSharedString(id: string, serializedSnapshot: string): Promise<SharedString> {

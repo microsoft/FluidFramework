@@ -1,5 +1,13 @@
 # @fluidframework/id-compressor
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   id-compressor: Deprecated ID compressor class has been removed from the public API. ([#19054](https://github.com/microsoft/FluidFramework/issues/19054)) [46a05617b2](https://github.com/microsoft/FluidFramework/commits/46a05617b2a42bf2763e49e4ccddd3ee8df9c05d)
+
+    This change should be a no-op for consumers, as there were already better static creation/deserialization functions for use and compressor types are generally unused outside the runtime.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

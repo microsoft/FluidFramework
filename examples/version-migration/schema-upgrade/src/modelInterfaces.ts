@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import type { IMigratableModel, IMigratableModelEvents } from "@fluid-example/example-utils";
+import {
+	EventEmitter,
+	type IMigratableModel,
+	type IMigratableModelEvents,
+} from "@fluid-example/example-utils";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { SharedString } from "@fluidframework/sequence";
 

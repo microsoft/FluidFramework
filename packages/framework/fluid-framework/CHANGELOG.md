@@ -1,5 +1,60 @@
 # fluid-framework
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   fluid-framework: EventEmitterWithErrorHandling is no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    EventEmitterWithErrorHandling is intended for authoring DDSes, and thus is only intended for use within the Fluid Framework client packages.
+    It is no longer publicly exported: any users should fine their own solution or be upstreamed.
+    EventEmitterWithErrorHandling is available for now as `@alpha` to make this migration less disrupting for any existing users.
+
+-   fluid-framework: SharedObject classes are no longer exported as public ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    `SharedObject` and `SharedObjectCore` are intended for authoring DDSes, and thus are only intended for use within the Fluid Framework client packages.
+    They is no longer publicly exported: any users should fine their own solution or be upstreamed.
+    `SharedObject` and `SharedObjectCore` are available for now as `@alpha` to make this migration less disrupting for any existing users.
+
+-   API tightening ([#20012](https://github.com/microsoft/FluidFramework/issues/20012)) [049de899dd](https://github.com/microsoft/FluidFramework/commits/049de899ddfd5c0155251cb0ea00ecbe3a7f7665)
+
+    The Fluid Framework API has been clarified with tags applied to package exports. As we are working toward a clear, safe,
+    and stable API surface, some build settings and imports may need to be adjusted.
+
+    **Now:** Most packages are specifying "exports" - import specifierss like` @fluidframework/foo/lib/internals` will
+    become build errors. The fix is to use only public APIs from @fluidframework/foo.
+
+    **Coming soon:** Build resolutions (`moduleResolution` in tsconfig compilerOptions) will need to be resolved with
+    Node16, NodeNext, or a bundler that supports resolution of named import/export paths. Internally, some FF packages will
+    use `@fluidframework/foo/internal` import paths that allow packages to talk to each other using non-public APIs.
+
+    **Final stage:** APIs that are not tagged @public will be removed from @fluidframework/foo imports.
+
+-   Deprecated error-related enums have been removed ([#19067](https://github.com/microsoft/FluidFramework/issues/19067)) [59793302e5](https://github.com/microsoft/FluidFramework/commits/59793302e56784cfb6ace0e6469345f3565b3312)
+
+    Error-related enums `ContainerErrorType`, `DriverErrorType`, `OdspErrorType` and `RouterliciousErrorType` were previously
+    deprecated and are now removed. There are replacement object-based enumerations of `ContainerErrorTypes`,
+    `DriverErrorTypes`, `OdspErrorTypes` and `RouterliciousErrorTypes`. Refer to the release notes of [Fluid Framework version
+    2.0.0-internal.7.0.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.0.0-internal.7.0.0) for details
+    on the replacements.
+
+-   map, tree: DDS classes are no longer publicly exported ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    SharedMap and SharedTree now only export their factories and the interface types.
+    The actual concrete classes which leak implementation details are no longer exported.
+    Users of the `SharedMap` type should use `ISharedMap`.
+    Users of the `SharedTree` type should use `ISharedTree`.
+
+-   tree: Minor API fixes for "@fluidframework/tree" package. ([#19057](https://github.com/microsoft/FluidFramework/issues/19057)) [3e0f218832](https://github.com/microsoft/FluidFramework/commits/3e0f21883255317f8bb1f7c420543650502a5b66)
+
+    Rename `IterableTreeListContent` to `IterableTreeArrayContent`, inline `TreeMapNodeBase` into `TreeMapNode`, rename `TreeArrayNode.spread` to `TreeArrayNode.spread` and remove `create` which was not supposed to be public (use `TreeArrayNode.spread` instead).
+
+-   fluid-framework: ContainerSchema is now readonly ([#19717](https://github.com/microsoft/FluidFramework/issues/19717)) [ae1d0be26d](https://github.com/microsoft/FluidFramework/commits/ae1d0be26d61453cff316b3f622a9f3647149167)
+
+    The `ContainerSchema` type is intended for defining input to these packages. This should make the APIs more tolerant and
+    thus be non-breaking, however its possible for some users of `ContainerSchema` to use it in ways where this could be a
+    breaking change: any such users should remove their mutations and/or use a different type.
+
 ## 2.0.0-rc.1.0.0
 
 Dependency updates only.

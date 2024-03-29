@@ -4,11 +4,12 @@
  */
 
 import { assert, Deferred } from "@fluidframework/core-utils";
+
 import {
-	SummarizerStopReason,
 	IConnectableRuntime,
 	ISummaryCancellationToken,
-} from "./summarizerTypes";
+	SummarizerStopReason,
+} from "./summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events

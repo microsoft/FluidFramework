@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as dirPath from "node:path";
 import { strict as assert } from "node:assert";
+import * as dirPath from "node:path";
+
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -14,14 +15,16 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
-	createDDSFuzzSuite,
 	DDSFuzzModel,
 	DDSFuzzTestState,
+	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { DirectoryFactory } from "../../directory";
-import { IDirectory } from "../../interfaces";
-import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
+
+import { DirectoryFactory, IDirectory } from "../../index.js";
+
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
+import { _dirname } from "./dirname.cjs";
 
 type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
@@ -344,7 +347,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 21,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1") },
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1") },
 	});
 
 	createDDSFuzzSuite(
@@ -375,7 +378,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 21,
 			saveFailures: {
-				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1"),
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/1"),
 			},
 		},
 	);
@@ -404,7 +407,7 @@ describe("SharedDirectory fuzz", () => {
 		defaultTestCount: 25,
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
-		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2") },
+		saveFailures: { directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2") },
 	});
 
 	createDDSFuzzSuite(
@@ -434,7 +437,7 @@ describe("SharedDirectory fuzz", () => {
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
-				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/2"),
+				directory: dirPath.join(_dirname, "../../../src/test/mocha/results/2"),
 			},
 		},
 	);

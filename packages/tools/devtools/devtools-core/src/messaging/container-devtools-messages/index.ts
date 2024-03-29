@@ -7,18 +7,18 @@
  * This directory contains {@link IDevtoolsMessage} types listened for and posted by {@link IContainerDevtools}.
  */
 
-export { AudienceSummary } from "./AudienceSummary";
-export { CloseContainer } from "./CloseContainer";
-export { ConnectContainer } from "./ConnectContainer";
-export { ContainerDevtoolsFeatures } from "./ContainerDevtoolsFeatures";
-export { ContainerStateChange } from "./ContainerStateChange";
-export { ContainerStateHistory } from "./ContainerStateHistory";
-export { DataEdit } from "./DataEdit";
-export { DataVisualization } from "./DataVisualization";
-export { DisconnectContainer } from "./DisconnectContainer";
-export { GetAudienceSummary } from "./GetAudienceSummary";
-export { GetContainerDevtoolsFeatures } from "./GetContainerDevtoolsFeatures";
-export { GetContainerState } from "./GetContainerState";
-export { GetDataVisualization } from "./GetDataVisualization";
-export { GetRootDataVisualizations } from "./GetRootDataVisualizations";
-export { RootDataVisualizations } from "./RootDataVisualizations";
+export { AudienceSummary } from "./AudienceSummary.js";
+export { CloseContainer } from "./CloseContainer.js";
+export { ConnectContainer } from "./ConnectContainer.js";
+export { ContainerDevtoolsFeatures } from "./ContainerDevtoolsFeatures.js";
+export { ContainerStateChange } from "./ContainerStateChange.js";
+export { ContainerStateHistory } from "./ContainerStateHistory.js";
+export { DataEdit } from "./DataEdit.js";
+export { DataVisualization } from "./DataVisualization.js";
+export { DisconnectContainer } from "./DisconnectContainer.js";
+export { GetAudienceSummary } from "./GetAudienceSummary.js";
+export { GetContainerDevtoolsFeatures } from "./GetContainerDevtoolsFeatures.js";
+export { GetContainerState } from "./GetContainerState.js";
+export { GetDataVisualization } from "./GetDataVisualization.js";
+export { GetRootDataVisualizations } from "./GetRootDataVisualizations.js";
+export { RootDataVisualizations } from "./RootDataVisualizations.js";

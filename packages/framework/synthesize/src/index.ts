@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export { DependencyContainer } from "./dependencyContainer";
+export { DependencyContainer } from "./dependencyContainer.js";
 export {
 	IFluidDependencySynthesizer,
 	IProvideFluidDependencySynthesizer,
-} from "./IFluidDependencySynthesizer";
+} from "./IFluidDependencySynthesizer.js";
 export {
 	AsyncFluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,
 	FluidObjectProvider,
 	FluidObjectSymbolProvider,
-} from "./types";
+} from "./types.js";

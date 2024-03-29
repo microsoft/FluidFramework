@@ -43,12 +43,6 @@ export class LocalWebSocket implements IWebSocket {
 	}
 
 	public emit(event: string, ...args: any[]) {
-		// Disconnect from the "socket" if the message is greater than 1MB
-		if (JSON.stringify(args).length > 1e6) {
-			this.disconnect();
-			return;
-		}
-
 		this.events.emit(event, ...args);
 	}
 

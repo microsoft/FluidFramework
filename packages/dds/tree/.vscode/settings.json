@@ -12,5 +12,5 @@
 	],
 	"mochaExplorer.configFile": ".mocharc.cjs",
 	"mochaExplorer.timeout": 999999,
-	"cSpell.words": ["deprioritized", "endregion", "insertable", "unhydrated"],
+	"cSpell.words": ["deprioritized", "endregion", "insertable", "reentrantly", "unhydrated"],
 }

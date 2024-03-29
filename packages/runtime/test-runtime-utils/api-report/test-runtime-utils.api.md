@@ -4,12 +4,10 @@
 
 ```ts
 
-/// <reference types="node" />
-
 import { AttachState } from '@fluidframework/container-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
-import { EventEmitter } from 'events';
+import { EventEmitter } from '@fluid-internal/client-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
@@ -20,7 +18,7 @@ import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
 import type { IContainerRuntimeEvents } from '@fluidframework/container-runtime-definitions';
-import { IdCreationRange } from '@fluidframework/id-compressor';
+import type { IdCreationRange } from '@fluidframework/id-compressor/internal';
 import { IDeltaConnection } from '@fluidframework/datastore-definitions';
 import { IDeltaHandler } from '@fluidframework/datastore-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -36,8 +34,8 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
-import { IIdCompressor } from '@fluidframework/id-compressor';
-import { IIdCompressorCore } from '@fluidframework/id-compressor';
+import type { IIdCompressor } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { ILoader } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -90,9 +88,7 @@ export class InsecureTokenProvider implements ITokenProvider {
     tenantKey: string,
     user: IInsecureUser,
     scopes?: ScopeType[] | undefined);
-    // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
-    // (undocumented)
     fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse>;
 }
 
@@ -105,8 +101,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // (undocumented)
-    protected clientSequenceNumber: number;
     // @deprecated (undocumented)
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
@@ -133,14 +127,13 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     rebase(): void;
-    protected get referenceSequenceNumber(): number;
     // (undocumented)
     protected reSubmitMessages(messagesToResubmit: {
         content: any;
-        localOpMetadata: unknown;
+        localOpMetadata?: unknown;
     }[]): void;
     // (undocumented)
-    submit(messageContent: any, localOpMetadata: unknown): number;
+    submit(messageContent: any, localOpMetadata?: unknown): number;
 }
 
 // @alpha
@@ -228,11 +221,13 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 // @alpha
 export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-    constructor();
+    constructor(getClientId?: (() => string) | undefined);
     // (undocumented)
     readonly active: boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
+    // (undocumented)
+    clientSequenceNumber: number;
     // (undocumented)
     readonly clientType: string;
     // (undocumented)
@@ -266,7 +261,7 @@ export class MockDeltaManager extends TypedEventEmitter<IDeltaManagerEvents> imp
     // (undocumented)
     get outbound(): MockDeltaQueue<IDocumentMessage[]>;
     // (undocumented)
-    prepareInboundResponse(type: MessageType, contents: any): void;
+    process(message: ISequencedDocumentMessage): void;
     // (undocumented)
     readOnlyInfo: ReadOnlyInfo;
     // (undocumented)
@@ -348,11 +343,17 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // @deprecated (undocumented)
     createProps?: any;
     // (undocumented)
+    deleteChildSummarizerNode(id: string): void;
+    // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     readonly existing: boolean;
+    // (undocumented)
+    readonly gcThrowOnTombstoneUsage = false;
+    // (undocumented)
+    readonly gcTombstoneEnforcementAllowed = false;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     // (undocumented)
@@ -413,6 +414,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     });
     // (undocumented)
     get absolutePath(): string;
+    // (undocumented)
+    addChannel(channel: IChannel): void;
     // @deprecated (undocumented)
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
     // (undocumented)
@@ -570,7 +573,7 @@ export class MockObjectStorageService implements IChannelStorageService {
 export class MockQuorumClients implements IQuorumClients, EventEmitter {
     constructor(...members: [string, Partial<ISequencedClient>][]);
     // (undocumented)
-    addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    addListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
     addMember(id: string, client: Partial<ISequencedClient>): void;
     // (undocumented)
@@ -578,9 +581,9 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     // (undocumented)
     disposed: boolean;
     // (undocumented)
-    emit(event: string | symbol, ...args: any[]): boolean;
+    emit(event: string | number, ...args: any[]): boolean;
     // (undocumented)
-    eventNames(): (string | symbol)[];
+    eventNames(): (string | number)[];
     // (undocumented)
     getMaxListeners(): number;
     // (undocumented)
@@ -588,25 +591,25 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
     // (undocumented)
     getMembers(): Map<string, ISequencedClient>;
     // (undocumented)
-    listenerCount(type: string | symbol): number;
+    listenerCount(type: string | number): number;
     // (undocumented)
-    listeners(event: string | symbol): Function[];
+    listeners(event: string | number): ReturnType<EventEmitter["listeners"]>;
     // (undocumented)
-    off(event: string | symbol, listener: (...args: any[]) => void): this;
+    off(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    on(event: string | symbol, listener: (...args: any[]) => void): this;
+    on(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    once(event: string | symbol, listener: (...args: any[]) => void): this;
+    once(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    prependListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    prependOnceListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
-    rawListeners(event: string | symbol): Function[];
+    rawListeners(event: string | number): ReturnType<EventEmitter["rawListeners"]>;
     // (undocumented)
-    removeAllListeners(event?: string | symbol | undefined): this;
+    removeAllListeners(event?: string | number | undefined): this;
     // (undocumented)
-    removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+    removeListener(event: string | number, listener: (...args: any[]) => void): this;
     // (undocumented)
     removeMember(id: string): void;
     // (undocumented)

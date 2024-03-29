@@ -4,14 +4,16 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { MapTree } from "../../core/index.js";
 
+import { MockHandle } from "@fluidframework/test-runtime-utils";
+
+import { MapTree } from "../../core/index.js";
+import { SchemaBuilder, leaf } from "../../domains/index.js";
 import {
-	isTreeValue,
-	applyTypesFromContext,
 	ContextuallyTypedNodeDataObject,
+	applyTypesFromContext,
 	cursorFromContextualData,
+	isTreeValue,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped.js";
@@ -20,7 +22,6 @@ import {
 	FlexFieldSchema,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { leaf, SchemaBuilder } from "../../domains/index.js";
 
 describe("ContextuallyTyped", () => {
 	it("isTreeValue", () => {
@@ -105,11 +106,9 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const recursiveReference = () => nodeSchema;
-			builder.fixRecursiveReference(recursiveReference);
-			const nodeSchema = builder.object("node", {
+			const nodeSchema = builder.objectRecursive("node", {
 				foo: builder.required(leaf.string),
-				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [recursiveReference]),
+				child: FlexFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));

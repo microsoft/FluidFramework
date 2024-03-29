@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IClient } from "@fluid-example/bubblebench-common";
+
 import { BubbleWrapper } from "./bubble.js";
 import { Client, FlexBubble } from "./schema.js";
 

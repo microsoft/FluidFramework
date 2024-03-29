@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-
+import { EventEmitter } from "@fluid-example/example-utils";
 import {
 	ITree,
 	NodeFromSchema,
@@ -13,7 +12,6 @@ import {
 	TreeConfiguration,
 	disposeSymbol,
 } from "@fluidframework/tree";
-
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 

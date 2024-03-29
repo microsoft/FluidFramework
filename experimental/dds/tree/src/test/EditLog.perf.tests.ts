@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
+import { BenchmarkType, benchmark } from '@fluid-tools/benchmark';
+
 import { Change, StablePlace } from '../ChangeTypes.js';
 import { EditLog } from '../EditLog.js';
 import { newEdit } from '../EditUtilities.js';
 import { Edit } from '../persisted-types/index.js';
+
 import { setUpTestTree } from './utilities/TestUtilities.js';
 
 describe('EditLog Perf', () => {

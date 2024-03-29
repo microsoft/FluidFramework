@@ -7,11 +7,14 @@ import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MessageType } from "@fluidframework/protocol-definitions";
 
-import { assert } from "@fluidframework/core-utils";
-import type { ISameContainerMigrationTool } from "../migrationInterfaces/index.js";
+import type {
+	ISameContainerMigrationTool,
+	SameContainerMigrationState,
+} from "../migrationInterfaces/index.js";
 
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";
@@ -89,7 +92,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		return this._pactMap;
 	}
 
-	public get migrationState() {
+	public get migrationState(): SameContainerMigrationState {
 		// TODO: Other states
 		if (this._v2SummaryDone) {
 			return "migrated";

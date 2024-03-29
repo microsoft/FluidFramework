@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
 import { Body1, Body1Strong, Link, Subtitle1, makeStyles } from "@fluentui/react-components";
 import {
-	handleIncomingMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	TelemetryEvent,
+	handleIncomingMessage,
 } from "@fluidframework/devtools-core";
-import { useMessageRelay } from "../MessageRelayContext";
-import { DynamicComposedChart, type GraphDataSet } from "./graphs";
+import React from "react";
+
+import { useMessageRelay } from "../MessageRelayContext.js";
+
+import { DynamicComposedChart, type GraphDataSet } from "./graphs/index.js";
 
 const useStyles = makeStyles({
 	flexColumn: {
@@ -101,6 +103,11 @@ export function OpLatencyView(): React.ReactElement {
 				const eventContents = message.data.event.logContent;
 				// Op roundtrip time logs are the only ones with relevant information for this component
 				if (!eventContents.eventName.endsWith("OpRoundtripTime")) {
+					return false;
+				}
+				// If any of the required fields are missing, we can't use this data
+				// TODO: AB#7583 Investigates the ops being skipped and their source.
+				if (eventContents.durationNetwork === undefined) {
 					return false;
 				}
 

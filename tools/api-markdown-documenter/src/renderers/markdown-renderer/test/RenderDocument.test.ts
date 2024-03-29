@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { expect } from "chai";
 
 import {
@@ -11,8 +12,8 @@ import {
 	PlainTextNode,
 	SectionNode,
 	SpanNode,
-} from "../../../documentation-domain";
-import { renderDocument } from "../Render";
+} from "../../../documentation-domain/index.js";
+import { renderDocument } from "../Render.js";
 
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {

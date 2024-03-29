@@ -25,7 +25,7 @@ export class AzureClient {
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
@@ -68,7 +68,7 @@ export interface AzureContainerVersion {
 
 // @internal @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
+    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "additionalDetails" | "userId" | "userName"> | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)

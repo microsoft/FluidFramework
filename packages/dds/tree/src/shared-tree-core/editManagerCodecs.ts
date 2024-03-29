@@ -16,6 +16,7 @@ import {
 	JsonCompatibleReadOnlySchema,
 	mapIterable,
 } from "../util/index.js";
+
 import { SummaryData } from "./editManager.js";
 import {
 	Commit,
@@ -85,7 +86,7 @@ export function makeEditManagerCodec<TChangeset>(
 						schema: context.schema,
 					}),
 				),
-				branches: Array.from(data.branches.entries(), ([sessionId, branch]) => [
+				branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
 					sessionId,
 					{
 						base: revisionTagCodec.encode(branch.base, {
@@ -115,7 +116,7 @@ export function makeEditManagerCodec<TChangeset>(
 							originatorId: commit.sessionId,
 						}),
 				),
-				branches: new Map(
+				peerLocalBranches: new Map(
 					mapIterable(json.branches, ([sessionId, branch]) => [
 						sessionId,
 						{

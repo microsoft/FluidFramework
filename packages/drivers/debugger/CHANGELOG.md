@@ -1,5 +1,13 @@
 # @fluidframework/debugger
 
+## 2.0.0-rc.2.0.0
+
+### Minor Changes
+
+-   driver-definitions: repositoryUrl removed from IDocumentStorageService ([#19522](https://github.com/microsoft/FluidFramework/issues/19522)) [90eb3c9d33](https://github.com/microsoft/FluidFramework/commits/90eb3c9d33d80e24caa1393a50f414c5602f6aa3)
+
+    The `repositoryUrl` member of `IDocumentStorageService` was unused and always equal to the empty string. It has been removed.
+
 ## 2.0.0-rc.1.0.0
 
 ### Minor Changes

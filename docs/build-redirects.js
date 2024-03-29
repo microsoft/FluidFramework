@@ -7,14 +7,19 @@
  * This script builds FF.com's redirects
  */
 
-const chalk = require("chalk");
-const fs = require("fs-extra");
-const path = require("path");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import chalk from "chalk";
+import fs from "fs-extra";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+
 const {
 	params: { currentVersion, ltsVersion },
-} = require("./data/versions.json");
+} = await fs.readJSON(path.resolve(dirname, "data", "versions.json"));
 
-const buildRedirects = async () => {
+try {
 	const content = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -42,20 +47,15 @@ module.exports = async (context, { headers }) => {
 	};
 };
 `;
-	const versionPath = path.resolve(__dirname, "api", "fallback", "index.js");
+	const versionPath = path.resolve(dirname, "api", "fallback", "index.js");
 	await fs.writeFile(versionPath, content);
-};
+} catch (error) {
+	console.error(
+		chalk.red("Could not download API doc model artifacts due to one or more errors:"),
+	);
+	console.error(error);
+	process.exit(1);
+}
 
-buildRedirects().then(
-	() => {
-		console.log(chalk.green("API doc model artifacts downloaded!"));
-		process.exit(0);
-	},
-	(error) => {
-		console.error(
-			chalk.red("Could not download API doc model artifacts due to one or more errors:"),
-		);
-		console.error(error);
-		process.exit(1);
-	},
-);
+console.log(chalk.green("API doc model artifacts downloaded!"));
+process.exit(0);

@@ -88,11 +88,20 @@ export async function disconnectDocument(
 			getLumberBaseProperties(room.documentId, room.tenantId),
 		);
 		removeAndStoreP.push(
-			clientManager.removeClient(room.tenantId, room.documentId, clientId).then(() => {
-				// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
-				// for the same clientId if retrying when connectDocument completes after disconnectDocument.
-				disconnectedClients.add(clientId);
-			}),
+			clientManager
+				.removeClient(room.tenantId, room.documentId, clientId)
+				.then(() => {
+					// Keep track of disconnected clientIds so that we don't repeat the disconnect signal
+					// for the same clientId if retrying when connectDocument completes after disconnectDocument.
+					disconnectedClients.add(clientId);
+				})
+				.catch((error) => {
+					Lumberjack.error(
+						`Failed to remove client ${clientId} from client manager`,
+						getLumberBaseProperties(room.documentId, room.tenantId),
+						error,
+					);
+				}),
 		);
 		socket
 			.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId))

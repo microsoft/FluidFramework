@@ -10,6 +10,7 @@ import {
 	type IConnected,
 	type ISignalClient,
 	type ITokenClaims,
+	type ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
 	NetworkError,
@@ -340,6 +341,7 @@ async function retrieveClients(
 }
 
 function createMessageClientAndJoinRoom(
+	mode: ConnectionMode,
 	client: IClient,
 	claims: ITokenClaims,
 	room: IRoom,
@@ -352,6 +354,7 @@ function createMessageClientAndJoinRoom(
 	const messageClient: Partial<IClient> = client ?? {};
 	messageClient.user = claims.user;
 	messageClient.scopes = claims.scopes;
+	messageClient.mode = isWriter(claims.scopes, mode) ? "write" : "read";
 	const isSummarizer = messageClient.details?.type === SummarizerClientType;
 
 	// 1. Do not give SummaryWrite scope to clients that are not summarizers.
@@ -501,6 +504,7 @@ export async function connectDocument(
 
 		const connectedTimestamp = Date.now();
 		const messageClient = createMessageClientAndJoinRoom(
+			message.mode,
 			message.client,
 			claims,
 			room,

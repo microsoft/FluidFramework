@@ -12,6 +12,7 @@ export {
 } from "./factory.js";
 export {
 	CacheContentType,
+	maximumCacheDurationMs,
 	getKeyForCacheEntry,
 	ICacheEntry,
 	IEntry,

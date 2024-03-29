@@ -6,9 +6,9 @@
 import { assert } from '@fluidframework/core-utils';
 import {
 	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IChannelServices,
 	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
 
 import { SharedTreeShim } from './sharedTreeShim.js';

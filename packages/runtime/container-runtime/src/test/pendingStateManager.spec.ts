@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import Deque from "double-ended-queue";
 
 import {
 	ContainerErrorTypes,
@@ -12,13 +11,14 @@ import {
 } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
+import Deque from "double-ended-queue";
 
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
-import { BatchManager, BatchMessage } from "../opLifecycle";
 import type {
 	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
-} from "../messageTypes";
+} from "../messageTypes.js";
+import { BatchManager, BatchMessage } from "../opLifecycle/index.js";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessage>;

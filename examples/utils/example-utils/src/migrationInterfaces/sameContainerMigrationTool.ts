@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IContainer } from "@fluidframework/container-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
 /**
  * The collaboration session may be in one of these states:

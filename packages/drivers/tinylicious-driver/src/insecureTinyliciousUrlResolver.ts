@@ -26,11 +26,9 @@ export const defaultTinyliciousEndpoint = "http://localhost";
  * @internal
  */
 export class InsecureTinyliciousUrlResolver implements IUrlResolver {
-	private readonly fluidProtocolEndpoint: string;
 	private readonly tinyliciousEndpoint: string;
 	public constructor(port = defaultTinyliciousPort, endpoint = defaultTinyliciousEndpoint) {
 		this.tinyliciousEndpoint = `${endpoint}:${port}`;
-		this.fluidProtocolEndpoint = this.tinyliciousEndpoint.replace(/(^\w+:|^)\/\//, "https://");
 	}
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
@@ -51,11 +49,11 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 				finalDocumentId = "new";
 			}
 			deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${finalDocumentId}`;
-			documentUrl = `${this.fluidProtocolEndpoint}/tinylicious/${finalDocumentId}`;
+			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${finalDocumentId}`;
 		} else {
 			const encodedDocId = encodeURIComponent(finalDocumentId);
 			const documentRelativePath = relativeUrl.slice(documentIdFromRequest.length);
-			documentUrl = `${this.fluidProtocolEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
+			documentUrl = `${this.tinyliciousEndpoint}/tinylicious/${encodedDocId}${documentRelativePath}`;
 			deltaStorageUrl = `${this.tinyliciousEndpoint}/deltas/tinylicious/${encodedDocId}`;
 		}
 
@@ -74,7 +72,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
 		const documentId = decodeURIComponent(
-			resolvedUrl.url.replace(`${this.fluidProtocolEndpoint}/tinylicious/`, ""),
+			resolvedUrl.url.replace(`${this.tinyliciousEndpoint}/tinylicious/`, ""),
 		);
 		/*
 		 * The detached container flow will ultimately call getAbsoluteUrl() with the resolved.url produced by

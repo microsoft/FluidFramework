@@ -180,7 +180,6 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
     constructor(message: string, canRetry: boolean, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry: boolean;
-    // (undocumented)
     readonly errorType: "genericNetworkError";
 }
 

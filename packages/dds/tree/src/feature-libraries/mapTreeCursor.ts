@@ -4,17 +4,19 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
-	FieldKey,
-	MapTree,
-	ITreeCursor,
 	CursorLocationType,
-	mapCursorField,
 	DetachedField,
-	detachedFieldAsKey,
-	rootField,
+	FieldKey,
+	ITreeCursor,
+	MapTree,
 	aboveRootPlaceholder,
+	detachedFieldAsKey,
+	mapCursorField,
+	rootField,
 } from "../core/index.js";
+
 import {
 	CursorAdapter,
 	CursorWithNode,

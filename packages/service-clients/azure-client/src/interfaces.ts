@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import {
 	type IConfigProviderBase,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import { type IMember, type IServiceAudience } from "@fluidframework/fluid-static";
 import { type IUser } from "@fluidframework/protocol-definitions";
 import { type ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { type ICompressionStorageConfig } from "@fluidframework/driver-utils";
 
 /**
  * Props for initializing a new AzureClient instance

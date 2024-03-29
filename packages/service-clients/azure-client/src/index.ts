@@ -9,8 +9,8 @@
  * @packageDocumentation
  */
 
-export { AzureClient } from "./AzureClient";
-export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
+export { AzureClient } from "./AzureClient.js";
+export { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 export type {
 	AzureClientProps,
 	AzureConnectionConfig,
@@ -23,7 +23,7 @@ export type {
 	AzureRemoteConnectionConfig,
 	AzureUser,
 	IAzureAudience,
-} from "./interfaces";
+} from "./interfaces.js";
 
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export type { ITokenClaims, IUser } from "@fluidframework/protocol-definitions";

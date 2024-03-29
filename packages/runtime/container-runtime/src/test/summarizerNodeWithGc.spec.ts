@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -17,15 +18,16 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
+
+import { cloneGCData } from "../gc/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode";
+import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
-	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
 	SummarizerNodeWithGC,
+	createRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../summary/summarizerNode/summarizerNodeWithGc";
-import { cloneGCData } from "../gc";
+} from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";

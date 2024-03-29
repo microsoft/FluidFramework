@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
-
 import type { ISameContainerMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
-import { SameContainerMigrator, ModelLoader } from "@fluid-example/example-utils";
+import { ModelLoader, SameContainerMigrator } from "@fluid-example/example-utils";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
-	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
+	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver";
+import React from "react";
+import ReactDOM from "react-dom";
 
 import { inventoryListDataTransformationCallback } from "./dataTransform.js";
 import { DemoCodeLoader } from "./demoCodeLoader.js";

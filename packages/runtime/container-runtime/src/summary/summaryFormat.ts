@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
-	readAndParse,
 	blobHeadersBlobName as blobNameForBlobHeaders,
+	readAndParse,
 } from "@fluidframework/driver-utils";
 import {
 	ISequencedDocumentMessage,
@@ -15,11 +15,14 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
+	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
-	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import { IGCMetadata } from "../gc";
+
+import { IGCMetadata } from "../gc/index.js";
+
+import { IDocumentSchema } from "./documentSchema.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -90,16 +93,18 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
+	/** @deprecated - used by old (prior to 2.0 RC3) runtimes */
+	readonly message?: ISummaryMetadataMessage;
 	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
-	readonly message: ISummaryMetadataMessage | undefined;
+	readonly lastMessage?: ISummaryMetadataMessage;
 	/** True if channels are not isolated in .channels subtrees, otherwise isolated. */
 	readonly disableIsolatedChannels?: true;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
 	readonly summaryNumber?: number;
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
-	/** True if the runtime IdCompressor is enabled */
-	readonly idCompressorEnabled?: boolean;
+
+	readonly documentSchema?: IDocumentSchema;
 }
 
 /**

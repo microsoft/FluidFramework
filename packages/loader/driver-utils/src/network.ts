@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import {
-	IThrottlingWarning,
-	IDriverErrorBase,
+	DriverErrorTypes,
 	IAuthorizationError,
+	IDriverErrorBase,
 	ILocationRedirectionError,
 	IResolvedUrl,
-	DriverErrorTypes,
+	IThrottlingWarning,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
 
 /**

@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { SessionSpaceCompressedId, OpSpaceCompressedId, SessionId, StableId } from "./identifiers";
+import {
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "./identifiers.js";
 import {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-} from "./persisted-types";
+} from "./persisted-types/index.js";
 
 /**
  * A distributed UUID generator and compressor.
@@ -107,7 +112,7 @@ export interface IIdCompressorCore {
 	 * @param ghostSessionId - The session id that minted ids generated within `ghostSessionCallback` should be attributed to.
 	 * @param ghostSessionCallback - Callback which mints ids attributed to the ghost session.
 	 */
-	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void);
+	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.

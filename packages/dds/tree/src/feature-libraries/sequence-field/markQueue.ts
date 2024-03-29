@@ -4,9 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { RevisionTag } from "../../core/index.js";
+
+import { MoveEffectTable, splitMarkForMoveEffects } from "./moveEffectTable.js";
 import { Mark } from "./types.js";
-import { splitMarkForMoveEffects, MoveEffectTable } from "./moveEffectTable.js";
 import { splitMark } from "./utils.js";
 
 export class MarkQueue<T> {

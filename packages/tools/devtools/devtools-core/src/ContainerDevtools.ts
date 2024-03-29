@@ -7,19 +7,21 @@ import { type IAudience, type IContainer } from "@fluidframework/container-defin
 import { type IFluidLoadable } from "@fluidframework/core-interfaces";
 import { type IClient } from "@fluidframework/protocol-definitions";
 
-import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces";
-import { ContainerStateChangeKind } from "./Container";
-import { type ContainerStateMetadata } from "./ContainerMetadata";
+import { type AudienceClientMetadata } from "./AudienceMetadata.js";
+import { type ContainerKey, type FluidObjectId, type HasContainerKey } from "./CommonInterfaces.js";
+import { ContainerStateChangeKind } from "./Container.js";
+import { type ContainerStateMetadata } from "./ContainerMetadata.js";
+import { type ContainerDevtoolsFeatureFlags } from "./Features.js";
+import { type IContainerDevtools } from "./IContainerDevtools.js";
+import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs.js";
 import {
 	DataVisualizerGraph,
-	defaultVisualizers,
-	defaultEditors,
 	type FluidObjectNode,
 	type RootHandleNode,
 	type SharedObjectEdit,
-} from "./data-visualization";
-import { type IContainerDevtools } from "./IContainerDevtools";
-import { type AudienceChangeLogEntry, type ConnectionStateChangeLogEntry } from "./Logs";
+	defaultEditors,
+	defaultVisualizers,
+} from "./data-visualization/index.js";
 import {
 	AudienceSummary,
 	CloseContainer,
@@ -35,16 +37,14 @@ import {
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
-	handleIncomingWindowMessage,
 	type IDevtoolsMessage,
-	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	type MessageLoggingOptions,
-	postMessagesToWindow,
 	RootDataVisualizations,
-} from "./messaging";
-import { type AudienceClientMetadata } from "./AudienceMetadata";
-import { type ContainerDevtoolsFeatureFlags } from "./Features";
+	handleIncomingWindowMessage,
+	postMessagesToWindow,
+} from "./messaging/index.js";
 
 /**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
