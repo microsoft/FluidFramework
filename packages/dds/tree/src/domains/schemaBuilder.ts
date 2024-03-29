@@ -13,17 +13,13 @@ import {
 	FlexFieldSchema,
 	FlexImplicitAllowedTypes,
 	FlexImplicitFieldSchema,
-	FlexMapFieldSchema,
-	FlexMapNodeSchema,
 	FlexObjectNodeSchema,
 	FlexTreeNodeSchema,
 	NormalizeAllowedTypes,
-	NormalizeField,
 	SchemaBuilderBase,
 	SchemaBuilderOptions,
 	TreeNodeSchemaBase,
 	Unenforced,
-	normalizeField,
 } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util/index.js";
 
@@ -158,65 +154,6 @@ export class SchemaBuilder<
 		);
 		this.addNodeSchema(schema);
 		return schema;
-	}
-
-	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link FlexMapNodeSchema} for a {@link TreeMapNode}.
-	 *
-	 * @remarks
-	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
-	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
-	 * This does not support recursive types.
-	 *
-	 * If using these structurally named maps, other types in this schema builder should avoid names of the form `Map<${string}>`.
-	 *
-	 * @privateRemarks
-	 * See note on list.
-	 */
-	public override map<const T extends FlexTreeNodeSchema | Any | readonly FlexTreeNodeSchema[]>(
-		allowedTypes: T,
-	): FlexMapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
-
-	/**
-	 * Define (and add to this library) a {@link FlexMapNodeSchema} for a {@link TreeMapNode}.
-	 */
-	public override map<
-		Name extends TName,
-		const T extends FlexMapFieldSchema | FlexImplicitAllowedTypes,
-	>(
-		name: Name,
-		fieldSchema: T,
-	): FlexMapNodeSchema<`${TScope}.${Name}`, NormalizeField<T, typeof FieldKinds.optional>>;
-
-	public override map<const T extends FlexMapFieldSchema | FlexImplicitAllowedTypes>(
-		nameOrAllowedTypes:
-			| TName
-			| ((T & FlexTreeNodeSchema) | Any | readonly FlexTreeNodeSchema[]),
-		allowedTypes?: T,
-	): FlexMapNodeSchema<`${TScope}.${string}`, NormalizeField<T, typeof FieldKinds.optional>> {
-		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as
-				| (T & FlexTreeNodeSchema)
-				| Any
-				| readonly FlexTreeNodeSchema[];
-			const fullName = structuralName("Map", types);
-			return getOrCreate(
-				this.structuralTypes,
-				fullName,
-				() =>
-					super.map(
-						fullName as TName,
-						normalizeField(nameOrAllowedTypes as T, FieldKinds.optional),
-					) as FlexTreeNodeSchema,
-			) as FlexMapNodeSchema<
-				`${TScope}.${string}`,
-				NormalizeField<T, typeof FieldKinds.optional>
-			>;
-		}
-		return super.map(
-			nameOrAllowedTypes as TName,
-			normalizeField(allowedTypes, FieldKinds.optional),
-		);
 	}
 
 	/**

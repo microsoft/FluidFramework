@@ -16,7 +16,6 @@ import {
 	FlexTreeSequenceField,
 	FlexTreeTypedNode,
 	schemaIsFieldNode,
-	schemaIsMap,
 } from "../../feature-libraries/index.js";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util/index.js";
 
@@ -125,53 +124,6 @@ describe("domains - SchemaBuilder", () => {
 				assert((builder.list(leaf.number) as FlexTreeNodeSchema) !== list);
 				// Creating again errors instead or reuses
 				assert.throws(() => builder.list("Foo", leaf.number));
-			});
-		});
-	});
-
-	describe("map", () => {
-		describe("structural", () => {
-			it("implicit", () => {
-				const builder = new SchemaBuilder({ scope: "scope" });
-				const mapAny = builder.map(Any);
-				assert(schemaIsMap(mapAny));
-				// Correct name
-				assert.equal(mapAny.name, "scope.Map<Any>");
-				// Infers optional kind
-				assert(mapAny.mapFields.equals(FlexFieldSchema.create(FieldKinds.optional, [Any])));
-				// Cached and reused
-				assert.equal(builder.map(Any), mapAny);
-			});
-
-			describe("named map", () => {
-				it("implicit normalizes", () => {
-					const builder = new SchemaBuilder({ scope: "scope" });
-
-					const map = builder.map("Foo", leaf.number);
-					assert(schemaIsMap(map));
-					assert.equal(map.name, `scope.Foo`);
-					assert(
-						map.mapFields.equals(
-							FlexFieldSchema.create(FieldKinds.optional, [leaf.number]),
-						),
-					);
-				});
-
-				it("explicit", () => {
-					const builder = new SchemaBuilder({ scope: "scope" });
-
-					const map = builder.map(
-						"Foo",
-						FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]),
-					);
-					assert(schemaIsMap(map));
-					assert.equal(map.name, `scope.Foo`);
-					assert(
-						map.mapFields.equals(
-							FlexFieldSchema.create(FieldKinds.sequence, [leaf.string]),
-						),
-					);
-				});
 			});
 		});
 	});
