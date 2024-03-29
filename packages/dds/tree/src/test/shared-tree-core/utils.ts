@@ -50,10 +50,12 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			codecOptions,
 			chunkCompressionStrategy,
 		);
+		const formatVersions = { editManager: 1, message: 1 };
 		super(
 			summarizables,
 			new DefaultChangeFamily(codec),
-			{ ...codecOptions, writeVersion: 1 },
+			codecOptions,
+			formatVersions,
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

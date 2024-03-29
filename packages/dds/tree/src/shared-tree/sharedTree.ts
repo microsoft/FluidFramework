@@ -40,7 +40,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { SharedTreeCore } from "../shared-tree-core/index.js";
+import { SharedTreeCore, CoreTopLevelCodecVersions } from "../shared-tree-core/index.js";
 import {
 	ITree,
 	ImplicitFieldSchema,
@@ -111,12 +111,10 @@ export interface ISharedTree extends ISharedObject, ITree {
 	): FlexTreeView<TRoot> | undefined;
 }
 
-interface TopLevelCodecVersions {
+interface TopLevelCodecVersions extends CoreTopLevelCodecVersions {
 	forest: number;
 	schema: number;
 	detachedFieldIndex: number;
-	editManager: number;
-	message: number;
 }
 
 const formatVersionToTopLevelCodecVersions = new Map<number, TopLevelCodecVersions>([
@@ -217,7 +215,8 @@ export class SharedTree
 		super(
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
-			{ ...options, writeVersion: codecVersions.editManager },
+			options,
+			codecVersions,
 			id,
 			runtime,
 			attributes,

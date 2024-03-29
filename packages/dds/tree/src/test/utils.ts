@@ -945,7 +945,7 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				}
 			});
 
-			const failureCases = encodingTestData.failures?.[version] ?? [];
+			const failureCases = encodingTestData.failures?.[version ?? "undefined"] ?? [];
 			if (failureCases.length > 0) {
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {

@@ -223,6 +223,7 @@ export const TestChange = {
 	toDelta,
 	isEmpty,
 	codec,
+	codecs: makeCodecFamily([[0, codec]]),
 };
 deepFreeze(TestChange);
 
@@ -311,7 +312,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		codecs: makeCodecFamily<TestChange, ChangeEncodingContext>([[0, TestChange.codec]]),
+		codecs: TestChange.codecs,
 		buildEditor: () => ({
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),

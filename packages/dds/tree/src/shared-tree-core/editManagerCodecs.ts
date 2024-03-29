@@ -8,11 +8,10 @@ import {
 	ICodecOptions,
 	IJsonCodec,
 	IMultiFormatCodec,
-	type Versioned,
 	makeCodecFamily,
-	makeVersionedCodec,
 	withSchemaValidation,
 } from "../codec/index.js";
+import { makeVersionDispatchingCodec } from "../codec/index.js";
 import { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import {
@@ -49,17 +48,7 @@ export function makeEditManagerCodec<TChangeset>(
 	EditManagerEncodingContext
 > {
 	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
-	const writeCodec = family.resolve(options.writeVersion).json;
-	const supportedVersions = new Set([1]);
-	return makeVersionedCodec(supportedVersions, options, {
-		encode(data, context): Versioned {
-			return writeCodec.encode(data, context) as Versioned;
-		},
-		decode(data: Versioned, context) {
-			const codec = family.resolve(data.version);
-			return codec.json.decode(data, context);
-		},
-	});
+	return makeVersionDispatchingCodec(family, options);
 }
 
 function makeEditManagerCodecs<TChangeset>(

@@ -30,10 +30,13 @@ import { type EditManagerFormatOptions, EditManagerSummarizer } from "./editMana
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 
-// TODO: How should the format version be determined?
-const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
+
+export interface CoreTopLevelCodecVersions {
+	editManager: number;
+	message: number;
+}
 
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
@@ -92,7 +95,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public constructor(
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
-		options: ICodecOptions & EditManagerFormatOptions,
+		options: ICodecOptions,
+		formatOptions: CoreTopLevelCodecVersions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -143,7 +147,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new EditManagerSummarizer(
 				this.editManager,
 				revisionTagCodec,
-				options,
+				{ ...options, writeVersion: formatOptions.editManager },
 				this.schemaAndPolicy,
 			),
 			...summarizables,
@@ -154,9 +158,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.messageCodec = makeMessageCodec(
-			changeFamily.codecs.resolve(formatVersion).json,
+			changeFamily.codecs,
 			new RevisionTagCodec(runtime.idCompressor),
 			options,
+			formatOptions.message,
 		);
 	}
 
