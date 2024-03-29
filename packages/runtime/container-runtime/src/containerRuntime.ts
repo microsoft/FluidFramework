@@ -3001,7 +3001,9 @@ export class ContainerRuntime
 		return this.submitSignalFn(envelope, targetClientId);
 	}
 
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+	public setAttachState(
+		attachState: typeof AttachState.Attaching | typeof AttachState.Attached,
+	): void {
 		if (attachState === AttachState.Attaching) {
 			assert(
 				this.attachState === AttachState.Attaching,

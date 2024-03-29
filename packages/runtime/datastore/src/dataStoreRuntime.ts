@@ -1208,7 +1208,9 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount--;
 	}
 
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+	public setAttachState(
+		attachState: typeof AttachState.Attaching | typeof AttachState.Attached,
+	): void {
 		switch (attachState) {
 			case AttachState.Attaching:
 				/**

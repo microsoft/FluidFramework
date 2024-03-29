@@ -19,7 +19,7 @@ import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
  * to make the union easy to deal with for both Detached types
  */
 export interface DetachedDefaultData {
-	readonly state: AttachState.Detached;
+	readonly state: typeof AttachState.Detached;
 	readonly blobs?: undefined;
 	readonly summary?: undefined;
 	readonly redirectTable?: undefined;
@@ -32,7 +32,7 @@ export interface DetachedDefaultData {
  * about the blobs as they are uploaded.
  */
 export interface DetachedDataWithOutstandingBlobs {
-	readonly state: AttachState.Detached;
+	readonly state: typeof AttachState.Detached;
 	readonly blobs: "outstanding";
 	readonly summary?: undefined;
 	readonly redirectTable: Map<string, string>;
@@ -44,7 +44,7 @@ export interface DetachedDataWithOutstandingBlobs {
  * so the container can move to the attaching state.
  */
 export interface AttachingDataWithBlobs {
-	readonly state: AttachState.Attaching;
+	readonly state: typeof AttachState.Attaching;
 	readonly blobs: "done";
 	readonly summary: CombinedAppAndProtocolSummary;
 }
@@ -56,7 +56,7 @@ export interface AttachingDataWithBlobs {
  * to the attaching state.
  */
 export interface AttachingDataWithoutBlobs {
-	readonly state: AttachState.Attaching;
+	readonly state: typeof AttachState.Attaching;
 	readonly summary: CombinedAppAndProtocolSummary;
 	readonly blobs: "none";
 }
@@ -66,7 +66,7 @@ export interface AttachingDataWithoutBlobs {
  * The baseSnapshotAndBlobs will only be enabled when offline load is enabled.
  */
 export interface AttachedData {
-	readonly state: AttachState.Attached;
+	readonly state: typeof AttachState.Attached;
 }
 
 /**

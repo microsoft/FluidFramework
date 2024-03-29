@@ -31,24 +31,28 @@ import type { ILoader } from "./loader.js";
  * service.  The transition from detached to attached state is a one-way transition.
  * @public
  */
-export enum AttachState {
+export const AttachState = {
 	/**
 	 * In detached state, the data is only present on the local client's machine.  It has not yet been uploaded
 	 * to the service.
 	 */
-	Detached = "Detached",
+	Detached: "Detached",
 
 	/**
 	 * In attaching state, the data has started the upload to the service, but has not yet completed.
 	 */
-	Attaching = "Attaching",
+	Attaching: "Attaching",
 
 	/**
 	 * In attached state, the data has completed upload to the service.  It can be accessed by other clients after
 	 * reaching attached state.
 	 */
-	Attached = "Attached",
-}
+	Attached: "Attached",
+} as const;
+/**
+ * @public
+ */
+export type AttachState = (typeof AttachState)[keyof typeof AttachState];
 
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
@@ -86,7 +90,7 @@ export interface IRuntime extends IDisposable {
 	 * Propagate the container state when container is attaching or attached.
 	 * @param attachState - State of the container.
 	 */
-	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container

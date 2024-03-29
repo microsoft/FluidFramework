@@ -414,7 +414,9 @@ export abstract class FluidDataStoreContext
 		this._tombstoned = tombstone;
 	}
 
-	public abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+	public abstract setAttachState(
+		attachState: typeof AttachState.Attaching | typeof AttachState.Attached,
+	): void;
 
 	private rejectDeferredRealize(
 		reason: string,
@@ -1073,7 +1075,9 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		  But its state is set to attached when loading container from stashed ops
 	4. attach op for this data store is processed - setAttachState() is called.
 	*/
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached) {}
+	public setAttachState(
+		attachState: typeof AttachState.Attaching | typeof AttachState.Attached,
+	) {}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
@@ -1181,7 +1185,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		this.createProps = props.createProps;
 	}
 
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+	public setAttachState(
+		attachState: typeof AttachState.Attaching | typeof AttachState.Attached,
+	): void {
 		switch (attachState) {
 			case AttachState.Attaching:
 				assert(

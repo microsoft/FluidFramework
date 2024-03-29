@@ -36,11 +36,14 @@ import type { IVersion } from '@fluidframework/protocol-definitions';
 import type { MessageType } from '@fluidframework/protocol-definitions';
 
 // @public
-export enum AttachState {
-    Attached = "Attached",
-    Attaching = "Attaching",
-    Detached = "Detached"
-}
+export const AttachState: {
+    readonly Detached: "Detached";
+    readonly Attaching: "Attaching";
+    readonly Attached: "Attached";
+};
+
+// @public (undocumented)
+export type AttachState = (typeof AttachState)[keyof typeof AttachState];
 
 // @public
 export namespace ConnectionState {
@@ -441,7 +444,7 @@ export interface IRuntime extends IDisposable {
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
 }
 

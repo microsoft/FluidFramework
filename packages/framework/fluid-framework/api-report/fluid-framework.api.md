@@ -26,11 +26,14 @@ export type ApplyKind<T, Kind extends FieldKind> = Kind extends FieldKind.Requir
 export type ArrayToUnion<T extends readonly unknown[]> = T[number];
 
 // @public
-export enum AttachState {
-    Attached = "Attached",
-    Attaching = "Attaching",
-    Detached = "Detached"
-}
+export const AttachState: {
+    readonly Detached: "Detached";
+    readonly Attaching: "Attaching";
+    readonly Attached: "Attached";
+};
+
+// @public (undocumented)
+export type AttachState = (typeof AttachState)[keyof typeof AttachState];
 
 // @public
 export enum CommitKind {

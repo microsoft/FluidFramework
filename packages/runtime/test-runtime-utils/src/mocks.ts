@@ -948,7 +948,9 @@ export class MockFluidDataStoreRuntime
 		};
 	}
 
-	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+	public setAttachState(
+		attachState: typeof AttachState.Attaching | typeof AttachState.Attached,
+	): void {
 		if (attachState === this._attachState) {
 			return;
 		}

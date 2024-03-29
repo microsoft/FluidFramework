@@ -158,8 +158,8 @@ export interface IContainerEvents extends IEvent {
 	(event: "disconnected", listener: () => void);
 
 	/**
-	 * Emitted when a {@link AttachState.Detached | detached} container begins the process of
-	 * {@link AttachState.Attaching | attached} to the Fluid service.
+	 * Emitted when a {@link (AttachState:variable).Detached | detached} container begins the process of
+	 * {@link (AttachState:variable).Attaching | attached} to the Fluid service.
 	 *
 	 * @see
 	 *
@@ -170,8 +170,8 @@ export interface IContainerEvents extends IEvent {
 	(event: "attaching", listener: () => void);
 
 	/**
-	 * Emitted when the {@link AttachState.Attaching | attaching} process is complete and the container is
-	 * {@link AttachState.Attached | attached} to the Fluid service.
+	 * Emitted when the {@link (AttachState:variable).Attaching | attaching} process is complete and the container is
+	 * {@link (AttachState:variable).Attached | attached} to the Fluid service.
 	 *
 	 * @see
 	 *
@@ -328,7 +328,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 	/**
 	 * Represents the resolved url to the Container.
-	 * Will be undefined only when the container is in the {@link AttachState.Detached | detatched} state.
+	 * Will be undefined only when the container is in the {@link (AttachState:variable).Detached | detatched} state.
 	 */
 	resolvedUrl: IResolvedUrl | undefined;
 

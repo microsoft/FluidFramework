@@ -514,7 +514,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     save(message: string): void;
     // (undocumented)
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)

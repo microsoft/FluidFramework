@@ -144,7 +144,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
     // (undocumented)
     rollback(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
@@ -329,7 +329,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     get scope(): FluidObject;
     // (undocumented)
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
     // (undocumented)
     setChannelDirty(address: string): void;
     // (undocumented)
@@ -550,7 +550,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     // (undocumented)
     readonly scope: FluidObject;
     // (undocumented)
-    abstract setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    abstract setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
     setChannelDirty(address: string): void;
     setConnectionState(connected: boolean, clientId?: string): void;
     // @deprecated (undocumented)
@@ -1170,7 +1170,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
     // (undocumented)
     getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
     // (undocumented)
-    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    setAttachState(attachState: typeof AttachState.Attaching | typeof AttachState.Attached): void;
 }
 
 // @internal
