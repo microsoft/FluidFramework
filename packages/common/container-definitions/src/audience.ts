@@ -78,19 +78,19 @@ export interface IAudience extends IEventProvider<IAudienceEvents> {
 	 * Returns this client's clientId, if it exists. undefined if this client never connected to ordering service.
 	 * Whenever this property changes, "clientIdChanged" event is fired on this object.
 	 * Wheeever clients loses connection and reconnects, it will raise "connected" event at various API surfaces.
-     *
+	 *
 	 * It's guranteed that such events and change of current clientId happens at the same time (syncronously, one after another).
 	 * That said, at the moment this is experimental API. It depends on some experimental settings that might change in the future.
-	 * The claim about clientId being changed simulteniously with raising "connected" event and being up-to-date only valid when 
+	 * The claim about clientId being changed simulteniously with raising "connected" event and being up-to-date only valid when
 	 * this API is consumed at loader / hosing layer. Container Runtime layer will get these changes delayed, as loader layer changes
 	 * propagate slowly through the system, and thus newer runtimes will continue to observe old (non-synchronized) behavior when paired
 	 * with old loader
-	 * 
+	 *
 	 * While it's marked as experimental, this promise could be broken, and consumers  could experience current clientId being changed
 	 * (and "clientIdChanged" event fired) while (only applicable for "read" kind of connections)
 	 * 1. Such clientId is not present in Audience
 	 * 2. Client is not fully caught up
-	 * 
+	 *
 	 * @experimental
 	 */
 	readonly currentClientId: string | undefined;

@@ -28,7 +28,10 @@ export class Audience extends TypedEventEmitter<IAudienceEvents> implements IAud
 	public setCurrentClientId(clientId: string | undefined): void {
 		if (this._currentClientId !== clientId) {
 			this._currentClientId = clientId;
-			assert(clientId !== undefined, "undefined could be only initial value, and once it is changed, it is never undefined");
+			assert(
+				clientId !== undefined,
+				"undefined could be only initial value, and once it is changed, it is never undefined",
+			);
 			// this.getMember(clientId) could resolve to undefined in these two cases:
 			// 1) Feature gates controlling ConnectionStateHandler() behavior are off
 			// 2) we are loaiding from stashed state and audience is empty, but we remember and set prior clientId

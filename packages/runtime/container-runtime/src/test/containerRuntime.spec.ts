@@ -127,7 +127,6 @@ describe("Runtime", () => {
 		settings: Record<string, ConfigTypes> = {},
 		logger = new MockLogger(),
 	): Partial<IContainerContext> => {
-
 		// Mock the storage layer so "submitSummary" works.
 		const mockStorage: Partial<IDocumentStorageService> = {
 			uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
@@ -1066,7 +1065,10 @@ describe("Runtime", () => {
 					addPendingMessage(pendingStateManager);
 
 					for (let i = 0; i < maxReconnects; i++) {
-						containerRuntime.setConnectionState(!containerRuntime.connected, fakeClientId);
+						containerRuntime.setConnectionState(
+							!containerRuntime.connected,
+							fakeClientId,
+						);
 						containerRuntime.process(
 							{
 								type: "op",
