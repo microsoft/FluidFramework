@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -14,36 +15,41 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISerializableValue, IValueChanged } from "../../interfaces.js";
+
+import { ISharedMap, IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
 	IMapKeyEditLocalOpMetadata,
 	IMapSetOperation,
+	ISerializableValue,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
-import { MapFactory, SharedMap } from "../../map.js";
+import { SharedMap as SharedMapInternal } from "../../map.js";
 import { IMapOperation } from "../../mapKernel.js";
 
-function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
+export function createConnectedMap(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+): ISharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
+	const map = SharedMap.getFactory().create(dataStoreRuntime, id);
 	map.connect(services);
 	return map;
 }
 
-function createLocalMap(id: string): SharedMap {
-	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
+function createLocalMap(id: string): ISharedMap {
+	const map = SharedMap.getFactory().create(new MockFluidDataStoreRuntime(), id);
 	return map;
 }
 
-class TestSharedMap extends SharedMap {
+class TestSharedMap extends SharedMapInternal {
 	private lastMetadata?: MapLocalOpMetadata;
 	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
 		this.lastMetadata = undefined;
@@ -271,7 +277,7 @@ describe("Map", () => {
 			it("new serialization format for big maps", async () => {
 				map.set("key", "value");
 
-				// 40K char string
+				// 160K char string
 				let longString = "01234567890";
 				for (let i = 0; i < 12; i++) {
 					longString = longString + longString;
@@ -354,7 +360,8 @@ describe("Map", () => {
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 					attachState: AttachState.Detached,
 				});
-				const map1 = new SharedMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
+				const factory = SharedMap.getFactory();
+				const map1 = factory.create(dataStoreRuntime1, "testMap1");
 
 				// Set a key in local state.
 				const key = "testKey";
@@ -370,8 +377,12 @@ describe("Map", () => {
 				);
 				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
-				const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
-				await map2.load(services2);
+				const map2 = await factory.load(
+					dataStoreRuntime2,
+					"testMap2",
+					services2,
+					factory.attributes,
+				);
 
 				// Now connect the first SharedMap
 				dataStoreRuntime1.setAttachState(AttachState.Attached);

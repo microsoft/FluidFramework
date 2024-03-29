@@ -5,6 +5,7 @@
 
 import crypto from "crypto";
 import fs from "fs";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	OdspTestDriver,
@@ -30,6 +31,7 @@ import {
 	TestDriverTypes,
 } from "@fluidframework/test-driver-definitions";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
+
 import { ILoadTest, createFluidExport } from "./loadTestDataStore.js";
 import {
 	generateConfigurations,
@@ -45,8 +47,8 @@ const packageName = `${pkgName}@${pkgVersion}`;
 class FileLogger implements ITelemetryBufferedLogger {
 	private static readonly loggerP = (minLogLevel?: LogLevel) =>
 		new LazyPromise<FileLogger>(async () => {
-			if (process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined) {
-				await import(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+			if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+				await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 				const logger = getTestLogger?.();
 				assert(logger !== undefined, "Expected getTestLogger to return something");
 				return new FileLogger(logger, minLogLevel);

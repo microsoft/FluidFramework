@@ -12,6 +12,7 @@ import {
 	makeClient,
 } from "@fluid-example/bubblebench-common";
 import { Change, SharedTree } from "@fluid-experimental/tree";
+
 import { TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
 
 interface IApp {

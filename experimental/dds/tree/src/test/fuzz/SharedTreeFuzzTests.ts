@@ -5,6 +5,7 @@
 
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+
 import {
 	AsyncGenerator,
 	chainAsync as chain,
@@ -14,6 +15,7 @@ import {
 	takeAsync as take,
 } from '@fluid-private/stochastic-test-utils';
 import { expect } from 'chai';
+
 import { fail } from '../../Common.js';
 import { areRevisionViewsSemanticallyEqual } from '../../EditUtilities.js';
 import { SharedTree } from '../../SharedTree.js';
@@ -23,6 +25,7 @@ import {
 	testDocumentsPathBase,
 	withContainerOffline,
 } from '../utilities/TestUtilities.js';
+
 import { makeOpGenerator } from './Generators.js';
 import { EditGenerationConfig, FuzzChange, FuzzTestState, Operation } from './Types.js';
 

@@ -4,6 +4,7 @@
  */
 
 import * as fs from "fs";
+
 import { BaseFileLogger } from "./baseFileLogger";
 
 /**

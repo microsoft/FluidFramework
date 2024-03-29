@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -27,6 +28,7 @@ import {
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString, getTextAndMarkers } from "../sharedString.js";
 

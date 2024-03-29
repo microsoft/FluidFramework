@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
@@ -12,6 +13,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+
 import { ISummaryOpMessage, SummaryCollection } from "../../summary/index.js";
 
 const summaryOp: ISummaryOpMessage = {

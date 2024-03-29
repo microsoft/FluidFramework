@@ -4,6 +4,7 @@
  */
 
 import assert from "assert";
+
 import {
 	ITestDataObject,
 	TestDataObjectType,

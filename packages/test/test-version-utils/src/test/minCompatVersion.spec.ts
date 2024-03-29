@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { CompatKind } from "../../compatOptions.cjs";
-import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+
 import { baseVersionForMinCompat } from "../baseVersion.js";
+import { isCompatVersionBelowMinVersion } from "../compatConfig.js";
+import { CompatKind } from "../compatOptions.js";
 
 describe("Minimum Compat Version", () => {
 	const numCompatVersions = 9;

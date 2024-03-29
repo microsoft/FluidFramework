@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	CursorLocationType,
 	EmptyKey,
@@ -15,6 +16,7 @@ import {
 	isCursor,
 } from "../core/index.js";
 import { fail, isReadonlyArray } from "../util/index.js";
+
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.

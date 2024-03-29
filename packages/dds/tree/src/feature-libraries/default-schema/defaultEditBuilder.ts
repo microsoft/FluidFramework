@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { ICodecFamily, ICodecOptions } from "../../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -36,6 +37,7 @@ import {
 } from "../modular-schema/index.js";
 import { OptionalChangeset } from "../optional-field/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
+
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
