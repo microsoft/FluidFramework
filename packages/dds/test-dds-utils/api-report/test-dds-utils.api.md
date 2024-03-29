@@ -8,6 +8,8 @@ import type { AsyncGenerator as AsyncGenerator_2 } from '@fluid-private/stochast
 import type { AsyncReducer } from '@fluid-private/stochastic-test-utils';
 import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import type { IChannelFactory } from '@fluidframework/datastore-definitions';
+import type { IFluidHandle } from '@fluidframework/core-interfaces';
+import type { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import type { IMockContainerRuntimeOptions } from '@fluidframework/test-runtime-utils';
@@ -70,6 +72,25 @@ export namespace createDDSFuzzSuite {
 
 // @internal
 export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite;
+
+// @internal (undocumented)
+export class DDSFuzzHandle implements IFluidHandle {
+    constructor(routeContext: IFluidHandleContext, onAttachGraph?: (() => void) | undefined);
+    // (undocumented)
+    readonly absolutePath: string;
+    // (undocumented)
+    attachGraph(): void;
+    // (undocumented)
+    bind(handle: IFluidHandle): void;
+    // (undocumented)
+    get(): Promise<any>;
+    // (undocumented)
+    get IFluidHandle(): IFluidHandle;
+    // (undocumented)
+    get isAttached(): boolean;
+    // (undocumented)
+    readonly routeContext: IFluidHandleContext;
+}
 
 // @internal (undocumented)
 export interface DDSFuzzHarnessEvents {
@@ -146,6 +167,14 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory> exten
 
 // @internal (undocumented)
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions;
+
+// @internal (undocumented)
+export interface HandleCreated {
+    // (undocumented)
+    handles: IFluidHandle[];
+    // (undocumented)
+    type: "handleCreated";
+}
 
 // @internal
 export interface IGCTestProvider {

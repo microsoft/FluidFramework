@@ -13,10 +13,16 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	createDDSFuzzSuite,
+	HandleCreated,
+} from "@fluid-private/test-dds-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -36,7 +42,9 @@ interface DeleteKey {
 	key: string;
 }
 
-type Operation = SetKey | DeleteKey | Clear;
+const handleKey = "handleKey";
+
+type Operation = SetKey | DeleteKey | Clear | HandleCreated;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
 type State = DDSFuzzTestState<MapFactory>;
@@ -46,6 +54,16 @@ function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): void {
 	for (const key of a.keys()) {
 		const aVal: unknown = a.get(key);
 		const bVal: unknown = b.get(key);
+		if (key === handleKey) {
+			// never actually get into here - add handles to generator??
+			assert.equal(typeof aVal, IFluidHandle, "aVal should be a handle");
+			assert.equal(typeof bVal, IFluidHandle, "bVal should be a handle");
+			assert.equal(
+				(aVal as IFluidHandle).get(),
+				(bVal as IFluidHandle).get(),
+				`${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`,
+			);
+		}
 		assert.equal(aVal, bVal, `${a.id} and ${b.id} differ at ${key}: ${aVal} vs ${bVal}`);
 	}
 }
@@ -57,6 +75,11 @@ const reducer = combineReducers<Operation, State>({
 	},
 	deleteKey: ({ client }, { key }) => {
 		client.channel.delete(key);
+	},
+	handleCreated: ({ client }, { handles }) => {
+		for (const handle of handles) {
+			client.channel.set(handleKey, handle);
+		}
 	},
 });
 
@@ -101,7 +124,7 @@ function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator
 	return async (state) => syncGenerator(state);
 }
 
-describe("Map fuzz tests", () => {
+describe.only("Map fuzz tests", () => {
 	const model: DDSFuzzModel<MapFactory, Operation> = {
 		workloadName: "default",
 		factory: new MapFactory(),

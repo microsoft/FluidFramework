@@ -30,6 +30,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils";
 import type { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -43,7 +44,6 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type Client,
 	type ClientLoadData,
@@ -1160,7 +1160,9 @@ export function mixinHandle<
 		return async (state): Promise<TOperation | HandleCreated | typeof done> => {
 			const baseOp = baseGenerator(state);
 			if (state.random.bool(0.5)) {
-				const handle1 = new DDSFuzzHandle();
+				const handle1 = new DDSFuzzHandle(
+					state.client.dataStoreRuntime.IFluidHandleContext,
+				);
 				return {
 					type: "handleCreated",
 					handles: [handle1],
@@ -1171,7 +1173,7 @@ export function mixinHandle<
 	};
 
 	const reducer: AsyncReducer<TOperation | HandleCreated, TState> = async (state, operation) => {
-		return model.reducer(state, operation);
+		return model.reducer(state, operation as TOperation);
 	};
 
 	return {

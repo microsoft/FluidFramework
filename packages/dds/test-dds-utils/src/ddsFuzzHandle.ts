@@ -7,6 +7,9 @@ import type { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-int
 import { generateHandleContextPath } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 
+/**
+ * @internal
+ */
 export class DDSFuzzHandle implements IFluidHandle {
 	private attached: boolean = false;
 
