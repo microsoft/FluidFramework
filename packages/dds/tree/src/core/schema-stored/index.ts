@@ -30,6 +30,7 @@ export {
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "./storedSchemaRepository.js";
+export { Multiplicity } from "./multiplicity.js";
 
 export { TreeNodeSchemaIdentifier, FieldKey, FieldKindIdentifier } from "./format.js";
 

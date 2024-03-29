@@ -12,9 +12,9 @@ import {
 	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeStoredSchema,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 import { FullSchemaPolicy } from "./fieldKind.js";
 

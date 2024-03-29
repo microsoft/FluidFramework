@@ -125,8 +125,6 @@ export {
 	EncodedModularChangeset,
 } from "./modular-schema/index.js";
 
-export { Multiplicity } from "./multiplicity.js";
-
 export {
 	FlexTreeNodeSchema,
 	FlexAllowedTypes,

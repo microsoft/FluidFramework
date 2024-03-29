@@ -19,10 +19,10 @@ import {
 	TreeValue,
 	Value,
 	mapCursorFields,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import { FullSchemaPolicy } from "../modular-schema/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 import { BasicChunk } from "./basicChunk.js";
 import { TreeChunk, tryGetChunk } from "./chunk.js";

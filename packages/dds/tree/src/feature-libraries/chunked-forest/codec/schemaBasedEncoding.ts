@@ -13,10 +13,10 @@ import {
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
+	Multiplicity,
 } from "../../../core/index.js";
 import { fail } from "../../../util/index.js";
 import { FullSchemaPolicy } from "../../modular-schema/index.js";
-import { Multiplicity } from "../../multiplicity.js";
 
 import {
 	EncoderCache,

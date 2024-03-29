@@ -9,6 +9,7 @@ import {
 	DeltaFieldChanges,
 	FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
+	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
@@ -20,7 +21,6 @@ import {
 	allowsTreeSchemaIdentifierSuperset,
 	referenceFreeFieldChangeRebaser,
 } from "../modular-schema/index.js";
-import { Multiplicity } from "../multiplicity.js";
 import {
 	OptionalChangeset,
 	noChangeCodecFamily,

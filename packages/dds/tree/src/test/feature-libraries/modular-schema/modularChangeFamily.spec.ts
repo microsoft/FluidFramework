@@ -23,6 +23,7 @@ import {
 	makeDetachedNodeId,
 	revisionMetadataSourceFromInfo,
 	tagChange,
+	Multiplicity,
 } from "../../../core/index.js";
 import { jsonObject, singleJsonCursor } from "../../../domains/index.js";
 import {
@@ -32,7 +33,6 @@ import {
 	FieldEditor,
 	FieldKindWithEditor,
 	ModularChangeset,
-	Multiplicity,
 	NodeChangeset,
 	RelevantRemovedRootsFromChild,
 	TreeChunk,

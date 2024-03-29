@@ -10,8 +10,8 @@ import {
 	TreeFieldStoredSchema,
 	TreeStoredSchema,
 	TreeTypeSet,
+	Multiplicity,
 } from "../../core/index.js";
-import { Multiplicity } from "../multiplicity.js";
 
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler.js";
 import { FlexFieldKind, FullSchemaPolicy } from "./fieldKind.js";

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, FieldKindData } from "../../core/index.js";
-import { Multiplicity } from "../multiplicity.js";
+import { FieldKindIdentifier, FieldKindData, Multiplicity } from "../../core/index.js";
 
 /**
  * Functionality for FieldKinds that is stable,
