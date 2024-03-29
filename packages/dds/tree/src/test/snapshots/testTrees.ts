@@ -256,7 +256,7 @@ export function generateTestTrees(useUncompressedEncode?: boolean) {
 					scope: "optional-field",
 					libraries: [leaf.library],
 				});
-				const testNode = innerBuilder.map("TestNode", leaf.all);
+				const testNode = innerBuilder.map("TestNode", SchemaBuilder.optional(leaf.all));
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(testNode));
 
 				const config = {
