@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import events_pkg from "events_pkg";
 const { EventEmitter } = events_pkg;
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluid-private/test-loader-utils";

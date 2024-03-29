@@ -39,7 +39,7 @@ import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import type { IIdCompressor } from '@fluidframework/id-compressor';
-import type { IIdCompressorCore } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -419,7 +419,7 @@ export class DocumentsSchemaController {
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
     // (undocumented)
-    summarizeDocumentSchema(refSeq: number): IDocumentSchema | undefined;
+    summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined;
 }
 
 // @alpha (undocumented)
@@ -668,8 +668,6 @@ export interface IChunkedOp {
     // (undocumented)
     originalMetadata?: Record<string, unknown>;
     // (undocumented)
-    originalType: MessageType | ContainerMessageType;
-    // (undocumented)
     totalChunks: number;
 }
 
@@ -709,7 +707,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
     readonly disableIsolatedChannels?: true;
     // (undocumented)
     readonly documentSchema?: IDocumentSchema;
-    readonly message: ISummaryMetadataMessage | undefined;
+    readonly lastMessage?: ISummaryMetadataMessage;
+    // @deprecated (undocumented)
+    readonly message?: ISummaryMetadataMessage;
     // (undocumented)
     readonly summaryFormatVersion: 1;
     readonly summaryNumber?: number;
@@ -1203,24 +1203,6 @@ export interface RuntimeHeaderData {
 export enum RuntimeHeaders {
     viaHandle = "viaHandle",
     wait = "wait"
-}
-
-// @internal @deprecated (undocumented)
-export enum RuntimeMessage {
-    // (undocumented)
-    Alias = "alias",
-    // (undocumented)
-    Attach = "attach",
-    // (undocumented)
-    BlobAttach = "blobAttach",
-    // (undocumented)
-    ChunkedOp = "chunkedOp",
-    // (undocumented)
-    FluidDataStoreOp = "component",
-    // (undocumented)
-    Operation = "op",
-    // (undocumented)
-    Rejoin = "rejoin"
 }
 
 // @alpha

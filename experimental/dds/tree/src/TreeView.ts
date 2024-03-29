@@ -4,6 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils';
+
 import { copyPropertyIfDefined, fail } from './Common.js';
 import { Delta, Forest, isParentedForestNode } from './Forest.js';
 import { NodeId, TraitLabel } from './Identifiers.js';

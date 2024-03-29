@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { type ContainerSchema, type DataObjectClass, type LoadableObjectClass } from "./types.js";
 
 /**

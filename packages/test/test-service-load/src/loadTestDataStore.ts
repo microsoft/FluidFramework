@@ -4,6 +4,7 @@
  */
 
 import * as crypto from "crypto";
+
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -25,7 +26,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoadTestConfig } from "./testConfigFile";
+
+import { ILoadTestConfig } from "./testConfigFile.js";
 
 export interface IRunConfig {
 	runId: number;

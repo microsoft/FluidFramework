@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
@@ -11,6 +12,7 @@ import { BasicChunk } from "../basicChunk.js";
 import { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
+
 import {
 	ChunkDecoder,
 	StreamCursor,

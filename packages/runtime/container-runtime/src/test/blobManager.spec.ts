@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 
 import {
 	IsoBuffer,
@@ -33,6 +32,8 @@ import {
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { v4 as uuid } from "uuid";
+
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP

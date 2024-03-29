@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
+
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	describeCompat,
@@ -26,6 +27,7 @@ import {
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
+
 import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider) => {

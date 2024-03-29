@@ -4,10 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core/index.js";
 import { fail, requireAssignableTo } from "../../util/index.js";
 import { FieldKinds, defaultSchemaPolicy } from "../default-schema/index.js";
 import { Multiplicity } from "../multiplicity.js";
+
 import { normalizeFlexListEager } from "./flexList.js";
 import {
 	FlexFieldNodeSchema,

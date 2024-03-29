@@ -6,13 +6,16 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
+
 import { _dirname } from "./dirname.cjs";
 import { LocationBase } from "./generateSharedStrings.js";
 

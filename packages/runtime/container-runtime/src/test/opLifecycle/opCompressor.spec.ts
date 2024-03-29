@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MockLogger } from "@fluidframework/telemetry-utils";
+
 import { ContainerMessageType } from "../../index.js";
 import { BatchMessage, IBatch, OpCompressor } from "../../opLifecycle/index.js";
 
@@ -27,7 +29,6 @@ describe("OpCompressor", () => {
 	});
 	const createMessage = (contents: string) => ({
 		metadata: { flag: true },
-		localOpMetadata: undefined,
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents,
 		referenceSequenceNumber: 0,

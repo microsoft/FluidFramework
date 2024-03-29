@@ -19,7 +19,8 @@ import {
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
+
+import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,

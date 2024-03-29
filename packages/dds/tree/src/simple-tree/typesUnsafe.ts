@@ -5,16 +5,19 @@
 
 import { FlexListToUnion, Unenforced } from "../feature-libraries/index.js";
 import { RestrictiveReadonlyRecord } from "../util/index.js";
+
 import {
 	AllowedTypes,
 	ApplyKind,
 	FieldKind,
+	type FieldSchema,
 	ImplicitAllowedTypes,
 	ImplicitFieldSchema,
 	NodeFromSchema,
 	NodeKind,
 	TreeNodeFromImplicitAllowedTypes,
 	TreeNodeSchema,
+	WithType,
 } from "./schemaTypes.js";
 import { TreeArrayNode } from "./treeArrayNode.js";
 import { TreeArrayNodeBase, TreeNode, Unhydrated } from "./types.js";
@@ -39,6 +42,15 @@ export type ObjectFromSchemaRecordUnsafe<
 > = {
 	-readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
+
+/**
+ * {@link Unenforced} version of {@link TreeObjectNode}.
+ * @beta
+ */
+export type TreeObjectNodeUnsafe<
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	TypeName extends string = string,
+> = TreeNode & ObjectFromSchemaRecordUnsafe<T> & WithType<TypeName>;
 
 /**
  * {@link Unenforced} version of {@link TreeFieldFromImplicitField}.
@@ -164,7 +176,17 @@ export type InsertableTreeFieldFromImplicitFieldUnsafe<
 export interface FieldSchemaUnsafe<
 	out Kind extends FieldKind,
 	out Types extends Unenforced<ImplicitAllowedTypes>,
-> {
+> extends FieldSchema<Kind, any> {
+	/**
+	 * {@inheritDoc FieldSchema.kind}
+	 */
 	readonly kind: Kind;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypes}
+	 */
 	readonly allowedTypes: Types;
+	/**
+	 * {@inheritDoc FieldSchema.allowedTypeSet}
+	 */
+	readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
 }

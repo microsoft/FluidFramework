@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
+
 import {
 	ChangeEncodingContext,
 	FieldKey,
@@ -15,6 +17,7 @@ import {
 	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
+
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";

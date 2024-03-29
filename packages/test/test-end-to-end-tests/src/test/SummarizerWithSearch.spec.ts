@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { PureDataObject } from "@fluidframework/aqueduct";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
@@ -39,6 +40,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+
 import { wrapObjectAndOverride } from "../mocking.js";
 
 interface ProvideSearchContent {
