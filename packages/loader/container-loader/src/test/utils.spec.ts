@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { IDocumentAttributes, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
 import { getDocumentAttributes, runSingle } from "../utils.js";
