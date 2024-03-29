@@ -4,7 +4,7 @@
  */
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISharedTree, SharedTreeFactory, type TreeView, fail } from "@fluidframework/tree";
+import { ISharedTree, SharedTreeFactory, type TreeView, fail } from "@fluidframework/tree/internal";
 import { AppState } from "./appState.js";
 import { type App, appTreeConfiguration } from "./schema.js";
 

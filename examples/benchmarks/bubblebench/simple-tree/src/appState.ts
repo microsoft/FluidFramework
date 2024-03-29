@@ -9,7 +9,7 @@ import {
 	makeBubble,
 	randomColor,
 } from "@fluid-example/bubblebench-common";
-import type { InsertableTypedNode, TreeView } from "@fluidframework/tree";
+import type { InsertableTypedNode, TreeView } from "@fluidframework/tree/internal";
 import { type App, type Bubble, Client } from "./schema.js";
 
 export class AppState implements IAppState {

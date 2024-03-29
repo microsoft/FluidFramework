@@ -4,7 +4,7 @@
  */
 
 import type { IBubble, IClient } from "@fluid-example/bubblebench-common";
-import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeConfiguration } from "@fluidframework/tree/internal";
 
 const sf = new SchemaFactory("bubble-bench-simple-tree");
 
