@@ -254,7 +254,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		return root.root.map;
 	}
 
-	async function getMapFromProvidor(
+	async function getMapFromProvider(
 		getMap: (t: ITestFluidObject) => Promise<MinimalMap>,
 	): Promise<MinimalMap> {
 		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
@@ -477,7 +477,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		{ name: "map", getMap: getMapBackedMap },
 	].forEach(({ name, getMap }) => {
 		it(`doesn't resend successful op (${name})`, async function () {
-			const map = await getMapFromProvidor(getMap);
+			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 				const mapPre = await getMap(d);
 				mapPre.set(testKey, "something unimportant");
@@ -515,7 +515,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		it(`resends delete op and can set after (${name})`, async function () {
-			const map = await getMapFromProvidor(getMap);
+			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 				const mapPre = await getMap(d);
 				mapPre.delete("clear");
@@ -536,7 +536,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		it(`resends a lot of ops (${name})`, async function () {
-			const map = await getMapFromProvidor(getMap);
+			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 				const mapPre = await getMap(d);
 				[...Array(lots).keys()].map((i) => mapPre.set(i.toString(), i.toString()));
@@ -565,7 +565,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		it(`doesn't resend a lot of successful ops (${name})`, async function () {
-			const map = await getMapFromProvidor(getMap);
+			const map = await getMapFromProvider(getMap);
 			const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 				const mapPre = await getMap(d);
 				[...Array(lots).keys()].map((i) => map.set(i.toString(), i.toString()));
