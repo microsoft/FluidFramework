@@ -20,6 +20,7 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
+	SetUnsampledTelemetry,
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
@@ -46,6 +47,11 @@ export const useAfterDisposeErrorText =
  * @privateRemarks Exported for test purposes only.
  */
 export const accessBeforeInitializeErrorText = "Devtools have not yet been initialized.";
+
+/**
+ * Key for sessionStorage that's used to toggle unsampled telemetry.
+ */
+const unsampledTelemetryKey = "Fluid.Telemetry.DisableSampling";
 
 /**
  * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
@@ -101,6 +107,8 @@ export interface FluidDevtoolsProps {
  *
  * - {@link GetContainerList.Message}: When received, {@link ContainerList.Message} will be posted in response.
  *
+ * -{@link SetUnsampledTelemetry.Message}: When received, the unsampled telemetry flag will be toggled.
+ *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
@@ -145,6 +153,13 @@ export class FluidDevtools implements IFluidDevtools {
 			this.postContainerList();
 			return true;
 		},
+		[SetUnsampledTelemetry.MessageType]: async (message) => {
+			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
+			globalThis.sessionStorage?.setItem(unsampledTelemetryKey, String(newValue));
+			this.postSupportedFeatures();
+			window.location.reload();
+			return true;
+		},
 	};
 
 	/**
@@ -174,11 +189,14 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly postSupportedFeatures = (): void => {
 		const supportedFeatures = this.getSupportedFeatures();
+		const unsampledTelemetry =
+			globalThis.sessionStorage?.getItem(unsampledTelemetryKey) === "true";
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({
 				features: supportedFeatures,
 				devtoolsVersion,
+				unsampledTelemetry,
 			}),
 		);
 	};
