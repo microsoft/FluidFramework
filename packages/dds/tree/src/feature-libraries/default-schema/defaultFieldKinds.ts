@@ -25,11 +25,12 @@ import {
 import { Multiplicity } from "../multiplicity.js";
 import {
 	OptionalChangeset,
-	noChangeCodecFamily,
 	optionalChangeHandler,
 	optionalFieldEditor,
 } from "../optional-field/index.js";
 import { sequenceFieldChangeHandler } from "../sequence-field/index.js";
+
+import { noChangeCodecFamily } from "./noChangeCodecs.js";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.

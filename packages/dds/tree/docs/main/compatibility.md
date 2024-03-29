@@ -175,12 +175,8 @@ flowchart TD
     DetachedNodeToFieldCodec-->RevisionTagCodec
     OptionalFieldCodec-->RevisionTagCodec
     SequenceFieldCodec-->RevisionTagCodec
-    NodeKeyFieldCodec-->RevisionTagCodec
-    ForbiddenFieldCodec-->RevisionTagCodec
     OptionalFieldCodec-->FieldBatchCodec
     SequenceFieldCodec-->FieldBatchCodec
-    NodeKeyFieldCodec-->FieldBatchCodec
-    ForbiddenFieldCodec-->FieldBatchCodec
 
     classDef summarizable stroke-width:8px
     classDef op stroke-width:8px
@@ -189,6 +185,24 @@ flowchart TD
     class MessageCodec op
     class FieldBatchCodec,SchemaCodec,ForestCodec,MessageCodec,EditManagerCodec,DetachedNodeToFieldCodec versioned
 ```
+
+Entries in this diagram align with the following in code:
+
+| Codec (chart entry)                                                                           | In-memory type                  |
+| --------------------------------------------------------------------------------------------- | ------------------------------- |
+| [RevisionTagCodec](../../src/core/rebase/revisionTagCodec.ts)                                 | RevisionTag                     |
+| [SchemaCodec](../../src/feature-libraries/schema-index/codec.ts)                              | TreeStoredSchema                |
+| [FieldBatchCodec](../../src/feature-libraries/chunked-forest/codec/codecs.ts)                 | FieldBatch                      |
+| [ForestCodec](../../src/feature-libraries/forest-summary/codec.ts)                            | FieldSet                        |
+| [MessageCodec](../../src/shared-tree-core/messageCodecs.ts)                                   | DecodedMessage<TChangeset>      |
+| [SharedTreeChangeFamilyCodec](../../src/shared-tree/sharedTreeChangeCodecs.ts)                | SharedTreeChange                |
+| [EditManagerCodec](../../src/shared-tree-core/editManagerCodecs.ts)                           | SummaryData<TChangeset>         |
+| [ModularChangeFamilyCodec](../../src/feature-libraries/modular-schema/modularChangeCodecs.ts) | ModularChange                   |
+| [OptionalFieldCodec](../../src/feature-libraries/optional-field/optionalFieldCodecs.ts)       | OptionalChangeset<TChildChange> |
+| [SequenceFieldCodec](../../src/feature-libraries/sequence-field/sequenceFieldCodecs.ts)       | Changeset<TChildChange>         |
+| [NodeKeyFieldCodec](../../src/feature-libraries/default-schema/noChangeCodecs.ts)             | N/A                             |
+| [ForbiddenFieldCodec](../../src/feature-libraries/default-schema/noChangeCodecs.ts)           | N/A                             |
+| [DetachedNodeToFieldCodec](../../src/core/tree/detachedFieldIndexCodec.ts)                    | DetachedFieldSummaryData        |
 
 > Field kind codecs are actually corecursive with ModularChangeset's codec with respect to the encoded data. That doesn't significantly affect guidance around updating the persisted format.
 
