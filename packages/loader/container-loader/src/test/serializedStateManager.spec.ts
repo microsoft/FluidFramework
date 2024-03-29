@@ -23,23 +23,12 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { type IPendingContainerState, SerializedStateManager } from "../serializedStateManager.js";
+import { failProxy } from "./failProxy.js";
 
 type ISerializedStateManagerDocumentStorageService = Pick<
 	IDocumentStorageService,
 	"getSnapshot" | "getSnapshotTree" | "getVersions" | "readBlob"
 >;
-
-const failProxy = <T extends object>() => {
-	const proxy = new Proxy<T>({} as any as T, {
-		get: (_, p) => {
-			if (p === "then") {
-				return undefined;
-			}
-			throw Error(`${p.toString()} not implemented`);
-		},
-	});
-	return proxy;
-};
 
 const snapshot = {
 	id: "fromStorage",
@@ -69,8 +58,8 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	public readonly blobs = new Map<string, ArrayBufferLike>();
 	private readonly snapshot: ISnapshotTree;
 
-	constructor() {
-		this.snapshot = snapshot;
+	constructor(baseSnapshot = snapshot) {
+		this.snapshot = baseSnapshot;
 		this.blobs.set(
 			"attributesId",
 			stringToBuffer(`{"minimumSequenceNumber" : 0, "sequenceNumber": 0}`, "utf8"),
@@ -101,6 +90,9 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 		return [{ id: this.snapshot.id, treeId: this.snapshot.id }];
 	}
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
+		if (!this.blobs.has(id)) {
+			throw new Error("Requested blob does not exist");
+		}
 		return this.blobs.get(id) as ArrayBufferLike;
 	}
 
@@ -149,21 +141,16 @@ const getAttributesFromPendingState = (
 };
 
 describe("serializedStateManager", () => {
-	let seq: number;
 	const logger = new MockLogger();
 
-	function generateSavedOp(): ISequencedDocumentMessage {
+	function generateSavedOp(seq: number): ISequencedDocumentMessage {
 		return {
 			clientId: "Some client ID",
 			minimumSequenceNumber: 0,
-			sequenceNumber: seq++,
+			sequenceNumber: seq,
 			type: MessageType.Operation,
 		} as any as ISequencedDocumentMessage;
 	}
-
-	beforeEach(async () => {
-		seq = 1;
-	});
 
 	it("can't get pending local state when offline load disabled", async () => {
 		const storageAdapter = new MockStorageAdapter();
@@ -282,8 +269,9 @@ describe("serializedStateManager", () => {
 			true,
 			cb,
 		);
-		for (let num = 0; num < 10; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
+		let seq = 1;
+		while (seq < 10) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 		const { baseSnapshot, version } = await serializedStateManager.fetchSnapshot(
 			undefined,
@@ -332,11 +320,11 @@ describe("serializedStateManager", () => {
 			cb,
 		);
 
-		const processedOpsSize = 20;
 		const firstProcessedOpSequenceNumber = 13; // greater than snapshotSequenceNumber + 1
-		seq = firstProcessedOpSequenceNumber;
-		for (let num = 0; num < processedOpsSize; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
+		const lastProcessedOpSequenceNumber = 40;
+		let seq = firstProcessedOpSequenceNumber;
+		while (seq <= lastProcessedOpSequenceNumber) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 		const snapshotSequenceNumber = 11;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
@@ -373,9 +361,10 @@ describe("serializedStateManager", () => {
 			true,
 		);
 
-		const processedOpsSize = 20;
-		for (let num = 0; num < processedOpsSize; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
+		const lastProcessedOpSequenceNumber = 20;
+		let seq = 1;
+		while (seq <= lastProcessedOpSequenceNumber) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 
 		const snapshotSequenceNumber = 11;
@@ -411,9 +400,10 @@ describe("serializedStateManager", () => {
 			cb,
 		);
 
-		const processedOpsSize = 20;
-		for (let num = 0; num < processedOpsSize; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
+		const lastProcessedOpSequenceNumber = 20;
+		let seq = 1;
+		while (seq <= lastProcessedOpSequenceNumber) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 
 		const snapshotSequenceNumber = 11;
@@ -442,7 +432,7 @@ describe("serializedStateManager", () => {
 		);
 		assert.strictEqual(
 			parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
-			processedOpsSize,
+			lastProcessedOpSequenceNumber,
 			"wrong last saved op",
 		);
 	});
@@ -476,13 +466,7 @@ describe("serializedStateManager", () => {
 			resolvedUrl,
 		);
 		const parsed = JSON.parse(state) as IPendingContainerState;
-		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
-		const attributes = getAttributesFromPendingState(parsed);
-		assert.strictEqual(
-			attributes.sequenceNumber,
-			snapshotSequenceNumber,
-			"wrong snapshot sequence number",
-		);
+		assert.strictEqual(parsed.baseSnapshot.id, "fromPending");
 		assert.strictEqual(parsed.savedOps.length, 0, "should be no savedOps");
 	});
 
@@ -503,18 +487,18 @@ describe("serializedStateManager", () => {
 			true,
 			cb,
 		);
-		const processedOpsSize1 = 20;
-		for (let num = 0; num < processedOpsSize1; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
+		let seq = 1;
+		while (seq < 20) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 
-		const snapshotSequenceNumber = 22;
+		const snapshotSequenceNumber = seq;
 		storageAdapter.uploadSummary(snapshotSequenceNumber);
 
 		await serializedStateManager.fetchSnapshot(undefined, false);
-		const processedOpsSize2 = 10;
-		for (let num = 0; num < processedOpsSize2; ++num) {
-			serializedStateManager.addProcessedOp(generateSavedOp());
+		const lastProcessedOpSequenceNumber = 40;
+		while (seq <= lastProcessedOpSequenceNumber) {
+			serializedStateManager.addProcessedOp(generateSavedOp(seq++));
 		}
 		await deferred.promise;
 		const state = await serializedStateManager.getPendingLocalStateCore(
@@ -538,7 +522,64 @@ describe("serializedStateManager", () => {
 		);
 		assert.strictEqual(
 			parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
-			processedOpsSize1 + processedOpsSize2,
+			lastProcessedOpSequenceNumber,
+			"wrong last saved op",
+		);
+	});
+
+	it("refresh snapshot with saved ops", async () => {
+		const savedOps: ISequencedDocumentMessage[] = [];
+		let seq = 1;
+		const savedOpsSize = 20;
+		while (seq <= savedOpsSize) {
+			savedOps.push(generateSavedOp(seq++));
+		}
+
+		const pending: IPendingContainerState = {
+			...pendingLocalState,
+			baseSnapshot: { ...snapshot, id: "fromPending" },
+			savedOps,
+		};
+		const storageAdapter = new MockStorageAdapter();
+		const deferred = new Deferred<void>();
+		const cb = () => {
+			deferred.resolve();
+		};
+		const serializedStateManager = new SerializedStateManager(
+			pending,
+			logger.toTelemetryLogger(),
+			storageAdapter,
+			true,
+			cb,
+		);
+
+		const snapshotSequenceNumber = 11;
+		storageAdapter.uploadSummary(snapshotSequenceNumber);
+
+		await serializedStateManager.fetchSnapshot(undefined, false);
+		await deferred.promise;
+		const state = await serializedStateManager.getPendingLocalStateCore(
+			{ notifyImminentClosure: false },
+			"clientId",
+			new MockRuntime(),
+			resolvedUrl,
+		);
+		const parsed = JSON.parse(state) as IPendingContainerState;
+		assert.strictEqual(parsed.baseSnapshot.id, "fromStorage");
+		const attributes = getAttributesFromPendingState(parsed);
+		assert.strictEqual(
+			attributes.sequenceNumber,
+			snapshotSequenceNumber,
+			"wrong snapshot sequence number",
+		);
+		assert.strictEqual(
+			parsed.savedOps[0].sequenceNumber,
+			snapshotSequenceNumber + 1,
+			"wrong first saved op",
+		);
+		assert.strictEqual(
+			parsed.savedOps[parsed.savedOps.length - 1].sequenceNumber,
+			savedOpsSize,
 			"wrong last saved op",
 		);
 	});
