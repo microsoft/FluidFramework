@@ -142,6 +142,10 @@ export interface IFluidHandleErased<T> extends ErasedType<readonly ["IFluidHandl
  * @alpha
  */
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T> {
+	if (!(fluidHandleSymbol in handle) || !(fluidHandleSymbol in handle[fluidHandleSymbol])) {
+		throw new TypeError("Invalid IFluidHandle");
+	}
+
 	// This casts the IFluidHandleErased from the symbol instead of `handle` to ensure that if someone
 	// implements their own IFluidHandle in terms of an existing handle, it won't break anything.
 	return handle[fluidHandleSymbol] as unknown as IFluidHandleInternal<T>;
