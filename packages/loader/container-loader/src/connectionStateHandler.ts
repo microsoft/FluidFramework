@@ -560,7 +560,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// assert(!this.waitingForLeaveOp || writeConnection,
 		//    0x2a6 /* "waitingForLeaveOp should imply writeConnection (we need to be ready to flush pending ops)" */);
 
-		// Stash the clientID to detect when transitioning from connecting (socket.io channel open) to connected
+		// Stash the clientID to detect when transitioning from catchingUp (socket.io channel open) to connected
 		// (have received the join message for the client ID)
 		// This is especially important in the reconnect case. It's possible there could be outstanding
 		// ops sent by this client, so we should keep the old client id until we see our own client's

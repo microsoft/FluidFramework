@@ -72,6 +72,7 @@ import {
 	IVersion,
 	MessageType,
 	SummaryType,
+	type ConnectionMode,
 } from "@fluidframework/protocol-definitions";
 import {
 	EventEmitterWithErrorHandling,
@@ -570,6 +571,7 @@ export class Container
 	private get connectionMode() {
 		return this._deltaManager.connectionManager.connectionMode;
 	}
+	public connectionDiagnosticsLog: ConnectionDiagnostics[] = [];
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
 		/**
@@ -837,20 +839,7 @@ export class Container
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
-				connectionStateChanged: (value, oldState, reason) => {
-					if (value === ConnectionState.Connected) {
-						this._clientId = this.connectionStateHandler.pendingClientId;
-					}
-					this.logConnectionStateChangeTelemetry(value, oldState, reason);
-					if (this._lifecycleState === "loaded") {
-						this.propagateConnectionState(
-							false /* initial transition */,
-							value === ConnectionState.Disconnected
-								? reason
-								: undefined /* disconnectedReason */,
-						);
-					}
-				},
+				connectionStateChanged: (...args) => this.handleConnectionStateChanged(...args),
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
 				maxClientLeaveWaitTime: options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
@@ -952,6 +941,58 @@ export class Container
 				}
 			};
 			document.addEventListener("visibilitychange", this.visibilityEventHandler);
+		}
+	}
+
+	private handleConnectionStateChanged(
+		value: ConnectionState,
+		oldState: ConnectionState,
+		reason?: IConnectionStateChangeReason,
+	) {
+		const state = ConnectionState[value] as keyof ConnectionDiagnostics["stateDetails"]; //* Can we move ConnectionState away from enum?
+
+		if (value === ConnectionState.Connected) {
+			this._clientId = this.connectionStateHandler.pendingClientId;
+		}
+
+		const diag = this.connectionDiagnosticsLog[0];
+		if (state === "disconnected") {
+			const newConnectionDiag: ConnectionDiagnostics = {
+				connectionMode: this.connectionMode, //* Correct?  Make it required?
+				state,
+				stateDetails: {
+					disconnected: {
+						time: Date.now(),
+						reason,
+						autoReconnect: false, //* unknown
+					},
+				},
+			};
+			this.connectionDiagnosticsLog.push(newConnectionDiag);
+		} else {
+			assert(
+				diag !== undefined,
+				"Connection diagnostics log should have been created from initial disconnect state",
+			);
+			//* Are these correct in all cases?
+			diag.clientId = this.connectionStateHandler.pendingClientId;
+			diag.connectionMode = this.connectionMode;
+
+			diag.state = state;
+			diag.stateDetails[state] = {
+				time: Date.now(),
+				reason,
+			};
+		}
+
+		this.logConnectionStateChangeTelemetry(value, oldState, reason);
+		if (this._lifecycleState === "loaded") {
+			this.propagateConnectionState(
+				false /* initial transition */,
+				value === ConnectionState.Disconnected
+					? reason
+					: undefined /* disconnectedReason */,
+			);
 		}
 	}
 
@@ -2451,48 +2492,53 @@ export interface ConnectionDiagnostics {
 	 */
 	clientId?: string;
 
-	/** The reason the previous connection was disconnected */
-	lastDisconnectReason?: string;
-
-	/** The reason this connection was disconnected (unset while it's active) */
-	disconnectReason?: string;
+	/** read-only v. read/write connection */
+	connectionMode?: ConnectionMode;
 
 	//* TODO: Do we need additional modeling for the case when a connection attempt is cancelled?
 
 	/** The current (while active) or final (after disconnect) state of this connection */
-	state: keyof Pick<
-		ConnectionDiagnostics,
-		"disconnected" | "establishingConnection" | "catchingUp" | "connected"
-	>;
+	state: keyof ConnectionDiagnostics["stateDetails"];
 
-	/** Details about the connection while disconnected */
-	disconnected: {
-		time: number;
-		autoReconnect: boolean;
-	};
-	/** Details about the connection while establishingConnection */
-	establishingConnection?: {
-		time: number;
-		steps: {
-			// 0 is current step
-			name: string; // Free-form, for telemetry only
-			type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
-			time: number;
-			retryableError?: Error; // with errorType (maybe AnyDriverError)
-		}[];
-	};
-	/** Details about the connection while catchingUp */
-	catchingUp?: {
-		time: number;
-		checkpointSequenceNumber: number;
-		initialProcessedSequenceNumber: number;
-		currentProcessedSequenceNumber: number;
-	};
-	/** Details about the connection while connected */
-	connected?: {
-		time: number;
-		opsSent: number;
-		opsReceived: number;
+	/** Details about the connection as it progressed through each state */
+	readonly stateDetails: {
+		/** Details about the connection while disconnected */
+		disconnected: {
+			readonly time: number;
+			readonly reason?: IConnectionStateChangeReason;
+
+			autoReconnect: boolean;
+		};
+		/** Details about the connection while establishingConnection */
+		establishingConnection?: {
+			readonly time: number;
+			readonly reason?: IConnectionStateChangeReason;
+
+			steps?: {
+				// 0 is current step
+				name: string; // Free-form, for telemetry only
+				type: "auth" | "socket.io" | "orderingService"; // unsure about this - part of public API, needs to be both stable and useful
+				time: number;
+				retryableError?: Error; // with errorType (maybe AnyDriverError)
+			}[];
+		};
+		/** Details about the connection while catchingUp */
+		catchingUp?: {
+			readonly time: number;
+			readonly reason?: IConnectionStateChangeReason;
+
+			checkpointSequenceNumber?: number;
+			initialProcessedSequenceNumber?: number;
+			currentProcessedSequenceNumber?: number;
+		};
+		/** Details about the connection while connected */
+		connected?: {
+			readonly time: number;
+			readonly reason?: IConnectionStateChangeReason;
+
+			opsSent?: number;
+			opsReceived?: number;
+		};
 	};
 }
 
