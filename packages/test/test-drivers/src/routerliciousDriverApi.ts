@@ -4,6 +4,7 @@
  */
 
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
+
 import { pkgVersion } from "./packageVersion.js";
 
 /**

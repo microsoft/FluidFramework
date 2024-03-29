@@ -6,15 +6,16 @@
 /**
  * @fileoverview Helper functions and classes to work with array ChangeSets
  */
+import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { copy as cloneDeep } from "fastest-json-copy";
 import isEqual from "lodash/isEqual.js";
 import isNumber from "lodash/isNumber.js";
 import isString from "lodash/isString.js";
 
 // @ts-ignore
-import { constants, ConsoleUtils } from "@fluid-experimental/property-common";
 import { ApplyChangeSetOptions, ConflictInfo, SerializedChangeSet } from "../changeset.js";
 import { TypeIdHelper } from "../helpers/typeidHelper.js";
+
 import {
 	ArrayChangeSetIterator,
 	GenericOperation,

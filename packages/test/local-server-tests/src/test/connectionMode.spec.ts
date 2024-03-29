@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";

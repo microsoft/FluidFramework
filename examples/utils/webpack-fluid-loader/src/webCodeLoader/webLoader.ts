@@ -12,6 +12,7 @@ import {
 	IResolvedFluidCodeDetails,
 	isFluidBrowserPackage,
 } from "@fluidframework/container-definitions";
+
 import { AllowList } from "./allowList.js";
 import { ScriptManager } from "./scriptManager.js";
 

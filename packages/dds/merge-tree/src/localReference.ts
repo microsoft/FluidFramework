@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
+
 import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";

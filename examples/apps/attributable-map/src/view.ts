@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { IRuntimeAttributor } from "@fluid-experimental/attributor";
+
 import { IHitCounter, ITinyliciousUser, greenKey, redKey } from "./dataObject.js";
 
 export function renderHitCounter(

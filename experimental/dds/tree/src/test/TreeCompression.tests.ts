@@ -5,6 +5,7 @@
 
 import { assert, expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
+
 import { walkTree } from '../EditUtilities.js';
 import {
 	Definition,
@@ -21,6 +22,7 @@ import { MutableStringInterner } from '../StringInterner.js';
 import { InterningTreeCompressor } from '../TreeCompressor.js';
 import { IdCompressor, createSessionId, isFinalId, isLocalId } from '../id-compressor/index.js';
 import { CompressedPlaceholderTree, PlaceholderTree, TraitMap, TreeNode } from '../persisted-types/index.js';
+
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 
 /**

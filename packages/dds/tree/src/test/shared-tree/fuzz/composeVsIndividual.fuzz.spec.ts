@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator,
@@ -16,7 +17,9 @@ import {
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+
 import {
 	EditGeneratorOpWeights,
 	FuzzTestState,
@@ -43,37 +46,35 @@ interface BranchedTreeFuzzTestState extends FuzzTestState {
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({
-	edit: async (state, operation) => {
-		const { contents } = operation;
-		switch (contents.type) {
+	treeEdit: async (state, { edit }) => {
+		switch (edit.type) {
 			case "fieldEdit": {
 				const tree = state.branch;
 				assert(tree !== undefined);
-				applyFieldEdit(tree, contents);
+				applyFieldEdit(tree, edit);
 				break;
 			}
 			default:
-				break;
+				fail("Unknown tree edit type");
 		}
 		return state;
 	},
-	transaction: async (state, operation) => {
+	transactionBoundary: async (state, operation) => {
 		assert.fail(
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: async (state, operation) => {
-		const { contents } = operation;
+	undoRedo: async (state, { operation }) => {
 		const tree = state.main ?? assert.fail();
 		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, contents);
+		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
 		applySynchronizationOp(state);
 		return state;
 	},
-	schema: async (state, operation) => {
+	schemaChange: async (state, operation) => {
 		applySchemaOp(state, operation);
 	},
 });
@@ -93,6 +94,8 @@ describe("Fuzz - composed vs individual changes", () => {
 	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
 	// assert 0x675, "Expected branch to be tracked"
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
+		set: 2,
+		clear: 1,
 		insert: 1,
 		remove: 2,
 		move: 2,

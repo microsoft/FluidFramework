@@ -9,6 +9,7 @@ import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { decompress } from "lz4js";
+
 import { CompressionAlgorithms } from "../containerRuntime.js";
 import { IBatchMetadata } from "../metadata.js";
 

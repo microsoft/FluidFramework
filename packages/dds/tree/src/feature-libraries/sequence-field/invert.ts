@@ -4,9 +4,11 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+
 import { RevisionMetadataSource, RevisionTag, TaggedChange } from "../../core/index.js";
 import { IdAllocator, Mutable, fail } from "../../util/index.js";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema/index.js";
+
 import { DetachIdOverrideType } from "./format.js";
 import { MarkListFactory } from "./markListFactory.js";
 import {

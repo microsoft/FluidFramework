@@ -4,8 +4,10 @@
  */
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import { ISubscribable, createEmitter } from "../../events/index.js";
 import { compareStrings } from "../../util/index.js";
+
 import { TreeNodeSchemaIdentifier } from "./format.js";
 import {
 	StoredSchemaCollection,

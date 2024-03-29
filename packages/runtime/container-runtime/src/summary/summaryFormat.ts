@@ -19,7 +19,9 @@ import {
 	channelsTreeName,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions";
+
 import { IGCMetadata } from "../gc/index.js";
+
 import { IDocumentSchema } from "./documentSchema.js";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

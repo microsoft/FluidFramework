@@ -4,6 +4,7 @@
  */
 
 import { ObjectOptions, Static, Type } from "@sinclair/typebox";
+
 import { ChangesetLocalId, RevisionTagSchema, schemaFormat } from "../../core/index.js";
 import {
 	JsonCompatibleReadOnly,
