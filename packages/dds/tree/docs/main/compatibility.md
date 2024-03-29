@@ -215,7 +215,7 @@ To make a breaking change in `SchemaChangeCodec`,
 -   Add a new version for `ChangeFamilyCodec` which leverages the new `SchemaChangeCodec`
 -   Add a new version for `EditManagerCodec` which leverages the new `ChangeFamilyCodec`
 -   Add a new version for `MessageCodec` which leverages the new `ChangeFamilyCodec`
--   Update `SharedTreeOptions` / `SharedTreeFormatVersion` with the new write version
+-   Add an option to `SharedTreeFormatVersion` as a new write version
     -   Make this write version create edit manager & message codecs of the appropriate versions
     -   Be sure to document code saturation requirements which must be met before the new version can be used
 

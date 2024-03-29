@@ -12,18 +12,12 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec/index.js";
-import {
-	ChangeEncodingContext,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	EncodedRevisionTag,
-	RevisionTag,
-} from "../core/index.js";
+import { IJsonCodec } from "../codec/index.js";
+import { ChangeFamily, ChangeFamilyEditor } from "../core/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
 import { EditManager, SummaryData } from "./editManager.js";
-import { EditManagerEncodingContext, makeEditManagerCodec } from "./editManagerCodecs.js";
+import { EditManagerEncodingContext } from "./editManagerCodecs.js";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";
 
 const stringKey = "String";
@@ -38,33 +32,20 @@ export interface EditManagerFormatOptions {
 export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public readonly key = "EditManager";
 
-	private readonly codec: IJsonCodec<
-		SummaryData<TChangeset>,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		EditManagerEncodingContext
-	>;
 	public constructor(
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
-		revisionTagCodec: IJsonCodec<
-			RevisionTag,
-			EncodedRevisionTag,
-			EncodedRevisionTag,
-			ChangeEncodingContext
+		private readonly codec: IJsonCodec<
+			SummaryData<TChangeset>,
+			JsonCompatibleReadOnly,
+			JsonCompatibleReadOnly,
+			EditManagerEncodingContext
 		>,
-		options: ICodecOptions & EditManagerFormatOptions,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
-	) {
-		this.codec = makeEditManagerCodec(
-			this.editManager.changeFamily.codecs,
-			revisionTagCodec,
-			options,
-		);
-	}
+	) {}
 
 	public getAttachSummary(
 		stringify: SummaryElementStringifier,

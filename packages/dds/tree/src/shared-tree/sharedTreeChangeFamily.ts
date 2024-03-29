@@ -19,8 +19,8 @@ import {
 	ModularChangeFamily,
 	ModularChangeset,
 	TreeCompressionStrategy,
-	fieldKinds,
 	fieldKindConfigurations,
+	fieldKinds,
 	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import { Mutable, fail } from "../util/index.js";

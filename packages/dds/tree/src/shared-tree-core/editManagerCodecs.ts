@@ -40,7 +40,8 @@ export function makeEditManagerCodec<TChangeset>(
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>,
-	options: ICodecOptions & { writeVersion: number },
+	options: ICodecOptions,
+	writeVersion: number,
 ): IJsonCodec<
 	SummaryData<TChangeset>,
 	JsonCompatibleReadOnly,
@@ -48,10 +49,10 @@ export function makeEditManagerCodec<TChangeset>(
 	EditManagerEncodingContext
 > {
 	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
-	return makeVersionDispatchingCodec(family, options);
+	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 
-function makeEditManagerCodecs<TChangeset>(
+export function makeEditManagerCodecs<TChangeset>(
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,

@@ -12,7 +12,7 @@ export {
 } from "./branch.js";
 
 export {
-	CoreTopLevelCodecVersions,
+	ExplicitCoreCodecVersions,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,

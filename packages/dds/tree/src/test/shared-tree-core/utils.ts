@@ -43,14 +43,14 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		const codecOptions: ICodecOptions = {
 			jsonValidator: typeboxValidator,
 		};
+		const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 		const codec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			testRevisionTagCodec,
-			makeFieldBatchCodec(codecOptions),
+			makeFieldBatchCodec(codecOptions, formatVersions.fieldBatch),
 			codecOptions,
 			chunkCompressionStrategy,
 		);
-		const formatVersions = { editManager: 1, message: 1 };
 		super(
 			summarizables,
 			new DefaultChangeFamily(codec),

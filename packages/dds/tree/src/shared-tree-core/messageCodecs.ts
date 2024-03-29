@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import {
+	type ICodecFamily,
 	ICodecOptions,
 	IJsonCodec,
-	withSchemaValidation,
-	type ICodecFamily,
 	makeCodecFamily,
 	makeVersionDispatchingCodec,
+	withSchemaValidation,
 } from "../codec/index.js";
 import {
 	ChangeEncodingContext,

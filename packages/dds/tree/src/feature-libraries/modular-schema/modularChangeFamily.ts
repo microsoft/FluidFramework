@@ -27,7 +27,6 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	RevisionTag,
-	RevisionTagCodec,
 	TaggedChange,
 	UpPath,
 	emptyDelta,
@@ -54,7 +53,6 @@ import {
 	tryGetFromNestedMap,
 } from "../../util/index.js";
 import {
-	FieldBatchCodec,
 	TreeChunk,
 	chunkFieldSingle,
 	chunkTree,
@@ -74,7 +72,6 @@ import {
 	NodeExistenceState,
 	RebaseRevisionMetadata,
 } from "./fieldChangeHandler.js";
-import { FieldKindConfiguration } from "./fieldKindConfiguration.js";
 import { FieldKindWithEditor, withEditor } from "./fieldKindWithEditor.js";
 import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind.js";
 import { GenericChangeset } from "./genericFieldKindTypes.js";

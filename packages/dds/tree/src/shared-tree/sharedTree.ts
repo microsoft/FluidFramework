@@ -40,7 +40,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
-import { SharedTreeCore, CoreTopLevelCodecVersions } from "../shared-tree-core/index.js";
+import { ExplicitCoreCodecVersions, SharedTreeCore } from "../shared-tree-core/index.js";
 import {
 	ITree,
 	ImplicitFieldSchema,
@@ -111,17 +111,28 @@ export interface ISharedTree extends ISharedObject, ITree {
 	): FlexTreeView<TRoot> | undefined;
 }
 
-interface TopLevelCodecVersions extends CoreTopLevelCodecVersions {
+/**
+ * Has an entry for each codec which writes an explicit version into its data.
+ *
+ * This is used to map the single API entrypoint controlling the format {@link SharedTreeOptions.formatVersion}
+ * to a list of write versions that for each codec that should be used for that format.
+ *
+ * Note that all explicitly versioned codecs should be using the format version from the data to read encoded data.
+ *
+ * TODO: Plumb these write versions into forest, schema, detached field index codec creation.
+ */
+interface ExplicitCodecVersions extends ExplicitCoreCodecVersions {
 	forest: number;
 	schema: number;
 	detachedFieldIndex: number;
+	fieldBatch: number;
 }
 
-const formatVersionToTopLevelCodecVersions = new Map<number, TopLevelCodecVersions>([
-	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1 }],
+const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersions>([
+	[1, { forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 1, message: 1, fieldBatch: 1 }],
 ]);
 
-function getCodecVersions(formatVersion: number): TopLevelCodecVersions {
+function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
 	assert(versions !== undefined, "Unknown format version");
 	return versions;
@@ -167,7 +178,7 @@ export class SharedTree
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
 			getCurrentSeq: () => this.runtime.deltaManager.lastSequenceNumber,
 		});
-		const fieldBatchCodec = makeFieldBatchCodec(options);
+		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
 		const encoderContext = {
 			schema: {
@@ -292,13 +303,22 @@ export class SharedTree
 }
 
 /**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
  * @internal
  */
 export const SharedTreeFormatVersion = {
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
 	v1: 1,
 } as const;
 
 /**
+ * Format versions supported by SharedTree.
+ *
+ * Each version documents a required minimum version of the \@fluidframework/tree package.
  * @internal
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
@@ -320,7 +340,15 @@ export type SharedTreeOptions = Partial<ICodecOptions> &
 export interface SharedTreeFormatOptions {
 	treeEncodeType: TreeCompressionStrategy;
 	/**
+	 * The format version SharedTree should use to persist documents.
 	 *
+	 * This option has compatibility implications for applications using SharedTree.
+	 * Each version documents a required minimum version of \@fluidframework/tree.
+	 * If this minimum version fails to be met, the SharedTree may fail to load.
+	 * To be safe, application authors should verify that they have saturated this version
+	 * of \@fluidframework/tree in their ecosystem before changing the format version.
+	 *
+	 * This option defaults to SharedTreeFormatVersion.v1.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
 }

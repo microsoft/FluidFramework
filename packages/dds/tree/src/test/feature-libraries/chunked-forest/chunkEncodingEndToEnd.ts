@@ -56,7 +56,7 @@ const context = {
 	schema: { schema: intoStoredSchema(numberSequenceRootSchema), policy: defaultSchemaPolicy },
 };
 
-const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator });
+const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);

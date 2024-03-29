@@ -25,15 +25,16 @@ import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly, brand } from "../util/index.js";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
+import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import { SeqNumber } from "./editManagerFormat.js";
-import { type EditManagerFormatOptions, EditManagerSummarizer } from "./editManagerSummarizer.js";
+import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import { DecodedMessage } from "./messageTypes.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
 
-export interface CoreTopLevelCodecVersions {
+export interface ExplicitCoreCodecVersions {
 	editManager: number;
 	message: number;
 }
@@ -96,7 +97,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
-		formatOptions: CoreTopLevelCodecVersions,
+		formatOptions: ExplicitCoreCodecVersions,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -143,13 +144,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		});
 
 		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const editManagerCodec = makeEditManagerCodec(
+			this.editManager.changeFamily.codecs,
+			revisionTagCodec,
+			options,
+			formatOptions.editManager,
+		);
 		this.summarizables = [
-			new EditManagerSummarizer(
-				this.editManager,
-				revisionTagCodec,
-				{ ...options, writeVersion: formatOptions.editManager },
-				this.schemaAndPolicy,
-			),
+			new EditManagerSummarizer(this.editManager, editManagerCodec, this.schemaAndPolicy),
 			...summarizables,
 		];
 		assert(
