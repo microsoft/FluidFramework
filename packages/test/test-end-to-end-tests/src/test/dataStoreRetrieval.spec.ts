@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {

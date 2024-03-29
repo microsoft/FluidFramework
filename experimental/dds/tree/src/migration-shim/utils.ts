@@ -4,6 +4,7 @@
  */
 
 import { type IChannelAttributes } from '@fluidframework/datastore-definitions';
+
 import { type IMigrationOp } from './migrationShim.js';
 import { type IOpContents, type IStampedContents } from './types.js';
 

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { type AttributionInfo } from "@fluidframework/runtime-definitions";
 
 import { Attributor, type IAttributor } from "../attributor.js";

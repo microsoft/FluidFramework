@@ -4,6 +4,7 @@
  */
 
 import { assert, compareArrays } from "@fluidframework/core-utils";
+
 import {
 	CursorLocationType,
 	FieldKey,
@@ -16,6 +17,7 @@ import {
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
+
 import { ChunkedCursor, TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**

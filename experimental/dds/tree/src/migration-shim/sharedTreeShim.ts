@@ -19,6 +19,7 @@ import {
 	type ITelemetryContext,
 } from '@fluidframework/runtime-definitions';
 import { type ITree } from '@fluidframework/tree';
+
 import { SharedTreeShimDeltaHandler } from './sharedTreeDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { StampDeltaConnection } from './shimDeltaConnection.js';

@@ -82,7 +82,7 @@ export function validateAndParseTelemetryOptions(format?: string, props?: (strin
 
 // Warnings were encountered during analysis:
 //
-// src/logger/loggerUtils.ts:29:35 - (ae-forgotten-export) The symbol "IFileLogger" needs to be exported by the entry point index.d.ts
+// src/logger/loggerUtils.ts:31:35 - (ae-forgotten-export) The symbol "IFileLogger" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

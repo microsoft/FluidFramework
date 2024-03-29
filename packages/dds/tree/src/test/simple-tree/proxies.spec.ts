@@ -4,11 +4,14 @@
  */
 
 import { strict as assert } from "assert";
+
 import { MockHandle } from "@fluidframework/test-runtime-utils";
+
 import { NodeFromSchema, SchemaFactory, TreeArrayNode } from "../../simple-tree/index.js";
 // TODO: test other things from "proxies" file.
 // eslint-disable-next-line import/no-internal-modules
 import { isTreeNode } from "../../simple-tree/proxies.js";
+
 import { hydrate, pretty } from "./utils.js";
 
 describe("simple-tree proxies", () => {

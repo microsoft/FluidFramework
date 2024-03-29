@@ -13,7 +13,8 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from '@fluidframework/datastore-definitions';
-import type { IIdCompressorCore, SessionId } from '@fluidframework/id-compressor';
+import type { SessionId } from '@fluidframework/id-compressor';
+import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
 import { type ISequencedDocumentMessage, MessageType } from '@fluidframework/protocol-definitions';
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -23,10 +24,12 @@ import {
 } from '@fluidframework/runtime-definitions';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { type ITree } from '@fluidframework/tree';
+
 import {
 	type SharedTree as LegacySharedTree,
 	type SharedTreeFactory as LegacySharedTreeFactory,
 } from '../SharedTree.js';
+
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';

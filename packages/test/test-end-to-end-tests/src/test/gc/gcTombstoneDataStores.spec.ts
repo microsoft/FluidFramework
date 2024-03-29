@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	ITestDataObject,
@@ -46,6 +47,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
+
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 type ExpectedTombstoneError = Error & {

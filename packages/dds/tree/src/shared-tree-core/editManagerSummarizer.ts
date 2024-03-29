@@ -12,6 +12,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+
 import { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
 	ChangeEncodingContext,
@@ -22,6 +23,7 @@ import {
 } from "../core/index.js";
 import { SchemaAndPolicy } from "../feature-libraries/index.js";
 import { JsonCompatibleReadOnly } from "../util/index.js";
+
 import { EditManager, SummaryData } from "./editManager.js";
 import { EditManagerEncodingContext, makeEditManagerCodec } from "./editManagerCodecs.js";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore.js";

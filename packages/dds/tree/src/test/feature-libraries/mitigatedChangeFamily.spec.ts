@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ChangeFamily, ChangeFamilyEditor, TaggedChange } from "../../core/index.js";
 import { makeMitigatedChangeFamily } from "../../feature-libraries/index.js";
 
