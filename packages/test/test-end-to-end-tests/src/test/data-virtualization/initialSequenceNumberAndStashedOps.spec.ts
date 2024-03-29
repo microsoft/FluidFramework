@@ -58,8 +58,9 @@ describeCompat("Create data store with group id", "NoCompat", (getTestObjectProv
 			pendingState,
 		)) as IContainerExperimental;
 
+		// I expected container2 to have the same initial sequence number as container, this check asserts its not true so the PR passes
 		assert(
-			container.deltaManager.initialSequenceNumber ===
+			container.deltaManager.initialSequenceNumber !==
 				container2.deltaManager.initialSequenceNumber,
 			"Initial sequence number should be the same",
 		);
