@@ -14,10 +14,24 @@ interface SharedTreeNodeBase {
 /**
  * List of possible SharedTree schemaType for {@link SharedTreeSchemaNode}.
  */
-type SharedTreeSchemaType =
-	| "MapNodeStoredSchema"
-	| "ObjectNodeStoredSchema"
-	| "LeafNodeStoredSchema";
+export const SharedTreeSchemaType = {
+	MapNodeStoredSchema: "MapNodeStoredSchema",
+	ObjectNodeStoredSchema: "ObjectNodeStoredSchema",
+	LeafNodeStoredSchema: "LeafNodeStoredSchema",
+} as const;
+
+/**
+ * Use a Union of Literal Types to represent the SharedTree schema type.
+ */
+type SharedTreeSchemaType = (typeof SharedTreeSchemaType)[keyof typeof SharedTreeSchemaType];
+
+/**
+ * The kind of {@link VisualSharedTreeNode}.
+ */
+export const VisualSharedTreeNodeKind = {
+	LeafNode: "LeafNode",
+	InternalNode: "InternalNode",
+} as const;
 
 /**
  * Base schema interface.
@@ -46,6 +60,7 @@ interface SharedTreeSchemaNode {
  * Visual interface for SharedTree node with child field(s).
  */
 interface SharedTreeNode extends SharedTreeNodeBase {
+	kind: typeof VisualSharedTreeNodeKind.InternalNode;
 	fields: Record<string | number, VisualSharedTreeNode>;
 }
 
@@ -53,6 +68,7 @@ interface SharedTreeNode extends SharedTreeNodeBase {
  * Visual interface for SharedTree leaf node.
  */
 export interface SharedTreeLeafNode extends SharedTreeNodeBase {
+	kind: typeof VisualSharedTreeNodeKind.LeafNode;
 	value: Primitive;
 }
 

@@ -17,13 +17,14 @@ import {
 	ObjectNodeStoredSchema,
 } from "@fluidframework/tree/internal";
 import type { SharedTreeLeafNode, VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
+import { SharedTreeSchemaType, VisualSharedTreeNodeKind } from "./VisualSharedTreeTypes.js";
 import { type VisualChildNode, VisualNodeKind, type VisualValueNode } from "./VisualTree.js";
 
 /**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
  */
 export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
-	if ("value" in tree) {
+	if (tree.kind === VisualSharedTreeNodeKind.LeafNode) {
 		const result: VisualValueNode = {
 			value: tree.value,
 			nodeKind: VisualNodeKind.ValueNode,
@@ -144,10 +145,11 @@ function visualizeLeafNodeStoredSchema(
 ): SharedTreeLeafNode {
 	return {
 		schema: {
-			schemaType: "LeafNodeStoredSchema",
+			schemaType: SharedTreeSchemaType.LeafNodeStoredSchema,
 			allowedTypes,
 		},
 		value: JSON.stringify(tree.value),
+		kind: VisualSharedTreeNodeKind.LeafNode,
 	};
 }
 
@@ -165,10 +167,11 @@ function visualizeObjectNodeStoredSchema(
 		return {
 			schema: {
 				name: tree.type,
-				schemaType: "ObjectNodeStoredSchema",
+				schemaType: SharedTreeSchemaType.ObjectNodeStoredSchema,
 				allowedTypes: getObjectAllowedTypes(schema),
 			},
 			fields: {},
+			kind: VisualSharedTreeNodeKind.InternalNode,
 		};
 	}
 
@@ -235,10 +238,11 @@ function visualizeObjectNodeStoredSchema(
 	return {
 		schema: {
 			name: tree.type,
-			schemaType: "ObjectNodeStoredSchema",
+			schemaType: SharedTreeSchemaType.ObjectNodeStoredSchema,
 			allowedTypes: getObjectAllowedTypes(schema),
 		},
 		fields,
+		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
 
@@ -256,10 +260,11 @@ function visualizeMapNodeStoredSchema(
 		return {
 			schema: {
 				name: tree.type,
-				schemaType: "MapNodeStoredSchema",
+				schemaType: SharedTreeSchemaType.MapNodeStoredSchema,
 				allowedTypes: getMapAllowedTypes(treeFields, schema),
 			},
 			fields: {},
+			kind: VisualSharedTreeNodeKind.InternalNode,
 		};
 	}
 
@@ -298,10 +303,11 @@ function visualizeMapNodeStoredSchema(
 	return {
 		schema: {
 			name: tree.type,
-			schemaType: "MapNodeStoredSchema",
+			schemaType: SharedTreeSchemaType.MapNodeStoredSchema,
 			allowedTypes: getMapAllowedTypes(treeFields, schema),
 		},
 		fields,
+		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
 
