@@ -22,7 +22,7 @@ import { type VisualChildNode, VisualNodeKind, type VisualValueNode } from "./Vi
 /**
  * Converts the output of {@link sharedTreeVisualizer} to {@link VisualChildNode} type containing `schema` and `children` fields.
  */
-export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNode {
+export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 	if ("value" in tree) {
 		const result: VisualValueNode = {
 			value: tree.value,
@@ -34,7 +34,7 @@ export function mapToVisualChildNode(tree: VisualSharedTreeNode): VisualChildNod
 		const children: Record<string, VisualChildNode> = {};
 
 		for (const [key, value] of Object.entries(tree.fields)) {
-			const child = mapToVisualChildNode(value);
+			const child = toVisualTree(value);
 			children[key] = child;
 		}
 

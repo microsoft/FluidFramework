@@ -20,7 +20,7 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import { EditType } from "../CommonInterfaces.js";
 
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization.js";
-import { mapToVisualChildNode, visualizeSharedTreeNodeBySchema } from "./SharedTreeVisualizer.js";
+import { toVisualTree, visualizeSharedTreeNodeBySchema } from "./SharedTreeVisualizer.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -262,7 +262,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	);
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
-	const visualTree = mapToVisualChildNode(visualTreeRepresentation);
+	const visualTree = toVisualTree(visualTreeRepresentation);
 
 	return {
 		fluidObjectId: sharedTree.id,
