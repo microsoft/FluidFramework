@@ -65,7 +65,7 @@ export function fieldShaper(
 	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
-	const kind = cache.fieldShapes.get(field.kind.identifier) ?? fail("missing FieldKind");
+	const kind = cache.fieldShapes.get(field.kind) ?? fail("missing FieldKind");
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary

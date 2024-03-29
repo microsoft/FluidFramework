@@ -6,9 +6,8 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 
 import { ICodecOptions, IJsonCodec, makeVersionedValidatedCodec } from "../../../codec/index.js";
-import { CursorLocationType, StoredSchemaCollection } from "../../../core/index.js";
+import { CursorLocationType, SchemaAndPolicy } from "../../../core/index.js";
 import { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { FullSchemaPolicy } from "../../modular-schema/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
@@ -20,11 +19,6 @@ import { uncompressedEncode } from "./uncompressedEncode.js";
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly schema?: SchemaAndPolicy;
-}
-
-export interface SchemaAndPolicy {
-	readonly schema: StoredSchemaCollection;
-	readonly policy: FullSchemaPolicy;
 }
 
 export type FieldBatchCodec = IJsonCodec<

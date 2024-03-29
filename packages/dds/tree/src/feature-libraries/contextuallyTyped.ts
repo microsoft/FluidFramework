@@ -488,7 +488,7 @@ function setFieldForKey(
 	const requiredFieldSchema = schema.getFieldSchema(key);
 	const multiplicity = getFieldKind(requiredFieldSchema).multiplicity;
 	if (multiplicity === Multiplicity.Single && context.fieldSource !== undefined) {
-		const fieldGenerator = context.fieldSource(key, requiredFieldSchema);
+		const fieldGenerator = context.fieldSource(key, requiredFieldSchema.stored);
 		if (fieldGenerator !== undefined) {
 			const children = fieldGenerator();
 			fields.set(key, children);

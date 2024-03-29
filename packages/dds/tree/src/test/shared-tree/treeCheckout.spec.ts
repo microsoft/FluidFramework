@@ -423,8 +423,7 @@ describe("sharedTreeView", () => {
 					rootFieldSchema: storedEmptyFieldSchema,
 				};
 				function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
-					return t.storedSchema.rootFieldSchema.kind.identifier ===
-						FieldKinds.required.identifier
+					return t.storedSchema.rootFieldSchema.kind === FieldKinds.required.identifier
 						? "schemaA"
 						: "schemaB";
 				}

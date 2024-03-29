@@ -75,7 +75,7 @@ export class FieldKindWithEditor<
 	): boolean {
 		if (
 			isNeverField(policy, originalData, {
-				kind: this,
+				kind: this.identifier,
 				types: originalTypes,
 			})
 		) {

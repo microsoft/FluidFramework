@@ -76,7 +76,7 @@ export {
 	UpPathDefault,
 	AnchorEvents,
 	AnchorSetRootEvents,
-	FieldKindSpecifier,
+	FieldKindData,
 	AllowedUpdateType,
 	PathVisitor,
 	Adapters,
