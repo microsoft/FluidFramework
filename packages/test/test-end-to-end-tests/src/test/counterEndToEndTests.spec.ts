@@ -4,20 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import type { ISharedCounter, SharedCounter } from "@fluidframework/counter";
-import {
-	ITestObjectProvider,
-	ITestContainerConfig,
-	DataObjectFactoryType,
-	ChannelFactoryRegistry,
-	ITestFluidObject,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils";
-import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
-import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { ContainerErrorTypes, IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ISharedCounter, SharedCounter } from "@fluidframework/counter";
+import {
+	ChannelFactoryRegistry,
+	DataObjectFactoryType,
+	ITestContainerConfig,
+	ITestFluidObject,
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 
 const counterId = "counterKey";
 

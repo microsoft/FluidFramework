@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import { FieldKey, ValueSchema } from "../../core/index.js";
 import {
 	FlexTreeContext,
@@ -12,6 +13,7 @@ import {
 	FlexTreeObjectNode,
 } from "../flex-tree/index.js";
 import { FlexTreeSchema, LeafNodeSchema, schemaIsObjectNode } from "../typed-schema/index.js";
+
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey.js";
 
 /**
@@ -43,7 +45,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	/**
 	 * Search the tree for all nodes with keys, and record them in this index for lookup.
 	 * This should be called each time the tree changes; each call to scan forgets all existing keys.
-	 * @param context - the editable tree context in which to search for node keys
+	 * @param context - the flex tree context in which to search for node keys
 	 */
 	// TODO: This can be optimized by responding to deltas/changes to the tree, rather than rescanning the whole tree every time
 	public scanKeys(context: FlexTreeContext): void {

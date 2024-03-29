@@ -6,6 +6,7 @@
 import { IContainer } from '@fluidframework/container-definitions';
 import { TestObjectProvider } from '@fluidframework/test-utils';
 import { expect } from 'chai';
+
 import { Change, StablePlace } from '../../ChangeTypes.js';
 import { fail } from '../../Common.js';
 import type { EditLog } from '../../EditLog.js';
@@ -13,6 +14,7 @@ import { EditId, NodeId, TraitLabel } from '../../Identifiers.js';
 import { SharedTree } from '../../SharedTree.js';
 import { TreeView } from '../../TreeView.js';
 import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types/index.js';
+
 import { SimpleTestTree } from './TestNode.js';
 import {
 	LocalServerSharedTreeTestingComponents,

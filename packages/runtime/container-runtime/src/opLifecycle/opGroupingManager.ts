@@ -7,7 +7,7 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType } from "../messageTypes.js";
+
 import { IBatch } from "./definitions.js";
 
 /**
@@ -26,6 +26,10 @@ interface IGroupedMessage {
 
 function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
 	return opContents?.type === OpGroupingManager.groupedBatchOp;
+}
+
+export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
+	return isGroupContents(op.contents);
 }
 
 export interface OpGroupingManagerConfig {
@@ -82,11 +86,9 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					contents: serializedContent,
-					type: OpGroupingManager.groupedBatchOp as ContainerMessageType,
 				},
 			],
 		};
@@ -94,13 +96,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (!isGroupContents(op.contents)) {
-			return [op];
-		}
+		assert(isGroupContents(op.contents), "can only ungroup a grouped batch");
+		const contents: IGroupedBatchMessageContents = op.contents;
 
-		const messages = op.contents.contents;
 		let fakeCsn = 1;
-		return messages.map((subMessage) => ({
+		return contents.contents.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,

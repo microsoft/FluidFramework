@@ -4,6 +4,7 @@
  */
 
 import child_process from "child_process";
+
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	IClientConfig,
@@ -21,7 +22,8 @@ import {
 	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils";
-import { getForceTokenReauth } from "./fluidFetchArgs";
+
+import { getForceTokenReauth } from "./fluidFetchArgs.js";
 
 export async function resolveWrapper<T>(
 	callback: (authRequestInfo: IOdspAuthRequestInfo) => Promise<T>,

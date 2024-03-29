@@ -4,7 +4,9 @@
  */
 
 import { strict } from "assert";
+
 import { assert, unreachableCase } from "@fluidframework/core-utils";
+
 import {
 	ChangesetLocalId,
 	DeltaFieldChanges,
@@ -65,6 +67,7 @@ import {
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
 } from "../../utils.js";
+
 import { TestChangeset } from "./testEdits.js";
 
 export function assertChangesetsEqual<T>(actual: SF.Changeset<T>, expected: SF.Changeset<T>): void {
@@ -256,10 +259,9 @@ export function rebase(
 
 	const metadata =
 		config.metadata ??
-		rebaseRevisionMetadataFromInfo(
-			defaultRevInfosFromChanges([cleanBase, makeAnonChange(cleanChange)]),
-			[cleanBase.revision],
-		);
+		rebaseRevisionMetadataFromInfo(defaultRevInfosFromChanges([cleanBase]), [
+			cleanBase.revision,
+		]);
 
 	const childRebaser = config.childRebaser ?? TestChange.rebase;
 

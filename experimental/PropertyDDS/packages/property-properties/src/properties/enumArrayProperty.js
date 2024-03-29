@@ -7,6 +7,7 @@ const { MSG } = require("@fluid-experimental/property-common").constants;
 const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
 const { BaseDataArray } = require("@fluid-experimental/property-common");
 const _ = require("lodash");
+
 const { ValueArrayProperty } = require("./valueArrayProperty");
 
 /**

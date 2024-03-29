@@ -7,8 +7,10 @@
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/test";
 import * as mocks from "@fluidframework/test-runtime-utils";
 import { MersenneTwister19937, Random } from "random-js";
+
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedString } from "../sharedString.js";
+
 import {
 	SharedStringWithV1IntervalCollection,
 	V1IntervalCollectionSharedStringFactory,

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { EventEmitterWithErrorHandling } from "../eventEmitterWithErrorHandling.js";
 
 describe("EventEmitterWithErrorHandling", () => {

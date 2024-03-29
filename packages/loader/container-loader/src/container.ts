@@ -30,6 +30,7 @@ import {
 	FluidObject,
 	IEvent,
 	IRequest,
+	type ISignalEnvelope,
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
@@ -91,6 +92,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
+
 import { AttachProcessProps, AttachmentData, runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
@@ -2287,7 +2289,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(content: any, targetClientId?: string) {
+	// unknown should be removed once `@alpha` tag is removed from IContainerContext
+	private submitSignal(content: unknown | ISignalEnvelope, targetClientId?: string) {
 		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
@@ -2335,10 +2338,6 @@ export class Container
 			throw new Error(packageNotFactoryError);
 		}
 
-		const getSpecifiedCodeDetails = () =>
-			(this.protocolHandler.quorum.get("code") ??
-				this.protocolHandler.quorum.get("code2")) as IFluidCodeDetails | undefined;
-
 		const existing = snapshotTree !== undefined;
 
 		const context = new ContainerContext(
@@ -2366,7 +2365,6 @@ export class Container
 			() => this.clientId,
 			() => this.attachState,
 			() => this.connected,
-			getSpecifiedCodeDetails,
 			this._deltaManager.clientDetails,
 			existing,
 			this.subLogger,

@@ -14,6 +14,7 @@ import {
 	getTreeContext,
 } from "../feature-libraries/index.js";
 import { IDisposable, disposeSymbol } from "../util/index.js";
+
 import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.js";
 
 /**
@@ -26,7 +27,7 @@ import { ITreeCheckout, ITreeCheckoutFork, TreeCheckout } from "./treeCheckout.j
  */
 export interface FlexTreeView<in out TRoot extends FlexFieldSchema> extends IDisposable {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.flexTree}.
+	 * Context for controlling the FlexTree nodes produced from {@link FlexTreeView.flexTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.

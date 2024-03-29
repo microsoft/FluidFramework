@@ -11,7 +11,6 @@ import {
 } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-
 import React from "react";
 
 import { IDiceRoller } from "./interface.js";

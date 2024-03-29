@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SchemaBuilder, leaf, nodeKeyField, nodeKeySchema } from "../../../domains/index.js";
 import {
 	LocalNodeKey,
@@ -15,7 +16,7 @@ import {
 import { flexTreeWithContent } from "../../utils.js";
 
 const builder = new SchemaBuilder({
-	scope: "EditableTree Node Keys",
+	scope: "FlexTree Node Keys",
 	libraries: [nodeKeySchema],
 });
 const childNodeSchema = builder.object("ChildNode", {

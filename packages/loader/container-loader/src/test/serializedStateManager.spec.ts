@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { IGetPendingLocalStateProps, IRuntime } from "@fluidframework/container-definitions";
 import { Deferred } from "@fluidframework/core-utils";

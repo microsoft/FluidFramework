@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers.js";
 import { SessionId, StableId } from "./types/index.js";
 import {

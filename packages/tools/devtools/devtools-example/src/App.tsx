@@ -13,8 +13,6 @@ import {
 	makeStyles,
 	shorthands,
 } from "@fluentui/react-components";
-import React from "react";
-
 import {
 	CollaborativeTextArea,
 	type SessionStorageModelLoader,
@@ -31,15 +29,17 @@ import {
 } from "@fluidframework/devtools-core";
 import { type SharedMatrix } from "@fluidframework/matrix";
 import { type SharedString } from "@fluidframework/sequence";
+import React from "react";
+
 import {
 	type ContainerInfo,
 	createContainer,
 	createLoader,
 	loadExistingContainer,
-} from "./ClientUtilities";
-import { type IAppModel } from "./Container";
-import { type AppData } from "./FluidObject";
-import { CounterWidget, EmojiGrid } from "./widgets";
+} from "./ClientUtilities.js";
+import { type IAppModel } from "./Container.js";
+import { type AppData } from "./FluidObject.js";
+import { CounterWidget, EmojiGrid } from "./widgets/index.js";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";

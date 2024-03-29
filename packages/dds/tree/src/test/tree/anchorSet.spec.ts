@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	Anchor,
 	AnchorNode,
@@ -684,7 +685,7 @@ describe("AnchorSet", () => {
 		log.expect([]);
 	});
 
-	// Simple scenario using just anchorSets to validate if cache implementation of the EditableTree.treeStatus api works.
+	// Simple scenario using just anchorSets to validate if cache implementation of the FlexTree.treeStatus api works.
 	it("AnchorNode cache can be set and retrieved.", () => {
 		const anchors = new AnchorSet();
 

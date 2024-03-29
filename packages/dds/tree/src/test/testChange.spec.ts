@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { SessionId } from "@fluidframework/id-compressor";
+
 import {
 	ChangeEncodingContext,
 	FieldKey,
@@ -15,6 +17,7 @@ import {
 	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";
+
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils.js";
 import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests.js";
 import { TestChange } from "./testChange.js";
@@ -111,6 +114,13 @@ describe("TestChange", () => {
 		return rebaseResult;
 	}
 
+	function assertChangesetsEquivalent(
+		change1: TaggedChange<TestChange>,
+		change2: TaggedChange<TestChange>,
+	) {
+		assert.deepEqual(change1, change2);
+	}
+
 	/**
 	 * See {@link ChildStateGenerator}
 	 */
@@ -150,6 +160,8 @@ describe("TestChange", () => {
 					},
 					rebaseComposed,
 					createEmpty: () => TestChange.emptyChange,
+					isEmpty: TestChange.isEmpty,
+					assertChangesetsEquivalent,
 				},
 				{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
 			);

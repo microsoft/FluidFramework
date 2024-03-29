@@ -11,6 +11,7 @@ import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
+
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
 import {

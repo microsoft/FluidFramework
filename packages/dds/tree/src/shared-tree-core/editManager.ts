@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import {
 	ChangeFamily,
 	ChangeFamilyEditor,
@@ -25,6 +26,7 @@ import {
 	getOrCreate,
 	mapIterable,
 } from "../util/index.js";
+
 import { SharedTreeBranch, getChangeReplaceType, onForkTransitive } from "./branch.js";
 import {
 	Commit,

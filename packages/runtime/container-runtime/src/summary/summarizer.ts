@@ -14,7 +14,9 @@ import {
 	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
+
 import { ISummaryConfiguration } from "../containerRuntime.js";
+
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
@@ -240,7 +242,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
-			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
+			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
 			this._heuristicData,
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,

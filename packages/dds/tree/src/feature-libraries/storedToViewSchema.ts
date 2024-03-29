@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -13,6 +14,7 @@ import {
 	TreeStoredSchema,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
+
 import { defaultSchemaPolicy } from "./default-schema/index.js";
 import {
 	Any,

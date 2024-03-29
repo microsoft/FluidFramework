@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { IntervalTree } from "../intervalTree.js";
 import { IInterval } from "../intervals/index.js";
 

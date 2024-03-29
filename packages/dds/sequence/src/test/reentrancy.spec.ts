@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	LocalReferenceCollection,
@@ -16,6 +17,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
+
 import { resetReentrancyLogCounter } from "../sequence.js";
 import { SharedString } from "../sharedString.js";
 
