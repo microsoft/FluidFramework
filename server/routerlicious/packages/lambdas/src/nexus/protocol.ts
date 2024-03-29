@@ -19,7 +19,7 @@ function selectProtocolVersion(connectVersions: string[]): string | undefined {
 	return undefined;
 }
 
-export function checkVersion(versions: string[]): [string[], string] {
+export function checkProtocolVersion(versions: string[]): [string[], string] {
 	// Iterate over the version ranges provided by the client and select the best one that works
 	const connectVersions = versions || ["^0.1.0"];
 	const version = selectProtocolVersion(connectVersions);

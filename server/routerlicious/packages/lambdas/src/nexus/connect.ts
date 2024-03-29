@@ -39,7 +39,7 @@ import {
 	isWriter,
 } from "./utils";
 import { StageTrace, sampleMessages } from "./trace";
-import { ProtocolVersions, checkVersion } from "./protocol";
+import { ProtocolVersions, checkProtocolVersion } from "./protocol";
 import type {
 	IBroadcastSignalEventPayload,
 	IConnectedClient,
@@ -474,7 +474,7 @@ export async function connectDocument(
 	let documentId = message.id;
 	let uncaughtError: any;
 	try {
-		const [connectVersions, version] = checkVersion(message.versions);
+		const [connectVersions, version] = checkProtocolVersion(message.versions);
 		connectionTrace.stampStage(ConnectDocumentStage.VersionsChecked);
 
 		checkThrottle(tenantId, lambdaDependencies);
