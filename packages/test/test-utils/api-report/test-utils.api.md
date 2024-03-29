@@ -222,7 +222,7 @@ export interface ITestObjectProvider {
     driver: ITestDriver;
     ensureSynchronized(timeoutDuration?: number): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     logger: EventAndErrorTrackingLogger | undefined;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
@@ -335,7 +335,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     readonly driver: ITestDriver;
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     get logger(): EventAndErrorTrackingLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
@@ -361,7 +361,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get driver(): ITestDriver;
     ensureSynchronized(): Promise<void>;
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
+    loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader, pendingLocalState?: string): Promise<IContainer>;
     get logger(): EventAndErrorTrackingLogger;
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
