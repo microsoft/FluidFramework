@@ -4,6 +4,7 @@
  */
 
 import { type ISharedDirectory, MapFactory, SharedDirectory } from "@fluidframework/map";
+
 import { PureDataObject } from "./pureDataObject.js";
 import { type DataObjectTypes } from "./types.js";
 

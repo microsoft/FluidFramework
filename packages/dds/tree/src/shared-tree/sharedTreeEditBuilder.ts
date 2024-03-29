@@ -9,6 +9,7 @@ import {
 	IDefaultEditBuilder,
 	ModularChangeFamily,
 } from "../feature-libraries/index.js";
+
 import { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 /**
@@ -62,7 +63,10 @@ export class SharedTreeEditBuilder
 					changes: [
 						{
 							type: "schema",
-							innerChange: { schema: { new: newSchema, old: oldSchema } },
+							innerChange: {
+								schema: { new: newSchema, old: oldSchema },
+								isInverse: false,
+							},
 						},
 					],
 				});

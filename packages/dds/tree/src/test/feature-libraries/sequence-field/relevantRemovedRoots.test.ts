@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+
 import {
 	ChangeAtomId,
 	DeltaDetachedNodeId,
@@ -14,6 +15,7 @@ import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
+
 import { MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 
 const tag = mintRevisionTag();

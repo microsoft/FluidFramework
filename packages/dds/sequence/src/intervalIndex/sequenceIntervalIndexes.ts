@@ -4,7 +4,9 @@
  */
 
 import { ISegment } from "@fluidframework/merge-tree";
+
 import { SequenceInterval } from "../intervals/index.js";
+
 import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex.js";
 
 /**

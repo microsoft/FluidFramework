@@ -10,6 +10,7 @@ import {
 	type IDeltaConnection,
 	type IDeltaHandler,
 } from '@fluidframework/datastore-definitions';
+
 import { type IShimDeltaHandler, type IUnstampedContents } from './types.js';
 
 /**

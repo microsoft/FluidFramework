@@ -16,6 +16,7 @@ import { CellId } from "../../../feature-libraries/sequence-field/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
+
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits.js";
 import {
 	assertChangesetsEqual,

@@ -11,6 +11,7 @@ import {
 	getDetachedFieldContainingPath,
 	rootField,
 } from "../../core/index.js";
+
 import { TreeStatus } from "./flexTreeTypes.js";
 /**
  * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.

@@ -6,6 +6,7 @@
 import { WithStyles, createStyles, withStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 import * as React from "react";
+
 import { SvgIcon } from "./SVGIcon.js";
 
 const styles = () =>

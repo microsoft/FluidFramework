@@ -11,7 +11,6 @@ import {
 	getTextAndMarkers,
 	reservedTileLabelsKey,
 } from "@fluidframework/sequence";
-
 import React, { useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 

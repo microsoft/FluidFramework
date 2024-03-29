@@ -5,6 +5,7 @@
 
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { compareArrays } from '@fluidframework/core-utils';
+
 import { Payload } from './persisted-types/index.js';
 
 /**

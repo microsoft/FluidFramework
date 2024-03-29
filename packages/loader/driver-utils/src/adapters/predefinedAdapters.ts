@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+
 import {
 	DefaultCompressionStorageConfig,
 	DocumentServiceFactoryCompressionAdapter,

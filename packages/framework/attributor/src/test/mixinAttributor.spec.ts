@@ -5,6 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { strict as assert } from "node:assert";
+
 import {
 	AttachState,
 	type IContainerContext,
@@ -19,6 +20,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+
 import { Attributor } from "../attributor.js";
 import { AttributorSerializer, chain, deltaEncoder } from "../encoders.js";
 import { makeLZ4Encoder } from "../lz4Encoder.js";
@@ -28,6 +30,7 @@ import {
 	enableOnNewFileKey,
 	mixinAttributor,
 } from "../mixinAttributor.js";
+
 import { makeMockAudience } from "./utils.js";
 
 type Mutable<T> = {
