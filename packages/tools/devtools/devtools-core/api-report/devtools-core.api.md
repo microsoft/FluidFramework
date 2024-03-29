@@ -204,6 +204,8 @@ export namespace DevtoolsFeatures {
     export interface MessageData {
         devtoolsVersion?: string;
         features: DevtoolsFeatureFlags;
+        // (undocumented)
+        unsampledTelemetry?: boolean;
     }
 }
 
@@ -456,6 +458,18 @@ export namespace RootDataVisualizations {
 
 // @internal
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
+
+// @internal
+export namespace SetUnsampledTelemetry {
+    const MessageType = "TOGGLE_UNSAMPLED_TELEMETRY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        unsampledTelemetry: boolean;
+    }
+}
 
 // @internal
 export interface SharedObjectEdit extends Edit, HasFluidObjectId {

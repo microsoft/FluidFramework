@@ -11,5 +11,8 @@
 	},
 	"apiReport": {
 		"enabled": false
+	},
+	"tsdocMetadata": {
+		"enabled": false
 	}
 }
