@@ -111,7 +111,7 @@ type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessa
 	contents: IMockContainerRuntimeIdAllocationMessage;
 };
 
-interface IMockContainerRuntimeIdAllocationMessage {
+export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
 	contents: IdCreationRange;
 }
