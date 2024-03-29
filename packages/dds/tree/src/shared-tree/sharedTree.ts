@@ -322,6 +322,8 @@ export const SharedTreeFormatVersion = {
  *
  * Each version documents a required minimum version of the \@fluidframework/tree package.
  * @internal
+ * @privateRemarks
+ * See packages/dds/tree/docs/main/compatibility.md for information on how to add support for a new format.
  */
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 

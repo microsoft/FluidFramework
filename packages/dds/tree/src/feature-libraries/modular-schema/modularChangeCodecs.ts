@@ -79,6 +79,20 @@ export function makeModularChangeCodecFamily(
 	);
 }
 
+type ModularChangeCodec = IJsonCodec<
+	ModularChangeset,
+	EncodedModularChangeset,
+	EncodedModularChangeset,
+	ChangeEncodingContext
+>;
+
+type FieldCodec = IMultiFormatCodec<
+	FieldChangeset,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnly,
+	ChangeEncodingContext
+>;
+
 function makeModularChangeCodec(
 	fieldKinds: FieldKindConfiguration,
 	revisionTagCodec: IJsonCodec<
@@ -90,12 +104,7 @@ function makeModularChangeCodec(
 	fieldsCodec: FieldBatchCodec,
 	{ jsonValidator: validator }: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
-): IJsonCodec<
-	ModularChangeset,
-	EncodedModularChangeset,
-	EncodedModularChangeset,
-	ChangeEncodingContext
-> {
+): ModularChangeCodec {
 	const nodeChangesetCodec: IJsonCodec<
 		NodeChangeset,
 		EncodedNodeChangeset,
@@ -118,13 +127,6 @@ function makeModularChangeCodec(
 				: undefined,
 		};
 	};
-
-	type FieldCodec = IMultiFormatCodec<
-		FieldChangeset,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>;
 
 	/**
 	 * The codec version for the generic field kind.
@@ -346,45 +348,40 @@ function makeModularChangeCodec(
 		return decodedRevisions;
 	}
 
-	return withSchemaValidation(
-		EncodedModularChangeset,
-		{
-			encode: (change, context) => {
-				// Destroys only exist in rollback changesets, which are never sent.
-				assert(
-					change.destroys === undefined,
-					0x899 /* Unexpected changeset with destroys */,
-				);
-				return {
-					maxId: change.maxId,
-					revisions:
-						change.revisions === undefined
-							? change.revisions
-							: encodeRevisionInfos(change.revisions, context),
-					changes: encodeFieldChangesForJson(change.fieldChanges, context),
-					builds: encodeDetachedNodes(change.builds, context),
-					refreshers: encodeDetachedNodes(change.refreshers, context),
-				};
-			},
-			decode: (encodedChange: EncodedModularChangeset, context) => {
-				const decoded: Mutable<ModularChangeset> = {
-					fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
-				};
-				if (encodedChange.builds !== undefined) {
-					decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
-				}
-				if (encodedChange.refreshers !== undefined) {
-					decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
-				}
-				if (encodedChange.revisions !== undefined) {
-					decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
-				}
-				if (encodedChange.maxId !== undefined) {
-					decoded.maxId = encodedChange.maxId;
-				}
-				return decoded;
-			},
+	const codec: ModularChangeCodec = {
+		encode: (change, context) => {
+			// Destroys only exist in rollback changesets, which are never sent.
+			assert(change.destroys === undefined, 0x899 /* Unexpected changeset with destroys */);
+			return {
+				maxId: change.maxId,
+				revisions:
+					change.revisions === undefined
+						? change.revisions
+						: encodeRevisionInfos(change.revisions, context),
+				changes: encodeFieldChangesForJson(change.fieldChanges, context),
+				builds: encodeDetachedNodes(change.builds, context),
+				refreshers: encodeDetachedNodes(change.refreshers, context),
+			};
 		},
-		validator,
-	);
+		decode: (encodedChange: EncodedModularChangeset, context) => {
+			const decoded: Mutable<ModularChangeset> = {
+				fieldChanges: decodeFieldChangesFromJson(encodedChange.changes, context),
+			};
+			if (encodedChange.builds !== undefined) {
+				decoded.builds = decodeDetachedNodes(encodedChange.builds, context);
+			}
+			if (encodedChange.refreshers !== undefined) {
+				decoded.refreshers = decodeDetachedNodes(encodedChange.builds, context);
+			}
+			if (encodedChange.revisions !== undefined) {
+				decoded.revisions = decodeRevisionInfos(encodedChange.revisions, context);
+			}
+			if (encodedChange.maxId !== undefined) {
+				decoded.maxId = encodedChange.maxId;
+			}
+			return decoded;
+		},
+	};
+
+	return withSchemaValidation(EncodedModularChangeset, codec, validator);
 }

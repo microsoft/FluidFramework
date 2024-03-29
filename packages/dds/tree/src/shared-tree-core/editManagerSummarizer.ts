@@ -24,10 +24,6 @@ import { Summarizable, SummaryElementParser, SummaryElementStringifier } from ".
 
 const stringKey = "String";
 
-export interface EditManagerFormatOptions {
-	writeVersion: number;
-}
-
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */

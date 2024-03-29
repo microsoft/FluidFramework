@@ -10,6 +10,7 @@ import {
 	ICodecOptions,
 	IJsonCodec,
 	makeCodecFamily,
+	withSchemaValidation,
 } from "../../codec/index.js";
 
 import { makeSchemaCodec } from "../schema-index/index.js";
@@ -25,7 +26,7 @@ function makeSchemaChangeCodec({
 	jsonValidator: validator,
 }: ICodecOptions): IJsonCodec<SchemaChange, EncodedSchemaChange> {
 	const schemaCodec = makeSchemaCodec({ jsonValidator: validator });
-	return {
+	const schemaChangeCodec: IJsonCodec<SchemaChange, EncodedSchemaChange> = {
 		encode: (schemaChange) => {
 			assert(!schemaChange.isInverse, "Inverse schema changes should never be transmitted");
 			return {
@@ -44,4 +45,6 @@ function makeSchemaChangeCodec({
 		},
 		encodedSchema: EncodedSchemaChange,
 	};
+
+	return withSchemaValidation(EncodedSchemaChange, schemaChangeCodec, validator);
 }

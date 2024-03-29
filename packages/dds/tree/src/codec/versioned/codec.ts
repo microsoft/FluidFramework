@@ -7,7 +7,14 @@ import { assert } from "@fluidframework/core-utils";
 import { TSchema } from "@sinclair/typebox";
 
 import { JsonCompatibleReadOnly } from "../../util/index.js";
-import { type ICodecFamily, ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec.js";
+import {
+	type ICodecFamily,
+	ICodecOptions,
+	IJsonCodec,
+	withSchemaValidation,
+	type FormatVersion,
+} from "../codec.js";
+
 import { Versioned } from "./format.js";
 
 export function makeVersionedCodec<
@@ -16,7 +23,7 @@ export function makeVersionedCodec<
 	TValidate = TEncoded,
 	TContext = void,
 >(
-	supportedVersions: Set<number | undefined>,
+	supportedVersions: Set<FormatVersion>,
 	{ jsonValidator: validator }: ICodecOptions,
 	inner: IJsonCodec<TDecoded, TEncoded, TValidate, TContext>,
 ): IJsonCodec<TDecoded, TEncoded, TValidate, TContext> {
@@ -39,6 +46,7 @@ export function makeVersionedCodec<
 			return decoded;
 		},
 	};
+
 	return supportedVersions.has(undefined)
 		? codec
 		: withSchemaValidation(Versioned, codec, validator);
