@@ -248,28 +248,20 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const sharedTree = sharedObject as ISharedTree;
 	const contentSnapshot = sharedTree.contentSnapshot();
 
-	/**
-	 * Root node of the SharedTree's treeview. Assume there is only one root node.
-	 */
+	// Root node of the SharedTree's treeview. Assume there is only one root node.
 	const treeView = contentSnapshot.tree[0];
 
-	/**
-	 * Schema of the tree node.
-	 */
+	// Schema of the tree node.
 	const treeSchema = contentSnapshot.schema.nodeSchema.get(treeView.type);
 
-	/**
-	 * Traverses the SharedTree and generates a visual representation of the tree (mainly composed of `schema` and `fields` field).
-	 */
+	// Traverses the SharedTree and generates a visual representation of the tree (mainly composed of `schema` and `fields` field).
 	const visualTreeRepresentation = visualizeSharedTreeNodeBySchema(
 		treeView,
 		treeSchema,
 		contentSnapshot,
 	);
 
-	/**
-	 * Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
-	 */
+	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = mapToVisualChildNode(visualTreeRepresentation);
 
 	return {

@@ -53,16 +53,12 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 	let result = "";
 
 	for (const [fieldKey, treeFieldStoredSchema] of schema.objectNodeFields) {
-		/**
-		 * Set of allowed tree types {@link TreeTypeSet}.
-		 */
+		// Set of allowed tree types {@link TreeTypeSet}.
 		const fieldTypes = treeFieldStoredSchema.types;
 
 		let fieldAllowedType = fieldKey === "" ? "" : `${fieldKey} : `;
 
-		/**
-		 * If not specified, types are unconstrained.
-		 */
+		// If not specified, types are unconstrained.
 		if (fieldTypes === undefined) {
 			fieldAllowedType += "any";
 		} else {
@@ -71,17 +67,13 @@ function getObjectAllowedTypes(schema: ObjectNodeStoredSchema): string {
 			}
 		}
 
-		/**
-		 * Slice the trailing ` | ` from the `fieldAllowedType`.
-		 */
+		// Slice the trailing ` | ` from the `fieldAllowedType`.
 		fieldAllowedType = `${fieldAllowedType.slice(0, -3)}, `;
 
 		result += fieldAllowedType;
 	}
 
-	/**
-	 * Slice the trailing `, ` from the `result`.
-	 */
+	// Slice the trailing `, ` from the `result`.
 	result = result.slice(0, -2);
 
 	return `{ ${result} }`;
@@ -106,9 +98,7 @@ function getMapAllowedTypes(
 		}
 	}
 
-	/**
-	 * Slice the trailing ` | ` from the `fieldAllowedType`.
-	 */
+	// Slice the trailing ` | ` from the `fieldAllowedType`.
 	fieldAllowedTypes = fieldAllowedTypes.slice(0, -3);
 
 	assert(fields !== undefined, "MapNodeStoredSchema fields undefined.");
@@ -118,9 +108,7 @@ function getMapAllowedTypes(
 		result += `${fieldKey} : ${fieldAllowedTypes}, `;
 	}
 
-	/**
-	 * Slice the trailing `, ` from the `result`.
-	 */
+	// Slice the trailing `, ` from the `result`.
 	result = result.slice(0, -2);
 
 	return `{ ${result} }`;
@@ -141,9 +129,7 @@ function getLeafAllowedTypes(schema: TreeFieldStoredSchema): string {
 		}
 	}
 
-	/**
-	 * Slice the trailing ` | ` from the `result`.
-	 */
+	// Slice the trailing ` | ` from the `result`.
 	result = `${result.slice(0, -3)}`;
 
 	return result;
@@ -188,15 +174,11 @@ function visualizeObjectNodeStoredSchema(
 
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
-	/**
-	 * If the child node is a leaf node, get the allowed types from the parent schema before entering {@link visualizeSharedTreeNodeBySchema}.
-	 */
+	// If the child node is a leaf node, get the allowed types from the parent schema before entering {@link visualizeSharedTreeNodeBySchema}.
 	let leafAllowedTypes;
 
-	/**
-	 * {@link EmptyKey} indicates an array field (e.g., `schemabuilder.array()`).
-	 * Hides level of indirection by omitting the empty key in the visual output.
-	 */
+	// {@link EmptyKey} indicates an array field (e.g., `schemabuilder.array()`).
+	// Hides level of indirection by omitting the empty key in the visual output.
 	if (
 		Object.keys(treeFields).length === 1 &&
 		Object.prototype.hasOwnProperty.call(treeFields, EmptyKey)
@@ -206,9 +188,7 @@ function visualizeObjectNodeStoredSchema(
 		for (let i = 0; i < children.length; i++) {
 			const childSchema = contentSnapshot.schema.nodeSchema.get(children[i].type);
 
-			/**
-			 * If the node within the array is a leaf node, get the allowed types from the parent schema.
-			 */
+			// If the node within the array is a leaf node, get the allowed types from the parent schema.
 			if (childSchema instanceof LeafNodeStoredSchema) {
 				const parentSchema = schema.objectNodeFields;
 
@@ -232,9 +212,7 @@ function visualizeObjectNodeStoredSchema(
 			);
 			const childSchema = contentSnapshot.schema.nodeSchema.get(childField[0].type);
 
-			/**
-			 * If the child field is a leaf node, get the allowed types from the parent schema.
-			 */
+			// If the child field is a leaf node, get the allowed types from the parent schema.
 			if (childSchema instanceof LeafNodeStoredSchema) {
 				const parentSchema = schema.objectNodeFields;
 
