@@ -25,12 +25,12 @@ import { normalizeFlexListEager } from "../feature-libraries/typed-schema/flexLi
 import { TreeContent } from "../shared-tree/index.js";
 import { brand, fail, isReadonlyArray, mapIterable } from "../util/index.js";
 
+import { InsertableContent, extractFactoryContent } from "./proxies.js";
 import {
-	InsertableContent,
-	extractFactoryContent,
-	getSimpleSchema,
-	simpleSchemaSymbol,
-} from "./proxies.js";
+	cachedFlexSchemaFromClassSchema,
+	setFlexSchemaFromClassSchema,
+	tryGetSimpleNodeSchema,
+} from "./schemaCaching.js";
 import {
 	FieldKind,
 	FieldSchema,
@@ -39,6 +39,7 @@ import {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	NodeKind,
 	TreeNodeSchema,
+	normalizeFieldSchema,
 } from "./schemaTypes.js";
 import { cursorFromNodeData } from "./toMapTree.js";
 import { TreeConfiguration } from "./tree.js";
@@ -52,23 +53,25 @@ import { TreeConfiguration } from "./tree.js";
  * For now though, this is the only case that's needed, and we do have the data to make it work, so this is fine.
  */
 function cursorFromUnhydratedRoot(
-	schema: FlexTreeSchema,
+	schema: ImplicitFieldSchema,
 	tree: InsertableTreeNodeFromImplicitAllowedTypes,
 ): ITreeCursorSynchronous {
 	const data = extractFactoryContent(tree as InsertableContent);
+	const normalizedFieldSchema = normalizeFieldSchema(schema);
 	return (
-		cursorFromNodeData(data, schema, schema.rootFieldSchema.allowedTypeSet) ??
+		cursorFromNodeData(data, normalizedFieldSchema.allowedTypes) ??
 		fail("failed to decode tree")
 	);
 }
 
 export function toFlexConfig(config: TreeConfiguration): TreeContent {
-	const schema = toFlexSchema(config.schema);
 	const unhydrated = config.initialTree();
 	const initialTree =
-		unhydrated === undefined ? undefined : [cursorFromUnhydratedRoot(schema, unhydrated)];
+		unhydrated === undefined
+			? undefined
+			: [cursorFromUnhydratedRoot(config.schema, unhydrated)];
 	return {
-		schema,
+		schema: toFlexSchema(config.schema),
 		initialTree,
 	};
 }
@@ -83,7 +86,7 @@ type SchemaMap = Map<TreeNodeSchemaIdentifier, SchemaInfo>;
 /**
  * Generate a {@link FlexTreeSchema} with `root` as the root field.
  *
- * This also has the side effect of populating the cached view schema on the class based schema.
+ * This also has the side effect of populating the cached view schema on the class-based schema.
  */
 export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const schemaMap: SchemaMap = new Map();
@@ -91,7 +94,7 @@ export function toFlexSchema(root: ImplicitFieldSchema): FlexTreeSchema {
 	const nodeSchema = new Map(
 		mapIterable(schemaMap, ([key, value]) => {
 			const schema = value.toFlex();
-			const classSchema = getSimpleSchema(schema);
+			const classSchema = tryGetSimpleNodeSchema(schema);
 			if (classSchema === undefined) {
 				assert(schemaIsLeaf(schema), 0x83e /* invalid leaf */);
 			} else {
@@ -255,26 +258,4 @@ export function convertNodeSchema(
 	};
 	schemaMap.set(brand(schema.identifier), { original: schema, toFlex });
 	return toFlex;
-}
-
-/**
- * A symbol for storing FlexTreeSchema on TreeNodeSchema.
- * Eagerly set on leaves, and lazily set for other cases.
- */
-export const flexSchemaSymbol: unique symbol = Symbol(`flexSchema`);
-
-export function cachedFlexSchemaFromClassSchema(
-	schema: TreeNodeSchema,
-): TreeNodeSchemaBase | undefined {
-	return (schema as any)[flexSchemaSymbol] as TreeNodeSchemaBase | undefined;
-}
-
-export function setFlexSchemaFromClassSchema(
-	simple: TreeNodeSchema,
-	flex: TreeNodeSchemaBase,
-): void {
-	assert(!(flexSchemaSymbol in simple), "simple schema already marked");
-	assert(!(simpleSchemaSymbol in flex), "flex schema already marked");
-	(simple as any)[flexSchemaSymbol] = flex;
-	(flex as any)[simpleSchemaSymbol] = simple;
 }
